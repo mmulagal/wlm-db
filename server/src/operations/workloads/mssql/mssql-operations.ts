@@ -637,7 +637,8 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
         for (const nodeId of nodeIds) {
             const response = await callSsmExecution(credentialsId, region, commands, nodeId);
             if (response) {
-                const parsedResponse = sqlResponseParsing(response);
+                let parsedResponse = sqlResponseParsing(response);
+                parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
                 return parsedResponse;
             }
         }

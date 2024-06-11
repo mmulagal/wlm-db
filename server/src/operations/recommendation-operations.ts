@@ -199,7 +199,7 @@ export default async function getSqlInstanceLicenseRecommendations(
 
             const recommendedSqlLicenseType =
                 sqlServerEngineEdition === 3
-                    ? await getLicenseRecommendations(region, credentialsId, accountId, instanceId)
+                    ? await getLicenseRecommendations(accountId, credentialsId, region, instanceId)
                     : existingLicenseType;
 
             // existing compute and license details
@@ -296,7 +296,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                 };
             } else {
                 const message =
-                    sqlServerEngineEdition === 3
+                    sqlServerEngineEdition !== 3
                         ? 'No license change recommended as you are already using a non-enterprise edition'
                         : recommendedSqlLicenseType === existingLicenseType
                         ? 'Need not change the license as the recommended type is the same as the existing license type'

@@ -7,10 +7,15 @@ import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { createResource, deleteDatabaseInstance, listDatabaseInstances } from '../lib/database/db';
+import {
+    createResource,
+    deleteDatabaseInstance,
+    listDatabaseInstances,
+    upsertDatabaseInstance
+} from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
-import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName } from '../utils/utils';
+import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName, derivePropertiesFromARN } from '../utils/utils';
 import {
     getEc2SqlParameters,
     callSsmExecution,
@@ -32,7 +37,8 @@ import {
     DBCREATE_RELATIVE_PATH,
     STORAGE_PROTOCOLS,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES,
-    PSMODULES_RELATIVE_PATH
+    PSMODULES_RELATIVE_PATH,
+    DatabaseTypes
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -496,6 +502,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerName,
                         sqlServerEngineEdition,
                         sqlServerEdition,
+                        serverGuid,
                         sqlServerNodes,
                         nodeIps,
                         sqlServerInstance,
@@ -530,6 +537,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerProductYear,
                         ...(sqlServerEngineEdition && { sqlServerEngineEdition: Number(sqlServerEngineEdition) }),
                         ...(sqlServerEdition && { sqlServerEdition }),
+                        serverGuid,
                         isDefaultInstance,
                         ...(failureInfo && { failureInfo }),
                         windowsAuthentication,
@@ -900,7 +908,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         logger.error(`Failed to get Active Directory details for EC2 ${ec2InstanceId}. Reason: ${adDetails}`);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: Failed to Active Directory details.`
+            `Unable to manage instance '${ec2InstanceId}'. Reason: Failed to get Active Directory details.`
         );
     }
 
@@ -908,19 +916,18 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
 
     const node1InstanceId = ec2InstanceId;
     let node2InstanceId;
+
     if (clusterNetworkIpDetailsInJson.clusterNetworkIps.length > 1) {
         // FCI environment
-        const describeInstanceParams: DescribeInstancesCommandInput = {
-            Filters: [{ Name: 'private-ip-address', Values: clusterNetworkIpDetailsInJson.clusterNetworkIps }]
-        };
-
-        const { Reservations } = await describeInstance(credentialsId, region, describeInstanceParams);
-        const instances = Reservations?.flatMap(elem => elem.Instances);
-        instances?.forEach(elem => {
-            if (elem?.InstanceId !== ec2InstanceId) {
-                node2InstanceId = elem?.InstanceId;
-            }
-        });
+        const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
+            credentialsId,
+            region,
+            clusterNetworkIpDetailsInJson.clusterNetworkIps
+        );
+        const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
+        if (!isEmpty(temp)) {
+            node2InstanceId = temp.ec2InstanceId;
+        }
     }
 
     /* Resource ID is obtained either by one instanceID (in case of standalone
@@ -992,7 +999,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
                         ? SqlServerDeploymentModel.SQL_STANDALONE_SHORT
                         : SqlServerDeploymentModel.SQL_FCI_SHORT,
                 source: RESOURCE_SOURCE.DISCOVER,
-                fsxSvmId: storageInfo?.svmId,
+                fsxSvmId: { fsxId: storageInfo!.svmId! },
                 storageProtocol: storageProtocols ? storageProtocols.join() : '',
                 ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
                 ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
@@ -1463,6 +1470,240 @@ async function preparePsModulesForManage(
     return jobStatusRecord.status;
 }
 
+async function manageSqlServerV2(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    databaseInstanceNameList: string[]
+) {
+    logger.info('Manage SQL Server instances (v2):', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        databaseInstanceList: databaseInstanceNameList
+    });
+
+    try {
+        /* SSM is a must for all remaining validations */
+        const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
+        if (ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, 'No SSM connectivity.');
+        }
+        const [ec2Details, discoverDetails, clusterNetworkIpDetails, adDetails, missingResourceDetails] =
+            await Promise.all([
+                describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }),
+                getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
+                callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId),
+                callSsmExecution(credentialsId, region, GET_ACTIVE_DIRECTORY_DETAILS, ec2InstanceId, accountId),
+                callSsmExecution(credentialsId, region, GET_MISSING_RESOURCE_DETAILS, ec2InstanceId, accountId)
+            ]);
+
+        const precheckErrorList: string[] = [];
+        const missingResourceJson = JSON.parse(missingResourceDetails!);
+
+        if (missingResourceJson[IS_PS7_AVAILABLE] === false) {
+            precheckErrorList.push(
+                'PowerShell 7 is required for managing the resource. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4.'
+            );
+        }
+        if (missingResourceJson[UNAVAILABLE_PS_MODULES]) {
+            precheckErrorList.push(
+                `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
+            );
+        }
+        if (missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
+            precheckErrorList.push(
+                'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".'
+            );
+        }
+
+        const { awsAccountId } =
+            derivePropertiesFromARN(ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn || '') || {};
+
+        if (isEmpty(awsAccountId)) {
+            precheckErrorList.push('Failed to get AWS account ID.');
+        }
+
+        if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
+            precheckErrorList.push('Failed to get network interface details.');
+        }
+
+        if (isEmpty(adDetails) || adDetails?.includes(FAILURE_INFO)) {
+            precheckErrorList.push('Failed to get Active Directory details.');
+        }
+
+        const { count, items } = discoverDetails;
+        if (count <= 0) {
+            precheckErrorList.push(
+                'Only existing instances in running state, have Microsoft Windows as host operating system, architecture is x86_64, and hosting SQL Server 2016 above can be managed.'
+            );
+        }
+
+        if (!isEmpty(precheckErrorList)) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, precheckErrorList.join('\n'));
+        }
+
+        const { sqlServerInstances } = items[0];
+
+        const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails!);
+        const node1InstanceId = ec2InstanceId;
+        let node2InstanceId;
+
+        if (clusterNetworkIpDetailsJson.clusterNetworkIps.length > 1) {
+            // FCI/AOAG environment
+            const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
+                credentialsId,
+                region,
+                clusterNetworkIpDetailsJson.clusterNetworkIps
+            );
+            const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
+            if (!isEmpty(temp)) {
+                node2InstanceId = temp.ec2InstanceId;
+            }
+        }
+
+        // A resource ID is a hash generated using available EC2 instance IDs.
+        const [resourceId1, resourceId2] = [
+            getMsSqlResourceId(node1InstanceId, node2InstanceId),
+            getMsSqlResourceId(node2InstanceId || '', node1InstanceId)
+        ];
+
+        const [
+            {
+                items: [resourceDetails1]
+            },
+            {
+                items: [resourceDetails2]
+            }
+        ] = await Promise.all([
+            getResources(accountId, resourceId1, credentialsId, region),
+            getResources(accountId, resourceId2, credentialsId, region)
+        ]);
+
+        let isResourceTobeCreated: boolean = isEmpty(resourceDetails1) && isEmpty(resourceDetails2);
+        const resourceId = !isEmpty(resourceDetails1) ? resourceId1 : resourceId2;
+
+        const alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
+            credentialsId,
+            resourceId
+        });
+
+        const itemsStatus: { databaseInstanceName: string; status: string; errorMessage?: string }[] = [];
+
+        for (const dbInst of databaseInstanceNameList) {
+            const sqlInstanceInfo = sqlServerInstances?.find(sqlInst => sqlInst.sqlServerInstance === dbInst);
+
+            if (alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)) {
+                itemsStatus.push({
+                    databaseInstanceName: dbInst,
+                    status: 'failed',
+                    errorMessage: 'Instance is already managed.'
+                });
+            } else if (isEmpty(sqlInstanceInfo)) {
+                itemsStatus.push({
+                    databaseInstanceName: dbInst,
+                    status: 'failed',
+                    errorMessage: 'SQL Server instance not found.'
+                });
+            } else {
+                try {
+                    const { windowsAuthentication, sqlServerAuthentication, storage } = sqlInstanceInfo;
+                    const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+                    const storageProtocols = storage
+                        ?.filter(elem => elem.type === STORAGE_TYPE.FSXN)
+                        .map(elem => elem.protocol);
+
+                    if (windowsAuthentication === false && sqlServerAuthentication === false) {
+                        throw Error(
+                            'Authentication to SQL Server instance is not possible. Check if the SQL Server service is running, stored credentials are valid, or windows authentication is enabled.'
+                        );
+                    }
+
+                    if (isEmpty(storageInfo)) {
+                        throw Error('SQL Server instance is not hosted on storage of type FSx for NetApp.');
+                    }
+
+                    if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+                        throw Error('Always On availability group environments are not supported.');
+                    }
+
+                    if (isResourceTobeCreated) {
+                        const { domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } =
+                            JSON.parse(adDetails!)[ACTIVE_DIRECTORY];
+
+                        await createResource(accountId, {
+                            resourceId,
+                            credentialsId,
+                            storageType: STORAGE_TYPE.FSXN,
+                            resourceName: sqlInstanceInfo.sqlServerName,
+                            cloudProviderAccountId: awsAccountId!,
+                            cloudProviderName: CloudProviders.AWS,
+                            resourceType: RESOURCESTYPE.MSSQL,
+                            region,
+                            metadata: {
+                                node1InstanceId,
+                                node2InstanceId,
+                                ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
+                                ...(activeDirectoryIpAddresses && {
+                                    activeDirectoryAddress: activeDirectoryIpAddresses.join()
+                                })
+                            }
+                        });
+
+                        isResourceTobeCreated = false;
+                    }
+
+                    tagResources(
+                        credentialsId,
+                        region,
+                        awsAccountId!,
+                        accountId,
+                        storageInfo.id,
+                        node1InstanceId,
+                        node2InstanceId
+                    );
+
+                    await upsertDatabaseInstance(accountId, {
+                        credentialsId,
+                        resourceId,
+                        region,
+                        databaseInstanceId: sqlInstanceInfo.serverGuid!,
+                        databaseInstanceName: sqlInstanceInfo.sqlServerInstance,
+                        fsxnIds: storageInfo.id!,
+                        isDefault: sqlInstanceInfo.isDefaultInstance,
+                        source: RESOURCE_SOURCE.DISCOVER,
+                        sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
+                        fsxSvmId: { fsxId: storageInfo!.svmId! },
+                        storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                        databaseType: DatabaseTypes.MS_SQL_SERVER
+                    });
+
+                    itemsStatus.push({
+                        databaseInstanceName: dbInst,
+                        status: 'success'
+                    });
+                } catch (error) {
+                    itemsStatus.push({
+                        databaseInstanceName: dbInst,
+                        status: 'failed',
+                        errorMessage: `${error}`
+                    });
+                }
+            }
+        }
+
+        return {
+            resourceId,
+            items: itemsStatus
+        };
+    } catch (error: any) {
+        error.message = `Unable to manage instance '${ec2InstanceId}'. Reason: ${error.message}`;
+        throw error;
+    }
+}
+
 async function unmanageDatabaseInstance(
     accountId: string,
     credentialsId: string,
@@ -1514,6 +1755,7 @@ export {
     validateAndStoreDiscoveredParameters,
     fetchUnmanagedHostsInformation,
     manageSqlServer,
+    manageSqlServerV2,
     prepareForManage,
     unmanageDatabaseInstance
 };

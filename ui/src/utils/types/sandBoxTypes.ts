@@ -107,3 +107,5 @@ export interface SandboxEntities {
     };
     splitEstimateLoading: boolean;
 }
+
+export type SandboxActions = 'delete' | 'refresh' | 'rebaseline' | 'split' | 'integrityCheck';
