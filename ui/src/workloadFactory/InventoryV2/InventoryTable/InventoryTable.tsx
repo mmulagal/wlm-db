@@ -152,7 +152,7 @@ const InventoryTable = () => {
     };
 
     const ExpandedRow = ({ rowData }: any) => {
-        if (rowData.hasOwnProperty('status')) {
+        if (rowData?.ssmState === 'Online') {
             return <ManagedHostSubTable rowId={rowData?.id} scrollPosition={scrollPos} />;
         }
         return <OfflineComponent />;
