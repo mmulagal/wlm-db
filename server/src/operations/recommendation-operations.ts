@@ -199,7 +199,7 @@ export default async function getSqlInstanceLicenseRecommendations(
 
             const recommendedSqlLicenseType =
                 sqlServerEngineEdition === 3
-                    ? await getLicenseRecommendations(region, credentialsId, accountId, instanceId)
+                    ? await getLicenseRecommendations(accountId, credentialsId, region, instanceId)
                     : existingLicenseType;
 
             // existing compute and license details
