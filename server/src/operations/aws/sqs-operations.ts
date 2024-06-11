@@ -602,14 +602,11 @@ async function processCloudFormationMessages() {
                                                         nodeIds.push(node2InstanceId);
                                                     }
                                                     try {
-                                                        let deployedInstances = await getAllInstanceDetails(
+                                                        const deployedInstances = await getAllInstanceDetails(
                                                             credentialsId,
                                                             region,
                                                             nodeIds
                                                         );
-                                                        if (!Array.isArray(deployedInstances)) {
-                                                            deployedInstances = [deployedInstances];
-                                                        }
                                                         const instanceNames = deployedInstances.map(
                                                             (instance: { instanceName: string }) =>
                                                                 instance.instanceName
