@@ -1889,17 +1889,17 @@ async function getDatabaseHostInstanceSummary(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaeInstanceId: string,
+    databaseInstanceId: string,
     fields?: string
 ) {
-    logger.info('Fetching details about a database host instance ', accountId, databaseHostId, databaeInstanceId);
+    logger.info('Fetching details about a database host instance ', accountId, databaseHostId, databaseInstanceId);
 
     const [[resourceDetails], [databaseInstanceDetails]] = await Promise.all([
         listResources(accountId, databaseHostId, credentialsId, region),
         listDatabaseInstances(accountId, {
             databaseHostId,
             credentialsId,
-            sqlInstanceId: databaeInstanceId
+            sqlInstanceId: databaseInstanceId
         })
     ]);
 
@@ -1919,7 +1919,7 @@ async function getDatabaseHostInstanceSummary(
     const { nodeId: activeNodeInstanceId, matchingInstance } = activeNodeResponse;
     const { instanceName, instanceState } = matchingInstance;
     if (instanceState.toLocaleLowerCase() !== 'running') {
-        const errorMessage = `Instance id ${databaeInstanceId} is not running on host ${databaseHostId}.`;
+        const errorMessage = `Instance id ${databaseInstanceId} is not running on host ${databaseHostId}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }

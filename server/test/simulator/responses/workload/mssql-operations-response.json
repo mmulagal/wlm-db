@@ -184,5 +184,15 @@
         "latency": 2,
         "assessment": "Very good ( <5 ms )"
     },
-    "mssqlServerStateResponse": "Running"
+    "mssqlServerStateResponse": "Running",
+    "mssqlServerInstanceDetails": {
+        "instanceName": "MSSQLSERVER",
+        "instanceState": "Running"
+    },
+    "activeInstanceResponse": {
+        "matchingInstance": {
+            "instanceName": "MSSQLSERVER",
+            "instanceState": "Running"
+        }
+    }
 }

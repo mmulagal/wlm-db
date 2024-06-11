@@ -944,6 +944,7 @@ async function getActiveSqlNodeV2(
             let connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId]);
+
                 if (instanceDetails) {
                     const matchingInstance = instanceDetails.find(
                         (instance: { instanceName: string }) => instance.instanceName === databaseInstanceName
@@ -962,11 +963,9 @@ async function getActiveSqlNodeV2(
             }
         }
     } catch (err) {
-        logger.error(
-            `Error while checking SSM connection or SQL server status for resource ${resourceId}`,
-            { credentialsId, region, nodeIds },
-            err
-        );
+        const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId} , ${credentialsId}, ${region}, ${nodeIds} , ${err}`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 }
 
@@ -991,7 +990,9 @@ async function getActiveNodeAndInstanceDetails(
         resourceId
     );
     if (!activeNodeResponse) {
-        throw createError(HttpErrorCodes.NOT_FOUND, 'Active node not found');
+        const errorMessage = `${node1InstanceId} , ${node2InstanceId} are not in active state for resource: ${resourceId} `;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
     return activeNodeResponse;
 }
@@ -1023,5 +1024,6 @@ export {
     getMssqlInstanceGuid,
     getActiveSqlInstanceName,
     getAllInstanceDetails,
-    getActiveNodeAndInstanceDetails
+    getActiveNodeAndInstanceDetails,
+    getActiveSqlNodeV2
 };

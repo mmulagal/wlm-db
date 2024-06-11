@@ -330,7 +330,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instance/:databaseInstanceId`,
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId`,
             { schema: DatabaseHostInstanceDetailsSchema },
             async (request, reply) => {
                 const {
