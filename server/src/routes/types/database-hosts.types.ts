@@ -1,5 +1,3 @@
-import { ConnectionStatus } from '@aws-sdk/client-ssm';
-import { InstanceStateName } from '@aws-sdk/client-ec2';
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { BILLING, PRICING } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
@@ -509,11 +507,11 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
     nodeStatus: Type.String({
         description:
             'Status of EC2 instance hosting the database server. In the case of cluster (like FCI or AOAG), running status will reflect the availabilty of either of the instances.',
-        InstanceStateName
+        enum: ['ONLINE', 'OFFLINE', 'N/A']
     }),
     ssmStatus: Type.String({
         description: 'SSM connectivity status to the active EC2 instance hosting the database server.',
-        ConnectionStatus
+        enum: ['ONLINE', 'OFFLINE']
     }),
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
     nodeTopology: Type.Optional(NodeTopologyResponse),
