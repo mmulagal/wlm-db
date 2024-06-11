@@ -35,6 +35,9 @@ const inventoryV2Slice = createSlice({
         setIsFullHostDataLoading: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts.fullHostDataLoading = action.payload;
         },
+        addDatabaseHostsDataV2: (state, action: PayloadAction<any>) => {
+            state.getDatabaseHosts.databaseHostsData = action.payload;
+        },
         setIsDiscoveredHostData: (state, action: PayloadAction<any>) => {
             state.discoveredHosts.discoveredHostData = action.payload;
         },
@@ -50,6 +53,7 @@ export const {
     setIsManagedHostListLoading,
     setIsDatabaseHostsLoading,
     setIsFullHostDataLoading,
+    addDatabaseHostsDataV2,
     setIsDiscoveredHostData,
     setIsDiscoverHostLoading
 } = inventoryV2Slice.actions;
