@@ -11,6 +11,7 @@ export interface InventorySliceData {
         discoveredHostData: any;
         discoverHostLoading: boolean;
     };
+    fsxCredentialStatusObj: any;
 }
 
 export interface InventoryTableData {
@@ -27,6 +28,7 @@ export interface InventoryTableData {
     vpcName?: string;
     vpcCidr?: string;
     action?: string;
+    actionDisable?: boolean;
     ec2Details?: Array<{
         id?: string;
         name?: string;
@@ -221,4 +223,57 @@ export interface ManagedHostsRowInterface {
     estimatedUsageCost?: EstimatedUsageCostInterface;
     databaseInstancesSummary?: Array<DatabaseInstancesSummaryInterface>;
     nodeInstanceError?: string;
+}
+
+export interface DiscoverHostInterface {
+    ec2InstanceId: string;
+    ec2InstanceType?: string;
+    ssmState?: string;
+    ec2InstanceName?: string;
+    ec2UsageOperation?: string;
+    nodesList?: Array<string>;
+    key?: string;
+    vpc?: {
+        id?: string;
+        name?: string;
+        cidrBlock?: string;
+    };
+    sqlServerInstances?: Array<SQLServerInstancesDiscovered>;
+}
+
+export interface SQLServerInstancesDiscovered {
+    sqlServerInstance?: string;
+    sqlServerState?: string;
+    sqlServerVersion?: string;
+    sqlServerProductYear?: string;
+    isDefaultInstance?: boolean;
+    windowsAuthentication?: boolean;
+    sqlServerEdition?: string;
+    sqlServerEngineEdition?: number;
+    sqlServerName?: string;
+    serverGuid?: string;
+    failureInfo?: string;
+    sqlServerNodes?: Array<string>;
+    nodeIps?: Array<string>;
+    sqlServerDeploymentType?: string;
+    databaseCount?: number;
+    sqlServerAuthentication?: boolean;
+    storage?: Array<DiscoveredStorageObj>;
+    deploymentTypes?: Array<{
+        type?: string;
+        zones?: Array<string>;
+    }>;
+}
+
+export interface DiscoveredStorageObj {
+    type?: string;
+    id?: string | undefined;
+    svmId?: string;
+    protocol?: string;
+}
+
+export interface StatusObjInterface {
+    status: string;
+    name: string;
+    storageType: any;
 }
