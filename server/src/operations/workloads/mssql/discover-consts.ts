@@ -295,7 +295,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         $responseObject['failureInfo'] += "Failed to get network drives from Windows Registry.\`n"
       }
   
-      $editionDBCountMachineInfo = @($null, $null, $null)
+      $editionDBCountMachineInfoGuid = @($null, $null, $null, $null, $null)
       $responseObject['windowsAuthentication'] = $False
       $sqlServerInstanceStorageInfo = $null
   
@@ -341,13 +341,14 @@ const HOST_AND_SQL_INFO_PS1 = [
         Get-Command -Type Application sqlcmd > $null 2> $null
         If ($? -eq $True) {
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" }
-          $editionDBCountMachineInfo = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName')" 2> $null
+          $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
           $responseObject['windowsAuthentication'] = $?
   
-          $responseObject['sqlServerEdition'] = $editionDBCountMachineInfo[0]
-          $responseObject['sqlServerEngineEdition'] = $editionDBCountMachineInfo[1]
-          $responseObject['databaseCount'] = $editionDBCountMachineInfo[2]
-          $responseObject['sqlServerName'] = $editionDBCountMachineInfo[3]
+          $responseObject['sqlServerEdition'] = $editionDBCountMachineInfoGuid[0]
+          $responseObject['sqlServerEngineEdition'] = $editionDBCountMachineInfoGuid[1]
+          $responseObject['databaseCount'] = $editionDBCountMachineInfoGuid[2]
+          $responseObject['sqlServerName'] = $editionDBCountMachineInfoGuid[3]
+          $responseObject['serverGuid'] = $editionDBCountMachineInfoGuid[4]
   
           $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails($serverInstance)
           

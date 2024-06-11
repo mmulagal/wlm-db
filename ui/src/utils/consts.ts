@@ -148,7 +148,10 @@ export const STATUS_CONST = {
     INITIALIZING: 'Initializing',
     FAILED: 'Failed',
     IN_PROGRESS: 'In Progress',
-    COMPLETED: 'Completed'
+    COMPLETED: 'Completed',
+    ONLINE: 'Online',
+    OFFLINE: 'Offline',
+    UNKNOWN: 'Unknown'
 };
 
 export const JOB_MONITORING_STATUS = {
@@ -478,3 +481,5 @@ export const OS_VERSIONS_LIST = [
         value: GENERAL.WIN_SERVER_2022_VERSION
     }
 ];
+
+export const SANDBOX_ACTIONS_POLLING_INTERVAL = 5000;

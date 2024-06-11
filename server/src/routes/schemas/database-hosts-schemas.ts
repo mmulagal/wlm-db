@@ -266,6 +266,12 @@ const SandboxSplitSchema = {
     }
 };
 
+const CheckSandboxIntegritySchema = {
+    ...SandboxSplitSchema,
+    summary: 'Check sandbox integrity',
+    description: 'Check sandbox integrity operation'
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -286,5 +292,6 @@ export {
     SandboxSplitSchema,
     DatabaseHostsSummarySchemaV2,
     DatabaseHostDetailsSchemaV2,
-    DatabaseHostInstanceDetailsSchema
+    DatabaseHostInstanceDetailsSchema,
+    CheckSandboxIntegritySchema
 };

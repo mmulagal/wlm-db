@@ -217,7 +217,7 @@ const SERVER_DETAILS = `
 
 const INSTANCE_GUID = `${SET_NOCOUNT} SELECT [service_broker_guid] as instance_guid FROM sys.databases WHERE [name] = N'msdb' ${FOR_JSON_PATH}`;
 
-const ENTERPRISE_CHECK_QUERY = ` ${SET_NOCOUNT} IF(SELECT CASE WHEN CONVERT(sysname, SELECT SERVERPROPERTY('EngineEdition'))= 3 THEN 1 ELSE 0 END )=1
+const ENTERPRISE_CHECK_QUERY = ` ${SET_NOCOUNT} IF(SELECT CASE WHEN CONVERT(sysname, SERVERPROPERTY('EngineEdition')) = '3' THEN 1 ELSE 0 END )=1
     BEGIN
         -- SQL Server is Enterprise Edition
         IF OBJECT_ID('tempdb.dbo.#EnterpriseFeaturesDB') IS NOT NULL
@@ -289,11 +289,6 @@ const ENTERPRISE_CHECK_QUERY = ` ${SET_NOCOUNT} IF(SELECT CASE WHEN CONVERT(sysn
     
         -- Finally, select from the results table using the FOR JSON clause
         SELECT * FROM #Results ${FOR_JSON_PATH}
-    END
-    ELSE
-    BEGIN
-        -- SQL Server is not Enterprise Edition
-        PRINT 'SQL Server is not running Enterprise Edition.'
     END`;
 
 const DATABASES_COUNT_V2 = `${SET_NOCOUNT} SELECT COUNT(*) AS totalCount FROM sys.databases ${FOR_JSON_PATH}`;

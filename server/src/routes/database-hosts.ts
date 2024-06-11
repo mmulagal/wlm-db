@@ -1,12 +1,12 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
-    getDatabaseHostInstanceSummary,
     getDatabaseHostsSummary,
     getDatabaseHostsSummaryV2,
     getDatabaseHostSummary,
+    getDatabases,
     getDatabaseHostSummaryV2,
-    getDatabases
+    getDatabaseHostInstanceSummary
 } from '../operations/database-hosts-operations';
 import { deployDatabase, getCollationDetails, getDriveInfo } from '../operations/createdb-operations';
 import {
@@ -28,6 +28,7 @@ import {
     SandboxLifeCycleSchema,
     SandboxSplitSchema,
     DatabaseHostsSummarySchemaV2,
+    CheckSandboxIntegritySchema,
     DatabaseHostDetailsSchemaV2,
     DatabaseHostInstanceDetailsSchema
 } from './schemas/database-hosts-schemas';
@@ -42,7 +43,8 @@ import {
     deleteSandbox,
     getSandboxSplitEstimate,
     updateSandboxLifeCycle,
-    splitSandbox
+    splitSandbox,
+    checkDatabaseIntegrity
 } from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -330,7 +332,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId`,
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instance/:databaseInstanceId`,
             { schema: DatabaseHostInstanceDetailsSchema },
             async (request, reply) => {
                 const {
@@ -344,6 +346,23 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseHostId,
                     databaseInstanceId,
                     fields
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/check-integrity`,
+            { schema: CheckSandboxIntegritySchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                } = request;
+                const response = await checkDatabaseIntegrity(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName
                 );
                 return reply.send(response);
             }

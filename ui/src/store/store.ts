@@ -13,7 +13,8 @@ import {
     workloadFactoryResourceApi,
     inventoryApi,
     sandboxApi,
-    exploreSavingsApi
+    exploreSavingsApi,
+    inventoryApiV2
 } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
@@ -60,6 +61,7 @@ const rootReducer = combineReducers({
     [policiesApi.reducerPath]: policiesApi.reducer,
     [createUserDbApi.reducerPath]: createUserDbApi.reducer,
     [inventoryApi.reducerPath]: inventoryApi.reducer,
+    [inventoryApiV2.reducerPath]: inventoryApiV2.reducer,
     [sandboxSlice.reducerPath]: sandboxSlice.reducer,
     [sandboxApi.reducerPath]: sandboxApi.reducer,
     [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,
@@ -129,6 +131,7 @@ const store = configureStore({
             .concat(policiesApi.middleware)
             .concat(createUserDbApi.middleware)
             .concat(inventoryApi.middleware)
+            .concat(inventoryApiV2.middleware)
             .concat(sandboxApi.middleware)
             .concat(exploreSavingsApi.middleware)
             .concat(rtkQueryErrorLogger)

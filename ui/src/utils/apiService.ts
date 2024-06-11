@@ -684,9 +684,9 @@ export const inventoryApiV2 = createApi({
             getDatabaseHostsFullDataV2: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
-                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databseInstanceTopology,dbCount,performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`;
                     } else {
-                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation`;
+                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databseInstanceTopology,dbCount,performance,storage,protection,estimatedUsageCost`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -703,9 +703,9 @@ export const inventoryApiV2 = createApi({
             getDatabaseHostsListV2: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
-                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?nextToken=${nextToken}`;
+                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology&nextToken=${nextToken}`;
                     } else {
-                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts`;
+                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -824,6 +824,12 @@ export const sandboxApi = createApi({
             splitSandbox: builder.mutation({
                 query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split`,
+                    method: 'POST'
+                })
+            }),
+            checkIntegrity: builder.mutation({
+                query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/check-integrity`,
                     method: 'POST'
                 })
             })
@@ -948,6 +954,7 @@ export const {
     useDeleteSandboxMutation,
     useUpdateSandboxMutation,
     useSplitSandboxMutation,
+    useCheckIntegrityMutation,
     useGetDatabaseHostsForSandboxQuery
 } = sandboxApi;
 
