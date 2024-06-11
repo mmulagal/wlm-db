@@ -6,7 +6,8 @@ import {
     getDatabaseHostSummary,
     getDatabases,
     getDatabaseHostSummaryV2,
-    getDatabaseHostInstanceSummary
+    getDatabaseHostInstanceSummary,
+    getDatabasesV2
 } from '../operations/database-hosts-operations';
 import { deployDatabase, getCollationDetails, getDriveInfo } from '../operations/createdb-operations';
 import {
@@ -30,7 +31,8 @@ import {
     DatabaseHostsSummarySchemaV2,
     CheckSandboxIntegritySchema,
     DatabaseHostDetailsSchemaV2,
-    DatabaseHostInstanceDetailsSchema
+    DatabaseHostInstanceDetailsSchema,
+    DatabasesListSchemaV2
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -346,6 +348,23 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseHostId,
                     databaseInstanceId,
                     fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instance/:databaseInstanceId/databases`,
+            { schema: DatabasesListSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
+                } = request;
+                const response = await getDatabasesV2(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId
                 );
                 return reply.send(response);
             }

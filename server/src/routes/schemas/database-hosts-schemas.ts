@@ -272,6 +272,17 @@ const CheckSandboxIntegritySchema = {
     description: 'Check sandbox integrity operation'
 };
 
+const DatabasesListSchemaV2 = {
+    tags: [RouteTags.DEPLOYMENT],
+    summary: 'Fetch details about databases in a server V2',
+    description:
+        'Fetch details about databases in a server - name, protection status, availability status, size and type of database V2',
+    params: DatabaseHostInstanceSummaryParams,
+    response: {
+        200: DatabasesListResponse
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -293,5 +304,6 @@ export {
     DatabaseHostsSummarySchemaV2,
     DatabaseHostDetailsSchemaV2,
     DatabaseHostInstanceDetailsSchema,
-    CheckSandboxIntegritySchema
+    CheckSandboxIntegritySchema,
+    DatabasesListSchemaV2
 };
