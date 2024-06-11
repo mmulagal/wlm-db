@@ -1664,7 +1664,10 @@ async function getDatabaseInstancesDetails(
         instancesManaged,
         resourceId
     });
-    const instanceDetails = await getAllInstanceDetails(credentialsId, region, [activeNodeInstanceId]);
+    let instanceDetails = await getAllInstanceDetails(credentialsId, region, [activeNodeInstanceId]);
+    if (!Array.isArray(instanceDetails)) {
+        instanceDetails = [instanceDetails];
+    }
     const managedInstancesName = instancesManaged.map(
         (item: { database_instance_name: string; is_default: boolean }) => ({
             instanceName: item.database_instance_name,
