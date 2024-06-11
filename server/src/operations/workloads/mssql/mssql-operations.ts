@@ -792,7 +792,7 @@ async function getActiveSqlNode(
                 };
             }
         } else {
-            errorMessage = `SSM connection to node or SQL server status check for ${node1InstanceId} has failed.`;
+            let errorMessage = `SSM status of node ${node1InstanceId} is not running :${connectionStatus.Status}`;
             errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
             logger.error(errorMessage, { connectionStatus });
         }
@@ -958,7 +958,7 @@ async function getActiveSqlNodeV2(
                         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
                     }
                 } else {
-                    const errorMessage = `SSM connection to node or SQL server status check for ${nodeId} has failed.`;
+                    const errorMessage = `SSM status of node ${nodeId} is not running :${connectionStatus.Status}`;
                     logger.error(errorMessage, { connectionStatus });
                 }
             }
