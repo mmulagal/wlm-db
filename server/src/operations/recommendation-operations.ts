@@ -102,9 +102,12 @@ async function getLicenseRecommendations(
             sqlServerInstance.sqlServerDeploymentType === sqlServerDeploymentType
     );
 
-    const usingEnterpriseConfiguration = runningEnterpriseEditionSqlServerInstances.some(async sqlServerInstance =>
-        isUsingEnterpriseConfiguration(accountId, credentialsId, region, instanceId, sqlServerInstance)
+    const enterpriseUsageResults = await Promise.all(
+        runningEnterpriseEditionSqlServerInstances.map(sqlServerInstance =>
+            isUsingEnterpriseConfiguration(accountId, credentialsId, region, instanceId, sqlServerInstance)
+        )
     );
+    const usingEnterpriseConfiguration = enterpriseUsageResults.some(result => result);
 
     if (!usingEnterpriseConfiguration) {
         return SQL_STD;
