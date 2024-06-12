@@ -99,7 +99,6 @@ const ComputeCalculationObject = Type.Object({
 });
 const LicenseCalculationObject = Type.Object({
     sqlServerEdition: Type.Optional(Type.String()),
-    licenseType: Type.Optional(Type.String()),
     licenseHourlyPrice: Type.Optional(Type.Number()),
     licenseIncluded: Type.Optional(Type.Boolean()),
     hoursInMonth: Type.Number()
