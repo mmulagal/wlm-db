@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { compact, groupBy, isEmpty } from 'lodash-es';
+import { compact, groupBy } from 'lodash-es';
 import { _InstanceType } from '@aws-sdk/client-ec2';
 import { STORAGE_TYPE } from '@prisma/client';
 import { HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
@@ -18,6 +18,14 @@ const logger = getLogger();
 const SQL_ENT = 'SQL Ent';
 const SQL_STD = 'SQL Std';
 const SQL_WEB = 'SQL Web';
+
+/*
+sqlServerEngineEdition = EngineEdition	Database Engine edition of the instance of SQL Server installed on the server.
+    2 = Standard (For Standard, Web, and Business Intelligence.)
+    3 = Enterprise (For Evaluation, Developer, and Enterprise editions.)
+    */
+const ENT_ENGINE_EDITION = 3;
+const STD_ENGINE_EDITION = 2;
 
 async function isUsingEnterpriseConfiguration(
     accountId: string,
@@ -89,7 +97,7 @@ async function getLicenseRecommendations(
 
     const runningEnterpriseEditionSqlServerInstances = sqlServerInstances.filter(
         sqlServerInstance =>
-            sqlServerInstance.sqlServerEngineEdition === 3 &&
+            sqlServerInstance.sqlServerEngineEdition === ENT_ENGINE_EDITION &&
             sqlServerInstance.sqlServerState === 'Running' &&
             sqlServerInstance.sqlServerDeploymentType === sqlServerDeploymentType
     );
@@ -104,15 +112,14 @@ async function getLicenseRecommendations(
     return SQL_ENT;
 }
 
-function processSqlInstances(sqlInstances: any[], edition: string) {
+/* The function processes the SQL Server instances based on the edition and deployment type. If there are multiple sql server instances of a certain edition with both AOAG and Standalone configuration, then AOAG configuration is given preference fist */
+function processSqlInstances(sqlInstances: SqlServerInstanceInfoType[], edition: string) {
     logger.debug('Processing SQL Server instances', { sqlInstances, edition });
 
     const filteredInstances = sqlInstances.filter(({ sqlServerEdition = '' }) => sqlServerEdition.includes(edition));
     if (filteredInstances.length > 0) {
         const groupByDeploymentType = groupBy(filteredInstances, 'sqlServerDeploymentType');
-        return !isEmpty(groupByDeploymentType[SqlServerDeploymentModel.SQL_AOAG_SHORT]?.[0])
-            ? groupByDeploymentType[SqlServerDeploymentModel.SQL_AOAG_SHORT][0]
-            : filteredInstances[0];
+        return groupByDeploymentType[SqlServerDeploymentModel.SQL_AOAG_SHORT]?.[0] || filteredInstances[0];
     }
 }
 
@@ -135,17 +142,17 @@ sqlServerEdition = Edition =	Installed product edition of the instance of SQL Se
 */
     const sqlCombination = groupBy(sqlServerInstances, 'sqlServerEngineEdition');
 
-    if (sqlCombination[3]?.length > 0) {
-        return processSqlInstances(sqlCombination[3], 'Enterprise');
+    if (sqlCombination[ENT_ENGINE_EDITION]?.length > 0) {
+        return processSqlInstances(sqlCombination[ENT_ENGINE_EDITION], 'Enterprise');
     }
 
-    if (sqlCombination[2]?.length > 0) {
-        const standardResult = processSqlInstances(sqlCombination[2], 'Standard');
+    if (sqlCombination[STD_ENGINE_EDITION]?.length > 0) {
+        const standardResult = processSqlInstances(sqlCombination[STD_ENGINE_EDITION], 'Standard');
         if (standardResult) {
             return standardResult;
         }
 
-        const webResult = processSqlInstances(sqlCombination[2], 'Web');
+        const webResult = processSqlInstances(sqlCombination[STD_ENGINE_EDITION], 'Web');
         if (webResult) {
             return webResult;
         }
@@ -289,7 +296,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                 let recommendedInstanceHourlyPriceWithoutLicense = existingInstanceHourlyPriceWithoutLicense;
 
                 const recommendedSqlLicenseType =
-                    sqlServerEngineEdition === 3
+                    sqlServerEngineEdition === ENT_ENGINE_EDITION
                         ? await getLicenseRecommendations(
                               accountId,
                               credentialsId,
@@ -382,7 +389,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                 // sql license recommendation logic; applicable only if the current instance is enterprise edition(sqlServerEngineEdition === 3)
                 // it either returns SQL Ent or SQL Std
                 if (
-                    sqlServerEngineEdition === 3 &&
+                    sqlServerEngineEdition === ENT_ENGINE_EDITION &&
                     recommendedSqlLicenseType === SQL_STD &&
                     recommendedSqlLicenseType !== existingLicenseType
                 ) {
@@ -396,7 +403,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                     };
                 } else {
                     const message =
-                        sqlServerEngineEdition !== 3
+                        sqlServerEngineEdition !== ENT_ENGINE_EDITION
                             ? 'No license change recommended as you are already using a non-enterprise edition'
                             : recommendedSqlLicenseType === existingLicenseType
                             ? 'Need not change the license as the recommended type is the same as the existing license type'
