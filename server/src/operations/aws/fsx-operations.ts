@@ -21,7 +21,7 @@ import {
     FSX_STORAGE_TYPE,
     AWS_RESOURCE_NAME_TAG,
     FSX_BATCH_CONCURRENCY_VALUE,
-    // SSM_COMMAND_CACHE_TYPE,
+    SSM_COMMAND_CACHE_TYPE,
     AWS_FSX_TYPE,
     HttpErrorCodes
 } from '../../utils/consts';
@@ -41,7 +41,7 @@ interface FsxStorage {
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
-// const TWENTYFOUR_HOURS = '24h';
+const TWENTYFOUR_HOURS = '24h';
 
 async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
     const enetInterfaceIds = fileSys.NetworkInterfaceIds;
@@ -285,7 +285,10 @@ async function isFsxnAwsBackupEnabled(
 
     const response = await getMappedOntapVolumes(credentialsId, region, fileSystemId, activeNodeInstanceId);
 
-    const { volumeUuids, volumeDBMap } = response || { volumeUuids: [], volumeDBMap: {} };
+    const { volumeUuids, volumeDBMap } = (response as { volumeUuids: string[]; volumeDBMap: any }) || {
+        volumeUuids: [],
+        volumeDBMap: {}
+    };
 
     if (!isEmpty(volumeUuids)) {
         const { volumeIds, uuidVolumeIdMap } = await getVolumeIdsFromUuids(
@@ -319,7 +322,7 @@ async function isFsxnAwsBackupEnabled(
 
             // This function maps the volumes in the volumeDBMap to their backup status,
             // indicating whether they have backups or not. {master: true, model: true, msdb: true};
-            const volumeDBMapWithBackupFlag = volumeDBMap.reduce((acc: any, volume: any) => {
+            const volumeDBMapWithBackupFlag = volumeDBMap?.reduce((acc: any, volume: any) => {
                 const fsxbackup = volumeUuidsInBackups.includes(volume.ontapVolumeuuid);
                 acc[volume.databaseName] = fsxbackup;
                 return acc;
@@ -367,14 +370,19 @@ async function getOntapVolumesSnapshotCount(
 
     try {
         const resp = await getMappedOntapVolumes(credentialsId, region, fileSystemId, activeNodeInstanceId);
-        const { volumeUuids, volumeDBMap } = resp || { volumeUuids: [], volumeDBMap: {} };
+        const { volumeUuids, volumeDBMap } = (resp as { volumeUuids: string[]; volumeDBMap: any }) || {
+            volumeUuids: [],
+            volumeDBMap: {}
+        };
+
         if (!isEmpty(volumeUuids)) {
             const apiEndpoint = '/storage/volumes';
-            const apiFilter = `uuid=${volumeUuids?.join()}`;
+            let apiFilter = `uuid=${volumeUuids?.join()}`;
             const apiQuery = 'fields=snapshot_count';
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
                 fileSystemId = 'test-fsx2345';
                 region = 'test-region';
+                apiFilter = 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44';
             }
 
             const command = restGetUtilForOntap(fileSystemId, region, apiEndpoint, apiFilter, apiQuery);
@@ -391,7 +399,7 @@ async function getOntapVolumesSnapshotCount(
                 // Update the volumeDBMap to mark the volumes that have local snapshots protected.
                 // Iterate through the volumeDBMap and check if the corresponding volume in the volumesMap has a snapshot count greater than 0.
                 // If so, set the localSnapshotsProtected property of the volumeDetail to true.
-                const volumesMap = parsedResponse.records.reduce(
+                const volumesMap = parsedResponse.records?.reduce(
                     (map: Record<string, number>, volume: { uuid: string; snapshot_count: number }) => {
                         map[volume.uuid] = volume.snapshot_count;
                         return map;
@@ -399,7 +407,7 @@ async function getOntapVolumesSnapshotCount(
                     {}
                 );
 
-                const volumeDBMapWithProtectionFlag = volumeDBMap.reduce(
+                const volumeDBMapWithProtectionFlag = volumeDBMap?.reduce(
                     (
                         acc: any,
                         volumeDetail: {
@@ -439,15 +447,16 @@ async function getMappedOntapVolumes(
         activeNodeInstanceId
     });
 
-    // const cacheKey = `${activeNodeInstanceId}-mapped-volumes`;
-    // if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
-    //     const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
-    //     return response;
-    // }
+    const cacheKey = `${activeNodeInstanceId}-mapped-volumes`;
+    if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
+        const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
+        return response;
+    }
 
     try {
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             fileSystemId = 'test-fsx';
+            region = 'us-east-1';
         }
         const command = getMappedOntapVolumesScript(fileSystemId, region);
 
@@ -463,7 +472,7 @@ async function getMappedOntapVolumes(
         if (volumes && !isEmpty(volumes?.records)) {
             const volumeUuids = volumes.records.map(({ uuid }: { uuid: string }) => uuid);
 
-            // writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, parsedResponse, TWENTYFOUR_HOURS);
+            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, { volumeUuids, volumeDBMap }, TWENTYFOUR_HOURS);
 
             return { volumeUuids, volumeDBMap };
         }
