@@ -291,10 +291,6 @@ export default async function getSqlInstanceLicenseRecommendations(
                     ? existingInstanceTypePricingDetails[existingLicenseType].pricePerUnit
                     : undefined;
 
-                let recommendedInstancePricingDetails = existingInstanceTypePricingDetails; // assuming no instance change; gets updated when a diff instance is recommended
-                let recommendedInstanceHourlyPrice = existingInstanceHourlyPrice;
-                let recommendedInstanceHourlyPriceWithoutLicense = existingInstanceHourlyPriceWithoutLicense;
-
                 const recommendedSqlLicenseType =
                     sqlServerEngineEdition === ENT_ENGINE_EDITION
                         ? await getLicenseRecommendations(
@@ -306,6 +302,16 @@ export default async function getSqlInstanceLicenseRecommendations(
                               sqlServerDeploymentType
                           ) // returns SQL Ent or SQL Std
                         : existingLicenseType;
+
+                let recommendedInstancePricingDetails = existingInstanceTypePricingDetails; // assuming no instance type change; gets updated when a diff instance is recommended
+
+                let recommendedInstanceHourlyPrice = existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]
+                    ?.pricePerUnit
+                    ? existingInstanceTypePricingDetails[recommendedSqlLicenseType].pricePerUnit
+                    : undefined;
+                let recommendedInstanceHourlyPriceWithoutLicense = existingInstanceTypePricingDetails?.NA?.pricePerUnit
+                    ? existingInstanceTypePricingDetails.NA.pricePerUnit
+                    : undefined;
 
                 // existing compute and license details
                 existingCompute = {
