@@ -69,7 +69,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { getDatabsaeInstanceName } from '../utils/utils';
+import { getDatabaseInstanceName } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -1493,7 +1493,7 @@ async function getDatabseInstanceSummary(
 
     const { userDatabase = [] } = metadata as unknown as Metadata;
 
-    const databaseInstanceName = getDatabsaeInstanceName(savedDatabaseInstanceName, isdefaultInstance);
+    const databaseInstanceName = getDatabaseInstanceName(savedDatabaseInstanceName, isdefaultInstance);
 
     let fieldsValues: Array<string> = [];
 
@@ -1762,7 +1762,9 @@ async function getDatabaseHostSummaryV2(
                         }
                     })
                 );
-            } else promises.push(Promise.resolve());
+            } else {
+                promises.push(Promise.resolve());
+            }
 
             if (getUsageEstimation && activeNodeInstanceId) {
                 promises.push(
@@ -1776,7 +1778,9 @@ async function getDatabaseHostSummaryV2(
                         }
                     )
                 );
-            } else promises.push(Promise.resolve());
+            } else {
+                promises.push(Promise.resolve());
+            }
 
             let instanceResults: any;
 
@@ -1810,7 +1814,9 @@ async function getDatabaseHostSummaryV2(
                     });
 
                     promises.push(Promise.all(instancePromises));
-                } else promises.push(Promise.resolve());
+                } else {
+                    promises.push(Promise.resolve());
+                }
 
                 [nodeTopology, usageEstimationData, instanceResults] = await Promise.all(promises);
 
@@ -1912,7 +1918,7 @@ async function getDatabasesV2(
         is_default: isdefaultInstance
     } = newDatabaseInstanceDetails;
     const { userDatabase = [] } = metadata as unknown as databaseInstanceMetadata;
-    const instanceName = getDatabsaeInstanceName(savedInstanceName, isdefaultInstance);
+    const instanceName = getDatabaseInstanceName(savedInstanceName, isdefaultInstance);
 
     const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all(
         [

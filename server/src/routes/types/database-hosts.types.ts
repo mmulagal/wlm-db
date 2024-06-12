@@ -1,8 +1,8 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { BILLING, PRICING } from '../../utils/consts';
-import { CredentialsIdParams } from './generic.types';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { InstanceStateName } from '@aws-sdk/client-ec2';
+import { BILLING, PRICING } from '../../utils/consts';
+import { CredentialsIdParams } from './generic.types';
 
 const DatabaseHostObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 })

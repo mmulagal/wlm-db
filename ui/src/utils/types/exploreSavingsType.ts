@@ -80,8 +80,8 @@ export interface RecommendedCompute {
 }
 
 export interface RecommendedLicense {
+    hoursInMonth: number;
     sqlServerEdition?: string;
-    licenseType?: string;
     licenseHourlyPrice?: number;
     licenseIncluded?: boolean;
 }

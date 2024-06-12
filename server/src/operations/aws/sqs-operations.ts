@@ -31,7 +31,7 @@ import {
     convertMetricsIntoJson,
     deployedStackUrl,
     derivePropertiesFromARN,
-    getDatabsaeInstanceName,
+    getDatabaseInstanceName,
     getDescriptionForMatchingName,
     getQueueUrl
 } from '../../utils/utils';
@@ -607,7 +607,7 @@ async function processCloudFormationMessages() {
                                                             region,
                                                             nodeIds
                                                         );
-                                                        
+
                                                         const instanceNames = deployedInstances.map(
                                                             (instance: { instanceName: string }) =>
                                                                 instance.instanceName
@@ -616,7 +616,7 @@ async function processCloudFormationMessages() {
                                                         await Promise.all(
                                                             instanceNames.map(async (instanceName: string) => {
                                                                 const defaultInstance = !instanceName.includes('$');
-                                                                const modifiedInstanceName = getDatabsaeInstanceName(
+                                                                const modifiedInstanceName = getDatabaseInstanceName(
                                                                     instanceName,
                                                                     defaultInstance
                                                                 );

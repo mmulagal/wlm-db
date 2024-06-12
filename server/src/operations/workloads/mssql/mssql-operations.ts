@@ -41,7 +41,7 @@ import {
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, deleteResource, listRelationshipsResources, listResources } from '../../../lib/database/db';
-import { getDatabsaeInstanceName, generateHash, sqlResponseParsing } from '../../../utils/utils';
+import { getDatabaseInstanceName, generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
@@ -172,10 +172,10 @@ async function getAllResourceUtilisationDetails(
     const diskUtilization: UtilisationResponseBodyInterface = {
         used: dbSizeData?.TotalSize?.toString() || '0',
         total: diskData?.total?.toString() || '0',
-        remaining: isNaN(Number(diskData.total) - dbSizeData.TotalSize)
+        remaining: Number.isNaN(Number(diskData.total) - dbSizeData.TotalSize)
             ? '0'
             : (Number(diskData.total) - dbSizeData.TotalSize).toString(),
-        percentUsed: isNaN(Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)))
+        percentUsed: Number.isNaN(Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)))
             ? '0'
             : Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)).toString(),
         error: diskError
@@ -622,7 +622,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                     defaultInstance = false;
                 }
                 if (selectedInstance !== undefined) {
-                    const instanceName = getDatabsaeInstanceName(selectedInstance, defaultInstance);
+                    const instanceName = getDatabaseInstanceName(selectedInstance, defaultInstance);
                     return instanceName;
                 }
 
@@ -953,7 +953,7 @@ async function getActiveSqlNodeAndInstanceDetails(
     });
     try {
         for (const nodeId of nodeIds) {
-            let connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
+            const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId]);
 
@@ -963,11 +963,10 @@ async function getActiveSqlNodeAndInstanceDetails(
                     );
                     if (matchingInstance) {
                         return { nodeId, matchingInstance };
-                    } else {
-                        const errorMessage = `Instance ${databaseInstanceName} not found on node ${nodeId}`;
-                        logger.error(errorMessage);
-                        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
                     }
+                    const errorMessage = `Instance ${databaseInstanceName} not found on node ${nodeId}`;
+                    logger.error(errorMessage);
+                    throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
                 } else {
                     logger.error(`No active sql instances found in node ${nodeId} `);
                 }
