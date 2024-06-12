@@ -240,7 +240,10 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             accessor: 'fileSystemType',
             id: '3',
             width: '160px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             Header: 'Storage savings',
