@@ -54,7 +54,7 @@ export const getInventoryDataCount = (data: { [key: string]: InventoryTableData 
 
 export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
     let managedInstanceCount = managedInstancesCount(managedRow);
-    let totalInstanceCount = managedRow?.databaseInstanceDetails?.length;
+    let totalInstanceCount = managedRow?.databaseInstanceDetails?.length || 0;
     let ssmState = getSsmState(managedRow);
     const result = {
         id: managedRow?.id,
@@ -70,7 +70,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         vpcId: managedRow?.nodeTopology?.vpcId,
         vpcName: managedRow?.nodeTopology?.vpcName,
         vpcCidr: managedRow?.nodeTopology?.vpcCidr,
-        action: ssmState === 'Online' ? 'Manage' : '', // This is default for managed rows,
+        action: ssmState === 'Online' && totalInstanceCount > 0 ? 'Manage' : '', // This is default for managed rows,
         actionDisable: totalInstanceCount === managedInstanceCount,
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
@@ -95,7 +95,7 @@ export const getNodeStatus = (row: ManagedHostsRowInterface) => {
 
 export const getSsmState = (row: ManagedHostsRowInterface) => {
     if (row?.ssmStatus && row?.ssmStatus !== 'N/A') {
-        if (row?.ssmStatus?.toLowerCase() === 'connected') {
+        if (row?.ssmStatus?.toLowerCase() === 'connected' || row?.ssmStatus?.toLowerCase() === 'online') {
             return 'Online';
         } else {
             return 'Offline';
@@ -197,25 +197,48 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
 };
 
 export const formatInstanceData = (row: ManagedHostsRowInterface) => {
-    let instanceRows = row?.databaseInstancesSummary?.map(perRow => {
-        const isManagedRow = row?.databaseInstanceDetails?.filter(
-            per => per?.instanceName === perRow?.databaseInstanceName
-        );
-        return {
-            ...perRow,
-            databaseInstanceName: perRow?.databaseInstanceName,
-            statusColText: isManagedRow?.[0]?.isManaged ? 'Managed' : 'Unmanaged',
-            fileSystemDeploymentMode: getFileSystemDeploymentMode(
-                perRow?.databseInstanceTopology?.fileSystemDeploymentMode
-            ),
-            fileSystemType: perRow?.databseInstanceTopology?.fileSystemType,
-            storageSavingsText: getStorageSavingsText(perRow),
-            allocatedCapacity:
-                (perRow?.storage?.fsxn?.size || 0) +
-                (perRow?.storage?.fsxw?.size || 0) +
-                (perRow?.storage?.ebs?.size || 0)
-        };
-    });
+    let instanceRows;
+    if (row?.databaseInstancesSummary) {
+        instanceRows = row?.databaseInstancesSummary?.map(perRow => {
+            const isManagedRow = row?.databaseInstanceDetails?.filter(
+                per => per?.instanceName === perRow?.databaseInstanceName
+            );
+            return {
+                ...perRow,
+                databaseInstanceId: perRow?.databaseInstanceId,
+                databaseInstanceName: perRow?.databaseInstanceName,
+                status: perRow?.status,
+                databaseCount: perRow?.databaseCount,
+                statusColText: isManagedRow?.[0]?.isManaged ? 'Managed' : 'Unmanaged',
+                fileSystemDeploymentMode: getFileSystemDeploymentMode(
+                    perRow?.databseInstanceTopology?.fileSystemDeploymentMode
+                ),
+                fileSystemType: perRow?.databseInstanceTopology?.fileSystemType,
+                protection: perRow?.protection,
+                performance: perRow?.performance,
+                storage: perRow?.storage,
+                storageSavingsText: getStorageSavingsText(perRow),
+                allocatedCapacity:
+                    (perRow?.storage?.fsxn?.size || 0) +
+                    (perRow?.storage?.fsxw?.size || 0) +
+                    (perRow?.storage?.ebs?.size || 0)
+            };
+        });
+    } else {
+        instanceRows = row?.databaseInstanceDetails?.map(perRow => {
+            const isManagedRow = row?.databaseInstanceDetails?.filter(
+                per => per?.instanceName === perRow?.instanceName
+            );
+            return {
+                ...perRow,
+                databaseInstanceId: '',
+                databaseInstanceName: perRow?.instanceName,
+                status: perRow?.instanceState,
+                statusColText: isManagedRow?.[0]?.isManaged ? 'Managed' : 'Unmanaged'
+            };
+        });
+    }
+
     return instanceRows;
 };
 
@@ -453,8 +476,7 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         vpcCidr: discoveredRow?.vpc?.cidrBlock,
         action: actionObj?.action,
         actionDisable: actionObj?.actionDisable,
-
-        // Below values will get from Instances API
+        // **** Below values will get from Instances API *****
         // ec2Details: discoveredRow?.ec2Details, // ToDo - will add in discovery only
         // estimatedUsageCost: {}, // Initially it will be blank
         // totalCost: '',
@@ -518,6 +540,9 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
     if (row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
         row?.sqlServerInstances?.map((perRow: SQLServerInstancesDiscovered) => {
             let statusObj = {};
+            if (perRow?.sqlServerName === 'SNAPMAY22') {
+                let a = 1;
+            }
             if (perRow?.sqlServerInstance) {
                 const isWindowAuthentication = perRow?.windowsAuthentication;
                 const isSqlAuthentication = perRow?.sqlServerAuthentication;
@@ -616,11 +641,17 @@ export const formatDiscoverInstanceData = (
         );
         return {
             ...perRow,
+            databaseInstanceId: perRow?.serverGuid,
             databaseInstanceName: perRow?.sqlServerInstance,
+            status: perRow?.sqlServerState,
+            // databaseCount: 0,
             statusColText: statusObj ? statusObj?.[0]?.status : 'Undetected',
             fileSystemDeploymentMode: getFileSystemDeploymentMode(perRow?.deploymentTypes?.[0]?.type || ''),
             fileSystemType: getDiscoverFileSystemType(perRow)
-            // storageSavingsText: getStorageSavingsText(perRow),
+            // protection: {},
+            // performance: {},
+            // storage: {},
+            // storageSavingsText: '',
             // allocatedCapacity:
             //     (perRow?.storage?.fsxn?.size || 0) +
             //     (perRow?.storage?.fsxw?.size || 0) +

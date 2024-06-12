@@ -264,7 +264,7 @@ const InventoryTable = () => {
             width: '184px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const checkForAllManaged = rowData?.sqlServerInstances.every(
+                const checkForAllManaged = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === 'Managed'
                 );
                 const checkForAllUnDetectInstance = rowData?.sqlServerInstances.every(

@@ -27,6 +27,7 @@ import {
     getPrimaryClusterNode
 } from './InventoryUtilsV2';
 import { setIsRefreshed } from '../../store/workloadFactory/inventorySlice';
+import InventoryTableData from './InventoryTableData.json';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
@@ -66,6 +67,11 @@ const InventoryApisV2 = () => {
 
     const credIdRef = useRef();
     const regionIdRef = useRef();
+    const fsxCredentialStatusObjRef: any = useRef();
+
+    useEffect(() => {
+        fsxCredentialStatusObjRef.current = fsxCredentialStatusObj;
+    }, [fsxCredentialStatusObj]);
 
     useEffect(() => {
         credIdRef.current = credId;
@@ -92,8 +98,13 @@ const InventoryApisV2 = () => {
                             result?.data?.fileSystems?.map((item: any) => {
                                 fsxCredStatusObj[item.id] = item.isRegistered;
                             });
-                            if (fsxCredentialStatusObj) {
-                                dispatch(setFsxCredentialStatus({ ...fsxCredentialStatusObj, ...fsxCredStatusObj }));
+                            if (fsxCredentialStatusObjRef.current) {
+                                dispatch(
+                                    setFsxCredentialStatus({
+                                        ...fsxCredentialStatusObjRef.current,
+                                        ...fsxCredStatusObj
+                                    })
+                                );
                             } else {
                                 dispatch(setFsxCredentialStatus(fsxCredStatusObj));
                             }
@@ -302,7 +313,7 @@ const InventoryApisV2 = () => {
         dispatch(setIsDiscoverHostLoading(true));
         setDiscoveryHostData({});
         // FSX cred object reset
-        dispatch(setFsxCredentialStatus(null));
+        dispatch(setFsxCredentialStatus({}));
         // inventory table reset
         dispatch(setInventoryTableData(null));
     };
@@ -404,7 +415,7 @@ const InventoryApisV2 = () => {
 
     // ToDo - Currently stored data is from json. Will update once writting API logic
     // useEffect(() => {
-    // dispatch(setInventoryTableData(InventoryTableData));
+    //     dispatch(setInventoryTableData(InventoryTableData));
     // }, []);
 
     useEffect(() => {
