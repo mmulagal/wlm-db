@@ -46,3 +46,57 @@
         height: 56px;
     }
 }
+
+@media screen and (max-width: 1500px) {
+    .costBreakdown {
+        width: 456px;
+
+        [class*='table-content'] {
+            height: 96px !important;
+
+            .table-container {
+                height: 80px;
+
+                .table-header {
+                    top: -31px;
+                }
+
+                p {
+                    position: relative;
+                    right: 16px;
+                    top: 11px;
+                }
+            }
+
+            .table-container::before {
+                padding-right: 9px !important;
+            }
+
+            .table-container-right {
+                height: 80px;
+                .table-header {
+                    top: -31px;
+                }
+
+                p {
+                    position: relative;
+                    right: 16px;
+                }
+            }
+
+            .table-container-right::before {
+                padding-right: 9px !important;
+            }
+        }
+
+        .totalSummary {
+            [class*='Layout_grid'] {
+                [class*='Layout_grid']:first-child {
+                    p {
+                        width: 122px;
+                    }
+                }
+            }
+        }
+    }
+}

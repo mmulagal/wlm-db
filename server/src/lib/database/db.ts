@@ -62,7 +62,7 @@ interface Config {
     data?: object;
 }
 
-interface DatabaseInstance {
+interface DatabaseInstanceRecord {
     credentialsId: string;
     resourceId: string;
     region: string;
@@ -551,7 +551,7 @@ async function updateResourceMetaData(accountId: string, resourceId: string, met
     });
 }
 
-async function upsertDatabaseInstance(accountId: string, record: DatabaseInstance) {
+async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanceRecord) {
     logger.info('Upserting a database instance record', { accountId, record });
 
     const {
@@ -703,5 +703,5 @@ export {
     listDatabaseInstances,
     updateDatabaseInstanceMetadata,
     deleteDatabaseInstance,
-    DatabaseInstance
+    DatabaseInstanceRecord
 };

@@ -458,7 +458,6 @@ const createVolumeClone = (
         Function New-VolumeClone {
             $parentsvm = $sourceSvm
 
-            $jobStatus = @()
             @($dataVolume, $logVolume) | ForEach-Object {
                 $volume = $_
                 write-debug "Volume: $($volume | convertto-json)"
@@ -467,8 +466,7 @@ const createVolumeClone = (
                     # Create snapshot
                     $job = New-Snapshot -volumeName $volume.name
                     if ($job.state -ne 'success') {
-                        $responseObject['error'] = "Could not create snapshot for $($volume.name). Ontap error: $($job.message)"
-                        return $responseObject
+                        throw "Could not create snapshot for $($volume.name). Ontap error: $($job.error.message)"
                     }
                     $snapshot = $defaultSnapshot
                 }
@@ -492,7 +490,10 @@ const createVolumeClone = (
                 } | ConvertTo-Json
     
                 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "POST"
-                $jobStatus += Get-OntapJobStatus -jobId $ontapResponse.job.uuid
+                $job = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
+                if ($job.state -ne 'success') {
+                    throw "Could not create snapshot for $($volume.name). Ontap error: $($job.error.message)"
+                }
             }
     
             return $jobStatus
@@ -580,10 +581,9 @@ const createVolumeClone = (
                 $ApiEndpoint = '/storage/volumes/' + $volumeid
                 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "PATCH"
                 $jobStatus += Get-OntapJobStatus -jobId $ontapResponse.job.uuid
-            }
-    
-            return @{
-                "jobstatus" = $jobStatus
+                if ($jobStatus.state -ne 'success') {
+                    throw "Could not add tags to the cloned volumes. Ontap error: $($jobStatus.error.message)"
+                }
             }
         }
 
@@ -666,22 +666,9 @@ const createVolumeClone = (
             return $responseObject | ConvertTo-Json -Depth 5
         }
     
-        $jobStatusList = New-VolumeClone
-        write-debug "Clone job status: $($jobStatusList | convertto-json)"
-        $failedjob = $jobStatusList | Where-Object { $_.state -ne 'success' } | Select-Object -First 1
-        write-debug "Clone volumes job: $($failedjob | convertto-json)"
-        if ($failedjob) {
-            $responseObject['error'] = "Could not clone volume. Ontap error: $($failedjob.message)"
-            return $responseObject | ConvertTo-Json -Depth 5
-        }
+        New-VolumeClone
     
-        $response = Add-ObjectTagsToVolume
-        write-debug "Modify volumes job: $($jobStatusList | convertto-json)"
-        $failedjob = $jobStatusList | Where-Object { $_.state -ne 'success' } | Select-Object -First 1
-        if ($failedjob) {
-            $responseObject['error'] = "Could not add tags to the cloned volumes. Ontap error: $($failedjob.message)"
-            return $responseObject | ConvertTo-Json -Depth 5
-        }
+        Add-ObjectTagsToVolume
 
         $errormessage = Set-LUNSignature
         if ($errormessage -ne $null) {
@@ -1121,12 +1108,12 @@ const addAccessPathAndAttachDb = (
 const splitFlexCloneVolumes = (
     fsxId: string,
     fsxRegion: string,
-    volumeIds: string,
+    volumes: string,
     instance = DEFAULT_MSSQL_INSTANCE_NAME
 ) => `
     $fsxid = '${fsxId}'
     $fsxregion = '${fsxRegion}'
-    $volumeIds = '${volumeIds}' | ConvertFrom-Json
+    $volumes = '${volumes}' | ConvertFrom-Json
     $instance = '${instance}'
 
     Start-Transcript -Path "C:\\cfn\\log\\split_volumes.log.txt" -Append | Out-Null
@@ -1141,8 +1128,9 @@ const splitFlexCloneVolumes = (
         Function Invoke-VolumeSplit {
             write-debug "Invoking volume split"
     
-            $volumeIds | ForEach-Object {
-                $volumeId = [system.web.httputility]::UrlEncode($_)
+            $volumes | ForEach-Object {
+                $volumeId = [system.web.httputility]::UrlEncode($_.volumeId)
+                $volumeName = $_.volumeName
                 $ApiEndpoint = "/storage/volumes/$volumeId"
                 $body = '{ "clone": { "split_initiated": true } }'
     
@@ -1151,14 +1139,14 @@ const splitFlexCloneVolumes = (
                 $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
                 if ($jobStatus.state -ne 'success') {
                     if ($jobStatus.message -match 'Volume is not a clone') {
-                        Write-Debug "Volume $volumeId is not a clone"
-                        $responseObject['error'] = "Volume $volumeId is not a clone"
+                        Write-Debug "Volume $volumeName is not a clone"
+                        $responseObject['error'] = "Volume $volumeName is not a clone"
                     } elseif ($jobStatus.message -match 'Volume has locked snapshots') {
-                        Write-Debug "Volume $volumeId has locked snapshots"
-                        $responseObject['error'] = "Volume $volumeId has locked snapshots"
+                        Write-Debug "Volume $volumeName has locked snapshots"
+                        $responseObject['error'] = "Volume $volumeName has locked snapshots"
                     } else {
-                        Write-Debug "Could not split volume $volumeId. Ontap error: $($jobStatus.message)"
-                        $responseObject['error'] = "Could not split volume $volumeId. Ontap error: $($jobStatus.message)"
+                        Write-Debug "Could not split volume $volumeName. Ontap error: $($jobStatus.message)"
+                        $responseObject['error'] = "Could not split volume $volumeName. Ontap error: $($jobStatus.message)"
                     }
                 }
             }
@@ -1167,8 +1155,9 @@ const splitFlexCloneVolumes = (
         Function Remove-VolumeObjectTags {
             write-debug "Removing volume object tags"
     
-            $volumeIds | ForEach-Object {
-                $volumeId = [system.web.httputility]::UrlEncode($_)
+            $volumes | ForEach-Object {
+                $volumeId = [system.web.httputility]::UrlEncode($_.volumeId)
+                $volumeName = $_.volumeName
                 $ApiEndpoint = "/storage/volumes/$volumeId"
                 $body = '{ "tiering.object_tags": [] }'
     
@@ -1176,8 +1165,8 @@ const splitFlexCloneVolumes = (
     
                 $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
                 if ($jobStatus.state -ne 'success') {
-                    Write-Debug "Could not remove tags from volume $volumeId. Ontap error: $($jobStatus.message)"
-                    $responseObject['error'] = "Could not remove tags from volume $volumeId. Ontap error: $($jobStatus.message)"
+                    Write-Debug "Could not remove tags from volume $volumeName. Ontap error: $($jobStatus.message)"
+                    $responseObject['error'] = "Could not remove tags from volume $volumeName. Ontap error: $($jobStatus.message)"
                 }
             }
         }
