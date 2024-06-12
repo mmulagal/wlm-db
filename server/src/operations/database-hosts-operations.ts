@@ -1801,13 +1801,17 @@ async function getDatabaseHostSummaryV2(
                     }
                 );
             }
-            databaseHostDetails.nodeStatus = nodeTopology.ec2Details[0].status || 'N/A';
+            databaseHostDetails.nodeStatus = 'N/A';
             databaseHostDetails.ssmStatus = 'ONLINE';
             databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType || [];
 
             databaseHostDetails.estimatedUsageCost = usageEstimationData;
             if (shouldQueryNodeTopology && nodeTopology) {
                 databaseHostDetails.nodeTopology = nodeTopology;
+                databaseHostDetails.nodeStatus =
+                    nodeTopology.ec2Details && nodeTopology.ec2Details.length > 0
+                        ? nodeTopology.ec2Details[0].status
+                        : 'N/A';
             }
             databaseHostDetails.databaseInstanceDetails = databaseInstancesDetail;
             let instanceResults: any;
