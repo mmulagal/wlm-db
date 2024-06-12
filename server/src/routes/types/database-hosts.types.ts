@@ -1,6 +1,8 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { BILLING, PRICING } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
+import { ConnectionStatus } from '@aws-sdk/client-ssm';
+import { InstanceStateName } from '@aws-sdk/client-ec2';
 
 const DatabaseHostObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
@@ -8,6 +10,11 @@ const DatabaseHostObjectParams = Type.Object({
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
 const DatabaseHostSummaryParams = Type.Composite([CredentialsIdParams, Type.Object({ databaseHostId: Type.String() })]);
+const DatabaseHostInstanceSummaryParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Object({ databaseInstanceId: Type.String() })
+]);
+
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 
 const CreateDatabaseParams = Type.Object({
@@ -416,6 +423,9 @@ const NodeTopologyResponse = Type.Object({
     awsAccount: Type.String({ minLength: 1 }),
     region: Type.String(),
     vpcId: Type.Optional(Type.String()),
+    vpcName: Type.Optional(Type.String()),
+    vpcCidr: Type.Optional(Type.String()),
+    keyPairName: Type.Optional(Type.String()),
     ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
@@ -456,8 +466,8 @@ type DatabaseHostInstanceSummaryResponseType = Static<typeof DatabaseHostInstanc
 const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
-    nodeStatus: Type.String({ enum: ['ONLINE', 'OFFLINE', 'N/A'] }),
-    ssmStatus: Type.String({ enum: ['ONLINE', 'OFFLINE'] }),
+    nodeStatus: Type.String({ enum: [InstanceStateName, 'N/A'] }),
+    ssmStatus: Type.String({ enum: [ConnectionStatus, 'N/A'] }),
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
@@ -548,6 +558,8 @@ export {
     DatabaseHostSummaryForMultiInstanceListResponse,
     DatabaseHostSummaryForMultiInstanceResponseType,
     DatabaseHostSummaryForMultiInstanceListResponseType,
+    DatabaseHostInstanceSummaryResponse,
     DatabaseHostInstanceSummaryResponseType,
-    DatabaseInstanceTopologyType
+    DatabaseInstanceTopologyType,
+    DatabaseHostInstanceSummaryParams
 };
