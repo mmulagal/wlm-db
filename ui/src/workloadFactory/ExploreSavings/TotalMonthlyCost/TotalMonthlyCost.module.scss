@@ -28,3 +28,17 @@
         }
     }
 }
+
+@media screen and (max-width: 1500px) {
+    .totalMonthlyCost {
+        width: 456px;
+
+        .mainSection {
+            [class*='xLabel'] {
+                span {
+                    height: 69px;
+                }
+            }
+        }
+    }
+}
