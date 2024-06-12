@@ -1805,8 +1805,9 @@ async function getDatabaseHostSummaryV2(
                 credentialsId &&
                 region
             ) {
+                let runningDatabaseInstances;
                 if (isManagedResource) {
-                    const runningDatabaseInstances = instancesManaged
+                    runningDatabaseInstances = instancesManaged
                         .filter(instance => {
                             const matchingInstance = databaseInstancesDetail.find(
                                 (dbInstance: { instanceName: string; instanceState: string }) =>
@@ -1821,38 +1822,23 @@ async function getDatabaseHostSummaryV2(
                                     dbInstance.instanceState === 'Running'
                             )
                         }));
-                    if (runningDatabaseInstances.length > 0) {
-                        const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
-                            const instanceResult = await getDatabseInstanceSummary(
-                                accountId,
-                                credentialsId,
-                                activeNodeInstanceId,
-                                region,
-                                instance,
-                                fields
-                            );
-                            return instanceResult;
-                        });
-
-                        instanceResults = await Promise.all(instancePromises);
-                    }
                 } else {
-                    const runningDatabaseInstances = resourceDetail.databaseInstanceDetails || [];
-                    if (runningDatabaseInstances.length > 0) {
-                        const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
-                            const instanceResult = await getDatabseInstanceSummary(
-                                accountId,
-                                credentialsId,
-                                activeNodeInstanceId,
-                                region,
-                                instance,
-                                fields
-                            );
-                            return instanceResult;
-                        });
+                    runningDatabaseInstances = resourceDetail.databaseInstanceDetails || [];
+                }
+                if (runningDatabaseInstances.length > 0) {
+                    const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
+                        const instanceResult = await getDatabseInstanceSummary(
+                            accountId,
+                            credentialsId,
+                            activeNodeInstanceId,
+                            region,
+                            instance,
+                            fields
+                        );
+                        return instanceResult;
+                    });
 
-                        instanceResults = await Promise.all(instancePromises);
-                    }
+                    instanceResults = await Promise.all(instancePromises);
                 }
             }
 

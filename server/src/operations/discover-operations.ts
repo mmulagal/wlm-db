@@ -851,7 +851,7 @@ async function fetchUnmanagedHostsInformationV2(
         undefined,
         instances
     );
-    let resourceDetailsList: ResourceDetails[] = [];
+    const resourceDetailsList: ResourceDetails[] = [];
 
     const errorInstances: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
 
@@ -866,7 +866,7 @@ async function fetchUnmanagedHostsInformationV2(
             ) {
                 clusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
             }
-            let resourceDetails: ResourceDetails = {
+            const resourceDetails: ResourceDetails = {
                 id: null,
                 account_id: accountId,
                 resource_id: ec2Instance.ec2InstanceId,
@@ -881,7 +881,8 @@ async function fetchUnmanagedHostsInformationV2(
                     node1InstanceId: ec2Instance.ec2InstanceId
                 },
                 clusterNodeDetails,
-                databaseInstanceDetails: []
+                databaseInstanceDetails: [],
+                co_relation_id: null
             };
             if (ec2Instance?.sqlServerInstances && ec2Instance?.sqlServerInstances.length > 0) {
                 ec2Instance?.sqlServerInstances?.forEach(sqlServerInstance => {

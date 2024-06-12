@@ -61,7 +61,7 @@ interface ResourceDetails {
     resource_id: string;
     resource_name: string | null;
     resource_type: string;
-    co_relation_id?: string | null;
+    co_relation_id: string | null;
     cloud_provider_account_id: string | null;
     cloud_provider_name: string | null;
     region: string | null;
