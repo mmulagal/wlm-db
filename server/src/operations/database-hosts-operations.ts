@@ -527,11 +527,11 @@ async function getProtectionStatus(
         return {
             isSqlNativeEnabled: Boolean(nativeSqlProtection),
             isAwsBackupEnabled: {
-                fsxn: Boolean(fsxnBackup),
+                fsxn: Boolean(checkAllTrue(fsxnBackup)),
                 fsxw: Boolean(fsxwBackup),
                 ebs: Boolean(ebsBackup)
             },
-            isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
+            isFsxOntapSnapshotsEnabled: Boolean(checkAllTrue(ontapProtection)),
             protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
         };
     } catch (error) {
@@ -540,6 +540,10 @@ async function getProtectionStatus(
             `Error while getting protection status: ${resourceDetail} ${error}`
         );
     }
+}
+
+function checkAllTrue(obj: { [key: string]: boolean }): boolean {
+    return Object.keys(obj).length > 0 && Object.values(obj).every(value => value === true);
 }
 
 async function getBillingOrPriceEstimation(
@@ -1105,6 +1109,7 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
         ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
     );
     try {
+        // protection status added for each database
         const response = databases.map(
             (database: {
                 databaseName: string;
@@ -1121,9 +1126,9 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
                     : MSSQL_DATABASE_TYPES.USER,
                 protection: {
                     isAwsBackupEnabled: {
-                        fsxn: awsBackup
+                        fsxn: awsBackup[database.databaseName]
                     },
-                    isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
+                    isFsxOntapSnapshotsEnabled: ontapBackup[database.databaseName],
                     isSqlNativeEnabled: Boolean(
                         backedupDatabases &&
                             backedupDatabases.find(
