@@ -2764,9 +2764,8 @@ async function getSandboxSnapshots(
     }
 
     let command = [
-        `${getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)}
-        \n
-        ${readExtendedPropertiesOfSandbox(sandboxName, instanceName)}`
+        `${readExtendedPropertiesOfSandbox(sandboxName, instanceName)}
+        ${getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)}`
     ];
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -2798,17 +2797,30 @@ async function getSandboxSnapshots(
         createdTime = parsedResp.createdAt;
     }
 
-    const snapshotsCommand = [
+    let snapshotsCommand = [
         getSnapshotsToClone(
             fileSystemId,
             region,
-            [parsedResp.data.parentVolumeUuid, parsedResp.log.parentVolumeUuid],
+            JSON.stringify([parsedResp.data.parentVolumeUuid, parsedResp.log.parentVolumeUuid]),
             parsedResp.data.parentVolumeUuid,
             sandboxName,
             TIME_WINDOW,
             createdTime
         )
     ];
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        snapshotsCommand = [
+            getSnapshotsToClone(
+                'test-fsx',
+                'us-east-1',
+                JSON.stringify(['5c1075d2-03a0-11ef-a514-55070fbfcab1', '5ace31ea-03a0-11ef-a514-55070fbfcab1']),
+                '5c1075d2-03a0-11ef-a514-55070fbfcab1',
+                'testdb1_clone'
+            )
+        ];
+    }
+
     const snapshotResponse = await callSsmExecution(
         credentialsId,
         region,
@@ -2831,9 +2843,12 @@ async function getSandboxSnapshots(
 
     const { snapshots } = parsedSnapshotResponse;
 
-    logger.info('Snapshots eligible for clone', snapshots);
+    logger.debug('Snapshots eligible for clone', snapshots);
 
-    return snapshots;
+    return snapshots.map((snapshot: { name: string; created: string }) => ({
+        name: snapshot.name,
+        created: new Date(snapshot.created).valueOf()
+    }));
 }
 
 export {

@@ -208,7 +208,9 @@ const getDbMappedOntapVolumes = (
 
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_$dbname.log.txt" -Append | Out-Null
 
-    $responseObject = @{}
+    if ($null -eq $responseObject) {
+        $responseObject = @{}
+    }
     
     try {
         $sqlquery = @"
@@ -1223,7 +1225,7 @@ Sqlcmd -S $instanceName -Q $query -m 1
 `;
 const readExtendedPropertiesOfSandbox = (dbName: string, instanceName: string = '.') => `
     $dbname = '${dbName}'
-    $instanceName = '${instanceName}'
+    $instanceName = "${instanceName}"
 
     if ($null -eq $responseObject) {
         $responseObject = @{}
@@ -1234,12 +1236,12 @@ const readExtendedPropertiesOfSandbox = (dbName: string, instanceName: string = 
             USE $dbname;
             SELECT name, value
             FROM fn_listextendedproperty(default, default, default, default, default, default, default) FOR JSON PATH;
-    "@
+"@
         $sqlresponse = Sqlcmd -S $instanceName -Q $query -y 0 -m 1
         $sqlresponse = $sqlresponse | ConvertFrom-JSON
 
         $sqlresponse | ForEach-Object {
-            $responseObject | Add-Member -MemberType NoteProperty -Name $_.name -Value $_.value
+            $responseObject[$_.name] = $_.value
         }
     } catch {
         $responseObject['error'] = "sqlerror: $($_.Exception.Message)"
@@ -1249,7 +1251,7 @@ const readExtendedPropertiesOfSandbox = (dbName: string, instanceName: string = 
 const getSnapshotsToClone = (
     fsxId: string,
     fsxRegion: string,
-    volumeids: string[],
+    volumeids: string,
     dataVolume: string,
     sandboxName: string,
     window = 60,
@@ -1308,7 +1310,7 @@ const getSnapshotsToClone = (
                         if ($snapshotCreateTime -ge $minTime -and $snapshotCreateTime -le $maxTime) {
                             $snapshots += @{
                                 'name' = $primarySnapshot.name
-                                'createTime' = $primarySnapshot.create_time
+                                'created' = $primarySnapshot.create_time
                             }
                         }
                     }

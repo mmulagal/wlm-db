@@ -411,7 +411,7 @@ const SandboxSnapshotsResponse = Type.Object({
     snapshots: Type.Array(
         Type.Object({
             name: Type.String(),
-            createTime: Type.Number()
+            created: Type.Number()
         })
     )
 });

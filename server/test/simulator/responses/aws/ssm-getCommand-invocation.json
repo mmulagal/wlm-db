@@ -893,7 +893,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\r\n    \"svm\":  \"wlmdb_sqlsvm_1714090636810\",\r\n    \"data\":  {\r\n                 \"lunPath\":  \"/vol/wlmdb_sqldata_1714098400/sqldata\",\r\n                 \"fileName\":  \"D:\\\\MSSQL\\\\data\\\\testdb_data.mdf\",\r\n                 \"windowsVolumeName\":  \"testdb-Data\",\r\n                 \"volumeName\":  \"wlmdb_sqldata_clone_1714098400\",\r\n \"parentVolume\": \"wlmdb_sqldata_1714098400\"             },\r\n    \"collation\":  \"SQL_Latin1_General_CP1_CI_AS\",\r\n    \"log\":  {\r\n                \"lunPath\":  \"/vol/wlmdb_sqllog_1714098400/sqllog\",\r\n                \"fileName\":  \"E:\\\\MSSQL\\\\log\\\\testdb_log.ldf\",\r\n                \"windowsVolumeName\":  \"testdb-Log\",\r\n                \"volumeName\":  \"wlmdb_sqllog_clone_1714098400\",\r\n   \"parentVolume\": \"wlmdb_sqllog_1714098400\"         }\r\n}\r\n",
+        "StandardOutputContent": "{\r\n    \"svm\":  \"wlmdb_sqlsvm_1714090636810\",\r\n    \"data\":  {\r\n                 \"lunPath\":  \"/vol/wlmdb_sqldata_1714098400/sqldata\",\r\n                 \"fileName\":  \"D:\\\\MSSQL\\\\data\\\\testdb_data.mdf\",\r\n                 \"windowsVolumeName\":  \"testdb-Data\",\r\n                 \"volumeName\":  \"wlmdb_sqldata_clone_1714098400\",\r\n \"parentVolume\": \"wlmdb_sqldata_1714098400\",\r\n             \"parentVolumeUuid\": \"5c1075d2-03a0-11ef-a514-55070fbfcab1\"\r\n},\r\n    \"collation\":  \"SQL_Latin1_General_CP1_CI_AS\",\r\n    \"log\":  {\r\n                \"lunPath\":  \"/vol/wlmdb_sqllog_1714098400/sqllog\",\r\n                \"fileName\":  \"E:\\\\MSSQL\\\\log\\\\testdb_log.ldf\",\r\n                \"windowsVolumeName\":  \"testdb-Log\",\r\n                \"volumeName\":  \"wlmdb_sqllog_clone_1714098400\",\r\n   \"parentVolume\": \"wlmdb_sqllog_1714098400\",\r\n         \"parentVolumeUuid\": \"5ace31ea-03a0-11ef-a514-55070fbfcab1\"\r\n}\r\n}\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -1244,6 +1244,31 @@
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
         "StandardOutputContent": "[{\"totalCount\":8}]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "getSnapshotsToCloneResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotsToCloneResponse",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotsToCloneResponse",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"snapshots\":[{\"created\":\"2024-06-12T01:18:23+00:00\",\"name\":\"netapp_wf_clone_1718155095\"},{\"created\":\"2024-06-12T09:00:24+00:00\",\"name\":\"netapp_wf_clone_1718182810\"}]}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
