@@ -90,3 +90,27 @@
         gap: 8px;
     }
 }
+
+@media screen and (max-width: 1500px) {
+    .costSavings {
+        width: 456px;
+
+        .leftSide {
+            .textContent {
+                width: 165px;
+            }
+        }
+
+        .separator {
+            margin-left: 8px;
+        }
+
+        .rightSide {
+            margin-left: 20px;
+
+            .bottomValue {
+                gap: 5px;
+            }
+        }
+    }
+}

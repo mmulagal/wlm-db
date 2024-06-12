@@ -65,3 +65,35 @@
         }
     }
 }
+
+@media screen and (max-width: 1500px) {
+    .savingsCalculator {
+        .savingsHeading {
+            width: 1128px;
+        }
+
+        .contentArea {
+            width: 1128px;
+            .firstContainer {
+                width: 648px;
+                height: 1356px;
+
+                [class*='savingsHeader'] {
+                    width: 648px;
+                }
+            }
+
+            .secondContainer {
+                width: 456px;
+            }
+        }
+
+        .selectionArea {
+            width: 1128px;
+        }
+
+        [class*='mssqlAccordion'] {
+            width: 1128px;
+        }
+    }
+}
