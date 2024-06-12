@@ -41,7 +41,7 @@ import {
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, deleteResource, listRelationshipsResources, listResources } from '../../../lib/database/db';
-import { getDatabsaeInstanceName, generateHash, sqlResponseParsing } from '../../../utils/utils';
+import { getDatabaseInstanceName, generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
@@ -618,7 +618,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                     defaultInstance = false;
                 }
                 if (selectedInstance !== undefined) {
-                    const instanceName = getDatabsaeInstanceName(selectedInstance, defaultInstance);
+                    const instanceName = getDatabaseInstanceName(selectedInstance, defaultInstance);
                     return instanceName;
                 }
 
