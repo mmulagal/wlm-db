@@ -792,7 +792,7 @@ async function getActiveSqlNode(
                 };
             }
         } else {
-            let errorMessage = `SSM status of node ${node1InstanceId} is not running :${connectionStatus.Status}`;
+            errorMessage = `SSM status of node ${node1InstanceId} is not running :${connectionStatus.Status}`;
             errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
             logger.error(errorMessage, { connectionStatus });
         }

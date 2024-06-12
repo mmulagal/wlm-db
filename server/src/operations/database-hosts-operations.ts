@@ -86,7 +86,7 @@ const DATABASE_HOSTS_INDEX_MAPPING: { [index: number]: string } = {
 const DATABASE_HOSTS_INDEX_MAPPING_V2: { [index: number]: string } = {
     0: 'nodeTopology',
     1: 'billing/pricing',
-    2: 'insatnceSummary'
+    2: 'instanceSummary'
 };
 const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     0: 'serverDetails',
@@ -1194,34 +1194,6 @@ async function getNodeTopology(
     };
 
     if (node1InstanceId && activeNodeInstanceId) {
-        let vpcId: string | undefined;
-        let vpcCidr: string | undefined;
-        let vpcName: string | undefined;
-        let nodeStatus: string | undefined;
-        try {
-            const ec2InstanceDetails = await describeInstance(credentialsId, region, {
-                InstanceIds: [activeNodeInstanceId]
-            });
-            const reservations = ec2InstanceDetails?.Reservations || []; // first item in the list
-            if (reservations.length > 0) {
-                const instances = reservations[0].Instances || [];
-                if (instances.length > 0) {
-                    vpcId = instances[0].VpcId;
-                    nodeStatus = instances[0].State?.Name;
-                }
-            }
-            const vpcParams: DescribeVpcsCommandInput = {
-                VpcIds: [vpcId!]
-            };
-
-            const { Vpcs: [vpc = {}] = [] } = await describeVpc(credentialsId, region, vpcParams);
-            vpcCidr = vpc?.CidrBlock;
-            const vpcTags = vpc.Tags || [];
-            vpcName = vpcTags.find(keyValuePair => keyValuePair.Key === 'Name')?.Value;
-        } catch (error) {
-            logger.error(`Error while fetching details for fsx. Error: ${error}`);
-        }
-
         const instanceIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
 
         let ec2InstanceDetails;
@@ -1236,6 +1208,10 @@ async function getNodeTopology(
         let standbyVolumeId;
         let activeNodeInstanceName;
         let standbyNodeInstanceName;
+        let vpcId: string | undefined;
+        let vpcCidr: string | undefined;
+        let vpcName: string | undefined;
+        let nodeStatus: string | undefined;
 
         if (!isEmpty(activeNodeInstanceId)) {
             // fetch instance details only if there is atleast one active node
@@ -1252,6 +1228,18 @@ async function getNodeTopology(
                     activeSubnetId = activeNode.SubnetId;
                     activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
                     activeNodeInstanceName = findResourceNameFromTags(activeNode.Tags);
+                    vpcId = activeNode.VpcId;
+                    vpcCidr = activeNode.VpcId;
+                    nodeStatus = activeNode.State?.Name;
+
+                    const vpcParams: DescribeVpcsCommandInput = {
+                        VpcIds: [vpcId!]
+                    };
+                    const { Vpcs: [vpc = {}] = [] } = await describeVpc(credentialsId, region, vpcParams);
+                    vpcCidr = vpc?.CidrBlock;
+                    const vpcTags = vpc.Tags || [];
+
+                    vpcName = vpcTags.find(keyValuePair => keyValuePair.Key === 'Name')?.Value;
 
                     if (!isEmpty(standbyNode)) {
                         standbyInstanceType = standbyNode.InstanceType;
@@ -1263,7 +1251,9 @@ async function getNodeTopology(
                     }
                 }
             } catch (error) {
-                logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
+                logger.error(
+                    `Error while fetching details for EC2 for node ${activeNodeInstanceId} in account ${accountId} Error: ${error}`
+                );
             }
         }
         const activeDirectoryDetails = {
@@ -1304,7 +1294,9 @@ async function getNodeTopology(
             });
         }
     } else {
-        logger.error(`FSX ID not found for resource ${resourceId}`);
+        logger.error(
+            `Error while fetching details for EC2 for node ${node1InstanceId} , ${node2InstanceId} in account ${accountId} as no active node was found.`
+        );
     }
 
     logger.debug('Topology data', nodeTopologyData);
@@ -1313,10 +1305,10 @@ async function getNodeTopology(
 
 async function getDatabaseHostsSummaryV2(
     accountId: string,
+    awsRegion: string,
+    customerCredentialsId: string,
     fields?: string,
     nextToken?: string,
-    awsRegion?: string,
-    customerCredentialsId?: string,
     vpcId?: string,
     fsxId?: string
 ) {
@@ -1350,13 +1342,6 @@ async function getDatabaseHostsSummaryV2(
 
     const databaseHosts: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
     try {
-        if (!awsRegion || !customerCredentialsId) {
-            throw createError(
-                HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                `Region or credentials id not provided region: ${awsRegion}, credentils Id:  ${customerCredentialsId}`
-            );
-        }
-
         await Promise.all(
             resourceDetails.map(async resourceDetail => {
                 const { resource_id: resourceId } = resourceDetail;
@@ -1395,8 +1380,7 @@ async function getDatabaseInstanceTopology(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    databaseInstances: any,
-    shouldQueryFullTopology: boolean = false
+    databaseInstances: any
 ) {
     logger.info(
         'Fetching database topology data',
@@ -1425,7 +1409,7 @@ async function getDatabaseInstanceTopology(
                     : storageType
                 : FileSystemTypes.FSXONTAP
     };
-    if (activeNodeInstanceId && shouldQueryFullTopology) {
+    if (activeNodeInstanceId) {
         let fileSystemStatus;
         let fileSystemName;
         let fileSystemDeploymentMode;
@@ -1515,8 +1499,6 @@ async function getDatabseInstanceSummary(
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
-    const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
-
     const shouldQueryServerDetails = fieldsValues?.includes(
         DatabaseHostsQueryFields.SERVER_DETAILS.toLocaleLowerCase()
     );
@@ -1558,7 +1540,7 @@ async function getDatabseInstanceSummary(
             databasesCount
         ] = await Promise.all(
             [
-                ...(shouldQueryServerDetails && instanceState && instanceState.toLocaleLowerCase() === 'running'
+                ...(shouldQueryServerDetails
                     ? [getServerDetails(credentialsId, region, activeNodeInstanceId, databaseInstanceName)]
                     : [Promise.resolve()]), // Fetch server metadata
                 ...(shouldQueryDatabaseTopology
@@ -1568,18 +1550,17 @@ async function getDatabseInstanceSummary(
                               credentialsId,
                               region,
                               activeNodeInstanceId,
-                              databaseInstances,
-                              shouldQueryTopology
+                              databaseInstances
                           )
                       ]
                     : [Promise.resolve()]),
-                ...(getPerformance && instanceState && instanceState.toLocaleLowerCase() === 'running'
+                ...(getPerformance
                     ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId, databaseInstanceName)]
                     : [Promise.resolve()]), // Fetch io latency data
                 ...(getStorageSavings
                     ? [getStorageData(undefined, databaseInstances, VERSION_2_0)]
                     : [Promise.resolve()]), // Fetch storage savings data
-                ...(getProtection && instanceState && instanceState.toLocaleLowerCase() === 'running'
+                ...(getProtection
                     ? [
                           getProtectionStatus(
                               activeNodeInstanceId,
@@ -1590,7 +1571,7 @@ async function getDatabseInstanceSummary(
                           )
                       ]
                     : [Promise.resolve()]), // Fetch protection status
-                ...(getResourceutilization && instanceState && instanceState.toLocaleLowerCase() === 'running'
+                ...(getResourceutilization
                     ? [
                           getAllResourceUtilisationDetails(
                               credentialsId,
@@ -1600,7 +1581,7 @@ async function getDatabseInstanceSummary(
                           )
                       ]
                     : [Promise.resolve()]),
-                ...(getDbCount && instanceState && instanceState.toLocaleLowerCase() === 'running'
+                ...(getDbCount && instanceState
                     ? [getDatabasesCount(credentialsId, region, activeNodeInstanceId, databaseInstanceName)]
                     : [Promise.resolve()])
             ].map((p, index) =>
@@ -1622,11 +1603,7 @@ async function getDatabseInstanceSummary(
         );
     }
 
-    if (
-        (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') &&
-        shouldQueryServerDetails &&
-        shouldQueryTopology
-    ) {
+    if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && shouldQueryServerDetails) {
         serverDetails.dbCount = serverDetails?.dbCount || 0;
         serverDetails.dbCount += userDatabase.length;
     }
@@ -1864,7 +1841,7 @@ async function getDatabaseHostSummaryV2(
                     databaseHostDetails.estimatedUsageCost = usageEstimationData;
                 }
 
-                if (shouldQueryNodeTopology && nodeTopology) {
+                if (shouldQueryNodeTopology && nodeTopology && nodeTopology.ec2Details.length > 0) {
                     databaseHostDetails.nodeStatus = nodeTopology.ec2Details[0].status || 'N/A';
                     databaseHostDetails.nodeTopology = nodeTopology;
                 }

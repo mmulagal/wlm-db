@@ -1,6 +1,8 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { BILLING, PRICING } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
+import { ConnectionStatus } from '@aws-sdk/client-ssm';
+import { InstanceStateName } from '@aws-sdk/client-ec2';
 
 const DatabaseHostObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
@@ -464,8 +466,8 @@ type DatabaseHostInstanceSummaryResponseType = Static<typeof DatabaseHostInstanc
 const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
-    nodeStatus: Type.String({ enum: ['ONLINE', 'OFFLINE', 'N/A'] }),
-    ssmStatus: Type.String({ enum: ['ONLINE', 'OFFLINE'] }),
+    nodeStatus: Type.String({ enum: [InstanceStateName, 'N/A'] }),
+    ssmStatus: Type.String({ enum: [ConnectionStatus, 'N/A'] }),
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),

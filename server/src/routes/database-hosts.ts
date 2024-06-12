@@ -306,10 +306,10 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 } = request;
                 const response = await getDatabaseHostsSummaryV2(
                     accountId,
-                    fields,
-                    nextToken,
                     region,
                     credentialsId,
+                    fields,
+                    nextToken,
                     vpcId,
                     fsxId
                 );
