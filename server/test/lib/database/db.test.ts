@@ -13,7 +13,7 @@ import {
     listRelationshipsResources,
     updateConfig,
     listEvents,
-    DatabaseInstance,
+    DatabaseInstanceRecord,
     upsertDatabaseInstance,
     listDatabaseInstances,
     deleteDatabaseInstance
@@ -161,7 +161,7 @@ describe('List deployments', () => {
 
 describe('Database instance operations', () => {
     it('Create/update/list/delete database instance record', async () => {
-        const DATABASE_INSTANCE_RECORD: DatabaseInstance = {
+        const DATABASE_INSTANCE_RECORD: DatabaseInstanceRecord = {
             credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
             resourceId: '02bff58ecf20c32b5bbf86de997c4296ab9cd45e88d4ff3b3d0c918b7f96a5bx',

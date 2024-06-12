@@ -164,7 +164,7 @@ interface MissingPermissionInterface {
 
 interface DatabaseInstance {
     database_instance_name: string;
-    instanceState: string;
+    instanceState?: string;
     database_instance_id: string;
     is_default: boolean;
     metadata: databaseInstanceMetadata;
@@ -172,11 +172,11 @@ interface DatabaseInstance {
     database_deployment_type: string;
     fsxn_ids: string;
     credentials_id: string;
-    fsxwId: string;
-    ebsVolumeIds: string[];
+    fsxwId?: string;
+    ebsVolumeIds?: string[];
     storage_protocol: string;
     region: string;
-    databaseType: string;
+    databaseType?: string;
 }
 
 export {

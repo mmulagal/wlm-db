@@ -45,7 +45,7 @@ import {
     updateDeployment,
     upsertDeployment,
     upsertDatabaseInstance,
-    DatabaseInstance
+    DatabaseInstanceRecord
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getAllInstanceDetails, getMsSqlResourceId, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
@@ -607,6 +607,7 @@ async function processCloudFormationMessages() {
                                                             region,
                                                             nodeIds
                                                         );
+                                                        
                                                         const instanceNames = deployedInstances.map(
                                                             (instance: { instanceName: string }) =>
                                                                 instance.instanceName
@@ -627,7 +628,7 @@ async function processCloudFormationMessages() {
                                                                     nodeIds
                                                                 );
 
-                                                                const instanceDetails: DatabaseInstance = {
+                                                                const instanceDetails: DatabaseInstanceRecord = {
                                                                     credentialsId,
                                                                     resourceId,
                                                                     region,
