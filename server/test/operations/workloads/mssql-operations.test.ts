@@ -28,10 +28,12 @@ import {
     getNativeSQLProtection,
     checkDatabaseExists,
     getAllResourceUtilisation,
-    getMssqlInstanceGuid
+    getMssqlInstanceGuid,
+    getAllInstanceDetails,
+    getActiveSqlNodeAndInstanceDetails
 } from '../../../src/operations/workloads/mssql/mssql-operations';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
-import { DATABASE_METRIC_TYPE, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../src/utils/consts';
+import { DATABASE_METRIC_TYPE, DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../src/utils/consts';
 
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
@@ -83,7 +85,12 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get databases count', async () => {
-        const resp = await getDatabasesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, DEFAULT_MSSQL_INSTANCE_NAME);
+        const resp = await getDatabasesCount(
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            ACTIVE_INSTANCE_ID,
+            DEFAULT_MSSQL_INSTANCE_NAME
+        );
         expect(resp.totalCount).toEqual(8);
     });
 
@@ -113,7 +120,12 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get MSSQL native backups count ', async () => {
-        const resp = await getNativeSQLProtection(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, DEFAULT_MSSQL_INSTANCE_NAME);
+        const resp = await getNativeSQLProtection(
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            ACTIVE_INSTANCE_ID,
+            DEFAULT_MSSQL_INSTANCE_NAME
+        );
         expect(resp).toEqual(4);
     });
 
@@ -161,5 +173,23 @@ describe('MSSQL Resource methods', () => {
             STANDBY_INSTANCE_ID
         ]);
         expect(resp).toEqual('FAC00473-3CB5-46A4-A145-64CC07C35655');
+    });
+
+    it('Get database instances details', async () => {
+        const resp = await getAllInstanceDetails(CREDENTIALS_ID, DEFAULT_AWS_REGION, [
+            ACTIVE_INSTANCE_ID,
+            STANDBY_INSTANCE_ID
+        ]);
+        expect(resp[0]).toEqual(mssqlResponse.mssqlServerInstanceDetails);
+    });
+
+    it('Get active instance', async () => {
+        const resp = await getActiveSqlNodeAndInstanceDetails(
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            [ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID],
+            DEFAULT_INSTANCE_NAME
+        );
+        expect(resp?.matchingInstance).toMatchObject(mssqlResponse.mssqlServerInstanceDetails);
     });
 });
