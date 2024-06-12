@@ -8,6 +8,11 @@ const DatabaseHostObjectParams = Type.Object({
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
 const DatabaseHostSummaryParams = Type.Composite([CredentialsIdParams, Type.Object({ databaseHostId: Type.String() })]);
+const DatabaseHostInstanceSummaryParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Object({ databaseInstanceId: Type.String() })
+]);
+
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 
 const CreateDatabaseParams = Type.Object({
@@ -416,6 +421,9 @@ const NodeTopologyResponse = Type.Object({
     awsAccount: Type.String({ minLength: 1 }),
     region: Type.String(),
     vpcId: Type.Optional(Type.String()),
+    vpcName: Type.Optional(Type.String()),
+    vpcCidr: Type.Optional(Type.String()),
+    keyPairName: Type.Optional(Type.String()),
     ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
@@ -548,6 +556,8 @@ export {
     DatabaseHostSummaryForMultiInstanceListResponse,
     DatabaseHostSummaryForMultiInstanceResponseType,
     DatabaseHostSummaryForMultiInstanceListResponseType,
+    DatabaseHostInstanceSummaryResponse,
     DatabaseHostInstanceSummaryResponseType,
-    DatabaseInstanceTopologyType
+    DatabaseInstanceTopologyType,
+    DatabaseHostInstanceSummaryParams
 };
