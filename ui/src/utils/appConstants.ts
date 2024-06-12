@@ -630,10 +630,30 @@ export const GENERAL = {
     CREATE: 'Create',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
-        delete: ['Deletion of ', ' sandbox is in progress. Track progress in '],
-        rebaseline: ['Re-baselining of ', ' sandbox is in progress. Track progress in '],
-        refresh: ['Refreshing of ', ' sandbox is in progress. Track progress in '],
-        split: ['Splitting of ', ' sandbox is in progress. Track progress in ']
+        IN_PROGRESS: {
+            delete: ['Deletion of ', ' sandbox is in progress. Track progress in '],
+            rebaseline: ['Re-baselining of ', ' sandbox is in progress. Track progress in '],
+            refresh: ['Refreshing of ', ' sandbox is in progress. Track progress in '],
+            split: ['Splitting of ', ' sandbox is in progress. Track progress in '],
+            integrityCheck: ['Integrity check of ', ' sandbox is in progress. Track progress in ']
+        },
+        SUCCESS: {
+            delete: ['Sandbox database ', ' deleted successfully.'],
+            rebaseline: [
+                'Sandbox of database ',
+                ' re-baselined successfully. Sandbox returned to its original version.'
+            ],
+            refresh: ['Sandbox of database ', ' refreshed successfully.'],
+            split: ['Sandbox database ', ' split successfully.'],
+            integrityCheck: ['Integrity check of ', ' completed successfully']
+        },
+        FAILED: {
+            delete: ['Sandbox database ', ' failed to delete.'],
+            rebaseline: ['Re-baseline of sandbox of database ', ' failed.'],
+            refresh: ['Sandbox of database ', ' refresh failed.'],
+            split: ['Sandbox database ', ' failed to split.'],
+            integrityCheck: ['Integrity check of ', ' failed']
+        }
     },
     DATABASE_INFORMATION: 'Database information',
     FILE_SETTINGS: 'File settings',
@@ -895,6 +915,7 @@ export const GENERAL = {
     DELETING: 'Deleting',
     REBASELINE: 'Re-baseline',
     SPLIT: 'Splitting',
+    INTEGRITY_CHECK: 'Integrity check',
     REBASELINE_DIALOG_TITLE: ['Are you sure you want to re-baseline ', ' sandbox for database '],
     REBASELINE_DIALOG_FIRST_BULLET:
         'This action will revert the sandbox to its original version at the time of creation.',
@@ -917,7 +938,9 @@ export const GENERAL = {
     EBS_TOOLTIP_MESSAGE:
         'Management of SQL Server instances using EBS (Elastic Block Store) storage is currently not supported. Please select a supported storage option to proceed.',
     ALL_MANAGED_TEXT:
-        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.'
+        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+    ALL_UNDETECT_TEXT:
+        'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.'
 };
 
 export const CODE_VIEWER = {

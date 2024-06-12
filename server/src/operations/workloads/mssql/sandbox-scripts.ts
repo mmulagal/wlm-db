@@ -204,7 +204,7 @@ const getDbMappedOntapVolumes = (
     $FSxID = '${fsxid}'
     $FSxRegion = '${fsxregion}'
     $dbname = '${dbName}'
-    $instanceName = '${instanceName}'
+    $instanceName = "${instanceName}"
 
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_$dbname.log.txt" -Append | Out-Null
 
@@ -781,7 +781,7 @@ const cleanUpOntapResources = (
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $DBName = '${dbName}'
-    $instanceName = '${instanceName}'
+    $instanceName = "${instanceName}"
 
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
 
@@ -966,7 +966,7 @@ const detachDbAndRemoveAccessPath = (
     $dbname = '${dbName}'
     $serialNumbers = '${serialNumbers}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
-    $instanceName = '${instanceName}'
+    $instanceName = "${instanceName}"
 
     Start-Transcript -Path "C:\\cfn\\log\\detachdb_remove_accesspath_$dbname.log.txt" -Append | Out-Null
 
@@ -1045,7 +1045,7 @@ const addAccessPathAndAttachDb = (
     $dbname = '${dbName}'
     $serialNumbers = '${JSON.stringify(datafile)}' | ConvertFrom-Json
     $filePaths = '${JSON.stringify(logfile)}' | ConvertFrom-Json
-    $instanceName = '${instanceName}'
+    $instanceName = "${instanceName}"
 
     Start-Transcript -Path "C:\\cfn\\log\\add_accesspath_attachdb_$dbname.log.txt" -Append | Out-Null
 
@@ -1198,7 +1198,7 @@ const deleteExtendedPropertiesScript = (
     props: Array<string>
 ) => `
 $dbname = '${dbName}'
-$instanceName = '${instanceName}'
+$instanceName = "${instanceName}"
 
 Start-Transcript -Path "C:\\cfn\\log\\delete_extended_properties_$dbname.log.txt" -Append | Out-Null
 
@@ -1218,6 +1218,20 @@ IF EXISTS (SELECT name, value FROM fn_listextendedproperty(default, default, def
 Sqlcmd -S $instanceName -Q $query -m 1
 `;
 
+const checkDatabaseIntegrityScript = (dbName: string, instanceName: string = '.') => `
+$dbname = '${dbName}'
+$instanceName = "${instanceName}"
+
+Start-Transcript -Path "C:\\cfn\\log\\check_integrity_for_$dbname.log.txt" -Append | Out-Null
+
+$query = @"
+USE $dbname;
+SET NOCOUNT ON;
+DBCC CHECKDB($dbname) WITH NO_INFOMSGS, ALL_ERRORMSGS;
+"@
+Sqlcmd -S $instanceName -Q $query -m 1
+`;
+
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
@@ -1231,5 +1245,6 @@ export {
     detachDbAndRemoveAccessPath,
     addAccessPathAndAttachDb,
     splitFlexCloneVolumes,
-    deleteExtendedPropertiesScript
+    deleteExtendedPropertiesScript,
+    checkDatabaseIntegrityScript
 };

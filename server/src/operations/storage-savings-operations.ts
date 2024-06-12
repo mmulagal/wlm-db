@@ -166,7 +166,9 @@ async function aoagStorageSavingsCalculations(
         ]);
 
         const allNodesComputeLicenseDetails = currentNodeComputeLicenseDetails.concat(partnerNodeComputeLicenseDetails);
-        const instanceType = `${allNodesComputeLicenseDetails
+
+        // existing compute and license details
+        const existingInstanceType = `${allNodesComputeLicenseDetails
             .map((node: { ec2InstanceType: any }) => node.ec2InstanceType)
             .join(',')}`;
         const allNodesExistingComputePrice = allNodesComputeLicenseDetails.reduce(
@@ -183,6 +185,18 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
+        const existingComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingComputePrice);
+
+        const existingLicenseType = `${allNodesComputeLicenseDetails
+            .map(
+                ({
+                    license: {
+                        existing: { licenseType: eLicenseType }
+                    }
+                }) => eLicenseType
+            )
+            .join(',')}`;
+
         const allNodesExistingLicensePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -197,18 +211,18 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
+        const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice);
 
-        const existingComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingComputePrice);
-        const licenseType = `${allNodesComputeLicenseDetails
+        // recommended compute and license details
+        const recommendedInstanceType = `${allNodesComputeLicenseDetails
             .map(
                 ({
-                    license: {
-                        existing: { licenseType: eLicenseType }
+                    compute: {
+                        recommended: { instanceType: rInstanceType }
                     }
-                }) => eLicenseType
+                }) => rInstanceType
             )
             .join(',')}`;
-        const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice);
         const allNodesRecommendedComputePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -223,6 +237,17 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
+        const recommendedComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedComputePrice);
+
+        const recommendedLicenseType = `${allNodesComputeLicenseDetails
+            .map(
+                ({
+                    license: {
+                        recommended: { licenseType: rLicenseType }
+                    }
+                }) => rLicenseType
+            )
+            .join(',')}`;
         const allNodesRecommendedLicensePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -237,16 +262,6 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
-        const recommendedComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedComputePrice);
-        const recommendedLicenseType = `${allNodesComputeLicenseDetails
-            .map(
-                ({
-                    license: {
-                        existing: { licenseType: eLicenseType }
-                    }
-                }) => eLicenseType
-            )
-            .join(',')}`;
         const recommendedLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedLicensePrice);
 
         const [
@@ -266,18 +281,18 @@ async function aoagStorageSavingsCalculations(
         return {
             compute: {
                 existing: {
-                    instanceType,
+                    instanceType: existingInstanceType,
                     computeMonthlyPrice: existingComputeMonthlyPrice
                 },
                 recommended: {
-                    instanceType,
+                    instanceType: recommendedInstanceType,
                     computeMonthlyPrice: recommendedComputeMonthlyPrice,
                     message: recommendedComputeMessage
                 }
             },
             license: {
                 existing: {
-                    licenseType,
+                    licenseType: existingLicenseType,
                     licenseMonthlyPrice: existingLicenseMonthlyPrice
                 },
                 recommended: {
