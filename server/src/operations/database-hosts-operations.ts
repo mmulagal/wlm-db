@@ -1851,8 +1851,8 @@ async function getDatabaseHostSummaryV2(
             }
 
             databaseHostDetails.databaseInstancesSummary = instanceResults;
-            return databaseHostDetails;
         }
+        return databaseHostDetails;
     } catch (error) {
         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
         throw createError(
