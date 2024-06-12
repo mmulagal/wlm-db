@@ -267,10 +267,10 @@ const InventoryTable = () => {
                 const checkForAllManaged = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === 'Managed'
                 );
-                const checkForAllUnDetectInstance = rowData?.sqlServerInstances.every(
+                const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === 'Undetected'
                 );
-                const checkForAllFileSystemNA = rowData?.sqlServerInstances.every(
+                const checkForAllFileSystemNA = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.fileSystemType === 'N/A'
                 );
 
