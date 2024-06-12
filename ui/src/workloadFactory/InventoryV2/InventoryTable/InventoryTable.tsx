@@ -15,7 +15,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST } from '../../../utils/consts';
+import { WLF_TABS, STATUS_CONST, INVENTORY_STATUS, INVENTORY_ACTIONS } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
@@ -36,6 +36,7 @@ import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 import { useRunOnce } from '../../../common/hooks/useRunOnce';
+import { sortInventoryTableData } from '../InventoryUtilsV2';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
@@ -100,7 +101,7 @@ const InventoryTable = () => {
 
     //Use effect to check weather to disable manage button in dialog
     useEffect(() => {
-        const checkButtonStatus = mockData.some((item: any) => item.status === 'Unmanaged');
+        const checkButtonStatus = mockData.some((item: any) => item.status === INVENTORY_STATUS.UNMANAGED);
 
         setIsManageButtonDisable(!checkButtonStatus);
     }, []);
@@ -127,7 +128,8 @@ const InventoryTable = () => {
                 };
                 result.push(rowData);
             });
-            setTableData(result);
+            // sort it based on action and whether it is disable or enable
+            setTableData(sortInventoryTableData(result));
         } else {
             setTableData([]);
         }
@@ -161,7 +163,7 @@ const InventoryTable = () => {
     };
 
     const ExpandedRow = ({ rowData }: any) => {
-        if (rowData?.ssmState === 'Online') {
+        if (rowData?.ssmState === INVENTORY_STATUS.ONLINE) {
             return <ManagedHostSubTable rowId={rowData?.id} scrollPosition={scrollPos} />;
         }
         return <OfflineComponent />;
@@ -227,12 +229,17 @@ const InventoryTable = () => {
             );
         }
         //Normal use case to show dialog or move to explore savings
-        if (rowData?.action && !checkForAllManaged && !rowData?.actionDisable && rowData.ssmState !== 'Offline') {
+        if (
+            rowData?.action &&
+            !checkForAllManaged &&
+            !rowData?.actionDisable &&
+            rowData.ssmState !== INVENTORY_STATUS.OFFLINE
+        ) {
             return (
                 <div
                     className={styles.detectManage}
                     onClick={() => {
-                        if (rowData?.action === 'Explore savings') {
+                        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
                             onClickESHost(dispatch, rowData, isDemoMode);
                         } else {
                             handleDialog();
@@ -245,7 +252,12 @@ const InventoryTable = () => {
                 </div>
             );
         }
-        if (rowData?.action && !checkForAllManaged && rowData?.actionDisable && rowData.ssmState !== 'Offline') {
+        if (
+            rowData?.action &&
+            !checkForAllManaged &&
+            rowData?.actionDisable &&
+            rowData.ssmState !== INVENTORY_STATUS.OFFLINE
+        ) {
             return (
                 <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
                     <Typography variant="Regular_14" className={styles.textStyle}>
@@ -265,12 +277,12 @@ const InventoryTable = () => {
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
                 const checkForAllManaged = rowData?.sqlServerInstances?.every(
-                    (item: any) => item?.statusColText === 'Managed'
+                    (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
                 );
-                const checkForAllUnDetectInstance = rowData?.sqlServerInstances.every(
-                    (item: any) => item?.statusColText === 'Undetected'
+                const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
+                    (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
                 );
-                const checkForAllFileSystemNA = rowData?.sqlServerInstances.every(
+                const checkForAllFileSystemNA = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.fileSystemType === 'N/A'
                 );
 
@@ -316,13 +328,13 @@ const InventoryTable = () => {
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
                         <div className={styles.firstColText}>
-                            {rowData?.status === STATUS_CONST.ONLINE && (
+                            {rowData?.status === INVENTORY_STATUS.ONLINE && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.OFFLINE && (
+                            {rowData?.status === INVENTORY_STATUS.OFFLINE && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.UNKNOWN && (
+                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
                             )}
                             <Typography variant="Regular_13">
@@ -430,10 +442,10 @@ const InventoryTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.firstColText}>
-                        {rowData?.ssmState === STATUS_CONST.ONLINE && (
+                        {rowData?.ssmState === INVENTORY_STATUS.ONLINE && (
                             <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                         )}
-                        {rowData?.ssmState === STATUS_CONST.OFFLINE && (
+                        {rowData?.ssmState === INVENTORY_STATUS.OFFLINE && (
                             <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                         )}
                         <Typography variant="Regular_13">{rowData?.ssmState}</Typography>

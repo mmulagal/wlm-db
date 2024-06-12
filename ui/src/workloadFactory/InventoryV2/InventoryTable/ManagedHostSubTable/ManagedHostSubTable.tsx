@@ -1,4 +1,4 @@
-import { Table, useTable, useDialog, DsTypography, Typography } from '@netapp/design-system';
+import { Table, useTable, useDialog, DsTypography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ManagedHostSubTable.module.scss';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
@@ -7,7 +7,7 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { WLF_TABS } from '../../../../utils/consts';
+import { INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -87,7 +87,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
     const handleManage = (rowData: any) => {
         let output = data.map((obj: any) => {
             if (obj.name === rowData.name) {
-                return { ...obj, cellProps: { isDisabled: true }, statusColText: 'In progress' };
+                return { ...obj, cellProps: { isDisabled: true }, statusColText: INVENTORY_STATUS.IN_PROGRESS };
             }
             return obj;
         });
@@ -96,7 +96,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
         setTimeout(() => {
             let output = data.map((obj: any) => {
                 if (obj.name === rowData.name) {
-                    return { ...obj, cellProps: { isDisabled: false }, statusColText: 'Managed' };
+                    return { ...obj, cellProps: { isDisabled: false }, statusColText: INVENTORY_STATUS.MANAGED };
                 }
                 return obj;
             });
@@ -111,12 +111,12 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             accessor: 'name',
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
-                if (rowData.statusColText === 'Undetected') {
+                if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
                         displayName: 'Detect'
                     });
-                } else if (rowData.statusColText === 'Unmanaged') {
+                } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     menu.push({
                         id: 'manage',
                         displayName: 'Manage'
@@ -150,8 +150,9 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                             isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
                             menuItems={[...menu]}
                             isDisabled={
-                                rowData?.statusColText === 'Unmanaged' &&
-                                (rowData.fileSystemType === 'EBS' || rowData.fileSystemType === 'FSx for Windows')
+                                rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                                (rowData.fileSystemType === GENERAL.EBS ||
+                                    rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
                             }
                             toggleMenu={(toggleType: string, menuId: string) => {
                                 if (toggleType === 'close') {
@@ -186,8 +187,9 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                             }}
                             CustomMenu={undefined}
                             disabledText={
-                                rowData?.statusColText === 'Unmanaged' &&
-                                (rowData.fileSystemType === 'EBS' || rowData.fileSystemType === 'FSx for Windows') &&
+                                rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                                (rowData.fileSystemType === GENERAL.EBS ||
+                                    rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS) &&
                                 GENERAL.EBS_TOOLTIP_MESSAGE
                             }
                         />
@@ -216,13 +218,13 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                if (cellData === 'Unmanaged') {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value="Unmanaged" />;
+                if (cellData === INVENTORY_STATUS.UNMANAGED) {
+                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
                 }
-                if (cellData === 'Undetected') {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value="Undetected" />;
+                if (cellData === INVENTORY_STATUS.UNDETECTED) {
+                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
                 }
-                if (cellData === 'In progress') {
+                if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
                         <div className={styles.inProgress}>
                             <SmallLoader />
@@ -230,8 +232,8 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                         </div>
                     );
                 }
-                if (cellData === 'Managed') {
-                    return <DotComponent color={'var(--success)'} value="Managed" />;
+                if (cellData === INVENTORY_STATUS.MANAGED) {
+                    return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
                 }
             }
         },

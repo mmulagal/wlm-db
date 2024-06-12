@@ -367,7 +367,12 @@ const InventoryApisV2 = () => {
         let databaseHostDataObj: any = {};
         Object.keys(topologyHostData).map((key: string) => {
             if (key in fullHostData) {
-                const perObj = { ...topologyHostData[key], ...fullHostData[key], loading: false };
+                const perObj = {
+                    ...topologyHostData[key],
+                    ...fullHostData[key],
+                    loading: false,
+                    nodeStatus: topologyHostData[key]?.nodeStatus
+                };
                 databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
             } else {
                 const perObj = { ...topologyHostData[key], loading: fullHostDataLoading ? true : false };

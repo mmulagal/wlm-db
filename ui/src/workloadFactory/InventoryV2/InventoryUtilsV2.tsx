@@ -1,6 +1,12 @@
 import store from '../../store/store';
 import { GENERAL } from '../../utils/appConstants';
-import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE } from '../../utils/consts';
+import {
+    DETECT_HOST_VAR,
+    FSX_DEPLOYMENT_MODE,
+    INVENTORY_ACTIONS,
+    INVENTORY_STATUS,
+    SQL_DEPLOYMENT_MODE
+} from '../../utils/consts';
 import {
     DatabaseInstancesSummaryInterface,
     DiscoverHostInterface,
@@ -35,7 +41,10 @@ export const getInventoryDataCount = (data: { [key: string]: InventoryTableData 
     let managedInst = 0;
     let totalInstance = 0;
     Object.keys(data).map((key: string) => {
-        if (data[key]?.action === 'Manage' || (data[key]?.action === 'Explore savings' && !data[key]?.actionDisable)) {
+        if (
+            data[key]?.action === INVENTORY_ACTIONS.MANAGE ||
+            (data[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && !data[key]?.actionDisable)
+        ) {
             detectedHostCount += 1;
         } else {
             undetectedHostCount += 1;
@@ -70,7 +79,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         vpcId: managedRow?.nodeTopology?.vpcId,
         vpcName: managedRow?.nodeTopology?.vpcName,
         vpcCidr: managedRow?.nodeTopology?.vpcCidr,
-        action: ssmState === 'Online' && totalInstanceCount > 0 ? 'Manage' : '', // This is default for managed rows,
+        action: ssmState === INVENTORY_STATUS.ONLINE && totalInstanceCount > 0 ? INVENTORY_ACTIONS.MANAGE : '', // This is default for managed rows,
         actionDisable: totalInstanceCount === managedInstanceCount,
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
@@ -84,24 +93,27 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
     if (row?.nodeStatus && row?.nodeStatus !== 'N/A') {
         if (row?.nodeStatus === 'running') {
-            return 'Online';
+            return INVENTORY_STATUS.ONLINE;
         } else {
-            return 'Offline';
+            return INVENTORY_STATUS.OFFLINE;
         }
     } else {
-        return 'Unknown';
+        return INVENTORY_STATUS.UNKNOWN;
     }
 };
 
 export const getSsmState = (row: ManagedHostsRowInterface) => {
     if (row?.ssmStatus && row?.ssmStatus !== 'N/A') {
-        if (row?.ssmStatus?.toLowerCase() === 'connected' || row?.ssmStatus?.toLowerCase() === 'online') {
-            return 'Online';
+        if (
+            row?.ssmStatus?.toLowerCase() === INVENTORY_STATUS.SSM_CONNECTED ||
+            row?.ssmStatus?.toLowerCase() === INVENTORY_STATUS.SSM_ONLINE
+        ) {
+            return INVENTORY_STATUS.ONLINE;
         } else {
-            return 'Offline';
+            return INVENTORY_STATUS.OFFLINE;
         }
     } else {
-        return 'Offline';
+        return INVENTORY_STATUS.UNKNOWN;
     }
 };
 
@@ -198,33 +210,7 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
 
 export const formatInstanceData = (row: ManagedHostsRowInterface) => {
     let instanceRows;
-    if (row?.databaseInstancesSummary) {
-        instanceRows = row?.databaseInstancesSummary?.map(perRow => {
-            const isManagedRow = row?.databaseInstanceDetails?.filter(
-                per => per?.instanceName === perRow?.databaseInstanceName
-            );
-            return {
-                ...perRow,
-                databaseInstanceId: perRow?.databaseInstanceId,
-                databaseInstanceName: perRow?.databaseInstanceName,
-                status: perRow?.status,
-                databaseCount: perRow?.databaseCount,
-                statusColText: isManagedRow?.[0]?.isManaged ? 'Managed' : 'Unmanaged',
-                fileSystemDeploymentMode: getFileSystemDeploymentMode(
-                    perRow?.databseInstanceTopology?.fileSystemDeploymentMode
-                ),
-                fileSystemType: perRow?.databseInstanceTopology?.fileSystemType,
-                protection: perRow?.protection,
-                performance: perRow?.performance,
-                storage: perRow?.storage,
-                storageSavingsText: getStorageSavingsText(perRow),
-                allocatedCapacity:
-                    (perRow?.storage?.fsxn?.size || 0) +
-                    (perRow?.storage?.fsxw?.size || 0) +
-                    (perRow?.storage?.ebs?.size || 0)
-            };
-        });
-    } else {
+    if (row?.databaseInstanceDetails) {
         instanceRows = row?.databaseInstanceDetails?.map(perRow => {
             const isManagedRow = row?.databaseInstanceDetails?.filter(
                 per => per?.instanceName === perRow?.instanceName
@@ -234,7 +220,37 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 databaseInstanceId: '',
                 databaseInstanceName: perRow?.instanceName,
                 status: perRow?.instanceState,
-                statusColText: isManagedRow?.[0]?.isManaged ? 'Managed' : 'Unmanaged'
+                statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED
+            };
+        });
+    }
+    if (row?.databaseInstancesSummary) {
+        instanceRows = instanceRows?.map(instRow => {
+            const perRow = row?.databaseInstancesSummary?.find(
+                per => per?.databaseInstanceName === instRow?.databaseInstanceName
+            );
+            const isManagedRow = row?.databaseInstanceDetails?.filter(
+                per => per?.instanceName === perRow?.databaseInstanceName
+            );
+            return {
+                ...perRow,
+                databaseInstanceId: perRow?.databaseInstanceId,
+                databaseInstanceName: perRow?.databaseInstanceName,
+                status: perRow?.status,
+                databaseCount: perRow?.databaseCount,
+                statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED,
+                fileSystemDeploymentMode: getFileSystemDeploymentMode(
+                    perRow?.databseInstanceTopology?.fileSystemDeploymentMode
+                ),
+                fileSystemType: perRow?.databseInstanceTopology?.fileSystemType,
+                protection: perRow?.protection,
+                performance: perRow?.performance,
+                storage: perRow?.storage,
+                storageSavingsText: getStorageSavingsText(perRow || {}),
+                allocatedCapacity:
+                    (perRow?.storage?.fsxn?.size || 0) +
+                    (perRow?.storage?.fsxw?.size || 0) +
+                    (perRow?.storage?.ebs?.size || 0)
             };
         });
     }
@@ -466,7 +482,7 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         ec2InstanceName: discoveredRow?.ec2InstanceName,
         resourceId: discoveredRow?.key,
         name: getDiscoverHostname(discoveredRow),
-        status: 'Online', // discover APIs will be Online only
+        status: INVENTORY_STATUS.ONLINE, // discover APIs will be Online only
         ssmState: ssmState,
         totalInstance: totalInstanceCount,
         managedInstance: 0,
@@ -502,13 +518,13 @@ export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface) => {
 
 export const getDiscoverSsmState = (row: DiscoverHostInterface) => {
     if (row?.ssmState && row?.ssmState !== 'N/A') {
-        if (row?.ssmState?.toLowerCase() === 'connected') {
-            return 'Online';
+        if (row?.ssmState?.toLowerCase() === INVENTORY_STATUS.SSM_CONNECTED) {
+            return INVENTORY_STATUS.ONLINE;
         } else {
-            return 'Offline';
+            return INVENTORY_STATUS.OFFLINE;
         }
     } else {
-        return 'Offline';
+        return INVENTORY_STATUS.OFFLINE;
     }
 };
 
@@ -522,9 +538,9 @@ export const getDiscoverInstallationMode = (row: DiscoverHostInterface) => {
                 break;
             }
         }
-        if (installationMode === 'FCI') {
+        if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
             installationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
-        } else if (installationMode === 'AOAG') {
+        } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
             installationMode = GENERAL.AOAG;
         }
         return installationMode;
@@ -540,9 +556,6 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
     if (row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
         row?.sqlServerInstances?.map((perRow: SQLServerInstancesDiscovered) => {
             let statusObj = {};
-            if (perRow?.sqlServerName === 'SNAPMAY22') {
-                let a = 1;
-            }
             if (perRow?.sqlServerInstance) {
                 const isWindowAuthentication = perRow?.windowsAuthentication;
                 const isSqlAuthentication = perRow?.sqlServerAuthentication;
@@ -562,14 +575,22 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                 }
 
                 if (
-                    ssmState !== 'Online' ||
+                    ssmState !== INVENTORY_STATUS.ONLINE ||
                     (!isWindowAuthentication && !isSqlAuthentication) ||
                     fsxCredentialValidationFailed ||
                     !storageTypeCheck
                 ) {
-                    statusObj = { name: perRow.sqlServerInstance, status: 'Undetected', storageType: perRow?.storage };
+                    statusObj = {
+                        name: perRow.sqlServerInstance,
+                        status: INVENTORY_STATUS.UNDETECTED,
+                        storageType: perRow?.storage
+                    };
                 } else {
-                    statusObj = { name: perRow.sqlServerInstance, status: 'Unmanaged', storageType: perRow?.storage };
+                    statusObj = {
+                        name: perRow.sqlServerInstance,
+                        status: INVENTORY_STATUS.UNMANAGED,
+                        storageType: perRow?.storage
+                    };
                 }
                 result = [...result, ...[statusObj]];
             }
@@ -581,8 +602,8 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
 export const getDiscoveredActions = (row: Array<StatusObjInterface>) => {
     let action = '';
     let actionDisable = false;
-    let undetected = row?.filter((per: StatusObjInterface) => per?.status === 'Undetected');
-    let unmanaged = row?.filter((per: StatusObjInterface) => per?.status === 'Unmanaged');
+    let undetected = row?.filter((per: StatusObjInterface) => per?.status === INVENTORY_STATUS.UNDETECTED);
+    let unmanaged = row?.filter((per: StatusObjInterface) => per?.status === INVENTORY_STATUS.UNMANAGED);
     let isStorage = row?.find((per: StatusObjInterface) => {
         if (per?.storageType && per?.storageType?.length > 0) {
             return per;
@@ -599,12 +620,12 @@ export const getDiscoveredActions = (row: Array<StatusObjInterface>) => {
         }
     });
     if (!isFsxn && isStorage) {
-        action = 'Explore savings';
+        action = INVENTORY_ACTIONS.EXPLORE_SAVINGS;
         actionDisable = undetected?.length > 0 && unmanaged?.length === 0 ? true : false;
     } else {
         actionDisable = false;
         if ((undetected?.length > 0 && unmanaged?.length > 0) || (undetected?.length === 0 && unmanaged?.length > 0)) {
-            action = 'Manage';
+            action = INVENTORY_ACTIONS.MANAGE;
         } else {
             action = '';
         }
@@ -645,7 +666,7 @@ export const formatDiscoverInstanceData = (
             databaseInstanceName: perRow?.sqlServerInstance,
             status: perRow?.sqlServerState,
             // databaseCount: 0,
-            statusColText: statusObj ? statusObj?.[0]?.status : 'Undetected',
+            statusColText: statusObj ? statusObj?.[0]?.status : INVENTORY_STATUS.UNDETECTED,
             fileSystemDeploymentMode: getFileSystemDeploymentMode(perRow?.deploymentTypes?.[0]?.type || ''),
             fileSystemType: getDiscoverFileSystemType(perRow)
             // protection: {},
@@ -659,4 +680,34 @@ export const formatDiscoverInstanceData = (
         };
     });
     return instanceRows;
+};
+
+export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
+    if (!data || data.length < 2) {
+        return data;
+    }
+    const sort_order_action_list = [
+        INVENTORY_ACTIONS.MANAGE + 'true',
+        INVENTORY_ACTIONS.MANAGE + 'false',
+        INVENTORY_ACTIONS.MANAGE,
+        INVENTORY_ACTIONS.EXPLORE_SAVINGS + 'false',
+        INVENTORY_ACTIONS.EXPLORE_SAVINGS + 'true',
+        INVENTORY_ACTIONS.EXPLORE_SAVINGS,
+        ''
+    ];
+    const result = data.slice().sort((a, b) => {
+        const indexA = sort_order_action_list.indexOf((a.action || '') + (a?.actionDisable?.toString() || ''));
+        const indexB = sort_order_action_list.indexOf((b.action || '') + (b?.actionDisable?.toString() || ''));
+        if (indexA !== -1 && indexB !== -1) {
+            return indexA - indexB;
+        }
+        if (indexA !== -1) {
+            return -1;
+        }
+        if (indexB !== -1) {
+            return 1;
+        }
+        return 0;
+    });
+    return result;
 };
