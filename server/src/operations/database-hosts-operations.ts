@@ -40,7 +40,8 @@ import {
     FileSystemTypes,
     CUSTOM,
     SQL_WEB,
-    VERSION_2_0
+    VERSION_2_0,
+    V2_API_PAGE_SIZE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -824,7 +825,8 @@ async function getDatabaseHostsSummary(
     awsRegion?: string,
     customerCredentialsId?: string,
     vpcId?: string,
-    fsxId?: string
+    fsxId?: string,
+    pageSize?: number
 ): Promise<DatabaseHostSummaryPerStorageTypeListResponseType> {
     logger.info(
         'Fetching all database hosts deployed in account ',
@@ -845,7 +847,7 @@ async function getDatabaseHostsSummary(
         RESOURCESTYPE.MSSQL,
         fsxId,
         undefined,
-        API_PAGE_SIZE,
+        pageSize ? pageSize : V2_API_PAGE_SIZE,
         nextToken
     );
 
