@@ -172,8 +172,12 @@ async function getAllResourceUtilisationDetails(
     const diskUtilization: UtilisationResponseBodyInterface = {
         used: dbSizeData?.TotalSize?.toString() || '0',
         total: diskData?.total?.toString() || '0',
-        remaining: (Number(diskData.total) - dbSizeData.TotalSize).toString(),
-        percentUsed: Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)).toString(),
+        remaining: isNaN(Number(diskData.total) - dbSizeData.TotalSize)
+            ? '0'
+            : (Number(diskData.total) - dbSizeData.TotalSize).toString(),
+        percentUsed: isNaN(Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)))
+            ? '0'
+            : Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)).toString(),
         error: diskError
     };
 
@@ -933,13 +937,20 @@ async function getMssqlInstanceGuid(credentialsId: string, region: string, insta
     }
 }
 
-async function getActiveSqlNodeV2(
+async function getActiveSqlNodeAndInstanceDetails(
     credentialsId: string,
     region: string,
     nodeIds: string[],
     databaseInstanceName: string,
     resourceId?: string
 ) {
+    logger.info('Getting active SQL node and instance details', {
+        credentialsId,
+        region,
+        nodeIds,
+        databaseInstanceName,
+        resourceId
+    });
     try {
         for (const nodeId of nodeIds) {
             let connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
@@ -958,9 +969,10 @@ async function getActiveSqlNodeV2(
                         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
                     }
                 } else {
-                    const errorMessage = `SSM status of node ${nodeId} is not running :${connectionStatus.Status}`;
-                    logger.error(errorMessage, { connectionStatus });
+                    logger.error(`No active sql instances found in node ${nodeId} `);
                 }
+            } else {
+                logger.error(`SSM status of node ${nodeId} is not running :${connectionStatus.Status}`);
             }
         }
     } catch (err) {
@@ -983,7 +995,7 @@ async function getActiveNodeAndInstanceDetails(
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
     const { database_instance_name: instanceName } = databaseInstanceDetails;
 
-    const activeNodeResponse = await getActiveSqlNodeV2(
+    const activeNodeResponse = await getActiveSqlNodeAndInstanceDetails(
         credentialsId,
         region,
         [node1InstanceId, ...(node2InstanceId ? [node2InstanceId] : [])],
@@ -1026,5 +1038,5 @@ export {
     getActiveSqlInstanceName,
     getAllInstanceDetails,
     getActiveNodeAndInstanceDetails,
-    getActiveSqlNodeV2
+    getActiveSqlNodeAndInstanceDetails
 };

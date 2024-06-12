@@ -59,7 +59,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
         .get(`${API_PREFIX_PATH}/database-hosts`, { schema: DatabaseHostsSummarySchema }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region },
-                query: { fields, nextToken, vpcId, fsxId, pageSize }
+                query: { fields, nextToken, vpcId, fsxId }
             } = request;
             const response = await getDatabaseHostsSummary(
                 accountId,
@@ -68,8 +68,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 region,
                 credentialsId,
                 vpcId,
-                fsxId,
-                pageSize
+                fsxId
             );
             return reply.send(response);
         })
@@ -302,7 +301,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region },
-                    query: { fields, nextToken, vpcId, fsxId }
+                    query: { fields, nextToken, vpcId, fsxId, pageSize }
                 } = request;
                 const response = await getDatabaseHostsSummaryV2(
                     accountId,
@@ -311,7 +310,8 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     fields,
                     nextToken,
                     vpcId,
-                    fsxId
+                    fsxId,
+                    pageSize
                 );
                 return reply.send(response);
             }

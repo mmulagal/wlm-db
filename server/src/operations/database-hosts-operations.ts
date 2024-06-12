@@ -825,8 +825,7 @@ async function getDatabaseHostsSummary(
     awsRegion?: string,
     customerCredentialsId?: string,
     vpcId?: string,
-    fsxId?: string,
-    pageSize?: number
+    fsxId?: string
 ): Promise<DatabaseHostSummaryPerStorageTypeListResponseType> {
     logger.info(
         'Fetching all database hosts deployed in account ',
@@ -847,7 +846,7 @@ async function getDatabaseHostsSummary(
         RESOURCESTYPE.MSSQL,
         fsxId,
         undefined,
-        pageSize ? pageSize : V2_API_PAGE_SIZE,
+        API_PAGE_SIZE,
         nextToken
     );
 
@@ -1310,7 +1309,8 @@ async function getDatabaseHostsSummaryV2(
     fields?: string,
     nextToken?: string,
     vpcId?: string,
-    fsxId?: string
+    fsxId?: string,
+    pageSize?: number
 ) {
     logger.info(
         'Fetching all database hosts deployed in account ',
@@ -1320,8 +1320,11 @@ async function getDatabaseHostsSummaryV2(
         awsRegion,
         customerCredentialsId,
         vpcId,
-        fsxId
+        fsxId,
+        pageSize
     );
+
+    const apiPageSize = pageSize || V2_API_PAGE_SIZE;
 
     const resourceDetails = await listResources(
         accountId,
@@ -1331,7 +1334,7 @@ async function getDatabaseHostsSummaryV2(
         RESOURCESTYPE.MSSQL,
         fsxId,
         undefined,
-        API_PAGE_SIZE,
+        apiPageSize,
         nextToken
     );
 
@@ -1370,8 +1373,7 @@ async function getDatabaseHostsSummaryV2(
     return {
         count: databaseHosts.length,
         items: databaseHosts,
-        nextToken:
-            resourceDetails?.length === API_PAGE_SIZE ? resourceDetails[resourceDetails.length - 1].id : undefined
+        nextToken: resourceDetails?.length === apiPageSize ? resourceDetails[resourceDetails.length - 1].id : undefined
     };
 }
 

@@ -30,7 +30,7 @@ import {
     getAllResourceUtilisation,
     getMssqlInstanceGuid,
     getAllInstanceDetails,
-    getActiveSqlNodeV2
+    getActiveSqlNodeAndInstanceDetails
 } from '../../../src/operations/workloads/mssql/mssql-operations';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
 import { DATABASE_METRIC_TYPE, DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../src/utils/consts';
@@ -184,7 +184,7 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get active instance', async () => {
-        const resp = await getActiveSqlNodeV2(
+        const resp = await getActiveSqlNodeAndInstanceDetails(
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             [ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID],
