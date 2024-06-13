@@ -1812,8 +1812,15 @@ async function getSandboxSplitEstimate(
 
     const parsedResp = sqlResponseParsing(mappings);
 
-    if (parsedResp.error) {
+    if (parsedResp?.error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+    }
+
+    if (!parsedResp?.data?.parentVolume || !parsedResp?.log?.parentVolume) {
+        throw createError(
+            HttpErrorCodes.VALIDATION_ERROR,
+            'The sandbox seems to be already split and hence cannot be altered!'
+        );
     }
 
     // get the estimated split size
@@ -1847,8 +1854,6 @@ async function getSandboxSplitEstimate(
         accountId,
         false
     );
-
-    logger.info('ESTIMATED RESP>>>', estimateResp);
 
     if (!estimateResp) {
         logger.error('Failed to get volume split estimate', { databaseHostId });
@@ -2381,7 +2386,10 @@ async function performSplitOperation(
             credentialsId,
             region,
             parentJobId,
-            [mappings.data.volumeUuid, mappings.log.volumeUuid],
+            JSON.stringify([
+                { volumeId: mappings.data.volumeUuid, volumeName: mappings.data.volumeName },
+                { volumeId: mappings.log.volumeUuid, volumeName: mappings.log.volumeName }
+            ]),
             resDetails
         );
 
@@ -2460,10 +2468,10 @@ async function splitVolumes(
     credentialsId: string,
     region: string,
     parentJobId: string,
-    volumeIds: Array<string>,
+    volumes: string,
     resourceDetail: HostAndDbInfo
 ) {
-    logger.info('Split volumes', { accountId, credentialsId, region, parentJobId, volumeIds, resourceDetail });
+    logger.info('Split volumes', { accountId, credentialsId, region, parentJobId, volumes, resourceDetail });
 
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
@@ -2478,9 +2486,7 @@ async function splitVolumes(
     });
 
     try {
-        const command = [
-            splitFlexCloneVolumes(resourceDetail.fsxId, region, JSON.stringify(volumeIds), resourceDetail.instanceName)
-        ];
+        const command = [splitFlexCloneVolumes(resourceDetail.fsxId, region, volumes, resourceDetail.instanceName)];
 
         const resp = await callSsmExecution(
             credentialsId,

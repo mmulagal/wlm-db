@@ -500,7 +500,7 @@ function getMonthlyPriceFromHourlyPrice(hourlyPrice: number) {
     return hourlyPrice * HOURS_IN_MONTH;
 }
 
-function getDatabsaeInstanceName(instanceName: string, isDefault: boolean = true) {
+function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true) {
     logger.info('Generate database instance name', { instanceName, isDefault });
 
     if (isDefault) {
@@ -543,5 +543,5 @@ export {
     camelizeKeys,
     convertToBytes,
     getMonthlyPriceFromHourlyPrice,
-    getDatabsaeInstanceName
+    getDatabaseInstanceName
 };

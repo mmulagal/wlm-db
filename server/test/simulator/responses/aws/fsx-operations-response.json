@@ -1,0 +1,14 @@
+{
+    "volumeMap": {
+        "volumeUuids": ["2f004bac-2865-11ef-b359-1b0fb5fca86e"],
+        "volumeDBMap": [
+            {
+                "ontapVolumeuuid": "2f004bac-2865-11ef-b359-1b0fb5fca86e",
+                "driveVolumeName": "SQL-Data",
+                "databaseName": "master",
+                "driveVolumeId": "Volume{54500894-6228-4770-8901-8dcbf98c9d83}",
+                "ontapVolumeName": "wlmdb_sqldata_1718157389159"
+            }
+        ]
+    }
+}

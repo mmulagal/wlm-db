@@ -22,7 +22,10 @@ const TotalMonthlyCost = () => {
             <div className={styles.mainSection}>
                 {storageSavingsLoading && (
                     <>
-                        <div style={{ position: 'relative', top: '250px' }}>
+                        <div
+                            style={{ position: 'relative', top: '250px' }}
+                            className={storageSavingsLoading ? styles.loadingState : ''}
+                        >
                             <ComparisonChart
                                 data={[1, 1]}
                                 yTickFormatter={yValue => '$' + 0}
@@ -63,8 +66,12 @@ const TotalMonthlyCost = () => {
                     <>
                         <ComparisonChart
                             data={[
-                                storageSavingsResponse?.totalSummary?.recommended ? Number(storageSavingsResponse?.totalSummary?.recommended) : 0,
-                                storageSavingsResponse?.totalSummary?.existing ? Number(storageSavingsResponse?.totalSummary?.existing) : 0
+                                storageSavingsResponse?.totalSummary?.recommended
+                                    ? Number(storageSavingsResponse?.totalSummary?.recommended)
+                                    : 0,
+                                storageSavingsResponse?.totalSummary?.existing
+                                    ? Number(storageSavingsResponse?.totalSummary?.existing)
+                                    : 0
                             ]}
                             yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
                             height={370}

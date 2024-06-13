@@ -483,3 +483,21 @@ export const OS_VERSIONS_LIST = [
 ];
 
 export const SANDBOX_ACTIONS_POLLING_INTERVAL = 5000;
+
+export const INVENTORY_STATUS = {
+    MANAGED: 'Managed',
+    UNMANAGED: 'Unmanaged',
+    DETECTED: 'Detected',
+    UNDETECTED: 'Undetected',
+    IN_PROGRESS: 'In progress',
+    ONLINE: 'Online',
+    OFFLINE: 'Offline',
+    UNKNOWN: 'Unknown',
+    SSM_ONLINE: 'online',
+    SSM_CONNECTED: 'connected'
+};
+
+export const INVENTORY_ACTIONS = {
+    MANAGE: 'Manage',
+    EXPLORE_SAVINGS: 'Explore savings'
+};

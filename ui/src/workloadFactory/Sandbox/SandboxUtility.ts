@@ -40,7 +40,8 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
                 tag: item?.tag,
                 status: 'active',
                 baseSnapshot: item?.baseSnapshot,
-                createdAt: item?.createdAt
+                createdAt: item?.createdAt,
+                ageForSorting: -1 * parseInt(item?.createdAt)
             };
         });
     return retData;

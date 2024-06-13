@@ -13,7 +13,8 @@ const initialInventoryV2State: InventorySliceData = {
     discoveredHosts: {
         discoveredHostData: null,
         discoverHostLoading: false
-    }
+    },
+    fsxCredentialStatusObj: null
 };
 
 const inventoryV2Slice = createSlice({
@@ -43,6 +44,9 @@ const inventoryV2Slice = createSlice({
         },
         setIsDiscoverHostLoading: (state, action: PayloadAction<any>) => {
             state.discoveredHosts.discoverHostLoading = action.payload;
+        },
+        setFsxCredentialStatus: (state, action: PayloadAction<any>) => {
+            state.fsxCredentialStatusObj = action.payload;
         }
     }
 });
@@ -55,7 +59,8 @@ export const {
     setIsFullHostDataLoading,
     addDatabaseHostsDataV2,
     setIsDiscoveredHostData,
-    setIsDiscoverHostLoading
+    setIsDiscoverHostLoading,
+    setFsxCredentialStatus
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
