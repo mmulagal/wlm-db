@@ -510,7 +510,8 @@ const SandboxTable = () => {
                 header={'Integrity check'}
                 content={
                     <DsTypography variant="Regular_14">
-                        `Do you want to perform integrity check for sandbox ${rowData.name}`
+                        Do you want to perform integrity check for sandbox{' '}
+                        <span style={{ fontWeight: '590' }}>{rowData.name}</span>
                     </DsTypography>
                 }
                 primaryButton={'Integrity check'}
