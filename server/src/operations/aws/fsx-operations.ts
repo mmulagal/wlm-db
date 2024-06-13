@@ -39,6 +39,11 @@ interface FsxStorage {
     storage: number;
 }
 
+interface MappedOnTapVolumeResponse {
+    volumeUuids: string[];
+    volumeDBMap: any;
+}
+
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
 const TWENTYFOUR_HOURS = '24h';
@@ -242,20 +247,25 @@ async function getStorageDataUsingSSM(
     return jsonResponse;
 }
 
-async function getVolumeIdsFromUuids(credentialsId: string, region: string, fsxId: string, volumeUuids: string[]) {
-    logger.info('List volume ids in an fsx', {
+async function getFsxnVolIdsFromOntapVolIds(
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    volumeUuids: string[]
+) {
+    logger.info('Get the Fsxn volume ids from the ontap volume ids', {
         credentialsId,
         region,
         fsxId,
         volumeUuids
     });
 
-    const { Volumes: volumes } = await describeFSxVolumes(credentialsId, region, fsxId);
+    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, fsxId);
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
 
-    (volumes || []).forEach(volume => {
+    volumes.forEach(volume => {
         const { OntapConfiguration: { UUID = '' } = {}, VolumeId = '' } = volume;
         if (volumeUuids.includes(UUID)) {
             volumeIds.push(VolumeId);
@@ -283,15 +293,15 @@ async function isFsxnAwsBackupEnabled(
         fileSystemId
     });
 
-    const response = await getMappedOntapVolumes(credentialsId, region, fileSystemId, activeNodeInstanceId);
-
-    const { volumeUuids, volumeDBMap } = (response as { volumeUuids: string[]; volumeDBMap: any }) || {
-        volumeUuids: [],
-        volumeDBMap: {}
-    };
+    const { volumeUuids, volumeDBMap } = ((await getMappedOntapVolumes(
+        credentialsId,
+        region,
+        fileSystemId,
+        activeNodeInstanceId
+    )) as MappedOnTapVolumeResponse) || { volumeUuids: [], volumeDBMap: {} };
 
     if (!isEmpty(volumeUuids)) {
-        const { volumeIds, uuidVolumeIdMap } = await getVolumeIdsFromUuids(
+        const { volumeIds, uuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
             credentialsId,
             region,
             fileSystemId,
@@ -369,11 +379,12 @@ async function getOntapVolumesSnapshotCount(
     });
 
     try {
-        const resp = await getMappedOntapVolumes(credentialsId, region, fileSystemId, activeNodeInstanceId);
-        const { volumeUuids, volumeDBMap } = (resp as { volumeUuids: string[]; volumeDBMap: any }) || {
-            volumeUuids: [],
-            volumeDBMap: {}
-        };
+        const { volumeUuids, volumeDBMap } = ((await getMappedOntapVolumes(
+            credentialsId,
+            region,
+            fileSystemId,
+            activeNodeInstanceId
+        )) as MappedOnTapVolumeResponse) || { volumeUuids: [], volumeDBMap: {} };
 
         if (!isEmpty(volumeUuids)) {
             const apiEndpoint = '/storage/volumes';
