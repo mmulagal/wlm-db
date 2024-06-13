@@ -660,10 +660,13 @@ const SandboxTable = () => {
         },
         {
             Header: GENERAL.AGE,
-            accessor: 'age',
+            accessor: 'ageForSorting',
             id: '6',
             width: '128px',
-            filterOptions: 'auto'
+            isSortable: true,
+            renderCell: (cellData: any, rowData: any) => {
+                return <DsTypography variant="Regular_14">{rowData?.age}</DsTypography>;
+            }
         },
 
         {
