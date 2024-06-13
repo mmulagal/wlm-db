@@ -32,7 +32,8 @@ import {
     CheckSandboxIntegritySchema,
     DatabaseHostDetailsSchemaV2,
     DatabaseHostInstanceDetailsSchema,
-    DatabasesListSchemaV2
+    DatabasesListSchemaV2,
+    GetSandboxSnapshotsSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -46,7 +47,8 @@ import {
     getSandboxSplitEstimate,
     updateSandboxLifeCycle,
     splitSandbox,
-    checkDatabaseIntegrity
+    checkDatabaseIntegrity,
+    getSandboxSnapshots
 } from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -385,6 +387,25 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     sandboxName
                 );
                 return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/snapshots`,
+            { schema: GetSandboxSnapshotsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName },
+                    query: { historical }
+                } = request;
+                const response = await getSandboxSnapshots(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName,
+                    historical
+                );
+                return reply.send({ snapshots: response });
             }
         );
 }

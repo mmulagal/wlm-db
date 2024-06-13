@@ -32,7 +32,9 @@ import {
     addAccessPathAndAttachDb,
     splitFlexCloneVolumes,
     deleteExtendedPropertiesScript,
-    checkDatabaseIntegrityScript
+    checkDatabaseIntegrityScript,
+    readExtendedPropertiesOfSandbox,
+    getSnapshotsToClone
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails, Sandbox } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
@@ -50,6 +52,7 @@ import { getDriveInfo } from './createdb-operations';
 import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 
 const logger = getLogger();
+const TIME_WINDOW = 60; // 60 seconds
 
 interface SandboxObject {
     sandbox_properties: { name: string; value: string }[];
@@ -374,6 +377,7 @@ interface VolumeLunMap {
     volumeUuid: string;
     parentSvm?: string;
     parentVolume?: string;
+    parentVolumeUuid?: string;
 }
 
 interface VolumeLunMapping {
@@ -2717,6 +2721,143 @@ async function performIntegrityCheck(
     }
 }
 
+async function getSandboxSnapshots(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    sandboxName: string,
+    historical = false
+) {
+    logger.info('Get snapshots eligible for clone', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        sandboxName,
+        historical
+    });
+
+    const [{ metadata, co_relation_id: fileSystemId }] = await listResources(
+        accountId,
+        databaseHostId,
+        credentialsId,
+        region
+    );
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+
+    const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId
+    );
+
+    if (!isSSMConnected) {
+        logger.error('Failed to connect to the host through SSM', { databaseHostId });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to connect to the host through SSM');
+    }
+
+    if (!activeNodeInstanceId || !instanceName || !fileSystemId) {
+        logger.error('Failed to get the active node instance id', { databaseHostId });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the active node instance id');
+    }
+
+    let mappingsCommand = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
+    let readExtPropsCommand = [readExtendedPropertiesOfSandbox(sandboxName, instanceName)];
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        mappingsCommand = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
+        readExtPropsCommand = [readExtendedPropertiesOfSandbox('testdb')];
+    }
+
+    const [mappings, extendedProps] = await Promise.all([
+        callSsmExecution(credentialsId, region, mappingsCommand, activeNodeInstanceId),
+        callSsmExecution(credentialsId, region, readExtPropsCommand, activeNodeInstanceId)
+    ]);
+
+    if (!mappings || !extendedProps) {
+        logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume lun mapping for the database');
+    }
+
+    const parsedMappingResponse = sqlResponseParsing(mappings);
+    const parsedExtendedPropsResponse = sqlResponseParsing(extendedProps);
+
+    if (parsedMappingResponse.error || parsedExtendedPropsResponse.error) {
+        logger.error(parsedMappingResponse.error);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            parsedMappingResponse.error,
+            parsedExtendedPropsResponse.error
+        );
+    }
+
+    if (!parsedMappingResponse?.data?.parentVolumeUuid || !parsedMappingResponse?.log?.parentVolumeUuid) {
+        const errorMessage = 'The underlying volume doesnot have parents, the volume seems to be already split';
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    let createdTime = 0;
+    if (!historical && parsedExtendedPropsResponse?.createdAt && !Number.isNaN(parsedExtendedPropsResponse.createdAt)) {
+        createdTime = Math.trunc(parsedExtendedPropsResponse.createdAt / 1000);
+    }
+
+    let snapshotsCommand = [
+        getSnapshotsToClone(
+            fileSystemId,
+            region,
+            JSON.stringify([parsedMappingResponse.data.parentVolumeUuid, parsedMappingResponse.log.parentVolumeUuid]),
+            parsedMappingResponse.data.parentVolumeUuid,
+            sandboxName,
+            TIME_WINDOW,
+            createdTime
+        )
+    ];
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        snapshotsCommand = [
+            getSnapshotsToClone(
+                'test-fsx',
+                'us-east-1',
+                JSON.stringify(['5c1075d2-03a0-11ef-a514-55070fbfcab1', '5ace31ea-03a0-11ef-a514-55070fbfcab1']),
+                '5c1075d2-03a0-11ef-a514-55070fbfcab1',
+                'testdb1_clone'
+            )
+        ];
+    }
+
+    const snapshotResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        snapshotsCommand,
+        activeNodeInstanceId,
+        accountId,
+        false
+    );
+    if (!snapshotResponse) {
+        logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume lun mapping for the database');
+    }
+
+    const parsedSnapshotResponse = sqlResponseParsing(snapshotResponse);
+
+    if (parsedSnapshotResponse.error) {
+        logger.error(parsedSnapshotResponse.error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedSnapshotResponse.error);
+    }
+
+    const { snapshots } = parsedSnapshotResponse;
+
+    logger.debug('Snapshots eligible for clone', snapshots);
+
+    return snapshots.map((snapshot: { name: string; created: string }) => ({
+        name: snapshot.name,
+        created: new Date(snapshot.created).valueOf()
+    }));
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
@@ -2729,5 +2870,6 @@ export {
     getSandboxSplitEstimate,
     updateSandboxLifeCycle,
     splitSandbox,
-    checkDatabaseIntegrity
+    checkDatabaseIntegrity,
+    getSandboxSnapshots
 };

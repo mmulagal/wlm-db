@@ -319,6 +319,7 @@ const getDbMappedOntapVolumes = (
                         $obj = @{}
                         $obj['parentSvm'] = $volrecord.clone.parent_svm.name
                         $obj['parentVolume'] = $volrecord.clone.parent_volume.name
+                        $obj['parentVolumeUuid'] = $volrecord.clone.parent_volume.uuid
                         if ($responseObject.data.volumename -eq $volrecord.name) {
                             $responseObject.data += $obj
                         } elseif ($responseObject.log.volumename -eq $volrecord.name) {
@@ -1221,6 +1222,114 @@ DBCC CHECKDB($dbname) WITH NO_INFOMSGS, ALL_ERRORMSGS;
 Sqlcmd -S $instanceName -Q $query -m 1
 `;
 
+const readExtendedPropertiesOfSandbox = (dbName: string, instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `
+    $dbname = '${dbName}'
+    $instanceName = "${instanceName}"
+
+    $responseObject = @{}
+
+    try {
+        $query = @"
+            SET NOCOUNT ON;
+            USE $dbname;
+            SELECT name, value
+            FROM fn_listextendedproperty(default, default, default, default, default, default, default) FOR JSON PATH;
+"@
+        $sqlresponse = Sqlcmd -S $instanceName -Q $query -y 0 -m 1
+        $sqlresponse = $sqlresponse | ConvertFrom-JSON
+
+        $sqlresponse | ForEach-Object {
+            $responseObject[$_.name] = $_.value
+        }
+    } catch {
+        $responseObject['error'] = "sqlerror: $($_.Exception.Message)"
+    }
+
+    $responseObject | ConvertTo-Json -Depth 5
+`;
+
+const getSnapshotsToClone = (
+    fsxId: string,
+    fsxRegion: string,
+    volumeids: string,
+    dataVolume: string,
+    sandboxName: string,
+    window = 60,
+    createdTime = 0
+) => `
+    $fsxid = '${fsxId}'
+    $fsxregion = '${fsxRegion}'
+    $volumeids = '${volumeids}' | ConvertFrom-Json
+    $dataVolume = '${dataVolume}'
+    $sandboxName = '${sandboxName}'
+    $timeWindow = ${window}
+    $createdTime = ${createdTime}
+
+    Start-Transcript -Path "C:\\cfn\\log\\get_snapshots_to_clone_$dbname.log.txt" -Append | Out-Null
+    Write-Information "Getting snapshots to clone for $sandboxName"
+
+    $WarningPreference = 'SilentlyContinue';
+    $responseObject = @{}
+
+    try {
+        ${ontapRestRequest}
+
+        Function Get-VolumeSnapshots {
+            write-Information "Getting volume snapshots"
+
+            $snapshotRecords = @()
+            $volumeids | ForEach-Object {
+                $volumeid = $_
+                $ApiEndpoint = "/storage/volumes/$volumeid/snapshots"
+                $ApiQueryFilter = "create_time=>=$createdTime"
+    
+                $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $ApiQueryFilter
+                if ($volumeid -eq $dataVolume) {
+                    $response | Add-Member -MemberType NoteProperty -Name primary -Value $True
+                }
+                $snapshotRecords += $response
+            }
+
+            $snapshotRecords | ForEach-Object {
+                if ($_.num_records -eq 0) {
+                    throw "No snapshots found for one or more volumes."
+                }
+            }
+
+            $snapshots = @()
+            $primarySnapshots = $snapshotRecords | Where-Object { $_.primary -eq $True } | Select-Object -ExpandProperty records
+            $snapshotRecords | Where-Object { $_.primary -ne $True } | ForEach-Object {
+                $secondarySnapshots = $_.records
+                $primarySnapshots | ForEach-Object {
+                    $primarySnapshot = $_
+                    $secondarySnapshot = $secondarySnapshots | Where-Object { $_.name -eq $primarySnapshot.name } | Select-Object -First 1
+                    $minTime = [int](Get-Date $primarySnapshot.create_time -UFormat %s) - $timewindow
+                    $maxTime = [int](Get-Date $primarySnapshot.create_time -UFormat %s) + $timewindow
+                    if ($secondarySnapshot -ne $null) {
+                        $snapshotCreateTime = [int](Get-Date $secondarySnapshot.create_time -UFormat %s)
+                        if ($snapshotCreateTime -ge $minTime -and $snapshotCreateTime -le $maxTime) {
+                            $snapshots += @{
+                                'name' = $primarySnapshot.name
+                                'created' = $primarySnapshot.create_time
+                            }
+                        }
+                    }
+                }
+            }
+            Write-Information "Snapshots to clone $($snapshots | ConvertTo-Json)"
+            $responseObject['snapshots'] = $snapshots
+        }
+
+        Get-VolumeSnapshots
+    } catch {
+        Write-Information $_.Exception.Message
+        $responseObject['error'] = $_.Exception.Message
+        return $responseObject | ConvertTo-Json -Depth 5
+    }
+
+    $responseObject | ConvertTo-Json -Depth 5
+`;
+
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
@@ -1235,5 +1344,7 @@ export {
     addAccessPathAndAttachDb,
     splitFlexCloneVolumes,
     deleteExtendedPropertiesScript,
-    checkDatabaseIntegrityScript
+    checkDatabaseIntegrityScript,
+    readExtendedPropertiesOfSandbox,
+    getSnapshotsToClone
 };
