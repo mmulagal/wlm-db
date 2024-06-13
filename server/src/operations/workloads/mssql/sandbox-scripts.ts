@@ -1292,7 +1292,7 @@ const getSnapshotsToClone = (
 
             $snapshotRecords | ForEach-Object {
                 if ($_.num_records -eq 0) {
-                    $responseObject['error'] = "No snapshots found for one or more volumes."
+                    throw "No snapshots found for one or more volumes."
                 }
             }
 
