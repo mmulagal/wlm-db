@@ -314,7 +314,8 @@ const HOST_AND_SQL_INFO_PS1 = [
   
       $responseObject['sqlServerInstance'] = $instanceName
       $responseObject['sqlServerState'] = $sqlService.State
-
+      $responseObject['windowsOsVersion'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
+      
       $clusterServiceStatus = (Get-Service -Name ClusSvc -ErrorAction SilentlyContinue).Status
       if ($clusterServiceStatus -eq "Running") {
         $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
