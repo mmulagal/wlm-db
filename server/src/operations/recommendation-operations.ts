@@ -430,8 +430,8 @@ export default async function getSqlInstanceLicenseRecommendations(
                     sqlServerDeploymentType,
                     recommendedSqlLicenseType,
                     ec2InstanceType,
-                    existingInstanceHourlyPrice,
-                    existingInstanceHourlyPriceWithoutLicense
+                    recommendedInstanceHourlyPrice, // license type is already identified, so use the price for the recommended license type which is essentially existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit
+                    recommendedInstanceHourlyPriceWithoutLicense
                 );
                 recommendedInstanceHourlyPrice = recommendedCompute.price;
                 recommendedInstanceHourlyPriceWithoutLicense = recommendedCompute.baseInstancePrice;
@@ -444,7 +444,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                     recommendedSqlLicenseType !== existingLicenseType
                 ) {
                     recommendedLicense = {
-                        sqlServerEdition: `Standard Edition ${processorArchitecture}`,
+                        sqlServerEdition: `Standard Edition (${processorArchitecture})`,
                         sqlServerVersion,
                         price:
                             recommendedInstanceHourlyPrice && recommendedInstanceHourlyPriceWithoutLicense
