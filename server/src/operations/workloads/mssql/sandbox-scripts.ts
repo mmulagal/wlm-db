@@ -90,7 +90,7 @@ const checkDatabaseExists = (dbCloneName: string, instanceName: string = DEFAULT
 // Assumes that the following variables are defined in the script:
 //  - $FSxID: FSx ID
 //  - $FSxRegion: FSx region
-const ontapRestRequest = `
+const ontapRestRequest = (skipCertificateCheck = false) => `
         Add-Type @"
             using System.Net;
             using System.Security.Cryptography.X509Certificates;
@@ -114,7 +114,11 @@ const ontapRestRequest = `
         $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
 
         $isprivatesubnet = $False
-        $connection =  Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet
+        $connection = ${
+            skipCertificateCheck
+                ? '$False'
+                : 'Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet'
+        }
         if ($connection -eq $False) {
             $isprivatesubnet = $True
             $regionCertificate = ''
@@ -250,7 +254,7 @@ const getDbMappedOntapVolumes = (
             return $responseObject
         }
     
-        ${ontapRestRequest}
+        ${ontapRestRequest(true)}
 
         Function Get-LunFromSerialNumber($responseObject) {
             Write-debug "Get ONTAP lun name from serial numbers for: $responseObject"
@@ -405,7 +409,7 @@ const createVolumeClone = (
         $epoch = (Get-Date -Date ((Get-Date).DateTime) -UFormat %s)
         $defaultSnapshot = 'netapp_wf_clone_' + $epoch
     
-        ${ontapRestRequest}
+        ${ontapRestRequest()}
 
         Function Get-IgroupName {
             $nodeiqn = (Get-InitiatorPort).NodeAddress
@@ -789,7 +793,7 @@ const cleanUpOntapResources = (
             }
         }
 
-        ${ontapRestRequest}
+        ${ontapRestRequest()}
         ${ontapJobStatusTemplate}
 
         $volumeIds | ForEach-Object {
@@ -1123,7 +1127,7 @@ const splitFlexCloneVolumes = (
     $responseObject = @{}
 
     try {
-        ${ontapRestRequest}
+        ${ontapRestRequest()}
         ${ontapJobStatusTemplate}
 
         Function Invoke-VolumeSplit {
@@ -1265,14 +1269,14 @@ const getSnapshotsToClone = (
     $timeWindow = ${window}
     $createdTime = ${createdTime}
 
-    Start-Transcript -Path "C:\\cfn\\log\\get_snapshots_to_clone_$dbname.log.txt" -Append | Out-Null
+    Start-Transcript -Path "C:\\cfn\\log\\get_snapshots_to_clone_$sandboxName.log.txt" -Append | Out-Null
     Write-Information "Getting snapshots to clone for $sandboxName"
 
     $WarningPreference = 'SilentlyContinue';
     $responseObject = @{}
 
     try {
-        ${ontapRestRequest}
+        ${ontapRestRequest(true)}
 
         Function Get-VolumeSnapshots {
             write-Information "Getting volume snapshots"
