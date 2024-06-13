@@ -208,9 +208,7 @@ const getDbMappedOntapVolumes = (
 
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_$dbname.log.txt" -Append | Out-Null
 
-    if ($null -eq $responseObject) {
-        $responseObject = @{}
-    }
+    $responseObject = @{}
     
     try {
         $sqlquery = @"
@@ -1223,13 +1221,13 @@ DBCC CHECKDB($dbname) WITH NO_INFOMSGS, ALL_ERRORMSGS;
 "@
 Sqlcmd -S $instanceName -Q $query -m 1
 `;
-const readExtendedPropertiesOfSandbox = (dbName: string, instanceName: string = '.') => `
+
+const readExtendedPropertiesOfSandbox = (dbName: string, instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `
     $dbname = '${dbName}'
     $instanceName = "${instanceName}"
 
-    if ($null -eq $responseObject) {
-        $responseObject = @{}
-    }
+    $responseObject = @{}
+
     try {
         $query = @"
             SET NOCOUNT ON;
@@ -1246,6 +1244,8 @@ const readExtendedPropertiesOfSandbox = (dbName: string, instanceName: string = 
     } catch {
         $responseObject['error'] = "sqlerror: $($_.Exception.Message)"
     }
+
+    $responseObject | ConvertTo-Json -Depth 5
 `;
 
 const getSnapshotsToClone = (

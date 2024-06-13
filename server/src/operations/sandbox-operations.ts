@@ -2763,46 +2763,53 @@ async function getSandboxSnapshots(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the active node instance id');
     }
 
-    let command = [
-        `${readExtendedPropertiesOfSandbox(sandboxName, instanceName)}
-        ${getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)}`
-    ];
+    let mappingsCommand = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
+    let readExtPropsCommand = [readExtendedPropertiesOfSandbox(sandboxName, instanceName)];
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
+        mappingsCommand = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
+        readExtPropsCommand = [readExtendedPropertiesOfSandbox('testdb')];
     }
 
-    const mappings = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
+    const [mappings, extendedProps] = await Promise.all([
+        callSsmExecution(credentialsId, region, mappingsCommand, activeNodeInstanceId),
+        callSsmExecution(credentialsId, region, readExtPropsCommand, activeNodeInstanceId)
+    ]);
 
-    if (!mappings) {
+    if (!mappings || !extendedProps) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume lun mapping for the database');
     }
 
-    const parsedResp = sqlResponseParsing(mappings);
+    const parsedMappingResponse = sqlResponseParsing(mappings);
+    const parsedExtendedPropsResponse = sqlResponseParsing(extendedProps);
 
-    if (parsedResp.error) {
-        logger.error(parsedResp.error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+    if (parsedMappingResponse.error || parsedExtendedPropsResponse.error) {
+        logger.error(parsedMappingResponse.error);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            parsedMappingResponse.error,
+            parsedExtendedPropsResponse.error
+        );
     }
 
-    if (!parsedResp?.data?.parentVolumeUuid || !parsedResp?.log?.parentVolumeUuid) {
+    if (!parsedMappingResponse?.data?.parentVolumeUuid || !parsedMappingResponse?.log?.parentVolumeUuid) {
         const errorMessage = 'The underlying volume doesnot have parents, the volume seems to be already split';
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
     let createdTime = 0;
-    if (!historical && parsedResp?.createdAt && !Number.isNaN(parsedResp.createdAt)) {
-        createdTime = parsedResp.createdAt;
+    if (!historical && parsedExtendedPropsResponse?.createdAt && !Number.isNaN(parsedExtendedPropsResponse.createdAt)) {
+        createdTime = Math.trunc(parsedExtendedPropsResponse.createdAt / 1000);
     }
 
     let snapshotsCommand = [
         getSnapshotsToClone(
             fileSystemId,
             region,
-            JSON.stringify([parsedResp.data.parentVolumeUuid, parsedResp.log.parentVolumeUuid]),
-            parsedResp.data.parentVolumeUuid,
+            JSON.stringify([parsedMappingResponse.data.parentVolumeUuid, parsedMappingResponse.log.parentVolumeUuid]),
+            parsedMappingResponse.data.parentVolumeUuid,
             sandboxName,
             TIME_WINDOW,
             createdTime
@@ -2838,7 +2845,7 @@ async function getSandboxSnapshots(
 
     if (parsedSnapshotResponse.error) {
         logger.error(parsedSnapshotResponse.error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedSnapshotResponse.error);
     }
 
     const { snapshots } = parsedSnapshotResponse;
