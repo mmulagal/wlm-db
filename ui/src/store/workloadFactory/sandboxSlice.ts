@@ -10,6 +10,7 @@ export const initialSandboxState: SandboxEntities = {
         sandboxListError: ''
     },
     aggregatedSandboxList: [],
+    allSandboxList: [],
     getSandboxSavings: {
         sandboxSavings: {
             consumedStorage: 0,
@@ -38,6 +39,9 @@ const sandboxSlice = createSlice({
         setAggregatedSandboxList: (state, action: PayloadAction<any>) => {
             state.aggregatedSandboxList = action.payload;
         },
+        setAllSandboxList: (state, action: PayloadAction<any>) => {
+            state.allSandboxList = action.payload;
+        },
         setSandboxSavingsState: (state, action: PayloadAction<any>) => {
             state.getSandboxSavings = action.payload;
         },
@@ -56,6 +60,7 @@ const sandboxSlice = createSlice({
 export const {
     setSandboxListState,
     setAggregatedSandboxList,
+    setAllSandboxList,
     setSandboxSavingsState,
     setShowBanner,
     updateConnectionInfo,
