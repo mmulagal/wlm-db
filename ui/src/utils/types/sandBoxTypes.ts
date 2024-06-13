@@ -90,6 +90,7 @@ export interface SandboxEntities {
         sandboxListError: string;
     };
     aggregatedSandboxList: SandboxListEntities;
+    allSandboxList: SandboxListEntities;
     getSandboxSavings: {
         sandboxSavings: {
             consumedStorage: number;
