@@ -1,4 +1,4 @@
 apiVersion: v1
 description: A Helm chart for wlmdb deployment
 name: wlmdb
-version: 1.1.017
+version: 1.1.018
