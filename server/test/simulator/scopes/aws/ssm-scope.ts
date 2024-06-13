@@ -450,7 +450,7 @@ const getSnapshotsToCloneCommand = {
 };
 
 const readExtendedPropertiesCommand = {
-    commands: [readExtendedPropertiesOfSandbox(testdb1_clone)]
+    commands: [readExtendedPropertiesOfSandbox('testdb1_clone')]
 };
 
 ssmMock
