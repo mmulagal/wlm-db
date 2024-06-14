@@ -11,7 +11,6 @@ import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import RebaseLineContent from './RebaseLineContent/RebaseLineContent';
 import RebaseSplitContent from './RebaseSplitContent/RebaseSplitContent';
-import RebaseRollbackContent from './RebaseRollbackContent/RebaseRollbackContent';
 import ViewDialog from '../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { useDispatch } from 'react-redux';
@@ -19,6 +18,8 @@ import {
     setAggregatedSandboxList,
     setSandboxSavingsState,
     updateConnectionInfo,
+    updateRollbackSnapshotList,
+    updateRollbackSnapshotsLoading,
     updateSplitEstimateLoading
 } from '../../../store/workloadFactory/sandboxSlice';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
@@ -26,6 +27,7 @@ import {
     getBaseUrl,
     useCheckIntegrityMutation,
     useDeleteSandboxMutation,
+    useLazyGetRollbackSnapshotsQuery,
     useLazyGetSandboxSavingsQuery,
     useLazyGetSplitEstimateInfoQuery,
     useLazyGetSubTaskListQuery,
@@ -50,7 +52,9 @@ import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 const SandboxTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { aggregatedSandboxList, connectionInfo } = useAppSelector(state => state.sandbox);
+    const { aggregatedSandboxList, connectionInfo, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
+        state => state.sandbox
+    );
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
 
@@ -307,24 +311,37 @@ const SandboxTable = () => {
         setDialog(
             <DialogComponent
                 header={'Refresh'}
-                content={<RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} />}
+                content={
+                    <RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} rowData={rowData} />
+                }
                 primaryButton={'Refresh'}
+                primaryButtonDisabled={isRollbackSelected && !selectedRollbackSnapshot}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
                     let output = data.map((obj: any) => {
                         if ((obj?.id === rowData?.id && obj.name) === rowData.name) {
-                            return { ...obj, cellProps: { isDisabled: true }, status: 'refresh', menuDisable: true };
+                            return {
+                                ...obj,
+                                cellProps: { isDisabled: true },
+                                status: 'refresh',
+                                menuDisable: true
+                            };
                         }
                         return obj;
                     });
                     dispatch(setAggregatedSandboxList(output));
+
+                    const updatedState = store.getState();
+                    const { isRollbackSelected, selectedRollbackSnapshot } = updatedState?.sandbox;
 
                     updateSandboxApi({
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         sandboxName: rowData?.name,
-                        payload: { action: 'REFRESH' }
+                        payload: isRollbackSelected
+                            ? { action: 'REFRESH', snapshot: selectedRollbackSnapshot?.value }
+                            : { action: 'REFRESH' }
                     }).then((res: any) => {
                         handleJob(res, rowData, 'refresh');
                     });
@@ -428,24 +445,6 @@ const SandboxTable = () => {
                 );
             }
         });
-    };
-
-    const handleRollback = () => {
-        setDialog(
-            <DialogComponent
-                header={'Roll-back'}
-                content={<RebaseRollbackContent />}
-                primaryButton={'Roll-back'}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    console.log('action');
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                customClass={styles.setWidth}
-            />
-        );
     };
 
     const handleConnectToTools = (rowData: any) => {
