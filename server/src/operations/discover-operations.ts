@@ -514,7 +514,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         scriptExecutionTime,
                         databaseCount,
                         failureInfo,
-                        sqlServerDeploymentType
+                        sqlServerDeploymentType,
+                        windowsOsVersion
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -543,6 +544,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         isDefaultInstance,
                         ...(failureInfo && { failureInfo }),
                         windowsAuthentication,
+                        windowsOsVersion:
+                            windowsOsVersion.match(/(Microsoft Windows Server \d+)/)[1] || windowsOsVersion,
                         sqlServerAuthentication,
                         storage: compact(uniqBy(storageTypes, v => [v.id, v.svmId, v.protocol].join())),
                         deploymentTypes: compact(

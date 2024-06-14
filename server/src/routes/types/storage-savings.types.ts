@@ -49,6 +49,8 @@ const StorageMetrics = Type.Object({
 const StorageSavingsCompute = Type.Object({
     instanceType: Type.String(),
     computeMonthlyPrice: Type.Optional(Type.Number()),
+    windowsOsVersion: Type.Optional(Type.String()),
+
     message: Type.Optional(Type.String())
 });
 
@@ -229,6 +231,7 @@ type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
 
 const ComputeDetails = Type.Object({
     instanceType: Type.String(),
+    windowsOsVersion: Type.Optional(Type.String()),
     computeHourlyPrice: Type.Optional(Type.Number()),
     instanceHourlyPrice: Type.Optional(Type.Number()),
     computeMonthlyPrice: Type.Optional(Type.Number()),
