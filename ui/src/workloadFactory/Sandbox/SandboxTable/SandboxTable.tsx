@@ -18,8 +18,6 @@ import {
     setAggregatedSandboxList,
     setSandboxSavingsState,
     updateConnectionInfo,
-    updateRollbackSnapshotList,
-    updateRollbackSnapshotsLoading,
     updateSplitEstimateLoading
 } from '../../../store/workloadFactory/sandboxSlice';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
@@ -27,7 +25,6 @@ import {
     getBaseUrl,
     useCheckIntegrityMutation,
     useDeleteSandboxMutation,
-    useLazyGetRollbackSnapshotsQuery,
     useLazyGetSandboxSavingsQuery,
     useLazyGetSplitEstimateInfoQuery,
     useLazyGetSubTaskListQuery,
@@ -129,7 +126,7 @@ const SandboxTable = () => {
             },
             {
                 id: 'integrityCheck',
-                displayName: 'Run Integrity check'
+                displayName: 'Check integrity'
             }
         ];
     };
@@ -506,14 +503,14 @@ const SandboxTable = () => {
     const handleIntegrityCheck = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Integrity check'}
+                header={'Check integrity'}
                 content={
                     <DsTypography variant="Regular_14">
                         Do you want to perform integrity check for sandbox{' '}
-                        <span style={{ fontWeight: '590' }}>{rowData.name}</span>
+                        <span style={{ fontWeight: '590' }}>{rowData.name}</span>?
                     </DsTypography>
                 }
-                primaryButton={'Integrity check'}
+                primaryButton={'Check integrity'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
                     let output = data.map((obj: any) => {
