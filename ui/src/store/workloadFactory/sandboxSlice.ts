@@ -26,7 +26,11 @@ export const initialSandboxState: SandboxEntities = {
         connectionString: null,
         isLoading: false
     },
-    splitEstimateLoading: false
+    splitEstimateLoading: false,
+    rollbackSnapshotsLoading: false,
+    rollbackSnapshotList: [],
+    isRollbackSelected: false,
+    selectedRollbackSnapshot: null
 };
 
 const sandboxSlice = createSlice({
@@ -53,6 +57,18 @@ const sandboxSlice = createSlice({
         },
         updateSplitEstimateLoading: (state, action: PayloadAction<any>) => {
             state.splitEstimateLoading = action.payload;
+        },
+        updateRollbackSnapshotsLoading: (state, action: PayloadAction<any>) => {
+            state.rollbackSnapshotsLoading = action.payload;
+        },
+        updateRollbackSnapshotList: (state, action: PayloadAction<any>) => {
+            state.rollbackSnapshotList = action.payload;
+        },
+        updateIsRollbackSelected: (state, action: PayloadAction<any>) => {
+            state.isRollbackSelected = action.payload;
+        },
+        updateSelectedRollbackSnapshot: (state, action: PayloadAction<any>) => {
+            state.selectedRollbackSnapshot = action.payload;
         }
     }
 });
@@ -64,7 +80,11 @@ export const {
     setSandboxSavingsState,
     setShowBanner,
     updateConnectionInfo,
-    updateSplitEstimateLoading
+    updateSplitEstimateLoading,
+    updateRollbackSnapshotsLoading,
+    updateRollbackSnapshotList,
+    updateIsRollbackSelected,
+    updateSelectedRollbackSnapshot
 } = sandboxSlice.actions;
 
 export default sandboxSlice;

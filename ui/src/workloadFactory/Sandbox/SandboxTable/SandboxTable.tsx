@@ -11,7 +11,6 @@ import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import RebaseLineContent from './RebaseLineContent/RebaseLineContent';
 import RebaseSplitContent from './RebaseSplitContent/RebaseSplitContent';
-import RebaseRollbackContent from './RebaseRollbackContent/RebaseRollbackContent';
 import ViewDialog from '../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { useDispatch } from 'react-redux';
@@ -50,7 +49,9 @@ import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 const SandboxTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { aggregatedSandboxList, connectionInfo } = useAppSelector(state => state.sandbox);
+    const { aggregatedSandboxList, connectionInfo, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
+        state => state.sandbox
+    );
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
 
@@ -125,7 +126,7 @@ const SandboxTable = () => {
             },
             {
                 id: 'integrityCheck',
-                displayName: 'Run Integrity check'
+                displayName: 'Check integrity'
             }
         ];
     };
@@ -307,24 +308,37 @@ const SandboxTable = () => {
         setDialog(
             <DialogComponent
                 header={'Refresh'}
-                content={<RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} />}
+                content={
+                    <RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} rowData={rowData} />
+                }
                 primaryButton={'Refresh'}
+                primaryButtonDisabled={isRollbackSelected && !selectedRollbackSnapshot}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
                     let output = data.map((obj: any) => {
                         if ((obj?.id === rowData?.id && obj.name) === rowData.name) {
-                            return { ...obj, cellProps: { isDisabled: true }, status: 'refresh', menuDisable: true };
+                            return {
+                                ...obj,
+                                cellProps: { isDisabled: true },
+                                status: 'refresh',
+                                menuDisable: true
+                            };
                         }
                         return obj;
                     });
                     dispatch(setAggregatedSandboxList(output));
+
+                    const updatedState = store.getState();
+                    const { isRollbackSelected, selectedRollbackSnapshot } = updatedState?.sandbox;
 
                     updateSandboxApi({
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         sandboxName: rowData?.name,
-                        payload: { action: 'REFRESH' }
+                        payload: isRollbackSelected
+                            ? { action: 'REFRESH', snapshot: selectedRollbackSnapshot?.value }
+                            : { action: 'REFRESH' }
                     }).then((res: any) => {
                         handleJob(res, rowData, 'refresh');
                     });
@@ -430,24 +444,6 @@ const SandboxTable = () => {
         });
     };
 
-    const handleRollback = () => {
-        setDialog(
-            <DialogComponent
-                header={'Roll-back'}
-                content={<RebaseRollbackContent />}
-                primaryButton={'Roll-back'}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    console.log('action');
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                customClass={styles.setWidth}
-            />
-        );
-    };
-
     const handleConnectToTools = (rowData: any) => {
         const baseUrl = getBaseUrl();
         const credID = headerSelectedCred?.data?.credentialsId;
@@ -507,14 +503,14 @@ const SandboxTable = () => {
     const handleIntegrityCheck = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Integrity check'}
+                header={'Check integrity'}
                 content={
                     <DsTypography variant="Regular_14">
                         Do you want to perform integrity check for sandbox{' '}
-                        <span style={{ fontWeight: '590' }}>{rowData.name}</span>
+                        <span style={{ fontWeight: '590' }}>{rowData.name}</span>?
                     </DsTypography>
                 }
-                primaryButton={'Integrity check'}
+                primaryButton={'Check integrity'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
                     let output = data.map((obj: any) => {
