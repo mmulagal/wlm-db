@@ -350,12 +350,7 @@ const getMappedOntapVolumesScript = (
 
         $sqlqueryresponse =  sqlcmd -S "${instanceName}" -Q $sqlqueryfordatabaseandvolumelist -y 0;   
 
-        Function Get-DatabaseMappedInVolume {        
-            param(
-                [Parameter(Mandatory = $true)]
-                [string]$sqlqueryresponse
-            )
-        
+        Function Get-DatabaseMappedInVolume($sqlqueryresponse) {        
             $sqlJsonResponse = $sqlqueryresponse | convertFrom-Json
         
             # Create an array to store the database-volume objects
@@ -384,7 +379,7 @@ const getMappedOntapVolumesScript = (
             )
 
             try {
-                $winvolumes = $sqlresponse | foreach { $_ | ConvertFrom-Json }
+                $winvolumes = $sqlresponse | convertFrom-Json
                 $Lunserialnumbers = @()
                 $VolumeSerialMapping = @{}
 
