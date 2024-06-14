@@ -454,7 +454,7 @@ async function retrieveComputeAndLicenseCost(
         ec2HostDetailsList.map(async ec2HostDetails => {
             const {
                 existingCompute: { price: ePrice = undefined, baseInstancePrice: eBasePrice = undefined } = {},
-                existingLicense: { price: eLicensePrice = undefined } = {},
+                existingLicense: { sqlServerEdition: eSqlServerEdition = '', price: eLicensePrice = undefined } = {},
                 recommendedCompute: {
                     instanceType: rInstanceType = '',
                     price: rPrice = undefined,
@@ -467,7 +467,7 @@ async function retrieveComputeAndLicenseCost(
                     message: licenseMessage = undefined
                 } = {}
             } = (await getSqlInstanceLicenseRecommendations(accountId, credentialsId, region, ec2HostDetails)) || {};
-            const [{ sqlServerEdition, windowsOsVersion }] = ec2HostDetails.sqlServerInstances || [];
+            const [{ windowsOsVersion }] = ec2HostDetails.sqlServerInstances || [];
             const existingInstanceType = ec2HostDetails.ec2InstanceType;
 
             return {
@@ -496,7 +496,7 @@ async function retrieveComputeAndLicenseCost(
                 },
                 license: {
                     existing: {
-                        sqlServerEdition,
+                        sqlServerEdition: eSqlServerEdition,
                         licenseHourlyPrice: eLicensePrice,
                         licenseIncluded: !!(eLicensePrice && eLicensePrice > 0),
                         licenseMonthlyPrice: eLicensePrice ? getMonthlyPriceFromHourlyPrice(eLicensePrice) : undefined,
