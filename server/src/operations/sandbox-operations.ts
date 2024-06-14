@@ -2713,10 +2713,10 @@ async function performIntegrityCheck(
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
     try {
-        let command = [checkDatabaseIntegrityScript(databaseName, instanceName)];
+        let command = [checkDatabaseIntegrityScript(databaseName, instanceName, `SandBox:${databaseName}:`)];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-            command = [checkDatabaseIntegrityScript('test-db', '.', `SandBox:${databaseName}:`)];
+            command = [checkDatabaseIntegrityScript('test-db', '.')];
         }
 
         const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
