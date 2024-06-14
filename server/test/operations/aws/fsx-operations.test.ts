@@ -19,6 +19,7 @@ import {
     isFsxwAwsBackupEnabled
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
+import fsxResponse from '../../simulator/responses/aws/fsx-operations-response.json';
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 const credentialsId = `${faker.string.alpha(20)}`;
@@ -43,7 +44,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             FSX_FILESYSTEM_ID,
             `i-${faker.string.alpha(17)}`
         );
-        expect(response).toEqual(true);
+        expect(response.master).toEqual(true);
     });
 
     it('Get Ontap volume snapshots count', async () => {
@@ -52,13 +53,12 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID
         );
-        expect(response).toBeTruthy();
+        expect(response.master).toBeTruthy();
     });
 
     it('Get Ontap mapped volumes', async () => {
         const response = await getMappedOntapVolumes(DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID);
-        const expectedResponse = ['939a4ec9-7c14-11ee-b185-8329e8fcbf44'];
-        expect(response).toEqual(expectedResponse);
+        expect(response).toEqual(fsxResponse.volumeMap);
     });
 
     it('Tag Ec2 instance', async () => {

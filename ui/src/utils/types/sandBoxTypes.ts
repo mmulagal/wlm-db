@@ -90,6 +90,7 @@ export interface SandboxEntities {
         sandboxListError: string;
     };
     aggregatedSandboxList: SandboxListEntities;
+    allSandboxList: SandboxListEntities;
     getSandboxSavings: {
         sandboxSavings: {
             consumedStorage: number;
@@ -106,4 +107,10 @@ export interface SandboxEntities {
         isLoading: boolean;
     };
     splitEstimateLoading: boolean;
+    rollbackSnapshotsLoading: boolean;
+    rollbackSnapshotList: any;
+    isRollbackSelected: boolean;
+    selectedRollbackSnapshot: any;
 }
+
+export type SandboxActions = 'delete' | 'refresh' | 'rebaseline' | 'split' | 'integrityCheck';

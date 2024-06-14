@@ -21,7 +21,12 @@ import {
     SandboxParams,
     SplitEstimatesResponse,
     SandboxLifeCycleBody,
-    DatabaseHostSummaryForMultiInstanceListResponse
+    DatabaseHostSummaryForMultiInstanceListResponse,
+    SandboxSnapshotsResponse,
+    SandboxSnapshotsQueryParams,
+    DatabaseHostSummaryForMultiInstanceResponse,
+    DatabaseHostInstanceSummaryParams,
+    DatabaseHostInstanceSummaryResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -227,6 +232,30 @@ const DatabaseHostsSummarySchemaV2 = {
     }
 };
 
+const DatabaseHostDetailsSchemaV2 = {
+    ...databaseHostsRequest,
+    summary: 'Fetch database server details V2',
+    description:
+        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server v2. ',
+    params: DatabaseHostSummaryParams,
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: DatabaseHostSummaryForMultiInstanceResponse
+    }
+};
+
+const DatabaseHostInstanceDetailsSchema = {
+    ...databaseHostsRequest,
+    summary: 'Fetch database server instance details',
+    description:
+        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server. ',
+    params: DatabaseHostInstanceSummaryParams,
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: DatabaseHostInstanceSummaryResponse
+    }
+};
+
 const SandboxSplitSchema = {
     params: SandboxParams,
     tags: [RouteTags.SANDBOX],
@@ -243,6 +272,29 @@ const CheckSandboxIntegritySchema = {
     ...SandboxSplitSchema,
     summary: 'Check sandbox integrity',
     description: 'Check sandbox integrity operation'
+};
+
+const DatabasesListSchemaV2 = {
+    tags: [RouteTags.DEPLOYMENT],
+    summary: 'Fetch details about databases in a server V2',
+    description:
+        'Fetch details about databases in a server - name, protection status, availability status, size and type of database V2',
+    params: DatabaseHostInstanceSummaryParams,
+    response: {
+        200: DatabasesListResponse
+    }
+};
+
+const GetSandboxSnapshotsSchema = {
+    params: SandboxParams,
+    tags: [RouteTags.SANDBOX],
+    querystring: SandboxSnapshotsQueryParams,
+    summary: 'Get Sandbox snapshots',
+    description:
+        'Get snapshots of all the mapped ontap volumes for the given sandbox to be able to restore the sandbox to a previous state',
+    response: {
+        200: SandboxSnapshotsResponse
+    }
 };
 
 export {
@@ -264,5 +316,9 @@ export {
     SandboxLifeCycleSchema,
     SandboxSplitSchema,
     DatabaseHostsSummarySchemaV2,
-    CheckSandboxIntegritySchema
+    DatabaseHostDetailsSchemaV2,
+    DatabaseHostInstanceDetailsSchema,
+    CheckSandboxIntegritySchema,
+    DatabasesListSchemaV2,
+    GetSandboxSnapshotsSchema
 };

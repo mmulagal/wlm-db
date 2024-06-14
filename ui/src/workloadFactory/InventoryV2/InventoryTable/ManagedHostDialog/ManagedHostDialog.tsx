@@ -5,6 +5,7 @@ import styles from './ManagedHostDialog.module.scss';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import { useEffect, useRef, useState } from 'react';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
+import { INVENTORY_STATUS } from '../../../../utils/consts';
 
 const ManagedHostDialog = ({ dialogData }: any) => {
     const [data, setData] = useState<any>([]);
@@ -51,8 +52,8 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             width: '192px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                if (rowData.status === 'Unmanaged') {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value="Unmanaged" />;
+                if (rowData.status === INVENTORY_STATUS.UNMANAGED) {
+                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
                 }
                 if (rowData.status === 'inProgress') {
                     return (
@@ -63,7 +64,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                     );
                 }
                 if (rowData.status === 'managed') {
-                    return <DotComponent color={'var(--success)'} value="Managed" />;
+                    return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
                 }
             }
         },

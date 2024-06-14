@@ -42,7 +42,8 @@ import {
     SERVER_DETAILS,
     PERFORMANCE_METRICS_WITH_LATENCY,
     INSTANCE_GUID,
-    ENTERPRISE_CHECK_QUERY
+    ENTERPRISE_CHECK_QUERY,
+    DATABASES_COUNT_V2
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
     GET_SANDBOX_DETAILS,
@@ -55,7 +56,9 @@ import {
     getStorageSavingsFromOntap,
     detachDbAndRemoveAccessPath,
     deleteExtendedPropertiesScript,
-    checkDatabaseIntegrityScript
+    checkDatabaseIntegrityScript,
+    getSnapshotsToClone,
+    readExtendedPropertiesOfSandbox
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -76,6 +79,13 @@ const dbCountParams = {
         'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id FOR JSON PATH" -y 0'
     ]
 };
+
+const dbCountParamasV2 = {
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT COUNT(*) AS totalCount FROM sys.databases FOR JSON PATH" -y 0'
+    ]
+};
+
 const dbSummaryParams1 = {
     commands: [
         'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 0 rows fetch next 75 rows only FOR JSON PATH" -y 0'
@@ -427,6 +437,22 @@ const checkDatabaseIntegirty = {
     commands: [checkDatabaseIntegrityScript('test-db', '.')]
 };
 
+const getSnapshotsToCloneCommand = {
+    commands: [
+        getSnapshotsToClone(
+            'test-fsx',
+            'us-east-1',
+            JSON.stringify(['5c1075d2-03a0-11ef-a514-55070fbfcab1', '5ace31ea-03a0-11ef-a514-55070fbfcab1']),
+            '5c1075d2-03a0-11ef-a514-55070fbfcab1',
+            'testdb1_clone'
+        )
+    ]
+};
+
+const readExtendedPropertiesCommand = {
+    commands: [readExtendedPropertiesOfSandbox('testdb1_clone')]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -548,8 +574,14 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getActiveDirectoryCommand)
     .on(SendCommandCommand, { Parameters: enterpriseFeatureUsageCheck })
     .resolves(listSendCommandCommandResponse.enterpriseFeatureUsageCheckCommand)
+    .on(SendCommandCommand, { Parameters: dbCountParamasV2 })
+    .resolves(listSendCommandCommandResponse.dbCountParamasV2Command)
     .on(SendCommandCommand, { Parameters: checkDatabaseIntegirty })
-    .resolves(listSendCommandCommandResponse.checkDatabaseIntegrity);
+    .resolves(listSendCommandCommandResponse.checkDatabaseIntegrity)
+    .on(SendCommandCommand, { Parameters: getSnapshotsToCloneCommand })
+    .resolves(listSendCommandCommandResponse.getSnapshotsToCloneCommand)
+    .on(SendCommandCommand, { Parameters: readExtendedPropertiesCommand })
+    .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -670,8 +702,16 @@ ssmMock
     .resolves(getCommandInvocationResponse.getActiveDirectoryResp)
     .on(GetCommandInvocationCommand, { CommandId: 'k273a5y9-2143-82qe-6w13-enterpriseFeatureUsageCheckCommand' })
     .resolves(getCommandInvocationResponse.enterpriseCheckResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbCountParamasV2Command' })
+    .resolves(getCommandInvocationResponse.getDbCount)
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkDatabaseIntegrity' })
-    .resolves(getCommandInvocationResponse.checkDatabaseIntegrityResponse);
+    .resolves(getCommandInvocationResponse.checkDatabaseIntegrityResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotsToCloneCommand' })
+    .resolves(getCommandInvocationResponse.getSnapshotsToCloneResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-readExtendedPropertiesCommand'
+    })
+    .resolves(getCommandInvocationResponse.readExtendedPropertiesResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

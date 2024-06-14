@@ -64,6 +64,31 @@
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:volume/fs-03773e21b2f0e39b4/fsvol-0be5ccb4d6b461a2f",
             "VolumeId": "fsvol-0be5ccb4d6b461a2f",
             "VolumeType": "ONTAP"
+        },
+        {
+            "CreationTime": "2023-08-01T05:46:14.000Z",
+            "FileSystemId": "fs-03773e21b2f0e39b4",
+            "Lifecycle": "CREATED",
+            "Name": "vol2",
+            "OntapConfiguration": {
+                "CopyTagsToBackups": false,
+                "FlexCacheEndpointType": "NONE",
+                "JunctionPath": "/",
+                "OntapVolumeType": "RW",
+                "SecurityStyle": "UNIX",
+                "SizeInMegabytes": 25600,
+                "SnapshotPolicy": "default",
+                "StorageEfficiencyEnabled": false,
+                "StorageVirtualMachineId": "svm-03985e26ffd55441d",
+                "StorageVirtualMachineRoot": true,
+                "TieringPolicy": {
+                    "Name": "NONE"
+                },
+                "UUID": "2f004bac-2865-11ef-b359-1b0fb5fca86e"
+            },
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:volume/fs-03773e21b2f0e39b4/fsvol-0be5ccb4d6b461a3f",
+            "VolumeId": "fsvol-0be5ccb4d6b461a3f",
+            "VolumeType": "ONTAP"
         }
     ]
 }

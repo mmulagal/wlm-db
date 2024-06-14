@@ -122,7 +122,7 @@ async function getHostAndSqlServerInfo(
     nextToken?: string,
     instances: string[] = []
 ): Promise<DiscoverMsSqlResponseBodyType> {
-    logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
+    logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken, instances });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return returnInventorydata(instances);
     }
@@ -933,6 +933,8 @@ async function fetchUnmanagedHostsInformationV2(
             getDatabaseHostSummaryV2(
                 accountId,
                 resourceDetail.resource_id,
+                credentialsId,
+                region,
                 'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
                 resourceDetail,
                 false // unmanaged host,

@@ -22,7 +22,11 @@ const CostBreakdown = () => {
     const ComparisonTableLayout = ({ data, calculatedResponse }: any) => {
         return (
             <div
-                className={styles['comparison-table-column']}
+                className={
+                    data?.type === 'Total summary'
+                        ? `${styles['comparison-table-column']} ${styles.totalSummary}`
+                        : styles['comparison-table-column']
+                }
                 style={
                     data?.type === 'Total summary'
                         ? { backgroundColor: 'var(--table-header-background)', fontWeight: 500 }

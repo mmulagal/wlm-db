@@ -31,7 +31,7 @@ import {
     convertMetricsIntoJson,
     deployedStackUrl,
     derivePropertiesFromARN,
-    getDatabsaeInstanceName,
+    getDatabaseInstanceName,
     getDescriptionForMatchingName,
     getQueueUrl
 } from '../../utils/utils';
@@ -45,7 +45,7 @@ import {
     updateDeployment,
     upsertDeployment,
     upsertDatabaseInstance,
-    DatabaseInstance
+    DatabaseInstanceRecord
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getAllInstanceDetails, getMsSqlResourceId, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
@@ -607,6 +607,7 @@ async function processCloudFormationMessages() {
                                                             region,
                                                             nodeIds
                                                         );
+
                                                         const instanceNames = deployedInstances.map(
                                                             (instance: { instanceName: string }) =>
                                                                 instance.instanceName
@@ -615,7 +616,7 @@ async function processCloudFormationMessages() {
                                                         await Promise.all(
                                                             instanceNames.map(async (instanceName: string) => {
                                                                 const defaultInstance = !instanceName.includes('$');
-                                                                const modifiedInstanceName = getDatabsaeInstanceName(
+                                                                const modifiedInstanceName = getDatabaseInstanceName(
                                                                     instanceName,
                                                                     defaultInstance
                                                                 );
@@ -627,7 +628,7 @@ async function processCloudFormationMessages() {
                                                                     nodeIds
                                                                 );
 
-                                                                const instanceDetails: DatabaseInstance = {
+                                                                const instanceDetails: DatabaseInstanceRecord = {
                                                                     credentialsId,
                                                                     resourceId,
                                                                     region,

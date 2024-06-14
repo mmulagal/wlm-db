@@ -53,7 +53,7 @@ const StorageSavingsCompute = Type.Object({
 });
 
 const StorageSavingsLicense = Type.Object({
-    licenseType: Type.Optional(Type.String()),
+    sqlServerEdition: Type.Optional(Type.String()),
     licenseMonthlyPrice: Type.Optional(Type.Number()),
     message: Type.Optional(Type.String())
 });
@@ -99,7 +99,6 @@ const ComputeCalculationObject = Type.Object({
 });
 const LicenseCalculationObject = Type.Object({
     sqlServerEdition: Type.Optional(Type.String()),
-    licenseType: Type.Optional(Type.String()),
     licenseHourlyPrice: Type.Optional(Type.Number()),
     licenseIncluded: Type.Optional(Type.Boolean()),
     hoursInMonth: Type.Number()
@@ -240,7 +239,6 @@ const ComputeDetails = Type.Object({
 
 const LicenseDetails = Type.Object({
     sqlServerEdition: Type.Optional(Type.String()),
-    licenseType: Type.Optional(Type.String()),
     licenseHourlyPrice: Type.Optional(Type.Number()),
     licenseIncluded: Type.Optional(Type.Boolean()),
     licenseMonthlyPrice: Type.Optional(Type.Number()),

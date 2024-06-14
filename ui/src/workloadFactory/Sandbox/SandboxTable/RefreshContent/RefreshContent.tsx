@@ -4,7 +4,7 @@ import RebaseRollbackContent from '../RebaseRollbackContent/RebaseRollbackConten
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 
-const RefreshContent = ({ databaseName, sandboxName }: any) => {
+const RefreshContent = ({ databaseName, sandboxName, rowData }: any) => {
     return (
         <div className={styles.refreshContent}>
             <DsTypography variant="Regular_14">
@@ -29,7 +29,7 @@ const RefreshContent = ({ databaseName, sandboxName }: any) => {
             </DsTypography>
 
             <div className={styles.rollbackContainer}>
-                <RebaseRollbackContent />
+                <RebaseRollbackContent rowData={rowData} />
             </div>
         </div>
     );
