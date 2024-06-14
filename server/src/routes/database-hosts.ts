@@ -23,10 +23,15 @@ import {
     PatchResourceForSandboxSchema,
     RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
+    GetSandboxesMountPointSchemaV2,
     GetSandboxConnectionStringSchema,
+    GetSandboxConnectionStringSchemaV2,
     DeleteSandboxSchema,
+    DeleteSandboxSchemaV2,
     GetSandboxSplitEstimateSchema,
+    GetSandboxSplitEstimateSchemaV2,
     SandboxLifeCycleSchema,
+    SandboxLifeCycleSchemaV2,
     SandboxSplitSchema,
     DatabaseHostsSummarySchemaV2,
     CheckSandboxIntegritySchema,
@@ -38,14 +43,18 @@ import {
 import {
     createSandbox,
     getSandboxConnectionString,
+    getSandboxConnectionStringV2,
     getSandboxesInfo,
     getDatabaseMountPointInfo,
     getSandboxSavings,
     revertMetadataForSanboxTesting,
     updateMetadataForSanboxTesting,
     deleteSandbox,
+    deleteSandboxV2,
     getSandboxSplitEstimate,
+    getSandboxSplitEstimateV2,
     updateSandboxLifeCycle,
+    updateSandboxLifeCycleV2,
     splitSandbox,
     checkDatabaseIntegrity,
     getSandboxSnapshots
@@ -183,6 +192,25 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceName/database-mount-points`,
+            { schema: GetSandboxesMountPointSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceName },
+                    query: { databaseName }
+                } = request;
+                const response = await getDatabaseMountPointInfo(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseName,
+                    databaseInstanceName
+                );
+                return reply.send(response);
+            }
+        )
         .patch(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes-meta-update`,
             { schema: PatchResourceForSandboxSchema },
@@ -239,6 +267,25 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceName/sandboxes/:sandboxName/connection-string`,
+            { schema: GetSandboxConnectionStringSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceName }
+                } = request;
+
+                const response = await getSandboxConnectionStringV2(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName,
+                    databaseInstanceName
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/split-estimate`,
             { schema: GetSandboxSplitEstimateSchema },
             async (request, reply) => {
@@ -255,6 +302,24 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send({ volumes: response });
             }
         )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/sandboxes/database-instances/:databaseInstanceName/:sandboxName/split-estimate`,
+            { schema: GetSandboxSplitEstimateSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceName }
+                } = request;
+                const response = await getSandboxSplitEstimateV2(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName,
+                    databaseInstanceName
+                );
+                return reply.send({ volumes: response });
+            }
+        )
         .delete(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName`,
             { schema: DeleteSandboxSchema },
@@ -263,6 +328,24 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, credentialsId, region, databaseHostId, sandboxName }
                 } = request;
                 const response = await deleteSandbox(accountId, credentialsId, region, databaseHostId, sandboxName);
+                return reply.send(response);
+            }
+        )
+        .delete(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceName/sandboxes/:sandboxName`,
+            { schema: DeleteSandboxSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceName }
+                } = request;
+                const response = await deleteSandboxV2(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName,
+                    databaseInstanceName
+                );
                 return reply.send(response);
             }
         )
@@ -286,6 +369,28 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
+        .patch(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceName/sandboxes/:sandboxName`,
+            { schema: SandboxLifeCycleSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceName },
+                    body: { snapshot, action }
+                } = request;
+                const response = await updateSandboxLifeCycleV2(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName,
+                    databaseInstanceName,
+                    action,
+                    snapshot
+                );
+                return reply.send(response);
+            }
+        )
+
         .post(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/split`,
             { schema: SandboxSplitSchema },

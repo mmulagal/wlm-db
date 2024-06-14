@@ -24,6 +24,14 @@ const CreateDatabaseParams = Type.Object({
     region: Type.String()
 });
 
+const CreateDatabaseParamsV2 = Type.Object({
+    accountId: Type.String({ description: 'Workload Factory account ID', minLength: 7 }),
+    credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1 }),
+    region: Type.String({ description: 'AWS region of the database host', minLength: 1 }),
+    databaseHostId: Type.String({ description: 'Workload Factory resource ID', minLength: 10 }),
+    databaseInstanceName: Type.String({ description: 'SQL Server instance name' })
+});
+
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String()),
@@ -403,6 +411,10 @@ const DatabaseMountPointRequestQueryParam = Type.Object({
     instanceName: Type.String()
 });
 
+const DatabaseMountPointRequestQueryParamV2 = Type.Object({
+    databaseName: Type.String()
+});
+
 const DatabaseMountPointResponseBody = Type.Object({
     databaseDataPath: Type.Array(Type.String()),
     databaseLogPath: Type.Array(Type.String())
@@ -410,6 +422,14 @@ const DatabaseMountPointResponseBody = Type.Object({
 type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
 
 const SandboxParams = Type.Composite([DatabaseHostSummaryParams, Type.Object({ sandboxName: Type.String() })]);
+
+const SandboxParamsV2 = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Object({
+        sandboxName: Type.String(),
+        databaseInstanceName: Type.String({ description: 'SQL Server instance name' })
+    })
+]);
 
 const SplitEstimatesResponse = Type.Object({
     volumes: Type.Array(
@@ -580,6 +600,7 @@ export {
     DatabasesCreateResponse,
     DatabaseCreateResponseType,
     CreateDatabaseParams,
+    CreateDatabaseParamsV2,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
     FileConfigType,
@@ -597,10 +618,12 @@ export {
     SandboxInfoResponseBody,
     SandboxInfoResponseBodyType,
     DatabaseMountPointRequestQueryParam,
+    DatabaseMountPointRequestQueryParamV2,
     GetDriveQueryString,
     DatabaseMountPointResponseBody,
     DatabaseMountPointResponseType,
     SandboxParams,
+    SandboxParamsV2,
     SplitEstimatesResponse,
     SandboxLifeCycleBody,
     SandboxSnapshotsResponse,
