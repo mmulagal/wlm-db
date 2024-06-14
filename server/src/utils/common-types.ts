@@ -181,6 +181,11 @@ interface DatabaseInstance {
     databaseType?: string;
 }
 
+interface InstanceDetails {
+    instanceName: string;
+    instanceState: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -197,5 +202,6 @@ export {
     MissingPermissionInterface,
     databaseInstanceMetadata,
     Sandbox,
-    DatabaseInstance
+    DatabaseInstance,
+    InstanceDetails
 };

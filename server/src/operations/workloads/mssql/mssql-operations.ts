@@ -606,27 +606,27 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
             if (response) {
                 const parsedResponse = sqlResponseParsing(response);
 
-                const instanceDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+                const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
                 let defaultInstance = true;
-                let selectedInstance = instanceDetails.find(
+                let selectedInstance = instancesDetails.find(
                     (instance: { instanceState: string; instanceName: string | string[] }) =>
                         instance.instanceState.toLocaleLowerCase() === 'running' && !instance.instanceName.includes('$') // there is a $ present in named instances
                 )?.instanceName;
 
                 if (!selectedInstance) {
-                    const runningServices = instanceDetails.filter(
+                    const runningServices = instancesDetails.filter(
                         (instance: { instanceState: string }) =>
                             instance.instanceState.toLocaleLowerCase() === 'running'
                     );
-                    selectedInstance = runningServices.length > 0 ? runningServices[0].Name : undefined;
+                    selectedInstance = runningServices.length > 0 ? runningServices[0].instanceName : undefined;
                     defaultInstance = false;
                 }
                 if (selectedInstance !== undefined) {
                     const instanceName = getDatabaseInstanceName(selectedInstance, defaultInstance);
-                    return instanceName;
+                    return { instanceName, instancesDetails };
                 }
 
-                return selectedInstance;
+                return { instanceName: selectedInstance, instancesDetails };
             }
         }
     } catch (error) {
@@ -785,14 +785,16 @@ async function getActiveSqlNode(
         let errorMessage = '';
         // Connection to activenode is successful
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-            const instanceName = await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId]);
+            const { instanceName, instancesDetails = [] } =
+                (await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId])) || {};
             if (instanceName) {
                 return {
                     isSSMConnected: true,
                     activeNodeInstanceId: node1InstanceId,
                     standbyNodeInstanceId: node2InstanceId,
                     instanceName,
-                    ssmConnectionSatus: connectionStatus.Status
+                    ssmConnectionStatus: connectionStatus.Status,
+                    instancesDetails
                 };
             }
         } else {
@@ -805,14 +807,16 @@ async function getActiveSqlNode(
         if (node2InstanceId) {
             connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                const instanceName = await getActiveSqlInstanceName(credentialsId, region, [node2InstanceId]);
+                const { instanceName, instancesDetails = [] } =
+                    (await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId])) || {};
                 if (instanceName) {
                     return {
                         isSSMConnected: true,
                         activeNodeInstanceId: node2InstanceId,
                         standbyNodeInstanceId: node1InstanceId,
                         instanceName,
-                        ssmConnectionSatus: connectionStatus.Status
+                        ssmConnectionStatus: connectionStatus.Status,
+                        instancesDetails
                     };
                 }
             }
@@ -824,7 +828,7 @@ async function getActiveSqlNode(
         errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
         logger.error(errorMessage, { connectionStatus });
 
-        return { isSSMConnected: false, ssmConnectionSatus: connectionStatus.Status };
+        return { isSSMConnected: false, ssmConnectionStatus: connectionStatus.Status };
     } catch (error) {
         logger.error(
             `Error while checking SSM connection or SQL server status for resource ID ${resourceId}`,
