@@ -371,7 +371,7 @@ const InventoryApisV2 = () => {
                     ...topologyHostData[key],
                     ...fullHostData[key],
                     loading: false,
-                    nodeStatus: topologyHostData[key]?.nodeStatus
+                    nodeStatus: topologyHostData[key]?.databasehoststatus
                 };
                 databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
             } else {

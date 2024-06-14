@@ -180,6 +180,7 @@ export interface ManagedHostsRowInterface {
     id?: string;
     name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
+    databasehoststatus?: string;
     ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
     databaseInstanceDetails?: Array<{
         instanceName?: string;
