@@ -92,7 +92,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
     if (row?.nodeStatus && row?.nodeStatus !== 'N/A') {
-        if (row?.nodeStatus === 'running') {
+        if (row?.nodeStatus === 'ONLINE') {
             return INVENTORY_STATUS.ONLINE;
         } else {
             return INVENTORY_STATUS.OFFLINE;
