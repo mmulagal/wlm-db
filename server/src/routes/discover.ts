@@ -6,6 +6,7 @@ import {
     MsSqlInstancesSchema,
     ManageMsSqlSchema,
     PrepareForManageSchema,
+    MsSqlInstancesSchemaV2,
     UnManageMsSqlSchema,
     ManageMsSqlSchemaV2
 } from './schemas/discover-schemas';
@@ -16,6 +17,7 @@ import {
     manageSqlServerV2,
     validateAndStoreDiscoveredParameters,
     prepareForManage,
+    fetchUnmanagedHostsInformationV2,
     unmanageDatabaseInstance
 } from '../operations/discover-operations';
 
@@ -86,6 +88,15 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         } = request;
 
         return fetchUnmanagedHostsInformation(accountId, credentialsId, region, instances.split(','));
+    });
+
+    server.get(`${DISCOVER_MSSQL_API_PATH_V2}/mssql/instances`, { schema: MsSqlInstancesSchemaV2 }, async request => {
+        const {
+            params: { accountId, credentialsId, region },
+            query: { instances }
+        } = request;
+
+        return fetchUnmanagedHostsInformationV2(accountId, credentialsId, region, instances.split(','));
     });
 
     server.post(

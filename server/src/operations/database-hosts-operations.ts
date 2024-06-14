@@ -1790,21 +1790,26 @@ async function getDatabaseHostSummaryV2(
             let instanceResults: any;
 
             if (activeNodeInstanceId && databaseInstancesDetail.length > 0 && credentialsId && region) {
-                const runningDatabaseInstances = instancesManaged
-                    .filter(instance => {
-                        const matchingInstance = databaseInstancesDetail.find(
-                            (dbInstance: { instanceName: string; instanceState: string }) =>
-                                dbInstance.instanceName === instance.database_instance_name
-                        );
-                        return matchingInstance !== undefined;
-                    })
-                    .map(instance => ({
-                        ...instance,
-                        ...databaseInstancesDetail.find(
-                            (dbInstance: { instanceName: string; instanceState: string }) =>
-                                dbInstance.instanceState === 'Running'
-                        )
-                    }));
+                let runningDatabaseInstances;
+                if (isManagedResource) {
+                    runningDatabaseInstances = instancesManaged
+                        .filter(instance => {
+                            const matchingInstance = databaseInstancesDetail.find(
+                                (dbInstance: { instanceName: string; instanceState: string }) =>
+                                    dbInstance.instanceName === instance.database_instance_name
+                            );
+                            return matchingInstance !== undefined;
+                        })
+                        .map(instance => ({
+                            ...instance,
+                            ...databaseInstancesDetail.find(
+                                (dbInstance: { instanceName: string; instanceState: string }) =>
+                                    dbInstance.instanceState === 'Running'
+                            )
+                        }));
+                } else {
+                    runningDatabaseInstances = resourceDetail.databaseInstanceDetails || [];
+                }
                 if (runningDatabaseInstances.length > 0) {
                     const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
                         const instanceResult = await getDatabseInstanceSummary(
@@ -1863,7 +1868,6 @@ async function getDatabaseHostSummaryV2(
 
             databaseHostDetails.databaseInstancesSummary = instanceResults;
         }
-        return databaseHostDetails;
     } catch (error) {
         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
         throw createError(
@@ -1871,6 +1875,7 @@ async function getDatabaseHostSummaryV2(
             `Error while fetching database hosts details ${accountId}, ${error}`
         );
     }
+    return databaseHostDetails;
 }
 
 async function getDatabaseHostInstanceSummary(

@@ -426,16 +426,20 @@ const SandboxLifeCycleBody = Type.Object({
 });
 
 const DatabaseHostInstanceDetailsResponse = Type.Object({
-    instanceName: Type.String(),
-    isManaged: Type.Optional(Type.Boolean()),
-    instanceState: Type.Optional(Type.String({ enum: ['UP', 'DOWN'] })), // Fix the syntax error
-    isDefault: Type.Optional(Type.Boolean())
+    instanceName: Type.String({ description: 'Name of SQL server instance.' }),
+    isManaged: Type.Optional(
+        Type.Boolean({ description: 'Boolean to indicate if SQL server instance is managed by WFDB.', default: false })
+    ),
+    instanceState: Type.Optional(Type.String({ description: 'State of SQL server instance.', enum: ['UP', 'DOWN'] })), // Fix the syntax error
+    isDefault: Type.Optional(
+        Type.Boolean({ description: 'Boolean to indicate if SQL server instance is default or not.', default: true })
+    )
 });
 
 const NodeTopologyResponse = Type.Object({
-    awsAccount: Type.String({ minLength: 1 }),
-    region: Type.String(),
-    vpcId: Type.Optional(Type.String()),
+    awsAccount: Type.String({ description: 'Identifer for AWS account', minLength: 1 }),
+    region: Type.String({ description: 'Region for EC2 instance' }),
+    vpcId: Type.Optional(Type.String({ description: 'Identifier for EC2 instance' })),
     vpcName: Type.Optional(Type.String()),
     vpcCidr: Type.Optional(Type.String()),
     keyPairName: Type.Optional(Type.String()),
@@ -447,7 +451,7 @@ const DatabaseInstanceTopology = Type.Object({
     serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows'] }),
-    fileSystemId: Type.String(),
+    fileSystemId: Type.Optional(Type.String()),
     fileSystemName: Type.Optional(Type.String()),
     fileSystemDeploymentMode: Type.Optional(Type.String()),
     fileSystemStatus: Type.Optional(
@@ -477,15 +481,33 @@ const DatabaseHostInstanceSummaryResponse = Type.Object({
 type DatabaseHostInstanceSummaryResponseType = Static<typeof DatabaseHostInstanceSummaryResponse>;
 
 const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-    nodeStatus: Type.String({ enum: [InstanceStateName, 'N/A'] }),
-    ssmStatus: Type.String({ enum: [ConnectionStatus, 'N/A'] }),
+    id: Type.String({ description: 'Identifier for the database resource' }),
+    name: Type.String({ description: 'Name for the database resource' }),
+    nodeStatus: Type.String({
+        description:
+            'Status of EC2 instance hosting the database server. In the case of cluster (like FCI or AOAG), running status will reflect the availabilty of either of the instances.',
+        enum: [InstanceStateName, 'N/A']
+    }),
+    ssmStatus: Type.String({
+        description: 'SSM connectivity status to the active EC2 instance hosting the database server.',
+        enum: [ConnectionStatus, 'N/A']
+    }),
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
-    databaseInstancesSummary: Type.Optional(Type.Array(DatabaseHostInstanceSummaryResponse))
+    databaseInstancesSummary: Type.Optional(Type.Array(DatabaseHostInstanceSummaryResponse)),
+    clusterNodeDetails: Type.Optional(
+        Type.Array(
+            Type.Object({
+                ec2InstanceId: Type.String(),
+                ec2InstancePrivateIpAddress: Type.String(),
+                ec2InstanceType: Type.String(),
+                ec2InstanceName: Type.Optional(Type.String())
+            })
+        )
+    ),
+    errors: Type.Optional(Type.String())
 });
 
 const DatabaseHostSummaryForMultiInstanceListResponse = Type.Object({
