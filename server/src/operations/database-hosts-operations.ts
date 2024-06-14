@@ -514,7 +514,7 @@ async function getProtectionStatus(
     }
 
     try {
-        const [nativeSqlProtection, fsxnBackup, ontapProtection, fsxwBackup, ebsBackup] = await Promise.all([
+        const [nativeSqlProtection, fsxnBackup = {}, ontapProtection = {}, fsxwBackup, ebsBackup] = await Promise.all([
             getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName),
 
             fsxnId ? isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, activeNodeInstanceId) : Promise.resolve(),
@@ -1101,7 +1101,7 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
 
-    const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all(
+    const [{ databases }, backedupDatabases, awsBackup = {}, ontapBackup = {}] = await Promise.all(
         [
             getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
             getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
@@ -1925,7 +1925,7 @@ async function getDatabasesV2(
     const { userDatabase = [] } = metadata as unknown as databaseInstanceMetadata;
     const instanceName = getDatabaseInstanceName(savedInstanceName, isdefaultInstance);
 
-    const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all(
+    const [{ databases }, backedupDatabases, awsBackup = {}, ontapBackup = {}] = await Promise.all(
         [
             getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
             getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
@@ -1950,9 +1950,9 @@ async function getDatabasesV2(
                     : MSSQL_DATABASE_TYPES.USER,
                 protection: {
                     isAwsBackupEnabled: {
-                        fsxn: awsBackup
+                        fsxn: awsBackup[database.databaseName]
                     },
-                    isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
+                    isFsxOntapSnapshotsEnabled: ontapBackup[database.databaseName],
                     isSqlNativeEnabled: Boolean(
                         backedupDatabases &&
                             backedupDatabases.find(
