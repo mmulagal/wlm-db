@@ -38,7 +38,8 @@ import {
     STORAGE_PROTOCOLS,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES,
     PSMODULES_RELATIVE_PATH,
-    DatabaseTypes
+    DatabaseTypes,
+    OFFLINE
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -920,7 +921,7 @@ async function fetchUnmanagedHostsInformationV2(
                 errorInstances.push({
                     id: ec2Instance.ec2InstanceId,
                     name: ec2Instance.ec2InstanceId,
-                    nodeStatus: 'Down',
+                    databaseHostStatus:OFFLINE,
                     errors: 'No active SQL Server instances found',
                     ssmStatus: ''
                 });
