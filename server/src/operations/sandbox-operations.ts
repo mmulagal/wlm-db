@@ -2658,9 +2658,9 @@ async function checkDatabaseIntegrity(
     }
 
     const checkDataIntegrityJob = await registerJob(accountId, credentialsId, region, {
-        description: `Check data integrity for ${databaseName} in ${resourceDetails.resource_name}`,
+        description: `Check data integrity for sandbox ${databaseName} in ${resourceDetails.resource_name}`,
         startTime: Date.now(),
-        name: `Check data integrity for ${databaseName}`,
+        name: `Check data integrity for sandbox ${databaseName}`,
         status: JOBSTATUS.IN_PROGRESS,
         type: JOBTYPE.SANDBOX,
         resourceName: databaseName
