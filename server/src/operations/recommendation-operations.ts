@@ -146,7 +146,10 @@ sqlServerEdition = Edition =	Installed product edition of the instance of SQL Se
     const sqlCombination = groupBy(sqlServerInstances, 'sqlServerEngineEdition');
 
     if (sqlCombination[ENT_ENGINE_EDITION]?.length > 0) {
-        return processSqlInstances(sqlCombination[ENT_ENGINE_EDITION], 'Enterprise');
+        const enterpriseResult = processSqlInstances(sqlCombination[ENT_ENGINE_EDITION], 'Enterprise');
+        if (enterpriseResult) {
+            return enterpriseResult;
+        }
     }
 
     if (sqlCombination[STD_ENGINE_EDITION]?.length > 0) {
@@ -284,6 +287,10 @@ export default async function getSqlInstanceLicenseRecommendations(
             server?.storage?.filter(storage => storage.type === STORAGE_TYPE.EBS).map(storage => storage.id)
         )
     );
+
+    if (ebsVolumeIds.length === 0) {
+        throw createError(HttpErrorCodes.BAD_REQUEST, 'No EBS volumes found for the provided instance.');
+    }
 
     if (ec2HostDetails?.sqlServerInstances && ec2HostDetails?.sqlServerInstances?.length > 0) {
         const { sqlServerEngineEdition, sqlServerEdition, sqlServerVersion, sqlServerDeploymentType, nodeIps } =

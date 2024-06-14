@@ -924,7 +924,7 @@ async function fetchUnmanagedHostsInformationV2(
                 errorInstances.push({
                     id: ec2Instance.ec2InstanceId,
                     name: ec2Instance.ec2InstanceId,
-                    databaseHostStatus:OFFLINE,
+                    databaseHostStatus: OFFLINE,
                     errors: 'No active SQL Server instances found',
                     ssmStatus: ''
                 });
