@@ -1,7 +1,17 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { InstanceStateName } from '@aws-sdk/client-ec2';
-import { BILLING, NOT_AVAILABLE, OFFLINE, ONLINE, PRICING, ServerState, UNKNOWN } from '../../utils/consts';
+import {
+    BILLING,
+    NOT_AVAILABLE,
+    OFFLINE,
+    ONLINE,
+    PRICING,
+    ServerState,
+    UNKNOWN,
+    SANDBOX_LIFECYCLE_REFRESH,
+    SANDBOX_LIFECYCLE_REBASELINE
+} from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
 
 const DatabaseHostObjectParams = Type.Object({
@@ -455,7 +465,7 @@ const SandboxSnapshotsQueryParams = Type.Object({
 
 const SandboxLifeCycleBody = Type.Object({
     snapshot: Type.Optional(Type.String()),
-    action: Type.String({ enum: ['REFRESH', 'RE-BASELINE'] })
+    action: Type.String({ enum: [SANDBOX_LIFECYCLE_REFRESH, SANDBOX_LIFECYCLE_REBASELINE] })
 });
 
 const DatabaseHostInstanceDetailsResponse = Type.Object({

@@ -17,7 +17,9 @@ import {
     SANDBOX_EXTENDED_PROPERTY_FLAG_NAME,
     SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
     SSM_COMMAND_CACHE_TYPE,
-    SSM_PARAM_PREFIX
+    SSM_PARAM_PREFIX,
+    SandboxLifecycleAction,
+    SANDBOX_LIFECYCLE_REFRESH
 } from '../utils/consts';
 import {
     GET_SANDBOX_DETAILS,
@@ -1540,12 +1542,7 @@ async function getSandboxConnectionStringV2(
             region
         );
 
-        const { stackname, activeDirectoryName, node1InstanceId, node2InstanceId } = metadata as unknown as {
-            stackname: string;
-            activeDirectoryName: string;
-            node1InstanceId: string;
-            node2InstanceId: string;
-        };
+        const { stackname, activeDirectoryName, node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
         const { isDefaultInstance, isManagedDatabaseInstance } = await getDatabaseEnvironmentDetails(
             accountId,
@@ -2193,9 +2190,11 @@ async function updateSandboxLifeCycle(
     }
 
     const job = await registerJob(accountId, credentialsId, region, {
-        name: `${action === 'REFRESH' ? 'Refresh' : 'Re-baseline'} sandbox ${databaseName}`,
+        name: `${
+            action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
+        } sandbox ${databaseName}`,
         description: `${
-            action === 'REFRESH' ? 'Refresh' : 'Re-baseline'
+            action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
         } sandbox ${databaseName} in the host ${resourceName}`,
         initiator: 'SYSTEM',
         type: JOBTYPE.SANDBOX,
@@ -2281,10 +2280,10 @@ async function updateSandboxLifeCycleV2(
 
     const job = await registerJob(accountId, credentialsId, region, {
         name: `${
-            action === 'REFRESH' ? 'Refresh' : 'Re-baseline'
+            action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
         } sandbox ${sandboxName} of SQL Server instance ${databaseInstanceName}`,
         description: `${
-            action === 'REFRESH' ? 'Refresh' : 'Re-baseline'
+            action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
         } sandbox ${sandboxName} of SQL Server instance ${databaseInstanceName} in the host ${resourceName}`,
         initiator: 'SYSTEM',
         type: JOBTYPE.SANDBOX,
@@ -2473,12 +2472,12 @@ async function validateLifeCycleParams(
     const validationJob = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.SANDBOX,
         status,
-        name: `Validate ${action === 'REFRESH' ? 'Refresh' : 'Re-baseline'} parameters for sandbox ${
-            resourceDetails.database
-        }`,
-        description: `Validate ${action === 'REFRESH' ? 'Refresh' : 'Re-baseline'} parameters for sandbox ${
-            resourceDetails.database
-        }`,
+        name: `Validate ${
+            action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
+        } parameters for sandbox ${resourceDetails.database}`,
+        description: `Validate ${
+            action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
+        } parameters for sandbox ${resourceDetails.database}`,
         resourceName: resourceDetails.database,
         startTime: Date.now(),
         parentJobId

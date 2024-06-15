@@ -5,7 +5,7 @@ import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
-import { ACCOUNT_ID } from '../../src/utils/consts';
+import { ACCOUNT_ID, SANDBOX_LIFECYCLE_REFRESH, SANDBOX_LIFECYCLE_REBASELINE } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
 import {
     createSandbox,
@@ -133,7 +133,7 @@ describe('sandbox operations ', () => {
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
             'testdb1',
-            'REFRESH'
+            SANDBOX_LIFECYCLE_REFRESH
         );
         expect(resp.jobId).toBeDefined();
     });
@@ -147,7 +147,7 @@ describe('sandbox operations ', () => {
                 '36E53042-04E8-40C9-AE69-26E56CB0D216',
                 'testdb1',
                 'NO_SUCH_INSTANCE',
-                'REFRESH'
+                SANDBOX_LIFECYCLE_REFRESH
             );
             expect(resp.jobId).toBeDefined();
         } catch (error: any) {
@@ -162,7 +162,7 @@ describe('sandbox operations ', () => {
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
             'testdb1',
-            'RE-BASELINE'
+            SANDBOX_LIFECYCLE_REBASELINE
         );
         expect(resp.jobId).toBeDefined();
     });
@@ -176,7 +176,7 @@ describe('sandbox operations ', () => {
                 '36E53042-04E8-40C9-AE69-26E56CB0D216',
                 'testdb1',
                 'NO_SUCH_INSTANCE',
-                'RE-BASELINE'
+                SANDBOX_LIFECYCLE_REBASELINE
             );
             expect(resp.jobId).toBeDefined();
         } catch (error: any) {
