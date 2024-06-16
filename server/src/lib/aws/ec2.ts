@@ -152,7 +152,7 @@ async function describeInstance(
 
     const client = await getEC2Client(region, credentialsId);
     const response = await client.send(new DescribeInstancesCommand(params));
-    logger.info('Describe instance response:', response);
+    logger.debug('Describe instance response:', response);
 
     return response;
 }
@@ -341,7 +341,7 @@ async function describeInstanceTypeOfferings(
     const command = new DescribeInstanceTypeOfferingsCommand(input);
     const response = await client.send(command);
 
-    logger.info('Describe instance type offerings response ', response);
+    logger.debug('Describe instance type offerings response ', response);
 
     return response;
 }

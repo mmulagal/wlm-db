@@ -49,11 +49,13 @@ const StorageMetrics = Type.Object({
 const StorageSavingsCompute = Type.Object({
     instanceType: Type.String(),
     computeMonthlyPrice: Type.Optional(Type.Number()),
+    windowsOsVersion: Type.Optional(Type.String()),
+
     message: Type.Optional(Type.String())
 });
 
 const StorageSavingsLicense = Type.Object({
-    licenseType: Type.Optional(Type.String()),
+    sqlServerEdition: Type.Optional(Type.String()),
     licenseMonthlyPrice: Type.Optional(Type.Number()),
     message: Type.Optional(Type.String())
 });
@@ -99,7 +101,6 @@ const ComputeCalculationObject = Type.Object({
 });
 const LicenseCalculationObject = Type.Object({
     sqlServerEdition: Type.Optional(Type.String()),
-    licenseType: Type.Optional(Type.String()),
     licenseHourlyPrice: Type.Optional(Type.Number()),
     licenseIncluded: Type.Optional(Type.Boolean()),
     hoursInMonth: Type.Number()
@@ -230,6 +231,7 @@ type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
 
 const ComputeDetails = Type.Object({
     instanceType: Type.String(),
+    windowsOsVersion: Type.Optional(Type.String()),
     computeHourlyPrice: Type.Optional(Type.Number()),
     instanceHourlyPrice: Type.Optional(Type.Number()),
     computeMonthlyPrice: Type.Optional(Type.Number()),
@@ -240,7 +242,6 @@ const ComputeDetails = Type.Object({
 
 const LicenseDetails = Type.Object({
     sqlServerEdition: Type.Optional(Type.String()),
-    licenseType: Type.Optional(Type.String()),
     licenseHourlyPrice: Type.Optional(Type.Number()),
     licenseIncluded: Type.Optional(Type.Boolean()),
     licenseMonthlyPrice: Type.Optional(Type.Number()),

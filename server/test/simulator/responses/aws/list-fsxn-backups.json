@@ -34,6 +34,41 @@
                 "VolumeId": "fsvol-06184c131ec936380",
                 "VolumeType": "ONTAP"
             }
+        },
+        {
+            "BackupId": "backup-08128857c75359124",
+            "CreationTime": "2023-10-19T09:27:13.929Z",
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
+            "Lifecycle": "AVAILABLE",
+            "OwnerId": "464262061435",
+            "ProgressPercent": 100,
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:backup/backup-08128857c75359124",
+            "ResourceType": "VOLUME",
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "backup_check_1"
+                }
+            ],
+            "Type": "USER_INITIATED",
+            "Volume": {
+                "FileSystemId": "fs-0d5efc3057c4f12cb",
+                "Lifecycle": "ACTIVE",
+                "Name": "Vol2",
+                "OntapConfiguration": {
+                    "CopyTagsToBackups": false,
+                    "JunctionPath": "/SQLData",
+                    "SizeInMegabytes": 148960,
+                    "StorageEfficiencyEnabled": false,
+                    "StorageVirtualMachineId": "svm-0391db09ba833467d",
+                    "TieringPolicy": {
+                        "Name": "SNAPSHOT_ONLY"
+                    }
+                },
+                "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:volume/fsvol-0be5ccb4d6b461a3f",
+                "VolumeId": "fsvol-0be5ccb4d6b461a3f",
+                "VolumeType": "ONTAP"
+            }
         }
     ]
 }

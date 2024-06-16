@@ -41,7 +41,7 @@ import {
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, deleteResource, listRelationshipsResources, listResources } from '../../../lib/database/db';
-import { getDatabsaeInstanceName, generateHash, sqlResponseParsing } from '../../../utils/utils';
+import { getDatabaseInstanceName, generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
@@ -172,10 +172,10 @@ async function getAllResourceUtilisationDetails(
     const diskUtilization: UtilisationResponseBodyInterface = {
         used: dbSizeData?.TotalSize?.toString() || '0',
         total: diskData?.total?.toString() || '0',
-        remaining: isNaN(Number(diskData.total) - dbSizeData.TotalSize)
+        remaining: Number.isNaN(Number(diskData.total) - dbSizeData.TotalSize)
             ? '0'
             : (Number(diskData.total) - dbSizeData.TotalSize).toString(),
-        percentUsed: isNaN(Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)))
+        percentUsed: Number.isNaN(Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)))
             ? '0'
             : Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)).toString(),
         error: diskError
@@ -606,27 +606,27 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
             if (response) {
                 const parsedResponse = sqlResponseParsing(response);
 
-                const instanceDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+                const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
                 let defaultInstance = true;
-                let selectedInstance = instanceDetails.find(
+                let selectedInstance = instancesDetails.find(
                     (instance: { instanceState: string; instanceName: string | string[] }) =>
                         instance.instanceState.toLocaleLowerCase() === 'running' && !instance.instanceName.includes('$') // there is a $ present in named instances
                 )?.instanceName;
 
                 if (!selectedInstance) {
-                    const runningServices = instanceDetails.filter(
+                    const runningServices = instancesDetails.filter(
                         (instance: { instanceState: string }) =>
                             instance.instanceState.toLocaleLowerCase() === 'running'
                     );
-                    selectedInstance = runningServices.length > 0 ? runningServices[0].Name : undefined;
+                    selectedInstance = runningServices.length > 0 ? runningServices[0].instanceName : undefined;
                     defaultInstance = false;
                 }
                 if (selectedInstance !== undefined) {
-                    const instanceName = getDatabsaeInstanceName(selectedInstance, defaultInstance);
-                    return instanceName;
+                    const instanceName = getDatabaseInstanceName(selectedInstance, defaultInstance);
+                    return { instanceName, instancesDetails };
                 }
 
-                return selectedInstance;
+                return { instanceName: selectedInstance, instancesDetails };
             }
         }
     } catch (error) {
@@ -785,14 +785,16 @@ async function getActiveSqlNode(
         let errorMessage = '';
         // Connection to activenode is successful
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-            const instanceName = await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId]);
+            const { instanceName, instancesDetails = [] } =
+                (await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId])) || {};
             if (instanceName) {
                 return {
                     isSSMConnected: true,
                     activeNodeInstanceId: node1InstanceId,
                     standbyNodeInstanceId: node2InstanceId,
                     instanceName,
-                    ssmConnectionSatus: connectionStatus.Status
+                    ssmConnectionStatus: connectionStatus.Status,
+                    instancesDetails
                 };
             }
         } else {
@@ -805,14 +807,16 @@ async function getActiveSqlNode(
         if (node2InstanceId) {
             connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                const instanceName = await getActiveSqlInstanceName(credentialsId, region, [node2InstanceId]);
+                const { instanceName, instancesDetails = [] } =
+                    (await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId])) || {};
                 if (instanceName) {
                     return {
                         isSSMConnected: true,
                         activeNodeInstanceId: node2InstanceId,
                         standbyNodeInstanceId: node1InstanceId,
                         instanceName,
-                        ssmConnectionSatus: connectionStatus.Status
+                        ssmConnectionStatus: connectionStatus.Status,
+                        instancesDetails
                     };
                 }
             }
@@ -824,7 +828,7 @@ async function getActiveSqlNode(
         errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
         logger.error(errorMessage, { connectionStatus });
 
-        return { isSSMConnected: false, ssmConnectionSatus: connectionStatus.Status };
+        return { isSSMConnected: false, ssmConnectionStatus: connectionStatus.Status };
     } catch (error) {
         logger.error(
             `Error while checking SSM connection or SQL server status for resource ID ${resourceId}`,
@@ -953,7 +957,7 @@ async function getActiveSqlNodeAndInstanceDetails(
     });
     try {
         for (const nodeId of nodeIds) {
-            let connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
+            const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId]);
 
@@ -963,11 +967,10 @@ async function getActiveSqlNodeAndInstanceDetails(
                     );
                     if (matchingInstance) {
                         return { nodeId, matchingInstance };
-                    } else {
-                        const errorMessage = `Instance ${databaseInstanceName} not found on node ${nodeId}`;
-                        logger.error(errorMessage);
-                        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
                     }
+                    const errorMessage = `Instance ${databaseInstanceName} not found on node ${nodeId}`;
+                    logger.error(errorMessage);
+                    throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
                 } else {
                     logger.error(`No active sql instances found in node ${nodeId} `);
                 }

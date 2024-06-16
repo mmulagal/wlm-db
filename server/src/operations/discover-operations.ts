@@ -38,7 +38,8 @@ import {
     STORAGE_PROTOCOLS,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES,
     PSMODULES_RELATIVE_PATH,
-    DatabaseTypes
+    DatabaseTypes,
+    OFFLINE
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -68,7 +69,7 @@ import {
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
-import { getDatabaseHostSummary } from './database-hosts-operations';
+import { getDatabaseHostSummary, getDatabaseHostSummaryV2 } from './database-hosts-operations';
 import {
     copyPowerShellModule,
     validateOntapConnectivity,
@@ -78,6 +79,7 @@ import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../u
 import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
+import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -121,7 +123,7 @@ async function getHostAndSqlServerInfo(
     nextToken?: string,
     instances: string[] = []
 ): Promise<DiscoverMsSqlResponseBodyType> {
-    logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
+    logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken, instances });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return returnInventorydata(instances);
     }
@@ -512,7 +514,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         scriptExecutionTime,
                         databaseCount,
                         failureInfo,
-                        sqlServerDeploymentType
+                        sqlServerDeploymentType,
+                        windowsOsVersion
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -541,6 +544,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         isDefaultInstance,
                         ...(failureInfo && { failureInfo }),
                         windowsAuthentication,
+                        windowsOsVersion:
+                            windowsOsVersion.match(/(Microsoft Windows Server \d+)/)[1] || windowsOsVersion,
                         sqlServerAuthentication,
                         storage: compact(uniqBy(storageTypes, v => [v.id, v.svmId, v.protocol].join())),
                         deploymentTypes: compact(
@@ -826,6 +831,124 @@ async function fetchUnmanagedHostsInformation(
         response = response.concat(errorInstances);
     }
 
+    return {
+        count: response.length,
+        items: response
+    };
+}
+
+async function fetchUnmanagedHostsInformationV2(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instances: string[] = []
+) {
+    logger.info('Fetching hosts information:', { accountId, credentialsId, region, instances });
+
+    // Modified implementation to fetch SQL Server instance details for EC2 instances with underlying storage details. The code now accepts instances ID array instead of object with ec2InstanceId and storageType. If there are multiple sql instances in an ec2 instance, the code will return multiple resource details for the same ec2 instance. Every item in resourceDetailsList is an ec2 instance - sql instance pair with storage type.
+
+    const { items: ec2HostDetails } = await getHostAndSqlServerInfo(
+        accountId,
+        credentialsId,
+        region,
+        undefined,
+        undefined,
+        instances
+    );
+    const resourceDetailsList: ResourceDetails[] = [];
+
+    const errorInstances: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
+
+    await Promise.all(
+        ec2HostDetails?.map(async ec2Instance => {
+            const [{ nodeIps, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [];
+            let clusterNodeDetails: NodeDetails[] = [];
+            if (
+                (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
+                    sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) &&
+                nodeIps
+            ) {
+                clusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
+            }
+            const resourceDetails: ResourceDetails = {
+                id: null,
+                account_id: accountId,
+                resource_id: ec2Instance.ec2InstanceId,
+                resource_type: RESOURCESTYPE.MSSQL,
+                resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
+                cloud_provider_name: CloudProviders.AWS,
+                cloud_provider_account_id: null,
+                region,
+                credentials_id: credentialsId,
+                metadata: {
+                    creationDate: Date.now(),
+                    node1InstanceId: ec2Instance.ec2InstanceId
+                },
+                clusterNodeDetails,
+                databaseInstanceDetails: [],
+                co_relation_id: null
+            };
+            if (ec2Instance?.sqlServerInstances && ec2Instance?.sqlServerInstances.length > 0) {
+                ec2Instance?.sqlServerInstances?.forEach(sqlServerInstance => {
+                    // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
+                    const { storage } = sqlServerInstance;
+                    let ebsVolumeIds: string[] | undefined = [];
+                    let fsxwId: string | undefined;
+                    let fsxnId: string | undefined;
+                    storage?.forEach(({ type, id }) => {
+                        // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
+                        // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
+                        ebsVolumeIds = type === STORAGE_TYPE.EBS ? ebsVolumeIds?.concat(id) : ebsVolumeIds;
+                        fsxwId = type === STORAGE_TYPE.FSXW ? id : fsxwId;
+                        fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
+                    });
+
+                    resourceDetails.ebsVolumeIds = ebsVolumeIds;
+                    resourceDetails.databaseInstanceDetails?.push({
+                        database_instance_id: sqlServerInstance.serverGuid || '',
+                        database_instance_name: sqlServerInstance.sqlServerInstance,
+                        database_type: RESOURCESTYPE.MSSQL,
+                        is_default: sqlServerInstance.isDefaultInstance,
+                        instanceState: sqlServerInstance.sqlServerState,
+                        region,
+                        credentials_id: credentialsId,
+                        metadata: { userDatabase: [] },
+                        fsxn_ids: fsxnId || '',
+                        fsxwId,
+                        ebsVolumeIds,
+                        database_deployment_type: sqlServerInstance.sqlServerDeploymentType
+                    });
+                });
+                resourceDetailsList.push(resourceDetails);
+            } else {
+                errorInstances.push({
+                    id: ec2Instance.ec2InstanceId,
+                    name: ec2Instance.ec2InstanceId,
+                    databaseHostStatus: OFFLINE,
+                    errors: 'No active SQL Server instances found',
+                    ssmStatus: ''
+                });
+            }
+        })
+    );
+
+    let response = await Promise.all(
+        resourceDetailsList.map(async resourceDetail =>
+            getDatabaseHostSummaryV2(
+                accountId,
+                resourceDetail.resource_id,
+                credentialsId,
+                region,
+                'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
+                resourceDetail,
+                false // unmanaged host,
+            )
+        )
+    );
+
+    if (errorInstances.length > 0) {
+        response = response.concat(errorInstances);
+    }
     return {
         count: response.length,
         items: response
@@ -1757,5 +1880,6 @@ export {
     manageSqlServer,
     manageSqlServerV2,
     prepareForManage,
+    fetchUnmanagedHostsInformationV2,
     unmanageDatabaseInstance
 };

@@ -273,16 +273,23 @@ const JobMonitoringTable = () => {
             renderCell: (value: any, rowData: any, { updateRowState, rowsState }: any) => {
                 const currentRowState = rowsState[rowData.id];
                 const statusType = rowData?.status.toLowerCase();
+                const isIntegrityCheckJob = rowData?.name?.includes('Check data integrity');
                 return (
                     <>
                         <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
-                        <div className={styles.arrow}>
+                        <div
+                            className={
+                                isIntegrityCheckJob ? `${styles.arrow} ${styles['arrow-disabled']}` : styles.arrow
+                            }
+                        >
                             <ArrowIcon
                                 className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
                                 onClick={(e: any) => {
-                                    getSubJobsData(rowData?.id); // calling sub jobs api on expand click
                                     e.stopPropagation();
-                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    if (!isIntegrityCheckJob) {
+                                        getSubJobsData(rowData?.id); // calling sub jobs api on expand click
+                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    }
                                 }}
                             />
                         </div>

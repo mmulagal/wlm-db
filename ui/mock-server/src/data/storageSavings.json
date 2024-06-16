@@ -11,11 +11,11 @@
     }, 
     "license": { 
       "existing": { 
-        "licenseType": "SQL Std", 
+        "sqlServerEdition": "Standard Edition (64-bit)", 
         "licenseMonthlyPrice": 4380 
       }, 
       "recommended": { 
-        "licenseType": "SQL Std", 
+        "sqlServerEdition": "Standard Edition (64-bit)", 
         "licenseMonthlyPrice": 1402 
       } 
     },

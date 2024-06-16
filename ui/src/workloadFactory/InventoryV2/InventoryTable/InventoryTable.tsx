@@ -37,6 +37,7 @@ import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import { sortInventoryTableData } from '../InventoryUtilsV2';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
@@ -197,35 +198,25 @@ const InventoryTable = () => {
         //Condition for if all managed then showing disable managed button with tooltip
         if (rowData?.action && checkForAllManaged) {
             return (
-                <Popover
-                    popoverClass={styles['copy-popover']}
-                    children={GENERAL.ALL_UNDETECT_TEXT}
-                    trigger="hover"
-                    container={
-                        <div className={styles.detectManageDisable}>
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                {rowData?.action}
-                            </Typography>
-                        </div>
-                    }
-                />
+                <TooltipComponent title={GENERAL.ALL_MANAGED_TEXT} placement="bottom" width="320px" height="90px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
             );
         }
         //Check for all un-detect instances and storage type is N/A
         if (rowData?.action && checkForAllUnDetectInstance && checkForAllFileSystemNA) {
             return (
-                <Popover
-                    popoverClass={styles['copy-popover']}
-                    children={GENERAL.ALL_MANAGED_TEXT}
-                    trigger="hover"
-                    container={
-                        <div className={styles.detectManageDisable}>
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                {rowData?.action}
-                            </Typography>
-                        </div>
-                    }
-                />
+                <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
             );
         }
         //Normal use case to show dialog or move to explore savings

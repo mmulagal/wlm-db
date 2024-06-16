@@ -22,6 +22,8 @@ import {
     SplitEstimatesResponse,
     SandboxLifeCycleBody,
     DatabaseHostSummaryForMultiInstanceListResponse,
+    SandboxSnapshotsResponse,
+    SandboxSnapshotsQueryParams,
     DatabaseHostSummaryForMultiInstanceResponse,
     DatabaseHostInstanceSummaryParams,
     DatabaseHostInstanceSummaryResponse
@@ -283,6 +285,18 @@ const DatabasesListSchemaV2 = {
     }
 };
 
+const GetSandboxSnapshotsSchema = {
+    params: SandboxParams,
+    tags: [RouteTags.SANDBOX],
+    querystring: SandboxSnapshotsQueryParams,
+    summary: 'Get Sandbox snapshots',
+    description:
+        'Get snapshots of all the mapped ontap volumes for the given sandbox to be able to restore the sandbox to a previous state',
+    response: {
+        200: SandboxSnapshotsResponse
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -305,5 +319,6 @@ export {
     DatabaseHostDetailsSchemaV2,
     DatabaseHostInstanceDetailsSchema,
     CheckSandboxIntegritySchema,
-    DatabasesListSchemaV2
+    DatabasesListSchemaV2,
+    GetSandboxSnapshotsSchema
 };

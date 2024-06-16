@@ -523,7 +523,7 @@ const AWS_REGIONS = new Map<string, string>([
     ['us-gov-west-1', 'AWS GovCloud (US-West)'],
     ['us-west-1', 'US West (N. California)'],
     ['us-west-2', 'US West (Oregon)'],
-    ['ca-west1', 'Canada (Calgary)']
+    ['ca-west-1', 'Canada (Calgary)']
 ]);
 
 const WLMDB = 'wlmdb';
@@ -1125,6 +1125,8 @@ const VALIDATION_NODE_INSTANCETYPE = {
 };
 
 const ONLINE = 'ONLINE';
+const OFFLINE = 'OFFLINE';
+const UNKNOWN = 'UNKNOWN';
 
 const BLOCKED_BY_SCP = 'blocked by scp';
 
@@ -1412,6 +1414,8 @@ export {
     VALIDATION_NODE_INSTANCETYPE,
     VALIDATION_INSTANCE_TYPE,
     ONLINE,
+    OFFLINE,
+    UNKNOWN,
     BLOCKED_BY_SCP,
     SIMULATE_IAM_POLICY,
     TEMPLATE_S3GATEWAY_ROUTETABLES,
