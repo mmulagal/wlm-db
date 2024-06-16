@@ -59,12 +59,12 @@ const InventoryTable = () => {
 
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
-    const { isManagedHostListLoading } = useAppSelector(state => state.inventoryV2);
+    const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        setLoading(databaseHostsLoading || isDiscoverInProgress || fullHostDataLoading || isManagedHostListLoading);
-    }, [databaseHostsLoading, isDiscoverInProgress, fullHostDataLoading, isManagedHostListLoading]);
+        setLoading(databaseHostsLoading || isDiscoverInProgress || fullHostDataLoading || isManagedHostListLoading || fsxCredentialStatusLoading);
+    }, [databaseHostsLoading, isDiscoverInProgress, fullHostDataLoading, isManagedHostListLoading, fsxCredentialStatusLoading]);
 
     //For scroll sync
     useRunOnce(() => {

@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addDatabaseHostsDataV2,
     setFsxCredentialStatus,
+    setFsxCredentialStatusLoading,
     setInventoryChartData,
     setInventoryTableData,
     setIsDatabaseHostsLoading,
@@ -23,14 +24,17 @@ import {
 import {
     formatDiscoveredInventoryData,
     formatInventoryTableData,
+    getExploreSavingsRows,
     getFsxIdsFromdiscover,
     getInventoryDataCount,
     getMhUnmanagedInstances,
     getPrimaryClusterNode,
-    getUnmanagedHostInstances
+    getUnmanagedHostInstances,
+    updateInstancesApiResponse
 } from './InventoryUtilsV2';
 import { setIsRefreshed } from '../../store/workloadFactory/inventorySlice';
 import InventoryTableData from './InventoryTableData.json';
+import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
@@ -108,6 +112,7 @@ const InventoryApisV2 = () => {
                     fsxIds: fsxIdsList.join(',')
                 });
                 if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    dispatch(setFsxCredentialStatusLoading(false));
                     if (result && !result?.error) {
                         if (result?.data?.fileSystems) {
                             let fsxCredStatusObj: any = {};
@@ -283,6 +288,7 @@ const InventoryApisV2 = () => {
                         // call fsx id cred status API is fsxids are found
                         const fsxIds = getFsxIdsFromdiscover(result?.data?.items);
                         if (fsxIds && fsxIds.length > 0) {
+                            dispatch(setFsxCredentialStatusLoading(true));
                             getFsxCredentialStatusList(fsxIds, runningCredId, runningRegionId);
                         }
                         if (result?.data?.nextToken) {
@@ -327,7 +333,7 @@ const InventoryApisV2 = () => {
                 result?.data?.items?.map((host: any) => {
                     if (mssqlInstancesDataRef.current[host?.id]) {
                         mssqlInstancesDataRes[host?.id] = {
-                            isManagedHost: isManagedHost,
+                            isManagedHost: mssqlInstancesDataRef.current[host?.id]?.isManagedHost,
                             loading: false,
                             data: host,
                             error: host?.errors
@@ -408,6 +414,8 @@ const InventoryApisV2 = () => {
         dispatch(setMssqlInstancesData({}));
         // Running instanceList reset 
         setRunningInstanceList([]);
+        // Explore savings data 
+        dispatch(setUnmanagedExploreSavingsHost([]));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -503,7 +511,6 @@ const InventoryApisV2 = () => {
                 clusterDiscoveredHost
             );
 
-            // ToDo - Get unmanaged host instances list
             let unmanagedHostList = getUnmanagedHostInstances(formattedDiscoveredInventoryTableData, runningInstanceList);
             if (unmanagedHostList && unmanagedHostList?.length > 0) {
                 callInstanceApi(unmanagedHostList, false);
@@ -514,19 +521,23 @@ const InventoryApisV2 = () => {
 
     // This data is coming from database-hosts API
     useEffect(() => {
-        const formattedInventoryTableData = formatInventoryTableData(databaseHostsData);
+        if (databaseHostsData) {
+            const formattedInventoryTableData = formatInventoryTableData(databaseHostsData);
 
-        // ToDo - Get instance list that has unmanaged rows and than 
-        let unmanagedInstanceList = getMhUnmanagedInstances(formattedInventoryTableData, runningInstanceList);
-        if (unmanagedInstanceList && unmanagedInstanceList?.length > 0) {
-            callInstanceApi(unmanagedInstanceList, true);
+            let unmanagedInstanceList = getMhUnmanagedInstances(formattedInventoryTableData, runningInstanceList);
+            if (unmanagedInstanceList && unmanagedInstanceList?.length > 0) {
+                callInstanceApi(unmanagedInstanceList, true);
+            };
+
+            dispatch(setInventoryTableData({ ...inventoryTableData, ...formattedInventoryTableData }));
         };
-
-        dispatch(setInventoryTableData({ ...inventoryTableData, ...formattedInventoryTableData }));
     }, [databaseHostsData]);
 
     useEffect(() => {
-        // ToDo - Store this loading data and update setInventoryTableData
+        if (mssqlInstancesData && inventoryTableData) {
+            const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesData, inventoryTableData);
+            dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
+        };
     }, [mssqlInstancesData]);
 
     // ToDo - Currently stored data is from json. Will update once writting API logic
@@ -535,8 +546,12 @@ const InventoryApisV2 = () => {
     // }, []);
 
     useEffect(() => {
-        const inventoryDataCount = getInventoryDataCount(inventoryTableData);
-        dispatch(setInventoryChartData(inventoryDataCount));
+        if (inventoryTableData) {
+            const inventoryDataCount = getInventoryDataCount(inventoryTableData);
+            dispatch(setInventoryChartData(inventoryDataCount));
+            const exploreSavingsRows = getExploreSavingsRows(inventoryTableData);
+            dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
+        };
     }, [inventoryTableData]);
 };
 

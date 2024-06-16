@@ -19,6 +19,7 @@ import {
     mergeDatabaseHostsData,
     resetDBHomePageState
 } from '../../utils/utilityFunctions';
+import { getManageAggrCost, getManagedAggrProtection, getManagedAggrStorageSavings, getManagedHostCount } from './DatabaseHomeUtils';
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
@@ -115,23 +116,20 @@ const DatabaseHomeApis = () => {
 
     // To have database hosts data in dashboard - V2
     useEffect(() => {
-        if (!isInventoryV2) {
+        if (!isInventoryV2 || !databaseHostsDataV2) {
             return;
         };
-        // ToDo - use different functions here for V2 API response
-        const mergedData = mergeDatabaseHostsData(databaseHostsDataV2);
-        dispatch(addDatabaseHostsList(mergedData));
 
-        const hostStatusCount = getHostStatusCount(mergedData);
+        const hostStatusCount = getManagedHostCount(databaseHostsDataV2);
         dispatch(addAggregateHostsCountData(hostStatusCount));
 
-        const aggrProtection = getAggrProtection(mergedData);
+        const aggrProtection = getManagedAggrProtection(databaseHostsDataV2);
         dispatch(addAggregatedProtectionDbCount(aggrProtection));
 
-        const aggrStorage = getAggrStorageSavings(mergedData, sandboxSavings);
+        const aggrStorage = getManagedAggrStorageSavings(databaseHostsDataV2, sandboxSavings);
         dispatch(addAggregatedStorageSavings(aggrStorage));
 
-        const aggrCost = getAggrCost(mergedData);
+        const aggrCost = getManageAggrCost(databaseHostsDataV2);
         dispatch(addAggregatedCosts(aggrCost));
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
