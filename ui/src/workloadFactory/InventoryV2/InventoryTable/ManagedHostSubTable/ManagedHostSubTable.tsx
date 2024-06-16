@@ -272,9 +272,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <>
-                        {cellData && (
-                            <div>{cellData}</div>
-                        )}
+                        {cellData && <div>{cellData}</div>}
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
                         {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
                     </>
@@ -300,9 +298,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <>
-                        {cellData && (
-                            <div>{cellData}</div>
-                        )}
+                        {cellData && <div>{cellData}</div>}
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
                         {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
                     </>
@@ -318,13 +314,11 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <>
-                        {cellData && (
-                            <div>{cellData}</div>
-                        )}
+                        {cellData && <div>{cellData}</div>}
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
                         {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
                     </>
-                )
+                );
             }
         },
         {

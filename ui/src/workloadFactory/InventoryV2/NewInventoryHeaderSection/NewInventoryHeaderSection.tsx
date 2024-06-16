@@ -10,12 +10,26 @@ const NewInventoryHeaderSection = () => {
     // const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
-    const { inventoryChartData, isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
+    const { inventoryChartData, isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(
+        state => state.inventoryV2
+    );
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        setLoading(databaseHostsLoading || isDiscoverInProgress || fullHostDataLoading || isManagedHostListLoading || fsxCredentialStatusLoading);
-    }, [databaseHostsLoading, isDiscoverInProgress, fullHostDataLoading, isManagedHostListLoading, fsxCredentialStatusLoading]);
+        setLoading(
+            databaseHostsLoading ||
+                isDiscoverInProgress ||
+                fullHostDataLoading ||
+                isManagedHostListLoading ||
+                fsxCredentialStatusLoading
+        );
+    }, [
+        databaseHostsLoading,
+        isDiscoverInProgress,
+        fullHostDataLoading,
+        isManagedHostListLoading,
+        fsxCredentialStatusLoading
+    ]);
 
     return (
         <div className={styles.chartSection}>

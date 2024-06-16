@@ -21,12 +21,15 @@ const InstanceInformation = () => {
                 instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
             } else {
                 instanceTypelist = selectedHostDetails?.ec2Details?.map((inst: any) => inst?.instanceType);
-            };
+            }
             let serverEdition: any = [];
             selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
-                if (perRow?.databaseServer?.serverEdition && !serverEdition.includes(perRow?.databaseServer?.serverEdition)) {
+                if (
+                    perRow?.databaseServer?.serverEdition &&
+                    !serverEdition.includes(perRow?.databaseServer?.serverEdition)
+                ) {
                     serverEdition.push(perRow?.databaseServer?.serverEdition);
-                } 
+                }
             });
             let data: any = [
                 {

@@ -410,11 +410,11 @@ const InventoryApisV2 = () => {
         dispatch(setFsxCredentialStatus({}));
         // inventory table reset
         dispatch(setInventoryTableData(null));
-        //Instances API reset 
+        //Instances API reset
         dispatch(setMssqlInstancesData({}));
-        // Running instanceList reset 
+        // Running instanceList reset
         setRunningInstanceList([]);
-        // Explore savings data 
+        // Explore savings data
         dispatch(setUnmanagedExploreSavingsHost([]));
     };
 
@@ -511,10 +511,13 @@ const InventoryApisV2 = () => {
                 clusterDiscoveredHost
             );
 
-            let unmanagedHostList = getUnmanagedHostInstances(formattedDiscoveredInventoryTableData, runningInstanceList);
+            let unmanagedHostList = getUnmanagedHostInstances(
+                formattedDiscoveredInventoryTableData,
+                runningInstanceList
+            );
             if (unmanagedHostList && unmanagedHostList?.length > 0) {
                 callInstanceApi(unmanagedHostList, false);
-            };
+            }
             dispatch(setInventoryTableData({ ...inventoryTableData, ...formattedDiscoveredInventoryTableData }));
         }
     }, [discoveredHostData, fsxCredentialStatusObj, managedHostListLoading]);
@@ -527,17 +530,17 @@ const InventoryApisV2 = () => {
             let unmanagedInstanceList = getMhUnmanagedInstances(formattedInventoryTableData, runningInstanceList);
             if (unmanagedInstanceList && unmanagedInstanceList?.length > 0) {
                 callInstanceApi(unmanagedInstanceList, true);
-            };
+            }
 
             dispatch(setInventoryTableData({ ...inventoryTableData, ...formattedInventoryTableData }));
-        };
+        }
     }, [databaseHostsData]);
 
     useEffect(() => {
         if (mssqlInstancesData && inventoryTableData) {
             const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesData, inventoryTableData);
             dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
-        };
+        }
     }, [mssqlInstancesData]);
 
     // ToDo - Currently stored data is from json. Will update once writting API logic
@@ -551,7 +554,7 @@ const InventoryApisV2 = () => {
             dispatch(setInventoryChartData(inventoryDataCount));
             const exploreSavingsRows = getExploreSavingsRows(inventoryTableData);
             dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
-        };
+        }
     }, [inventoryTableData]);
 };
 

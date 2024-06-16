@@ -239,7 +239,10 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             const isManagedRow = row?.databaseInstanceDetails?.filter(
                 per => per?.instanceName === perRow?.databaseInstanceName
             );
-            const allocatedCapacity = (perRow?.storage?.fsxn?.size || 0) + (perRow?.storage?.fsxw?.size || 0) + (perRow?.storage?.ebs?.size || 0);
+            const allocatedCapacity =
+                (perRow?.storage?.fsxn?.size || 0) +
+                (perRow?.storage?.fsxw?.size || 0) +
+                (perRow?.storage?.ebs?.size || 0);
             return {
                 ...perRow,
                 databaseInstanceId: perRow?.databaseInstanceId,
@@ -256,7 +259,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 storage: perRow?.storage,
                 storageSavingsText: getStorageSavingsText(perRow || {}),
                 allocatedCapacity: allocatedCapacity,
-                allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
+                allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
             };
         });
     }
@@ -648,7 +651,7 @@ export const getDiscoveredActions = (row: Array<StatusObjInterface>) => {
         } else {
             action = '';
         }
-    };
+    }
     let storageType = '';
     if (isFsxn) {
         storageType = GENERAL.FSX_FOR_ONTAP;
@@ -742,27 +745,30 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
 };
 
 export const getMhUnmanagedInstances = (databaseHostsData: any, runningInstanceList: any) => {
-    let instanceList : Array<string> = [];
+    let instanceList: Array<string> = [];
     Object.keys(databaseHostsData).map((key: string) => {
         if (runningInstanceList.includes(databaseHostsData[key]?.ec2InstanceId)) {
             return;
-        };
+        }
         if (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) {
             instanceList.push(databaseHostsData[key]?.ec2InstanceId);
-        };
+        }
     });
     return instanceList;
 };
 
 export const getUnmanagedHostInstances = (databaseHostsData: any, runningInstanceList: any) => {
-    let instanceList : Array<string> = [];
+    let instanceList: Array<string> = [];
     Object.keys(databaseHostsData).map((key: string) => {
         if (runningInstanceList.includes(databaseHostsData[key]?.ec2InstanceId)) {
             return;
-        };
-        if ((databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) || (databaseHostsData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && databaseHostsData[key]?.isDetected)) {
+        }
+        if (
+            (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) ||
+            (databaseHostsData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && databaseHostsData[key]?.isDetected)
+        ) {
             instanceList.push(databaseHostsData[key]?.ec2InstanceId);
-        };
+        }
     });
     return instanceList;
 };
@@ -771,7 +777,7 @@ export const updateInstancesApiResponse = (mssqlInstancesData: any, inventoryTab
     let result = inventoryTableData;
     Object.keys(mssqlInstancesData).map((key: string) => {
         if (inventoryTableData?.[key]) {
-            const newData = updateInventoryDatawithInstancesRes(inventoryTableData[key], mssqlInstancesData[key])
+            const newData = updateInventoryDatawithInstancesRes(inventoryTableData[key], mssqlInstancesData[key]);
             result = {
                 ...result,
                 [key]: newData
@@ -786,13 +792,13 @@ export const updateInstancesApiResponse = (mssqlInstancesData: any, inventoryTab
                 }
             });
             if (inventoryRow) {
-                const newData = updateInventoryDatawithInstancesRes(inventoryRow, mssqlInstancesData[key])
+                const newData = updateInventoryDatawithInstancesRes(inventoryRow, mssqlInstancesData[key]);
                 result = {
                     ...result,
                     [resourceId]: newData
                 };
-            };
-        };
+            }
+        }
     });
     return result;
 };
@@ -802,22 +808,22 @@ export const updateInventoryDatawithInstancesRes = (inventoryRow: any, instanceR
     if (instanceRow?.loading) {
         result = {
             ...inventoryRow,
-            isManagedHost : instanceRow?.isManagedHost,
-            loading : instanceRow?.loading
+            isManagedHost: instanceRow?.isManagedHost,
+            loading: instanceRow?.loading
         };
     } else if (instanceRow?.isManagedHost) {
         result = {
             ...inventoryRow,
-            isManagedHost : instanceRow?.isManagedHost,
-            loading : instanceRow?.loading
+            isManagedHost: instanceRow?.isManagedHost,
+            loading: instanceRow?.loading
             // sqlServerInstances: {} // ToDo
         };
     } else if (!instanceRow?.isManagedHost) {
         const allocatedCapacity = getAllocatedCapacity(instanceRow?.data);
         result = {
             ...inventoryRow,
-            isManagedHost : instanceRow?.isManagedHost,
-            loading : instanceRow?.loading,
+            isManagedHost: instanceRow?.isManagedHost,
+            loading: instanceRow?.loading,
             // ec2Details: {}, // ToDo
             estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
             totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
@@ -831,7 +837,7 @@ export const updateInventoryDatawithInstancesRes = (inventoryRow: any, instanceR
     } else {
         result = {
             ...inventoryRow
-        }
+        };
     }
     return result;
 };
@@ -846,7 +852,10 @@ export const updateSqlServerInstancesForUnmanaged = (instanceData: any, existing
             const perRow = instanceData?.databaseInstancesSummary?.find(
                 (per: any) => per?.databaseInstanceName === instRow?.databaseInstanceName
             );
-            const allocatedCapacity =(perRow?.storage?.fsxn?.size || 0) + (perRow?.storage?.fsxw?.size || 0) + (perRow?.storage?.ebs?.size || 0);
+            const allocatedCapacity =
+                (perRow?.storage?.fsxn?.size || 0) +
+                (perRow?.storage?.fsxw?.size || 0) +
+                (perRow?.storage?.ebs?.size || 0);
             return {
                 ...instRow,
                 // fileSystemDeploymentMode: getFileSystemDeploymentMode(
@@ -862,7 +871,7 @@ export const updateSqlServerInstancesForUnmanaged = (instanceData: any, existing
                 databaseServer: perRow?.databaseServer
             };
         });
-    };
+    }
 
     return instanceRows;
 };

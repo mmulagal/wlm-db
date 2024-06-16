@@ -41,7 +41,7 @@ const DatabaseHost = () => {
                         <Typography variant="Regular_14" className={styles.databaseText}>
                             {GENERAL.DATABASES}
                         </Typography>
-                        {(loading) && <FlashingDotsLoader />}
+                        {loading && <FlashingDotsLoader />}
                     </div>
                 </div>
 

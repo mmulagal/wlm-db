@@ -24,7 +24,7 @@ const ProtectionSection = () => {
                     {GENERAL.DB_HOST_PROTECTION}
                 </Typography>
 
-                {(loading) && <FlashingDotsLoader />}
+                {loading && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.secondContainer}>

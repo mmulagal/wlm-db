@@ -16,7 +16,7 @@ const initialInventoryV2State: InventorySliceData = {
     },
     fsxCredentialStatusObj: null,
     fsxCredentialStatusLoading: false,
-    mssqlInstancesData: null,
+    mssqlInstancesData: null
 };
 
 const inventoryV2Slice = createSlice({
@@ -55,7 +55,7 @@ const inventoryV2Slice = createSlice({
         },
         setMssqlInstancesData: (state, action: PayloadAction<any>) => {
             state.mssqlInstancesData = action.payload;
-        },
+        }
     }
 });
 

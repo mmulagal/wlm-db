@@ -19,7 +19,12 @@ import {
     mergeDatabaseHostsData,
     resetDBHomePageState
 } from '../../utils/utilityFunctions';
-import { getManageAggrCost, getManagedAggrProtection, getManagedAggrStorageSavings, getManagedHostCount } from './DatabaseHomeUtils';
+import {
+    getManageAggrCost,
+    getManagedAggrProtection,
+    getManagedAggrStorageSavings,
+    getManagedHostCount
+} from './DatabaseHomeUtils';
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
@@ -90,11 +95,11 @@ const DatabaseHomeApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [jobsSummaryData, jobsSummaryLoading, jobsSummaryError]);
 
-    // To have database hosts data in dashboard - V1 
+    // To have database hosts data in dashboard - V1
     useEffect(() => {
         if (isInventoryV2) {
             return;
-        };
+        }
         const mergedData = mergeDatabaseHostsData(databaseHostsDataV1);
         dispatch(addDatabaseHostsList(mergedData));
 
@@ -113,12 +118,11 @@ const DatabaseHomeApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsDataV1, sandboxSavings]);
 
-
     // To have database hosts data in dashboard - V2
     useEffect(() => {
         if (!isInventoryV2 || !databaseHostsDataV2) {
             return;
-        };
+        }
 
         const hostStatusCount = getManagedHostCount(databaseHostsDataV2);
         dispatch(addAggregateHostsCountData(hostStatusCount));

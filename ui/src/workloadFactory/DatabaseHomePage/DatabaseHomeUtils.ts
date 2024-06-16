@@ -1,9 +1,9 @@
 // ToDo - Write utils dunction for dashboard page here
 
-import { GENERAL } from "../../utils/appConstants";
-import { COSTING_TYPES, STATUS_CONST } from "../../utils/consts";
-import { DatabaseHostItem } from "../../utils/types/databaseHomeTypes";
-import { formatFractionalNumber, formatSizeOnePrecision, isAwsBackupEnabled } from "../../utils/utilityFunctions";
+import { GENERAL } from '../../utils/appConstants';
+import { COSTING_TYPES, STATUS_CONST } from '../../utils/consts';
+import { DatabaseHostItem } from '../../utils/types/databaseHomeTypes';
+import { formatFractionalNumber, formatSizeOnePrecision, isAwsBackupEnabled } from '../../utils/utilityFunctions';
 
 export const getManagedHostCount = (data: any) => {
     let totalDatabases = 0;
@@ -73,10 +73,7 @@ export const getManagedAggrProtection = (data: any) => {
     };
 };
 
-export const getManagedAggrStorageSavings = (
-    data: any,
-    sandboxSavings?: any
-) => {
+export const getManagedAggrStorageSavings = (data: any, sandboxSavings?: any) => {
     let totalConsume = 0;
     let storageSavings = 0;
     Object.keys(data).map((key: string) => {
@@ -97,7 +94,7 @@ export const getManagedAggrStorageSavings = (
                 if (val?.storage?.[fsxType]?.spaceSavings) {
                     storageSavings += val.storage[fsxType].spaceSavings;
                 }
-            };
+            }
         });
     });
 
@@ -134,7 +131,7 @@ export const getManageAggrCost = (data: any) => {
                 fsxVal = summVal?.databaseInstanceTopology?.fileSystemId;
                 break;
             }
-        };
+        }
         if (val?.estimatedUsageCost?.compute) {
             computeCost += val.estimatedUsageCost.compute;
         }
