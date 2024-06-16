@@ -15,6 +15,9 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Manage",
         "actionDisable": false,
+        "isManagedHost": false,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -207,6 +210,9 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Manage",
         "actionDisable": false,
+        "isManagedHost": true,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -394,6 +400,9 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Manage",
         "actionDisable": true,
+        "isManagedHost": true,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -586,6 +595,9 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "",
         "actionDisable": false,
+        "isManagedHost": false,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -767,6 +779,9 @@
         "ssmState": "Offline",
         "action": "",
         "actionDisable": true,
+        "isManagedHost": false,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "sqlServerInstances": []
     },
     "host6": {
@@ -785,6 +800,9 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -921,6 +939,9 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1052,6 +1073,9 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": true,
+        "isManagedHost": false,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1183,6 +1207,9 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1332,6 +1359,9 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1479,6 +1509,9 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": true,
+        "isManagedHost": false,
+        "instanceApiLoading": false,
+        "dbHostApiLoading": false,
         "ec2Details": [
             {
                 "id": "i-1234",

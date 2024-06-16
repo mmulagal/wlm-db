@@ -12,6 +12,7 @@ export interface InventorySliceData {
         discoverHostLoading: boolean;
     };
     fsxCredentialStatusObj: any;
+    mssqlInstancesData: any;
 }
 
 export interface InventoryTableData {

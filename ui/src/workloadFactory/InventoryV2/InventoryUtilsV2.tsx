@@ -81,6 +81,9 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         vpcCidr: managedRow?.nodeTopology?.vpcCidr,
         action: ssmState === INVENTORY_STATUS.ONLINE && totalInstanceCount > 0 ? INVENTORY_ACTIONS.MANAGE : '', // This is default for managed rows,
         actionDisable: totalInstanceCount === managedInstanceCount,
+        isManagedHost: true,
+        instanceApiLoading: false,
+        dbHostApiLoading: false,
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
         totalCost: getTotalCost(managedRow?.estimatedUsageCost || {}),
@@ -224,7 +227,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             };
         });
     }
-    if (row?.databaseInstancesSummary) {
+    if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
         instanceRows = instanceRows?.map(instRow => {
             const perRow = row?.databaseInstancesSummary?.find(
                 per => per?.databaseInstanceName === instRow?.databaseInstanceName
@@ -235,7 +238,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             return {
                 ...perRow,
                 databaseInstanceId: perRow?.databaseInstanceId,
-                databaseInstanceName: perRow?.databaseInstanceName,
+                databaseInstanceName: instRow?.databaseInstanceName,
                 status: perRow?.status,
                 databaseCount: perRow?.databaseCount,
                 statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED,
@@ -492,6 +495,9 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         vpcCidr: discoveredRow?.vpc?.cidrBlock,
         action: actionObj?.action,
         actionDisable: actionObj?.actionDisable,
+        isManagedHost: false,
+        instanceApiLoading: false,
+        dbHostApiLoading: false,
         // **** Below values will get from Instances API *****
         // ec2Details: discoveredRow?.ec2Details, // ToDo - will add in discovery only
         // estimatedUsageCost: {}, // Initially it will be blank
@@ -710,4 +716,32 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
         return 0;
     });
     return result;
+};
+
+export const getMhUnmanagedInstances = (databaseHostsData: any, runningInstanceList: any) => {
+    // ToDo
+    let instanceList : Array<string> = [];
+    Object.keys(databaseHostsData).map((key: string) => {
+        if (runningInstanceList.includes(databaseHostsData[key]?.ec2InstanceId)) {
+            return;
+        };
+        if (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) {
+            instanceList.push(databaseHostsData[key]?.ec2InstanceId);
+        };
+    });
+    return instanceList;
+};
+
+export const getUnmanagedHostInstances = (databaseHostsData: any, runningInstanceList: any) => {
+    // ToDo
+    let instanceList : Array<string> = [];
+    Object.keys(databaseHostsData).map((key: string) => {
+        if (runningInstanceList.includes(databaseHostsData[key]?.ec2InstanceId)) {
+            return;
+        };
+        if ((databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) || (databaseHostsData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && databaseHostsData[key]?.actionDisable)) {
+            instanceList.push(databaseHostsData[key]?.ec2InstanceId);
+        };
+    });
+    return instanceList;
 };

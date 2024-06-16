@@ -14,7 +14,8 @@ const initialInventoryV2State: InventorySliceData = {
         discoveredHostData: null,
         discoverHostLoading: false
     },
-    fsxCredentialStatusObj: null
+    fsxCredentialStatusObj: null,
+    mssqlInstancesData: {},
 };
 
 const inventoryV2Slice = createSlice({
@@ -47,7 +48,10 @@ const inventoryV2Slice = createSlice({
         },
         setFsxCredentialStatus: (state, action: PayloadAction<any>) => {
             state.fsxCredentialStatusObj = action.payload;
-        }
+        },
+        setMssqlInstancesData: (state, action: PayloadAction<any>) => {
+            state.mssqlInstancesData = action.payload;
+        },
     }
 });
 
@@ -60,7 +64,8 @@ export const {
     addDatabaseHostsDataV2,
     setIsDiscoveredHostData,
     setIsDiscoverHostLoading,
-    setFsxCredentialStatus
+    setFsxCredentialStatus,
+    setMssqlInstancesData
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
