@@ -16,8 +16,7 @@
         "action": "Manage",
         "actionDisable": false,
         "isManagedHost": false,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -213,8 +212,7 @@
         "action": "Manage",
         "actionDisable": false,
         "isManagedHost": true,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -405,8 +403,7 @@
         "action": "Manage",
         "actionDisable": true,
         "isManagedHost": true,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -602,8 +599,7 @@
         "action": "",
         "actionDisable": false,
         "isManagedHost": false,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -788,8 +784,7 @@
         "action": "",
         "actionDisable": true,
         "isManagedHost": false,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "storageType": "",
         "isDetected": false,
         "sqlServerInstances": []
@@ -811,8 +806,7 @@
         "action": "Explore savings",
         "actionDisable": false,
         "isManagedHost": false,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -952,8 +946,7 @@
         "action": "Explore savings",
         "actionDisable": false,
         "isManagedHost": false,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1088,8 +1081,7 @@
         "action": "Explore savings",
         "actionDisable": true,
         "isManagedHost": false,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1224,8 +1216,7 @@
         "action": "Explore savings",
         "actionDisable": false,
         "isManagedHost": false,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1378,8 +1369,7 @@
         "action": "Explore savings",
         "actionDisable": false,
         "isManagedHost": false,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1530,8 +1520,7 @@
         "action": "Explore savings",
         "actionDisable": true,
         "isManagedHost": false,
-        "instanceApiLoading": false,
-        "dbHostApiLoading": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
