@@ -16,8 +16,8 @@ import {
     SANDBOX_API_SIZE,
     SANDBOX_EXTENDED_PROPERTY_FLAG_NAME,
     SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
-    SSM_COMMAND_CACHE_TYPE,
-    SSM_PARAM_PREFIX
+    SSM_COMMAND_CACHE_TYPE
+    // SSM_PARAM_PREFIX
 } from '../utils/consts';
 import {
     GET_SANDBOX_DETAILS,
@@ -47,7 +47,7 @@ import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
 import { updateSandboxDBIntoResourceData, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
-import { getParameter } from '../lib/aws/ssm';
+// import { getParameter } from '../lib/aws/ssm';
 import { getDriveInfo } from './createdb-operations';
 import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 
@@ -1472,7 +1472,7 @@ async function getSandboxConnectionString(
             credentialsId
         );
 
-        const { node1InstanceId, node2InstanceId, stackname, activeDirectoryName } = metadata as unknown as Metadata;
+        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
         const { instanceName } = await getActiveSqlNode(
             credentialsId,
@@ -1486,24 +1486,18 @@ async function getSandboxConnectionString(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the connection string');
         }
 
-        const resp = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${stackname}`);
+        const command = ['(Get-CimInstance Win32_ComputerSystem).Domain'];
+
+        const resp = await callSsmExecution(credentialsId, region, command, node1InstanceId);
 
         if (!resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the connection string');
         }
 
-        const parsedResp = sqlResponseParsing(resp);
-
         return {
             server:
-                instanceName === DEFAULT_MSSQL_INSTANCE_NAME
-                    ? `${resourceName}.${activeDirectoryName}`
-                    : `${instanceName}.${activeDirectoryName}`,
-            database: sandboxName,
-            userId:
-                process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
-                    ? 'admin'
-                    : parsedResp?.domain?.username
+                instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? `${resourceName}.${resp}` : `${instanceName}.${resp}`,
+            database: sandboxName
         };
     } catch (e: any) {
         logger.error(`Failed to get the connection string for sandbox ${sandboxName} in host ${databaseHostId}, ${e}`);

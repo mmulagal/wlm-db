@@ -453,6 +453,10 @@ const readExtendedPropertiesCommand = {
     commands: [readExtendedPropertiesOfSandbox('testdb1_clone')]
 };
 
+const getDomainCommand = {
+    commands: ['(Get-CimInstance Win32_ComputerSystem).Domain']
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -581,6 +585,8 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getSnapshotsToCloneCommand })
     .resolves(listSendCommandCommandResponse.getSnapshotsToCloneCommand)
     .on(SendCommandCommand, { Parameters: readExtendedPropertiesCommand })
+    .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand)
+    .on(SendCommandCommand, { Parameters: getDomainCommand })
     .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand);
 
 ssmMock
@@ -711,7 +717,11 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-readExtendedPropertiesCommand'
     })
-    .resolves(getCommandInvocationResponse.readExtendedPropertiesResponse);
+    .resolves(getCommandInvocationResponse.readExtendedPropertiesResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getDomainCommand'
+    })
+    .resolves(getCommandInvocationResponse.getDomainCommandResp);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
