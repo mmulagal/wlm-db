@@ -580,6 +580,7 @@ export const GENERAL = {
     INSTANCES_DISTRIBUTION: 'Instances distribution',
     DETECTED_HOSTS: 'Detected hosts',
     UNIDENTIFIABLE_HOSTS: 'Unidentifiable hosts',
+    HOSTS_PENDING_DETECTION: 'Hosts pending detection',
     UNIDENTIFIABLE_HOST: 'Unidentifiable host',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     MANAGED_BY_WLF: 'Managed by Workload Factory',

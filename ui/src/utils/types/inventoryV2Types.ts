@@ -12,6 +12,8 @@ export interface InventorySliceData {
         discoverHostLoading: boolean;
     };
     fsxCredentialStatusObj: any;
+    fsxCredentialStatusLoading: boolean;
+    mssqlInstancesData: any;
 }
 
 export interface InventoryTableData {
@@ -36,6 +38,10 @@ export interface InventoryTableData {
     }>;
     estimatedUsageCost?: EstimatedUsageCostInterface;
     allocatedCapacity?: number;
+    isManagedHost?: boolean;
+    loading?: boolean;
+    isDetected?: boolean;
+    storageType?: string;
     sqlServerInstances?: Array<{
         databaseInstanceId?: string;
         databaseInstanceName?: string;
@@ -107,7 +113,7 @@ export interface DatabaseInstancesSummaryInterface {
         creationDate?: string;
         collation?: string;
     };
-    databseInstanceTopology?: {
+    databaseInstanceTopology?: {
         serverType?: string;
         serverInstallationMode?: string;
         fileSystemType?: string;
