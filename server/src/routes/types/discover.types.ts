@@ -70,6 +70,9 @@ const SqlServerInstanceInfo = Type.Object({
     windowsAuthentication: Type.Boolean({
         description: 'Is Windows authentication possible for SQL Server?'
     }),
+    windowsOsVersion: Type.String({
+        description: 'Windows operating system version installed on the database host instance.'
+    }),
     sqlServerAuthentication: Type.Optional(
         Type.Boolean({
             description: 'Is SQL Server authentication possible for SQL Server instnace?',

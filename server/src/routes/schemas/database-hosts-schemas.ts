@@ -10,18 +10,23 @@ import {
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
     CreateDatabaseParams,
+    CreateDatabaseParamsV2,
     DriveInfoResponseBody,
     CloneDatabaseHostBody,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,
     SandboxInfoResponseBody,
     DatabaseMountPointRequestQueryParam,
+    DatabaseMountPointRequestQueryParamV2,
     GetDriveQueryString,
     DatabaseMountPointResponseBody,
     SandboxParams,
+    SandboxParamsV2,
     SplitEstimatesResponse,
     SandboxLifeCycleBody,
     DatabaseHostSummaryForMultiInstanceListResponse,
+    SandboxSnapshotsResponse,
+    SandboxSnapshotsQueryParams,
     DatabaseHostSummaryForMultiInstanceResponse,
     DatabaseHostInstanceSummaryParams,
     DatabaseHostInstanceSummaryResponse
@@ -148,6 +153,17 @@ const GetSandboxesMountPointSchema = {
     }
 };
 
+const GetSandboxesMountPointSchemaV2 = {
+    params: CreateDatabaseParamsV2,
+    querystring: DatabaseMountPointRequestQueryParamV2,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Get the mount point information of database',
+    description: 'Get the data and log file mount point drive information of database',
+    response: {
+        200: DatabaseMountPointResponseBody
+    }
+};
+
 const PatchResourceForSandboxSchema = {
     ...databaseHostsRequest,
     tags: [RouteTags.SANDBOX],
@@ -185,8 +201,32 @@ const GetSandboxConnectionStringSchema = {
     }
 };
 
+const GetSandboxConnectionStringSchemaV2 = {
+    params: SandboxParamsV2,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Get Sandbox connection string',
+    description: 'Get sandbox connection string for sql server connection',
+    response: {
+        200: {
+            server: Type.String(),
+            database: Type.String(),
+            userId: Type.Optional(Type.String())
+        }
+    }
+};
+
 const GetSandboxSplitEstimateSchema = {
     params: SandboxParams,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Get Sandbox split estimate',
+    description: 'Get split estimate of all the mapped ontap volumes for the given sandbox',
+    response: {
+        200: SplitEstimatesResponse
+    }
+};
+
+const GetSandboxSplitEstimateSchemaV2 = {
+    params: SandboxParamsV2,
     tags: [RouteTags.SANDBOX],
     summary: 'Get Sandbox split estimate',
     description: 'Get split estimate of all the mapped ontap volumes for the given sandbox',
@@ -207,8 +247,33 @@ const DeleteSandboxSchema = {
     }
 };
 
+const DeleteSandboxSchemaV2 = {
+    params: SandboxParamsV2,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Delete sandbox of given SQL Server instance.',
+    description: 'Delete sandbox of given SQL Server instance in the database host',
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
+
 const SandboxLifeCycleSchema = {
     params: SandboxParams,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Sandbox lifecycle',
+    description: 'Sandbox lifecycle operations',
+    body: SandboxLifeCycleBody,
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
+
+const SandboxLifeCycleSchemaV2 = {
+    params: SandboxParamsV2,
     tags: [RouteTags.SANDBOX],
     summary: 'Sandbox lifecycle',
     description: 'Sandbox lifecycle operations',
@@ -283,6 +348,18 @@ const DatabasesListSchemaV2 = {
     }
 };
 
+const GetSandboxSnapshotsSchema = {
+    params: SandboxParams,
+    tags: [RouteTags.SANDBOX],
+    querystring: SandboxSnapshotsQueryParams,
+    summary: 'Get Sandbox snapshots',
+    description:
+        'Get snapshots of all the mapped ontap volumes for the given sandbox to be able to restore the sandbox to a previous state',
+    response: {
+        200: SandboxSnapshotsResponse
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -296,14 +373,20 @@ export {
     PatchResourceForSandboxSchema,
     RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
+    GetSandboxesMountPointSchemaV2,
     GetSandboxConnectionStringSchema,
+    GetSandboxConnectionStringSchemaV2,
     DeleteSandboxSchema,
+    DeleteSandboxSchemaV2,
     GetSandboxSplitEstimateSchema,
+    GetSandboxSplitEstimateSchemaV2,
     SandboxLifeCycleSchema,
+    SandboxLifeCycleSchemaV2,
     SandboxSplitSchema,
     DatabaseHostsSummarySchemaV2,
     DatabaseHostDetailsSchemaV2,
     DatabaseHostInstanceDetailsSchema,
     CheckSandboxIntegritySchema,
-    DatabasesListSchemaV2
+    DatabasesListSchemaV2,
+    GetSandboxSnapshotsSchema
 };

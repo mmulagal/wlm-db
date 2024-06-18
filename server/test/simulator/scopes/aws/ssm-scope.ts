@@ -56,7 +56,9 @@ import {
     getStorageSavingsFromOntap,
     detachDbAndRemoveAccessPath,
     deleteExtendedPropertiesScript,
-    checkDatabaseIntegrityScript
+    checkDatabaseIntegrityScript,
+    getSnapshotsToClone,
+    readExtendedPropertiesOfSandbox
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -333,7 +335,9 @@ const cloneVolumeCommand = {
             JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
             JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
             'test-res-id',
-            'netapp_wf_test_account_test_cred'
+            'netapp_wf_test_account_test_cred',
+            'target-svm',
+            'testdb'
         )
     ]
 };
@@ -433,6 +437,22 @@ const enterpriseFeatureUsageCheck = {
 
 const checkDatabaseIntegirty = {
     commands: [checkDatabaseIntegrityScript('test-db', '.')]
+};
+
+const getSnapshotsToCloneCommand = {
+    commands: [
+        getSnapshotsToClone(
+            'test-fsx',
+            'us-east-1',
+            JSON.stringify(['5c1075d2-03a0-11ef-a514-55070fbfcab1', '5ace31ea-03a0-11ef-a514-55070fbfcab1']),
+            '5c1075d2-03a0-11ef-a514-55070fbfcab1',
+            'testdb1_clone'
+        )
+    ]
+};
+
+const readExtendedPropertiesCommand = {
+    commands: [readExtendedPropertiesOfSandbox('testdb1_clone')]
 };
 
 ssmMock
@@ -559,7 +579,11 @@ ssmMock
     .on(SendCommandCommand, { Parameters: dbCountParamasV2 })
     .resolves(listSendCommandCommandResponse.dbCountParamasV2Command)
     .on(SendCommandCommand, { Parameters: checkDatabaseIntegirty })
-    .resolves(listSendCommandCommandResponse.checkDatabaseIntegrity);
+    .resolves(listSendCommandCommandResponse.checkDatabaseIntegrity)
+    .on(SendCommandCommand, { Parameters: getSnapshotsToCloneCommand })
+    .resolves(listSendCommandCommandResponse.getSnapshotsToCloneCommand)
+    .on(SendCommandCommand, { Parameters: readExtendedPropertiesCommand })
+    .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -683,7 +707,13 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbCountParamasV2Command' })
     .resolves(getCommandInvocationResponse.getDbCount)
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkDatabaseIntegrity' })
-    .resolves(getCommandInvocationResponse.checkDatabaseIntegrityResponse);
+    .resolves(getCommandInvocationResponse.checkDatabaseIntegrityResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotsToCloneCommand' })
+    .resolves(getCommandInvocationResponse.getSnapshotsToCloneResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-readExtendedPropertiesCommand'
+    })
+    .resolves(getCommandInvocationResponse.readExtendedPropertiesResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

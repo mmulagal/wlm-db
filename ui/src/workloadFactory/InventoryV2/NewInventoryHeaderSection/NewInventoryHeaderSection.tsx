@@ -10,12 +10,26 @@ const NewInventoryHeaderSection = () => {
     // const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
-    const { inventoryChartData, isManagedHostListLoading } = useAppSelector(state => state.inventoryV2);
+    const { inventoryChartData, isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(
+        state => state.inventoryV2
+    );
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        setLoading(databaseHostsLoading || isDiscoverInProgress || fullHostDataLoading || isManagedHostListLoading);
-    }, [databaseHostsLoading, isDiscoverInProgress, fullHostDataLoading, isManagedHostListLoading]);
+        setLoading(
+            databaseHostsLoading ||
+                isDiscoverInProgress ||
+                fullHostDataLoading ||
+                isManagedHostListLoading ||
+                fsxCredentialStatusLoading
+        );
+    }, [
+        databaseHostsLoading,
+        isDiscoverInProgress,
+        fullHostDataLoading,
+        isManagedHostListLoading,
+        fsxCredentialStatusLoading
+    ]);
 
     return (
         <div className={styles.chartSection}>
@@ -49,7 +63,7 @@ const NewInventoryHeaderSection = () => {
                             <SquareComponent
                                 value={String(inventoryChartData?.undetectedHost || 0)}
                                 color="var(--chart-2)"
-                                text={GENERAL.UNIDENTIFIABLE_HOSTS}
+                                text={GENERAL.HOSTS_PENDING_DETECTION}
                                 isLoading={loading}
                             />
                         </div>

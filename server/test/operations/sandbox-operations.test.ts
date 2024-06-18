@@ -5,7 +5,7 @@ import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
-import { ACCOUNT_ID } from '../../src/utils/consts';
+import { ACCOUNT_ID, SANDBOX_LIFECYCLE_REFRESH, SANDBOX_LIFECYCLE_REBASELINE } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
 import {
     createSandbox,
@@ -13,9 +13,12 @@ import {
     getSandboxesInfo,
     getDatabaseMountPointInfo,
     deleteSandbox,
+    deleteSandboxV2,
     updateSandboxLifeCycle,
+    updateSandboxLifeCycleV2,
     splitSandbox,
-    checkDatabaseIntegrity
+    checkDatabaseIntegrity,
+    getSandboxSnapshots
 } from '../../src/operations/sandbox-operations';
 import sandboxResponse from '../simulator/responses/workload/sandbox-response.json';
 
@@ -107,6 +110,22 @@ describe('sandbox operations ', () => {
         expect(resp.jobId).toBeDefined();
     });
 
+    it('Delete the sandbox of given SQL Server instance', async () => {
+        try {
+            const resp = await deleteSandboxV2(
+                ACCOUNT_ID,
+                'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+                'ap-southeast-1',
+                '36E53042-04E8-40C9-AE69-26E56CB0D216',
+                'testdb1',
+                'NO_SUCH_INSTANCE'
+            );
+            expect(resp.jobId).toBeDefined();
+        } catch (error: any) {
+            expect(error.message).toEqual('NO_SUCH_INSTANCE is not a managed SQL Server instance.');
+        }
+    });
+
     it('Refreshes the sandbox', async () => {
         const resp = await updateSandboxLifeCycle(
             ACCOUNT_ID,
@@ -114,9 +133,26 @@ describe('sandbox operations ', () => {
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
             'testdb1',
-            'REFRESH'
+            SANDBOX_LIFECYCLE_REFRESH
         );
         expect(resp.jobId).toBeDefined();
+    });
+
+    it('Refreshes the sandbox of SQL Server instance', async () => {
+        try {
+            const resp = await updateSandboxLifeCycleV2(
+                ACCOUNT_ID,
+                'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+                'ap-southeast-1',
+                '36E53042-04E8-40C9-AE69-26E56CB0D216',
+                'testdb1',
+                'NO_SUCH_INSTANCE',
+                SANDBOX_LIFECYCLE_REFRESH
+            );
+            expect(resp.jobId).toBeDefined();
+        } catch (error: any) {
+            expect(error.message).toEqual('NO_SUCH_INSTANCE is not a managed SQL Server instance.');
+        }
     });
 
     it('Re-baselines the sandbox', async () => {
@@ -126,9 +162,26 @@ describe('sandbox operations ', () => {
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
             'testdb1',
-            'RE-BASELINE'
+            SANDBOX_LIFECYCLE_REBASELINE
         );
         expect(resp.jobId).toBeDefined();
+    });
+
+    it('Re-baselines the sandbox of SQL Server instance', async () => {
+        try {
+            const resp = await updateSandboxLifeCycleV2(
+                ACCOUNT_ID,
+                'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+                'ap-southeast-1',
+                '36E53042-04E8-40C9-AE69-26E56CB0D216',
+                'testdb1',
+                'NO_SUCH_INSTANCE',
+                SANDBOX_LIFECYCLE_REBASELINE
+            );
+            expect(resp.jobId).toBeDefined();
+        } catch (error: any) {
+            expect(error.message).toEqual('NO_SUCH_INSTANCE is not a managed SQL Server instance.');
+        }
     });
 
     it('Splits the sandbox', async () => {
@@ -151,5 +204,16 @@ describe('sandbox operations ', () => {
             'testdb1'
         );
         expect(resp.jobId).toBeDefined();
+    });
+
+    it('Get snapshots for clone', async () => {
+        const resp = await getSandboxSnapshots(
+            ACCOUNT_ID,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'testdb1'
+        );
+        expect(resp).toBeDefined();
     });
 });

@@ -684,9 +684,9 @@ export const inventoryApiV2 = createApi({
             getDatabaseHostsFullDataV2: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
-                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databseInstanceTopology,dbCount,performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`;
+                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`;
                     } else {
-                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databseInstanceTopology,dbCount,performance,storage,protection,estimatedUsageCost`;
+                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,estimatedUsageCost`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -731,6 +731,12 @@ export const inventoryApiV2 = createApi({
                 query: ({ credentialId, regionId, id }) => ({
                     url: `v2/credentials/${credentialId}/regions/${regionId}/database-hosts/${id}?fields=topology,serverDetails,storage,performance,protection,usageEstimation`,
                     method: 'GET'
+                })
+            }),
+            unmanageMssqlInstance: builder.mutation({
+                query: ({ credentialsId, regionId, resourceId, dbInstanceId }) => ({
+                    url: `v1/credentials/${credentialsId}/resources/${resourceId}/mssql/instances?databaseInstanceIds=${dbInstanceId}`,
+                    method: 'DELETE'
                 })
             })
         };
@@ -822,15 +828,20 @@ export const sandboxApi = createApi({
                 })
             }),
             splitSandbox: builder.mutation({
-                query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
+                query: ({ credentialsId, regionId, databaseHostId, sandboxName }) => ({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split`,
                     method: 'POST'
                 })
             }),
             checkIntegrity: builder.mutation({
-                query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
+                query: ({ credentialsId, regionId, databaseHostId, sandboxName }) => ({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/check-integrity`,
                     method: 'POST'
+                })
+            }),
+            getRollbackSnapshots: builder.query({
+                query: ({ credentialId, region, databaseHostId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/snapshots`
                 })
             })
         };
@@ -940,7 +951,8 @@ export const {
     useLazyGetDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
     useGetMssqlInstanceDataV2Mutation,
-    useGetMssqlResourceDataV2Mutation
+    useGetMssqlResourceDataV2Mutation,
+    useUnmanageMssqlInstanceMutation
 } = inventoryApiV2;
 
 export const {
@@ -955,7 +967,8 @@ export const {
     useUpdateSandboxMutation,
     useSplitSandboxMutation,
     useCheckIntegrityMutation,
-    useGetDatabaseHostsForSandboxQuery
+    useGetDatabaseHostsForSandboxQuery,
+    useLazyGetRollbackSnapshotsQuery
 } = sandboxApi;
 
 export const { useGetStorageSavingsMutation, useGetViewCalculationsMutation } = exploreSavingsApi;

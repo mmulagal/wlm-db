@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';
@@ -16,6 +16,13 @@ const DatabaseHomePage = () => {
     const hostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const hostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const databaseHostsLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
+    const fullHostDataLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        setLoading(databaseHostsLoading || fullHostDataLoading || databaseHostsLoadingV2 || fullHostDataLoadingV2);
+    }, [databaseHostsLoading, fullHostDataLoading, databaseHostsLoadingV2, fullHostDataLoadingV2]);
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
@@ -47,11 +54,11 @@ const DatabaseHomePage = () => {
                     {/* Bar lines */}
                     <div className={styles.barContainer}>
                         <div className={styles.commonContainer}>
-                            <StorageSavings hostData={hostStorageSavingsData} hostsLoading={databaseHostsLoading || fullHostDataLoading} />
+                            <StorageSavings hostData={hostStorageSavingsData} hostsLoading={loading} />
                         </div>
 
                         <div className={styles.commonContainer}>
-                            <EstimatedCost hostData={hostCostData} hostsLoading={databaseHostsLoading || fullHostDataLoading} />
+                            <EstimatedCost hostData={hostCostData} hostsLoading={loading} />
                         </div>
                     </div>
                 </div>

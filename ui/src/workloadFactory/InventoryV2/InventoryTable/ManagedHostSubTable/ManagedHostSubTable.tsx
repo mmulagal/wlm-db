@@ -1,4 +1,4 @@
-import { Table, useTable, useDialog, DsTypography } from '@netapp/design-system';
+import { Table, useTable, useDialog, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ManagedHostSubTable.module.scss';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
@@ -15,6 +15,7 @@ import { formatSizeTwoPrecision, isAwsBackupEnabled } from '../../../../utils/ut
 import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
+import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 
 const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollPosition: any }) => {
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
@@ -43,6 +44,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                 }
                 return {
                     ...perRow,
+                    loading: inventoryTableData?.[rowId]?.loading,
                     protectionText: protectionText,
                     allocatedCapacityText: perRow?.allocatedCapacity
                         ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
@@ -109,6 +111,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             id: '9',
             Header: '',
             accessor: 'name',
+
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
@@ -146,53 +149,66 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
 
                 return (
                     <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={[...menu]}
-                            isDisabled={
-                                rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                                (rowData.fileSystemType === GENERAL.EBS ||
-                                    rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
-                            }
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-
-                                    if (menuId === 'manage') {
-                                        handleManage(rowData);
-                                    }
-                                    if (menuId === 'viewInstance') {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                        dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
-                                    }
-                                    if (menuId === 'viewDatabases') {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                        dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
-                                    }
-                                    if (menuId === 'createUserDb') {
-                                        navigate('../create-new-user');
-                                    }
-                                    if (menuId === 'unManage') {
-                                        handleDialog();
-                                    }
+                        {rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                        (rowData.fileSystemType === GENERAL.EBS ||
+                            rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS) ? (
+                            <TooltipComponent
+                                placement={'bottom'}
+                                title={GENERAL.EBS_TOOLTIP_MESSAGE}
+                                width="320px"
+                                height="90px"
+                            >
+                                <div className={styles.menuPointerDisabled}>
+                                    <span className={styles.menuPointer}>...</span>
+                                </div>
+                            </TooltipComponent>
+                        ) : (
+                            <MenuPopover
+                                isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                                menuItems={[...menu]}
+                                isDisabled={
+                                    rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                                    (rowData.fileSystemType === GENERAL.EBS ||
+                                        rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
                                 }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={
-                                rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                                (rowData.fileSystemType === GENERAL.EBS ||
-                                    rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS) &&
-                                GENERAL.EBS_TOOLTIP_MESSAGE
-                            }
-                        />
+                                toggleMenu={(toggleType: string, menuId: string) => {
+                                    if (toggleType === 'close') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
+                                    } else if (toggleType === 'open') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(rowData.id);
+                                        menuOpenedRowDetail.current = rowData.id;
+                                    } else if (toggleType === 'selectedOption') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
+
+                                        if (menuId === 'manage') {
+                                            handleManage(rowData);
+                                        }
+                                        if (menuId === 'viewInstance') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
+                                            dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
+                                        }
+                                        if (menuId === 'viewDatabases') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
+                                            dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
+                                        }
+                                        if (menuId === 'createUserDb') {
+                                            navigate('../create-new-user');
+                                        }
+                                        if (menuId === 'unManage') {
+                                            handleDialog();
+                                        }
+                                    }
+                                }}
+                                CustomMenu={undefined}
+                                disabledText={
+                                    undefined
+                                    // GENERAL.EBS_TOOLTIP_MESSAGE
+                                }
+                            />
+                        )}
                     </div>
                 );
             },
@@ -215,7 +231,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             accessor: 'statusColText',
             id: '2',
             isSortable: false,
-            width: '180px',
+            width: '170px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.UNMANAGED) {
@@ -253,8 +269,14 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             id: '4',
             width: '172px',
             isSortable: true,
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <>
+                        {cellData && <div>{cellData}</div>}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                    </>
+                );
             }
         },
         {
@@ -273,18 +295,30 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             id: '6',
             width: '135px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <>
+                        {cellData && <div>{cellData}</div>}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                    </>
+                );
             }
         },
         {
             Header: 'Performance',
             accessor: 'performance.assessment',
             id: '7',
-            width: '150px',
+            width: '160px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <>
+                        {cellData && <div>{cellData}</div>}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                    </>
+                );
             }
         },
         {

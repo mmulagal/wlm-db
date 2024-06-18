@@ -1,10 +1,19 @@
 import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
 import DatabaseHostsV2 from '../data/databaseHostsV2.json';
+import MssqlInstancesV2 from '../data/mssqlInstancesV2.json';
 
 const router = require('express').Router();
 
 router.get(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/database-hosts`, async (req: {}, res: any) => {
-    generateResponse(res, 200, DatabaseHostsV2);
+    setTimeout(() => {
+        generateResponse(res, 200, DatabaseHostsV2);
+    }, 4000);
+});
+
+router.get(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/mssql/instances`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, MssqlInstancesV2);
+    }, 7000);
 });
 
 export default router;

@@ -8,5 +8,11 @@
         [class*='Table-module_header-cell'] {
             position: relative !important;
         }
+
+        .findings {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
     }
 }

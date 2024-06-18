@@ -637,7 +637,7 @@ async function processCloudFormationMessages() {
                                                                     fsxnIds: fsxId,
                                                                     isDefault: defaultInstance,
                                                                     source: RESOURCE_SOURCE.DEPLOY,
-                                                                    fsxSvmId: { fsxId: fsxSvmId },
+                                                                    fsxSvmId: { [fsxId]: fsxSvmId },
                                                                     sqlDeploymentType,
                                                                     databaseType: DatabaseTypes.MS_SQL_SERVER
                                                                 };

@@ -15,6 +15,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Manage",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -36,6 +38,8 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for ONTAP",
+        "isDetected": true,
         "sqlServerInstances": [
             {
                 "databaseInstanceId": "11",                             
@@ -207,6 +211,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Manage",
         "actionDisable": false,
+        "isManagedHost": true,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -223,6 +229,8 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for ONTAP",
+        "isDetected": true,
         "sqlServerInstances": [
             {
                 "databaseInstanceId": "11",                             
@@ -394,6 +402,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Manage",
         "actionDisable": true,
+        "isManagedHost": true,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -415,6 +425,8 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for ONTAP",
+        "isDetected": true,
         "sqlServerInstances": [
             {
                 "databaseInstanceId": "11",                             
@@ -586,6 +598,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -602,6 +616,8 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for ONTAP",
+        "isDetected": false,
         "sqlServerInstances": [
             {
                 "databaseInstanceId": "11",                             
@@ -767,6 +783,10 @@
         "ssmState": "Offline",
         "action": "",
         "actionDisable": true,
+        "isManagedHost": false,
+        "loading": false,
+        "storageType": "",
+        "isDetected": false,
         "sqlServerInstances": []
     },
     "host6": {
@@ -785,6 +805,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -806,6 +828,8 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "EBS",
+        "isDetected": true,
         "sqlServerInstances": [
             {
                 "databaseInstanceId": "11",                             
@@ -921,6 +945,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -937,6 +963,8 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "EBS",
+        "isDetected": true,
         "sqlServerInstances": [
             {
                 "databaseInstanceId": "11",                             
@@ -1052,6 +1080,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": true,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1068,6 +1098,8 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "EBS",
+        "isDetected": false,
         "sqlServerInstances": [
             {
                 "databaseInstanceId": "11",                             
@@ -1183,6 +1215,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1204,6 +1238,8 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for Windows",
+        "isDetected": true,
         "sqlServerInstances": [
             {
                 "databaseInstanceId": "11",                             
@@ -1332,6 +1368,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1348,6 +1386,8 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for Windows",
+        "isDetected": true,
         "sqlServerInstances": [
             {
                 "databaseInstanceId": "11",                             
@@ -1479,6 +1519,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": true,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1495,6 +1537,8 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for Windows",
+        "isDetected": false,
         "sqlServerInstances": [
             {
                 "databaseInstanceId": "11",                             

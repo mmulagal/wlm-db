@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './ProtectionSection.module.scss';
 import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import MultiRingDoughnut from '../MultiRingDoughnut/MultiRingDoughnut';
@@ -9,6 +9,13 @@ const ProtectionSection = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
 
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const databaseHostsLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
+    const fullHostDataLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        setLoading(databaseHostsLoading || fullHostDataLoading || databaseHostsLoadingV2 || fullHostDataLoadingV2);
+    }, [databaseHostsLoading, fullHostDataLoading, databaseHostsLoadingV2, fullHostDataLoadingV2]);
 
     return (
         <div className={styles.protectionSection}>
@@ -17,7 +24,7 @@ const ProtectionSection = () => {
                     {GENERAL.DB_HOST_PROTECTION}
                 </Typography>
 
-                {(databaseHostsLoading || fullHostDataLoading) && <FlashingDotsLoader />}
+                {loading && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.secondContainer}>
