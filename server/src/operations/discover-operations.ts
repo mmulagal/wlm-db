@@ -10,6 +10,7 @@ import throat from 'throat';
 import {
     createResource,
     deleteDatabaseInstance,
+    deleteResource,
     listDatabaseInstances,
     upsertDatabaseInstance
 } from '../lib/database/db';
@@ -1085,17 +1086,9 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     const { storage } = sqlServerInstance;
     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
     const storageProtocols = storage?.filter(elem => elem.type === STORAGE_TYPE.FSXN).map(elem => elem.protocol);
+    await verifyAndAddFSxOntapCredentials(accountId, credentialsId, region, storageInfo!.id);
 
-    verifyAndAddFSxOntapCredentials(
-        accountId,
-        credentialsId,
-        region,
-        discoverInfo?.items?.[0].sqlServerInstances?.[0]?.storage
-    );
-
-    const fsxStorage = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
-
-    tagResources(credentialsId, region, awsAccountId!, accountId, fsxStorage!.id, node1InstanceId, node2InstanceId);
+    tagResources(credentialsId, region, awsAccountId!, accountId, storageInfo!.id, node1InstanceId, node2InstanceId);
 
     const { domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } = JSON.parse(adDetails!)[
         ACTIVE_DIRECTORY
@@ -1337,20 +1330,19 @@ async function verifyAndAddFSxOntapCredentials(
     accountId: string,
     credentialsId: string,
     region: string,
-    storage: SqlServerInstanceInfoType['storage']
+    fsxNId: string
 ) {
-    logger.info('verifyAndAddFSxOntapCredentials', { storage });
+    logger.info('verifyAndAddFSxOntapCredentials', { accountId, credentialsId, region, fsxStorageId: fsxNId });
 
-    const fsxStorage = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
-    if (fsxStorage) {
+    if (!isEmpty(fsxNId)) {
         // Check if the FSx credentials are already present in SSM parameter store
-        const fsxCredentials = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${fsxStorage.id}`);
+        const fsxCredentials = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${fsxNId}`);
 
         if (!fsxCredentials) {
             let credentials;
 
             try {
-                ({ credentials } = await listFsxOntapCredentials(accountId, fsxStorage?.id));
+                ({ credentials } = await listFsxOntapCredentials(accountId, fsxNId));
 
                 if (isEmpty(credentials)) {
                     throw new Error('FSx for ONTAP storage credentials not found');
@@ -1358,13 +1350,13 @@ async function verifyAndAddFSxOntapCredentials(
             } catch (error: any) {
                 throw createError(
                     HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Unable to manage the instance. Reason: FSx for ONTAP storage '${fsxStorage.id}' isn't registered with FSxN core service.`
+                    `Unable to manage the instance. Reason: FSx for ONTAP storage '${fsxNId}' isn't registered with FSxN core service.`
                 );
             }
 
             const preparedCreds = prepareParametersToStore('', [
                 {
-                    resourceId: fsxStorage.id,
+                    resourceId: fsxNId,
                     resourceType: RESOURCESTYPE.FSX,
                     username: credentials?.userName,
                     password: credentials?.password
@@ -1752,6 +1744,16 @@ async function manageSqlServerV2(
                         throw Error('Always On availability group environments are not supported.');
                     }
 
+                    try {
+                        await verifyAndAddFSxOntapCredentials(accountId, credentialsId, region, storageInfo.id);
+                    } catch (error: any) {
+                        // verifyAndAddFSxOntapCredentials() is used by both V1 and V2 versions
+                        // of the API.  The prefix 'Unable to manage' is alredy added by V2 API.
+                        // To avoid duplication of sentence, we remove the sentence, if
+                        const errorMessage = error?.message?.replace('Unable to manage the instance. Reason: ', '');
+                        throw Error(isEmpty(errorMessage) ? error : errorMessage);
+                    }
+
                     if (isResourceTobeCreated) {
                         const { domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } =
                             JSON.parse(adDetails!)[ACTIVE_DIRECTORY];
@@ -1866,6 +1868,13 @@ async function unmanageDatabaseInstance(
                 });
             }
         });
+
+        // When all database instances are removed, the EC2 ceases to be a
+        // managed resource, since  we aren't managing any SQL Server instance.
+        // So we need to remove the EC2 resource from wlmdb.resource table.
+        if (postDeleteDatabaseInstances.length <= 0) {
+            deleteResource(accountId, resourceId, credentialsId);
+        }
     }
 
     return {
