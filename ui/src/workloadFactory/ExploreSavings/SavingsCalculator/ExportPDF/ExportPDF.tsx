@@ -44,6 +44,7 @@ const ExportPDF = ({ printDocument }: any) => {
                     className={styles.text}
                     style={{ width: '80px' }}
                     onClick={() => (loading ? () => {} : handleExport())}
+                    id="export-pdf"
                 >
                     {GENERAL.EXPORT_PDF}
                 </DsTypography>
@@ -66,6 +67,7 @@ const ExportPDF = ({ printDocument }: any) => {
                             onClick={() =>
                                 viewLoading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                             }
+                            id="view-calculations"
                         >
                             {GENERAL.VIEW_THE_CALCULATIONS}
                         </DsTypography>
@@ -92,6 +94,7 @@ const ExportPDF = ({ printDocument }: any) => {
                                     //     viewLoading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                                     // }
                                     onClick={() => () => {}}
+                                    id="view-calculations"
                                 >
                                     {GENERAL.VIEW_THE_CALCULATIONS}
                                 </DsTypography>
