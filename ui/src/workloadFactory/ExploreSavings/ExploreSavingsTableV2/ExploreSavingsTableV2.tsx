@@ -1,7 +1,7 @@
 import { Table, useTable, Typography, TableTopBar, Popover, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
-import styles from './ExploreSavingsTable.module.scss';
+import styles from './ExploreSavingsTableV2.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -14,12 +14,14 @@ import {
     renderUnmanagedHostName
 } from '../../Inventory/InventoryUtils';
 import { onClickESHost } from '../ExploreSavingsUtils';
+import { INVENTORY_STATUS } from '../../../utils/consts';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
-const ExploreSavingsTable = () => {
+const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
 
-    const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
-    const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
+    const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
+    const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
@@ -51,14 +53,36 @@ const ExploreSavingsTable = () => {
     const ExploreSavingsColDefs: ColumnProps[] = [
         {
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'databaseServerName',
+            accessor: 'status',
             id: '1',
             isSortable: true,
             isSticky: true,
             width: '280px',
-            accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
-                return renderUnmanagedHostName(cellData, rowData, styles);
+                const name = rowData?.name;
+                return (
+                    <div>
+                        <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
+                        <div className={styles.firstColText}>
+                            {rowData?.status === INVENTORY_STATUS.ONLINE && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                            )}
+                            {rowData?.status === INVENTORY_STATUS.OFFLINE && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                            )}
+                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
+                            )}
+                            <Typography variant="Regular_13">
+                                {rowData?.status}
+                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                                {!rowData?.status && !rowData?.loading && 'Unknown'}
+                            </Typography>
+                            <div className={CommonStyles.separator} />
+                            <Typography variant="Regular_13">{GENERAL.MSSQL}</Typography>
+                        </div>
+                    </div>
+                );
             }
         },
         {
@@ -67,19 +91,18 @@ const ExploreSavingsTable = () => {
             id: '6',
             width: '230px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return renderDeploymentModel(cellData, rowData);
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
             Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
-            accessor: 'fileSystemType',
+            accessor: 'storageType',
             id: '2',
             width: '160px',
             filterOptions: 'auto',
-            accessorForTextFilter: 'fileSystemType',
-            renderCell: (cellData: string, rowData: any) => {
-                return renderFileSystemType(cellData, rowData);
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
@@ -114,11 +137,11 @@ const ExploreSavingsTable = () => {
         },
         {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-            accessor: 'sizeformat',
+            accessor: 'allocatedCapacityText',
             id: '4',
             width: '200px',
             isSortable: true,
-            accessorForTextFilter: 'sizeformat',
+            accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
                 return renderAllocatedCapacity(cellData, rowData);
             }
@@ -178,4 +201,4 @@ const ExploreSavingsTable = () => {
     );
 };
 
-export default ExploreSavingsTable;
+export default ExploreSavingsTableV2;

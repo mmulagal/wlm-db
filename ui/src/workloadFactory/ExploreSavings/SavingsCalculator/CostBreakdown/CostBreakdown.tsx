@@ -1,4 +1,4 @@
-import { DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import { DsTypography, DsFlashingDotsLoader, TooltipInfo } from '@netapp/design-system';
 import styles from './CostBreakdown.module.scss';
 import { Card, CardContent, CardTableContent } from '../../../../ui-components/Cards/Card';
 import { Text } from '../../../../ui-components/Typography';
@@ -39,7 +39,14 @@ const CostBreakdown = () => {
                             color={!calculatedResponse && 'text-disabled'}
                             level={data?.type === 'Total summary' ? '14' : '13'}
                         >
-                            {data?.type}
+                            {data?.isTooltip ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <TooltipInfo>{data?.isTooltip}</TooltipInfo>
+                                    <div>{data?.type}</div>
+                                </div>
+                            ) : (
+                                data?.type
+                            )}
                         </Text>
                     </GridItem>
                     <GridItem lg="4">
