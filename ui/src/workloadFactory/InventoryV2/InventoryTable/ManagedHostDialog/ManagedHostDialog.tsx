@@ -22,11 +22,11 @@ const ManagedHostDialog = ({ dialogData }: any) => {
         const dbInstances = dialogData?.sqlServerInstances;
         let output = dbInstances.map((obj: any) => {
             const isInstanceInProgress = inProgressInstances.has(`${dialogData?.id}_${obj?.databaseInstanceName}`);
-            if (isInstanceInProgress || obj.statusColText === 'managed') {
+            if (isInstanceInProgress || obj.statusColText === INVENTORY_STATUS.MANAGED) {
                 return {
                     ...obj,
                     cellProps: { isDisabled: true },
-                    statusColText: isInstanceInProgress ? 'inProgress' : obj.statusColText,
+                    statusColText: isInstanceInProgress ? INVENTORY_STATUS.IN_PROGRESS : obj.statusColText,
                     storageType: dialogData?.storageType
                 };
             } else {
@@ -69,15 +69,15 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                 if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
                 }
-                if (rowData.statusColText === 'inProgress') {
+                if (rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
                         <div className={styles.inProgress}>
                             <SmallLoader />
-                            <DsTypography variant="Regular_14">In progress</DsTypography>
+                            <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
                         </div>
                     );
                 }
-                if (rowData.status === 'managed') {
+                if (rowData.status === INVENTORY_STATUS.MANAGED) {
                     return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
                 }
             }

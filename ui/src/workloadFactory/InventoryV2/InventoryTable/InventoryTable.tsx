@@ -198,7 +198,7 @@ const InventoryTable = () => {
                     })
                 );
             } else {
-                console.log('update manage');
+                //To do post success scenario
             }
         });
     };

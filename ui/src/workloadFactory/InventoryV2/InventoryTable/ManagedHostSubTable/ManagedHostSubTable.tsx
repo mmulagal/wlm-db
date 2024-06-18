@@ -113,7 +113,7 @@ const ManagedHostSubTable = ({
                                 })
                             );
                         } else {
-                            console.log('update unmanage');
+                            // to do post success scenario
                         }
                     });
                 }}
