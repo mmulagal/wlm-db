@@ -1210,69 +1210,86 @@ async function validateCredentials(
         ]);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
+    let parsedResponse;
 
-    let command = '$WarningPreference = "SilentlyContinue";';
+    try {
+        let command = '$WarningPreference = "SilentlyContinue";';
 
-    if (fsxCredentials || sqlCredentials.length) {
-        // Get signed url for aws_ssm.zip to install the ps modules
-        const bucketname = getArtifactsRegionBucketName(region);
-        const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
-        const moduleNames = `
+        if (fsxCredentials || sqlCredentials.length) {
+            // Get signed url for aws_ssm.zip to install the ps modules
+            const bucketname = getArtifactsRegionBucketName(region);
+            const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
+            const moduleNames = `
   'AWS.Tools.Common',
   'AWS.Tools.SimpleSystemsManagement'
 `;
-        command += `${copyPowerShellModule(copyPSModuleS3SignedUrl, moduleNames)};\n`;
-    }
+            command += `${copyPowerShellModule(copyPSModuleS3SignedUrl, moduleNames)};\n`;
+        }
 
-    if (fsxCredentials) {
-        command += `${validateOntapConnectivity(fsxCredentials.resourceId, region)};\n`;
-    }
-
-    if (sqlCredentials.length) {
-        command += sqlCredentials.reduce(
-            (acc: string, { resourceId }) => `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId)};\n`,
-            ''
-        );
-    }
-
-    command += '$responseObject | ConvertTo-Json -Compress';
-
-    const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
-
-    const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
-    let parsedResponse = attempt(JSON.parse, cleanResponse);
-
-    parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
-
-    if (!parsedResponse) {
-        throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
-    }
-
-    const response: Record<string, string> = {};
-    const paramesToDelete: string[] = [];
-
-    if (parsedResponse.requiredModuleError) {
-        response.requiredModuleError = parsedResponse.requiredModuleError;
-    } else {
-        if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
-            paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-            response.fsxnError = parsedResponse?.ontaperror;
+        if (fsxCredentials) {
+            command += `${validateOntapConnectivity(fsxCredentials.resourceId, region)};\n`;
         }
 
         if (sqlCredentials.length) {
-            if (parsedResponse.sqlInstanceConnectivity === false) {
-                paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
-                response.sqlServerError = parsedResponse?.sqlerror;
-            } else if (parsedResponse.sqlInstanceConnectivity === true) {
-                response.sqlServerEdition = parsedResponse?.sqlEdition;
-                response.databaseCount = parsedResponse?.noOfDatabases;
+            command += sqlCredentials.reduce(
+                (acc: string, { resourceId }) => `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId)};\n`,
+                ''
+            );
+        }
+
+        command += '$responseObject | ConvertTo-Json -Compress';
+
+        const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
+
+        const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
+        parsedResponse = attempt(JSON.parse, cleanResponse);
+
+        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+
+        if (!parsedResponse) {
+            throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
+        }
+
+        const response: Record<string, string> = {};
+        const paramesToDelete: string[] = [];
+
+        if (parsedResponse.requiredModuleError) {
+            response.requiredModuleError = parsedResponse.requiredModuleError;
+        } else {
+            if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
+                paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+                response.fsxnError = parsedResponse?.ontaperror;
+            }
+
+            if (sqlCredentials.length) {
+                if (parsedResponse.sqlInstanceConnectivity === false) {
+                    paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+                    response.sqlServerError = parsedResponse?.sqlerror;
+                } else if (parsedResponse.sqlInstanceConnectivity === true) {
+                    response.sqlServerEdition = parsedResponse?.sqlEdition;
+                    response.databaseCount = parsedResponse?.noOfDatabases;
+                }
             }
         }
+
+        await deleteSSMParameter(credentialsId, region, paramesToDelete);
+
+        return response;
+    } catch (error: any) {
+        // delete the ssm parameters if its already created
+        const paramesToDelete: string[] = [];
+        if (fsxCredentials) {
+            paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+        }
+        if (sqlCredentials.length) {
+            paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+        }
+        await deleteSSMParameter(credentialsId, region, paramesToDelete);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `unable to validate the credentials . Reason: ${error?.message}.`
+        );
     }
-
-    await deleteSSMParameter(credentialsId, region, paramesToDelete);
-
-    return response;
 }
 
 async function verifyAndCreateCredentials(
@@ -1314,11 +1331,14 @@ async function verifyAndCreateCredentials(
 async function deleteSSMParameter(credentialsId: string, region: string, ssmParameterNames: string[]) {
     logger.info('deleteSSMParameter', { ssmParameterNames });
 
-    const newlyAddedSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
+    const newlyAddedSSMParameters: string[] = (await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS)) || [];
+    const ssmParamRegex = /\/netapp\/wlmdb\/(.*)/;
+
     if (!isEmpty(newlyAddedSSMParameters) && !isEmpty(ssmParameterNames)) {
-        const filteredSSMParameters = (ssmParameterNames || []).filter(param =>
-            (newlyAddedSSMParameters || []).includes(param)
-        );
+        const filteredSSMParameters = (ssmParameterNames || []).filter(param => {
+            const [, lastPart] = param.match(ssmParamRegex) || [];
+            return newlyAddedSSMParameters.includes(lastPart);
+        });
 
         if (filteredSSMParameters?.length) {
             await deleteParameters(credentialsId, region, filteredSSMParameters);

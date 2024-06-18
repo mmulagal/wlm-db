@@ -176,6 +176,10 @@ const validateSQLInstanceConnectivity = (
     ec2instanceId: string,
     sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => `
+        $destinationPath = $env:PSModulePath.split(';')[0]
+        $CommonmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.Common"
+        $ssmmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.SimpleSystemsManagement"
+        Import-Module -Name $CommonmodulePath, $ssmmodulePath
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
@@ -231,6 +235,11 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
+
+    $destinationPath = $env:PSModulePath.split(';')[0]
+    $CommonmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.Common"
+    $ssmmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.SimpleSystemsManagement"
+    Import-Module -Name $CommonmodulePath, $ssmmodulePath
 
     try {
         $FSxID = '${fsxid}'
