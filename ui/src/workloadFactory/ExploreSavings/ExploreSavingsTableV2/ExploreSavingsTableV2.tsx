@@ -37,7 +37,7 @@ const ExploreSavingsTableV2 = () => {
                 });
                 const rowData = {
                     ...perRow,
-                    instanceListText: instanceList.join(','),
+                    instanceListText: instanceList.join(',')
                 };
                 result.push(rowData);
             });

@@ -59,7 +59,7 @@ const MSSQLAccordion = ({ printState }: any) => {
             serverEdition: storageSavingsResponse?.license?.recommended?.sqlServerEdition,
             serverVersion: selectedHostDetails?.recommendedInstance?.serverVersion,
             instanceType: storageSavingsResponse?.compute?.recommended?.instanceType,
-            windowsServer: storageSavingsResponse?.compute?.recommended?.windowsOsVersion,
+            windowsServer: storageSavingsResponse?.compute?.recommended?.windowsOsVersion
         };
         setMsSqlInstance(mssqlInstanceData);
     }, [selectedHostDetails, storageSavingsResponse]);

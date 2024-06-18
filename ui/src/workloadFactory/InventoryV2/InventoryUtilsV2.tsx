@@ -815,7 +815,7 @@ export const updateInventoryDatawithInstancesRes = (inventoryRow: any, instanceR
             ...inventoryRow,
             loading: false
         };
-    };
+    }
     if (instanceRow?.loading) {
         result = {
             ...inventoryRow,
@@ -861,17 +861,19 @@ export const getEc2DetailsForUnmanagedHost = (instanceRow: any) => {
     if (instanceRow?.data?.nodeTopology?.ec2Details && instanceRow?.data?.nodeTopology?.ec2Details?.length > 0) {
         instanceId = instanceRow?.data?.nodeTopology?.ec2Details?.[0]?.id;
         ec2Details.push(instanceRow?.data?.nodeTopology?.ec2Details?.[0]);
-    };
+    }
     if (instanceRow?.data?.clusterNodeDetails) {
         if (instanceId) {
-            let partnerNode = instanceRow?.data?.clusterNodeDetails?.filter((perInst: any) => perInst?.ec2InstanceId !== instanceId);
+            let partnerNode = instanceRow?.data?.clusterNodeDetails?.filter(
+                (perInst: any) => perInst?.ec2InstanceId !== instanceId
+            );
             if (partnerNode && partnerNode?.length > 0) {
                 ec2Details.push({
                     id: partnerNode[0]?.ec2InstanceId,
                     name: partnerNode[0]?.ec2InstanceName,
                     instanceType: partnerNode[0]?.ec2InstanceType
                 });
-            };
+            }
         } else {
             let node1 = instanceRow?.data?.clusterNodeDetails?.[0];
             let node2 = instanceRow?.data?.clusterNodeDetails?.[1];
@@ -881,17 +883,16 @@ export const getEc2DetailsForUnmanagedHost = (instanceRow: any) => {
                     name: node1?.ec2InstanceName,
                     instanceType: node1?.ec2InstanceType
                 });
-            };
+            }
             if (node2) {
                 ec2Details.push({
                     id: node2?.ec2InstanceId,
                     name: node2?.ec2InstanceName,
                     instanceType: node2?.ec2InstanceType
                 });
-            };
+            }
         }
-        
-    };
+    }
     return ec2Details;
 };
 

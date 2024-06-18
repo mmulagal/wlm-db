@@ -129,7 +129,9 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                 ...data,
                 recommendedInstance: {
                     serverInstallationMode: data?.serverInstallationMode,
-                    serverVersion: data?.databaseServer?.serverVersion || data?.sqlServerInstances?.[0]?.databaseServer?.serverVersion,
+                    serverVersion:
+                        data?.databaseServer?.serverVersion ||
+                        data?.sqlServerInstances?.[0]?.databaseServer?.serverVersion
                 }
             })
         );
