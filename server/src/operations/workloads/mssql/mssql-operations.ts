@@ -40,7 +40,13 @@ import {
     DEFAULT_MSSQL_INSTANCE_NAME
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import { createResource, deleteResource, listRelationshipsResources, listResources } from '../../../lib/database/db';
+import {
+    createResource,
+    deleteResource,
+    listDatabaseInstances,
+    listRelationshipsResources,
+    listResources
+} from '../../../lib/database/db';
 import { getDatabaseInstanceName, generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
@@ -840,6 +846,76 @@ async function getActiveSqlNode(
     return { isSSMConnected: false };
 }
 
+async function getDatabaseEnvironmentDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    resourceId: string,
+    databaseInstanceName: string,
+    node1InstanceId: string,
+    node2InstanceId?: string
+) {
+    logger.info('Get active SQL node and instance details', {
+        accountId,
+        credentialsId,
+        region,
+        resourceId,
+        databaseInstanceName,
+        node1InstanceId,
+        node2InstanceId
+    });
+    let isSSMConnected: boolean = false;
+    let isManagedDatabaseInstance: boolean = false;
+    let isDefaultInstance: boolean = false;
+    let activeNodeInstanceId = node1InstanceId;
+    let fsxId;
+    let svmId;
+
+    try {
+        let connectionStatus = await getSSMConnectionStatus(credentialsId, region, activeNodeInstanceId);
+        if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
+            // Check if SSM connectivity is available on other node.
+            if (node2InstanceId) {
+                activeNodeInstanceId = node2InstanceId;
+            }
+            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
+        }
+        if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+            isSSMConnected = true;
+        }
+    } catch (error) {
+        logger.error(
+            `Failed to get SSM state of nodes ${node1InstanceId} and ${node2InstanceId} in region ${region}. Reason: ${error}`
+        );
+    }
+
+    const databaseInstanceInfo = await listDatabaseInstances(accountId, {
+        credentialsId,
+        resourceId,
+        sqlInstanceName: databaseInstanceName
+    });
+
+    if (!isEmpty(databaseInstanceInfo)) {
+        isManagedDatabaseInstance = true;
+        isDefaultInstance = databaseInstanceInfo[0].is_default;
+
+        // Currently the DB environment is expected to be on a single FSxN/SVM
+        fsxId = databaseInstanceInfo[0].fsxn_ids;
+        const temp = databaseInstanceInfo[0].fsx_svm_id || '';
+        svmId = temp![fsxId as keyof typeof temp];
+        logger.info(svmId);
+    }
+
+    return {
+        isSSMConnected,
+        isManagedDatabaseInstance,
+        isDefaultInstance,
+        ...(isSSMConnected && { activeNodeInstanceId }),
+        fsxId,
+        svmId
+    };
+}
+
 async function checkDatabaseExists(
     accountId: string,
     credentialsId: string,
@@ -1035,6 +1111,7 @@ export {
     getPerformanceMetrics,
     getNativeSQLBackedupDatabases,
     getActiveSqlNode,
+    getDatabaseEnvironmentDetails,
     checkDatabaseExists,
     getSqlServerVersion,
     getMssqlInstanceGuid,
