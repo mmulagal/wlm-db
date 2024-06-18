@@ -84,7 +84,7 @@ const InstanceInformation = () => {
                         {rowData?.findings === 'not optimized' && (
                             <div className={styles.findings}>
                                 <TooltipInfo>
-                                    Your SQL license is Enterprise and could be replaced with Standard while using FsxN,
+                                    Your SQL license is Enterprise and could be replaced with Standard while using FSxN,
                                     since replication and other Enterprise features are not in use anymore.
                                 </TooltipInfo>
                                 <DsTypography variant="Regular_14">Not optimized</DsTypography>
