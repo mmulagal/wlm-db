@@ -54,7 +54,11 @@ const StorageCapacityTable = () => {
             id: 6,
             type: GENERAL.TOTAL_VOLUME,
             // For existing FSX removing buffer size
-            size: isFsxnNew(fsxNType) ? sizeData?.total : sizeData?.total - (sizeData?.buffer || 0),
+            size: isFsxnNew(fsxNType)
+                ? sizeData?.total
+                : sizeData?.total <= 1024
+                ? sizeData?.total
+                : sizeData?.total - (sizeData?.buffer || 0),
             calculation: `Total FSx for ONTAP file system SSD capacity`
         });
         setSizeData(newList);
