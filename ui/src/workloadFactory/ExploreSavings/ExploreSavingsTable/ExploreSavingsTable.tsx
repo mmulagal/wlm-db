@@ -38,7 +38,7 @@ const ExploreSavingsTable = () => {
                                 onClickESHost(dispatch, rowData, isDemoMode);
                             }}
                         >
-                            <Typography variant="Regular_14" className={styles.textStyle}>
+                            <Typography variant="Regular_14" className={styles.textStyle} id="explore-savings">
                                 {GENERAL.ES_SAVINGS}
                             </Typography>
                         </div>
