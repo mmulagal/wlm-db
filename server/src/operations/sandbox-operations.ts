@@ -2323,6 +2323,7 @@ async function performLifecycleUpdate(
     let mappings;
     let clonedVolumes;
     let mountPaths;
+    let sandboxUpdated = false;
     try {
         await validateLifeCycleParams(accountId, credentialsId, region, parentJobId, resourceDetails, action);
 
@@ -2410,6 +2411,9 @@ async function performLifecycleUpdate(
             }
         );
 
+        sandboxUpdated = true;
+
+        // Clean up older volumes
         await startCleanup(
             accountId,
             credentialsId,
@@ -2426,26 +2430,30 @@ async function performLifecycleUpdate(
         logger.error(`Failed to perform lifecycle update for sandbox ${resourceDetails.database}`, e);
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
-        await startCleanup(
-            accountId,
-            credentialsId,
-            region,
-            parentJobId,
-            resourceDetails,
-            resourceDetails,
-            clonedVolumes ? [clonedVolumes.data.volumeId, clonedVolumes.log.volumeId] : [],
-            []
-        );
 
-        if (mappings) {
-            await reAttachSandboxAndAccessPath(
+        // Clean up only when the sandbox is not updated
+        if (!sandboxUpdated) {
+            await startCleanup(
                 accountId,
                 credentialsId,
                 region,
                 parentJobId,
                 resourceDetails,
-                mappings
+                resourceDetails,
+                clonedVolumes ? [clonedVolumes.data.volumeId, clonedVolumes.log.volumeId] : [],
+                []
             );
+
+            if (mappings) {
+                await reAttachSandboxAndAccessPath(
+                    accountId,
+                    credentialsId,
+                    region,
+                    parentJobId,
+                    resourceDetails,
+                    mappings
+                );
+            }
         }
     } finally {
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
