@@ -83,7 +83,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         action: ssmState === INVENTORY_STATUS.ONLINE && totalInstanceCount > 0 ? INVENTORY_ACTIONS.MANAGE : '', // This is default for managed rows,
         actionDisable: totalInstanceCount === managedInstanceCount,
         isManagedHost: true,
-        loading: false,
+        loading: managedRow?.loading,
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
         totalCost: getTotalCost(managedRow?.estimatedUsageCost || {}),
@@ -97,8 +97,8 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
 };
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
-    if (row?.nodeStatus && row?.nodeStatus !== 'N/A') {
-        if (row?.nodeStatus === 'ONLINE') {
+    if (row?.databaseHostStatus && row?.databaseHostStatus !== 'N/A') {
+        if (row?.databaseHostStatus === 'ONLINE') {
             return INVENTORY_STATUS.ONLINE;
         } else {
             return INVENTORY_STATUS.OFFLINE;
