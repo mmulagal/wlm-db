@@ -16,7 +16,9 @@ const initialInventoryV2State: InventorySliceData = {
     },
     fsxCredentialStatusObj: null,
     fsxCredentialStatusLoading: false,
-    mssqlInstancesData: null
+    mssqlInstancesData: null,
+    inProgressInstances: new Set(),
+    manageHostSelectedRows: []
 };
 
 const inventoryV2Slice = createSlice({
@@ -55,6 +57,12 @@ const inventoryV2Slice = createSlice({
         },
         setMssqlInstancesData: (state, action: PayloadAction<any>) => {
             state.mssqlInstancesData = action.payload;
+        },
+        setInProgressInstances: (state, action: PayloadAction<any>) => {
+            state.inProgressInstances = action.payload;
+        },
+        setManageHostSelectedRows: (state, action: PayloadAction<any>) => {
+            state.manageHostSelectedRows = action.payload;
         }
     }
 });
@@ -70,7 +78,9 @@ export const {
     setIsDiscoverHostLoading,
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
-    setMssqlInstancesData
+    setMssqlInstancesData,
+    setInProgressInstances,
+    setManageHostSelectedRows
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

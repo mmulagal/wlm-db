@@ -16,9 +16,22 @@ import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
+import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
+import { setInProgressInstances } from '../../../../store/workloadFactory/inventoryV2Slice';
+import store from '../../../../store/store';
+import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
 
-const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollPosition: any }) => {
-    const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
+const ManagedHostSubTable = ({
+    rowId,
+    scrollPosition,
+    resourceId
+}: {
+    rowId: string;
+    scrollPosition: any;
+    resourceId: string;
+}) => {
+    const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
@@ -28,6 +41,8 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
     const [data, setData] = useState<any>();
 
     const dispatch = useDispatch();
+
+    const [unmanageApi] = useUnmanageMssqlInstanceMutation();
 
     useEffect(() => {
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
@@ -57,7 +72,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
         }
     }, [rowId, inventoryTableData]);
 
-    const handleDialog = () => {
+    const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
                 header={'Unmanage instance'}
@@ -75,7 +90,32 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                 primaryButton={'Unmanage'}
                 secondaryButton={'Close'}
                 callback={() => {
-                    console.log('action');
+                    const updatedState = store.getState();
+                    const { inProgressInstances } = updatedState.inventoryV2;
+                    const inProgressId = `${rowData?.id}_${rowData?.id}`;
+                    dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
+                    unmanageApi({
+                        credentialsId: headerSelectedCred?.data?.credentialsId,
+                        regionId: headerSelectedRegion?.label2,
+                        resourceId,
+                        dbInstanceId: rowData?.id
+                    }).then((res: any) => {
+                        const updatedState = store.getState();
+                        const { inProgressInstances } = updatedState?.inventoryV2;
+                        let updatedInProgressInstances = new Set([...inProgressInstances]);
+                        updatedInProgressInstances.delete(inProgressId);
+                        dispatch(setInProgressInstances(updatedInProgressInstances));
+                        if (res?.items?.[0]?.errorMessage) {
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: res?.items?.[0]?.errorMessage
+                                })
+                            );
+                        } else {
+                            console.log('update unmanage');
+                        }
+                    });
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -198,7 +238,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                                             navigate('../create-new-user');
                                         }
                                         if (menuId === 'unManage') {
-                                            handleDialog();
+                                            handleDialog(rowData);
                                         }
                                     }
                                 }}

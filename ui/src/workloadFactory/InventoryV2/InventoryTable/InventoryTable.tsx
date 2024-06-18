@@ -38,6 +38,10 @@ import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import { sortInventoryTableData } from '../InventoryUtilsV2';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
+import { useManageMssqlInstanceMutation } from '../../../utils/apiService';
+import store from '../../../store/store';
+import { setInProgressInstances } from '../../../store/workloadFactory/inventoryV2Slice';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
@@ -45,6 +49,7 @@ const InventoryTable = () => {
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -54,13 +59,14 @@ const InventoryTable = () => {
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
-    const [isManageButtonDisable, setIsManageButtonDisable] = useState(false);
     const [scrollPos, setScrollPos] = useState(0);
 
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
     const [loading, setLoading] = useState(false);
+
+    const [manageInstanceApi] = useManageMssqlInstanceMutation();
 
     useEffect(() => {
         setLoading(
@@ -98,26 +104,6 @@ const InventoryTable = () => {
             }
         };
     });
-
-    const mockData = [
-        {
-            id: '1',
-            serverInstance: 'SQL Server instance 1',
-            status: 'Unmanaged',
-            storageType: 'FSx for ONTAP'
-        },
-        { id: '2', serverInstance: 'SQL Server instance 2', status: 'inProgress', storageType: 'FSx for ONTAP' },
-        { id: '3', serverInstance: 'SQL Server instance 3', status: 'Unmanaged', storageType: 'FSx for ONTAP' },
-        { id: '4', serverInstance: 'SQL Server instance 4', status: 'Unmanaged', storageType: 'FSx for ONTAP' },
-        { id: '5', serverInstance: 'SQL Server instance 5', status: 'managed', storageType: 'FSx for ONTAP' }
-    ];
-
-    //Use effect to check weather to disable manage button in dialog
-    useEffect(() => {
-        const checkButtonStatus = mockData.some((item: any) => item.status === INVENTORY_STATUS.UNMANAGED);
-
-        setIsManageButtonDisable(!checkButtonStatus);
-    }, []);
 
     useEffect(() => {
         if (inventoryTableData) {
@@ -177,26 +163,64 @@ const InventoryTable = () => {
 
     const ExpandedRow = ({ rowData }: any) => {
         if (rowData?.ssmState === INVENTORY_STATUS.ONLINE) {
-            return <ManagedHostSubTable rowId={rowData?.id} scrollPosition={scrollPos} />;
+            return (
+                <ManagedHostSubTable rowId={rowData?.id} scrollPosition={scrollPos} resourceId={rowData?.resourceId} />
+            );
         }
         return <OfflineComponent />;
     };
 
-    const handleDialog = () => {
+    const handleManageInstances = (rowData: any, instances: any) => {
+        const updatedState = store.getState();
+        const { inProgressInstances } = updatedState.inventoryV2;
+        const inProgressIds = instances.map((instance: any) => `${rowData?.id}_${instance}`);
+        dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
+        manageInstanceApi({
+            credentialsId: headerSelectedCred?.data?.credentialsId,
+            regionId: headerSelectedRegion?.label2,
+            payload: {
+                ec2InstanceId: rowData?.ec2InstanceId,
+                databaseInstanceNames: instances
+            }
+        }).then((res: any) => {
+            const updatedState = store.getState();
+            const { inProgressInstances } = updatedState?.inventoryV2;
+            let updatedInProgressInstances = new Set([...inProgressInstances]);
+            inProgressIds.map((inProgressId: any) => {
+                updatedInProgressInstances.delete(inProgressId);
+            });
+            dispatch(setInProgressInstances(updatedInProgressInstances));
+            if (res?.items?.[0]?.errorMessage) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: res?.items?.[0]?.errorMessage
+                    })
+                );
+            } else {
+                console.log('update manage');
+            }
+        });
+    };
+
+    const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Manage data base host <data base name> instances'}
-                content={<ManagedHostDialog dialogData={mockData} />}
-                primaryButton={'Manage'}
+                header={`Manage data base host ${rowData?.name} instances`}
+                content={<ManagedHostDialog dialogData={rowData} />}
+                primaryButton={INVENTORY_ACTIONS.MANAGE}
                 secondaryButton={'Close'}
                 callback={() => {
-                    console.log('action');
+                    const updatedState = store.getState();
+                    const manageHostSelectedRows = updatedState?.inventoryV2?.manageHostSelectedRows;
+                    const selectedInstanceNames = manageHostSelectedRows.map((row: any) => row?.databaseInstanceName);
+                    handleManageInstances(rowData, selectedInstanceNames);
                 }}
                 closeCallback={() => {
                     closeDialog();
                 }}
                 customClass={styles.setWidth}
-                primaryButtonDisabled={isManageButtonDisable}
+                primaryButtonDisabled={false}
             />
         );
     };
@@ -245,7 +269,7 @@ const InventoryTable = () => {
                         if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
                             onClickESHost(dispatch, rowData, isDemoMode);
                         } else {
-                            handleDialog();
+                            handleDialog(rowData);
                         }
                     }}
                 >

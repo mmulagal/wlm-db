@@ -14,6 +14,8 @@ export interface InventorySliceData {
     fsxCredentialStatusObj: any;
     fsxCredentialStatusLoading: boolean;
     mssqlInstancesData: any;
+    inProgressInstances: any;
+    manageHostSelectedRows: any;
 }
 
 export interface InventoryTableData {
