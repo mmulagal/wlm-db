@@ -69,13 +69,13 @@ const InstanceInformation = () => {
                     details: 'Instance type',
                     value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
                     id: '1',
-                    findings: ''
+                    findings: findingsComputeData
                 },
                 {
                     details: 'SQL Edition',
                     value: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
                     id: '2',
-                    findings: ''
+                    findings: findingsLicenseData
                 },
                 {
                     details: 'Deployment model',
