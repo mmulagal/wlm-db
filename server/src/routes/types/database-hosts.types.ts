@@ -1,7 +1,17 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { InstanceStateName } from '@aws-sdk/client-ec2';
-import { BILLING, NOT_AVAILABLE, OFFLINE, ONLINE, PRICING, ServerState, UNKNOWN } from '../../utils/consts';
+import {
+    BILLING,
+    NOT_AVAILABLE,
+    OFFLINE,
+    ONLINE,
+    PRICING,
+    ServerState,
+    UNKNOWN,
+    SANDBOX_LIFECYCLE_REFRESH,
+    SANDBOX_LIFECYCLE_REBASELINE
+} from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
 
 const DatabaseHostObjectParams = Type.Object({
@@ -22,6 +32,14 @@ const CreateDatabaseParams = Type.Object({
     databaseHostId: Type.String({ minLength: 10 }),
     credentialsId: Type.String(),
     region: Type.String()
+});
+
+const CreateDatabaseParamsV2 = Type.Object({
+    accountId: Type.String({ description: 'Workload Factory account ID', minLength: 7 }),
+    credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1 }),
+    region: Type.String({ description: 'AWS region of the database host', minLength: 1 }),
+    databaseHostId: Type.String({ description: 'Workload Factory resource ID', minLength: 10 }),
+    databaseInstanceName: Type.String({ description: 'SQL Server instance name' })
 });
 
 // Query parameter to fetch protection, performance, storage and cost details
@@ -57,7 +75,6 @@ const EC2InstanceDetailsResponse = Type.Object({
     instanceType: Type.Optional(Type.String()),
     availabilityZone: Type.Optional(Type.String()),
     subnetId: Type.Optional(Type.String()),
-    privateIpAddress: Type.Optional(Type.String()),
     status: Type.Optional(Type.String())
 });
 type EC2InstanceDetailsResponseType = Static<typeof EC2InstanceDetailsResponse>;
@@ -403,6 +420,10 @@ const DatabaseMountPointRequestQueryParam = Type.Object({
     instanceName: Type.String()
 });
 
+const DatabaseMountPointRequestQueryParamV2 = Type.Object({
+    databaseName: Type.String()
+});
+
 const DatabaseMountPointResponseBody = Type.Object({
     databaseDataPath: Type.Array(Type.String()),
     databaseLogPath: Type.Array(Type.String())
@@ -410,6 +431,14 @@ const DatabaseMountPointResponseBody = Type.Object({
 type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
 
 const SandboxParams = Type.Composite([DatabaseHostSummaryParams, Type.Object({ sandboxName: Type.String() })]);
+
+const SandboxParamsV2 = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Object({
+        sandboxName: Type.String(),
+        databaseInstanceName: Type.String({ description: 'SQL Server instance name' })
+    })
+]);
 
 const SplitEstimatesResponse = Type.Object({
     volumes: Type.Array(
@@ -435,7 +464,7 @@ const SandboxSnapshotsQueryParams = Type.Object({
 
 const SandboxLifeCycleBody = Type.Object({
     snapshot: Type.Optional(Type.String()),
-    action: Type.String({ enum: ['REFRESH', 'RE-BASELINE'] })
+    action: Type.String({ enum: [SANDBOX_LIFECYCLE_REFRESH, SANDBOX_LIFECYCLE_REBASELINE] })
 });
 
 const DatabaseHostInstanceDetailsResponse = Type.Object({
@@ -580,6 +609,7 @@ export {
     DatabasesCreateResponse,
     DatabaseCreateResponseType,
     CreateDatabaseParams,
+    CreateDatabaseParamsV2,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
     FileConfigType,
@@ -597,10 +627,12 @@ export {
     SandboxInfoResponseBody,
     SandboxInfoResponseBodyType,
     DatabaseMountPointRequestQueryParam,
+    DatabaseMountPointRequestQueryParamV2,
     GetDriveQueryString,
     DatabaseMountPointResponseBody,
     DatabaseMountPointResponseType,
     SandboxParams,
+    SandboxParamsV2,
     SplitEstimatesResponse,
     SandboxLifeCycleBody,
     SandboxSnapshotsResponse,
