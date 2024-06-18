@@ -895,7 +895,9 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
         }
         // OS version
         if (msSqlInstance?.windowsServer) {
-            const osVersionOption = OS_VERSIONS_LIST?.filter(perRow => msSqlInstance?.windowsServer.includes(perRow?.value));
+            const osVersionOption = OS_VERSIONS_LIST?.filter(perRow =>
+                msSqlInstance?.windowsServer.includes(perRow?.value)
+            );
             if (osVersionOption && osVersionOption?.length > 0) {
                 result = {
                     ...result,
@@ -904,8 +906,8 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
                         value: osVersionOption[0].value
                     }
                 };
-            };
-        };
+            }
+        }
         // database version
         if (msSqlInstance?.serverVersion) {
             const dbVersionOption = DB_VERSIONS?.filter(perRow => msSqlInstance?.serverVersion.includes(perRow?.value));

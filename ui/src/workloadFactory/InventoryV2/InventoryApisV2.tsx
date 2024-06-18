@@ -390,7 +390,7 @@ const InventoryApisV2 = () => {
                     getMssqlData([ec2InstanceId], isManagedHost);
                 }, 0);
             });
-        };
+        }
     };
 
     const resetValues = () => {

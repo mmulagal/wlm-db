@@ -181,7 +181,7 @@ const SavingsCalculatorApi = () => {
                     instances: selectedInstanceId,
                     nextToken: ''
                 });
-            };
+            }
 
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
@@ -234,7 +234,7 @@ const SavingsCalculatorApi = () => {
                     instances: selectedPartnerInstanceId,
                     nextToken: ''
                 });
-            };
+            }
 
             if (result && !result?.error) {
                 dispatch(setSelectedPartnerHostDetails(result?.data?.items?.[0]));
