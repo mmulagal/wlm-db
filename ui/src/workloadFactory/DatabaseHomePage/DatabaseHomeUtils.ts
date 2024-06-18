@@ -2,7 +2,6 @@
 
 import { GENERAL } from '../../utils/appConstants';
 import { COSTING_TYPES, STATUS_CONST } from '../../utils/consts';
-import { DatabaseHostItem } from '../../utils/types/databaseHomeTypes';
 import { formatFractionalNumber, formatSizeOnePrecision, isAwsBackupEnabled } from '../../utils/utilityFunctions';
 
 export const getManagedHostCount = (data: any) => {
