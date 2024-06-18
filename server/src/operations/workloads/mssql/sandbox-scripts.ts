@@ -56,7 +56,7 @@ $results = foreach ($instance in $instances) {
     catch {
         [PSCustomObject]@{
             Instance = $instance
-            Error = "Error executing query on $instance  $_.Exception.Message"
+            Error = "Error executing query on $instance $($_.Exception.Message)"
         } | ConvertTo-Json
     }
 }
@@ -210,7 +210,7 @@ const getDbMappedOntapVolumes = (
     $FSxRegion = '${fsxregion}'
     $dbname = '${dbName}'
     $instanceName = "${instanceName}"
-    $logPrefix = ${logPrefix} ? '${logPrefix}' : 'INFO:'
+    $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_for_$dbname.log.txt" -Append | Out-Null
 
@@ -370,7 +370,7 @@ const getDbMappedOntapVolumes = (
         $responseObject = Get-VolumeIdFromName $responseObject
         Write-Information "$logPrefix Volume Names: $($responseObject | ConvertTo-Json)"
     } catch {
-        write-Error "$logPrefix $_.Exception.Message"
+        write-Error "$logPrefix $($_.Exception.Message)"
         if ($responseObject -eq $null) {
             $responseObject = @{}
         }
@@ -403,7 +403,7 @@ const createVolumeClone = (
     $resourceId = '${resourceId}'
     $clonedByTagValue = '${clonedByTagValue}'
     $sandboxName = '${sandboxName}'
-    $logPrefix = ${logPrefix} ? '${logPrefix}:' : 'INFO:'
+    $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\create_ontap_flexclone_volumes_for_$sandboxName.log.txt" -Append | Out-Null
 
@@ -695,7 +695,7 @@ const createVolumeClone = (
             return $responseObject | ConvertTo-Json -Depth 5
         }
     } catch {
-        Write-Information "$logPrefix $_.Exception.Message"
+        Write-Information "$logPrefix $($_.Exception.Message)"
         $responseObject['error'] = $_.Exception.Message
     }
     
@@ -710,7 +710,7 @@ const createClonedDb = (
 ) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
-    $logPrefix = ${logPrefix} ? '${logPrefix}:' : 'INFO:'
+    $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\sqlserver_create_db_$dbname.log.txt" -Append | Out-Null
 
@@ -733,7 +733,7 @@ const createClonedDb = (
 "@
         sqlcmd -S "${instanceName}"  -Q $attachQuery
     } catch {
-        Write-Error "$logPrefix $_.Exception.Message"
+        Write-Error "$logPrefix $($_.Exception.Message)"
     }
 `;
 
@@ -743,15 +743,15 @@ const addExtendedProperties = (
     propObj: { [x: string]: string | number | boolean }
 ) => `
 $dbname = '${dbName}'
-$extProps = ${JSON.stringify(propObj)} | ConvertFrom-Json
+$extProps = '${JSON.stringify(propObj)}' | ConvertFrom-Json
 
 Start-Transcript -Path "C:\\cfn\\log\\add_extended_properties_$dbname.log.txt" -Append | Out-Null
+
+Write-Information "Sandbox:$($dbname): Adding extended properties $extProps"
 
 $query = @"
 USE $dbname;
 SET NOCOUNT ON;
-
-Write-Information "Sandbox:$dbname: Adding extended properties $extProps"
 
 ${Object.keys(propObj)
     .map(
@@ -770,6 +770,7 @@ ${Object.keys(propObj)
 "@
 
 Sqlcmd -S "${instanceName}"  -Q $query -m 1
+Stop-Transcript | Out-Null
 `;
 
 const cleanUpOntapResources = (
@@ -787,7 +788,7 @@ const cleanUpOntapResources = (
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $DBName = '${dbName}'
     $instanceName = "${instanceName}"
-    $logPrefix = ${logPrefix} ? '${logPrefix}:' : 'INFO:'
+    $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
 
@@ -828,7 +829,7 @@ const cleanUpOntapResources = (
                     throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
                 }
             } catch {
-                Write-Information "$logPrefix $_.Exception.Message"
+                Write-Information "$logPrefix $($_.Exception.Message)"
                 throw $_.Exception.Message
             }
 
@@ -868,7 +869,7 @@ const cleanUpOntapResources = (
             }
         }
     } catch {
-        Write-Information "$logPrefix $_.Exception.Message"
+        Write-Information "$logPrefix $($_.Exception.Message)"
         $responseObject['error'] = $_.Exception.Message
     }
 
@@ -974,7 +975,7 @@ const detachDbAndRemoveAccessPath = (
     $serialNumbers = '${serialNumbers}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $instanceName = "${instanceName}"
-    $logPrefix = ${logPrefix} ? '${logPrefix}:' : 'INFO:'
+    $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\detachdb_remove_accesspath_$dbname.log.txt" -Append | Out-Null
 
@@ -1037,7 +1038,7 @@ const detachDbAndRemoveAccessPath = (
             }
         }
     } catch {
-        Write-Information "$logPrefix $_.Exception.Message"
+        Write-Information "$logPrefix $($_.Exception.Message)"
         $responseObject['error'] = $_.Exception.Message
     }
 
@@ -1055,7 +1056,7 @@ const addAccessPathAndAttachDb = (
     $serialNumbers = '${JSON.stringify(datafile)}' | ConvertFrom-Json
     $filePaths = '${JSON.stringify(logfile)}' | ConvertFrom-Json
     $instanceName = "${instanceName}"
-    $logPrefix = ${logPrefix} ? '${logPrefix}:' : 'INFO:'
+    $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\add_accesspath_attachdb_$dbname.log.txt" -Append | Out-Null
 
@@ -1122,7 +1123,7 @@ const addAccessPathAndAttachDb = (
             return $responseObject | ConvertTo-Json -Depth 5
         }
     } catch {
-        Write-Information "$logPrefix $_.Exception.Message"
+        Write-Information "$logPrefix $($_.Exception.Message)"
         $responseObject['error'] = $_.Exception.Message
         return $responseObject | ConvertTo-Json -Depth 5
     }
@@ -1139,7 +1140,7 @@ const splitFlexCloneVolumes = (
     $fsxregion = '${fsxRegion}'
     $volumes = '${volumes}' | ConvertFrom-Json
     $instance = '${instance}'
-    $logPrefix = ${logPrefix} ? '${logPrefix}:' : 'INFO:'
+    $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\split_volumes.log.txt" -Append | Out-Null
 
@@ -1199,7 +1200,7 @@ const splitFlexCloneVolumes = (
         Invoke-VolumeSplit
         Remove-VolumeObjectTags
     } catch {
-        Write-Information "$logPrefix $_.Exception.Message"
+        Write-Information "$logPrefix $($_.Exception.Message)"
         $responseObject['error'] = $_.Exception.Message
     }
 
@@ -1213,12 +1214,11 @@ const deleteExtendedPropertiesScript = (
 ) => `
 $dbname = '${dbName}'
 $instanceName = "${instanceName}"
-
-$extProps = ${JSON.stringify(props)} | ConvertFrom-Json
+$extProps = '${JSON.stringify(props)}' | ConvertFrom-Json
 
 Start-Transcript -Path "C:\\cfn\\log\\delete_extended_properties_$dbname.log.txt" -Append | Out-Null
 
-Write-Information "Sandbox:$dbname: Deleting extended properties $extProps"
+Write-Information "Sandbox:$($dbname): Deleting extended properties $extProps"
 
 $query = @"
 USE $dbname;
@@ -1234,12 +1234,13 @@ IF EXISTS (SELECT name, value FROM fn_listextendedproperty(default, default, def
 "@
 
 Sqlcmd -S $instanceName -Q $query -m 1
+Stop-Transcript | Out-Null
 `;
 
 const checkDatabaseIntegrityScript = (dbName: string, instanceName: string = '.', logPrefix: string = '') => `
 $dbname = '${dbName}'
 $instanceName = "${instanceName}"
-$logPrefix = ${logPrefix} ? '${logPrefix}:' : 'INFO:'
+$logPrefix = '${logPrefix}'
 
 Start-Transcript -Path "C:\\cfn\\log\\check_integrity_for_$dbname.log.txt" -Append | Out-Null
 

@@ -812,7 +812,9 @@ async function getMappings(
     try {
         const { fsxId, database } = srcDetails;
 
-        let command = [getDbMappedOntapVolumes(fsxId, region, database, `Sandbox:${sandboxName}:`)];
+        let command = [
+            getDbMappedOntapVolumes(fsxId, region, database, srcDetails.instanceName, `Sandbox:${sandboxName}:`)
+        ];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
@@ -1017,7 +1019,7 @@ async function invokeVirtualMount(
 
         try {
             let command = [
-                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -LogPrefix Sandbox:${destDetails.database}:`
+                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}'`
             ];
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
