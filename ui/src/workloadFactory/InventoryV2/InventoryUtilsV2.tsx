@@ -715,8 +715,15 @@ export const formatDiscoverInstanceData = (
 export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
     if (!data || data.length < 2) {
         return data;
-    }
+    };
     const sort_order_action_list = [
+        INVENTORY_STATUS.ONLINE + INVENTORY_ACTIONS.MANAGE + 'true',
+        INVENTORY_STATUS.ONLINE +INVENTORY_ACTIONS.MANAGE + 'false',
+        INVENTORY_STATUS.ONLINE +INVENTORY_ACTIONS.MANAGE,
+        INVENTORY_STATUS.ONLINE +INVENTORY_ACTIONS.EXPLORE_SAVINGS + 'false',
+        INVENTORY_STATUS.ONLINE +INVENTORY_ACTIONS.EXPLORE_SAVINGS + 'true',
+        INVENTORY_STATUS.ONLINE +INVENTORY_ACTIONS.EXPLORE_SAVINGS,
+        INVENTORY_STATUS.ONLINE,
         INVENTORY_ACTIONS.MANAGE + 'true',
         INVENTORY_ACTIONS.MANAGE + 'false',
         INVENTORY_ACTIONS.MANAGE,
