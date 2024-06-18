@@ -16,7 +16,7 @@ param(
     [string]$LogSerial,
 
     [Parameter(Mandatory = $false)]
-    [string]$LogPrefix = 'INFO:'
+    [string]$LogPrefix = ''
 )
 
 $null = (Start-Transcript -Path "C:\cfn\log\invoke_virtualmount_$DBName.log.txt" -Append)
