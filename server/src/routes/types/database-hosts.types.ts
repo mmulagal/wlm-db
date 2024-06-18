@@ -57,7 +57,6 @@ const EC2InstanceDetailsResponse = Type.Object({
     instanceType: Type.Optional(Type.String()),
     availabilityZone: Type.Optional(Type.String()),
     subnetId: Type.Optional(Type.String()),
-    privateIpAddress: Type.Optional(Type.String()),
     status: Type.Optional(Type.String())
 });
 type EC2InstanceDetailsResponseType = Static<typeof EC2InstanceDetailsResponse>;
