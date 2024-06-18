@@ -18,7 +18,7 @@
         }
     ],
     "homepage": {
-        "description": "Deploy databases end-to-end with built-in best practices for optimization. Automate thin cloning, enable application aware backup and disaster recovery, monitor and resolve database health issues.",
+        "description": "Detect your existing database estate on AWS, assess potential cost savings by moving to FSx for ONTAP, deploy databases end-to-end with built-in best practices for optimization, and automate thin cloning for CI/CD pipelines.",
         "primaryCtaLabel": "Deploy database host",
         "primaryCtaTo": "/databases/add-working-environment/database-services/mssql/create",
         "secondaryCtaLabel": "Go to Databases inventory",

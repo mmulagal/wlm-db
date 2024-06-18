@@ -107,25 +107,29 @@ const MSSQLAccordion = ({ printState }: any) => {
                             children={GENERAL.ES_SAVE_ERROR}
                             trigger="hover"
                             container={
-                                <DsButton type="text" isDisabled={true}>
-                                    {GENERAL.ES_SAVE_CONFIG}
-                                </DsButton>
+                                <div id="es-save-config">
+                                    <DsButton type="text" isDisabled={true}>
+                                        {GENERAL.ES_SAVE_CONFIG}
+                                    </DsButton>
+                                </div>
                             }
                         />
                     ) : (
                         !printState && (
-                            <DsButton
-                                type="text"
-                                isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
-                                onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
-                            >
-                                {GENERAL.ES_SAVE_CONFIG}
-                            </DsButton>
+                            <div id="es-save-config">
+                                <DsButton
+                                    type="text"
+                                    isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
+                                    onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
+                                >
+                                    {GENERAL.ES_SAVE_CONFIG}
+                                </DsButton>
+                            </div>
                         )
                     ),
 
                     !printState && (
-                        <div style={{ height: '32px' }} className={styles.buttonContainer}>
+                        <div style={{ height: '32px' }} id="es-create" className={styles.buttonContainer}>
                             <DsButton
                                 type="button"
                                 isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}

@@ -13,7 +13,10 @@ param(
     [string]$DataSerial,
 
     [Parameter(Mandatory = $true)]
-    [string]$LogSerial
+    [string]$LogSerial,
+
+    [Parameter(Mandatory = $false)]
+    [string]$LogPrefix = 'INFO:'
 )
 
 $null = (Start-Transcript -Path "C:\cfn\log\invoke_virtualmount_$DBName.log.txt" -Append)
@@ -23,7 +26,7 @@ try {
     $responseObject = [ordered]@{}
 
     if ($DataFilePath -eq $null -or $LogFilePath -eq $null -or $DataSerial -eq $null -or $LogSerial -eq $null) {
-        write-debug "DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
+        Write-Information "$LogPrefix DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
         throw "DataFilePath or LogFilePath or DataSerial or LogSerial is null"
     }
 
@@ -51,7 +54,7 @@ try {
         $retry++
     } until (($retry -eq 4) -Or ($diskcount -ge $2))
 
-    write-debug "Disklist: $disklist"
+    Write-Information "$LogPrefix Disklist: $disklist"
 
     #Adding Silently Continue for Set-Disk as warning caused output to have the string an API considered failure despite success
     #If warning is indeed serious the next step to initialize will fail and that will be caught
@@ -76,7 +79,7 @@ try {
     }
 }
 catch {
-    write-debug "Error: $($_.Exception)"
+    Write-Information "$LogPrefix Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to modify disks'
     return ($responseObject | ConvertTo-Json -Depth 5)
@@ -101,7 +104,7 @@ try {
     $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
     $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
-    write-debug "DataFolder: $datafolder $logfolder"
+    Write-Information "$LogPrefix DataFolder: $datafolder $logfolder"
 
 
     Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
@@ -109,7 +112,7 @@ try {
 
 }
 catch {
-    write-debug "Error: $($_.Exception)"
+    Write-Information "$LogPrefix Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to initialize disks'
     return ($responseObject | ConvertTo-Json -Depth 5)
@@ -206,10 +209,10 @@ try {
         $partition = $_
         $partition.AccessPaths | ForEach-Object {
             $accessPath = $_
-            write-debug "AccessPath: $accessPath"
+            Write-Information "$LogPrefix AccessPath: $accessPath"
             if ($accessPath) {
                 $matched = $accessPath -match '^[A-Z]:\\$'
-                write-debug "Matched: $matched"
+                Write-Information "$LogPrefix Matched: $matched"
                 if ($matched -eq $True -and $accessPath -notcontains $DataDriveLetter -and $accessPath -notcontains $logDriveLetter) {
                     $accessDrive = $matches[0]
                     $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
@@ -221,7 +224,7 @@ try {
     Get-ChildItem -Path $datafolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
     Get-ChildItem -Path $logfolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
 } catch {
-    write-debug "Failed to remove stale junction paths"
+    Write-Information "$LogPrefix Failed to remove stale junction paths"
 }
 
 try {
@@ -232,7 +235,7 @@ try {
     if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
         $responseObject['dataPath'] = $newDataFilePath
         $responseObject['logPath'] = $newLogFilePath
-        write-debug "NewFilePaths: $newDataFilePath $newLogFilePath"
+        Write-Information "$LogPrefix NewFilePaths: $newDataFilePath $newLogFilePath"
     }
     else {
         throw 
