@@ -129,9 +129,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                 ...data,
                 recommendedInstance: {
                     serverInstallationMode: data?.serverInstallationMode,
-                    serverEdition: data?.databaseServer?.serverEdition,
-                    serverVersion: data?.databaseServer?.serverVersion,
-                    instanceType: data?.topology?.ec2Details?.map((inst: any) => inst?.instanceType)
+                    serverVersion: data?.databaseServer?.serverVersion || data?.[0]?.databaseServer?.serverVersion,
                 }
             })
         );

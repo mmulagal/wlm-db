@@ -385,10 +385,12 @@ const InventoryApisV2 = () => {
             });
             dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataLoad }));
             setRunningInstanceList([...runningInstanceList, ...instancesList]);
-            setTimeout(() => {
-                getMssqlData(instancesList, isManagedHost);
-            }, 1);
-        }
+            instancesList?.map((ec2InstanceId: any) => {
+                setTimeout(() => {
+                    getMssqlData([ec2InstanceId], isManagedHost);
+                }, 0);
+            });
+        };
     };
 
     const resetValues = () => {
@@ -416,6 +418,8 @@ const InventoryApisV2 = () => {
         setRunningInstanceList([]);
         // Explore savings data
         dispatch(setUnmanagedExploreSavingsHost([]));
+        // chart counts
+        dispatch(setInventoryChartData(null));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -538,8 +542,10 @@ const InventoryApisV2 = () => {
 
     useEffect(() => {
         if (mssqlInstancesData && inventoryTableData) {
-            const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesData, inventoryTableData);
-            dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
+            setTimeout(() => {
+                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesData, inventoryTableData);
+                dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
+            }, 0);
         }
     }, [mssqlInstancesData]);
 

@@ -16,6 +16,7 @@ import {
 import { onClickESHost } from '../ExploreSavingsUtils';
 import { INVENTORY_STATUS } from '../../../utils/consts';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { useEffect, useState } from 'react';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -24,6 +25,27 @@ const ExploreSavingsTableV2 = () => {
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const [tableData, setTableData] = useState<any>([]);
+
+    useEffect(() => {
+        if (unManagedHostFormatedList) {
+            let result: any = [];
+            unManagedHostFormatedList?.map((perRow: any) => {
+                let instanceList: any = [];
+                perRow?.ec2Details?.map((row: any) => {
+                    instanceList.push(row?.id);
+                });
+                const rowData = {
+                    ...perRow,
+                    instanceListText: instanceList.join(','),
+                };
+                result.push(rowData);
+            });
+            setTableData(result);
+        } else {
+            setTableData([]);
+        }
+    }, [unManagedHostFormatedList]);
 
     const lastColDetails = () => {
         return {
@@ -107,30 +129,38 @@ const ExploreSavingsTableV2 = () => {
         },
         {
             Header: GENERAL.DB_HOST_INSTANCE_ID,
-            accessor: 'clusterEc2Instances',
+            accessor: 'instanceListText',
             id: '3',
             width: '200px',
-            accessorForTextFilter: 'clusterEc2Instances',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
+                let instanceList: any = cellData ? cellData.split(',') : null;
                 return (
                     <>
-                        {cellData && (
+                        {instanceList && (
                             <div>
-                                {cellData?.[0] && (
-                                    <Typography variant="Regular_13" className={styles.colText}>
-                                        {cellData[0]}
+                                {instanceList?.[0] && (
+                                    <Typography
+                                        variant="Regular_13"
+                                        className={`${styles.colText}`}
+                                        title={instanceList[0]}
+                                    >
+                                        {instanceList[0]}
                                     </Typography>
                                 )}
-                                {cellData?.[1] && (
-                                    <Typography variant="Regular_13" className={styles.colText}>
-                                        {cellData[1]}
+                                {instanceList?.[1] && (
+                                    <Typography
+                                        variant="Regular_13"
+                                        className={`${styles.colText}`}
+                                        title={instanceList[1]}
+                                    >
+                                        {instanceList[1]}
                                     </Typography>
                                 )}
                             </div>
                         )}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && cellData !== 0 && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                        {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
                     </>
                 );
             }
@@ -180,7 +210,7 @@ const ExploreSavingsTableV2 = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: ExploreSavingsColDefs,
-        rows: unManagedHostFormatedList || [],
+        rows: tableData || [],
         pageSize: 50,
         isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
     });

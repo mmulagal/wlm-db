@@ -56,12 +56,13 @@ const MSSQLAccordion = ({ printState }: any) => {
     useEffect(() => {
         let mssqlInstanceData = {
             serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
-            serverEdition: selectedHostDetails?.recommendedInstance?.serverEdition,
+            serverEdition: storageSavingsResponse?.license?.recommended?.sqlServerEdition,
             serverVersion: selectedHostDetails?.recommendedInstance?.serverVersion,
-            instanceType: selectedHostDetails?.recommendedInstance?.instanceType
+            instanceType: storageSavingsResponse?.compute?.recommended?.instanceType,
+            windowsServer: storageSavingsResponse?.compute?.recommended?.windowsOsVersion,
         };
         setMsSqlInstance(mssqlInstanceData);
-    }, [selectedHostDetails]);
+    }, [selectedHostDetails, storageSavingsResponse]);
 
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(
