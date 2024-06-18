@@ -176,7 +176,8 @@ const EstimatedCost = () => {
         iopsValueType,
         iopsValue,
         deploymentModel,
-        selectedFsxnType
+        selectedFsxnType,
+        selectedLicenseType
     ]);
 
     //To open accordion if default account is present
