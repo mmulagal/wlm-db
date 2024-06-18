@@ -1840,24 +1840,6 @@ async function getDatabaseHostSummaryV2(
             }
             [nodeTopology, usageEstimationData, instanceResults] = await Promise.all(promises);
 
-            if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0 && nodeTopology) {
-                const clusterNodeDetails = resourceDetail?.clusterNodeDetails;
-
-                nodeTopology = clusterNodeDetails.map(
-                    (node: { ec2InstanceId: any; ec2InstancePrivateIpAddress: any }) => {
-                        const correspondingNodeTopology = nodeTopology.find(
-                            (topology: { id: string }) => topology.id === node.ec2InstanceId
-                        );
-
-                        if (correspondingNodeTopology) {
-                            correspondingNodeTopology.privateIpAddress = node.ec2InstancePrivateIpAddress;
-                        }
-
-                        return correspondingNodeTopology;
-                    }
-                );
-            }
-
             databaseHostDetails.ssmStatus = ssmConnectionStatus || 'N/A';
 
             if (getUsageEstimation && usageEstimationData) {
@@ -1873,6 +1855,11 @@ async function getDatabaseHostSummaryV2(
             }
 
             databaseHostDetails.databaseInstancesSummary = instanceResults;
+
+            // ClusterNodeDetails is used in TCO
+            if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0) {
+                databaseHostDetails.clusterNodeDetails = resourceDetail?.clusterNodeDetails;
+            }
         }
     } catch (error) {
         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
