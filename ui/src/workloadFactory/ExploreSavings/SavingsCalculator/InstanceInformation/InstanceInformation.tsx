@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 
 const InstanceInformation = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
+    const { storageSavingsResponse, storageSavingsLoading }: any = useAppSelector(state => state.exploreSavings);
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     const [tableData, setTableData] = useState([]);
@@ -15,6 +16,10 @@ const InstanceInformation = () => {
 
     useEffect(() => {
         setLoading(selectedHostDetails?.loading);
+        const findingsComputeData =
+            storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.findings || '-');
+        const findingsLicenseData =
+            storageSavingsResponse && (storageSavingsResponse?.license?.existing?.findings || '-');
         if (isInventoryV2) {
             let instanceTypelist = [];
             if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
@@ -36,13 +41,13 @@ const InstanceInformation = () => {
                     details: 'Instance type',
                     value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
                     id: '1',
-                    findings: ''
+                    findings: findingsComputeData
                 },
                 {
                     details: 'SQL Edition',
                     value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
                     id: '2',
-                    findings: ''
+                    findings: findingsLicenseData
                 },
                 {
                     details: 'Deployment model',
@@ -64,13 +69,13 @@ const InstanceInformation = () => {
                     details: 'Instance type',
                     value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
                     id: '1',
-                    findings: ''
+                    findings: findingsComputeData
                 },
                 {
                     details: 'SQL Edition',
                     value: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
                     id: '2',
-                    findings: ''
+                    findings: findingsLicenseData
                 },
                 {
                     details: 'Deployment model',
@@ -81,7 +86,7 @@ const InstanceInformation = () => {
             ];
             setTableData(data);
         }
-    }, [selectedHostDetails]);
+    }, [selectedHostDetails, storageSavingsResponse]);
 
     const InstanceColDefs: ColumnProps[] = [
         {
@@ -119,9 +124,9 @@ const InstanceInformation = () => {
             id: '3',
             width: '192px',
             renderCell: (cellData: any, rowData: any) => {
-                return !loading ? (
+                return !storageSavingsLoading ? (
                     <>
-                        {rowData?.findings === 'not optimized' && (
+                        {rowData?.findings === 'NOT-OPTIMIZED' && (
                             <div className={styles.findings}>
                                 <TooltipInfo>
                                     Your SQL license is Enterprise and could be replaced with Standard while using FSxN,
@@ -131,7 +136,7 @@ const InstanceInformation = () => {
                             </div>
                         )}
 
-                        {rowData?.findings === 'optimized' && (
+                        {rowData?.findings === 'OPTIMIZED' && (
                             <DsTypography variant="Regular_14">Optimized</DsTypography>
                         )}
                     </>
