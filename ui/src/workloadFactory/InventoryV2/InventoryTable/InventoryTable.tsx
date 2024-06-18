@@ -30,7 +30,7 @@ import {
     initialCreateNewUserState,
     setDBHostName
 } from '../../../store/workloadFactory/createNewDBSlice';
-import { renderAllocatedCapacity, renderEstimatedCost } from '../../Inventory/InventoryUtils';
+import { renderAllocatedCapacity, renderCellData, renderEstimatedCost } from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
@@ -384,7 +384,7 @@ const InventoryTable = () => {
             width: '216px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
