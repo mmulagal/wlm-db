@@ -97,8 +97,8 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
 };
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
-    if (row?.databaseHostStatus && row?.databaseHostStatus !== 'N/A') {
-        if (row?.databaseHostStatus === 'ONLINE') {
+    if (row?.databaseHostStatus && row?.databaseHostStatus !== INVENTORY_STATUS.NOT_AVAILABLE) {
+        if (row?.databaseHostStatus?.toLowerCase() === INVENTORY_STATUS.HOST_ONLINE) {
             return INVENTORY_STATUS.ONLINE;
         } else {
             return INVENTORY_STATUS.OFFLINE;
@@ -109,7 +109,7 @@ export const getNodeStatus = (row: ManagedHostsRowInterface) => {
 };
 
 export const getSsmState = (row: ManagedHostsRowInterface) => {
-    if (row?.ssmStatus && row?.ssmStatus !== 'N/A') {
+    if (row?.ssmStatus && row?.ssmStatus !== INVENTORY_STATUS.NOT_AVAILABLE) {
         if (
             row?.ssmStatus?.toLowerCase() === INVENTORY_STATUS.SSM_CONNECTED ||
             row?.ssmStatus?.toLowerCase() === INVENTORY_STATUS.SSM_ONLINE
@@ -529,7 +529,7 @@ export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface) => {
 };
 
 export const getDiscoverSsmState = (row: DiscoverHostInterface) => {
-    if (row?.ssmState && row?.ssmState !== 'N/A') {
+    if (row?.ssmState && row?.ssmState !== INVENTORY_STATUS.NOT_AVAILABLE) {
         if (row?.ssmState?.toLowerCase() === INVENTORY_STATUS.SSM_CONNECTED) {
             return INVENTORY_STATUS.ONLINE;
         } else {
