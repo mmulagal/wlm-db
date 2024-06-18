@@ -1297,7 +1297,7 @@ const getSnapshotsToClone = (
     $sandboxName = '${sandboxName}'
     $timeWindow = ${window}
     $createdTime = ${createdTime}
-    $logPrefix = "Sandbox:$sandboxName:"
+    $logPrefix = "Sandbox:$($sandboxName):"
 
     Start-Transcript -Path "C:\\cfn\\log\\get_snapshots_to_clone_$sandboxName.log.txt" -Append | Out-Null
     Write-Information "$logPrefix Getting snapshots to clone"
