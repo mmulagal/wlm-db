@@ -120,12 +120,14 @@ const InventoryTable = () => {
                 });
                 const rowData = {
                     ...inventoryTableData[key],
-                    sqlServerInstancesText: inventoryTableData[key]?.totalInstance !== 0 ?
-                        '(' +
-                        inventoryTableData[key]?.managedInstance +
-                        ' out of ' +
-                        inventoryTableData[key]?.totalInstance +
-                        ' managed)' : '',
+                    sqlServerInstancesText:
+                        inventoryTableData[key]?.totalInstance !== 0
+                            ? '(' +
+                              inventoryTableData[key]?.managedInstance +
+                              ' out of ' +
+                              inventoryTableData[key]?.totalInstance +
+                              ' managed)'
+                            : '',
                     instanceListText: instanceList.join(','),
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
                 };
@@ -394,13 +396,15 @@ const InventoryTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
-                        {(cellData && rowData?.sqlServerInstancesText && cellData !== 0) ? (
+                        {cellData && rowData?.sqlServerInstancesText && cellData !== 0 ? (
                             <>
                                 <Typography variant="Semibold_14">{cellData + ' instances'}</Typography>
                                 <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
                             </>
-                        ): ''}
-                        {(!cellData || !rowData?.sqlServerInstancesText) ? GENERAL.NOT_AVAILABLE : ''}
+                        ) : (
+                            ''
+                        )}
+                        {!cellData || !rowData?.sqlServerInstancesText ? GENERAL.NOT_AVAILABLE : ''}
                     </div>
                 );
             }
