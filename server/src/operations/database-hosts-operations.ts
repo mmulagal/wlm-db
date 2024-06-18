@@ -1843,7 +1843,7 @@ async function getDatabaseHostSummaryV2(
             databaseHostDetails.ssmStatus = ssmConnectionStatus || 'N/A';
 
             if (getUsageEstimation && usageEstimationData) {
-                databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdown;
+                databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType;
                 databaseHostDetails.estimatedUsageCost = usageEstimationData;
             }
 
