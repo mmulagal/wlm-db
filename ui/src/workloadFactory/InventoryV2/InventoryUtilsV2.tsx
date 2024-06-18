@@ -83,7 +83,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         action: ssmState === INVENTORY_STATUS.ONLINE && totalInstanceCount > 0 ? INVENTORY_ACTIONS.MANAGE : '', // This is default for managed rows,
         actionDisable: totalInstanceCount === managedInstanceCount,
         isManagedHost: true,
-        loading: false,
+        loading: managedRow?.loading,
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
         totalCost: getTotalCost(managedRow?.estimatedUsageCost || {}),
@@ -97,8 +97,8 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
 };
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
-    if (row?.nodeStatus && row?.nodeStatus !== 'N/A') {
-        if (row?.nodeStatus === 'ONLINE') {
+    if (row?.databaseHostStatus && row?.databaseHostStatus !== INVENTORY_STATUS.NOT_AVAILABLE) {
+        if (row?.databaseHostStatus?.toLowerCase() === INVENTORY_STATUS.HOST_ONLINE) {
             return INVENTORY_STATUS.ONLINE;
         } else {
             return INVENTORY_STATUS.OFFLINE;
@@ -109,7 +109,7 @@ export const getNodeStatus = (row: ManagedHostsRowInterface) => {
 };
 
 export const getSsmState = (row: ManagedHostsRowInterface) => {
-    if (row?.ssmStatus && row?.ssmStatus !== 'N/A') {
+    if (row?.ssmStatus && row?.ssmStatus !== INVENTORY_STATUS.NOT_AVAILABLE) {
         if (
             row?.ssmStatus?.toLowerCase() === INVENTORY_STATUS.SSM_CONNECTED ||
             row?.ssmStatus?.toLowerCase() === INVENTORY_STATUS.SSM_ONLINE
@@ -529,7 +529,7 @@ export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface) => {
 };
 
 export const getDiscoverSsmState = (row: DiscoverHostInterface) => {
-    if (row?.ssmState && row?.ssmState !== 'N/A') {
+    if (row?.ssmState && row?.ssmState !== INVENTORY_STATUS.NOT_AVAILABLE) {
         if (row?.ssmState?.toLowerCase() === INVENTORY_STATUS.SSM_CONNECTED) {
             return INVENTORY_STATUS.ONLINE;
         } else {

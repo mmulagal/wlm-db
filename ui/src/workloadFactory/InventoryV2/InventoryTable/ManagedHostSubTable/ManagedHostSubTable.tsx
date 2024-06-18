@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { formatSizeTwoPrecision, isAwsBackupEnabled } from '../../../../utils/utilityFunctions';
-import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
+import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
@@ -299,8 +299,8 @@ const ManagedHostSubTable = ({
             id: '3',
             width: '160px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -325,8 +325,8 @@ const ManagedHostSubTable = ({
             id: '5',
             width: '193px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
