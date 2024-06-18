@@ -1,4 +1,4 @@
-import { Table, useTable, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, DsFlashingDotsLoader, TooltipInfo } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { DsTypography } from '@netapp/design-system';
 import styles from './InstanceInformation.module.scss';
@@ -35,17 +35,20 @@ const InstanceInformation = () => {
                 {
                     details: 'Instance type',
                     value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
-                    id: '1'
+                    id: '1',
+                    findings: ''
                 },
                 {
                     details: 'SQL Edition',
                     value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
-                    id: '2'
+                    id: '2',
+                    findings: ''
                 },
                 {
                     details: 'Deployment model',
                     value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-                    id: '3'
+                    id: '3',
+                    findings: ''
                 }
             ];
             setTableData(data);
@@ -60,17 +63,20 @@ const InstanceInformation = () => {
                 {
                     details: 'Instance type',
                     value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
-                    id: '1'
+                    id: '1',
+                    findings: ''
                 },
                 {
                     details: 'SQL Edition',
                     value: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
-                    id: '2'
+                    id: '2',
+                    findings: ''
                 },
                 {
                     details: 'Deployment model',
                     value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-                    id: '3'
+                    id: '3',
+                    findings: ''
                 }
             ];
             setTableData(data);
@@ -82,7 +88,7 @@ const InstanceInformation = () => {
             Header: 'Details',
             accessor: 'details',
             id: '1',
-            width: '190px',
+            width: '178px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <DsTypography variant="Regular_14" style={{ minWidth: '125px' }}>
@@ -96,12 +102,39 @@ const InstanceInformation = () => {
             Header: 'Value',
             accessor: 'value',
             id: '2',
-            width: '386px',
+            width: '220px',
             renderCell: (cellData: any, rowData: any) => {
                 return !loading ? (
                     <DsTypography variant="Regular_14" style={{ minWidth: '200px' }}>
                         {rowData.value}
                     </DsTypography>
+                ) : (
+                    <DsFlashingDotsLoader />
+                );
+            }
+        },
+        {
+            Header: 'Findings',
+            accessor: 'findings',
+            id: '3',
+            width: '192px',
+            renderCell: (cellData: any, rowData: any) => {
+                return !loading ? (
+                    <>
+                        {rowData?.findings === 'not optimized' && (
+                            <div className={styles.findings}>
+                                <TooltipInfo>
+                                    Your SQL license is Enterprise and could be replaced with Standard while using FSxN,
+                                    since replication and other Enterprise features are not in use anymore.
+                                </TooltipInfo>
+                                <DsTypography variant="Regular_14">Not optimized</DsTypography>
+                            </div>
+                        )}
+
+                        {rowData?.findings === 'optimized' && (
+                            <DsTypography variant="Regular_14">Optimized</DsTypography>
+                        )}
+                    </>
                 ) : (
                     <DsFlashingDotsLoader />
                 );

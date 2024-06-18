@@ -81,6 +81,8 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'SQL license',
+            isTooltip:
+                ' SQL license costs for SQL on FSxN are based on Standard SQL license while SQL license costs for SQL on EBS are based on Enterprise license, since license could be optimized when using FsxN according to our findings.',
             fsx: calculatedResponse?.license?.recommended?.licenseMonthlyPrice
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.license?.recommended?.licenseMonthlyPrice, 2)
