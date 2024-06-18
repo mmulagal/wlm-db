@@ -562,7 +562,8 @@ async function startSandboxCreation(
             credentialsId,
             region,
             parentJobId,
-            srcDetails
+            srcDetails,
+            destDetails.database
         )) as VolumeLunMapping;
 
         logger.debug({ mappings });
@@ -790,7 +791,8 @@ async function getMappings(
     credentialsId: string,
     region: string,
     parentJobId: string,
-    srcDetails: HostAndDbInfo
+    srcDetails: HostAndDbInfo,
+    sandboxName: string
 ) {
     logger.info('Get volume mappings', { accountId, credentialsId, region, parentJobId, srcDetails });
 
@@ -810,7 +812,7 @@ async function getMappings(
     try {
         const { fsxId, database } = srcDetails;
 
-        let command = [getDbMappedOntapVolumes(fsxId, region, database)];
+        let command = [getDbMappedOntapVolumes(fsxId, region, database, `Sandbox:${sandboxName}:`)];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
@@ -906,7 +908,9 @@ async function createVolumeClone(
                 JSON.stringify({ name: mapping.log.volumeName, ...(snapshot && { snapshot }) }),
                 destDetails.host,
                 getClonedByTagValue(accountId, credentialsId),
-                sqlVMName || mapping.svm
+                sqlVMName || mapping.svm,
+                destDetails.database,
+                `Sandbox:${destDetails.database}:`
             )
         ];
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -918,7 +922,9 @@ async function createVolumeClone(
                     JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
                     JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
                     'test-res-id',
-                    'netapp_wf_test_account_test_cred'
+                    'netapp_wf_test_account_test_cred',
+                    'target-svm',
+                    'testdb'
                 )
             ];
         }
@@ -1011,7 +1017,7 @@ async function invokeVirtualMount(
 
         try {
             let command = [
-                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}'`
+                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -LogPrefix Sandbox:${destDetails.database}:`
             ];
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -1100,10 +1106,12 @@ async function createCloneDb(
     try {
         let command = [
             // The instance name fix is temporary fix where the instance name is retrieved from the getActiveNode method since we are supporting only single instance. The instance value passed by the user in the body of API will ot be used. Once we support multiple instances this needs to be updated as well.
-            createCloneDbScript(destDetails.database, destDetails.instanceName, [
-                mountPaths.dataPath,
-                mountPaths.logPath
-            ])
+            createCloneDbScript(
+                destDetails.database,
+                destDetails.instanceName,
+                [mountPaths.dataPath, mountPaths.logPath],
+                `Sandbox:${destDetails.database}:`
+            )
         ];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -1281,7 +1289,8 @@ async function startCleanup(
                 JSON.stringify(volumeIds),
                 JSON.stringify(filePaths),
                 destDetails.database,
-                destDetails.instanceName
+                destDetails.instanceName,
+                `SandBox:${destDetails.database}:`
             )
         ];
 
@@ -1832,7 +1841,8 @@ async function performSandboxDeletion(
             credentialsId,
             region,
             parentJobId,
-            resDetails
+            resDetails,
+            resDetails.database
         )) as VolumeLunMapping;
 
         await startCleanup(
@@ -1957,7 +1967,7 @@ async function getSandboxSplitEstimate(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the active node instance id');
     }
 
-    let command = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
+    let command = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName, `Sandbox:${sandboxName}:`)];
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
@@ -2331,7 +2341,8 @@ async function performLifecycleUpdate(
             credentialsId,
             region,
             parentJobId,
-            resourceDetails
+            resourceDetails,
+            resourceDetails.database
         )) as VolumeLunMapping;
 
         if (!mappings.data.parentVolume || !mappings.log.parentVolume) {
@@ -2554,7 +2565,8 @@ async function detachSandboxAndAccessPath(
                 resourceDetails.database,
                 JSON.stringify([mappings.data.lunSerialNumber, mappings.log.lunSerialNumber]),
                 JSON.stringify([mappings.data.fileName, mappings.log.fileName]),
-                resourceDetails.instanceName
+                resourceDetails.instanceName,
+                `SandBox:${resourceDetails.database}:`
             )
         ];
 
@@ -2634,7 +2646,8 @@ async function reAttachSandboxAndAccessPath(
                 resourceDetails.database,
                 { serial: mappings.log.lunSerialNumber, path: mappings.log.fileName },
                 { serial: mappings.data.lunSerialNumber, path: mappings.data.fileName },
-                resourceDetails.instanceName
+                resourceDetails.instanceName,
+                `SandBox:${resourceDetails.database}:`
             )
         ];
         const resp = await callSsmExecution(credentialsId, region, command, resourceDetails.activeNodeInstanceId);
@@ -2745,7 +2758,8 @@ async function performSplitOperation(
             credentialsId,
             region,
             parentJobId,
-            resDetails
+            resDetails,
+            resDetails.database
         )) as VolumeLunMapping;
 
         await splitVolumes(
@@ -2853,7 +2867,15 @@ async function splitVolumes(
     });
 
     try {
-        const command = [splitFlexCloneVolumes(resourceDetail.fsxId, region, volumes, resourceDetail.instanceName)];
+        const command = [
+            splitFlexCloneVolumes(
+                resourceDetail.fsxId,
+                region,
+                volumes,
+                resourceDetail.instanceName,
+                `Sandbox:${resourceDetail.database}:`
+            )
+        ];
 
         const resp = await callSsmExecution(
             credentialsId,
@@ -3054,7 +3076,7 @@ async function performIntegrityCheck(
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
     try {
-        let command = [checkDatabaseIntegrityScript(databaseName, instanceName)];
+        let command = [checkDatabaseIntegrityScript(databaseName, instanceName, `SandBox:${databaseName}:`)];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [checkDatabaseIntegrityScript('test-db', '.')];
