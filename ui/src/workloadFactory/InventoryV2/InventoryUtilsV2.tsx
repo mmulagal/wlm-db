@@ -782,7 +782,7 @@ export const updateInstancesApiResponse = (mssqlInstancesData: any, inventoryTab
     let result = inventoryTableData;
     Object.keys(mssqlInstancesData).map((key: string) => {
         if (inventoryTableData?.[key]) {
-            const newData = updateInventoryDatawithInstancesRes(inventoryTableData[key], mssqlInstancesData[key], key);
+            const newData = updateInventoryDatawithInstancesRes(inventoryTableData[key], mssqlInstancesData[key]);
             result = {
                 ...result,
                 [key]: newData
@@ -797,7 +797,7 @@ export const updateInstancesApiResponse = (mssqlInstancesData: any, inventoryTab
                 }
             });
             if (inventoryRow) {
-                const newData = updateInventoryDatawithInstancesRes(inventoryRow, mssqlInstancesData[key], key);
+                const newData = updateInventoryDatawithInstancesRes(inventoryRow, mssqlInstancesData[key]);
                 result = {
                     ...result,
                     [resourceId]: newData
@@ -808,7 +808,7 @@ export const updateInstancesApiResponse = (mssqlInstancesData: any, inventoryTab
     return result;
 };
 
-export const updateInventoryDatawithInstancesRes = (inventoryRow: any, instanceRow: any, id: string) => {
+export const updateInventoryDatawithInstancesRes = (inventoryRow: any, instanceRow: any) => {
     let result = {};
     if (inventoryRow?.hasInstanceData) {
         return {
