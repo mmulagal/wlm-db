@@ -71,7 +71,12 @@ async function invokeMarketingApi(
 ) {
     // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        ebsVolumeIds = await getVolumeIdsFromStorage(accountId, credentialsId, region);
+        const response = await getVolumeIdsFromStorage(accountId, credentialsId, region);
+        ebsVolumeIds = response.length ? [] : ebsVolumeIds;
+        // Randomly picking one volume id from the list of volume ids
+        const randomIndex = Math.floor(Math.random() * response.length);
+        ebsVolumeIds.push(response[randomIndex]);
+        logger.debug('Randomly selected volume id for demo:', ebsVolumeIds);
     }
     const response = await getStorageSavings(
         accountId,
