@@ -339,7 +339,7 @@ async function getVolumeIdsFromStorage(accountId: string, credentialsId: string,
     const {
         ec2Instances: [firstInstance]
     } = (await getInstanceListFromStorage(accountId, credentialsId, region)) || {};
-    demoInstanceId = firstInstance.instanceId;
+    demoInstanceId = firstInstance?.instanceId;
     if (demoInstanceId) {
         const { volumeInstances } =
             (await getVolumesListFromStorage(accountId, credentialsId, region, demoInstanceId)) || {};

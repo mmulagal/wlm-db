@@ -168,7 +168,7 @@ const InventoryTable = () => {
     };
 
     const ExpandedRow = ({ rowData }: any) => {
-        if (rowData?.ssmState === INVENTORY_STATUS.ONLINE) {
+        if (rowData?.ssmState === INVENTORY_STATUS.ONLINE || rowData?.totalInstance !== 0) {
             return (
                 <ManagedHostSubTable rowId={rowData?.id} scrollPosition={scrollPos} resourceId={rowData?.resourceId} />
             );
