@@ -388,6 +388,25 @@ export const workloadFactoryResourceApi = createApi({
     }
 });
 
+export const workloadFactoryResourceApiV2 = createApi({
+    reducerPath: 'workloadFactoryResourceApiV2',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getResourceDetailsV2: builder.query({
+                query: ({ credentialId, region, id, sqlInstanceId }) => ({
+                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount`
+                })
+            }),
+            getDatabaseListV2: builder.query({
+                query: ({ credentialId, region, id, sqlInstanceId }) => ({
+                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}/databases`
+                })
+            })
+        };
+    }
+});
+
 export const jobMonitoringApi = createApi({
     reducerPath: 'jobMonitoringApi',
     baseQuery: dynamicBaseQuery,
@@ -920,6 +939,8 @@ export const {
 export const { useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
+
+export const { useLazyGetResourceDetailsV2Query, useLazyGetDatabaseListV2Query } = workloadFactoryResourceApiV2;
 
 export const {
     useGetJobsListQuery,
