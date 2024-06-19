@@ -433,22 +433,28 @@ const InventoryTable = () => {
                         {instanceList && (
                             <div>
                                 {instanceList?.[0] && (
-                                    <Typography
-                                        variant="Regular_13"
-                                        className={`${styles.colText}`}
+                                    <TooltipComponent
                                         title={instanceList[0]}
+                                        placement={'bottom'}
+                                        width={'max-content'}
+                                        height="32px"
                                     >
-                                        {instanceList[0]}
-                                    </Typography>
+                                        <Typography variant="Regular_13" className={`${styles.colText}`}>
+                                            {instanceList[0]}
+                                        </Typography>
+                                    </TooltipComponent>
                                 )}
                                 {instanceList?.[1] && (
-                                    <Typography
-                                        variant="Regular_13"
-                                        className={`${styles.colText}`}
+                                    <TooltipComponent
                                         title={instanceList[1]}
+                                        placement={'bottom'}
+                                        width={'max-content'}
+                                        height="32px"
                                     >
-                                        {instanceList[1]}
-                                    </Typography>
+                                        <Typography variant="Regular_13" className={`${styles.colText}`}>
+                                            {instanceList[1]}
+                                        </Typography>
+                                    </TooltipComponent>
                                 )}
                             </div>
                         )}

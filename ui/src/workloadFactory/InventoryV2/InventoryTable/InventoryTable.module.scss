@@ -21,9 +21,6 @@
             // background-color: transparent !important;
             border-bottom: 1px solid var(--content-background) !important;
         }
-        span {
-            background-color: var(--content-background) !important;
-        }
     }
 
     .jobMenuPopover {
@@ -39,9 +36,11 @@
 
     .arrow {
         svg {
+            transform: rotate(90deg);
+            -webkit-transform: rotate(90deg);
             &.arrow-down {
-                transform: rotate(90deg);
-                -webkit-transform: rotate(90deg);
+                transform: rotate(270deg);
+                -webkit-transform: rotate(270deg);
             }
         }
     }
