@@ -915,16 +915,6 @@ export const getEc2DetailsForUnmanagedHost = (instanceRow: InstancesObjectInterf
     return ec2Details;
 };
 
-export const getInstanceName = (instRow: InventoryTableInstanceDatInterface) => {
-    let name: string = '';
-    if (instRow?.databaseInstanceName?.includes('$')) {
-        name = instRow?.databaseInstanceName.split('$')[1];
-    } else {
-        name = instRow?.databaseInstanceName || '';
-    }
-    return name;
-};
-
 export const updateSqlServerInstancesForUnmanaged = (
     instanceData: InstancesHostsRowInterface | undefined,
     existingInstanceRow: InventoryTableData
@@ -935,9 +925,8 @@ export const updateSqlServerInstancesForUnmanaged = (
     }
     if (instanceData?.databaseInstancesSummary && instanceData?.databaseInstancesSummary?.length > 0) {
         instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
-            let name = getInstanceName(instRow);
             const perRow = instanceData?.databaseInstancesSummary?.find(
-                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === name
+                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
             );
             const allocatedCapacity =
                 (perRow?.storage?.fsxn?.size || 0) +
