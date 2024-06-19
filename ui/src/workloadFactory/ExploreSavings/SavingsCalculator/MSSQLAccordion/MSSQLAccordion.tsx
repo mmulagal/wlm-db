@@ -54,14 +54,27 @@ const MSSQLAccordion = ({ printState }: any) => {
     }, [storageSavingsResponse]);
 
     useEffect(() => {
+        let instanceType = '';
+        if (storageSavingsResponse?.compute?.recommended?.instanceType) {
+            instanceType = storageSavingsResponse?.compute?.recommended?.instanceType.split(',')[0];
+        }
+        let serverEdition = '';
+        if (storageSavingsResponse?.license?.recommended?.sqlServerEdition) {
+            serverEdition = storageSavingsResponse?.license?.recommended?.sqlServerEdition.split(',')[0];
+        }
+        let windowsServer = '';
+        if (storageSavingsResponse?.compute?.recommended?.windowsOsVersion) {
+            windowsServer = storageSavingsResponse?.compute?.recommended?.windowsOsVersion.split(',')[0];
+        }
         let mssqlInstanceData = {
             serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
-            serverEdition: selectedHostDetails?.recommendedInstance?.serverEdition,
+            serverEdition: serverEdition,
             serverVersion: selectedHostDetails?.recommendedInstance?.serverVersion,
-            instanceType: selectedHostDetails?.recommendedInstance?.instanceType
+            instanceType: instanceType,
+            windowsServer: windowsServer
         };
         setMsSqlInstance(mssqlInstanceData);
-    }, [selectedHostDetails]);
+    }, [selectedHostDetails, storageSavingsResponse]);
 
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(
