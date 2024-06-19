@@ -518,6 +518,7 @@ export const GENERAL = {
     TOPOLOGY: 'Topology',
     STATUS: 'Status',
     HOST_NAME: 'Host name',
+    INSTANCE_NAME: 'Instance name',
     NO_OF_DBS: 'Number of databases',
     TOTAL_USED_CAPACITY: 'Total used capacity',
     SQL_VERSION: 'SQL version',

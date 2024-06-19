@@ -16,17 +16,40 @@ import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/Inve
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
-import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
+import {
+    useLazyGetDatabaseListV2Query,
+    useLazyGetResourceDetailsV2Query,
+    useUnmanageMssqlInstanceMutation
+} from '../../../../utils/apiService';
 import { setInProgressInstances } from '../../../../store/workloadFactory/inventoryV2Slice';
 import store from '../../../../store/store';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
+import {
+    resetWorkloadFactoryResourceData,
+    setDatabaseList,
+    setDatabaseListLoading,
+    setResourceDetails,
+    setResourceLoading,
+    setSelectedDatabaseInstance,
+    setSelectedDatabaseInstanceName,
+    setSelectedHostname,
+    setSelectedResourceId
+} from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
+import {
+    addInitialDBCreateData,
+    initialCreateNewUserState,
+    setDBHostName
+} from '../../../../store/workloadFactory/createNewDBSlice';
+import { updateResourceId } from '../../../../store/authSlice';
 
 const ManagedHostSubTable = ({
     rowId,
+    hostname,
     scrollPosition,
     resourceId
 }: {
     rowId: string;
+    hostname: string;
     scrollPosition: any;
     resourceId: string;
 }) => {
@@ -146,6 +169,14 @@ const ManagedHostSubTable = ({
         }, 5000);
     };
 
+    const resourceAction = (rowData: any) => {
+        dispatch(resetWorkloadFactoryResourceData());
+        dispatch(setSelectedHostname(hostname));
+        dispatch(setSelectedResourceId(resourceId));
+        dispatch(setSelectedDatabaseInstance(rowData?.databaseInstanceId));
+        dispatch(setSelectedDatabaseInstanceName(rowData?.databaseInstanceName));
+    };
+
     const lastColDetails = () => {
         return {
             id: '9',
@@ -229,12 +260,17 @@ const ManagedHostSubTable = ({
                                         if (menuId === 'viewInstance') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
                                             dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
+                                            resourceAction(rowData);
                                         }
                                         if (menuId === 'viewDatabases') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
                                             dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
+                                            resourceAction(rowData);
                                         }
                                         if (menuId === 'createUserDb') {
+                                            dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                            dispatch(updateResourceId(rowData.id));
+                                            dispatch(setDBHostName(rowData?.name));
                                             navigate('../create-new-user');
                                         }
                                         if (menuId === 'unManage') {

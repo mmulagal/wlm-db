@@ -131,7 +131,12 @@ const initialState: WorkloadFactoryResourceEntities = {
         }
     },
     databaseListLoading: true,
-    databaseList: []
+    databaseList: [],
+    selectedResourceId: '',
+    selectedDatabaseInstance: '',
+    selectedDatabaseInstanceName: '',
+    selectedHostname: '',
+    isResourceRefresh: false
 };
 
 const workloadFactoryResourceSlice = createSlice({
@@ -153,6 +158,21 @@ const workloadFactoryResourceSlice = createSlice({
         resetWorkloadFactoryResourceData: state => {
             state.resourceDetails = initialState.resourceDetails;
             state.databaseList = initialState.databaseList;
+        },
+        setSelectedResourceId: (state, action: PayloadAction<any>) => {
+            state.selectedResourceId = action.payload;
+        },
+        setSelectedDatabaseInstance: (state, action: PayloadAction<any>) => {
+            state.selectedDatabaseInstance = action.payload;
+        },
+        setSelectedDatabaseInstanceName: (state, action: PayloadAction<any>) => {
+            state.selectedDatabaseInstanceName = action.payload;
+        },
+        setSelectedHostname: (state, action: PayloadAction<any>) => {
+            state.selectedHostname = action.payload;
+        },
+        setIsResourceRefresh: (state, action: PayloadAction<any>) => {
+            state.isResourceRefresh = action.payload;
         }
     }
 });
@@ -162,6 +182,11 @@ export const {
     setResourceDetails,
     setDatabaseListLoading,
     setDatabaseList,
-    resetWorkloadFactoryResourceData
+    resetWorkloadFactoryResourceData,
+    setSelectedResourceId,
+    setSelectedDatabaseInstance,
+    setSelectedDatabaseInstanceName,
+    setSelectedHostname,
+    setIsResourceRefresh
 } = workloadFactoryResourceSlice.actions;
 export default workloadFactoryResourceSlice;

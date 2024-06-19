@@ -170,7 +170,12 @@ const InventoryTable = () => {
     const ExpandedRow = ({ rowData }: any) => {
         if (rowData?.ssmState === INVENTORY_STATUS.ONLINE || rowData?.totalInstance !== 0) {
             return (
-                <ManagedHostSubTable rowId={rowData?.id} scrollPosition={scrollPos} resourceId={rowData?.resourceId} />
+                <ManagedHostSubTable
+                    rowId={rowData?.id}
+                    hostname={rowData?.name}
+                    scrollPosition={scrollPos}
+                    resourceId={rowData?.resourceId}
+                />
             );
         }
         return <OfflineComponent />;
