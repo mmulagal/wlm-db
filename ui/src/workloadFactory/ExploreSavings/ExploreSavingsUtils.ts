@@ -60,9 +60,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                 ],
                 recommendedInstance: {
                     serverInstallationMode: GENERAL.STANDALONE,
-                    serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
-                    serverVersion: 'Microsoft SQL Server 2019',
-                    instanceType: ['m5.2xlarge']
+                    serverVersion: 'Microsoft SQL Server 2019'
                 },
                 storage: {
                     ebs: {
@@ -111,9 +109,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                 ],
                 recommendedInstance: {
                     serverInstallationMode: GENERAL.FAILOVER_CLUSTER_INSTANCES,
-                    serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
-                    serverVersion: 'Microsoft SQL Server 2019',
-                    instanceType: ['m5.2xlarge']
+                    serverVersion: 'Microsoft SQL Server 2019'
                 },
                 storage: {
                     ebs: {

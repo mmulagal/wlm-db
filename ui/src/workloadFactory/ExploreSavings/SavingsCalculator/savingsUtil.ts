@@ -888,8 +888,8 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
     if (msSqlInstance) {
         // setting instance type
         if (msSqlInstance?.instanceType) {
-            const value = msSqlInstance?.instanceType?.[0].toLowerCase();
-            const data = { instanceType: msSqlInstance?.instanceType?.[0].toLowerCase() };
+            const value = msSqlInstance?.instanceType?.toLowerCase();
+            const data = { instanceType: msSqlInstance?.instanceType?.toLowerCase() };
             const option = generateOptionType(value, value, '', false, '', data);
             result = { ...result, instanceType: option };
         }
