@@ -42,7 +42,8 @@ import {
     SQL_WEB,
     VERSION_2_0,
     V2_API_PAGE_SIZE,
-    NOT_AVAILABLE
+    NOT_AVAILABLE,
+    SQL_NAMED_INSTANCE_PREFIX
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1681,10 +1682,13 @@ async function getDatabaseInstancesDetails(
                       managedItem.instanceName === item.instanceName
               );
 
+              const instanceName = item.instanceName.startsWith(SQL_NAMED_INSTANCE_PREFIX)
+                  ? item.instanceName.replace(SQL_NAMED_INSTANCE_PREFIX, '')
+                  : item.instanceName;
               const isManaged = Boolean(managedInstance);
-              const isDefault = Boolean(item.instanceName.includes('$'));
+              const isDefault = Boolean(!item.instanceName.includes('$'));
               const instanceState = item.instanceState === 'Running' ? ServerState.UP : ServerState.DOWN;
-              return { ...item, isManaged, isDefault, instanceState };
+              return { ...item, instanceName, isManaged, isDefault, instanceState };
           })
         : managedInstancesName;
 
