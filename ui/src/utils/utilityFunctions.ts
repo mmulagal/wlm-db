@@ -613,9 +613,11 @@ export const getAggrStorageSavings = (
 ) => {
     let totalConsume = 0;
     let storageSavings = 0;
+    let storageList: (string | undefined)[] = [];
 
     data?.map((val: any) => {
         let storageType = val?.topology?.fileSystemType || '';
+        let fsxVal = val?.topology?.fileSystemId || '';
         let fsxType = '';
         if (storageType.includes(GENERAL.FSX_FOR_ONTAP)) {
             fsxType = 'fsxn';
@@ -625,11 +627,16 @@ export const getAggrStorageSavings = (
             fsxType = 'ebs';
         }
         if (fsxType) {
-            if (val?.storage?.[fsxType]?.used) {
-                totalConsume += val.storage[fsxType].used;
-            }
-            if (val?.storage?.[fsxType]?.spaceSavings) {
-                storageSavings += val.storage[fsxType].spaceSavings;
+            if (!fsxVal || !storageList.includes(fsxVal)) {
+                if (val?.storage?.[fsxType]?.used) {
+                    totalConsume += val.storage[fsxType].used;
+                }
+                if (val?.storage?.[fsxType]?.spaceSavings) {
+                    storageSavings += val.storage[fsxType].spaceSavings;
+                }
+                if (fsxVal) {
+                    storageList.push(fsxVal);
+                }
             }
         }
     });

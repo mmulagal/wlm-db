@@ -15,6 +15,7 @@ import {
     DB_EDITIONS,
     DB_VERSIONS,
     GIB_IN_BYTE,
+    OS_VERSIONS_LIST,
     SQL_DEPLOYMENT_MODE,
     THROUGHPUT_LIST
 } from '../../../utils/consts';
@@ -887,20 +888,26 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
     if (msSqlInstance) {
         // setting instance type
         if (msSqlInstance?.instanceType) {
-            const value = msSqlInstance?.instanceType?.[0].toLowerCase();
-            const data = { instanceType: msSqlInstance?.instanceType?.[0].toLowerCase() };
+            const value = msSqlInstance?.instanceType?.toLowerCase();
+            const data = { instanceType: msSqlInstance?.instanceType?.toLowerCase() };
             const option = generateOptionType(value, value, '', false, '', data);
             result = { ...result, instanceType: option };
         }
         // OS version
-        result = {
-            ...result,
-            operatingSystem: {
-                label: GENERAL.WIN_SERVER_2019,
-                value: GENERAL.WIN_SERVER_2019_VERSION
+        if (msSqlInstance?.windowsServer) {
+            const osVersionOption = OS_VERSIONS_LIST?.filter(perRow =>
+                msSqlInstance?.windowsServer.includes(perRow?.value)
+            );
+            if (osVersionOption && osVersionOption?.length > 0) {
+                result = {
+                    ...result,
+                    operatingSystem: {
+                        label: osVersionOption[0].label,
+                        value: osVersionOption[0].value
+                    }
+                };
             }
-        };
-
+        }
         // database version
         if (msSqlInstance?.serverVersion) {
             const dbVersionOption = DB_VERSIONS?.filter(perRow => msSqlInstance?.serverVersion.includes(perRow?.value));

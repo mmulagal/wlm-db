@@ -60,7 +60,15 @@ export interface StorageSavingsInterface {
     totalSummary?: {
         existing?: number | string;
         recommended?: number | string;
-    }
+    };
+    compute?: {
+        existing?: RecommendedCompute;
+        recommended?: RecommendedCompute;
+    };
+    license?: {
+        existing?: RecommendedLicense;
+        recommended?: RecommendedLicense;
+    };
 }
 
 export interface RecommendedIntanceInterface {
@@ -77,6 +85,7 @@ export interface RecommendedCompute {
     computeMonthlyPrice?: number | string;
     instanceMonthlyPrice?: number | string;
     hoursInMonth?: number | string;
+    windowsOsVersion?: string;
 }
 
 export interface RecommendedLicense {

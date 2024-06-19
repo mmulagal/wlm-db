@@ -83,7 +83,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         action: ssmState === INVENTORY_STATUS.ONLINE && totalInstanceCount > 0 ? INVENTORY_ACTIONS.MANAGE : '', // This is default for managed rows,
         actionDisable: totalInstanceCount === managedInstanceCount,
         isManagedHost: true,
-        loading: false,
+        loading: managedRow?.loading,
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
         totalCost: getTotalCost(managedRow?.estimatedUsageCost || {}),
@@ -97,8 +97,8 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
 };
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
-    if (row?.nodeStatus && row?.nodeStatus !== 'N/A') {
-        if (row?.nodeStatus === 'ONLINE') {
+    if (row?.databaseHostStatus && row?.databaseHostStatus !== INVENTORY_STATUS.NOT_AVAILABLE) {
+        if (row?.databaseHostStatus?.toLowerCase() === INVENTORY_STATUS.HOST_ONLINE) {
             return INVENTORY_STATUS.ONLINE;
         } else {
             return INVENTORY_STATUS.OFFLINE;
@@ -109,7 +109,7 @@ export const getNodeStatus = (row: ManagedHostsRowInterface) => {
 };
 
 export const getSsmState = (row: ManagedHostsRowInterface) => {
-    if (row?.ssmStatus && row?.ssmStatus !== 'N/A') {
+    if (row?.ssmStatus && row?.ssmStatus !== INVENTORY_STATUS.NOT_AVAILABLE) {
         if (
             row?.ssmStatus?.toLowerCase() === INVENTORY_STATUS.SSM_CONNECTED ||
             row?.ssmStatus?.toLowerCase() === INVENTORY_STATUS.SSM_ONLINE
@@ -529,7 +529,7 @@ export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface) => {
 };
 
 export const getDiscoverSsmState = (row: DiscoverHostInterface) => {
-    if (row?.ssmState && row?.ssmState !== 'N/A') {
+    if (row?.ssmState && row?.ssmState !== INVENTORY_STATUS.NOT_AVAILABLE) {
         if (row?.ssmState?.toLowerCase() === INVENTORY_STATUS.SSM_CONNECTED) {
             return INVENTORY_STATUS.ONLINE;
         } else {
@@ -717,6 +717,13 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
         return data;
     }
     const sort_order_action_list = [
+        INVENTORY_STATUS.ONLINE + INVENTORY_ACTIONS.MANAGE + 'true',
+        INVENTORY_STATUS.ONLINE + INVENTORY_ACTIONS.MANAGE + 'false',
+        INVENTORY_STATUS.ONLINE + INVENTORY_ACTIONS.MANAGE,
+        INVENTORY_STATUS.ONLINE + INVENTORY_ACTIONS.EXPLORE_SAVINGS + 'false',
+        INVENTORY_STATUS.ONLINE + INVENTORY_ACTIONS.EXPLORE_SAVINGS + 'true',
+        INVENTORY_STATUS.ONLINE + INVENTORY_ACTIONS.EXPLORE_SAVINGS,
+        INVENTORY_STATUS.ONLINE,
         INVENTORY_ACTIONS.MANAGE + 'true',
         INVENTORY_ACTIONS.MANAGE + 'false',
         INVENTORY_ACTIONS.MANAGE,
@@ -803,6 +810,12 @@ export const updateInstancesApiResponse = (mssqlInstancesData: any, inventoryTab
 
 export const updateInventoryDatawithInstancesRes = (inventoryRow: any, instanceRow: any) => {
     let result = {};
+    if (inventoryRow?.hasInstanceData) {
+        return {
+            ...inventoryRow,
+            loading: false
+        };
+    }
     if (instanceRow?.loading) {
         result = {
             ...inventoryRow,
@@ -813,7 +826,8 @@ export const updateInventoryDatawithInstancesRes = (inventoryRow: any, instanceR
         result = {
             ...inventoryRow,
             isManagedHost: instanceRow?.isManagedHost,
-            loading: instanceRow?.loading
+            loading: instanceRow?.loading,
+            hasInstanceData: true
             // sqlServerInstances: {} // ToDo
         };
     } else if (!instanceRow?.isManagedHost) {
@@ -822,7 +836,7 @@ export const updateInventoryDatawithInstancesRes = (inventoryRow: any, instanceR
             ...inventoryRow,
             isManagedHost: instanceRow?.isManagedHost,
             loading: instanceRow?.loading,
-            // ec2Details: {}, // ToDo
+            ec2Details: getEc2DetailsForUnmanagedHost(instanceRow),
             estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
             totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
             allocatedCapacity: allocatedCapacity,
@@ -830,7 +844,8 @@ export const updateInventoryDatawithInstancesRes = (inventoryRow: any, instanceR
             sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow),
             //For explore savings
             ebsResourceInfo: instanceRow?.data?.ebsResourceInfo,
-            clusterNodeDetails: instanceRow?.data?.clusterNodeDetails
+            clusterNodeDetails: instanceRow?.data?.clusterNodeDetails,
+            hasInstanceData: true
         };
     } else {
         result = {
@@ -838,6 +853,47 @@ export const updateInventoryDatawithInstancesRes = (inventoryRow: any, instanceR
         };
     }
     return result;
+};
+
+export const getEc2DetailsForUnmanagedHost = (instanceRow: any) => {
+    const ec2Details: any = [];
+    let instanceId = '';
+    if (instanceRow?.data?.nodeTopology?.ec2Details && instanceRow?.data?.nodeTopology?.ec2Details?.length > 0) {
+        instanceId = instanceRow?.data?.nodeTopology?.ec2Details?.[0]?.id;
+        ec2Details.push(instanceRow?.data?.nodeTopology?.ec2Details?.[0]);
+    }
+    if (instanceRow?.data?.clusterNodeDetails) {
+        if (instanceId) {
+            let partnerNode = instanceRow?.data?.clusterNodeDetails?.filter(
+                (perInst: any) => perInst?.ec2InstanceId !== instanceId
+            );
+            if (partnerNode && partnerNode?.length > 0) {
+                ec2Details.push({
+                    id: partnerNode[0]?.ec2InstanceId,
+                    name: partnerNode[0]?.ec2InstanceName,
+                    instanceType: partnerNode[0]?.ec2InstanceType
+                });
+            }
+        } else {
+            let node1 = instanceRow?.data?.clusterNodeDetails?.[0];
+            let node2 = instanceRow?.data?.clusterNodeDetails?.[1];
+            if (node1) {
+                ec2Details.push({
+                    id: node1?.ec2InstanceId,
+                    name: node1?.ec2InstanceName,
+                    instanceType: node1?.ec2InstanceType
+                });
+            }
+            if (node2) {
+                ec2Details.push({
+                    id: node2?.ec2InstanceId,
+                    name: node2?.ec2InstanceName,
+                    instanceType: node2?.ec2InstanceType
+                });
+            }
+        }
+    }
+    return ec2Details;
 };
 
 export const updateSqlServerInstancesForUnmanaged = (instanceData: any, existingInstanceRow: any) => {

@@ -60,9 +60,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                 ],
                 recommendedInstance: {
                     serverInstallationMode: GENERAL.STANDALONE,
-                    serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
-                    serverVersion: 'Microsoft SQL Server 2019',
-                    instanceType: ['m5.2xlarge']
+                    serverVersion: 'Microsoft SQL Server 2019'
                 },
                 storage: {
                     ebs: {
@@ -111,9 +109,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                 ],
                 recommendedInstance: {
                     serverInstallationMode: GENERAL.FAILOVER_CLUSTER_INSTANCES,
-                    serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
-                    serverVersion: 'Microsoft SQL Server 2019',
-                    instanceType: ['m5.2xlarge']
+                    serverVersion: 'Microsoft SQL Server 2019'
                 },
                 storage: {
                     ebs: {
@@ -129,9 +125,9 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                 ...data,
                 recommendedInstance: {
                     serverInstallationMode: data?.serverInstallationMode,
-                    serverEdition: data?.databaseServer?.serverEdition,
-                    serverVersion: data?.databaseServer?.serverVersion,
-                    instanceType: data?.topology?.ec2Details?.map((inst: any) => inst?.instanceType)
+                    serverVersion:
+                        data?.databaseServer?.serverVersion ||
+                        data?.sqlServerInstances?.[0]?.databaseServer?.serverVersion
                 }
             })
         );

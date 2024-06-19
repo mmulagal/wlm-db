@@ -812,7 +812,9 @@ async function getMappings(
     try {
         const { fsxId, database } = srcDetails;
 
-        let command = [getDbMappedOntapVolumes(fsxId, region, database, `Sandbox:${sandboxName}:`)];
+        let command = [
+            getDbMappedOntapVolumes(fsxId, region, database, srcDetails.instanceName, `Sandbox:${sandboxName}:`)
+        ];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
@@ -1017,7 +1019,7 @@ async function invokeVirtualMount(
 
         try {
             let command = [
-                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -LogPrefix Sandbox:${destDetails.database}:`
+                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}'`
             ];
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -2333,6 +2335,7 @@ async function performLifecycleUpdate(
     let mappings;
     let clonedVolumes;
     let mountPaths;
+    let sandboxUpdated = false;
     try {
         await validateLifeCycleParams(accountId, credentialsId, region, parentJobId, resourceDetails, action);
 
@@ -2421,6 +2424,9 @@ async function performLifecycleUpdate(
             }
         );
 
+        sandboxUpdated = true;
+
+        // Clean up older volumes
         await startCleanup(
             accountId,
             credentialsId,
@@ -2437,26 +2443,30 @@ async function performLifecycleUpdate(
         logger.error(`Failed to perform lifecycle update for sandbox ${resourceDetails.database}`, e);
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
-        await startCleanup(
-            accountId,
-            credentialsId,
-            region,
-            parentJobId,
-            resourceDetails,
-            resourceDetails,
-            clonedVolumes ? [clonedVolumes.data.volumeId, clonedVolumes.log.volumeId] : [],
-            []
-        );
 
-        if (mappings) {
-            await reAttachSandboxAndAccessPath(
+        // Clean up only when the sandbox is not updated
+        if (!sandboxUpdated) {
+            await startCleanup(
                 accountId,
                 credentialsId,
                 region,
                 parentJobId,
                 resourceDetails,
-                mappings
+                resourceDetails,
+                clonedVolumes ? [clonedVolumes.data.volumeId, clonedVolumes.log.volumeId] : [],
+                []
             );
+
+            if (mappings) {
+                await reAttachSandboxAndAccessPath(
+                    accountId,
+                    credentialsId,
+                    region,
+                    parentJobId,
+                    resourceDetails,
+                    mappings
+                );
+            }
         }
     } finally {
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {

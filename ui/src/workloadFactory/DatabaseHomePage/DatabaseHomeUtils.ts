@@ -27,13 +27,19 @@ export const getManagedAggrProtection = (data: any) => {
     let sqlServerBackupDb = 0;
 
     Object.keys(data).map((key: string) => {
+        let protectedHostDb = 0;
+        let unProtectedHostDb = 0;
+        let perFsxOntapSnapshotsDb = 0;
+        let perAwsBackupDb = 0;
+        let perSqlServerBackupDb = 0;
+        let totalInstances = data[key]?.databaseInstancesSummary?.length || 0;
         data[key]?.databaseInstancesSummary?.map((val: any) => {
             if (
                 isAwsBackupEnabled(val) ||
                 val?.protection?.isFsxOntapSnapshotsEnabled ||
                 val?.protection?.isSqlNativeEnabled
             ) {
-                protectedDb += 1;
+                protectedHostDb = 1;
             } else if (
                 (val?.status === STATUS_CONST.DOWN ||
                     val?.status === STATUS_CONST.UP ||
@@ -45,18 +51,25 @@ export const getManagedAggrProtection = (data: any) => {
                 !val?.protection?.isFsxOntapSnapshotsEnabled &&
                 !val?.protection?.isSqlNativeEnabled
             ) {
-                unprotectedDb += 1;
+                unProtectedHostDb += 1;
             }
             if (val?.protection?.isFsxOntapSnapshotsEnabled) {
-                fsxOntapSnapshotsDb += 1;
+                perFsxOntapSnapshotsDb = 1;
             }
             if (isAwsBackupEnabled(val)) {
-                awsBackupDb += 1;
+                perAwsBackupDb = 1;
             }
             if (val?.protection?.isSqlNativeEnabled) {
-                sqlServerBackupDb += 1;
+                perSqlServerBackupDb = 1;
             }
         });
+        protectedDb += protectedHostDb;
+        if (unProtectedHostDb === totalInstances) {
+            unprotectedDb += 1;
+        }
+        fsxOntapSnapshotsDb += perFsxOntapSnapshotsDb;
+        awsBackupDb += perAwsBackupDb;
+        sqlServerBackupDb += perSqlServerBackupDb;
     });
 
     const totalHost = protectedDb + unprotectedDb;
@@ -75,8 +88,11 @@ export const getManagedAggrProtection = (data: any) => {
 export const getManagedAggrStorageSavings = (data: any, sandboxSavings?: any) => {
     let totalConsume = 0;
     let storageSavings = 0;
+    let storageList: (string | undefined)[] = [];
+
     Object.keys(data).map((key: string) => {
         data[key]?.databaseInstancesSummary?.map((val: any) => {
+            let fsxVal = val?.databaseInstanceTopology?.fileSystemId || '';
             let storageType = val?.databaseInstanceTopology?.fileSystemType || '';
             let fsxType = '';
             if (storageType.includes(GENERAL.FSX_FOR_ONTAP)) {
@@ -87,11 +103,16 @@ export const getManagedAggrStorageSavings = (data: any, sandboxSavings?: any) =>
                 fsxType = 'ebs';
             }
             if (fsxType) {
-                if (val?.storage?.[fsxType]?.used) {
-                    totalConsume += val.storage[fsxType].used;
-                }
-                if (val?.storage?.[fsxType]?.spaceSavings) {
-                    storageSavings += val.storage[fsxType].spaceSavings;
+                if (!fsxVal || !storageList.includes(fsxVal)) {
+                    if (val?.storage?.[fsxType]?.used) {
+                        totalConsume += val.storage[fsxType].used;
+                    }
+                    if (val?.storage?.[fsxType]?.spaceSavings) {
+                        storageSavings += val.storage[fsxType].spaceSavings;
+                    }
+                    if (fsxVal) {
+                        storageList.push(fsxVal);
+                    }
                 }
             }
         });

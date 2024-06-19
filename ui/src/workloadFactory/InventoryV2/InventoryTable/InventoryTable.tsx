@@ -30,7 +30,7 @@ import {
     initialCreateNewUserState,
     setDBHostName
 } from '../../../store/workloadFactory/createNewDBSlice';
-import { renderAllocatedCapacity, renderEstimatedCost } from '../../Inventory/InventoryUtils';
+import { renderAllocatedCapacity, renderCellData, renderEstimatedCost } from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
@@ -112,16 +112,22 @@ const InventoryTable = () => {
                 let instanceList: any = [];
                 const allocatedCapacity = inventoryTableData[key]?.allocatedCapacity || '';
                 inventoryTableData[key]?.ec2Details?.map((row: any) => {
-                    instanceList.push(row?.name + ' | ' + row?.id);
+                    if (row?.name && row?.id) {
+                        instanceList.push(row?.name + ' | ' + row?.id);
+                    } else if (row?.id) {
+                        instanceList.push(row?.id);
+                    }
                 });
                 const rowData = {
                     ...inventoryTableData[key],
                     sqlServerInstancesText:
-                        '(' +
-                        inventoryTableData[key]?.managedInstance +
-                        ' out of ' +
-                        inventoryTableData[key]?.totalInstance +
-                        ' managed)',
+                        inventoryTableData[key]?.totalInstance !== 0
+                            ? '(' +
+                              inventoryTableData[key]?.managedInstance +
+                              ' out of ' +
+                              inventoryTableData[key]?.totalInstance +
+                              ' managed)'
+                            : '',
                     instanceListText: instanceList.join(','),
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
                 };
@@ -387,16 +393,18 @@ const InventoryTable = () => {
             width: '216px',
             isSortable: true,
             accessorForTextFilter: 'sqlServerInstancesText',
-            renderCell: (cellData: string, rowData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
-                        {cellData && rowData?.sqlServerInstancesText && (
+                        {cellData && rowData?.sqlServerInstancesText && cellData !== 0 ? (
                             <>
                                 <Typography variant="Semibold_14">{cellData + ' instances'}</Typography>
                                 <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
                             </>
+                        ) : (
+                            ''
                         )}
-                        {(!cellData || !rowData?.sqlServerInstancesText) && GENERAL.NOT_AVAILABLE}
+                        {!cellData || !rowData?.sqlServerInstancesText ? GENERAL.NOT_AVAILABLE : ''}
                     </div>
                 );
             }
@@ -408,7 +416,7 @@ const InventoryTable = () => {
             width: '216px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
