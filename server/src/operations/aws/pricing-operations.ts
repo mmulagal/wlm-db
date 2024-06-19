@@ -136,6 +136,13 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
     if (compute.sqlSoftwareType && compute.sqlSoftwareType !== CUSTOM) {
         const sqlFilter = getSqlSoftwareEdition(compute.sqlSoftwareType);
         filters.input.Filters.push(sqlFilter);
+    } else if (compute.sqlSoftwareType === CUSTOM) {
+        const byolFilter = {
+            Type: FilterType.TERM_MATCH,
+            Field: 'licenseModel',
+            Value: 'Bring your own license'
+        };
+        filters.input.Filters.push(byolFilter);
     }
     return filters;
 }
