@@ -126,7 +126,7 @@ const InstanceInformation = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return !storageSavingsLoading ? (
                     <>
-                        {rowData?.findings === 'NOT-OPTIMIZED' && (
+                        {rowData?.findings === 'NOT_OPTIMIZED' && (
                             <div className={styles.findings}>
                                 <TooltipInfo>{GENERAL.NOT_OPTIMIZED}</TooltipInfo>
                                 <DsTypography variant="Regular_14">Not optimized</DsTypography>
