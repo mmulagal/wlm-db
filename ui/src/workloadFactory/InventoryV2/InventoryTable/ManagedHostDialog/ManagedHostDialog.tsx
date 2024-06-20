@@ -84,7 +84,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                         </div>
                     );
                 }
-                if (rowData.status === INVENTORY_STATUS.MANAGED) {
+                if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
                     return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
                 }
             }
