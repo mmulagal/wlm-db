@@ -1,4 +1,4 @@
-import { SqlServerDeploymentModel, HOURS_IN_MONTH } from '../../utils/consts';
+import { SqlServerDeploymentModel, HOURS_IN_MONTH, STORAGE_SERVICE_DEFAULT_REGION } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { getStorageSavings } from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType } from '../../routes/types/storage-savings.types';
@@ -71,6 +71,8 @@ async function invokeMarketingApi(
 ) {
     // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        // Setting to default region as us-east-1 to make the call to storage service, where we have the instance and volume details for demo
+        region = STORAGE_SERVICE_DEFAULT_REGION;
         const response = (await getVolumeIdsFromStorage(accountId, credentialsId, region)) || [];
         ebsVolumeIds = response.length ? [] : ebsVolumeIds;
         // Randomly picking one volume id from the list of volume ids
