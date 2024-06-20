@@ -453,8 +453,16 @@ async function retrieveComputeAndLicenseCost(
     return Promise.all(
         ec2HostDetailsList.map(async ec2HostDetails => {
             const {
-                existingCompute: { price: ePrice = undefined, baseInstancePrice: eBasePrice = undefined } = {},
-                existingLicense: { sqlServerEdition: eSqlServerEdition = '', price: eLicensePrice = undefined } = {},
+                existingCompute: {
+                    price: ePrice = undefined,
+                    finding: eComputeFinding = '',
+                    baseInstancePrice: eBasePrice = undefined
+                } = {},
+                existingLicense: {
+                    sqlServerEdition: eSqlServerEdition = '',
+                    finding: eLicenseFinding = '',
+                    price: eLicensePrice = undefined
+                } = {},
                 recommendedCompute: {
                     instanceType: rInstanceType = '',
                     price: rPrice = undefined,
@@ -476,6 +484,7 @@ async function retrieveComputeAndLicenseCost(
                 compute: {
                     existing: {
                         instanceType: existingInstanceType,
+                        finding: eComputeFinding,
                         windowsOsVersion,
                         computeHourlyPrice: eBasePrice,
                         computeMonthlyPrice: eBasePrice ? getMonthlyPriceFromHourlyPrice(eBasePrice) : undefined,
@@ -496,6 +505,7 @@ async function retrieveComputeAndLicenseCost(
                 },
                 license: {
                     existing: {
+                        finding: eLicenseFinding,
                         sqlServerEdition: eSqlServerEdition,
                         licenseHourlyPrice: eLicensePrice,
                         licenseIncluded: !!(eLicensePrice && eLicensePrice > 0),

@@ -41,11 +41,11 @@ import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 import { useRunOnce } from '../../../common/hooks/useRunOnce';
-import { sortInventoryTableData } from '../InventoryUtilsV2';
+import { sortInventoryTableData, updateInstanceStatus } from '../InventoryUtilsV2';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
-import { setInProgressInstances } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setInProgressInstances, setInventoryTableData } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 
 const InventoryTable = () => {
@@ -183,6 +183,7 @@ const InventoryTable = () => {
                     resourceId={rowData?.resourceId}
                     handleManageInstances={handleManageInstances}
                     hostData={rowData}
+                    loading={loading}
                 />
             );
         }
@@ -192,7 +193,7 @@ const InventoryTable = () => {
     const handleManageInstances = (rowData: any, instances: any) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState.inventoryV2;
-        const inProgressIds = instances.map((instance: any) => `${rowData?.id}_${instance}`);
+        const inProgressIds = instances.map((instance: any) => `${rowData?.ec2InstanceId}_${instance}`);
         dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
         manageInstanceApi({
             credentialsId: headerSelectedCred?.data?.credentialsId,
@@ -210,10 +211,10 @@ const InventoryTable = () => {
             });
             dispatch(setInProgressInstances(updatedInProgressInstances));
             if (res?.data?.items) {
-                let successFullInstances = [];
+                let successFullInstances: any = [];
                 res?.data?.items.map((item: any) => {
                     if (item.status === NOTIFICATION_TYPES.SUCCESS) {
-                        successFullInstances.push();
+                        successFullInstances.push(item);
                         dispatch(
                             addNotification({
                                 notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -230,6 +231,13 @@ const InventoryTable = () => {
                         );
                     }
                 });
+                const updatedInventoryTableData = updateInstanceStatus(
+                    'manage',
+                    rowData,
+                    instances,
+                    successFullInstances
+                );
+                dispatch(setInventoryTableData(updatedInventoryTableData));
             }
         });
     };
@@ -458,28 +466,32 @@ const InventoryTable = () => {
                         {instanceList && (
                             <div>
                                 {instanceList?.[0] && (
-                                    <TooltipComponent
-                                        title={instanceList[0]}
-                                        placement={'bottom'}
-                                        width={'max-content'}
-                                        height="32px"
-                                    >
-                                        <Typography variant="Regular_13" className={`${styles.colText}`}>
-                                            {instanceList[0]}
-                                        </Typography>
-                                    </TooltipComponent>
+                                    <Popover
+                                        popoverClass={''}
+                                        children={instanceList[0]}
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={
+                                            <Typography variant="Regular_14" className={`${styles.colText}`}>
+                                                {instanceList[0]}
+                                            </Typography>
+                                        }
+                                    />
                                 )}
                                 {instanceList?.[1] && (
-                                    <TooltipComponent
-                                        title={instanceList[1]}
-                                        placement={'bottom'}
-                                        width={'max-content'}
-                                        height="32px"
-                                    >
-                                        <Typography variant="Regular_13" className={`${styles.colText}`}>
-                                            {instanceList[1]}
-                                        </Typography>
-                                    </TooltipComponent>
+                                    <Popover
+                                        popoverClass={''}
+                                        children={instanceList[1]}
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={
+                                            <Typography variant="Regular_14" className={`${styles.colText}`}>
+                                                {instanceList[1]}
+                                            </Typography>
+                                        }
+                                    />
                                 )}
                             </div>
                         )}

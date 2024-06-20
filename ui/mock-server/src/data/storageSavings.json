@@ -3,7 +3,7 @@
         "existing": {
             "instanceType": "m5.large",
             "computeMonthlyPrice": 1097.92,
-            "findings": "OPTIMIZED"
+            "finding": "OPTIMIZED"
         },
         "recommended": {
             "instanceType": "m5.large",
@@ -14,7 +14,7 @@
         "existing": {
             "sqlServerEdition": "Standard Edition (64-bit)",
             "licenseMonthlyPrice": 4380,
-            "findings": "NOT-OPTIMIZED"
+            "finding": "NOT_OPTIMIZED"
         },
         "recommended": {
             "sqlServerEdition": "Standard Edition (64-bit)",

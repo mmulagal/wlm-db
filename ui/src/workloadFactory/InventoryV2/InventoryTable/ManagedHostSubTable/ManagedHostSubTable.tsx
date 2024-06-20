@@ -16,20 +16,12 @@ import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/Inve
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
-import {
-    useLazyGetDatabaseListV2Query,
-    useLazyGetResourceDetailsV2Query,
-    useUnmanageMssqlInstanceMutation
-} from '../../../../utils/apiService';
-import { setInProgressInstances } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
+import { setInProgressInstances, setInventoryTableData } from '../../../../store/workloadFactory/inventoryV2Slice';
 import store from '../../../../store/store';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
 import {
     resetWorkloadFactoryResourceData,
-    setDatabaseList,
-    setDatabaseListLoading,
-    setResourceDetails,
-    setResourceLoading,
     setSelectedDatabaseInstance,
     setSelectedDatabaseInstanceName,
     setSelectedHostname,
@@ -41,6 +33,7 @@ import {
     setDBHostName
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../../store/authSlice';
+import { updateInstanceStatus } from '../../InventoryUtilsV2';
 
 const ManagedHostSubTable = ({
     rowId,
@@ -48,6 +41,7 @@ const ManagedHostSubTable = ({
     scrollPosition,
     resourceId,
     hostData,
+    loading,
     handleManageInstances
 }: {
     rowId: string;
@@ -55,6 +49,7 @@ const ManagedHostSubTable = ({
     scrollPosition: any;
     resourceId: string;
     hostData: any;
+    loading: boolean;
     handleManageInstances: (rowData: any, instances: any) => void;
 }) => {
     const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
@@ -91,7 +86,7 @@ const ManagedHostSubTable = ({
                     allocatedCapacityText: perRow?.allocatedCapacity
                         ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
                         : '',
-                    statusColText: inProgressInstances.has(`${resourceId}_${perRow.databaseInstanceName}`)
+                    statusColText: inProgressInstances.has(`${hostData?.ec2InstanceId}_${perRow.databaseInstanceName}`)
                         ? INVENTORY_STATUS.IN_PROGRESS
                         : perRow.statusColText
                 };
@@ -122,13 +117,13 @@ const ManagedHostSubTable = ({
                 callback={() => {
                     const updatedState = store.getState();
                     const { inProgressInstances } = updatedState.inventoryV2;
-                    const inProgressId = `${rowData?.id}_${rowData?.id}`;
+                    const inProgressId = `${hostData?.ec2InstanceId}_${rowData?.databaseInstanceName}`;
                     dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
                     unmanageApi({
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
                         resourceId,
-                        dbInstanceId: rowData?.id
+                        dbInstanceId: rowData?.databaseInstanceId
                     }).then((res: any) => {
                         const updatedState = store.getState();
                         const { inProgressInstances } = updatedState?.inventoryV2;
@@ -145,6 +140,8 @@ const ManagedHostSubTable = ({
                                     })
                                 );
                             } else {
+                                const updatedInventoryTableData = updateInstanceStatus('unmanage', hostData, rowData);
+                                dispatch(setInventoryTableData(updatedInventoryTableData));
                                 dispatch(
                                     addNotification({
                                         notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -212,17 +209,38 @@ const ManagedHostSubTable = ({
                     );
                 }
 
+                let disableMsg = '';
+                let width = '';
+                let height = '';
+                let disableMenu = () => {
+                    if (loading) {
+                        disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
+                        width = '220px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+                        disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+                        width = '220px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
+                    ) {
+                        disableMsg = GENERAL.EBS_TOOLTIP_MESSAGE;
+                        width = '320px';
+                        height = '90px';
+                        return true;
+                    }
+                    return false;
+                };
+
                 return (
                     <div className={styles.jobMenuPopover}>
-                        {rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        (rowData.fileSystemType === GENERAL.EBS ||
-                            rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS) ? (
-                            <TooltipComponent
-                                placement={'bottom'}
-                                title={GENERAL.EBS_TOOLTIP_MESSAGE}
-                                width="320px"
-                                height="90px"
-                            >
+                        {disableMenu() ? (
+                            <TooltipComponent placement={'bottom'} title={disableMsg} width={width} height={height}>
                                 <div className={styles.menuPointerDisabled}>
                                     <span className={styles.menuPointer}>...</span>
                                 </div>

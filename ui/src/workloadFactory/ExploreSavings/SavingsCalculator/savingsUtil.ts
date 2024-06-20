@@ -83,7 +83,7 @@ export const comparisonData = (calculatedResponse: any) => {
         {
             type: 'SQL license',
             isTooltip:
-                ' SQL license costs for SQL on FSxN are based on Standard SQL license while SQL license costs for SQL on EBS are based on Enterprise license, since license could be optimized when using FsxN according to our findings.',
+                'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
             fsx: calculatedResponse?.license?.recommended?.licenseMonthlyPrice
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.license?.recommended?.licenseMonthlyPrice, 2)
