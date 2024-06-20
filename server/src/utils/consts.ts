@@ -1008,11 +1008,13 @@ const SQL_STD = 'SQL std';
 const SQL_ENT = 'SQL ent';
 const SQL_WEB = 'SQL web';
 const CUSTOM = 'custom';
+const NA = 'NA';
 
 const SQL_SOFTWARE_TYPES = new Map<string, string>([
     [SQL_STD, SQL_STD],
     [SQL_ENT, SQL_ENT],
-    [SQL_WEB, SQL_WEB]
+    [SQL_WEB, SQL_WEB],
+    [CUSTOM, NA]
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
