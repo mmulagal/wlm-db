@@ -147,6 +147,11 @@ export const getInstallationMode = (row: ManagedHostsRowInterface) => {
                 break;
             }
         }
+        if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+            installationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+        } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+            installationMode = GENERAL.AOAG;
+        }
         return installationMode;
     } else {
         return '';
