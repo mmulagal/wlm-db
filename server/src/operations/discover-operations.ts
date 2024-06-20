@@ -917,7 +917,8 @@ async function fetchUnmanagedHostsInformationV2(
                         fsxn_ids: fsxnId || '',
                         fsxwId,
                         ebsVolumeIds,
-                        database_deployment_type: sqlServerInstance.sqlServerDeploymentType
+                        database_deployment_type: sqlServerInstance.sqlServerDeploymentType,
+                        storageType: fsxnId ? STORAGE_TYPE.FSXN : fsxwId ? STORAGE_TYPE.FSXW : STORAGE_TYPE.EBS
                     });
                 });
                 resourceDetailsList.push(resourceDetails);
