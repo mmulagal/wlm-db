@@ -949,7 +949,9 @@ export const GENERAL = {
     MANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to manage.`,
     UNMANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) =>
         `Database instance ${instanceName} unmanaged successfully.`,
-    UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unmanage.`
+    UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unmanage.`,
+    NOT_OPTIMIZED:
+        "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use."
 };
 
 export const CODE_VIEWER = {
