@@ -14,7 +14,6 @@ import {
     MAX_WRITE_REQUEST_FSXN,
     MIN_DISKSIZE,
     MIN_THROUGHPUT,
-    CUSTOM,
     SINGLE_AZ,
     SQL_SOFTWARE_TYPES,
     SQL_STD,
@@ -54,7 +53,7 @@ const storageProductFamily: Filter = {
     Value: 'Storage'
 };
 
-const BYOL = 'Bring your own license';
+// const BYOL = 'Bring your own license';
 
 function getPriceUtil(rate: number, quantity: number, resourceCount = 1): number {
     logger.debug('Calculate price util', { rate, quantity, resourceCount });
@@ -128,6 +127,12 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
                     Type: FilterType.TERM_MATCH,
                     Field: 'CapacityStatus',
                     Value: 'Used' // On-demand
+                },
+                {
+                    // No license required for windows
+                    Type: FilterType.TERM_MATCH,
+                    Field: 'licenseModel',
+                    Value: 'No License required'
                 }
             ],
             ...ec2Service,
@@ -135,16 +140,9 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
         }
     };
     // add this filter based on whether its windows sql based ami or not
-    if (compute.sqlSoftwareType && compute.sqlSoftwareType !== CUSTOM) {
+    if (compute.sqlSoftwareType) {
         const sqlFilter = getSqlSoftwareEdition(compute.sqlSoftwareType);
         filters.input.Filters.push(sqlFilter);
-    } else if (compute.sqlSoftwareType === CUSTOM) {
-        const byolFilter = {
-            Type: FilterType.TERM_MATCH,
-            Field: 'licenseModel',
-            Value: BYOL
-        };
-        filters.input.Filters.push(byolFilter);
     }
     return filters;
 }
