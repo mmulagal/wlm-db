@@ -613,6 +613,9 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 const parsedResponse = sqlResponseParsing(response);
 
                 const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+                instancesDetails.forEach(obj => {
+                    obj.instanceName = obj.instanceName.replace(/.*\$([^$]+)/, '$1');
+                });
                 let defaultInstance = true;
                 let selectedInstance = instancesDetails.find(
                     (instance: { instanceState: string; instanceName: string | string[] }) =>
@@ -814,7 +817,7 @@ async function getActiveSqlNode(
             connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const { instanceName, instancesDetails = [] } =
-                    (await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId])) || {};
+                    (await getActiveSqlInstanceName(credentialsId, region, [node2InstanceId])) || {};
                 if (instanceName) {
                     return {
                         isSSMConnected: true,
