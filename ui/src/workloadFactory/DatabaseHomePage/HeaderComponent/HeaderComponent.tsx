@@ -26,7 +26,12 @@ import {
     setHeaderSelectedRegion,
     setRefreshTime
 } from '../../../store/workloadFactory/headersSlice';
-import { inventoryApi, inventoryApiV2, workloadFactoryResourceApi } from '../../../utils/apiService';
+import {
+    inventoryApi,
+    inventoryApiV2,
+    workloadFactoryResourceApi,
+    workloadFactoryResourceApiV2
+} from '../../../utils/apiService';
 import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import { WLF_TABS } from '../../../utils/consts';
@@ -43,6 +48,8 @@ import { setSavingsCalculatorRefresh } from '../../../store/workloadFactory/expl
 import SandboxApis from '../../Sandbox/SandboxApis';
 import InventoryV2 from '../../InventoryV2/InventoryV2';
 import InventoryApisV2 from '../../InventoryV2/InventoryApisV2';
+import DatabaseHostOverviewV2 from '../../ResourcePage/ResourceHomePage/DatabaseHostOverviewV2';
+import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 type Tab = {
     tab: string;
@@ -185,7 +192,12 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
-            dispatch(workloadFactoryResourceApi.util.resetApiState());
+            if (isInventoryV2) {
+                dispatch(workloadFactoryResourceApiV2.util.resetApiState());
+                dispatch(setIsResourceRefresh(true));
+            } else {
+                dispatch(workloadFactoryResourceApi.util.resetApiState());
+            }
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));
             dispatch(setSubJobsData([]));
@@ -360,7 +372,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                 {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
                 {selectedHeaderTab === WLF_TABS.INVENTORY && isInventoryV2 && <InventoryV2 />}
                 {selectedHeaderTab === WLF_TABS.JOB_MONITORING && <JobMonitoring />}
-                {selectedHeaderTab === WLF_TABS.OVERVIEW && <DatabaseHostOverview />}
+                {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && <DatabaseHostOverviewV2 />}
+                {selectedHeaderTab === WLF_TABS.OVERVIEW && !isInventoryV2 && <DatabaseHostOverview />}
                 {selectedHeaderTab === WLF_TABS.SANDBOXES && <Sandbox />}
                 {selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS && <ExploreSavings />}
                 {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}

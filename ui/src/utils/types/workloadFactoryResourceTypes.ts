@@ -3,6 +3,11 @@ export interface WorkloadFactoryResourceEntities {
     resourceDetails: WorkloadFactoryResourceDetails;
     databaseListLoading: boolean;
     databaseList: WorkloadFactoryDatabaseItem[];
+    selectedResourceId: string;
+    selectedDatabaseInstance: string;
+    selectedDatabaseInstanceName: string;
+    selectedHostname: string;
+    isResourceRefresh: boolean;
 }
 
 export interface WorkloadFactoryResourceDetails {
