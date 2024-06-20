@@ -1241,8 +1241,6 @@ async function validateCredentials(
 
         command += '$responseObject | ConvertTo-Json -Compress';
 
-        logger.info(command);
-
         const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
 
         const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
@@ -1279,9 +1277,11 @@ async function validateCredentials(
 
         if (instancesToBeDeleted.length > 0) {
             if (newSqlCredentials.length === instancesToBeDeleted.length) {
+                // Delete the parameter store all credentials are invalid
                 paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
                 await deleteSSMParameter(credentialsId, region, paramesToDelete);
             } else {
+                // Rewrite parameter store after removing invalid credentials
                 const latestSqlCredentials = newSqlCredentials.filter(
                     e => !instancesToBeDeleted.includes(e.resourceId)
                 );
@@ -1333,9 +1333,10 @@ async function verifyAndCreateCredentials(
 
     if (sqlCredentials.length) {
         const existingParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
-        const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
-        setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), instanceId]);
-        if (existingParameters) {
+        if (!existingParameters) {
+            const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
+            setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), instanceId]);
+        } else {
             const { sql } = JSON.parse(existingParameters);
             if (sql) {
                 sql.forEach((e: { sqlinstancename: string; username: string; password: string }) => {
