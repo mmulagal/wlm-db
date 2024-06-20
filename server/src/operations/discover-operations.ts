@@ -3,7 +3,7 @@ import config from 'config';
 
 import { STORAGE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { FileSystem, FileSystemType } from '@aws-sdk/client-fsx';
-import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
+import { attempt, compact, uniqBy, isEmpty, cloneDeep } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
@@ -611,8 +611,8 @@ function prepareParametersToStore(instanceId: string, credentials: DiscoverCrede
         if (resourceType === RESOURCESTYPE.MSSQL) {
             const sqlItem = acc.find(el => el.value.sql);
 
-            if (sqlItem && Array.isArray(sqlItem)) {
-                sqlItem.push({
+            if (sqlItem && Array.isArray(sqlItem.value.sql)) {
+                sqlItem.value.sql.push({
                     sqlinstancename: resourceId,
                     username,
                     password
@@ -1197,8 +1197,6 @@ async function validateCredentials(
 ) {
     logger.info('validateCredentials', { instanceId, fsxCredentials, sqlCredentials });
 
-    await verifyAndCreateCredentials(credentialsId, region, instanceId, fsxCredentials, sqlCredentials);
-
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
     if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
         const errorMessage = `Unable to validate the credentials through SSM, for host ${instanceId}`;
@@ -1210,6 +1208,10 @@ async function validateCredentials(
         ]);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
+
+    const newSqlCredentials = cloneDeep(sqlCredentials);
+    await verifyAndCreateCredentials(credentialsId, region, instanceId, fsxCredentials, newSqlCredentials);
+
     let parsedResponse;
 
     try {
@@ -1239,6 +1241,8 @@ async function validateCredentials(
 
         command += '$responseObject | ConvertTo-Json -Compress';
 
+        logger.info(command);
+
         const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
 
         const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
@@ -1252,6 +1256,7 @@ async function validateCredentials(
 
         const response: Record<string, string> = {};
         const paramesToDelete: string[] = [];
+        const instancesToBeDeleted: string[] = [];
 
         if (parsedResponse.requiredModuleError) {
             response.requiredModuleError = parsedResponse.requiredModuleError;
@@ -1263,7 +1268,7 @@ async function validateCredentials(
 
             if (sqlCredentials.length) {
                 if (parsedResponse.sqlInstanceConnectivity === false) {
-                    paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+                    instancesToBeDeleted.push(sqlCredentials[0].resourceId);
                     response.sqlServerError = parsedResponse?.sqlerror;
                 } else if (parsedResponse.sqlInstanceConnectivity === true) {
                     response.sqlServerEdition = parsedResponse?.sqlEdition;
@@ -1272,8 +1277,21 @@ async function validateCredentials(
             }
         }
 
-        await deleteSSMParameter(credentialsId, region, paramesToDelete);
-
+        if (instancesToBeDeleted.length > 0) {
+            if (newSqlCredentials.length === instancesToBeDeleted.length) {
+                paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+                await deleteSSMParameter(credentialsId, region, paramesToDelete);
+            } else {
+                const latestSqlCredentials = newSqlCredentials.filter(
+                    e => !instancesToBeDeleted.includes(e.resourceId)
+                );
+                const creds = prepareParametersToStore(instanceId, [
+                    ...(fsxCredentials ? [fsxCredentials] : []),
+                    ...latestSqlCredentials
+                ]);
+                await ssmPutParameters(credentialsId, region, creds);
+            }
+        }
         return response;
     } catch (error: any) {
         // delete the ssm parameters if its already created
@@ -1287,7 +1305,7 @@ async function validateCredentials(
         await deleteSSMParameter(credentialsId, region, paramesToDelete);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `unable to validate the credentials . Reason: ${error?.message}.`
+            `Unable to validate the credentials . Reason: ${error?.message}.`
         );
     }
 }
@@ -1314,10 +1332,21 @@ async function verifyAndCreateCredentials(
     }
 
     if (sqlCredentials.length) {
-        const SSMParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
-        if (!SSMParameters) {
-            const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
-            setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), instanceId]);
+        const existingParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
+        const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
+        setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), instanceId]);
+        if (existingParameters) {
+            const { sql } = JSON.parse(existingParameters);
+            if (sql) {
+                sql.forEach((e: { sqlinstancename: string; username: string; password: string }) => {
+                    sqlCredentials.push({
+                        resourceId: e.sqlinstancename,
+                        resourceType: RESOURCESTYPE.MSSQL,
+                        username: e.username,
+                        password: e.password
+                    });
+                });
+            }
         }
     }
 

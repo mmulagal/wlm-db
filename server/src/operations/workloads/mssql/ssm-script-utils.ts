@@ -213,17 +213,32 @@ const validateSQLInstanceConnectivity = (
             }
             $username = $sqlCredentials.username
             $password = $sqlCredentials.password
+            $errorfile = "C:\\$sqlinstancename.log"
+            
+            $serverInstanceName = "$env:COMPUTERNAME"
+            If($sqlinstancename -ne "MSSQLSERVER") {
+                $serverInstanceName = "$env:COMPUTERNAME\\$sqlinstancename"
+                
+            }
 
             if ($username -eq $null -or $password -eq $null) {
                 $errorMessage = "SQL credentials not found for the instance $sqlinstancename"
                 throw $errorMessage
             }
-            $sqlresult = Sqlcmd -U $username -P $password -Q $sqlcmd -y 0
-            $sqlresult | ConvertFrom-Json | ForEach-Object {
-                $responseObject.add('sqlEdition', $_.sqlEdition)
-                $responseObject.add('noOfDatabases', $_.noOfDatabases)
+
+            $sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlcmd -y 0 -r1 2> $errorfile
+
+            if([string]::IsNullOrEmpty($sqlresult)) {
+                $responseObject.add('sqlInstanceConnectivity', $False)
+                $responseObject.add('sqlerror', "SQLCMD execution failed. Verify credentials.")
             }
-            $responseObject.add('sqlInstanceConnectivity', $True)
+            else {
+                $sqlresult | ConvertFrom-Json | ForEach-Object {
+                    $responseObject.add('sqlEdition', $_.sqlEdition)
+                    $responseObject.add('noOfDatabases', $_.noOfDatabases)
+                }
+                $responseObject.add('sqlInstanceConnectivity', $True)
+            }
         }
     } catch {
         $responseObject.add('sqlerror', $_.Exception.Message)
