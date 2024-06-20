@@ -1,5 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { CredentialsIdParams } from './generic.types';
+import { FINDING } from '../../utils/consts';
 
 const StorageSavingsRequestParams = Type.Composite([
     CredentialsIdParams,
@@ -27,21 +28,6 @@ const StorageMetrics = Type.Object({
     iops: Type.Number(),
     throughput: Type.Number(),
     snapshots: Type.Number(),
-    compute: Type.Optional(
-        Type.Object({
-            cost: Type.Optional(Type.Number()),
-            instanceType: Type.String(),
-            message: Type.Optional(Type.String())
-        })
-    ),
-    license: Type.Optional(
-        Type.Object({
-            sqlEdition: Type.String(),
-            sqlServerVersion: Type.String(),
-            licenseCost: Type.Optional(Type.Number()),
-            message: Type.Optional(Type.String())
-        })
-    ),
     clones: Type.Number(),
     total: Type.Number()
 });
@@ -50,13 +36,18 @@ const StorageSavingsCompute = Type.Object({
     instanceType: Type.String(),
     computeMonthlyPrice: Type.Optional(Type.Number()),
     windowsOsVersion: Type.Optional(Type.String()),
-
+    finding: Type.Optional(
+        Type.String({ enum: [FINDING.OPTIMIZED, FINDING.NOT_OPTIMIZED, FINDING.INSUFFICIENT_DATA] })
+    ),
     message: Type.Optional(Type.String())
 });
 
 const StorageSavingsLicense = Type.Object({
     sqlServerEdition: Type.Optional(Type.String()),
     licenseMonthlyPrice: Type.Optional(Type.Number()),
+    finding: Type.Optional(
+        Type.String({ enum: [FINDING.OPTIMIZED, FINDING.NOT_OPTIMIZED, FINDING.INSUFFICIENT_DATA] })
+    ),
     message: Type.Optional(Type.String())
 });
 const StorageSavingsResponse = Type.Object({

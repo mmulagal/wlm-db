@@ -496,7 +496,9 @@ export const INVENTORY_STATUS = {
     SSM_ONLINE: 'online',
     SSM_CONNECTED: 'connected',
     HOST_ONLINE: 'online',
-    NOT_AVAILABLE: 'N/A'
+    NOT_AVAILABLE: 'N/A',
+    UP: 'up',
+    DOWN: 'down'
 };
 
 export const INVENTORY_ACTIONS = {

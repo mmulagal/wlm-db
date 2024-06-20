@@ -244,7 +244,7 @@ export const formatDate = (date: string | number) => {
 };
 
 export const formatDateWithTime = (date: string | number) => {
-    const dateStr = date.toString();
+    const dateStr = (date && date.toString()) || '';
     return moment(new Date(parseInt(dateStr))).format('LL HH:mm');
 };
 

@@ -6,7 +6,7 @@ import { GENERAL } from '../../../utils/appConstants';
 
 const DBDistributionSection = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
-    const { cpu, disk, memory } = resourceDetails.resourceUtilization || {};
+    const { cpu, disk, memory } = resourceDetails?.resourceUtilization || {};
 
     return (
         <div className={styles.dbDistribution}>
@@ -144,7 +144,7 @@ const DBDistributionSection = () => {
                             <Typography variant="Regular_14">{GENERAL.STORAGE}</Typography>
                         </div>
                     </div>
-                    
+
                     <div className={styles.separatorProtection} />
                 </div>
             </div>
