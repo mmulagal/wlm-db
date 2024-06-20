@@ -16,4 +16,20 @@ router.get(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/mssql/inst
     }, 7000);
 });
 
+router.post(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/mssql`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            resourceId: 'resource-id-2',
+            items: [
+              {
+                databaseInstanceName: 'MSSQLSERVER3',
+                databaseInstanceGuid: '3',
+                status: 'success',
+                errorMessage: ''
+              }
+            ]
+          })
+    }, 3000);
+});
+
 export default router;

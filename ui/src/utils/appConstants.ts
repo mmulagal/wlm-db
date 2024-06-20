@@ -707,8 +707,9 @@ export const GENERAL = {
     MULTI_AZ: 'Multi AZ',
     // Const for unidentifiable data
     DETECT_HOST: 'Detect host',
+    DETECT_INSTANCE: 'Detect Instance',
     MANAGE_HOST: 'Manage host',
-    DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 out of 2'],
+    DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 / 2'],
     FAILED_TO_DETECT_HOST: 'Failed to detect host',
     DETECT_FAILED_WITH_NO_STORAGE: 'Unable to move to unmanaged hosts tab as storage could not be identified',
     DONE: 'Done',
@@ -717,6 +718,7 @@ export const GENERAL = {
     SSM_ONLINE: 'Online',
     SSM_CONNECTION_LOST: 'Connection lost',
     DETECT_HOST_DESC: 'Detect and manage Microsoft SQL Server deployed on EC2 instance ',
+    DETECT_INSTANCE_DESC: 'Detect and manage instance ',
     DETECT_MSSQL_HEADING: 'Microsoft SQL Server',
     DETECT_MSSQL_USERNAME: 'Microsoft SQL Server user name',
     DETECT_MSSQL_PASSWORD: 'Microsoft SQL Server password',
@@ -724,7 +726,9 @@ export const GENERAL = {
     DETECT_FSX_USERNAME: 'ONTAP user name',
     DETECT_FSX_PASSWORD: 'ONTAP password',
     DETECTED_HOST_INFO: 'Detected host information',
+    DETECTED_INSTANCE_INFO: 'Detected instance information',
     DETECT_HOSTNAME: 'Host name',
+    DETECT_INSTANCE_NAME: 'Instance name',
     DETECT_STORAGE_TYPE: 'Storage type',
     DETECT_NO_OF_DB: 'Number of databases',
     DETECT_SQL_VERSION: 'SQL version',
@@ -737,11 +741,17 @@ export const GENERAL = {
         ' Unmanaged hosts ',
         ' tab.'
     ],
+    EBS_INSTANCE_DETECT_SUCCESS_MSG: ['Instance ', ' detected successfully.'],
     FSX_DETECT_SUCCESS_MSG: [
         'Detected host management',
         'Would you like to manage the detected host via workload factory?'
     ],
+    FSX_INSTANCE_DETECT_SUCCESS_MSG: [
+        'Detected instance management',
+        'Would you like to manage the detected instance via workload factory?'
+    ],
     FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.'],
+    FSX_INSTANCE_AFTER_DETECT_OPTIONS: ['Yes, Manage instance via Workload Factory.', 'No.'],
     HOST_MOVED_SUCCESS: [
         'Host ',
         ' successfully detected and moved to the ',
@@ -749,6 +759,8 @@ export const GENERAL = {
         ' Managed hosts ',
         'tab.'
     ],
+    INSTANCE_MANAGE_REQUEST: ['Your request to manage the SQL Server instance ', ' is in progress.'],
+    INSTANCE_SUCCESS_DETECTED: ['Instance ', ' successfully detected.'],
     HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
     HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. ', 'For more details view ', ' Job Monitoring.'],
     HOST_MOVED_INFO: [
@@ -794,6 +806,7 @@ export const GENERAL = {
     VPC_MESSAGE:
         'Ensure your VPC has connectivity to other AWS services (SQS, FSx, EC2, CloudWatch, CloudFormation, SSM) via VPC endpoints and S3 gateway endpoint. If not, endpoints will be created automatically during deployment.',
     SQL_SERVER_NOT_RUNNING: 'SQL service is not running',
+    SSM_CONNECTION_DOWN: 'SSM is not connected',
     STORAGE_NOT_PRESENT: 'Storage could not be identified',
     //Sandbox constants
     SANDBOXES: 'Sandboxes',

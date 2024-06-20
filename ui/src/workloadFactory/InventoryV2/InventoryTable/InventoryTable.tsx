@@ -245,7 +245,7 @@ const InventoryTable = () => {
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={`Manage data base host ${rowData?.name} instances`}
+                header={`Manage database host ${rowData?.name} instances`}
                 content={<ManagedHostDialog dialogData={rowData} />}
                 primaryButton={INVENTORY_ACTIONS.MANAGE}
                 secondaryButton={'Close'}

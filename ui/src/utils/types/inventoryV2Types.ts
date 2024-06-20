@@ -16,6 +16,12 @@ export interface InventorySliceData {
     mssqlInstancesData: any;
     inProgressInstances: any;
     manageHostSelectedRows: any;
+    valuesNotFilled: boolean;
+    detectHostRadio: string;
+    detectManageUserName: string;
+    detectManagePassword: string;
+    detectOntapUsername: string;
+    detectOntapPassword: string;
 }
 
 export interface InventoryTableData {
@@ -81,6 +87,25 @@ export interface InventoryTableInstanceDatInterface {
         };
     };
     allocatedCapacity?: number;
+}
+
+export interface StorageInterface {
+    fsxn?: {
+        protocol?: Array<String>;
+        size?: number;
+        used?: number;
+        spaceSavings?: number;
+        spaceSavingsPercentage?: number;
+    };
+    fsxw?: {
+        size?: number;
+        used?: number;
+        spaceSavings?: number;
+        spaceSavingsPercentage?: number;
+    };
+    ebs?: {
+        size?: number;
+    };
 }
 
 export interface InventoryChartData {
@@ -315,6 +340,8 @@ export interface SQLServerInstancesDiscovered {
     sqlServerDeploymentType?: string;
     databaseCount?: number;
     sqlServerAuthentication?: boolean;
+    // storage?: StorageInterface;
+    // storageFsx?: Array<DiscoveredStorageObj>;
     storage?: Array<DiscoveredStorageObj>;
     deploymentTypes?: Array<{
         type?: string;
@@ -330,9 +357,13 @@ export interface DiscoveredStorageObj {
 }
 
 export interface StatusObjInterface {
-    status: string;
-    name: string;
-    storageType: any;
+    status?: string;
+    name?: string;
+    storageType?: any;
+    fsxId?: string;
+    isFsxRegistered?: boolean;
+    detectOption?: string;
+    detectOptionDisableMsg?: string;
 }
 
 export interface InstancesObjectInterface {
