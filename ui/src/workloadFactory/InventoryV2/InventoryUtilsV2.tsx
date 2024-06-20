@@ -1069,8 +1069,10 @@ export const updateInstanceStatus = (action: InstanceActions, hostData: any, ins
                     : INVENTORY_ACTIONS.MANAGE,
             actionDisable: false,
             sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
-                if (instanceItem?.databaseInstanceId === instanceData?.databaseInstanceId) {
+                if (instanceItem?.databaseInstanceName === instanceData?.databaseInstanceName) {
                     return { ...instanceItem, statusColText: INVENTORY_STATUS.UNMANAGED };
+                } else {
+                    return { ...instanceItem };
                 }
                 return instanceItem;
             })
