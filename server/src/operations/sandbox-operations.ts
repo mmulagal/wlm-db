@@ -638,7 +638,7 @@ async function startSandboxCreation(
         await createExtendedProperties(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, {
             tag,
             cloned_by: 'netapp_wf',
-            source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
+            source: `${srcDetails.resourceName}|${srcDetails.instanceName}|${srcDetails.database}`,
             createdAt: Date.now(), // to be used for calculating age
             updatedAt: Date.now(), // to be used for getting the last update
             baseSnapshot: clonedVolumes.data.parentSnapshot,

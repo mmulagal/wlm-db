@@ -280,7 +280,8 @@ async function sleep(ms: number) {
 }
 
 function generateHash(value: string) {
-    const hash = crypto.createHash('sha256');
+    // changing it to md5 to keep the resource_id smaller in size, as we don't have a unique constraint on resource_id
+    const hash = crypto.createHash('md5');
     hash.update(value);
     return hash.digest('hex');
 }
