@@ -54,6 +54,8 @@ const storageProductFamily: Filter = {
     Value: 'Storage'
 };
 
+const BYOL = 'Bring your own license';
+
 function getPriceUtil(rate: number, quantity: number, resourceCount = 1): number {
     logger.debug('Calculate price util', { rate, quantity, resourceCount });
 
@@ -140,7 +142,7 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
         const byolFilter = {
             Type: FilterType.TERM_MATCH,
             Field: 'licenseModel',
-            Value: 'Bring your own license'
+            Value: BYOL
         };
         filters.input.Filters.push(byolFilter);
     }
