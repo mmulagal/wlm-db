@@ -1182,6 +1182,7 @@ enum SandboxLifecycleAction {
     REBASELINE = 'Re-baseline'
 }
 
+const STORAGE_SERVICE_DEFAULT_REGION = 'us-east-1';
 const FINDING = {
     OPTIMIZED: 'OPTIMIZED',
     NOT_OPTIMIZED: 'NOT_OPTIMIZED',
@@ -1467,5 +1468,6 @@ export {
     SandboxLifecycleAction,
     SANDBOX_LIFECYCLE_REFRESH,
     SANDBOX_LIFECYCLE_REBASELINE,
+    STORAGE_SERVICE_DEFAULT_REGION,
     FINDING
 };
