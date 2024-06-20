@@ -466,28 +466,32 @@ const InventoryTable = () => {
                         {instanceList && (
                             <div>
                                 {instanceList?.[0] && (
-                                    <TooltipComponent
-                                        title={instanceList[0]}
-                                        placement={'bottom'}
-                                        width={'max-content'}
-                                        height="32px"
-                                    >
-                                        <Typography variant="Regular_13" className={`${styles.colText}`}>
-                                            {instanceList[0]}
-                                        </Typography>
-                                    </TooltipComponent>
+                                    <Popover
+                                        popoverClass={''}
+                                        children={instanceList[0]}
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={
+                                            <Typography variant="Regular_14" className={`${styles.colText}`}>
+                                                {instanceList[0]}
+                                            </Typography>
+                                        }
+                                    />
                                 )}
                                 {instanceList?.[1] && (
-                                    <TooltipComponent
-                                        title={instanceList[1]}
-                                        placement={'bottom'}
-                                        width={'max-content'}
-                                        height="32px"
-                                    >
-                                        <Typography variant="Regular_13" className={`${styles.colText}`}>
-                                            {instanceList[1]}
-                                        </Typography>
-                                    </TooltipComponent>
+                                    <Popover
+                                        popoverClass={''}
+                                        children={instanceList[1]}
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={
+                                            <Typography variant="Regular_14" className={`${styles.colText}`}>
+                                                {instanceList[1]}
+                                            </Typography>
+                                        }
+                                    />
                                 )}
                             </div>
                         )}
