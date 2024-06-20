@@ -527,7 +527,7 @@ function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true
     if (isDefault) {
         return DEFAULT_MSSQL_INSTANCE_NAME;
     }
-    return instanceName.replace(/^.+\$/, '');
+    return `${DEFAULT_MSSQL_INSTANCE_NAME}\\${instanceName.replace(/^.+\$/, '')}`;
 }
 
 export {
