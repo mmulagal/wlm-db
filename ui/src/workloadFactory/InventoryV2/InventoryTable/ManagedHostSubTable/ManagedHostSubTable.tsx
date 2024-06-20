@@ -16,21 +16,48 @@ import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/Inve
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
-import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
+import {
+    useLazyGetDatabaseListV2Query,
+    useLazyGetResourceDetailsV2Query,
+    useUnmanageMssqlInstanceMutation
+} from '../../../../utils/apiService';
 import { setInProgressInstances } from '../../../../store/workloadFactory/inventoryV2Slice';
 import store from '../../../../store/store';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
+import {
+    resetWorkloadFactoryResourceData,
+    setDatabaseList,
+    setDatabaseListLoading,
+    setResourceDetails,
+    setResourceLoading,
+    setSelectedDatabaseInstance,
+    setSelectedDatabaseInstanceName,
+    setSelectedHostname,
+    setSelectedResourceId
+} from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
+import {
+    addInitialDBCreateData,
+    initialCreateNewUserState,
+    setDBHostName
+} from '../../../../store/workloadFactory/createNewDBSlice';
+import { updateResourceId } from '../../../../store/authSlice';
 
 const ManagedHostSubTable = ({
     rowId,
+    hostname,
     scrollPosition,
-    resourceId
+    resourceId,
+    hostData,
+    handleManageInstances
 }: {
     rowId: string;
+    hostname: string;
     scrollPosition: any;
     resourceId: string;
+    hostData: any;
+    handleManageInstances: (rowData: any, instances: any) => void;
 }) => {
-    const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
+    const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -46,7 +73,7 @@ const ManagedHostSubTable = ({
 
     useEffect(() => {
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
-            const newTable = inventoryTableData?.[rowId]?.sqlServerInstances?.map(perRow => {
+            const newTable = inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
                 let protectionText = '';
                 if (
                     isAwsBackupEnabled(perRow) ||
@@ -63,7 +90,10 @@ const ManagedHostSubTable = ({
                     protectionText: protectionText,
                     allocatedCapacityText: perRow?.allocatedCapacity
                         ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
-                        : ''
+                        : '',
+                    statusColText: inProgressInstances.has(`${resourceId}_${perRow.databaseInstanceName}`)
+                        ? INVENTORY_STATUS.IN_PROGRESS
+                        : perRow.statusColText
                 };
             });
             setData(newTable);
@@ -105,15 +135,23 @@ const ManagedHostSubTable = ({
                         let updatedInProgressInstances = new Set([...inProgressInstances]);
                         updatedInProgressInstances.delete(inProgressId);
                         dispatch(setInProgressInstances(updatedInProgressInstances));
-                        if (res?.items?.[0]?.errorMessage) {
-                            dispatch(
-                                addNotification({
-                                    notificationType: NOTIFICATION_TYPES.ERROR,
-                                    message: res?.items?.[0]?.errorMessage
-                                })
-                            );
-                        } else {
-                            // to do post success scenario
+                        if (res?.data?.items) {
+                            if (res?.data?.items?.[0]?.errorMessage) {
+                                dispatch(
+                                    addNotification({
+                                        notificationType: NOTIFICATION_TYPES.ERROR,
+                                        message: GENERAL.UNMANAGE_INSTANCE_FAILED_MSG(rowData?.databaseInstanceName),
+                                        additionalText: res?.data?.items?.[0]?.errorMessage
+                                    })
+                                );
+                            } else {
+                                dispatch(
+                                    addNotification({
+                                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                        message: GENERAL.UNMANAGE_INSTANCE_SUCCESS_MSG(rowData?.databaseInstanceName)
+                                    })
+                                );
+                            }
                         }
                     });
                 }}
@@ -125,25 +163,12 @@ const ManagedHostSubTable = ({
         );
     };
 
-    //Function to manage the row
-    const handleManage = (rowData: any) => {
-        let output = data.map((obj: any) => {
-            if (obj.name === rowData.name) {
-                return { ...obj, cellProps: { isDisabled: true }, statusColText: INVENTORY_STATUS.IN_PROGRESS };
-            }
-            return obj;
-        });
-        setData(output);
-
-        setTimeout(() => {
-            let output = data.map((obj: any) => {
-                if (obj.name === rowData.name) {
-                    return { ...obj, cellProps: { isDisabled: false }, statusColText: INVENTORY_STATUS.MANAGED };
-                }
-                return obj;
-            });
-            setData(output);
-        }, 5000);
+    const resourceAction = (rowData: any) => {
+        dispatch(resetWorkloadFactoryResourceData());
+        dispatch(setSelectedHostname(hostname));
+        dispatch(setSelectedResourceId(resourceId));
+        dispatch(setSelectedDatabaseInstance(rowData?.databaseInstanceId));
+        dispatch(setSelectedDatabaseInstanceName(rowData?.databaseInstanceName));
     };
 
     const lastColDetails = () => {
@@ -224,17 +249,22 @@ const ManagedHostSubTable = ({
                                         setOpenedRow(null);
 
                                         if (menuId === 'manage') {
-                                            handleManage(rowData);
+                                            handleManageInstances(hostData, [rowData?.databaseInstanceName]);
                                         }
                                         if (menuId === 'viewInstance') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
                                             dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
+                                            resourceAction(rowData);
                                         }
                                         if (menuId === 'viewDatabases') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
                                             dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
+                                            resourceAction(rowData);
                                         }
                                         if (menuId === 'createUserDb') {
+                                            dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                            dispatch(updateResourceId(rowData.id));
+                                            dispatch(setDBHostName(rowData?.name));
                                             navigate('../create-new-user');
                                         }
                                         if (menuId === 'unManage') {
@@ -284,7 +314,7 @@ const ManagedHostSubTable = ({
                     return (
                         <div className={styles.inProgress}>
                             <SmallLoader />
-                            <DsTypography variant="Regular_14">In progress</DsTypography>
+                            <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
                         </div>
                     );
                 }
