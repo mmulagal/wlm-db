@@ -21,7 +21,9 @@ const ManagedHostDialog = ({ dialogData }: any) => {
     useEffect(() => {
         const dbInstances = dialogData?.sqlServerInstances;
         let output = dbInstances.map((obj: any) => {
-            const isInstanceInProgress = inProgressInstances.has(`${dialogData?.id}_${obj?.databaseInstanceName}`);
+            const isInstanceInProgress = inProgressInstances.has(
+                `${dialogData?.ec2InstanceId}_${obj?.databaseInstanceName}`
+            );
             if (isInstanceInProgress || obj.statusColText === INVENTORY_STATUS.MANAGED) {
                 return {
                     ...obj,
@@ -34,7 +36,9 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             }
         });
         let defaultSelection = dbInstances.map((item: any) => {
-            const isInstanceInProgress = inProgressInstances.has(`${dialogData?.id}_${item?.databaseInstanceName}`);
+            const isInstanceInProgress = inProgressInstances.has(
+                `${dialogData?.ec2InstanceId}_${item?.databaseInstanceName}`
+            );
             if (isInstanceInProgress || item.statusColText === 'managed') {
                 return item.id;
             }

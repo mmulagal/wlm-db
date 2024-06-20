@@ -340,3 +340,5 @@ export interface InstancesObjectInterface {
     loading?: boolean;
     isManagedHost?: boolean;
 }
+
+export type InstanceActions = 'manage' | 'unmanage' | 'detect';

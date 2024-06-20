@@ -13,6 +13,7 @@ import {
     DiscoveredStorageObj,
     EC2DetailsInterface,
     EstimatedUsageCostInterface,
+    InstanceActions,
     InstancesHostsRowInterface,
     InstancesObjectInterface,
     InventoryTableData,
@@ -957,4 +958,49 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
         }
     });
     return nonFsxnStorageList;
+};
+
+export const updateInstanceStatus = (action: InstanceActions, hostData: any, instanceData: any, responseData?: any) => {
+    let updatedState = store.getState();
+    let { inventoryTableData }: any = updatedState?.inventoryV2;
+    const targettedHostId = inventoryTableData[hostData.resourceId] ? hostData.resourceId : hostData.ec2InstanceId;
+    const updatedInventoryTableData = { ...inventoryTableData };
+    if (action === 'unmanage') {
+        updatedInventoryTableData[targettedHostId] = {
+            ...inventoryTableData[targettedHostId],
+            managedInstance: inventoryTableData[targettedHostId].managedInstance - 1,
+            actionDisable: inventoryTableData[targettedHostId].actionDisable
+                ? false
+                : inventoryTableData[targettedHostId].actionDisable,
+            sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
+                if (instanceItem?.databaseInstanceId === instanceData?.databaseInstanceId) {
+                    return { ...instanceItem, statusColText: INVENTORY_STATUS.UNMANAGED };
+                }
+                return instanceItem;
+            })
+        };
+    }
+    if (action === 'manage') {
+        updatedInventoryTableData[targettedHostId] = {
+            ...inventoryTableData[targettedHostId],
+            managedInstance: inventoryTableData[targettedHostId].managedInstance + 1,
+            actionDisable:
+                inventoryTableData[targettedHostId].totalInstance ===
+                inventoryTableData[targettedHostId].managedInstance + 1,
+            sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
+                const instanceInRes = responseData.find(
+                    (item: any) => item?.databaseInstanceName === instanceItem?.databaseInstanceName
+                );
+                if (instanceInRes?.databaseInstanceName) {
+                    return {
+                        ...instanceItem,
+                        databaseInstanceId: instanceInRes.databaseInstanceGuid,
+                        statusColText: INVENTORY_STATUS.MANAGED
+                    };
+                }
+                return instanceItem;
+            })
+        };
+    }
+    return updatedInventoryTableData;
 };
