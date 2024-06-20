@@ -150,6 +150,7 @@ const MultiInstanceManageResponseBody = Type.Object({
     items: Type.Array(
         Type.Object({
             databaseInstanceName: Type.String({ description: 'SQL Server database instance name.' }),
+            databaseInstanceGuid: Type.Optional(Type.String({ description: 'SQL Server database instance GUID.' })),
             status: Type.String({ description: 'Status of database instance unmanage operation.' }),
             errorMessage: Type.Optional(
                 Type.String({ description: 'Error details, if any, of a failed database instance management.' })
