@@ -1182,6 +1182,8 @@ enum SandboxLifecycleAction {
     REBASELINE = 'Re-baseline'
 }
 
+const STORAGE_SERVICE_DEFAULT_REGION = 'us-east-1';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1460,5 +1462,6 @@ export {
     V2_API_PAGE_SIZE,
     SandboxLifecycleAction,
     SANDBOX_LIFECYCLE_REFRESH,
-    SANDBOX_LIFECYCLE_REBASELINE
+    SANDBOX_LIFECYCLE_REBASELINE,
+    STORAGE_SERVICE_DEFAULT_REGION
 };
