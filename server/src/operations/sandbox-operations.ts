@@ -4,7 +4,7 @@ import { compact, groupBy, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
-import { listResources, updateResourceMetaData } from '../lib/database/db';
+import { listDatabaseInstances, listResources, updateResourceMetaData } from '../lib/database/db';
 import {
     ACCOUNTID,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
@@ -46,7 +46,7 @@ import {
     getDatabaseEnvironmentDetails
 } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
-import { sleep, sqlResponseParsing } from '../utils/utils';
+import { getDatabaseInstanceName, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
@@ -434,13 +434,21 @@ async function createSandbox(
         mountPoints[key as keyof MountPoints] = value.toUpperCase();
     });
 
-    let [[srcResourceDetail], [destResourceDetail]] = await Promise.all([
+    let [[srcResourceDetail], [destResourceDetail], [srcInstanceDetail], [destInstanceDetail]] = await Promise.all([
         listResources(accountId, source.host),
-        source.host === dest.host ? Promise.resolve([]) : listResources(accountId, dest.host)
+        source.host === dest.host ? Promise.resolve([]) : listResources(accountId, dest.host),
+        listDatabaseInstances(accountId, { credentialsId, resourceId: source.host, sqlInstanceId: source.instance }),
+        source.instance === dest.instance
+            ? Promise.resolve([])
+            : listDatabaseInstances(accountId, { credentialsId, resourceId: dest.host, sqlInstanceId: dest.instance })
     ]);
 
     if (source.host === dest.host) {
         destResourceDetail = srcResourceDetail;
+    }
+
+    if (source.instance === dest.instance) {
+        destInstanceDetail = srcInstanceDetail;
     }
 
     if (isEmpty(srcResourceDetail)) {
@@ -449,6 +457,20 @@ async function createSandbox(
 
     if (isEmpty(destResourceDetail)) {
         throw createError(HttpErrorCodes.NOT_FOUND, `No database host by id ${dest.host} for ${accountId} is found.`);
+    }
+
+    if (isEmpty(srcInstanceDetail)) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No database host instance by id ${source.instance} for ${accountId} is found.`
+        );
+    }
+
+    if (isEmpty(destInstanceDetail)) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No database host instance by id ${dest.instance} for ${accountId} is found.`
+        );
     }
 
     if (srcResourceDetail.co_relation_id !== destResourceDetail.co_relation_id) {
@@ -463,7 +485,7 @@ async function createSandbox(
         destResourceDetail.metadata as unknown as Metadata;
 
     let [srcStatus, destStatus] = await Promise.all([
-        getActiveSqlNode(credentialsId, region, srcNode1, srcNode2),
+        getActiveSqlNode(credentialsId, region, srcNode1, srcNode2, source.host),
         source.host === dest.host
             ? Promise.resolve(
                   {} as {
@@ -471,9 +493,10 @@ async function createSandbox(
                       activeNodeInstanceId: string;
                       standbyNodeInstanceId: string | undefined;
                       instanceName: string;
+                      instancesDetails: { instanceId: string; state: string }[];
                   }
               )
-            : getActiveSqlNode(credentialsId, region, destNode1, destNode2)
+            : getActiveSqlNode(credentialsId, region, destNode1, destNode2, dest.host)
     ]);
 
     if (source.host === dest.host) {
@@ -494,6 +517,23 @@ async function createSandbox(
         );
     }
 
+    const srcInstanceName = srcStatus.instancesDetails?.find(
+        instance =>
+            instance.instanceName === srcInstanceDetail.database_instance_name && instance.instanceState === 'Running'
+    );
+
+    const destInstanceName = destStatus.instancesDetails?.find(
+        instance =>
+            instance.instanceName === destInstanceDetail.database_instance_name && instance.instanceState === 'Running'
+    );
+
+    if (!srcInstanceName || !destInstanceName) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Source or destination instance is not running, please check the instance status'
+        );
+    }
+
     const job = await registerJob(accountId, credentialsId, region, {
         name: `Creating sandbox ${dest.database} in the target host ${destResourceDetail.resource_name}`,
         description: `Creating sandbox ${dest.database} in the target host ${destResourceDetail.resource_name}`,
@@ -504,9 +544,6 @@ async function createSandbox(
         type: JOBTYPE.SANDBOX
     });
 
-    const { fsxSvmId: sourceSvm } = srcResourceDetail.metadata as unknown as Metadata;
-    const { fsxSvmId: destSvm } = destResourceDetail.metadata as unknown as Metadata;
-
     startSandboxCreation(
         accountId,
         credentialsId,
@@ -515,20 +552,26 @@ async function createSandbox(
         {
             ...source,
             resourceName: srcResourceDetail.resource_name!,
-            svm: sourceSvm!,
-            fsxId: srcResourceDetail.co_relation_id!,
+            svm: (srcInstanceDetail.fsx_svm_id as Record<string, string>)[srcInstanceDetail.fsxn_ids as string],
+            fsxId: srcInstanceDetail.fsxn_ids!,
             activeNodeInstanceId: srcStatus.activeNodeInstanceId!,
             metadata: srcResourceDetail.metadata as unknown as Metadata,
-            instanceName: srcStatus.instanceName || DEFAULT_MSSQL_INSTANCE_NAME
+            instanceName: getDatabaseInstanceName(
+                srcInstanceDetail.database_instance_name,
+                srcInstanceDetail.is_default
+            )
         },
         {
             ...dest,
             resourceName: destResourceDetail.resource_name!,
-            svm: destSvm!,
-            fsxId: destResourceDetail.co_relation_id!,
+            svm: (destInstanceDetail.fsx_svm_id as Record<string, string>)[destInstanceDetail.fsxn_ids as string],
+            fsxId: destInstanceDetail.fsxn_ids!,
             activeNodeInstanceId: destStatus.activeNodeInstanceId!,
             metadata: destResourceDetail.metadata as unknown as Metadata,
-            instanceName: destStatus.instanceName || DEFAULT_MSSQL_INSTANCE_NAME
+            instanceName: getDatabaseInstanceName(
+                destInstanceDetail.database_instance_name,
+                destInstanceDetail.is_default
+            )
         },
         tag,
         mountPoints
