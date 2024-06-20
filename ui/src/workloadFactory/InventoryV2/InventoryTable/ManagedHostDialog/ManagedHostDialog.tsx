@@ -73,6 +73,9 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                 if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
                 }
+                if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
+                }
                 if (rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
                         <div className={styles.inProgress}>

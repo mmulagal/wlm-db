@@ -14,7 +14,7 @@
         "existing": {
             "sqlServerEdition": "Standard Edition (64-bit)",
             "licenseMonthlyPrice": 4380,
-            "findings": "NOT-OPTIMIZED"
+            "findings": "NOT_OPTIMIZED"
         },
         "recommended": {
             "sqlServerEdition": "Standard Edition (64-bit)",
