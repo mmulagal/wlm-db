@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import { compact, groupBy } from 'lodash-es';
 import { _InstanceType } from '@aws-sdk/client-ec2';
 import { STORAGE_TYPE } from '@prisma/client';
-import { HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
+import { FINDING, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
 import { getInstanceRecommendations } from './aws/compute-optimizer-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { ENTERPRISE_CHECK_QUERY } from './workloads/mssql/queries';
@@ -95,6 +95,7 @@ async function getLicenseRecommendations(
 
     */
 
+    let licenseFinding = FINDING.OPTIMIZED;
     const runningEnterpriseEditionSqlServerInstances = sqlServerInstances.filter(
         sqlServerInstance =>
             sqlServerInstance.sqlServerEngineEdition === ENT_ENGINE_EDITION &&
@@ -109,10 +110,12 @@ async function getLicenseRecommendations(
     );
     const usingEnterpriseConfiguration = enterpriseUsageResults.some(result => result);
 
+    let recommendedLicenseType = SQL_ENT;
     if (!usingEnterpriseConfiguration) {
-        return SQL_STD;
+        licenseFinding = FINDING.NOT_OPTIMIZED;
+        recommendedLicenseType = SQL_STD;
     }
-    return SQL_ENT;
+    return { licenseFinding, recommendedLicenseType };
 }
 
 /* The function processes the SQL Server instances based on the edition and deployment type. If there are multiple sql server instances of a certain edition with both AOAG and Standalone configuration, then AOAG configuration is given preference fist */
@@ -193,6 +196,7 @@ async function handleInstanceRecommendation(
     });
 
     let recommendedCompute;
+    let computeFinding = FINDING.OPTIMIZED;
     try {
         const instanceRecommendation = await getInstanceRecommendations(
             region,
@@ -219,6 +223,8 @@ async function handleInstanceRecommendation(
             const recommendedInstanceHourlyPriceWithoutLicense = recommendedInstancePricingDetails?.NA?.pricePerUnit
                 ? recommendedInstancePricingDetails.NA.pricePerUnit
                 : undefined;
+
+            computeFinding = FINDING.NOT_OPTIMIZED;
             recommendedCompute = {
                 price: recommendedInstanceHourlyPrice,
                 baseInstancePrice: recommendedInstanceHourlyPriceWithoutLicense,
@@ -229,7 +235,7 @@ async function handleInstanceRecommendation(
                 existingInstanceType === recommendedInstanceType
                     ? 'No instance change recommended as per Compute Optimizer'
                     : 'Instance Recommendations not available for the instance';
-
+            computeFinding = FINDING.OPTIMIZED;
             recommendedCompute = {
                 price: existingInstanceHourlyPrice,
                 baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
@@ -244,7 +250,7 @@ async function handleInstanceRecommendation(
             region,
             instanceId: instanceIdToUseForRecommendations
         });
-
+        computeFinding = FINDING.INSUFFICIENT_DATA;
         recommendedCompute = {
             price: existingInstanceHourlyPrice,
             baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
@@ -253,7 +259,7 @@ async function handleInstanceRecommendation(
         };
     }
 
-    return recommendedCompute;
+    return { computeFinding, recommendedCompute };
 }
 
 export default async function getSqlInstanceLicenseRecommendations(
@@ -361,6 +367,9 @@ export default async function getSqlInstanceLicenseRecommendations(
             let existingLicense;
             let recommendedCompute;
             let recommendedLicense;
+
+            let computeFinding = FINDING.OPTIMIZED;
+            let licenseFinding = FINDING.OPTIMIZED;
             const existingSqlServerEditionLowerCase = sqlServerEdition.toLowerCase();
 
             const existingInstanceHourlyPriceWithoutLicense = existingInstanceTypePricingDetails?.NA?.pricePerUnit
@@ -391,7 +400,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                     ? existingInstanceTypePricingDetails[existingLicenseType].pricePerUnit
                     : undefined;
 
-                const recommendedSqlLicenseType =
+                const { licenseFinding: currentLicenseFinding, recommendedLicenseType: recommendedSqlLicenseType } =
                     sqlServerEngineEdition === ENT_ENGINE_EDITION
                         ? await getLicenseRecommendations(
                               accountId,
@@ -401,8 +410,8 @@ export default async function getSqlInstanceLicenseRecommendations(
                               ec2HostDetails.sqlServerInstances,
                               sqlServerDeploymentType
                           ) // returns SQL Ent or SQL Std
-                        : existingLicenseType;
-
+                        : { licenseFinding, recommendedLicenseType: existingLicenseType };
+                licenseFinding = currentLicenseFinding;
                 let recommendedInstanceHourlyPrice = existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]
                     ?.pricePerUnit
                     ? existingInstanceTypePricingDetails[recommendedSqlLicenseType].pricePerUnit
@@ -415,7 +424,8 @@ export default async function getSqlInstanceLicenseRecommendations(
                 existingCompute = {
                     price: existingInstanceHourlyPrice, // could be undefined if the pricing information is not available for a certain instance type
                     baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
-                    instanceType: ec2InstanceType
+                    instanceType: ec2InstanceType,
+                    finding: computeFinding
                 };
 
                 existingLicense = {
@@ -424,11 +434,12 @@ export default async function getSqlInstanceLicenseRecommendations(
                     price:
                         existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
                             ? existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense
-                            : undefined
+                            : undefined,
+                    finding: licenseFinding
                 };
 
                 // instance recommendation logic
-                recommendedCompute = await handleInstanceRecommendation(
+                ({ computeFinding, recommendedCompute } = await handleInstanceRecommendation(
                     accountId,
                     credentialsId,
                     region,
@@ -439,7 +450,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                     ec2InstanceType,
                     recommendedInstanceHourlyPrice, // license type is already identified, so use the price for the recommended license type which is essentially existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit
                     recommendedInstanceHourlyPriceWithoutLicense
-                );
+                ));
                 recommendedInstanceHourlyPrice = recommendedCompute.price;
                 recommendedInstanceHourlyPriceWithoutLicense = recommendedCompute.baseInstancePrice;
 
@@ -478,17 +489,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                 }
             } else {
                 // for enterprise evaluation, express, developer, business intelligence, azure sql, azure sql edge, azure sql edge developer editions
-                existingCompute = {
-                    price: existingInstanceHourlyPriceWithoutLicense, // could be undefined if the pricing information is not available for a certain instance type
-                    baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
-                    instanceType: ec2InstanceType
-                };
-                existingLicense = {
-                    sqlServerEdition,
-                    sqlServerVersion,
-                    price: 0
-                };
-                recommendedCompute = await handleInstanceRecommendation(
+                ({ computeFinding, recommendedCompute } = await handleInstanceRecommendation(
                     accountId,
                     credentialsId,
                     region,
@@ -499,7 +500,19 @@ export default async function getSqlInstanceLicenseRecommendations(
                     ec2InstanceType,
                     existingInstanceHourlyPriceWithoutLicense,
                     existingInstanceHourlyPriceWithoutLicense
-                );
+                ));
+                existingCompute = {
+                    finding: computeFinding,
+                    price: existingInstanceHourlyPriceWithoutLicense, // could be undefined if the pricing information is not available for a certain instance type
+                    baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
+                    instanceType: ec2InstanceType
+                };
+                existingLicense = {
+                    finding: licenseFinding,
+                    sqlServerEdition,
+                    sqlServerVersion,
+                    price: 0
+                };
                 recommendedLicense = existingLicense;
             }
 
