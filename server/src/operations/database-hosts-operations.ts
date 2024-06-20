@@ -1675,17 +1675,16 @@ async function getDatabaseInstancesDetails(
     );
 
     const updatedInstanceDetails = instanceDetails
-        ? instanceDetails.map((item: { instanceName: string; instanceState: string }) => {
+        ? instanceDetails.map(({ instanceName, instanceState }) => {
               const managedInstance = managedInstancesName.find(
-                  (managedItem: { instanceName: string; instanceState: string }) =>
-                      managedItem.instanceName === item.instanceName
+                  ({ instanceName: managedInstanceName }) => managedInstanceName === instanceName
               );
 
-              const instanceName = item.instanceName.replace(/^MSSQL\$/, '');
               const isManaged = Boolean(managedInstance);
-              const isDefault = Boolean(!item.instanceName.includes('$'));
-              const instanceState = item.instanceState === 'Running' ? ServerState.UP : ServerState.DOWN;
-              return { ...item, instanceName, isManaged, isDefault, instanceState };
+              const isDefault = !instanceName.includes('$');
+              const updatedInstanceState = instanceState === 'Running' ? ServerState.UP : ServerState.DOWN;
+
+              return { instanceName, instanceState: updatedInstanceState, isManaged, isDefault };
           })
         : managedInstancesName;
 
