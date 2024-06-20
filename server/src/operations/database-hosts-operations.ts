@@ -1681,10 +1681,11 @@ async function getDatabaseInstancesDetails(
                       managedItem.instanceName === item.instanceName
               );
 
+              const instanceName = item.instanceName.replace(/^MSSQL\$/, '');
               const isManaged = Boolean(managedInstance);
-              const isDefault = Boolean(item.instanceName.includes('$'));
+              const isDefault = Boolean(!item.instanceName.includes('$'));
               const instanceState = item.instanceState === 'Running' ? ServerState.UP : ServerState.DOWN;
-              return { ...item, isManaged, isDefault, instanceState };
+              return { ...item, instanceName, isManaged, isDefault, instanceState };
           })
         : managedInstancesName;
 
