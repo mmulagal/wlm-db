@@ -614,7 +614,8 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
 
                 const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
                 instancesDetails.forEach(obj => {
-                    obj.instanceName = obj.instanceName.replace(/.+?\$/, '');
+                    (obj as any).isDefault = !obj.instanceName.includes('$');
+                    obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
                 });
                 let defaultInstance = true;
                 let selectedInstance = instancesDetails.find(

@@ -1675,13 +1675,12 @@ async function getDatabaseInstancesDetails(
     );
 
     const updatedInstanceDetails = instanceDetails
-        ? instanceDetails.map(({ instanceName, instanceState }) => {
+        ? instanceDetails.map(({ instanceName, instanceState, isDefault }) => {
               const managedInstance = managedInstancesName.find(
                   ({ instanceName: managedInstanceName }) => managedInstanceName === instanceName
               );
 
               const isManaged = Boolean(managedInstance);
-              const isDefault = !instanceName.includes('$');
               const updatedInstanceState = instanceState === 'Running' ? ServerState.UP : ServerState.DOWN;
 
               return { instanceName, instanceState: updatedInstanceState, isManaged, isDefault };
