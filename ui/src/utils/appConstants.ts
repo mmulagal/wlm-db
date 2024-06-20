@@ -942,7 +942,12 @@ export const GENERAL = {
     ALL_MANAGED_TEXT:
         'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
     ALL_UNDETECT_TEXT:
-        'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.'
+        'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+    MANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) => `Database instance ${instanceName} managed successfully.`,
+    MANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to manage.`,
+    UNMANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) =>
+        `Database instance ${instanceName} unmanaged successfully.`,
+    UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unmanage.`
 };
 
 export const CODE_VIEWER = {
