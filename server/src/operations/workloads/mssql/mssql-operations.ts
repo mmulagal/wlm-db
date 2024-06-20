@@ -653,6 +653,7 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
             if (response) {
                 let parsedResponse = sqlResponseParsing(response);
                 parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+
                 return parsedResponse;
             }
         }
@@ -1040,7 +1041,9 @@ async function getActiveSqlNodeAndInstanceDetails(
             const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId]);
-
+                instanceDetails.forEach((obj: { instanceName: string }) => {
+                    obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
+                });
                 if (instanceDetails) {
                     const matchingInstance = instanceDetails.find(
                         (instance: { instanceName: string }) => instance.instanceName === databaseInstanceName
