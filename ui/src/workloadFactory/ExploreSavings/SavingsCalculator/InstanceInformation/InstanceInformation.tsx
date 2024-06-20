@@ -17,9 +17,9 @@ const InstanceInformation = () => {
     useEffect(() => {
         setLoading(selectedHostDetails?.loading);
         const findingsComputeData =
-            storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.findings || '-');
+            storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.finding || '-');
         const findingsLicenseData =
-            storageSavingsResponse && (storageSavingsResponse?.license?.existing?.findings || '-');
+            storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
         if (isInventoryV2) {
             let instanceTypelist = [];
             if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
