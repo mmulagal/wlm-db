@@ -8,12 +8,11 @@ import {
     setDbCreatePressed
 } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
-import { useAppSelector } from '../../../store/storeHooks';
+import store from '../../../store/store';
 import { GENERAL } from '../../../utils/appConstants';
 
-const { isInventoryV2 } = useAppSelector(state => state.auth);
-
 export const createUserDbPayload = (newUserDb: any) => {
+    const { isInventoryV2 } = store.getState()?.auth;
     let payload: any = {
         databaseName: newUserDb?.newUserDBName,
         dataFileConfig: {
