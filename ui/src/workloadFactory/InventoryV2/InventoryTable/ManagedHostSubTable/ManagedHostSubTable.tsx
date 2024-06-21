@@ -7,17 +7,34 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { formatSizeTwoPrecision, isAwsBackupEnabled } from '../../../../utils/utilityFunctions';
+import {
+    createDetectHostPayload,
+    formatSizeTwoPrecision,
+    isAwsBackupEnabled
+} from '../../../../utils/utilityFunctions';
 import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
-import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
-import { setInProgressInstances, setInventoryTableData } from '../../../../store/workloadFactory/inventoryV2Slice';
+import {
+    useManageMssqlInstanceMutation,
+    useRegisterResourceCredentialsMutation,
+    useUnmanageMssqlInstanceMutation
+} from '../../../../utils/apiService';
+import {
+    setDetectManagePassword,
+    setDetectManageUserName,
+    setDetectONTAPPassword,
+    setDetectONTAPUserName,
+    setInProgressInstances,
+    setInventoryTableData,
+    setRadioValueDetect,
+    setValuesForForm
+} from '../../../../store/workloadFactory/inventoryV2Slice';
 import store from '../../../../store/store';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
 import {
@@ -35,7 +52,10 @@ import {
     setInstanceName
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../../store/authSlice';
-import { updateInstanceStatus } from '../../InventoryUtilsV2';
+import { detectFieldsValidation, updateInstanceStatus } from '../../InventoryUtilsV2';
+import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
+import UndetectedHostDialogContentV2 from '../UndetectedHostDialogContent/UndetectedHostDialogContentV2';
+import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecondDialogV2';
 
 const ManagedHostSubTable = ({
     rowId,
@@ -52,7 +72,7 @@ const ManagedHostSubTable = ({
     resourceId: string;
     hostData: any;
     loading: boolean;
-    handleManageInstances: (rowData: any, instances: any) => void;
+    handleManageInstances: (rowData: any, instances: any, isDetected?: boolean) => void;
 }) => {
     const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
@@ -67,6 +87,7 @@ const ManagedHostSubTable = ({
     const dispatch = useDispatch();
 
     const [unmanageApi] = useUnmanageMssqlInstanceMutation();
+    const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     useEffect(() => {
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
@@ -170,6 +191,131 @@ const ManagedHostSubTable = ({
         dispatch(setSelectedDatabaseInstanceName(rowData?.databaseInstanceName));
     };
 
+    const resetDialogValues = () => {
+        // reset all detect host dialog fields if dialog is closed.
+        dispatch(setIsDetectHostError(''));
+        dispatch(setDetectManageUserName(''));
+        dispatch(setDetectManagePassword(''));
+        dispatch(setDetectONTAPUserName(''));
+        dispatch(setDetectONTAPPassword(''));
+    };
+
+    // This function is used to check if user wants to manage the detected host vis workload factory
+    const handleMoveToManage = async (rowData: any, fsxId: any) => {
+        const state = store.getState();
+        const detectHostRadio = state.inventoryV2.detectHostRadio;
+        if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
+            handleManageInstances(hostData, [rowData?.databaseInstanceName], true);
+
+            const manageStartMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
+                    <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
+                    {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: manageStartMsg }));
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
+        } else {
+            const updatedInventoryTableData = updateInstanceStatus('detect', hostData, rowData);
+            dispatch(setInventoryTableData(updatedInventoryTableData));
+            const detectedSuccessMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.INSTANCE_SUCCESS_DETECTED[0]}
+                    <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
+                    {GENERAL.INSTANCE_SUCCESS_DETECTED[1]}
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: detectedSuccessMsg }));
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
+        }
+    };
+
+    // This function is to register credentials on detect host
+    const handleRegisterResourceCred = async (rowData: any, fsxId: string) => {
+        if (!detectFieldsValidation(rowData)) {
+            dispatch(setValuesForForm(true));
+        } else {
+            dispatch(setValuesForForm(false));
+            dispatch(setIsDetectHostLoading(true));
+            const sqlServerInstance = rowData?.sqlServerInstance || '';
+            try {
+                const result: any = await registerResourceCred({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instanceId: rowData?.instanceID,
+                    payload: createDetectHostPayload(sqlServerInstance, fsxId)
+                });
+                if (result && !result?.error) {
+                    if (result?.data?.sqlServerError || result?.data?.fsxnError) {
+                        let error = [];
+                        error.push(result?.data?.sqlServerError || '');
+                        error.push(result?.data?.fsxnError || '');
+                        dispatch(setIsDetectHostError(error.join(' ')));
+                        dispatch(setIsDetectHostLoading(false));
+                    } else {
+                        dispatch(setIsDetectHostLoading(false));
+                        if (rowData?.storage && rowData?.storage?.length > 0) {
+                            setTimeout(() => {
+                                setDialog(
+                                    <DialogComponent
+                                        header={
+                                            <div className={styles.headerDialog}>
+                                                <DsTypography variant="Regular_20">
+                                                    {GENERAL.DETECT_INSTANCE}
+                                                </DsTypography>
+                                                <DsTypography variant="Semibold_14">
+                                                    {GENERAL.DETECT_HOST_STEPS[1]}
+                                                </DsTypography>
+                                            </div>
+                                        }
+                                        content={<UndetectedSecondDialogV2 data={rowData} apiResult={result?.data} />}
+                                        primaryButton={GENERAL.DONE}
+                                        callback={() => handleMoveToManage(rowData, fsxId)}
+                                    />
+                                );
+                            }, 0);
+                            resetDialogValues();
+                        } else {
+                            dispatch(setIsDetectHostError(GENERAL.DETECT_FAILED_WITH_NO_STORAGE));
+                        }
+                    }
+                } else {
+                    dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));
+                    dispatch(setIsDetectHostLoading(false));
+                }
+            } catch (error) {
+                dispatch(setIsDetectHostError(error || GENERAL.FAILED_TO_DETECT_HOST));
+                dispatch(setIsDetectHostLoading(false));
+            }
+        }
+    };
+
+    // To open detect host dialog
+    const handleDetectDialog = (rowData: any) => {
+        dispatch(setIsDetectHostError(''));
+
+        setDialog(
+            <DialogComponent
+                header={
+                    <div className={styles.headerDialog}>
+                        <DsTypography variant="Regular_20">{GENERAL.DETECT_INSTANCE}</DsTypography>
+                        <DsTypography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[0]}</DsTypography>
+                    </div>
+                }
+                content={<UndetectedHostDialogContentV2 rowData={rowData} />}
+                primaryButton={GENERAL.DETECT}
+                secondaryButton={GENERAL.CLOSE}
+                callback={() => handleRegisterResourceCred(rowData, rowData?.fsxId)}
+                closeCallback={() => {
+                    closeDialog();
+                    resetDialogValues();
+                }}
+                dialogFrom={FROM_DIALOG.DETECT_HOST}
+            />
+        );
+    };
+
     const lastColDetails = () => {
         return {
             id: '9',
@@ -224,6 +370,15 @@ const ManagedHostSubTable = ({
                     if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
                         disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                         width = '220px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        rowData?.detectOption === DETECT_HOST_VAR.DISABLE ||
+                        rowData?.detectOption === DETECT_HOST_VAR.HIDE
+                    ) {
+                        disableMsg = rowData?.detectOptionDisableMsg;
+                        width = '240px';
                         height = '33px';
                         return true;
                     }
@@ -292,6 +447,9 @@ const ManagedHostSubTable = ({
                                         if (menuId === 'unManage') {
                                             handleDialog(rowData);
                                         }
+                                        if (menuId === 'detect') {
+                                            handleDetectDialog(rowData);
+                                        }
                                     }
                                 }}
                                 CustomMenu={undefined}
@@ -309,6 +467,7 @@ const ManagedHostSubTable = ({
             isSticky: true
         };
     };
+
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'SQL Server instance',

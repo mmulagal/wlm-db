@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { InventorySliceData } from '../../utils/types/inventoryV2Types';
+import { DETECT_HOST_VAR } from '../../utils/consts';
 
 const initialInventoryV2State: InventorySliceData = {
     inventoryTableData: null,
@@ -18,13 +19,22 @@ const initialInventoryV2State: InventorySliceData = {
     fsxCredentialStatusLoading: false,
     mssqlInstancesData: null,
     inProgressInstances: new Set(),
-    manageHostSelectedRows: []
+    manageHostSelectedRows: [],
+    valuesNotFilled: false, // Detect host dialog fields check
+    detectHostRadio: DETECT_HOST_VAR.MOVE_TO_MANAGE,
+    detectManageUserName: '',
+    detectManagePassword: '',
+    detectOntapUsername: '',
+    detectOntapPassword: ''
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setValuesForForm: (state, action: PayloadAction<any>) => {
+            state.valuesNotFilled = action.payload;
+        },
         setInventoryTableData: (state, action: PayloadAction<any>) => {
             state.inventoryTableData = action.payload;
         },
@@ -63,11 +73,27 @@ const inventoryV2Slice = createSlice({
         },
         setManageHostSelectedRows: (state, action: PayloadAction<any>) => {
             state.manageHostSelectedRows = action.payload;
+        },
+        setRadioValueDetect: (state, action: PayloadAction<any>) => {
+            state.detectHostRadio = action.payload;
+        },
+        setDetectManageUserName: (state, action: PayloadAction<any>) => {
+            state.detectManageUserName = action.payload;
+        },
+        setDetectManagePassword: (state, action: PayloadAction<any>) => {
+            state.detectManagePassword = action.payload;
+        },
+        setDetectONTAPUserName: (state, action: PayloadAction<any>) => {
+            state.detectOntapUsername = action.payload;
+        },
+        setDetectONTAPPassword: (state, action: PayloadAction<any>) => {
+            state.detectOntapPassword = action.payload;
         }
     }
 });
 
 export const {
+    setValuesForForm,
     setInventoryTableData,
     setInventoryChartData,
     setIsManagedHostListLoading,
@@ -80,7 +106,12 @@ export const {
     setFsxCredentialStatusLoading,
     setMssqlInstancesData,
     setInProgressInstances,
-    setManageHostSelectedRows
+    setManageHostSelectedRows,
+    setRadioValueDetect,
+    setDetectManageUserName,
+    setDetectManagePassword,
+    setDetectONTAPUserName,
+    setDetectONTAPPassword
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
