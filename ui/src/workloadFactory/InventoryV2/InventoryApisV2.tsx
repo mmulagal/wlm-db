@@ -476,51 +476,51 @@ const InventoryApisV2 = () => {
     }, [fullHostData, topologyHostData]);
 
     // This data is coming from discover API
-    useEffect(() => {
-        if (!managedHostListLoading && discoveredHostData && discoveredHostData.length) {
-            let newDiscoveredHostData: any = [];
-            discoveredHostData.map((host: any) => {
-                if (host?.sqlServerInstances) {
-                    let perHostNodesList: any = [];
-                    host?.sqlServerInstances?.map((perSql: any) => {
-                        if (perSql?.sqlServerNodes) {
-                            perHostNodesList = [...perHostNodesList, ...perSql?.sqlServerNodes];
-                        }
-                    });
-                    host = { ...host, nodesList: perHostNodesList };
-                }
-                newDiscoveredHostData.push(host);
-            });
+    // useEffect(() => {
+    //     if (!managedHostListLoading && discoveredHostData && discoveredHostData.length) {
+    //         let newDiscoveredHostData: any = [];
+    //         discoveredHostData.map((host: any) => {
+    //             if (host?.sqlServerInstances) {
+    //                 let perHostNodesList: any = [];
+    //                 host?.sqlServerInstances?.map((perSql: any) => {
+    //                     if (perSql?.sqlServerNodes) {
+    //                         perHostNodesList = [...perHostNodesList, ...perSql?.sqlServerNodes];
+    //                     }
+    //                 });
+    //                 host = { ...host, nodesList: perHostNodesList };
+    //             }
+    //             newDiscoveredHostData.push(host);
+    //         });
 
-            let removeRows: any[] = [];
-            let clusterDiscoveredHost: any = {};
-            // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
-            getPrimaryClusterNode(newDiscoveredHostData, removeRows, managedHostList, clusterDiscoveredHost);
+    //         let removeRows: any[] = [];
+    //         let clusterDiscoveredHost: any = {};
+    //         // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
+    //         getPrimaryClusterNode(newDiscoveredHostData, removeRows, managedHostList, clusterDiscoveredHost);
 
-            const formattedDiscoveredInventoryTableData = formatDiscoveredInventoryData(
-                newDiscoveredHostData,
-                removeRows,
-                clusterDiscoveredHost
-            );
+    //         const formattedDiscoveredInventoryTableData = formatDiscoveredInventoryData(
+    //             newDiscoveredHostData,
+    //             removeRows,
+    //             clusterDiscoveredHost
+    //         );
 
-            let unmanagedHostList = getUnmanagedHostInstances(
-                formattedDiscoveredInventoryTableData,
-                runningInstanceList
-            );
-            if (unmanagedHostList && unmanagedHostList?.length > 0) {
-                callInstanceApi(unmanagedHostList, false);
-            }
+    //         let unmanagedHostList = getUnmanagedHostInstances(
+    //             formattedDiscoveredInventoryTableData,
+    //             runningInstanceList
+    //         );
+    //         if (unmanagedHostList && unmanagedHostList?.length > 0) {
+    //             callInstanceApi(unmanagedHostList, false);
+    //         }
 
-            // To Avoid overriding
-            let updatedResult = { ...inventoryTableData, ...formattedDiscoveredInventoryTableData };
-            if (mssqlInstancesData) {
-                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesData, updatedResult);
-                dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
-            } else {
-                dispatch(setInventoryTableData(updatedResult));
-            }
-        }
-    }, [discoveredHostData, fsxCredentialStatusObj, managedHostListLoading]);
+    //         // To Avoid overriding
+    //         let updatedResult = { ...inventoryTableData, ...formattedDiscoveredInventoryTableData };
+    //         if (mssqlInstancesData) {
+    //             const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesData, updatedResult);
+    //             dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
+    //         } else {
+    //             dispatch(setInventoryTableData(updatedResult));
+    //         }
+    //     }
+    // }, [discoveredHostData, fsxCredentialStatusObj, managedHostListLoading]);
 
     // This data is coming from database-hosts API
     useEffect(() => {

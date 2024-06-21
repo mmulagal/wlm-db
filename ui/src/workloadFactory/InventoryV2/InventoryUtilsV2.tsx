@@ -139,7 +139,7 @@ export const managedInstancesCount = (row: ManagedHostsRowInterface) => {
     }
 };
 
-export const getInstallationMode = (row: ManagedHostsRowInterface) => {
+export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) => {
     let installationMode = '';
     if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
         for (let i = 0; i < row?.databaseInstancesSummary?.length; i++) {
@@ -496,6 +496,12 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
     let ssmState = getDiscoverSsmState(discoveredRow);
     let perInstanceStatus = getDiscoveredPerInstanceStatus(discoveredRow, ssmState);
     let actionObj = getDiscoveredActions(perInstanceStatus);
+    let ec2Details = [
+        {
+            id: discoveredRow?.ec2InstanceId,
+            name: discoveredRow?.ec2InstanceName
+        }
+    ];
     const result = {
         id: discoveredRow?.ec2InstanceId,
         ec2InstanceId: discoveredRow?.ec2InstanceId,
@@ -516,8 +522,8 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         loading: false,
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
+        ec2Details: ec2Details,
         // **** Below values will get from Instances API *****
-        // ec2Details: discoveredRow?.ec2Details, // ToDo - will add in discovery only
         // estimatedUsageCost: {}, // Initially it will be blank
         // totalCost: '',
         // allocatedCapacity: '',
@@ -906,6 +912,9 @@ export const updateInventoryDatawithInstancesRes = (
             isManagedHost: instanceRow?.isManagedHost,
             loading: instanceRow?.loading,
             hasInstanceData: true,
+            serverInstallationMode: !inventoryRow?.serverInstallationMode
+                ? getInstallationMode(instanceRow?.data)
+                : inventoryRow?.serverInstallationMode,
             sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow)
         };
     } else if (!instanceRow?.isManagedHost) {
