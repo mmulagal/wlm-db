@@ -1,6 +1,7 @@
 import createError from 'http-errors';
 import moment from 'moment';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
+import { isEmpty } from 'lodash-es';
 import {
     createConfig,
     updateConfig,
@@ -8,7 +9,8 @@ import {
     listConfig,
     listDeployments,
     listResources,
-    countResources
+    countResources,
+    listDatabaseInstances
 } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
@@ -271,6 +273,27 @@ function trimAccountIdForDemo(records: any) {
     return records;
 }
 
+async function getInstanceInfo(
+    accountId: string,
+    credentialsId: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    const [instanceDetail] = await listDatabaseInstances(accountId, {
+        credentialsId,
+        resourceId: databaseHostId,
+        sqlInstanceId: databaseInstanceId
+    });
+
+    if (isEmpty(instanceDetail)) {
+        const errorMessage = `No database instance by id ${databaseInstanceId} in host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
+    return instanceDetail;
+}
+
 export {
     getSavedConfig,
     getAllSavedConfig,
@@ -281,5 +304,6 @@ export {
     getDeploymentStatusByName,
     getDeployments,
     getResources,
-    trimAccountIdForDemo
+    trimAccountIdForDemo,
+    getInstanceInfo
 };

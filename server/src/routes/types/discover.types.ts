@@ -75,7 +75,7 @@ const SqlServerInstanceInfo = Type.Object({
     }),
     sqlServerAuthentication: Type.Optional(
         Type.Boolean({
-            description: 'Is SQL Server authentication possible for SQL Server instnace?',
+            description: 'Is SQL Server authentication possible for SQL Server instance?',
             default: false
         })
     ),

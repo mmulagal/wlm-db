@@ -29,7 +29,8 @@ import {
     SandboxSnapshotsQueryParams,
     DatabaseHostSummaryForMultiInstanceResponse,
     DatabaseHostInstanceSummaryParams,
-    DatabaseHostInstanceSummaryResponse
+    DatabaseHostInstanceSummaryResponse,
+    DatabaseHostOptionalInstanceSummaryParams
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -98,6 +99,17 @@ const GetDriveInfoSchema = {
     }
 };
 
+const GetDriveInfoSchemaV2 = {
+    ...databaseHostsRequest,
+    querystring: GetDriveQueryString,
+    summary: 'Get database host drive information',
+    description: 'Fetch drive info about the database host',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    response: {
+        200: DriveInfoResponseBody
+    }
+};
+
 const CloneDatabaseHostSchema = {
     ...databaseHostsRequest,
     tags: [RouteTags.SANDBOX],
@@ -116,6 +128,16 @@ const GetCollationDetailsSchema = {
     summary: 'Get database host collation details',
     description: 'Fetch collation details about the database host',
     params: DatabaseHostSummaryParams,
+    response: {
+        200: CollationInfoResponseBody
+    }
+};
+
+const GetCollationDetailsSchemaV2 = {
+    ...databaseHostsRequest,
+    summary: 'Get database host collation details',
+    description: 'Fetch collation details about the database host',
+    params: DatabaseHostOptionalInstanceSummaryParams,
     response: {
         200: CollationInfoResponseBody
     }
@@ -388,5 +410,7 @@ export {
     DatabaseHostInstanceDetailsSchema,
     CheckSandboxIntegritySchema,
     DatabasesListSchemaV2,
-    GetSandboxSnapshotsSchema
+    GetSandboxSnapshotsSchema,
+    GetDriveInfoSchemaV2,
+    GetCollationDetailsSchemaV2
 };

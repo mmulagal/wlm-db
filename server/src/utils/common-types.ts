@@ -174,6 +174,7 @@ interface DatabaseInstance {
     database_deployment_type?: string;
     fsxn_ids: string;
     credentials_id: string;
+    fsx_svm_id?: JSON;
     fsxwId?: string;
     ebsVolumeIds?: string[];
     storage_protocol?: string;
