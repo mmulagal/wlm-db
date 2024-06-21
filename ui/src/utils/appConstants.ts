@@ -629,6 +629,7 @@ export const GENERAL = {
     ],
     CREATE_USER_DB_TITLE: 'Create user database',
     DB_CREATE_HOST: 'Host:',
+    DB_CREATE_INSTANCE: 'Instance:',
     CREATE: 'Create',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {

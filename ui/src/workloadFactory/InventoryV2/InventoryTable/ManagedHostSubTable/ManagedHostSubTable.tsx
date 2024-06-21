@@ -30,7 +30,9 @@ import {
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
-    setDBHostName
+    setDBHostName,
+    setInstanceId,
+    setInstanceName
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../../store/authSlice';
 import { updateInstanceStatus } from '../../InventoryUtilsV2';
@@ -281,8 +283,10 @@ const ManagedHostSubTable = ({
                                         }
                                         if (menuId === 'createUserDb') {
                                             dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                            dispatch(updateResourceId(rowData.id));
-                                            dispatch(setDBHostName(rowData?.name));
+                                            dispatch(updateResourceId(hostData?.resourceId));
+                                            dispatch(setDBHostName(hostData?.name));
+                                            dispatch(setInstanceId(rowData?.databaseInstanceId));
+                                            dispatch(setInstanceName(rowData?.databaseInstanceName));
                                             navigate('../create-new-user');
                                         }
                                         if (menuId === 'unManage') {
