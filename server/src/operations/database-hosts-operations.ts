@@ -42,7 +42,9 @@ import {
     SQL_WEB,
     VERSION_2_0,
     V2_API_PAGE_SIZE,
-    NOT_AVAILABLE
+    NOT_AVAILABLE,
+    ONLINE,
+    OFFLINE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1740,7 +1742,7 @@ async function getDatabaseHostSummaryV2(
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
         name: resourceName || '',
-        databaseHostStatus: activeNodeInstanceId ? 'ONLINE' : 'OFFLINE',
+        databaseHostStatus: activeNodeInstanceId ? ONLINE : OFFLINE,
         ssmStatus: ssmConnectionStatus || NOT_AVAILABLE
     };
 
@@ -1801,23 +1803,17 @@ async function getDatabaseHostSummaryV2(
             let instanceResults: any;
 
             if (activeNodeInstanceId && databaseInstancesDetail.length > 0 && credentialsId && region) {
-                let runningDatabaseInstances;
+                let runningDatabaseInstances: any[] = [];
                 if (isManagedResource) {
-                    runningDatabaseInstances = instancesManaged
-                        .filter(instance => {
-                            const matchingInstance = databaseInstancesDetail.find(
-                                (dbInstance: { instanceName: string; instanceState: string }) =>
-                                    dbInstance.instanceName === instance.database_instance_name
-                            );
-                            return matchingInstance !== undefined;
-                        })
-                        .map(instance => ({
-                            ...instance,
-                            ...databaseInstancesDetail.find(
-                                (dbInstance: { instanceName: string; instanceState: string }) =>
-                                    dbInstance.instanceState === 'Running'
-                            )
-                        }));
+                    runningDatabaseInstances = instancesManaged.filter(resource => {
+                        const matchingInstance = databaseInstancesDetail.find(
+                            (instance: { instanceState: string; instanceName: string }) =>
+                                instance.instanceState === ServerState.UP &&
+                                instance.instanceName === resource.database_instance_name
+                        );
+
+                        return matchingInstance !== undefined;
+                    });
                 } else {
                     runningDatabaseInstances = resourceDetail.databaseInstanceDetails || [];
                 }
@@ -1841,7 +1837,7 @@ async function getDatabaseHostSummaryV2(
             }
             [nodeTopology, usageEstimationData, instanceResults] = await Promise.all(promises);
 
-            databaseHostDetails.ssmStatus = ssmConnectionStatus || 'N/A';
+            databaseHostDetails.ssmStatus = ssmConnectionStatus || NOT_AVAILABLE;
 
             if (getUsageEstimation && usageEstimationData) {
                 databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType;
