@@ -8,10 +8,12 @@ import {
     setDbCreatePressed
 } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import store from '../../../store/store';
 import { GENERAL } from '../../../utils/appConstants';
 
 export const createUserDbPayload = (newUserDb: any) => {
-    let payload = {
+    const { isInventoryV2 } = store.getState()?.auth;
+    let payload: any = {
         databaseName: newUserDb?.newUserDBName,
         dataFileConfig: {
             fileName: newUserDb?.newUserDBFileName ? newUserDb.newUserDBFileName + '.mdf' : '',
@@ -35,6 +37,9 @@ export const createUserDbPayload = (newUserDb: any) => {
         },
         collation: newUserDb?.selectedCollation?.label || ''
     };
+    if (isInventoryV2) {
+        payload.databaseInstanceId = newUserDb?.instanceId;
+    }
     return payload;
 };
 
