@@ -18,11 +18,12 @@ router.get(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/mssql/inst
 
 router.post(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/mssql`, async (req: {}, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, {
+        generateResponse(res, 400, {
+            error: 'fvfvfv',
             resourceId: 'resource-id-2',
             items: [
               {
-                databaseInstanceName: 'MSSQLSERVER3',
+                databaseInstanceName: 'MSSQLSERVER',
                 databaseInstanceGuid: '3',
                 status: 'success',
                 errorMessage: ''

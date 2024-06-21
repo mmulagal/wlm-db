@@ -190,7 +190,7 @@ const InventoryTable = () => {
         return <OfflineComponent />;
     };
 
-    const handleManageInstances = (rowData: any, instances: any) => {
+    const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState.inventoryV2;
         const inProgressIds = instances.map((instance: any) => `${rowData?.ec2InstanceId}_${instance}`);
@@ -238,6 +238,21 @@ const InventoryTable = () => {
                     successFullInstances
                 );
                 dispatch(setInventoryTableData(updatedInventoryTableData));
+            }
+            if (res?.error && isDetected) {
+                let databaseInstanceObj = {
+                    databaseInstanceName: instances?.[0]
+                };
+                const updatedInventoryTableData = updateInstanceStatus('detect', rowData, databaseInstanceObj);
+                dispatch(setInventoryTableData(updatedInventoryTableData));
+                const detectedSuccessMsg = (
+                    <div className={styles.notification}>
+                        {GENERAL.INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED[0]}
+                        <span className={styles.bold}>{databaseInstanceObj?.databaseInstanceName}</span>
+                        {GENERAL.INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED[1]}
+                    </div>
+                );
+                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: detectedSuccessMsg }));
             }
         });
     };

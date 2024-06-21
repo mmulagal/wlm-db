@@ -340,8 +340,6 @@ export interface SQLServerInstancesDiscovered {
     sqlServerDeploymentType?: string;
     databaseCount?: number;
     sqlServerAuthentication?: boolean;
-    // storage?: StorageInterface;
-    // storageFsx?: Array<DiscoveredStorageObj>;
     storage?: Array<DiscoveredStorageObj>;
     deploymentTypes?: Array<{
         type?: string;

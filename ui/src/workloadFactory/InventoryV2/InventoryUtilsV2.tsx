@@ -1042,6 +1042,7 @@ export const updateInstanceStatus = (action: InstanceActions, hostData: any, ins
         updatedInventoryTableData[targettedHostId] = {
             ...inventoryTableData[targettedHostId],
             managedInstance: inventoryTableData[targettedHostId].managedInstance + responseData?.length || 0,
+            action: INVENTORY_ACTIONS.MANAGE,
             actionDisable:
                 inventoryTableData[targettedHostId].totalInstance ===
                     inventoryTableData[targettedHostId].managedInstance + responseData?.length || 0,
@@ -1064,7 +1065,8 @@ export const updateInstanceStatus = (action: InstanceActions, hostData: any, ins
         updatedInventoryTableData[targettedHostId] = {
             ...inventoryTableData[targettedHostId],
             action:
-                inventoryTableData[targettedHostId]?.storageType === GENERAL.EBS
+                inventoryTableData[targettedHostId]?.storageType === GENERAL.EBS ||
+                inventoryTableData[targettedHostId]?.storageType === GENERAL.FSX_FOR_WINDOWS
                     ? INVENTORY_ACTIONS.EXPLORE_SAVINGS
                     : INVENTORY_ACTIONS.MANAGE,
             actionDisable: false,

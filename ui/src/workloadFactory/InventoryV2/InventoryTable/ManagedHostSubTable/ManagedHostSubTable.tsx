@@ -72,7 +72,7 @@ const ManagedHostSubTable = ({
     resourceId: string;
     hostData: any;
     loading: boolean;
-    handleManageInstances: (rowData: any, instances: any) => void;
+    handleManageInstances: (rowData: any, instances: any, isDetected?: boolean) => void;
 }) => {
     const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
@@ -205,8 +205,7 @@ const ManagedHostSubTable = ({
         const state = store.getState();
         const detectHostRadio = state.inventoryV2.detectHostRadio;
         if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
-            // ToDo - write logic to manage
-            handleManageInstances(rowData, [rowData?.databaseInstanceName]);
+            handleManageInstances(hostData, [rowData?.databaseInstanceName], true);
 
             const manageStartMsg = (
                 <div className={styles.notification}>
