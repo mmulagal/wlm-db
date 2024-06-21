@@ -361,12 +361,12 @@ const ManagedHostSubTable = ({
                 let width = '';
                 let height = '';
                 let disableMenu = () => {
-                    // if (loading) {
-                    //     disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
-                    //     width = '220px';
-                    //     height = '33px';
-                    //     return true;
-                    // }
+                    if (loading) {
+                        disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
+                        width = '220px';
+                        height = '33px';
+                        return true;
+                    }
                     if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
                         disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                         width = '220px';
