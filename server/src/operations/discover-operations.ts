@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import config from 'config';
+import randomize from 'randomatic';
 
 import { STORAGE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { FileSystem, FileSystemType } from '@aws-sdk/client-fsx';
@@ -16,7 +17,13 @@ import {
 } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
-import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName, derivePropertiesFromARN } from '../utils/utils';
+import {
+    getResourceNameFromTags,
+    sleep,
+    getArtifactsRegionBucketName,
+    derivePropertiesFromARN,
+    isDemo
+} from '../utils/utils';
 import {
     getEc2SqlParameters,
     callSsmExecution,
@@ -164,7 +171,7 @@ async function getHostAndSqlServerInfo(
     api1StartTime = performance.now();
     await Promise.all(
         (ec2instanceList || []).map(async ec2Instance => {
-            const name = getResourceNameFromTags(ec2Instance?.Tags);
+            const name = isDemo() ? `sqlnode-${randomize('0', 5)}` : getResourceNameFromTags(ec2Instance?.Tags);
             const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2Instance?.InstanceId || '');
             ssmTargets.push({
                 ec2InstanceId: ec2Instance?.InstanceId || '',

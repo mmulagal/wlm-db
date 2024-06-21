@@ -1,4 +1,5 @@
 import { STORAGE_TYPE } from '@prisma/client';
+import randomize from 'randomatic';
 import numeral from 'numeral';
 import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
@@ -70,12 +71,12 @@ import {
     databaseInstanceMetadata
 } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
-import { findResourceNameFromTags, getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
+import { getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { getDatabaseInstanceName } from '../utils/utils';
+import { getDatabaseInstanceName, getResourceNameFromTags, isDemo } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -270,7 +271,9 @@ async function getTopology(
                     activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
                     activeSubnetId = activeNode.SubnetId;
                     activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                    activeNodeInstanceName = findResourceNameFromTags(activeNode.Tags);
+                    activeNodeInstanceName = isDemo()
+                        ? `sqlnode-${randomize('0', 5)}`
+                        : getResourceNameFromTags(activeNode.Tags);
 
                     if (!isEmpty(standbyNode)) {
                         standbyInstanceType = standbyNode.InstanceType;
@@ -278,7 +281,9 @@ async function getTopology(
                         standbySubnetId = standbyNode.SubnetId;
                         const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
                         ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
-                        standbyNodeInstanceName = findResourceNameFromTags(standbyNode.Tags);
+                        standbyNodeInstanceName = isDemo()
+                            ? `sqlnode-${randomize('0', 5)}`
+                            : getResourceNameFromTags(standbyNode.Tags);
                     }
                 }
             } catch (error) {
@@ -294,7 +299,7 @@ async function getTopology(
             const { Vpcs: [firstVpc = {}] = [] } = await describeVpc(credentialsId, region, {
                 VpcIds: [vpcId]
             });
-            vpcName = findResourceNameFromTags(firstVpc?.Tags);
+            vpcName = getResourceNameFromTags(firstVpc?.Tags);
         }
         // Fetch topology data
         topologyData = {
@@ -1239,7 +1244,9 @@ async function getNodeTopology(
                     activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
                     activeSubnetId = activeNode.SubnetId;
                     activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                    activeNodeInstanceName = findResourceNameFromTags(activeNode.Tags);
+                    activeNodeInstanceName = isDemo()
+                        ? `sqlnode-${randomize('0', 5)}`
+                        : getResourceNameFromTags(activeNode.Tags);
                     vpcId = activeNode.VpcId;
                     vpcCidr = activeNode.VpcId;
                     activeNodeStatus = activeNode.State?.Name;
@@ -1260,7 +1267,9 @@ async function getNodeTopology(
                         standbyNodeStatus = standbyNode.State?.Name;
                         const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
                         ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
-                        standbyNodeInstanceName = findResourceNameFromTags(standbyNode.Tags);
+                        standbyNodeInstanceName = isDemo()
+                            ? `sqlnode-${randomize('0', 5)}`
+                            : getResourceNameFromTags(standbyNode.Tags);
                     }
                 }
             } catch (error) {

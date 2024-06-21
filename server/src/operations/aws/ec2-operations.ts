@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
+import randomize from 'randomatic';
 import {
     DescribeSubnetsRequest,
     DescribeSecurityGroupsRequest,
@@ -45,7 +46,7 @@ import {
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
-import { filterSqlAmis } from '../../utils/utils';
+import { filterSqlAmis, getResourceNameFromTags, isDemo } from '../../utils/utils';
 import { getEbsVolumeUtilization, getInstanceUtilization } from './cloud-watch-operations';
 import {
     ResourceDetails,
@@ -79,7 +80,7 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
     if (Vpcs?.length && fieldsValues.length === 0) {
         vpcs = Vpcs.map(
             ({ VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault }) => {
-                const resourceName = findResourceNameFromTags(tags);
+                const resourceName = getResourceNameFromTags(tags);
                 return { id, state, tags, cidrBlock, isDefault, ...(resourceName && { name: resourceName }) };
             }
         );
@@ -139,7 +140,7 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
 
                 const [subnets, securityGroups] = await Promise.all(proms);
 
-                const resourceName = findResourceNameFromTags(tags);
+                const resourceName = getResourceNameFromTags(tags);
                 vpcs.push({
                     id,
                     state,
@@ -198,7 +199,7 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
 
                 const routeTableId = subnetTable || mainTable;
 
-                const resourceName = findResourceNameFromTags(tags);
+                const resourceName = getResourceNameFromTags(tags);
 
                 subnetsList.push({
                     id,
@@ -232,7 +233,7 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
                 Tags: tags,
                 GroupName: securityGroupName
             }) => {
-                const resourceName = findResourceNameFromTags(tags);
+                const resourceName = getResourceNameFromTags(tags);
                 return {
                     id,
                     description,
@@ -381,19 +382,6 @@ async function getAmiList(
     }
 
     return { amis: response };
-}
-
-/*
- * AWS considers the value of tag 'Name' as the resource name.
- * If tag 'Name' is present, return its corresponding Value.
- * Otherwise, returns undefined.
- */
-function findResourceNameFromTags(tags?: Tag[]) {
-    logger.debug('Find resource name from the tags', { tags });
-
-    const { Value: name } = tags?.find(tag => tag?.Key === 'Name') || {};
-
-    return name;
 }
 
 async function getInstanceTypes(credentialsId: string, region: string) {
@@ -815,7 +803,7 @@ async function getInstanceDetailsByPrivateIp(credentialsId: string, region: stri
                     ec2InstanceId: InstanceId,
                     ec2InstancePrivateIpAddress: PrivateIpAddress,
                     ec2InstanceType: InstanceType,
-                    ec2InstanceName: Tags?.find(tag => tag?.Key === 'Name')?.Value
+                    ec2InstanceName: isDemo() ? `sqlnode-${randomize('0', 5)}` : getResourceNameFromTags(Tags)
                 });
             }
         }
@@ -837,7 +825,6 @@ export {
     getVpcEndpoints,
     getVpcSecurityGroups,
     getServicesWithNoEndpoint,
-    findResourceNameFromTags,
     enableVpcDnsAttributes,
     getValidationNodeInstanceType,
     isEbsAwsBackupEnabled,
