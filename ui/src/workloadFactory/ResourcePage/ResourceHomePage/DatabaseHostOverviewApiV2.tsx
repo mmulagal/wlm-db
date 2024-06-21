@@ -42,7 +42,13 @@ const DatabaseHostOverviewApiV2 = () => {
                 sqlInstanceId: selectedDatabaseInstance
             });
             if (result && !result?.error) {
-                let resourceData = { ...result?.data, topology: result?.data?.databaseInstanceTopology };
+                let resourceData = {
+                    ...result?.data,
+                    topology: {
+                        ...result?.data?.databaseInstanceTopology,
+                        ...result?.data?.nodeTopology
+                    }
+                };
                 dispatch(setResourceDetails(resourceData));
                 dispatch(setResourceLoading(false));
             } else {
