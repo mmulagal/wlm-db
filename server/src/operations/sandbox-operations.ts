@@ -951,8 +951,10 @@ async function createVolumeClone(
                 mapping.svm,
                 JSON.stringify({ name: mapping.data.volumeName, ...(snapshot && { snapshot }) }),
                 JSON.stringify({ name: mapping.log.volumeName, ...(snapshot && { snapshot }) }),
-                destDetails.host,
-                getClonedByTagValue(accountId, credentialsId),
+                [
+                    `cloned_by=${getClonedByTagValue(accountId, credentialsId)}`,
+                    `source=${destDetails.host}|${destDetails.instance}|${destDetails.database}`
+                ],
                 sqlVMName || mapping.svm,
                 destDetails.database,
                 `Sandbox:${destDetails.database}:`
@@ -966,8 +968,7 @@ async function createVolumeClone(
                     'wlmdb_sqlsvm_1714090636810',
                     JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
                     JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
-                    'test-res-id',
-                    'netapp_wf_test_account_test_cred',
+                    ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
                     'target-svm',
                     'testdb'
                 )

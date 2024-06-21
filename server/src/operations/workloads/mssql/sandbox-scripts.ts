@@ -388,8 +388,7 @@ const createVolumeClone = (
     sourceSvm: string,
     dataVolume: string,
     logVolume: string,
-    resourceId: string,
-    clonedByTagValue: string,
+    tags: Array<string>,
     targetSvm: string,
     sandboxName: string,
     logPrefix?: string
@@ -400,8 +399,6 @@ const createVolumeClone = (
     $targetSvm = '${targetSvm}'
     $dataVolume = '${dataVolume}' | convertFrom-json
     $logVolume = '${logVolume}' | convertFrom-json
-    $resourceId = '${resourceId}'
-    $clonedByTagValue = '${clonedByTagValue}'
     $sandboxName = '${sandboxName}'
     $logPrefix = '${logPrefix}'
 
@@ -584,10 +581,7 @@ const createVolumeClone = (
                 $volumeid = $_.location.volume.uuid
                 $body = @"
                 {
-                    "tiering.object_tags": [
-                        "cloned_by=$clonedByTagValue",
-                        "resource_id=$resourceId"
-                    ]
+                    "tiering.object_tags": [${tags.map(tag => `"${tag}"`).join(',')}]
                 }
 "@
                 $ApiEndpoint = '/storage/volumes/' + $volumeid
@@ -1363,6 +1357,19 @@ const getSnapshotsToClone = (
 
     $responseObject | ConvertTo-Json -Depth 5
 `;
+
+console.log(
+    createVolumeClone(
+        'test-fsx',
+        'us-east-1',
+        'wlmdb_sqlsvm_1714090636810',
+        JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
+        JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
+        ['resourceid=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
+        'target-svm',
+        'testdb'
+    )
+);
 
 export {
     GET_SANDBOX_DETAILS,
