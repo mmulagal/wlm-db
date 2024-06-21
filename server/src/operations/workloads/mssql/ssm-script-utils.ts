@@ -454,7 +454,7 @@ const getMappedOntapVolumesScript = (
             $QueryFilter = ''
             foreach ($SerialNumber in $SerialNumbers) {
                 if ($SerialNumber -ne '') {
-                    $QueryFilter += $SerialNumber + '|'
+                    $QueryFilter += [System.Web.HttpUtility]::UrlEncode($SerialNumber) + '|'
                 }
             }
             $QueryFilter = $QueryFilter.TrimEnd('|')
@@ -499,7 +499,7 @@ const getMappedOntapVolumesScript = (
             $QueryFilter = ''
             foreach ($Name in $Names) {
                 if ($Name -ne '') {
-                    $QueryFilter += $Name + '|'
+                    $QueryFilter += [System.Web.HttpUtility]::UrlEncode($Name) + '|'
                 }
             }
             $QueryFilter = $QueryFilter.TrimEnd('|')
@@ -550,7 +550,7 @@ const getMappedOntapVolumesScript = (
             foreach ($SmbShare in $SmbShares) {
                     $volname = $SmbShare.volumename
                     if ($volname -ne '') {
-                        $QueryFilter += $volname + '|'
+                        $QueryFilter += [System.Web.HttpUtility]::UrlEncode($volname) + '|'
                     }
                 }
             $QueryFilter = $QueryFilter.TrimEnd('|')
