@@ -1425,7 +1425,7 @@ async function getDatabaseInstanceTopology(
                     : storageType === STORAGE_TYPE.FSXW
                     ? FileSystemTypes.FSXWINDOWS
                     : storageType
-                : FileSystemTypes.FSXONTAP
+                : NOT_AVAILABLE
     };
     if (activeNodeInstanceId) {
         let fileSystemStatus;
