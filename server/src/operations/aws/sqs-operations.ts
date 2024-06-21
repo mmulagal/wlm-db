@@ -31,6 +31,7 @@ import {
     convertMetricsIntoJson,
     deployedStackUrl,
     derivePropertiesFromARN,
+    getDatabaseInstanceName,
     getDescriptionForMatchingName,
     getQueueUrl
 } from '../../utils/utils';
@@ -614,7 +615,7 @@ async function processCloudFormationMessages() {
 
                                                         await Promise.all(
                                                             instanceNames.map(async (instanceName: string) => {
-                                                                const defaultInstance = !instanceName.includes('$');
+                                                                const isDefaultInstance = !instanceName.includes('$');
                                                                 const modifiedInstanceName = instanceName.includes('$')
                                                                     ? instanceName.replace(/^.+\$/, '')
                                                                     : instanceName;
@@ -622,7 +623,10 @@ async function processCloudFormationMessages() {
                                                                 const sqlInstanceGuid = await getMssqlInstanceGuid(
                                                                     credentialsId,
                                                                     region,
-                                                                    modifiedInstanceName,
+                                                                    getDatabaseInstanceName(
+                                                                        instanceName,
+                                                                        isDefaultInstance
+                                                                    ),
                                                                     nodeIds
                                                                 );
 
@@ -631,9 +635,9 @@ async function processCloudFormationMessages() {
                                                                     resourceId,
                                                                     region,
                                                                     databaseInstanceId: sqlInstanceGuid,
-                                                                    databaseInstanceName: instanceName,
+                                                                    databaseInstanceName: modifiedInstanceName,
                                                                     fsxnIds: fsxId,
-                                                                    isDefault: defaultInstance,
+                                                                    isDefault: isDefaultInstance,
                                                                     source: RESOURCE_SOURCE.DEPLOY,
                                                                     fsxSvmId: { [fsxId]: fsxSvmId },
                                                                     sqlDeploymentType,

@@ -38,7 +38,9 @@ import {
     DatabaseHostDetailsSchemaV2,
     DatabaseHostInstanceDetailsSchema,
     DatabasesListSchemaV2,
-    GetSandboxSnapshotsSchema
+    GetSandboxSnapshotsSchema,
+    GetDriveInfoSchemaV2,
+    GetCollationDetailsSchemaV2
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -123,7 +125,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region },
-                    body: { databaseName, dataFileConfig, logFileConfig, collation }
+                    body: { databaseName, dataFileConfig, logFileConfig, collation, databaseInstanceId }
                 } = request;
                 const response = await deployDatabase(
                     accountId,
@@ -133,7 +135,8 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseName,
                     dataFileConfig,
                     logFileConfig,
-                    collation
+                    collation,
+                    databaseInstanceId
                 );
                 return reply.send(response);
             }
@@ -158,6 +161,23 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region }
                 } = request;
                 const response = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/collation`,
+            { schema: GetCollationDetailsSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
+                } = request;
+                const response = await getCollationDetails(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    databaseInstanceId
+                );
                 return reply.send(response);
             }
         )
@@ -511,6 +531,26 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     historical
                 );
                 return reply.send({ snapshots: response });
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drive-information`,
+            { schema: GetDriveInfoSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    query: { forSandbox }
+                } = request;
+                const response = await getDriveInfo(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    forSandbox,
+                    undefined,
+                    databaseInstanceId
+                );
+                return reply.send(response);
             }
         );
 }

@@ -20,9 +20,15 @@ const DatabaseHostObjectParams = Type.Object({
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
 const DatabaseHostSummaryParams = Type.Composite([CredentialsIdParams, Type.Object({ databaseHostId: Type.String() })]);
+
 const DatabaseHostInstanceSummaryParams = Type.Composite([
     DatabaseHostSummaryParams,
     Type.Object({ databaseInstanceId: Type.String() })
+]);
+
+const DatabaseHostOptionalInstanceSummaryParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Optional(Type.Object({ databaseInstanceId: Type.String() }))
 ]);
 
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
@@ -316,7 +322,8 @@ const CreateDatabseRequestBody = Type.Object({
     databaseName: Type.String({ minLength: 1, maxLength: 123 }),
     dataFileConfig: FileConfig,
     logFileConfig: FileConfig,
-    collation: Type.String()
+    collation: Type.String(),
+    databaseInstanceId: Type.Optional(Type.String())
 });
 
 const DatabasesCreateResponse = Type.Object({
@@ -645,5 +652,6 @@ export {
     DatabaseHostInstanceSummaryResponse,
     DatabaseHostInstanceSummaryResponseType,
     DatabaseInstanceTopologyType,
-    DatabaseHostInstanceSummaryParams
+    DatabaseHostInstanceSummaryParams,
+    DatabaseHostOptionalInstanceSummaryParams
 };
