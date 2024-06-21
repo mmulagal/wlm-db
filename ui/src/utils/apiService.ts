@@ -790,9 +790,9 @@ export const sandboxApi = createApi({
             getDatabaseHostsForSandbox: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,storage&nextToken=${nextToken}`;
+                        return `v2/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage&nextToken=${nextToken}`;
                     } else {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,storage`;
+                        return `v2/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -952,7 +952,8 @@ export const { useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeA
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
-export const { useLazyGetResourceDetailsV2Query, useLazyGetDatabaseListV2Query } = workloadFactoryResourceApiV2;
+export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
+    workloadFactoryResourceApiV2;
 
 export const {
     useGetJobsListQuery,

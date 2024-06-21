@@ -850,7 +850,7 @@ export const GENERAL = {
     TARGET_INSTANCE: 'Target database instance',
     TARGET_DATABASES: 'Target database',
     TARGET_DATABASE_NOTICE:
-        'Notice: The target host must be in the same VPC and have the same FSx for ONTAP file system as the source host.',
+        'Notice: The target instance must be in the same VPC and have the same FSx for ONTAP file system as the source instance.',
     SOURCE_HOST: 'Source database host',
     SOURCE_INSTANCE: 'Source database instance',
     SOURCE_DATABASE: 'Source database',

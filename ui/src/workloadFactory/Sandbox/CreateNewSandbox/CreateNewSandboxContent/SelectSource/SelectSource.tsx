@@ -64,8 +64,8 @@ const SelectSource = () => {
     //Function to generate the options for Select Field
     const generateHostName = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        aggregatedDbHostList?.map((obj, idx: number) => {
-            if (obj.status === STATUS_CONST.UP) {
+        aggregatedDbHostList?.map((obj: any, idx: number) => {
+            if (obj?.databaseHostStatus?.toLowerCase() === STATUS_CONST.ONLINE.toLowerCase()) {
                 const protocolDisable = isSmbProtocol(obj?.storage?.fsxn?.protocol);
                 const option = generateOptionType(
                     obj?.id,
@@ -84,16 +84,30 @@ const SelectSource = () => {
     }, [aggregatedDbHostList]);
 
     const generateSourceInstance = useMemo<optionType[]>((): optionType[] => {
-        const hostName = [{ label: 'MSSQLSERVER', value: 'MSSQLSERVER' }];
+        const selectedHostData: any = aggregatedDbHostList.find(
+            (hostItem: any) => hostItem?.id === selectedDatabaseHost?.value
+        );
+        const instanceList = selectedHostData?.databaseInstancesSummary
+            ? selectedHostData.databaseInstancesSummary.map((instanceItem: any) => {
+                  return {
+                      value: instanceItem?.databaseInstanceId,
+                      label: instanceItem?.databaseInstanceName,
+                      status: instanceItem?.status,
+                      fileSystemId: instanceItem?.databaseInstanceTopology?.fileSystemId
+                  };
+              })
+            : [];
         const options: optionType[] = [];
-        hostName?.map((obj, idx: number) => {
-            const option = generateOptionType(obj?.value, obj?.label, '', false, '');
-            options.push(option);
+        instanceList?.map((obj: any, idx: number) => {
+            const option = generateOptionType(obj?.value, obj?.label, '', false, '', obj);
+            if (obj?.status?.toLowerCase() === STATUS_CONST.UP.toLowerCase()) {
+                options.push(option);
+            }
         });
 
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [selectedDatabaseHost]);
 
     const generateSourceDatabase = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
@@ -176,18 +190,15 @@ const SelectSource = () => {
                                 <SelectField
                                     label={GENERAL.SOURCE_INSTANCE}
                                     isClearable={false}
-                                    defaultValue={
-                                        selectedDatabaseInstance
-                                            ? selectedDatabaseInstance
-                                            : [generateSourceInstance[0]]
-                                    }
+                                    value={selectedDatabaseInstance}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSourceDbInstance(selectedOptions));
                                     }}
+                                    isLoading={databaseHostsLoading}
                                     isSearchable={true}
                                     options={generateSourceInstance}
                                     className={styles.selectField}
-                                    isDisabled={true}
+                                    isDisabled={false}
                                 />
 
                                 {windowSize.width <= 1500 && (

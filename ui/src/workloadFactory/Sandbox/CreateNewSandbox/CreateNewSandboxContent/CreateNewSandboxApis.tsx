@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
 import {
     useGetDatabaseHostsForSandboxQuery,
-    useGetDatabaseListQuery,
+    useGetDatabaseListV2Query,
     useGetDatabaseMountPointsQuery,
     useGetDriveInfoQuery
 } from '../../../../utils/apiService';
@@ -25,6 +25,7 @@ const CreateSandboxApis = () => {
     const [selectedDbHostId, setSelectedDbHostId] = useState<any>(null);
     const [selectedDbName, setSelectedDbName] = useState<any>(null);
     const [selectedInstanceName, setSelectedInstanceName] = useState<any>(null);
+    const [selectedInstanceId, setSelectedInstanceId] = useState<any>(null);
     const [selectedTargetDbHostId, setSelectedTargetDbHostId] = useState<any>(null);
     const [databaseHostCursor, setDatabaseHostCursor] = useState(null);
     const [fetchedDatabases, setFetchedDatabases] = useState(false);
@@ -38,7 +39,8 @@ const CreateSandboxApis = () => {
     useEffect(() => {
         setSelectedDbHostId(source?.selectedDatabaseHost?.value);
         setSelectedDbName(source?.selectedDatabase?.label);
-        setSelectedInstanceName(source?.selectedDatabaseInstance?.value);
+        setSelectedInstanceName(source?.selectedDatabaseInstance?.label);
+        setSelectedInstanceId(source?.selectedDatabaseInstance?.value);
     }, [source]);
 
     useEffect(() => {
@@ -62,13 +64,14 @@ const CreateSandboxApis = () => {
         data: databaseList,
         isFetching: databaseListLoading,
         isError: databaseListError
-    } = useGetDatabaseListQuery(
+    } = useGetDatabaseListV2Query(
         {
             credentialId: credId,
             region: regionId,
-            id: selectedDbHostId
+            id: selectedDbHostId,
+            sqlInstanceId: selectedInstanceId
         },
-        { skip: !credId || !regionId || !selectedDbHostId }
+        { skip: !credId || !regionId || !selectedDbHostId || !selectedInstanceId }
     );
 
     const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoQuery(
