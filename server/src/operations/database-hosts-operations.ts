@@ -101,7 +101,8 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     3: 'storage',
     4: 'protection',
     5: 'resourceUtilization',
-    6: 'databasesCount'
+    6: 'databasesCount',
+    7: 'nodeTopology'
 };
 
 // type VolumeSpaceRecord = {
@@ -1483,7 +1484,13 @@ async function getDatabseInstanceSummary(
     activeNodeInstanceId: string,
     region: string,
     databaseInstances: DatabaseInstance,
-    fields?: string
+    fields?: string,
+    resourceDetails?: ResourceDetails
+    /*
+    resource detail is used to fetch node Topology for host its optional in instance summary
+    as its returned at host level for database-hosts api(inventory) and
+    at instance level for database-instances api (resource page)
+    */
 ) {
     logger.info(
         'Fetching summary of database instance',
@@ -1492,7 +1499,8 @@ async function getDatabseInstanceSummary(
         activeNodeInstanceId,
         region,
         databaseInstances,
-        fields
+        fields,
+        resourceDetails
     );
 
     const {
@@ -1527,6 +1535,7 @@ async function getDatabseInstanceSummary(
     );
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
     const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
+    const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLocaleLowerCase());
 
     const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
         databaseInstanceId,
@@ -1542,6 +1551,7 @@ async function getDatabseInstanceSummary(
     let resourceUtilizationData: any;
     let protectionData: any;
     let databasesCount: any;
+    let nodeTopologyData: any;
     const errormessages: { [index: string]: string } = {};
 
     try {
@@ -1552,7 +1562,8 @@ async function getDatabseInstanceSummary(
             storageData,
             protectionData,
             resourceUtilizationData,
-            databasesCount
+            databasesCount,
+            nodeTopologyData
         ] = await Promise.all(
             [
                 ...(shouldQueryServerDetails
@@ -1598,6 +1609,9 @@ async function getDatabseInstanceSummary(
                     : [Promise.resolve()]),
                 ...(getDbCount
                     ? [getDatabasesCount(credentialsId, region, activeNodeInstanceId, databaseInstanceName)]
+                    : [Promise.resolve()]),
+                ...(shouldQueryNodeTopology && resourceDetails
+                    ? [getNodeTopology(accountId, region, databaseInstanceId, resourceDetails, activeNodeInstanceId)]
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
@@ -1628,6 +1642,10 @@ async function getDatabseInstanceSummary(
         serverDetails.creationDate = creationDate || '';
     }
     databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
+
+    if (shouldQueryNodeTopology && nodeTopologyData) {
+        databaseInstanceDetails.nodeTopology = nodeTopologyData;
+    }
 
     databaseInstanceDetails.databaseInstanceTopology = databaseInstancetopologyData;
     databaseInstanceDetails.performance = getPerformance
@@ -1675,13 +1693,12 @@ async function getDatabaseInstancesDetails(
     );
 
     const updatedInstanceDetails = instanceDetails
-        ? instanceDetails.map(({ instanceName, instanceState }) => {
+        ? instanceDetails.map(({ instanceName, instanceState, isDefault }) => {
               const managedInstance = managedInstancesName.find(
                   ({ instanceName: managedInstanceName }) => managedInstanceName === instanceName
               );
 
               const isManaged = Boolean(managedInstance);
-              const isDefault = !instanceName.includes('$');
               const updatedInstanceState = instanceState === 'Running' ? ServerState.UP : ServerState.DOWN;
 
               return { instanceName, instanceState: updatedInstanceState, isManaged, isDefault };
@@ -1848,11 +1865,10 @@ async function getDatabaseHostSummaryV2(
             }
 
             if (shouldQueryNodeTopology && nodeTopology && nodeTopology.ec2Details.length > 0) {
-                if (shouldQueryNodeTopology && nodeTopology && nodeTopology.ec2Details.length > 0) {
-                    databaseHostDetails.nodeTopology = nodeTopology;
-                }
-                databaseHostDetails.databaseInstanceDetails = databaseInstancesDetail;
+                databaseHostDetails.nodeTopology = nodeTopology;
             }
+
+            databaseHostDetails.databaseInstanceDetails = databaseInstancesDetail;
 
             databaseHostDetails.databaseInstancesSummary = instanceResults;
 
@@ -1888,13 +1904,17 @@ async function getDatabaseHostInstanceSummary(
         databaseHostId,
         databaseInstanceId
     );
+
+    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+
     const databaseInstanceSummary = await getDatabseInstanceSummary(
         accountId,
         credentialsId,
         activeNodeInstanceId,
         region,
         newDatabaseInstanceDetails,
-        fields
+        fields,
+        resourceDetails
     );
     logger.debug('Database host instance details', databaseInstanceSummary);
     return databaseInstanceSummary;

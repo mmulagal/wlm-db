@@ -616,7 +616,7 @@ async function processCloudFormationMessages() {
                                                             instanceNames.map(async (instanceName: string) => {
                                                                 const defaultInstance = !instanceName.includes('$');
                                                                 const modifiedInstanceName = instanceName.includes('$')
-                                                                    ? instanceName.split('$')?.[1] || instanceName
+                                                                    ? instanceName.replace(/^.+\$/, '')
                                                                     : instanceName;
 
                                                                 const sqlInstanceGuid = await getMssqlInstanceGuid(
