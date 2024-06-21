@@ -31,18 +31,18 @@ const ProvisionedIOPS = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
     const [placeHolderText, setPlaceHolderText] = useState('range should be between 3072 - 160000 IOPS');
-    const [total, setTotal] = useState<any>(0);
+    const [total, setTotal] = useState<any>(3072);
 
     const [isDisable, setIsDisable] = useState(false);
 
     useEffect(() => {
         const sizeData = getEstimatedCostData?.data?.fsxnStorage?.size;
-        if (isFsxnNew(selectedFsxnType)) {
+        if (isFsxnNew(selectedFsxnType) && sizeData) {
             setPlaceHolderText(`range should be between ${sizeData?.total * 3} - 16000 IOPS`);
+            setTotal(sizeData?.total * 3);
         } else {
             setPlaceHolderText('range should be between 3072 - 160000 IOPS');
         }
-        setTotal(sizeData?.total * 3);
     }, [selectedFsxnType, getEstimatedCostData]);
 
     useEffect(() => {
