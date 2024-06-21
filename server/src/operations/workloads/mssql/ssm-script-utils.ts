@@ -213,10 +213,9 @@ const validateSQLInstanceConnectivity = (
             }
             $username = $sqlCredentials.username
             $password = $sqlCredentials.password
-            $errorfile = "C:\\$sqlinstancename.log"
             
             $serverInstanceName = "$env:COMPUTERNAME"
-            If($sqlinstancename -ne "MSSQLSERVER") {
+            If($sqlinstancename -ne '${DEFAULT_MSSQL_INSTANCE_NAME}') {
                 $serverInstanceName = "$env:COMPUTERNAME\\$sqlinstancename"
                 
             }
@@ -226,7 +225,7 @@ const validateSQLInstanceConnectivity = (
                 throw $errorMessage
             }
 
-            $sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlcmd -y 0 -r1 2> $errorfile
+            $sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlcmd -y 0 -r1 2> $null
 
             if([string]::IsNullOrEmpty($sqlresult)) {
                 $responseObject.add('sqlInstanceConnectivity', $False)
