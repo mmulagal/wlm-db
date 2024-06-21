@@ -494,7 +494,7 @@ const NodeTopologyResponse = Type.Object({
 const DatabaseInstanceTopology = Type.Object({
     serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
-    fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows'] }),
+    fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows', NOT_AVAILABLE] }),
     fileSystemId: Type.Optional(Type.String()),
     fileSystemName: Type.Optional(Type.String()),
     fileSystemDeploymentMode: Type.Optional(Type.String()),

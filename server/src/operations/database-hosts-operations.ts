@@ -1423,8 +1423,10 @@ async function getDatabaseInstanceTopology(
             storageType !== undefined
                 ? storageType === STORAGE_TYPE.FSXN
                     ? FileSystemTypes.FSXONTAP
+                    : storageType === STORAGE_TYPE.FSXW
+                    ? FileSystemTypes.FSXWINDOWS
                     : storageType
-                : FileSystemTypes.FSXONTAP
+                : NOT_AVAILABLE
     };
     if (activeNodeInstanceId) {
         let fileSystemStatus;
@@ -1478,7 +1480,7 @@ async function getDatabaseInstanceTopology(
     return topologyData;
 }
 
-async function getDatabseInstanceSummary(
+async function getDatabaseInstanceSummary(
     accountId: string,
     credentialsId: string,
     activeNodeInstanceId: string,
@@ -1839,7 +1841,7 @@ async function getDatabaseHostSummaryV2(
                 }
                 if (runningDatabaseInstances.length > 0) {
                     const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
-                        const instanceResult = await getDatabseInstanceSummary(
+                        const instanceResult = await getDatabaseInstanceSummary(
                             accountId,
                             credentialsId,
                             activeNodeInstanceId,
@@ -1907,7 +1909,7 @@ async function getDatabaseHostInstanceSummary(
 
     const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
 
-    const databaseInstanceSummary = await getDatabseInstanceSummary(
+    const databaseInstanceSummary = await getDatabaseInstanceSummary(
         accountId,
         credentialsId,
         activeNodeInstanceId,

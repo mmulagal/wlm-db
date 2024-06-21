@@ -179,6 +179,7 @@ interface DatabaseInstance {
     storage_protocol?: string;
     region: string;
     databaseType?: string;
+    storageType?: string;
 }
 
 interface InstanceDetails {
