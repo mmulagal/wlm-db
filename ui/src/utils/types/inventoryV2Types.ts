@@ -22,6 +22,7 @@ export interface InventorySliceData {
     detectManagePassword: string;
     detectOntapUsername: string;
     detectOntapPassword: string;
+    detectedInstanceId: string;
 }
 
 export interface InventoryTableData {

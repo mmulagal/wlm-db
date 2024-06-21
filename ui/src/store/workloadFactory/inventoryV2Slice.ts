@@ -25,7 +25,8 @@ const initialInventoryV2State: InventorySliceData = {
     detectManageUserName: '',
     detectManagePassword: '',
     detectOntapUsername: '',
-    detectOntapPassword: ''
+    detectOntapPassword: '',
+    detectedInstanceId: ''
 };
 
 const inventoryV2Slice = createSlice({
@@ -88,6 +89,9 @@ const inventoryV2Slice = createSlice({
         },
         setDetectONTAPPassword: (state, action: PayloadAction<any>) => {
             state.detectOntapPassword = action.payload;
+        },
+        setDetectedInstanceId: (state, action: PayloadAction<any>) => {
+            state.detectedInstanceId = action.payload;
         }
     }
 });
@@ -111,7 +115,8 @@ export const {
     setDetectManageUserName,
     setDetectManagePassword,
     setDetectONTAPUserName,
-    setDetectONTAPPassword
+    setDetectONTAPPassword,
+    setDetectedInstanceId
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
