@@ -185,6 +185,7 @@ interface DatabaseInstance {
 interface InstanceDetails {
     instanceName: string;
     instanceState: string;
+    isDefault?: boolean;
 }
 
 export {

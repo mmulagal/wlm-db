@@ -514,6 +514,7 @@ const DatabaseHostInstanceSummaryResponse = Type.Object({
     status: Type.String({ enum: [ServerState.UP, ServerState.DOWN, NOT_AVAILABLE] }),
     databaseCount: Type.Optional(Type.Number()),
     databaseServer: Type.Optional(DatabaseServerMetadataResponse),
+    nodeTopology: Type.Optional(NodeTopologyResponse),
     databaseInstanceTopology: Type.Optional(DatabaseInstanceTopology),
     protection: Type.Optional(ProtectionPerStorageTypeResponse),
     performance: Type.Optional(PerformanceResponse),

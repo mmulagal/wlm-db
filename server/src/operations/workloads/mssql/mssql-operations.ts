@@ -614,7 +614,8 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
 
                 const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
                 instancesDetails.forEach(obj => {
-                    obj.instanceName = obj.instanceName.replace(/.+?\$/, '');
+                    (obj as any).isDefault = !obj.instanceName.includes('$');
+                    obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
                 });
                 let defaultInstance = true;
                 let selectedInstance = instancesDetails.find(
@@ -652,6 +653,7 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
             if (response) {
                 let parsedResponse = sqlResponseParsing(response);
                 parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+
                 return parsedResponse;
             }
         }
@@ -1039,7 +1041,9 @@ async function getActiveSqlNodeAndInstanceDetails(
             const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId]);
-
+                instanceDetails.forEach((obj: { instanceName: string }) => {
+                    obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
+                });
                 if (instanceDetails) {
                     const matchingInstance = instanceDetails.find(
                         (instance: { instanceName: string }) => instance.instanceName === databaseInstanceName
