@@ -55,9 +55,16 @@ function generateDeploymentParams(
     FSxDataLunSize: number,
     isExistingFSx: boolean,
     sqlDeploymentType: string = 'fci',
-    fsxVolThroughput: number
+    fsxVolThroughput: number,
+    fsxIOPS: number
 ) {
-    logger.info('Generate deployment params', { FSxDataLunSize, isExistingFSx, sqlDeploymentType, fsxVolThroughput });
+    logger.info('Generate deployment params', {
+        FSxDataLunSize,
+        isExistingFSx,
+        sqlDeploymentType,
+        fsxVolThroughput,
+        fsxIOPS
+    });
 
     const prefix = WLMDB;
     const suffix = Date.now();
@@ -79,6 +86,20 @@ function generateDeploymentParams(
     // https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/performance.html
     if (fsxVolThroughput === FSX_VOL_THROUGHPUT && fsxStorageCapacity <= FSX_STORAGE_MIN_CAPACITY_IN_GIB) {
         throw createError(412, 'Supported FSx for ONTAP Storage Capactiy should be minumum of 5,120 GiB');
+    }
+
+    // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
+    // Automatic (3 IOPS per GiB of SSD storage)
+    // User-Provisioned (it should be calculated by 3 times of fsxStorageCapacity as minimum size)
+    if (fsxIOPS !== 3 && fsxVolThroughput !== FSX_VOL_THROUGHPUT) {
+        // accepted iops values
+        const acceptedIOPS = fsxStorageCapacity * 3;
+        if (fsxIOPS < acceptedIOPS) {
+            throw createError(412, `Provisioned SSD IOPS should be at least ${acceptedIOPS}`);
+        }
+        if (fsxIOPS < 3072 || fsxIOPS > 80000) {
+            throw createError(412, 'Provisioned SSD IOPS should be between 3072 and 80000');
+        }
     }
 
     const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;

@@ -1008,11 +1008,13 @@ const SQL_STD = 'SQL std';
 const SQL_ENT = 'SQL ent';
 const SQL_WEB = 'SQL web';
 const CUSTOM = 'custom';
+const NA = 'NA';
 
 const SQL_SOFTWARE_TYPES = new Map<string, string>([
     [SQL_STD, SQL_STD],
     [SQL_ENT, SQL_ENT],
-    [SQL_WEB, SQL_WEB]
+    [SQL_WEB, SQL_WEB],
+    [CUSTOM, NA]
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
@@ -1179,6 +1181,14 @@ enum SandboxLifecycleAction {
     REFRESH = 'Refresh',
     REBASELINE = 'Re-baseline'
 }
+
+const STORAGE_SERVICE_DEFAULT_REGION = 'us-east-1';
+const FINDING = {
+    OPTIMIZED: 'OPTIMIZED',
+    NOT_OPTIMIZED: 'NOT_OPTIMIZED',
+    INSUFFICIENT_DATA: 'INSUFFICIENT_DATA'
+};
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1457,5 +1467,7 @@ export {
     V2_API_PAGE_SIZE,
     SandboxLifecycleAction,
     SANDBOX_LIFECYCLE_REFRESH,
-    SANDBOX_LIFECYCLE_REBASELINE
+    SANDBOX_LIFECYCLE_REBASELINE,
+    STORAGE_SERVICE_DEFAULT_REGION,
+    FINDING
 };

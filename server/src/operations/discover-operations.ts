@@ -917,7 +917,8 @@ async function fetchUnmanagedHostsInformationV2(
                         fsxn_ids: fsxnId || '',
                         fsxwId,
                         ebsVolumeIds,
-                        database_deployment_type: sqlServerInstance.sqlServerDeploymentType
+                        database_deployment_type: sqlServerInstance.sqlServerDeploymentType,
+                        storageType: fsxnId ? STORAGE_TYPE.FSXN : fsxwId ? STORAGE_TYPE.FSXW : STORAGE_TYPE.EBS
                     });
                 });
                 resourceDetailsList.push(resourceDetails);
@@ -1725,7 +1726,12 @@ async function manageSqlServerV2(
             resourceId
         });
 
-        const itemsStatus: { databaseInstanceName: string; status: string; errorMessage?: string }[] = [];
+        const itemsStatus: {
+            databaseInstanceName: string;
+            databaseInstanceGuid?: string;
+            status: string;
+            errorMessage?: string;
+        }[] = [];
 
         for (const dbInst of databaseInstanceNameList) {
             const sqlInstanceInfo = sqlServerInstances?.find(sqlInst => sqlInst.sqlServerInstance === dbInst);
@@ -1733,6 +1739,7 @@ async function manageSqlServerV2(
             if (alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)) {
                 itemsStatus.push({
                     databaseInstanceName: dbInst,
+                    databaseInstanceGuid: sqlInstanceInfo?.serverGuid,
                     status: 'failed',
                     errorMessage: 'Instance is already managed.'
                 });
@@ -1744,7 +1751,7 @@ async function manageSqlServerV2(
                 });
             } else {
                 try {
-                    const { windowsAuthentication, sqlServerAuthentication, storage } = sqlInstanceInfo;
+                    const { windowsAuthentication, sqlServerAuthentication, serverGuid, storage } = sqlInstanceInfo;
                     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
                     const storageProtocols = storage
                         ?.filter(elem => elem.type === STORAGE_TYPE.FSXN)
@@ -1765,11 +1772,11 @@ async function manageSqlServerV2(
                     }
 
                     try {
-                        await verifyAndAddFSxOntapCredentials(accountId, credentialsId, region, storageInfo.id);
+                        await verifyAndAddFSxOntapCredentials(accountId, credentialsId, region, storageInfo!.id);
                     } catch (error: any) {
                         // verifyAndAddFSxOntapCredentials() is used by both V1 and V2 versions
                         // of the API.  The prefix 'Unable to manage' is alredy added by V2 API.
-                        // To avoid duplication of sentence, we remove the sentence, if
+                        // To avoid duplication of sentence, we remove the sentence, if present.
                         const errorMessage = error?.message?.replace('Unable to manage the instance. Reason: ', '');
                         throw Error(isEmpty(errorMessage) ? error : errorMessage);
                     }
@@ -1786,10 +1793,16 @@ async function manageSqlServerV2(
                             cloudProviderAccountId: awsAccountId!,
                             cloudProviderName: CloudProviders.AWS,
                             resourceType: RESOURCESTYPE.MSSQL,
+                            coRelationId: storageInfo!.id,
                             region,
                             metadata: {
+                                creationDate: Date.now(),
                                 node1InstanceId,
                                 node2InstanceId,
+                                sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
+                                source: RESOURCE_SOURCE.DISCOVER,
+                                fsxSvmId: storageInfo!.svmId,
+                                storageProtocol: storageProtocols ? storageProtocols.join() : '',
                                 ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
                                 ...(activeDirectoryIpAddresses && {
                                     activeDirectoryAddress: activeDirectoryIpAddresses.join()
@@ -1805,7 +1818,7 @@ async function manageSqlServerV2(
                         region,
                         awsAccountId!,
                         accountId,
-                        storageInfo.id,
+                        storageInfo!.id,
                         node1InstanceId,
                         node2InstanceId
                     );
@@ -1814,19 +1827,20 @@ async function manageSqlServerV2(
                         credentialsId,
                         resourceId,
                         region,
-                        databaseInstanceId: sqlInstanceInfo.serverGuid!,
+                        databaseInstanceId: serverGuid!,
                         databaseInstanceName: sqlInstanceInfo.sqlServerInstance,
-                        fsxnIds: storageInfo.id!,
+                        fsxnIds: storageInfo!.id,
                         isDefault: sqlInstanceInfo.isDefaultInstance,
                         source: RESOURCE_SOURCE.DISCOVER,
                         sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
-                        fsxSvmId: { fsxId: storageInfo!.svmId! },
+                        fsxSvmId: { [storageInfo!.id]: storageInfo!.svmId },
                         storageProtocol: storageProtocols ? storageProtocols.join() : '',
                         databaseType: DatabaseTypes.MS_SQL_SERVER
                     });
 
                     itemsStatus.push({
                         databaseInstanceName: dbInst,
+                        databaseInstanceGuid: serverGuid,
                         status: 'success'
                     });
                 } catch (error) {

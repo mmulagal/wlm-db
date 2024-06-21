@@ -19,11 +19,11 @@ interface PayloadAuthSuccess {
 }
 
 const checkLocalStorageValue = () => {
-    const value = localStorage.getItem('inventoryV2');
+    const value = localStorage.getItem('inventoryV1');
     if (value === 'true') {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 };
 
 const initialState: AuthState = {

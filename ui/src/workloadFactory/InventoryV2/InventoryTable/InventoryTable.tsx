@@ -15,7 +15,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST, INVENTORY_STATUS, INVENTORY_ACTIONS } from '../../../utils/consts';
+import { WLF_TABS, STATUS_CONST, INVENTORY_STATUS, INVENTORY_ACTIONS, API_ERRORS } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
@@ -30,17 +30,22 @@ import {
     initialCreateNewUserState,
     setDBHostName
 } from '../../../store/workloadFactory/createNewDBSlice';
-import { renderAllocatedCapacity, renderCellData, renderEstimatedCost } from '../../Inventory/InventoryUtils';
+import {
+    installModuleNotification,
+    renderAllocatedCapacity,
+    renderCellData,
+    renderEstimatedCost
+} from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 import { useRunOnce } from '../../../common/hooks/useRunOnce';
-import { sortInventoryTableData } from '../InventoryUtilsV2';
+import { sortInventoryTableData, updateInstanceStatus } from '../InventoryUtilsV2';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
-import { useManageMssqlInstanceMutation } from '../../../utils/apiService';
+import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
-import { setInProgressInstances } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setInProgressInstances, setInventoryTableData } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 
 const InventoryTable = () => {
@@ -67,6 +72,7 @@ const InventoryTable = () => {
     const [loading, setLoading] = useState(false);
 
     const [manageInstanceApi] = useManageMssqlInstanceMutation();
+    const [prepareHostApi] = usePrepareHostMutation();
 
     useEffect(() => {
         setLoading(
@@ -168,9 +174,17 @@ const InventoryTable = () => {
     };
 
     const ExpandedRow = ({ rowData }: any) => {
-        if (rowData?.ssmState === INVENTORY_STATUS.ONLINE) {
+        if (rowData?.ssmState === INVENTORY_STATUS.ONLINE || rowData?.totalInstance !== 0) {
             return (
-                <ManagedHostSubTable rowId={rowData?.id} scrollPosition={scrollPos} resourceId={rowData?.resourceId} />
+                <ManagedHostSubTable
+                    rowId={rowData?.id}
+                    hostname={rowData?.name}
+                    scrollPosition={scrollPos}
+                    resourceId={rowData?.resourceId}
+                    handleManageInstances={handleManageInstances}
+                    hostData={rowData}
+                    loading={loading}
+                />
             );
         }
         return <OfflineComponent />;
@@ -179,7 +193,7 @@ const InventoryTable = () => {
     const handleManageInstances = (rowData: any, instances: any) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState.inventoryV2;
-        const inProgressIds = instances.map((instance: any) => `${rowData?.id}_${instance}`);
+        const inProgressIds = instances.map((instance: any) => `${rowData?.ec2InstanceId}_${instance}`);
         dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
         manageInstanceApi({
             credentialsId: headerSelectedCred?.data?.credentialsId,
@@ -196,15 +210,34 @@ const InventoryTable = () => {
                 updatedInProgressInstances.delete(inProgressId);
             });
             dispatch(setInProgressInstances(updatedInProgressInstances));
-            if (res?.items?.[0]?.errorMessage) {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: res?.items?.[0]?.errorMessage
-                    })
+            if (res?.data?.items) {
+                let successFullInstances: any = [];
+                res?.data?.items.map((item: any) => {
+                    if (item.status === NOTIFICATION_TYPES.SUCCESS) {
+                        successFullInstances.push(item);
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                message: GENERAL.MANAGE_INSTANCE_SUCCESS_MSG(item.databaseInstanceName)
+                            })
+                        );
+                    } else {
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                message: GENERAL.MANAGE_INSTANCE_FAILED_MSG(item.databaseInstanceName),
+                                additionalText: item?.errorMessage
+                            })
+                        );
+                    }
+                });
+                const updatedInventoryTableData = updateInstanceStatus(
+                    'manage',
+                    rowData,
+                    instances,
+                    successFullInstances
                 );
-            } else {
-                //To do post success scenario
+                dispatch(setInventoryTableData(updatedInventoryTableData));
             }
         });
     };
@@ -433,22 +466,32 @@ const InventoryTable = () => {
                         {instanceList && (
                             <div>
                                 {instanceList?.[0] && (
-                                    <Typography
-                                        variant="Regular_13"
-                                        className={`${styles.colText}`}
-                                        title={instanceList[0]}
-                                    >
-                                        {instanceList[0]}
-                                    </Typography>
+                                    <Popover
+                                        popoverClass={''}
+                                        children={instanceList[0]}
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={
+                                            <Typography variant="Regular_14" className={`${styles.colText}`}>
+                                                {instanceList[0]}
+                                            </Typography>
+                                        }
+                                    />
                                 )}
                                 {instanceList?.[1] && (
-                                    <Typography
-                                        variant="Regular_13"
-                                        className={`${styles.colText}`}
-                                        title={instanceList[1]}
-                                    >
-                                        {instanceList[1]}
-                                    </Typography>
+                                    <Popover
+                                        popoverClass={''}
+                                        children={instanceList[1]}
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={
+                                            <Typography variant="Regular_14" className={`${styles.colText}`}>
+                                                {instanceList[1]}
+                                            </Typography>
+                                        }
+                                    />
                                 )}
                             </div>
                         )}

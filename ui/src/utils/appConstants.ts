@@ -518,6 +518,7 @@ export const GENERAL = {
     TOPOLOGY: 'Topology',
     STATUS: 'Status',
     HOST_NAME: 'Host name',
+    INSTANCE_NAME: 'Instance name',
     NO_OF_DBS: 'Number of databases',
     TOTAL_USED_CAPACITY: 'Total used capacity',
     SQL_VERSION: 'SQL version',
@@ -934,6 +935,8 @@ export const GENERAL = {
     REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
     REFRESH_CURRENT_RADIO: 'Refresh to current time',
     REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot',
+    SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
+    INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
     EBS_TOOLTIP_MESSAGE:
@@ -941,7 +944,14 @@ export const GENERAL = {
     ALL_MANAGED_TEXT:
         'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
     ALL_UNDETECT_TEXT:
-        'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.'
+        'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+    MANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) => `Database instance ${instanceName} managed successfully.`,
+    MANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to manage.`,
+    UNMANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) =>
+        `Database instance ${instanceName} unmanaged successfully.`,
+    UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unmanage.`,
+    NOT_OPTIMIZED:
+        "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use."
 };
 
 export const CODE_VIEWER = {

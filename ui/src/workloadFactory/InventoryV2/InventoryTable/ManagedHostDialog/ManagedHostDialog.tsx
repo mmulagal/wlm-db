@@ -21,7 +21,9 @@ const ManagedHostDialog = ({ dialogData }: any) => {
     useEffect(() => {
         const dbInstances = dialogData?.sqlServerInstances;
         let output = dbInstances.map((obj: any) => {
-            const isInstanceInProgress = inProgressInstances.has(`${dialogData?.id}_${obj?.databaseInstanceName}`);
+            const isInstanceInProgress = inProgressInstances.has(
+                `${dialogData?.ec2InstanceId}_${obj?.databaseInstanceName}`
+            );
             if (isInstanceInProgress || obj.statusColText === INVENTORY_STATUS.MANAGED) {
                 return {
                     ...obj,
@@ -34,7 +36,9 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             }
         });
         let defaultSelection = dbInstances.map((item: any) => {
-            const isInstanceInProgress = inProgressInstances.has(`${dialogData?.id}_${item?.databaseInstanceName}`);
+            const isInstanceInProgress = inProgressInstances.has(
+                `${dialogData?.ec2InstanceId}_${item?.databaseInstanceName}`
+            );
             if (isInstanceInProgress || item.statusColText === 'managed') {
                 return item.id;
             }
@@ -69,6 +73,9 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                 if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
                 }
+                if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
+                }
                 if (rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
                         <div className={styles.inProgress}>
@@ -77,7 +84,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                         </div>
                     );
                 }
-                if (rowData.status === INVENTORY_STATUS.MANAGED) {
+                if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
                     return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
                 }
             }

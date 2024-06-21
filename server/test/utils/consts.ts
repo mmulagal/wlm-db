@@ -35,7 +35,7 @@ const FSX_CONFIGURATION = {
     fsxFileSystemId: 'fs-05a228ef446b34d27',
     fsxUsername: 'fsxadmin',
     fsxPassword: 'netapp1!',
-    databaseSize: 1024,
+    databaseSize: 120,
     fsxVolThroughput: 128,
     fsxIOPS: 3072,
     encryptionKey: '',
