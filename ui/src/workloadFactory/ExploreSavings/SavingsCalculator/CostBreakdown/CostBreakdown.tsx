@@ -14,6 +14,10 @@ const CostBreakdown = () => {
     const [calculatedResponse, setCalculatedResponse] = useState({});
     const [loading, setLoading] = useState(false);
 
+    const checkForTooltip =
+        storageSavingsResponse?.license?.existing?.sqlServerEdition?.includes('Enterprise') &&
+        storageSavingsResponse?.license?.recommended?.sqlServerEdition?.includes('Standard');
+
     useEffect(() => {
         setCalculatedResponse(storageSavingsResponse);
         setLoading(storageSavingsLoading);
@@ -41,7 +45,7 @@ const CostBreakdown = () => {
                         >
                             {data?.isTooltip ? (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <TooltipInfo>{data?.isTooltip}</TooltipInfo>
+                                    {checkForTooltip && <TooltipInfo>{data?.isTooltip}</TooltipInfo>}
                                     <div>{data?.type}</div>
                                 </div>
                             ) : (
