@@ -30,6 +30,7 @@ import {
     setDetectManageUserName,
     setDetectONTAPPassword,
     setDetectONTAPUserName,
+    setDetectedInstanceId,
     setInProgressInstances,
     setInventoryTableData,
     setRadioValueDetect,
@@ -52,7 +53,7 @@ import {
     setInstanceName
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../../store/authSlice';
-import { detectFieldsValidation, updateInstanceStatus } from '../../InventoryUtilsV2';
+import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import UndetectedHostDialogContentV2 from '../UndetectedHostDialogContent/UndetectedHostDialogContentV2';
 import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecondDialogV2';
@@ -201,12 +202,11 @@ const ManagedHostSubTable = ({
     };
 
     // This function is used to check if user wants to manage the detected host vis workload factory
-    const handleMoveToManage = async (rowData: any, fsxId: any) => {
+    const handleMoveToManage = async (rowData: any, fsxId: any, isFsxRegister?: boolean) => {
         const state = store.getState();
         const detectHostRadio = state.inventoryV2.detectHostRadio;
         if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
             handleManageInstances(hostData, [rowData?.databaseInstanceName], true);
-
             const manageStartMsg = (
                 <div className={styles.notification}>
                     {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
@@ -229,6 +229,10 @@ const ManagedHostSubTable = ({
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: detectedSuccessMsg }));
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         }
+        // if fsx register is false and only db cred is added than call instance API
+        if (!isFsxRegister) {
+            dispatch(setDetectedInstanceId(hostData?.ec2InstanceId));
+        }
     };
 
     // This function is to register credentials on detect host
@@ -243,7 +247,7 @@ const ManagedHostSubTable = ({
                 const result: any = await registerResourceCred({
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
-                    instanceId: rowData?.instanceID,
+                    instanceId: hostData?.ec2InstanceId,
                     payload: createDetectHostPayload(sqlServerInstance, fsxId)
                 });
                 if (result && !result?.error) {
@@ -255,6 +259,10 @@ const ManagedHostSubTable = ({
                         dispatch(setIsDetectHostLoading(false));
                     } else {
                         dispatch(setIsDetectHostLoading(false));
+
+                        // store fsx cred in register obj if payload has fsx register
+                        let isFsxRegister = saveFsxInCredRegisteredObj(fsxId, dispatch);
+
                         if (rowData?.storage && rowData?.storage?.length > 0) {
                             setTimeout(() => {
                                 setDialog(
@@ -271,7 +279,7 @@ const ManagedHostSubTable = ({
                                         }
                                         content={<UndetectedSecondDialogV2 data={rowData} apiResult={result?.data} />}
                                         primaryButton={GENERAL.DONE}
-                                        callback={() => handleMoveToManage(rowData, fsxId)}
+                                        callback={() => handleMoveToManage(rowData, fsxId, isFsxRegister)}
                                     />
                                 );
                             }, 0);

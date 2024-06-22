@@ -43,6 +43,7 @@ const InventoryApisV2 = () => {
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const fsxCredentialStatusObj = useAppSelector(state => state.inventoryV2.fsxCredentialStatusObj);
     const mssqlInstancesData = useAppSelector(state => state.inventoryV2.mssqlInstancesData);
+    const detectedInstanceId = useAppSelector(state => state.inventoryV2.detectedInstanceId);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
@@ -381,6 +382,11 @@ const InventoryApisV2 = () => {
             });
         }
     };
+
+    useEffect(() => {
+        // if fsx register is false and only db cred is added than call instance API
+        callInstanceApi([detectedInstanceId], false);
+    }, [detectedInstanceId]);
 
     const resetValues = () => {
         // reset for getManagedHostList

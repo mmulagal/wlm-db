@@ -68,8 +68,8 @@ const UndetectedHostDialogContentV2 = ({ rowData }: DialogProps) => {
 
     //useEffect for detect password
     useEffect(() => {
-        setDetectPasswordSearch(detectManagePassword);
-    }, [detectManagePassword]);
+        setDetectPasswordSearch(detectPassword);
+    }, [detectPassword]);
 
     useEffect(() => {
         dispatch(setDetectManagePassword(detectPasswordSearch));

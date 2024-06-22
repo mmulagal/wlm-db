@@ -1,6 +1,10 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
-import { setInProgressInstances, setInventoryTableData } from '../../store/workloadFactory/inventoryV2Slice';
+import {
+    setFsxCredentialStatus,
+    setInProgressInstances,
+    setInventoryTableData
+} from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
@@ -919,11 +923,13 @@ export const updateInventoryDatawithInstancesRes = (
         };
     } else if (!instanceRow?.isManagedHost) {
         const allocatedCapacity = getAllocatedCapacity(instanceRow?.data);
+        const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
         result = {
             ...inventoryRow,
+            name: inventoryRow?.name || instanceRow?.data?.name,
             isManagedHost: instanceRow?.isManagedHost,
             loading: instanceRow?.loading,
-            ec2Details: getEc2DetailsForUnmanagedHost(instanceRow),
+            ec2Details: ec2Details?.length > 0 ? ec2Details : inventoryRow?.ec2Details,
             estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
             totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
             allocatedCapacity: allocatedCapacity,
@@ -1079,6 +1085,7 @@ export const updateInstanceStatus = (action: InstanceActions, hostData: any, ins
                     ? INVENTORY_ACTIONS.EXPLORE_SAVINGS
                     : INVENTORY_ACTIONS.MANAGE,
             actionDisable: false,
+            hasInstanceData: false,
             sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
                 if (instanceItem?.databaseInstanceName === instanceData?.databaseInstanceName) {
                     return { ...instanceItem, statusColText: INVENTORY_STATUS.UNMANAGED };
@@ -1134,4 +1141,20 @@ export const getDiscoveredHostDeploymentV2 = (host: any) => {
         type = sqlServerDeploymentType;
     }
     return type;
+};
+
+export const saveFsxInCredRegisteredObj = (fsxId: string, dispatch: any) => {
+    let state = store.getState();
+    const { fsxCredentialStatusObj, detectOntapUsername, detectOntapPassword } = state?.inventoryV2;
+    if (detectOntapUsername && detectOntapPassword && fsxId) {
+        dispatch(
+            setFsxCredentialStatus({
+                ...fsxCredentialStatusObj,
+                [fsxId]: true
+            })
+        );
+        return true;
+    } else {
+        return false;
+    }
 };
