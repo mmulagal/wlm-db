@@ -57,11 +57,12 @@ import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatu
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import UndetectedHostDialogContentV2 from '../UndetectedHostDialogContent/UndetectedHostDialogContentV2';
 import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecondDialogV2';
+import useResize from '../../../../common/hooks/useResize';
 
 const ManagedHostSubTable = ({
     rowId,
     hostname,
-    scrollPosition,
+
     resourceId,
     hostData,
     loading,
@@ -69,12 +70,13 @@ const ManagedHostSubTable = ({
 }: {
     rowId: string;
     hostname: string;
-    scrollPosition: any;
+
     resourceId: string;
     hostData: any;
     loading: boolean;
     handleManageInstances: (rowData: any, instances: any, isDetected?: boolean) => void;
 }) => {
+    const windowSize = useResize();
     const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
@@ -589,9 +591,14 @@ const ManagedHostSubTable = ({
             renderCell: (cellData: string | number, rowData: any) => {
                 return renderAllocatedCapacity(cellData, rowData);
             }
-        },
-        lastColDetails()
+        }
     ];
+
+    if (windowSize.width > 1500) {
+        managedHostSubTableColDefs.push(lastColDetails());
+    } else {
+        managedHostSubTableColDefs.unshift(lastColDetails());
+    }
 
     const tableProps = useTable({
         isSorting: false,
@@ -607,7 +614,7 @@ const ManagedHostSubTable = ({
             {/* <div className={styles.topDiv} /> */}
             <div className={styles.extraDiv2} />
 
-            <span className={styles.managedSubTable} style={{ position: 'relative', left: `${scrollPosition}px` }}>
+            <span className={styles.managedSubTable}>
                 <Table
                     //@ts-ignore
 
@@ -615,6 +622,8 @@ const ManagedHostSubTable = ({
                     variant="innerTable"
                 />
             </span>
+
+            <div className={styles.extraDivRight} />
 
             {/* <div className={styles.topDiv} /> */}
         </div>
