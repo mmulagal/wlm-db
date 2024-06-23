@@ -1026,7 +1026,7 @@ async function invokeVirtualMount(
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
                 command = [
-                    `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve  -InstanceName '${destDetails.instanceName}' -IsDefaultInstance ${isDefaultSqlServerInstance}`
+                    `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve`
                 ];
             }
 
