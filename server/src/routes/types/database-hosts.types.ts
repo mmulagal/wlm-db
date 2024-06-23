@@ -20,9 +20,15 @@ const DatabaseHostObjectParams = Type.Object({
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
 const DatabaseHostSummaryParams = Type.Composite([CredentialsIdParams, Type.Object({ databaseHostId: Type.String() })]);
+
 const DatabaseHostInstanceSummaryParams = Type.Composite([
     DatabaseHostSummaryParams,
     Type.Object({ databaseInstanceId: Type.String() })
+]);
+
+const DatabaseHostOptionalInstanceSummaryParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Optional(Type.Object({ databaseInstanceId: Type.String() }))
 ]);
 
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
@@ -316,7 +322,8 @@ const CreateDatabseRequestBody = Type.Object({
     databaseName: Type.String({ minLength: 1, maxLength: 123 }),
     dataFileConfig: FileConfig,
     logFileConfig: FileConfig,
-    collation: Type.String()
+    collation: Type.String(),
+    databaseInstanceId: Type.Optional(Type.String())
 });
 
 const DatabasesCreateResponse = Type.Object({
@@ -494,7 +501,7 @@ const NodeTopologyResponse = Type.Object({
 const DatabaseInstanceTopology = Type.Object({
     serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
-    fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows'] }),
+    fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows', NOT_AVAILABLE] }),
     fileSystemId: Type.Optional(Type.String()),
     fileSystemName: Type.Optional(Type.String()),
     fileSystemDeploymentMode: Type.Optional(Type.String()),
@@ -514,6 +521,7 @@ const DatabaseHostInstanceSummaryResponse = Type.Object({
     status: Type.String({ enum: [ServerState.UP, ServerState.DOWN, NOT_AVAILABLE] }),
     databaseCount: Type.Optional(Type.Number()),
     databaseServer: Type.Optional(DatabaseServerMetadataResponse),
+    nodeTopology: Type.Optional(NodeTopologyResponse),
     databaseInstanceTopology: Type.Optional(DatabaseInstanceTopology),
     protection: Type.Optional(ProtectionPerStorageTypeResponse),
     performance: Type.Optional(PerformanceResponse),
@@ -644,5 +652,6 @@ export {
     DatabaseHostInstanceSummaryResponse,
     DatabaseHostInstanceSummaryResponseType,
     DatabaseInstanceTopologyType,
-    DatabaseHostInstanceSummaryParams
+    DatabaseHostInstanceSummaryParams,
+    DatabaseHostOptionalInstanceSummaryParams
 };

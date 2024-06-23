@@ -35,6 +35,15 @@
         // border-bottom: 1px solid var(--border);
     }
 
+    .extraDivRight {
+        width: 70px;
+        position: sticky;
+        right: 0;
+        z-index: 3;
+        background-color: var(--content-background);
+        // border-bottom: 1px solid var(--border);
+    }
+
     .table {
         display: flex;
         // padding: 40px 56px 40px 0;
@@ -97,10 +106,13 @@
     position: relative;
 }
 
+.headerDialog {
+    display: flex;
+    justify-content: space-between;
+}
+
 @media screen and (max-width: 1500px) {
     .managedSubTable {
-        width: 980px !important;
-
         [class*='Table-module_scroll'] {
             width: 1449px !important;
         }

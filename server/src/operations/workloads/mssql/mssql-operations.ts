@@ -613,6 +613,10 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 const parsedResponse = sqlResponseParsing(response);
 
                 const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+                instancesDetails.forEach(obj => {
+                    (obj as any).isDefault = !obj.instanceName.includes('$');
+                    obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
+                });
                 let defaultInstance = true;
                 let selectedInstance = instancesDetails.find(
                     (instance: { instanceState: string; instanceName: string | string[] }) =>
@@ -649,6 +653,7 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
             if (response) {
                 let parsedResponse = sqlResponseParsing(response);
                 parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+
                 return parsedResponse;
             }
         }
@@ -814,7 +819,7 @@ async function getActiveSqlNode(
             connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const { instanceName, instancesDetails = [] } =
-                    (await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId])) || {};
+                    (await getActiveSqlInstanceName(credentialsId, region, [node2InstanceId])) || {};
                 if (instanceName) {
                     return {
                         isSSMConnected: true,
@@ -1036,7 +1041,9 @@ async function getActiveSqlNodeAndInstanceDetails(
             const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId]);
-
+                instanceDetails.forEach((obj: { instanceName: string }) => {
+                    obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
+                });
                 if (instanceDetails) {
                     const matchingInstance = instanceDetails.find(
                         (instance: { instanceName: string }) => instance.instanceName === databaseInstanceName

@@ -1,4 +1,10 @@
+import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
+import {
+    setFsxCredentialStatus,
+    setInProgressInstances,
+    setInventoryTableData
+} from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
@@ -137,7 +143,7 @@ export const managedInstancesCount = (row: ManagedHostsRowInterface) => {
     }
 };
 
-export const getInstallationMode = (row: ManagedHostsRowInterface) => {
+export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) => {
     let installationMode = '';
     if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
         for (let i = 0; i < row?.databaseInstancesSummary?.length; i++) {
@@ -494,6 +500,12 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
     let ssmState = getDiscoverSsmState(discoveredRow);
     let perInstanceStatus = getDiscoveredPerInstanceStatus(discoveredRow, ssmState);
     let actionObj = getDiscoveredActions(perInstanceStatus);
+    let ec2Details = [
+        {
+            id: discoveredRow?.ec2InstanceId,
+            name: discoveredRow?.ec2InstanceName
+        }
+    ];
     const result = {
         id: discoveredRow?.ec2InstanceId,
         ec2InstanceId: discoveredRow?.ec2InstanceId,
@@ -514,8 +526,8 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         loading: false,
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
+        ec2Details: ec2Details,
         // **** Below values will get from Instances API *****
-        // ec2Details: discoveredRow?.ec2Details, // ToDo - will add in discovery only
         // estimatedUsageCost: {}, // Initially it will be blank
         // totalCost: '',
         // allocatedCapacity: '',
@@ -572,7 +584,7 @@ export const getDiscoverInstallationMode = (row: DiscoverHostInterface) => {
 };
 
 export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmState: string) => {
-    let result: any[] = [];
+    let result: Array<StatusObjInterface> = [];
     let state = store.getState();
     const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObj;
     if (row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
@@ -583,6 +595,9 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                 const isSqlAuthentication = perRow?.sqlServerAuthentication;
                 let fsxCredentialValidationFailed;
                 let storageTypeCheck;
+                let fsxIdObject = perRow?.storage?.find(
+                    (item: DiscoveredStorageObj) => item.type === DETECT_HOST_VAR.FSXN
+                );
                 if (perRow?.storage && perRow?.storage?.length > 0) {
                     fsxCredentialValidationFailed = perRow?.storage?.find(
                         (item: DiscoveredStorageObj) =>
@@ -602,16 +617,27 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                     fsxCredentialValidationFailed ||
                     !storageTypeCheck
                 ) {
+                    let detectOptionObj = getDetectOptionForInstance(
+                        perRow,
+                        row?.ssmState,
+                        fsxIdObject?.id,
+                        fsxCredentialStatusObj
+                    );
                     statusObj = {
+                        ...detectOptionObj,
                         name: perRow.sqlServerInstance,
                         status: INVENTORY_STATUS.UNDETECTED,
-                        storageType: perRow?.storage
+                        storageType: perRow?.storage,
+                        fsxId: fsxIdObject?.id,
+                        isFsxRegistered: !fsxCredentialValidationFailed
                     };
                 } else {
                     statusObj = {
                         name: perRow.sqlServerInstance,
                         status: INVENTORY_STATUS.UNMANAGED,
-                        storageType: perRow?.storage
+                        storageType: perRow?.storage,
+                        fsxId: fsxIdObject?.id,
+                        isFsxRegistered: !fsxCredentialValidationFailed
                     };
                 }
                 result = [...result, ...[statusObj]];
@@ -619,6 +645,37 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
         });
     }
     return result;
+};
+
+export const getDetectOptionForInstance = (
+    perRow: SQLServerInstancesDiscovered,
+    ssmState: string | undefined,
+    fsxId: string | undefined,
+    fsxCredentialStatusObj: any
+) => {
+    let hasStorageTypes = false;
+    if (perRow?.storage && perRow?.storage?.length > 0) {
+        hasStorageTypes = true;
+    }
+    let detectOption = DETECT_HOST_VAR.DISABLE;
+    let detectOptionDisableMsg = '';
+    let isSqlRunning = perRow?.sqlServerState === DETECT_HOST_VAR.RUNNING;
+    if (ssmState?.toLowerCase() !== INVENTORY_STATUS.SSM_CONNECTED) {
+        detectOption = DETECT_HOST_VAR.HIDE;
+        detectOptionDisableMsg = GENERAL.SSM_CONNECTION_DOWN;
+    } else if (!isSqlRunning) {
+        detectOption = DETECT_HOST_VAR.DISABLE;
+        detectOptionDisableMsg = GENERAL.SQL_SERVER_NOT_RUNNING;
+    } else if (!hasStorageTypes && (perRow?.windowsAuthentication || perRow?.sqlServerAuthentication)) {
+        detectOption = DETECT_HOST_VAR.DISABLE;
+        detectOptionDisableMsg = GENERAL.STORAGE_NOT_PRESENT;
+    } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
+        detectOption = DETECT_HOST_VAR.SHOW;
+    }
+    return {
+        detectOption: detectOption,
+        detectOptionDisableMsg: detectOptionDisableMsg
+    };
 };
 
 export const getDiscoveredActions = (row: Array<StatusObjInterface>) => {
@@ -708,10 +765,16 @@ export const formatDiscoverInstanceData = (
             // databaseCount: 0,
             statusColText: statusObj ? statusObj?.[0]?.status : INVENTORY_STATUS.UNDETECTED,
             fileSystemDeploymentMode: getFileSystemDeploymentMode(perRow?.deploymentTypes?.[0]?.type || ''),
-            fileSystemType: getDiscoverFileSystemType(perRow)
+            fileSystemType: getDiscoverFileSystemType(perRow),
+            storage: perRow?.storage,
+            fsxId: statusObj?.[0]?.fsxId,
+            isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
+            sqlServerAuthentication: perRow?.sqlServerAuthentication,
+            windowsAuthentication: perRow?.windowsAuthentication,
+            detectOption: statusObj?.[0]?.detectOption,
+            detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg
             // protection: {},
             // performance: {},
-            // storage: {},
             // storageSavingsText: '',
             // allocatedCapacity:
             //     (perRow?.storage?.fsxn?.size || 0) +
@@ -853,15 +916,20 @@ export const updateInventoryDatawithInstancesRes = (
             isManagedHost: instanceRow?.isManagedHost,
             loading: instanceRow?.loading,
             hasInstanceData: true,
+            serverInstallationMode: !inventoryRow?.serverInstallationMode
+                ? getInstallationMode(instanceRow?.data)
+                : inventoryRow?.serverInstallationMode,
             sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow)
         };
     } else if (!instanceRow?.isManagedHost) {
         const allocatedCapacity = getAllocatedCapacity(instanceRow?.data);
+        const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
         result = {
             ...inventoryRow,
+            name: inventoryRow?.name || instanceRow?.data?.name,
             isManagedHost: instanceRow?.isManagedHost,
             loading: instanceRow?.loading,
-            ec2Details: getEc2DetailsForUnmanagedHost(instanceRow),
+            ec2Details: ec2Details?.length > 0 ? ec2Details : inventoryRow?.ec2Details,
             estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
             totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
             allocatedCapacity: allocatedCapacity,
@@ -988,10 +1056,11 @@ export const updateInstanceStatus = (action: InstanceActions, hostData: any, ins
     if (action === 'manage') {
         updatedInventoryTableData[targettedHostId] = {
             ...inventoryTableData[targettedHostId],
-            managedInstance: inventoryTableData[targettedHostId].managedInstance + 1,
+            managedInstance: inventoryTableData[targettedHostId].managedInstance + responseData?.length || 0,
+            action: INVENTORY_ACTIONS.MANAGE,
             actionDisable:
                 inventoryTableData[targettedHostId].totalInstance ===
-                inventoryTableData[targettedHostId].managedInstance + 1,
+                    inventoryTableData[targettedHostId].managedInstance + responseData?.length || 0,
             sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
                 const instanceInRes = responseData.find(
                     (item: any) => item?.databaseInstanceName === instanceItem?.databaseInstanceName
@@ -1007,5 +1076,85 @@ export const updateInstanceStatus = (action: InstanceActions, hostData: any, ins
             })
         };
     }
+    if (action === 'detect') {
+        updatedInventoryTableData[targettedHostId] = {
+            ...inventoryTableData[targettedHostId],
+            action:
+                inventoryTableData[targettedHostId]?.storageType === GENERAL.EBS ||
+                inventoryTableData[targettedHostId]?.storageType === GENERAL.FSX_FOR_WINDOWS
+                    ? INVENTORY_ACTIONS.EXPLORE_SAVINGS
+                    : INVENTORY_ACTIONS.MANAGE,
+            actionDisable: false,
+            hasInstanceData: false,
+            sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
+                if (instanceItem?.databaseInstanceName === instanceData?.databaseInstanceName) {
+                    return { ...instanceItem, statusColText: INVENTORY_STATUS.UNMANAGED };
+                }
+                return instanceItem;
+            })
+        };
+    }
     return updatedInventoryTableData;
+};
+
+export const detectFieldsValidation = (entryData: any) => {
+    const state = store.getState();
+    const { detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword } = state.inventoryV2;
+    if (
+        !entryData?.sqlServerAuthentication &&
+        !entryData?.windowsAuthentication &&
+        entryData?.fsxId &&
+        !entryData?.isFsxRegistered
+    ) {
+        if (detectManageUserName && detectManagePassword && detectOntapUsername && detectOntapPassword) {
+            return true;
+        } else {
+            return false;
+        }
+    } else if (!entryData?.sqlServerAuthentication && !entryData?.windowsAuthentication) {
+        if (detectManageUserName && detectManagePassword) {
+            return true;
+        } else {
+            return false;
+        }
+    } else if (entryData?.fsxId && !entryData?.isFsxRegistered) {
+        if (detectOntapUsername && detectOntapPassword) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+};
+
+export const getDiscoveredHostDeploymentV2 = (host: any) => {
+    // This will get deployment type in case of unmanaged hosts
+    const sqlServerDeploymentType = host.sqlServerDeploymentType || '';
+    let type = '';
+
+    if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+        type = GENERAL.AOAG;
+    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+        type = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+        type = GENERAL.STANDALONE;
+    } else {
+        type = sqlServerDeploymentType;
+    }
+    return type;
+};
+
+export const saveFsxInCredRegisteredObj = (fsxId: string, dispatch: any) => {
+    let state = store.getState();
+    const { fsxCredentialStatusObj, detectOntapUsername, detectOntapPassword } = state?.inventoryV2;
+    if (detectOntapUsername && detectOntapPassword && fsxId) {
+        dispatch(
+            setFsxCredentialStatus({
+                ...fsxCredentialStatusObj,
+                [fsxId]: true
+            })
+        );
+        return true;
+    } else {
+        return false;
+    }
 };

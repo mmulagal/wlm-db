@@ -395,7 +395,7 @@ export const workloadFactoryResourceApiV2 = createApi({
         return {
             getResourceDetailsV2: builder.query({
                 query: ({ credentialId, region, id, sqlInstanceId }) => ({
-                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount`
+                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology`
                 })
             }),
             getDatabaseListV2: builder.query({
@@ -529,6 +529,13 @@ export const createUserDbApi = createApi({
                     }`
                 })
             }),
+            getDriveInfoV2: builder.query({
+                query: ({ credentialId, region, id, instanceId, forSandbox }) => ({
+                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/drive-information${
+                        forSandbox ? '?forSandbox=true' : ''
+                    }`
+                })
+            }),
             createUserDB: builder.mutation({
                 query: ({ credentialId, region, id, payload }) => ({
                     url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database`,
@@ -539,6 +546,11 @@ export const createUserDbApi = createApi({
             getCollationList: builder.query({
                 query: ({ credentialId, region, id }) => ({
                     url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/collation`
+                })
+            }),
+            getCollationListV2: builder.query({
+                query: ({ credentialId, region, id, instanceId }) => ({
+                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/collation`
                 })
             })
         };
@@ -956,7 +968,13 @@ export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetS
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
-export const { useGetDriveInfoQuery, useCreateUserDBMutation, useGetCollationListQuery } = createUserDbApi;
+export const {
+    useGetDriveInfoQuery,
+    useCreateUserDBMutation,
+    useGetCollationListQuery,
+    useGetDriveInfoV2Query,
+    useGetCollationListV2Query
+} = createUserDbApi;
 
 export const {
     useLazyGetDatabaseHostsFullDataQuery,

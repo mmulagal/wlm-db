@@ -40,7 +40,7 @@ import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
-import { useRunOnce } from '../../../common/hooks/useRunOnce';
+
 import { sortInventoryTableData, updateInstanceStatus } from '../InventoryUtilsV2';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../utils/apiService';
@@ -64,7 +64,6 @@ const InventoryTable = () => {
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
-    const [scrollPos, setScrollPos] = useState(0);
 
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
@@ -89,27 +88,6 @@ const InventoryTable = () => {
         isManagedHostListLoading,
         fsxCredentialStatusLoading
     ]);
-
-    //For scroll sync
-    useRunOnce(() => {
-        const handleOuterScroll = () => {
-            setScrollPos(currentTable[0].scrollLeft);
-        };
-
-        const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
-
-        if (currentTable[0]) {
-            //@ts-ignore
-            currentTable[0].addEventListener('scroll', handleOuterScroll);
-        }
-
-        return () => {
-            if (currentTable[0]) {
-                //@ts-ignore
-                currentTable[0].removeEventListener('scroll', handleOuterScroll);
-            }
-        };
-    });
 
     useEffect(() => {
         if (inventoryTableData) {
@@ -179,7 +157,6 @@ const InventoryTable = () => {
                 <ManagedHostSubTable
                     rowId={rowData?.id}
                     hostname={rowData?.name}
-                    scrollPosition={scrollPos}
                     resourceId={rowData?.resourceId}
                     handleManageInstances={handleManageInstances}
                     hostData={rowData}
@@ -190,7 +167,7 @@ const InventoryTable = () => {
         return <OfflineComponent />;
     };
 
-    const handleManageInstances = (rowData: any, instances: any) => {
+    const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState.inventoryV2;
         const inProgressIds = instances.map((instance: any) => `${rowData?.ec2InstanceId}_${instance}`);
@@ -239,13 +216,28 @@ const InventoryTable = () => {
                 );
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             }
+            if (res?.error && isDetected) {
+                let databaseInstanceObj = {
+                    databaseInstanceName: instances?.[0]
+                };
+                const updatedInventoryTableData = updateInstanceStatus('detect', rowData, databaseInstanceObj);
+                dispatch(setInventoryTableData(updatedInventoryTableData));
+                const detectedSuccessMsg = (
+                    <div className={styles.notification}>
+                        {GENERAL.INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED[0]}
+                        <span className={styles.bold}>{databaseInstanceObj?.databaseInstanceName}</span>
+                        {GENERAL.INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED[1]}
+                    </div>
+                );
+                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: detectedSuccessMsg }));
+            }
         });
     };
 
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={`Manage data base host ${rowData?.name} instances`}
+                header={`Manage database host ${rowData?.name} instances`}
                 content={<ManagedHostDialog dialogData={rowData} />}
                 primaryButton={INVENTORY_ACTIONS.MANAGE}
                 secondaryButton={'Close'}

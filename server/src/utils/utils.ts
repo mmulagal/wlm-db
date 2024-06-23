@@ -91,7 +91,7 @@ function generateDeploymentParams(
     // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
     // Automatic (3 IOPS per GiB of SSD storage)
     // User-Provisioned (it should be calculated by 3 times of fsxStorageCapacity as minimum size)
-    if (fsxIOPS !== 3 && fsxVolThroughput !== FSX_VOL_THROUGHPUT) {
+    if (fsxIOPS !== 3 && fsxVolThroughput !== FSX_VOL_THROUGHPUT && !isExistingFSx) {
         // accepted iops values
         const acceptedIOPS = fsxStorageCapacity * 3;
         if (fsxIOPS < acceptedIOPS) {
@@ -427,7 +427,14 @@ function convertMetricsIntoJson(input: Array<string>) {
     return metrics;
 }
 
+/*
+ * AWS considers the value of tag 'Name' as the resource name.
+ * If tag 'Name' is present, return its corresponding Value.
+ * Otherwise, returns undefined.
+ */
 function getResourceNameFromTags(tags?: Tag[]) {
+    logger.debug('Find resource name from the tags', { tags });
+
     const { Value: name } = tags?.find(tag => tag?.Key === 'Name') || {};
     return name;
 }
@@ -530,6 +537,10 @@ function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true
     return `${DEFAULT_MSSQL_INSTANCE_NAME}\\${instanceName.replace(/^.+\$/, '')}`;
 }
 
+function isDemo() {
+    return process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -564,5 +575,6 @@ export {
     camelizeKeys,
     convertToBytes,
     getMonthlyPriceFromHourlyPrice,
-    getDatabaseInstanceName
+    getDatabaseInstanceName,
+    isDemo
 };

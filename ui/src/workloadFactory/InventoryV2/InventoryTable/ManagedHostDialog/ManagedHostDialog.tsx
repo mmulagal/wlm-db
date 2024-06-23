@@ -24,7 +24,11 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             const isInstanceInProgress = inProgressInstances.has(
                 `${dialogData?.ec2InstanceId}_${obj?.databaseInstanceName}`
             );
-            if (isInstanceInProgress || obj.statusColText === INVENTORY_STATUS.MANAGED) {
+            if (
+                isInstanceInProgress ||
+                obj.statusColText === INVENTORY_STATUS.MANAGED ||
+                obj.statusColText === INVENTORY_STATUS.UNDETECTED
+            ) {
                 return {
                     ...obj,
                     cellProps: { isDisabled: true },
@@ -84,7 +88,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                         </div>
                     );
                 }
-                if (rowData.status === INVENTORY_STATUS.MANAGED) {
+                if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
                     return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
                 }
             }

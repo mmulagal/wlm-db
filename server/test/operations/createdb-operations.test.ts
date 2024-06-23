@@ -165,7 +165,9 @@ describe('Create database operations', () => {
             reqData.fsxLogVolumeName,
             reqData.dataSerial,
             reqData.logSerial,
-            'false'
+            'false',
+            'MSSQLSERVER',
+            'true'
         );
 
         expect(resp.Status).toBe('Complete');

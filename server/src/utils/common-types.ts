@@ -174,16 +174,19 @@ interface DatabaseInstance {
     database_deployment_type?: string;
     fsxn_ids: string;
     credentials_id: string;
+    fsx_svm_id?: JSON;
     fsxwId?: string;
     ebsVolumeIds?: string[];
     storage_protocol?: string;
     region: string;
     databaseType?: string;
+    storageType?: string;
 }
 
 interface InstanceDetails {
     instanceName: string;
     instanceState: string;
+    isDefault?: boolean;
 }
 
 export {
