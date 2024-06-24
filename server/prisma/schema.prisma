@@ -131,7 +131,7 @@ model database_instances {
   storage_protocol                  STORAGEPROTOCOL?  @default(iSCSI)
   fsx_svm_id                        Json     
   metadata                          Json?             @default("{}")
-  storage_type                      STORAGE_TYPE      @default(FSXN)
+  storage_type                      MANAGED_STORAGE_TYPE      @default(FSXN)
 
   resource resource @relation(fields: [account_id, credentials_id, region, resource_id], references: [account_id, credentials_id, region, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_region_resource_id")
 
@@ -184,6 +184,10 @@ enum DEPLOYMENT_STATUS {
 enum DEPLOYMENT_MODEL {
   FCI
   Standalone
+}
+
+enum MANAGED_STORAGE_TYPE {
+  FSXN
 }
 
 enum STORAGE_TYPE {

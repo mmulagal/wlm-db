@@ -37,7 +37,8 @@ import {
     WF,
     ServerState,
     DATABASE_METRIC_TYPE,
-    DEFAULT_MSSQL_INSTANCE_NAME
+    DEFAULT_MSSQL_INSTANCE_NAME,
+    SQL_SERVICE_STATE
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import {
@@ -620,13 +621,12 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 let isDefaultInstance = true;
                 let selectedInstance = instancesDetails.find(
                     (instance: InstanceDetails) =>
-                        instance.instanceState.toLocaleLowerCase() === 'running' && !instance.instanceName.includes('$') // there is a $ present in named instances
+                        instance.instanceState === SQL_SERVICE_STATE.RUNNING && !instance.instanceName.includes('$')
                 )?.instanceName;
 
                 if (!selectedInstance) {
                     const runningInstances = instancesDetails.filter(
-                        ({ instanceState }: { instanceState: string }) =>
-                            instanceState.toLocaleLowerCase() === 'running'
+                        ({ instanceState }: { instanceState: string }) => instanceState === SQL_SERVICE_STATE.RUNNING
                     );
 
                     // Select the first running instance
@@ -1048,8 +1048,9 @@ async function getActiveSqlNodeAndInstanceDetails(
                 });
                 if (instanceDetails) {
                     const matchingInstance = instanceDetails.find(
-                        (instance: { instanceName: string; instanceState: string }) =>
-                            instance.instanceName === databaseInstanceName && instance.instanceState === 'Running'
+                        (instance: InstanceDetails) =>
+                            instance.instanceName === databaseInstanceName &&
+                            instance.instanceState === SQL_SERVICE_STATE.RUNNING
                     );
                     if (matchingInstance) {
                         return { nodeId, matchingInstance };

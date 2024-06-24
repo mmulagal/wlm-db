@@ -19,7 +19,8 @@ import {
     SSM_COMMAND_CACHE_TYPE,
     SSM_PARAM_PREFIX,
     SandboxLifecycleAction,
-    SANDBOX_LIFECYCLE_REFRESH
+    SANDBOX_LIFECYCLE_REFRESH,
+    SQL_SERVICE_STATE
 } from '../utils/consts';
 import {
     GET_SANDBOX_DETAILS,
@@ -1522,7 +1523,7 @@ async function getDatabaseMountPointInfo(
     databaseName: string
 ) {
     logger.info(
-        `Fetching mount point information`,
+        'Fetching mount point information',
         accountId,
         region,
         credentialsId,
@@ -3250,12 +3251,14 @@ async function runSandboxPreValidations(
 
     const srcInstanceName = srcStatus.instancesDetails?.find(
         instance =>
-            instance.instanceName === srcInstanceDetail.database_instance_name && instance.instanceState === 'Running'
+            instance.instanceName === srcInstanceDetail.database_instance_name &&
+            instance.instanceState === SQL_SERVICE_STATE.RUNNING
     );
 
     const destInstanceName = destStatus.instancesDetails?.find(
         instance =>
-            instance.instanceName === destInstanceDetail.database_instance_name && instance.instanceState === 'Running'
+            instance.instanceName === destInstanceDetail.database_instance_name &&
+            instance.instanceState === SQL_SERVICE_STATE.RUNNING
     );
 
     if (!srcInstanceName || !destInstanceName) {

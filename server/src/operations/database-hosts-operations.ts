@@ -45,7 +45,8 @@ import {
     V2_API_PAGE_SIZE,
     NOT_AVAILABLE,
     ONLINE,
-    OFFLINE
+    OFFLINE,
+    SQL_SERVICE_STATE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1651,8 +1652,8 @@ async function getDatabaseInstanceSummary(
     }
     databaseInstanceDetails.status = ServerState.UP;
     if (shouldQueryServerDetails && serverDetails) {
-        databaseInstanceDetails.databaseServer = serverDetails;
         serverDetails.creationDate = creationDate ? Date.parse(creationDate.toString()) : '';
+        databaseInstanceDetails.databaseServer = serverDetails;
     }
     databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
 
@@ -1712,7 +1713,8 @@ async function getDatabaseInstancesDetails(
               );
 
               const isManaged = Boolean(managedInstance);
-              const updatedInstanceState = instanceState === 'Running' ? ServerState.UP : ServerState.DOWN;
+              const updatedInstanceState =
+                  instanceState === SQL_SERVICE_STATE.RUNNING ? ServerState.UP : ServerState.DOWN;
 
               return { instanceName, instanceState: updatedInstanceState, isManaged, isDefault };
           })
@@ -2037,7 +2039,7 @@ async function getInstanceDetails(
     );
     const { nodeId: activeNodeInstanceId, matchingInstance } = activeNodeResponse;
     const { instanceName, instanceState } = matchingInstance;
-    if (instanceState.toLocaleLowerCase() !== 'running') {
+    if (instanceState !== SQL_SERVICE_STATE.RUNNING) {
         const errorMessage = `Instance id ${databaseInstanceId} is not running on host ${databaseHostId}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
