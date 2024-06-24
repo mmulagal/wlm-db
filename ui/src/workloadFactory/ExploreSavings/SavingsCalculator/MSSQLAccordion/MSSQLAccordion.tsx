@@ -14,7 +14,7 @@ import { setSaveConfigName } from '../../../../store/workloadFactory/exploreSavi
 import { useDispatch } from 'react-redux';
 import { useSaveConfigDataMutation } from '../../../../utils/apiService';
 import { LoadRecommendedConfig } from '../../../../components/CreateMsSql/Configuration/LoadConfiguration';
-import { setIsLoadConfig, setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
+import { setIsLoadConfig, setIsLoading, setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
 
 const TableLayout = ({ data }: any) => {
     return (
@@ -97,11 +97,12 @@ const MSSQLAccordion = ({ printState }: any) => {
         dispatch(setIsLoading(true));
         dispatch(setIsLoadConfig(true));
         navigate(WLF_TO_FORM_NAVIGATE);
+        const data = setRecommendedConfig(msSqlInstance, fsxData);
+        dispatch(setIsRecommendedInstance(data?.instanceType));
+        LoadRecommendedConfig(dispatch, data, false);
         setTimeout(() => {
-            const data = setRecommendedConfig(msSqlInstance, fsxData);
-            LoadRecommendedConfig(dispatch, data, false);
             dispatch(setIsLoadConfig(false));
-        }, 1);
+        }, 5);
     };
 
     return (
