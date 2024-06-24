@@ -806,6 +806,25 @@ export const sandboxApi = createApi({
                     return response;
                 }
             }),
+            getDatabaseHostsForSandboxV2: builder.query({
+                query: ({ credentialId, region, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v2/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage&nextToken=${nextToken}`;
+                    } else {
+                        return `v2/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.region
+                        };
+                    }
+                    return response;
+                }
+            }),
             getSandboxList: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
@@ -952,7 +971,8 @@ export const { useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeA
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
-export const { useLazyGetResourceDetailsV2Query, useLazyGetDatabaseListV2Query } = workloadFactoryResourceApiV2;
+export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
+    workloadFactoryResourceApiV2;
 
 export const {
     useGetJobsListQuery,
@@ -1015,6 +1035,7 @@ export const {
     useSplitSandboxMutation,
     useCheckIntegrityMutation,
     useGetDatabaseHostsForSandboxQuery,
+    useGetDatabaseHostsForSandboxV2Query,
     useLazyGetRollbackSnapshotsQuery
 } = sandboxApi;
 
