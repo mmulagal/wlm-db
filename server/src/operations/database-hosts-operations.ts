@@ -669,12 +669,14 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
         const [ec2Info, fsxnInfo, ebsInfo, fsxwInfo] = await Promise.all([
             getEc2ResourceInfo(credentialsId, region, activeNodeInstanceId),
             ...(fsxnIds && !isEmpty(fsxnIds)
-                ? [getFsxResourceInfo(credentialsId, region, fsxnIds!)]
+                ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxnIds!)])]
                 : [Promise.resolve()]),
             ...(ebsVolumeIds && !isEmpty(ebsVolumeIds)
                 ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds)]
                 : [Promise.resolve()]),
-            ...(!isEmpty(fsxwIds) ? [getFsxResourceInfo(credentialsId, region, fsxwIds!)] : [Promise.resolve()])
+            ...(fsxwIds && !isEmpty(fsxwIds)
+                ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxnIds!)])]
+                : [Promise.resolve()])
         ]);
 
         const ec2ResourceInfo = ec2Info as EstimationEc2Type;
