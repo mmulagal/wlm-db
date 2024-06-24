@@ -17,6 +17,12 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string]$LogPrefix = ''
+
+    [Parameter(Mandatory = $true)]
+    [string]$InstanceName
+
+    [Parameter(Mandatory = $true)]
+    [boolean]$IsDefaultInstance
 )
 
 $null = (Start-Transcript -Path "C:\cfn\log\invoke_virtualmount_$DBName.log.txt" -Append)
@@ -154,7 +160,7 @@ try {
         }
 
         try {
-            $SQLRoleGroup = (Get-ClusterGroup).Name -match ('SQl Server*')
+            $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($InstanceName)")
             $SQLGroup = $SQLRoleGroup[0]
 
             if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
@@ -162,8 +168,9 @@ try {
                 $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
 
                 #Add dependency on new disks in SQL Server Resource
-                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $($clusterdatadisk.Name))
-                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $($clusterlogdisk.Name))
+                $ClusterResourceName = If ($IsDefaultInstance) { "SQL Server" } Else { "SQL Server ($InstanceName)" }
+                $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterdatadisk.Name))
+                $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterlogdisk.Name))
 
                 #Rename new cluster disks to user friendly name
                 (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
