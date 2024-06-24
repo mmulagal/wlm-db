@@ -119,7 +119,7 @@ const CreateSandboxApis = () => {
             region: regionId,
             databaseHostId: selectedDbHostId,
             databaseName: selectedDbName,
-            instanceName: selectedInstanceName
+            instanceId: selectedInstanceId
         },
         {
             skip:
