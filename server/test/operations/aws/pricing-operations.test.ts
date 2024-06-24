@@ -5,9 +5,10 @@ import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import {
     getProductRates,
     calculateFsxWindowsCapacityPrice,
-    calculatePrice
+    calculatePrice,
+    calculatePriceV2
 } from '../../../src/operations/aws/pricing-operations';
-import { PricingServiceRequestType } from '../../../src/routes/types/pricing.types';
+import { PricingServiceRequestType, PricingServiceRequestTypeV2 } from '../../../src/routes/types/pricing.types';
 
 describe('Pricing Operations', () => {
     it('calculate Price', async () => {
@@ -79,5 +80,44 @@ describe('Pricing Operations', () => {
         let resp = calculateFsxWindowsCapacityPrice(capacity, storageType, iops, throughput, 1, storageRates);
         resp = Number(resp.toFixed(2));
         expect(resp).toEqual(expectedPrice);
+    });
+});
+
+describe('Pricing Operations - v2', () => {
+    it('calculate Price v2', async () => {
+        const pricingRequest: PricingServiceRequestTypeV2 = {
+            compute: {
+                regionCode: 'ap-southeast-1',
+                instanceType: 'm5.xlarge',
+                sqlSoftwareType: 'SQL std',
+                sqlDeploymentMode: 'fci'
+            },
+            fsxnStorage: {
+                regionCode: 'ap-southeast-1',
+                fsxnResourceInfo: [
+                    {
+                        diskSize: 102400,
+                        throughput: 1024,
+                        iops: 0,
+                        deploymentOption: 'MULTI_AZ_1'
+                    }
+                ]
+            },
+            ebsStorage: {
+                regionCode: 'ap-southeast-1',
+                ebsResourceInfo: [
+                    { id: 'vol-test-1', size: 102400, throughput: 1024, iops: 0, volumeType: 'gp3' },
+                    { id: 'vol-test-2', size: 102400, throughput: 1024, volumeType: 'gp2' },
+                    { id: 'vol-test-3', size: 102400, iops: 0, volumeType: 'st1' }
+                ]
+            },
+            vpc: {
+                regionCode: 'ap-southeast-1'
+            }
+        };
+
+        const { compute, fsxnStorage, vpc, ebsStorage } = pricingRequest;
+        const resp = await calculatePriceV2(compute, fsxnStorage, vpc, ebsStorage);
+        expect(resp).toBeDefined();
     });
 });

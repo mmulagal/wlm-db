@@ -17,9 +17,9 @@ import {
 } from '../routes/types/database-hosts.types';
 import { describeInstance, describeSubnets, describeVolumes, describeVpc, getAmis } from '../lib/aws/ec2';
 import { describeFSx } from '../lib/aws/fsx';
-import { PricingServiceRequestType, PricingServiceResponseType } from '../routes/types/pricing.types';
+import { PricingServiceRequestTypeV2, PricingServiceResponseTypeV2 } from '../routes/types/pricing.types';
 
-import { calculatePrice } from './aws/pricing-operations';
+import { calculatePriceV2 } from './aws/pricing-operations';
 import {
     DatabaseHostsQueryFields,
     HttpErrorCodes,
@@ -126,12 +126,14 @@ type EstimationEc2Type = {
 };
 
 type EstimationFSxType = {
+    id: string;
     storageCapacity: number;
     throughput: number;
     iops: number;
     deploymentOption: string;
     storageType: string;
-};
+    diskSize: number;
+}[];
 
 type EstimationEbsType = {
     id: string;
@@ -657,13 +659,22 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             throw new Error('Unable to fetch usage estimation data as region is not available');
         }
 
+        const fsxnIds = fsxnId
+            ? [fsxnId]
+            : resourceDetail.databaseInstanceDetails?.flatMap(f => (f.fsxn_ids ? [f.fsxn_ids] : []));
+        const fsxwIds = fsxwId
+            ? [fsxwId]
+            : resourceDetail.databaseInstanceDetails?.flatMap(f => (f.fsxwId ? [f.fsxwId] : []));
+
         const [ec2Info, fsxnInfo, ebsInfo, fsxwInfo] = await Promise.all([
             getEc2ResourceInfo(credentialsId, region, activeNodeInstanceId),
-            ...(fsxnId ? [getFsxResourceInfo(credentialsId, region, fsxnId!)] : [Promise.resolve()]),
+            ...(fsxnIds && !isEmpty(fsxnIds)
+                ? [getFsxResourceInfo(credentialsId, region, fsxnIds!)]
+                : [Promise.resolve()]),
             ...(ebsVolumeIds && !isEmpty(ebsVolumeIds)
                 ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds)]
                 : [Promise.resolve()]),
-            ...(fsxwId ? [getFsxResourceInfo(credentialsId, region, fsxwId!)] : [Promise.resolve()])
+            ...(!isEmpty(fsxwIds) ? [getFsxResourceInfo(credentialsId, region, fsxwIds!)] : [Promise.resolve()])
         ]);
 
         const ec2ResourceInfo = ec2Info as EstimationEc2Type;
@@ -671,7 +682,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
         const ebsResourceInfo = ebsInfo as EstimationEbsType;
         const fsxwResourceInfo = fsxwInfo as EstimationFSxType;
 
-        const pricingRequest: PricingServiceRequestType = {
+        const pricingRequest: PricingServiceRequestTypeV2 = {
             compute: {
                 regionCode: region!,
                 instanceType: ec2ResourceInfo.resourceType,
@@ -681,11 +692,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             ...(fsxnResourceInfo && {
                 fsxnStorage: {
                     regionCode: region!,
-                    storageCapacity: fsxnResourceInfo.storageCapacity,
-                    throughput: fsxnResourceInfo.throughput,
-                    iops: fsxnResourceInfo.iops,
-                    deploymentOption: fsxnResourceInfo.deploymentOption,
-                    diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
+                    fsxnResourceInfo: fsxnResourceInfo || []
                 }
             }),
             ...(ebsResourceInfo && {
@@ -700,17 +707,12 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             ...(fsxwResourceInfo && {
                 fsxwStorage: {
                     regionCode: region!,
-                    storageCapacity: fsxwResourceInfo.storageCapacity,
-                    throughput: fsxwResourceInfo.throughput,
-                    iops: fsxwResourceInfo.iops,
-                    deploymentOption: fsxwResourceInfo.deploymentOption,
-                    storageType: fsxwResourceInfo.storageType,
-                    diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
+                    fsxwResourceInfo: fsxwResourceInfo || []
                 }
             })
         };
 
-        const pricingResponse: PricingServiceResponseType = await calculatePrice(
+        const pricingResponse: PricingServiceResponseTypeV2 = await calculatePriceV2(
             pricingRequest.compute,
             pricingRequest.fsxnStorage,
             pricingRequest.vpc,
@@ -720,14 +722,12 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
         return {
             compute: pricingResponse?.compute || 0,
             storage: {
-                fsxn:
-                    (pricingResponse?.fsxnStorage?.capacityCost || 0) +
-                    (pricingResponse?.fsxnStorage?.operationalCost || 0),
-                fsxw:
-                    (pricingResponse?.fsxwStorage?.capacityCost || 0) +
-                    (pricingResponse?.fsxwStorage?.operationalCost || 0),
+                fsxn: pricingResponse?.fsxnStorage?.fsxStorageCost,
+                fsxw: pricingResponse?.fsxwStorage?.fsxwStorageCost,
                 ebs: pricingResponse.ebsStorage?.ebsStorageCost,
-                ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType
+                ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
+                fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById,
+                fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById
             },
             connectivity: pricingResponse?.vpc || 0,
             others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
@@ -785,26 +785,35 @@ async function getEc2ResourceInfo(
 async function getFsxResourceInfo(
     credentialsId: string,
     region: string,
-    filesystemId: string
+    filesystemIds: string[]
 ): Promise<EstimationFSxType> {
-    logger.info('Getting FSx resource info:', { credentialsId, region, filesystemId });
+    logger.info('Getting FSx resource info:', { credentialsId, region, filesystemIds });
 
-    const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [filesystemId] });
+    const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: filesystemIds });
     logger.info('Estimation info for FSx:', fsxInfo);
 
-    const [{ StorageCapacity, OntapConfiguration, StorageType, WindowsConfiguration }] = fsxInfo?.FileSystems || [];
-    const storageCapacity = StorageCapacity || 0;
-    const throughput = OntapConfiguration?.ThroughputCapacity || WindowsConfiguration?.ThroughputCapacity;
-    const iops = OntapConfiguration?.DiskIopsConfiguration?.Iops || WindowsConfiguration?.DiskIopsConfiguration?.Iops;
-    const deploymentOption = OntapConfiguration?.DeploymentType || WindowsConfiguration?.DeploymentType;
+    const filesystems = fsxInfo?.FileSystems || [];
+    const response = filesystems.map(
+        ({ FileSystemId, StorageCapacity, OntapConfiguration, StorageType, WindowsConfiguration }) => {
+            const storageCapacity = StorageCapacity || 0;
+            const throughput = OntapConfiguration?.ThroughputCapacity || WindowsConfiguration?.ThroughputCapacity;
+            const iops =
+                OntapConfiguration?.DiskIopsConfiguration?.Iops || WindowsConfiguration?.DiskIopsConfiguration?.Iops;
+            const deploymentOption = OntapConfiguration?.DeploymentType || WindowsConfiguration?.DeploymentType;
 
-    return {
-        storageCapacity,
-        throughput: throughput!,
-        iops: iops!,
-        deploymentOption: deploymentOption!,
-        storageType: StorageType!
-    };
+            return {
+                id: FileSystemId!,
+                storageCapacity,
+                throughput: throughput!,
+                iops: iops!,
+                deploymentOption: deploymentOption!,
+                storageType: StorageType!,
+                diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
+            };
+        }
+    );
+
+    return response;
 }
 
 async function getEbsResourceInfo(
@@ -1863,6 +1872,8 @@ async function getDatabaseHostSummaryV2(
 
             if (getUsageEstimation && usageEstimationData) {
                 databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType;
+                databaseHostDetails.fsxnResourceInfo = usageEstimationData?.storage?.fsxnBreakDownById;
+                databaseHostDetails.fsxwResourceInfo = usageEstimationData?.storage?.fsxwBreakDownById;
                 databaseHostDetails.estimatedUsageCost = usageEstimationData;
             }
 
