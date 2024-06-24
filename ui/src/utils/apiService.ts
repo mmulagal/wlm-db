@@ -867,8 +867,8 @@ export const sandboxApi = createApi({
                 })
             }),
             getDatabaseMountPoints: builder.query({
-                query: ({ region, credentialId, databaseHostId, databaseName, instanceName }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-mount-points?databaseName=${databaseName}&instanceName=${instanceName}`
+                query: ({ region, credentialId, databaseHostId, databaseName, instanceId }) => ({
+                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-mount-points?databaseName=${databaseName}&databaseInstanceId=${instanceId}`
                 })
             }),
             deleteSandbox: builder.mutation({

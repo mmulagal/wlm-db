@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar, Popover, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTable.module.scss';
@@ -21,7 +21,6 @@ const ExploreSavingsTable = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
-    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const lastColDetails = () => {
         return {
@@ -35,7 +34,7 @@ const ExploreSavingsTable = () => {
                         <div
                             className={styles.detectManage}
                             onClick={() => {
-                                onClickESHost(dispatch, rowData, isDemoMode);
+                                onClickESHost(dispatch, rowData);
                             }}
                         >
                             <Typography variant="Regular_14" className={styles.textStyle} id="explore-savings">

@@ -334,31 +334,48 @@ const ManagedHostSubTable = ({
 
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
+                let disableOption = false;
+                let disableMessage = '';
+                if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+                    disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+                    disableOption = true;
+                }
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
-                        displayName: 'Detect'
+                        displayName: 'Detect',
+                        disabled: disableOption,
+                        infoText: disableMessage
                     });
                 } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     menu.push({
                         id: 'manage',
-                        displayName: 'Manage'
+                        displayName: 'Manage',
+                        disabled: disableOption,
+                        infoText: disableMessage
                     });
                 } else {
+                    
                     menu.push(
                         {
                             id: 'viewInstance',
-                            displayName: 'View instance'
+                            displayName: 'View instance',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
 
                         {
                             id: 'viewDatabases',
-                            displayName: 'View databases'
+                            displayName: 'View databases',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
 
                         {
                             id: 'createUserDb',
-                            displayName: 'Create user database'
+                            displayName: 'Create user database',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
                         {
                             id: 'unManage',
@@ -377,7 +394,7 @@ const ManagedHostSubTable = ({
                         height = '33px';
                         return true;
                     }
-                    if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+                    if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN && rowData?.statusColText !== INVENTORY_STATUS.MANAGED) {
                         disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                         width = '220px';
                         height = '33px';
@@ -416,11 +433,6 @@ const ManagedHostSubTable = ({
                             <MenuPopover
                                 isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
                                 menuItems={[...menu]}
-                                isDisabled={
-                                    rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                                    (rowData.fileSystemType === GENERAL.EBS ||
-                                        rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
-                                }
                                 toggleMenu={(toggleType: string, menuId: string) => {
                                     if (toggleType === 'close') {
                                         menuOpenedRowDetail.current = null;

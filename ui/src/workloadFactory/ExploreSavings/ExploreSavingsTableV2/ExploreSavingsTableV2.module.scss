@@ -10,8 +10,11 @@
     }
 
     .colText {
-        display: flex;
         gap: 16px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 180px;
     }
 
     .statusIcon {

@@ -199,15 +199,15 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId },
-                    query: { databaseName, instanceName }
+                    query: { databaseName, databaseInstanceId }
                 } = request;
                 const response = await getDatabaseMountPointInfo(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
-                    databaseName,
-                    instanceName
+                    databaseInstanceId,
+                    databaseName
                 );
                 return reply.send(response);
             }

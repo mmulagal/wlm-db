@@ -434,109 +434,11 @@ async function createSandbox(
         mountPoints[key as keyof MountPoints] = value.toUpperCase();
     });
 
-    let [[srcResourceDetail], [destResourceDetail], [srcInstanceDetail], [destInstanceDetail]] = await Promise.all([
-        listResources(accountId, source.host),
-        source.host === dest.host ? Promise.resolve([]) : listResources(accountId, dest.host),
-        listDatabaseInstances(accountId, { credentialsId, resourceId: source.host, sqlInstanceId: source.instance }),
-        source.instance === dest.instance
-            ? Promise.resolve([])
-            : listDatabaseInstances(accountId, { credentialsId, resourceId: dest.host, sqlInstanceId: dest.instance })
-    ]);
-
-    if (source.host === dest.host) {
-        destResourceDetail = srcResourceDetail;
-    }
-
-    if (source.instance === dest.instance) {
-        destInstanceDetail = srcInstanceDetail;
-    }
-
-    if (isEmpty(srcResourceDetail)) {
-        throw createError(HttpErrorCodes.NOT_FOUND, `No database host by id ${source.host} for ${accountId} is found.`);
-    }
-
-    if (isEmpty(destResourceDetail)) {
-        throw createError(HttpErrorCodes.NOT_FOUND, `No database host by id ${dest.host} for ${accountId} is found.`);
-    }
-
-    if (isEmpty(srcInstanceDetail)) {
-        throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `No database host instance by id ${source.instance} for ${accountId} is found.`
-        );
-    }
-
-    if (isEmpty(destInstanceDetail)) {
-        throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `No database host instance by id ${dest.instance} for ${accountId} is found.`
-        );
-    }
-
-    if (srcResourceDetail.co_relation_id !== destResourceDetail.co_relation_id) {
-        throw createError(
-            HttpErrorCodes.BAD_REQUEST,
-            'The source and destination host should be connected to the same FSx'
-        );
-    }
-
-    const { node1InstanceId: srcNode1, node2InstanceId: srcNode2 } = srcResourceDetail.metadata as unknown as Metadata;
-    const { node1InstanceId: destNode1, node2InstanceId: destNode2 } =
-        destResourceDetail.metadata as unknown as Metadata;
-
-    let [srcStatus, destStatus] = await Promise.all([
-        getActiveSqlNode(credentialsId, region, srcNode1, srcNode2, source.host),
-        source.host === dest.host
-            ? Promise.resolve(
-                  {} as {
-                      isSSMConnected: boolean;
-                      activeNodeInstanceId: string;
-                      standbyNodeInstanceId: string | undefined;
-                      instanceName: string;
-                      instancesDetails: { instanceId: string; state: string }[];
-                  }
-              )
-            : getActiveSqlNode(credentialsId, region, destNode1, destNode2, dest.host)
-    ]);
-
-    if (source.host === dest.host) {
-        destStatus = srcStatus;
-    }
-
-    if (!srcStatus.isSSMConnected) {
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            'SSM connection could not be established with the source host'
-        );
-    }
-
-    if (!destStatus.isSSMConnected) {
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            'SSM connection could not be established with the destination host'
-        );
-    }
-
-    const srcInstanceName = srcStatus.instancesDetails?.find(
-        instance =>
-            instance.instanceName === srcInstanceDetail.database_instance_name && instance.instanceState === 'Running'
-    );
-
-    const destInstanceName = destStatus.instancesDetails?.find(
-        instance =>
-            instance.instanceName === destInstanceDetail.database_instance_name && instance.instanceState === 'Running'
-    );
-
-    if (!srcInstanceName || !destInstanceName) {
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            'Source or destination instance is not running, please check the instance status'
-        );
-    }
+    const { srcDetails, destDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, dest);
 
     const job = await registerJob(accountId, credentialsId, region, {
-        name: `Creating sandbox ${dest.database} in the target host ${destResourceDetail.resource_name}`,
-        description: `Creating sandbox ${dest.database} in the target host ${destResourceDetail.resource_name}`,
+        name: `Creating sandbox ${dest.database} in the target host ${srcDetails.resourceName}`,
+        description: `Creating sandbox ${dest.database} in the target host ${destDetails.resourceName}`,
         resourceName: dest.database,
         initiator: 'SYSTEM',
         startTime: Date.now(),
@@ -544,38 +446,7 @@ async function createSandbox(
         type: JOBTYPE.SANDBOX
     });
 
-    startSandboxCreation(
-        accountId,
-        credentialsId,
-        region,
-        job.id,
-        {
-            ...source,
-            resourceName: srcResourceDetail.resource_name!,
-            svm: (srcInstanceDetail.fsx_svm_id as Record<string, string>)[srcInstanceDetail.fsxn_ids as string],
-            fsxId: srcInstanceDetail.fsxn_ids!,
-            activeNodeInstanceId: srcStatus.activeNodeInstanceId!,
-            metadata: srcResourceDetail.metadata as unknown as Metadata,
-            instanceName: getDatabaseInstanceName(
-                srcInstanceDetail.database_instance_name,
-                srcInstanceDetail.is_default
-            )
-        },
-        {
-            ...dest,
-            resourceName: destResourceDetail.resource_name!,
-            svm: (destInstanceDetail.fsx_svm_id as Record<string, string>)[destInstanceDetail.fsxn_ids as string],
-            fsxId: destInstanceDetail.fsxn_ids!,
-            activeNodeInstanceId: destStatus.activeNodeInstanceId!,
-            metadata: destResourceDetail.metadata as unknown as Metadata,
-            instanceName: getDatabaseInstanceName(
-                destInstanceDetail.database_instance_name,
-                destInstanceDetail.is_default
-            )
-        },
-        tag,
-        mountPoints
-    );
+    startSandboxCreation(accountId, credentialsId, region, job.id, srcDetails, destDetails, tag, mountPoints);
 
     return { jobId: job.id };
 }
@@ -1065,7 +936,7 @@ async function invokeVirtualMount(
             const isDefaultSqlServerInstance: boolean = destDetails.instanceName === DEFAULT_INSTANCE_NAME;
 
             let command = [
-                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -InstanceName '${destDetails.instanceName}' -IsDefaultInstance ${isDefaultSqlServerInstance}`
+                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -InstanceName '${destDetails.instanceName}' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
             ];
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -1647,52 +1518,30 @@ async function getDatabaseMountPointInfo(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseName: string,
-    instance: string
+    databaseInstanceId: string,
+    databaseName: string
 ) {
     logger.info(
-        `Fetching mount point information for database host id ${databaseHostId} database ${databaseName} `,
+        `Fetching mount point information`,
         accountId,
         region,
         credentialsId,
-        instance
-    );
-    const {
-        items: [resourceDetail]
-    } = await getResources(accountId, databaseHostId, credentialsId);
-
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
-    }
-
-    const { metadata } = resourceDetail;
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-
-    const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
-        credentialsId,
-        region,
-        node1InstanceId,
-        node2InstanceId
+        databaseHostId,
+        databaseInstanceId,
+        databaseName
     );
 
-    if (!isSSMConnected || activeNodeInstanceId === undefined || instanceName === undefined) {
-        const errorMessage = `Unable to get mount point information for database host id ${databaseHostId} database ${databaseName} in account ${accountId} due to SSM connection issues.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-    }
-
-    const actualDbName = databaseName;
+    const src = { host: databaseHostId, instance: databaseInstanceId, database: databaseName };
+    const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, src, src);
 
     try {
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             databaseName = 'test-database';
         }
 
-        const command = [mountPointQuery(instanceName, databaseName)];
+        const command = [mountPointQuery(srcDetails.instanceName, databaseName)];
 
-        const mountPoints = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
+        const mountPoints = await callSsmExecution(credentialsId, region, command, srcDetails.activeNodeInstanceId);
         if (!mountPoints) {
             throw createError('No mount points found.');
         }
@@ -1709,8 +1558,8 @@ async function getDatabaseMountPointInfo(
         });
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             const updatedResult = {
-                databaseDataPath: result.databaseDataPath.map(path => path.replace('test-database', actualDbName)),
-                databaseLogPath: result.databaseLogPath.map(path => path.replace('test-database', actualDbName))
+                databaseDataPath: result.databaseDataPath.map(path => path.replace('test-database', databaseName)),
+                databaseLogPath: result.databaseLogPath.map(path => path.replace('test-database', databaseName))
             };
             return updatedResult;
         }
@@ -3297,6 +3146,151 @@ async function getSandboxSnapshots(
         name: snapshot.name,
         created: new Date(snapshot.created).valueOf()
     }));
+}
+
+async function runSandboxPreValidations(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    source: DbInfo,
+    dest: DbInfo
+) {
+    logger.info('Run sandbox pre-validations', { accountId, credentialsId, region, source, dest });
+
+    let [[srcResourceDetail], [srcInstanceDetail], [destResourceDetail], [destInstanceDetail]] = await Promise.all([
+        listResources(accountId, source.host),
+        listDatabaseInstances(accountId, {
+            credentialsId,
+            resourceId: source.host,
+            sqlInstanceId: source.instance
+        }),
+        source.host === dest.host ? Promise.resolve([]) : listResources(accountId, dest.host),
+        source.instance === dest.instance
+            ? Promise.resolve([])
+            : listDatabaseInstances(accountId, {
+                  credentialsId,
+                  resourceId: dest.host,
+                  sqlInstanceId: dest.instance
+              })
+    ]);
+
+    if (source.host === dest.host) {
+        destResourceDetail = srcResourceDetail;
+    }
+
+    if (source.instance === dest.instance) {
+        destInstanceDetail = srcInstanceDetail;
+    }
+
+    if (isEmpty(srcResourceDetail)) {
+        throw createError(HttpErrorCodes.NOT_FOUND, `No database host by id ${source.host} for ${accountId} is found.`);
+    }
+
+    if (isEmpty(destResourceDetail)) {
+        throw createError(HttpErrorCodes.NOT_FOUND, `No database host by id ${dest.host} for ${accountId} is found.`);
+    }
+
+    if (isEmpty(srcInstanceDetail)) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No database host instance by id ${source.instance} for ${accountId} is found.`
+        );
+    }
+
+    if (isEmpty(destInstanceDetail)) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No database host instance by id ${dest.instance} for ${accountId} is found.`
+        );
+    }
+
+    if (srcResourceDetail.co_relation_id !== destResourceDetail.co_relation_id) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            'The source and destination host should be connected to the same FSx'
+        );
+    }
+
+    const { node1InstanceId: srcNode1, node2InstanceId: srcNode2 } = srcResourceDetail.metadata as unknown as Metadata;
+    const { node1InstanceId: destNode1, node2InstanceId: destNode2 } =
+        destResourceDetail.metadata as unknown as Metadata;
+
+    let [srcStatus, destStatus] = await Promise.all([
+        getActiveSqlNode(credentialsId, region, srcNode1, srcNode2, source.host),
+        source.host === dest.host
+            ? Promise.resolve(
+                  {} as {
+                      isSSMConnected: boolean;
+                      activeNodeInstanceId: string;
+                      standbyNodeInstanceId: string | undefined;
+                      instanceName: string;
+                      instancesDetails: { instanceId: string; state: string }[];
+                  }
+              )
+            : getActiveSqlNode(credentialsId, region, destNode1, destNode2, dest.host)
+    ]);
+
+    if (source.host === dest.host) {
+        destStatus = srcStatus;
+    }
+
+    if (!srcStatus.isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the source host'
+        );
+    }
+
+    if (!destStatus.isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the destination host'
+        );
+    }
+
+    const srcInstanceName = srcStatus.instancesDetails?.find(
+        instance =>
+            instance.instanceName === srcInstanceDetail.database_instance_name && instance.instanceState === 'Running'
+    );
+
+    const destInstanceName = destStatus.instancesDetails?.find(
+        instance =>
+            instance.instanceName === destInstanceDetail.database_instance_name && instance.instanceState === 'Running'
+    );
+
+    if (!srcInstanceName || !destInstanceName) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Source or destination instance is not running, please check the instance status'
+        );
+    }
+
+    return {
+        srcDetails: {
+            ...source,
+            resourceName: srcResourceDetail.resource_name!,
+            svm: (srcInstanceDetail.fsx_svm_id as Record<string, string>)[srcInstanceDetail.fsxn_ids as string],
+            fsxId: srcInstanceDetail.fsxn_ids!,
+            activeNodeInstanceId: srcStatus.activeNodeInstanceId!,
+            metadata: srcResourceDetail.metadata as unknown as Metadata,
+            instanceName: getDatabaseInstanceName(
+                srcInstanceDetail.database_instance_name,
+                srcInstanceDetail.is_default
+            )
+        },
+        destDetails: {
+            ...dest,
+            resourceName: destResourceDetail.resource_name!,
+            svm: (destInstanceDetail.fsx_svm_id as Record<string, string>)[destInstanceDetail.fsxn_ids as string],
+            fsxId: destInstanceDetail.fsxn_ids!,
+            activeNodeInstanceId: destStatus.activeNodeInstanceId!,
+            metadata: destResourceDetail.metadata as unknown as Metadata,
+            instanceName: getDatabaseInstanceName(
+                destInstanceDetail.database_instance_name,
+                destInstanceDetail.is_default
+            )
+        }
+    };
 }
 
 export {
