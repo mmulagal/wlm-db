@@ -47,6 +47,7 @@ const InventoryApisV2 = () => {
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
@@ -223,7 +224,8 @@ const InventoryApisV2 = () => {
                 const result: any = await getDatabaseHostsFullDataApi({
                     credentialId: credId,
                     regionId: regionId,
-                    nextToken: nextToken
+                    nextToken: nextToken,
+                    isDemoMode: isDemoMode
                 });
                 if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
                     if (result && !result?.error) {

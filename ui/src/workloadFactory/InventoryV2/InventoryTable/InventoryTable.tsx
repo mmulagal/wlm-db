@@ -256,6 +256,18 @@ const InventoryTable = () => {
         checkForAllFileSystemNA: boolean
     ) => {
         //Condition for if all managed then showing disable managed button with tooltip
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
+            return (
+                <TooltipComponent title={GENERAL.AOAG_MANAGE_DISABLE} placement="bottom" width="320px" height="50px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+        //Condition for if all managed then showing disable managed button with tooltip
         if (rowData?.action && checkForAllManaged) {
             return (
                 <TooltipComponent title={GENERAL.ALL_MANAGED_TEXT} placement="bottom" width="320px" height="90px">
@@ -510,60 +522,6 @@ const InventoryTable = () => {
         selectionType: 'none',
         isHorizontalScroll: true,
         isManagedColumns: false,
-        manageColumnsProps: {
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems(rowData)}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-
-                                    if (menuId === 'viewOverview') {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                        dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
-                                        dispatch(updateResourceId(rowData.id));
-                                        dispatch(setDBHostName(rowData?.name));
-                                        dispatch(resetWorkloadFactoryResourceData());
-                                    }
-
-                                    if (menuId === 'viewDatabaseList') {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                        dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
-                                        dispatch(updateResourceId(rowData.id));
-                                        dispatch(setDBHostName(rowData?.name));
-                                        dispatch(resetWorkloadFactoryResourceData());
-                                    }
-
-                                    if (menuId === 'createNewUserDatabase') {
-                                        dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                        dispatch(updateResourceId(rowData.id));
-                                        dispatch(setDBHostName(rowData?.name));
-                                        navigate('../create-new-user');
-                                    }
-
-                                    if (menuId === 'remove') {
-                                        // ToDo
-                                    }
-                                }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
-                    </div>
-                );
-            }
-        },
         isLazyLoading: loading
     });
 

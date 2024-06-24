@@ -499,7 +499,8 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
     let totalInstanceCount = discoveredRow?.sqlServerInstances?.length || 0;
     let ssmState = getDiscoverSsmState(discoveredRow);
     let perInstanceStatus = getDiscoveredPerInstanceStatus(discoveredRow, ssmState);
-    let actionObj = getDiscoveredActions(perInstanceStatus);
+    let installationMode = getDiscoverInstallationMode(discoveredRow);
+    let actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
     let ec2Details = [
         {
             id: discoveredRow?.ec2InstanceId,
@@ -516,7 +517,7 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         ssmState: ssmState,
         totalInstance: totalInstanceCount,
         managedInstance: 0,
-        serverInstallationMode: getDiscoverInstallationMode(discoveredRow),
+        serverInstallationMode: installationMode,
         vpcId: discoveredRow?.vpc?.id,
         vpcName: discoveredRow?.vpc?.name,
         vpcCidr: discoveredRow?.vpc?.cidrBlock,
@@ -678,7 +679,7 @@ export const getDetectOptionForInstance = (
     };
 };
 
-export const getDiscoveredActions = (row: Array<StatusObjInterface>) => {
+export const getDiscoveredActions = (row: Array<StatusObjInterface>, installationMode: string | null) => {
     let action = '';
     let actionDisable = false;
     let undetected = row?.filter((per: StatusObjInterface) => per?.status === INVENTORY_STATUS.UNDETECTED);
@@ -710,7 +711,13 @@ export const getDiscoveredActions = (row: Array<StatusObjInterface>) => {
         action = INVENTORY_ACTIONS.EXPLORE_SAVINGS;
         actionDisable = isEbs ? (undetected?.length > 0 && unmanaged?.length === 0 ? true : false) : true;
     } else {
-        actionDisable = false;
+        if (installationMode && installationMode === GENERAL.AOAG) {
+            // For AOAG currently we cant manage host
+            actionDisable = true;
+        } else {
+            actionDisable = false;
+        }
+
         if ((undetected?.length > 0 && unmanaged?.length > 0) || (undetected?.length === 0 && unmanaged?.length > 0)) {
             action = INVENTORY_ACTIONS.MANAGE;
         } else {

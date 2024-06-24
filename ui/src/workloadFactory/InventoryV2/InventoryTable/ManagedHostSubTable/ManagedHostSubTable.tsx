@@ -62,7 +62,6 @@ import useResize from '../../../../common/hooks/useResize';
 const ManagedHostSubTable = ({
     rowId,
     hostname,
-
     resourceId,
     hostData,
     loading,
@@ -70,7 +69,6 @@ const ManagedHostSubTable = ({
 }: {
     rowId: string;
     hostname: string;
-
     resourceId: string;
     hostData: any;
     loading: boolean;
@@ -355,7 +353,6 @@ const ManagedHostSubTable = ({
                         infoText: disableMessage
                     });
                 } else {
-                    
                     menu.push(
                         {
                             id: 'viewInstance',
@@ -394,7 +391,10 @@ const ManagedHostSubTable = ({
                         height = '33px';
                         return true;
                     }
-                    if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN && rowData?.statusColText !== INVENTORY_STATUS.MANAGED) {
+                    if (
+                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
                         disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                         width = '220px';
                         height = '33px';
@@ -416,6 +416,15 @@ const ManagedHostSubTable = ({
                         disableMsg = GENERAL.EBS_TOOLTIP_MESSAGE;
                         width = '320px';
                         height = '90px';
+                        return true;
+                    }
+                    if (
+                        hostData?.serverInstallationMode === GENERAL.AOAG &&
+                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
+                    ) {
+                        disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
+                        width = '320px';
+                        height = '50px';
                         return true;
                     }
                     return false;
