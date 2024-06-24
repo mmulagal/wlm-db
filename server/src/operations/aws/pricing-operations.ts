@@ -1,4 +1,3 @@
-import createError from 'http-errors';
 import { Filter, FilterType, GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
 import { compact, isEmpty } from 'lodash-es';
@@ -7,9 +6,7 @@ import {
     FsxnCostBreakdownType,
     FsxwCostBreakdownType,
     PricingServiceRequestType,
-    PricingServiceRequestTypeV2,
-    PricingServiceResponseType,
-    PricingServiceResponseTypeV2
+    PricingServiceResponseType
 } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
 import { calculateFsxnStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
@@ -292,46 +289,46 @@ function calculateFsxOperationalCost(
     );
 }
 
+// function getInputs(
+//     compute: PricingServiceRequestType['compute'],
+//     fsxnStorage: PricingServiceRequestType['fsxnStorage'],
+//     ebsStorage: PricingServiceRequestType['ebsStorage'],
+//     vpc: PricingServiceRequestType['vpc'],
+//     fsxwStorage: PricingServiceRequestType['fsxwStorage']
+// ): ProductInput[] {
+//     logger.info('Getting product inputs', {
+//         compute,
+//         fsxnStorage,
+//         vpc,
+//         ebsStorage,
+//         fsxwStorage
+//     });
+
+//     let inputList: ProductInput[] = [
+//         getEc2InstaceInput(compute),
+//         getEc2StorageInput(compute),
+//         ...((fsxnStorage && [getProductsInputForFSxN(fsxnStorage.regionCode, fsxnStorage.deploymentOption!)]) || []),
+//         ...((fsxwStorage && [getProductsInputForFSxWindows(fsxwStorage.regionCode, fsxwStorage.deploymentOption!)]) ||
+//             []),
+//         ...((vpc && [getVpcInput(vpc)]) || [])
+//     ];
+
+//     if (ebsStorage && ebsStorage.ebsResourceInfo.length > 0) {
+//         const ebsStorageProductInputList = ebsStorage.ebsResourceInfo.map(ebsResource =>
+//             getEbsStorageInput(ebsStorage.regionCode, ebsResource.volumeType)
+//         );
+//         inputList = inputList.concat(ebsStorageProductInputList);
+//     }
+
+//     return inputList;
+// }
+
 function getInputs(
     compute: PricingServiceRequestType['compute'],
     fsxnStorage: PricingServiceRequestType['fsxnStorage'],
     ebsStorage: PricingServiceRequestType['ebsStorage'],
     vpc: PricingServiceRequestType['vpc'],
     fsxwStorage: PricingServiceRequestType['fsxwStorage']
-): ProductInput[] {
-    logger.info('Getting product inputs', {
-        compute,
-        fsxnStorage,
-        vpc,
-        ebsStorage,
-        fsxwStorage
-    });
-
-    let inputList: ProductInput[] = [
-        getEc2InstaceInput(compute),
-        getEc2StorageInput(compute),
-        ...((fsxnStorage && [getProductsInputForFSxN(fsxnStorage.regionCode, fsxnStorage.deploymentOption!)]) || []),
-        ...((fsxwStorage && [getProductsInputForFSxWindows(fsxwStorage.regionCode, fsxwStorage.deploymentOption!)]) ||
-            []),
-        ...((vpc && [getVpcInput(vpc)]) || [])
-    ];
-
-    if (ebsStorage && ebsStorage.ebsResourceInfo.length > 0) {
-        const ebsStorageProductInputList = ebsStorage.ebsResourceInfo.map(ebsResource =>
-            getEbsStorageInput(ebsStorage.regionCode, ebsResource.volumeType)
-        );
-        inputList = inputList.concat(ebsStorageProductInputList);
-    }
-
-    return inputList;
-}
-
-function getInputsV2(
-    compute: PricingServiceRequestTypeV2['compute'],
-    fsxnStorage: PricingServiceRequestTypeV2['fsxnStorage'],
-    ebsStorage: PricingServiceRequestTypeV2['ebsStorage'],
-    vpc: PricingServiceRequestTypeV2['vpc'],
-    fsxwStorage: PricingServiceRequestTypeV2['fsxwStorage']
 ): ProductInput[] {
     logger.info('Getting product inputs', {
         compute,
@@ -363,7 +360,7 @@ function getInputsV2(
 
     if (fsxwStorage && fsxwStorage.fsxwResourceInfo.length > 0) {
         const fswStorageProductInputList = fsxwStorage.fsxwResourceInfo.map(fsxResource =>
-            getProductsInputForFSxN(fsxwStorage.regionCode, fsxResource.deploymentOption!)
+            getProductsInputForFSxWindows(fsxwStorage.regionCode, fsxResource.deploymentOption!)
         );
         inputList = inputList.concat(fswStorageProductInputList);
     }
@@ -492,6 +489,135 @@ async function getProductRates(
     return parsedResponse;
 }
 
+// async function calculatePrice(
+//     compute: PricingServiceRequestType['compute'],
+//     fsxnStorage: PricingServiceRequestType['fsxnStorage'],
+//     vpc: PricingServiceRequestType['vpc'],
+//     ebsStorage?: PricingServiceRequestType['ebsStorage'],
+//     fsxwStorage?: PricingServiceRequestType['fsxwStorage']
+// ): Promise<PricingServiceResponseType> {
+//     logger.info('Calculating price for AWS resources', {
+//         compute,
+//         fsxnStorage,
+//         vpc,
+//         ebsStorage,
+//         fsxwStorage
+//     });
+
+//     if (fsxnStorage && fsxnStorage?.diskSize > 133120) {
+//         throw createError(412, 'Supported FSx for ONTAP data disk size should be between 120GiB to 130TiB');
+//     }
+
+//     const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));
+//     const productRates = await getProductRates(inputList);
+
+//     const {
+//         ec2Instance: { compute: { pricePerUnit: ec2InstanceRate = 0 } = {} },
+//         ec2Storage: { storage: { pricePerUnit: ec2StorageRate = 0 } = {} },
+//         vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {}
+//     } = productRates;
+
+//     const ec2Cost = calculateEc2Cost(ec2InstanceRate, ec2StorageRate, compute?.sqlDeploymentMode);
+//     const vpcCost = vpcRate ? getPriceUtil(vpcRate, HOURS_IN_MONTH, 1) : 0;
+
+//     let fsxnStorageCost = 0;
+//     let fsxnOperationalCost = 0;
+//     let fsxnDiskSizes;
+//     if (fsxnStorage) {
+//         ({ fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes } = calculateFsxnCost(
+//             fsxnStorage,
+//             productRates.fsxnStorage,
+//             compute?.sqlDeploymentMode
+//         ));
+//     }
+
+//     const ebsBreakdownByVolumeType: {
+//         id: string;
+//         volumeType: string;
+//         cost: number;
+//         size: number;
+//         iops: number | undefined;
+//         throughput: number | undefined;
+//     }[] = [];
+//     let totalEbsStorageCost = 0;
+//     if (!isEmpty(ebsStorage)) {
+//         await Promise.all(
+//             ebsStorage.ebsResourceInfo.map(async ebsResource => {
+//                 const rate = productRates[`ebsStorage-${ebsResource.volumeType}`];
+//                 const cost = calculateEbsCost(
+//                     ebsResource.volumeType,
+//                     ebsResource.size,
+//                     ebsResource.iops,
+//                     ebsResource.throughput,
+//                     rate
+//                 );
+//                 totalEbsStorageCost += cost;
+//                 ebsBreakdownByVolumeType.push({
+//                     id: ebsResource.id,
+//                     volumeType: ebsResource.volumeType,
+//                     cost,
+//                     size: ebsResource.size,
+//                     iops: ebsResource?.iops,
+//                     throughput: ebsResource?.throughput
+//                 });
+//             })
+//         );
+//     }
+
+//     let fsxwStorageCost = 0;
+//     let fsxwOperationalCost = 0;
+//     if (fsxwStorage) {
+//         ({ fsxwStorageCost, fsxwOperationalCost } = calculateFsxwCost(fsxwStorage, productRates.fsxwStorage));
+//     }
+
+//     return {
+//         compute: ec2Cost,
+//         ...(fsxnStorage && {
+//             fsxnStorage: {
+//                 capacityCost: fsxnStorageCost,
+//                 operationalCost: fsxnOperationalCost,
+//                 // This is optional and only needed to display in UI
+//                 ...(fsxnDiskSizes && {
+//                     size: {
+//                         data: sizeInGigaBytes(fsxnDiskSizes?.FSxDataVolumeSize),
+//                         log: sizeInGigaBytes(fsxnDiskSizes?.FSxLogVolumeSize),
+//                         tempdb: sizeInGigaBytes(fsxnDiskSizes?.FSxTempDbVolumeSize),
+//                         buffer: sizeInGigaBytes(fsxnDiskSizes?.FSxBufferVolumeSize),
+//                         total: fsxnDiskSizes?.FSxStorageCapacity,
+//                         ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
+//                             quorum: sizeInGigaBytes(fsxnDiskSizes?.FSxQuorumVolumeSize)
+//                         })
+//                     }
+//                 })
+//             }
+//         }),
+//         ...(vpc && { vpc: vpcCost }),
+//         ...(ebsStorage && {
+//             ebsStorage: {
+//                 ebsStorageCost: totalEbsStorageCost,
+//                 ebsBreakdownByVolumeType: ebsBreakdownByVolumeType.map(
+//                     ({ id, size, volumeType, cost, iops, throughput }) => ({
+//                         id,
+//                         volumeType,
+//                         cost,
+//                         size: numeral(`${size}GiB`).value() || 0,
+//                         iops,
+//                         throughput
+//                     })
+//                 )
+//             }
+//         }),
+//         ...(fsxwStorage && {
+//             fsxwStorage: {
+//                 capacityCost: fsxwStorageCost,
+//                 operationalCost: fsxwOperationalCost,
+//                 size: sizeInGigaBytes(fsxwStorage.storageCapacity) || 0
+//             }
+//         }),
+//         total: ec2Cost + vpcCost + fsxnStorageCost + fsxnOperationalCost + totalEbsStorageCost + fsxwStorageCost
+//     };
+// }
+
 async function calculatePrice(
     compute: PricingServiceRequestType['compute'],
     fsxnStorage: PricingServiceRequestType['fsxnStorage'],
@@ -507,136 +633,7 @@ async function calculatePrice(
         fsxwStorage
     });
 
-    if (fsxnStorage && fsxnStorage?.diskSize > 133120) {
-        throw createError(412, 'Supported FSx for ONTAP data disk size should be between 120GiB to 130TiB');
-    }
-
     const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));
-    const productRates = await getProductRates(inputList);
-
-    const {
-        ec2Instance: { compute: { pricePerUnit: ec2InstanceRate = 0 } = {} },
-        ec2Storage: { storage: { pricePerUnit: ec2StorageRate = 0 } = {} },
-        vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {}
-    } = productRates;
-
-    const ec2Cost = calculateEc2Cost(ec2InstanceRate, ec2StorageRate, compute?.sqlDeploymentMode);
-    const vpcCost = vpcRate ? getPriceUtil(vpcRate, HOURS_IN_MONTH, 1) : 0;
-
-    let fsxnStorageCost = 0;
-    let fsxnOperationalCost = 0;
-    let fsxnDiskSizes;
-    if (fsxnStorage) {
-        ({ fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes } = calculateFsxnCost(
-            fsxnStorage,
-            productRates.fsxnStorage,
-            compute?.sqlDeploymentMode
-        ));
-    }
-
-    const ebsBreakdownByVolumeType: {
-        id: string;
-        volumeType: string;
-        cost: number;
-        size: number;
-        iops: number | undefined;
-        throughput: number | undefined;
-    }[] = [];
-    let totalEbsStorageCost = 0;
-    if (!isEmpty(ebsStorage)) {
-        await Promise.all(
-            ebsStorage.ebsResourceInfo.map(async ebsResource => {
-                const rate = productRates[`ebsStorage-${ebsResource.volumeType}`];
-                const cost = calculateEbsCost(
-                    ebsResource.volumeType,
-                    ebsResource.size,
-                    ebsResource.iops,
-                    ebsResource.throughput,
-                    rate
-                );
-                totalEbsStorageCost += cost;
-                ebsBreakdownByVolumeType.push({
-                    id: ebsResource.id,
-                    volumeType: ebsResource.volumeType,
-                    cost,
-                    size: ebsResource.size,
-                    iops: ebsResource?.iops,
-                    throughput: ebsResource?.throughput
-                });
-            })
-        );
-    }
-
-    let fsxwStorageCost = 0;
-    let fsxwOperationalCost = 0;
-    if (fsxwStorage) {
-        ({ fsxwStorageCost, fsxwOperationalCost } = calculateFsxwCost(fsxwStorage, productRates.fsxwStorage));
-    }
-
-    return {
-        compute: ec2Cost,
-        ...(fsxnStorage && {
-            fsxnStorage: {
-                capacityCost: fsxnStorageCost,
-                operationalCost: fsxnOperationalCost,
-                // This is optional and only needed to display in UI
-                ...(fsxnDiskSizes && {
-                    size: {
-                        data: sizeInGigaBytes(fsxnDiskSizes?.FSxDataVolumeSize),
-                        log: sizeInGigaBytes(fsxnDiskSizes?.FSxLogVolumeSize),
-                        tempdb: sizeInGigaBytes(fsxnDiskSizes?.FSxTempDbVolumeSize),
-                        buffer: sizeInGigaBytes(fsxnDiskSizes?.FSxBufferVolumeSize),
-                        total: fsxnDiskSizes?.FSxStorageCapacity,
-                        ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
-                            quorum: sizeInGigaBytes(fsxnDiskSizes?.FSxQuorumVolumeSize)
-                        })
-                    }
-                })
-            }
-        }),
-        ...(vpc && { vpc: vpcCost }),
-        ...(ebsStorage && {
-            ebsStorage: {
-                ebsStorageCost: totalEbsStorageCost,
-                ebsBreakdownByVolumeType: ebsBreakdownByVolumeType.map(
-                    ({ id, size, volumeType, cost, iops, throughput }) => ({
-                        id,
-                        volumeType,
-                        cost,
-                        size: numeral(`${size}GiB`).value() || 0,
-                        iops,
-                        throughput
-                    })
-                )
-            }
-        }),
-        ...(fsxwStorage && {
-            fsxwStorage: {
-                capacityCost: fsxwStorageCost,
-                operationalCost: fsxwOperationalCost,
-                size: sizeInGigaBytes(fsxwStorage.storageCapacity) || 0
-            }
-        }),
-        total: ec2Cost + vpcCost + fsxnStorageCost + fsxnOperationalCost + totalEbsStorageCost + fsxwStorageCost
-    };
-}
-
-async function calculatePriceV2(
-    compute: PricingServiceRequestTypeV2['compute'],
-    fsxnStorage: PricingServiceRequestTypeV2['fsxnStorage'],
-    vpc: PricingServiceRequestTypeV2['vpc'],
-    ebsStorage?: PricingServiceRequestTypeV2['ebsStorage'],
-    fsxwStorage?: PricingServiceRequestTypeV2['fsxwStorage']
-): Promise<PricingServiceResponseTypeV2> {
-    logger.info('Calculating price for AWS resources', {
-        compute,
-        fsxnStorage,
-        vpc,
-        ebsStorage,
-        fsxwStorage
-    });
-
-    const inputList: ProductInput[] = compact(getInputsV2(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));
     const productRates = await getProductRates(inputList);
 
     const {
@@ -725,10 +722,10 @@ async function calculatePriceV2(
                 let fsxwStorageCost = 0;
                 let fsxwOperationalCost = 0;
 
-                ({ fsxwStorageCost, fsxwOperationalCost } = calculateFsxwCost(fsxwStorage, productRates.fsxwStorage));
-                totalFsxwCost = totalFsxnCost + fsxwStorageCost + fsxwOperationalCost;
+                ({ fsxwStorageCost, fsxwOperationalCost } = calculateFsxwCost(fsxResource, productRates.fsxwStorage));
+                totalFsxwCost = totalFsxwCost + fsxwStorageCost + fsxwOperationalCost;
                 fsxwCostBreakdownById.push({
-                    id: fsxResource.id,
+                    id: fsxResource.id!,
                     capacityCost: fsxwStorageCost,
                     operationalCost: fsxwOperationalCost,
                     size: sizeInGigaBytes(fsxResource.storageCapacity) || 0
@@ -1061,10 +1058,4 @@ async function getSqlInstancePricingDetails(
     return pricingDetails;
 }
 
-export {
-    getProductRates,
-    calculatePrice,
-    calculateFsxWindowsCapacityPrice,
-    getSqlInstancePricingDetails,
-    calculatePriceV2
-};
+export { getProductRates, calculateFsxWindowsCapacityPrice, getSqlInstancePricingDetails, calculatePrice };

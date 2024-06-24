@@ -17,9 +17,9 @@ import {
 } from '../routes/types/database-hosts.types';
 import { describeInstance, describeSubnets, describeVolumes, describeVpc, getAmis } from '../lib/aws/ec2';
 import { describeFSx } from '../lib/aws/fsx';
-import { PricingServiceRequestTypeV2, PricingServiceResponseTypeV2 } from '../routes/types/pricing.types';
+import { PricingServiceRequestType, PricingServiceResponseType } from '../routes/types/pricing.types';
 
-import { calculatePriceV2 } from './aws/pricing-operations';
+import { calculatePrice } from './aws/pricing-operations';
 import {
     DatabaseHostsQueryFields,
     HttpErrorCodes,
@@ -132,7 +132,7 @@ type EstimationFSxType = {
     iops: number;
     deploymentOption: string;
     storageType: string;
-    diskSize: number;
+    diskSize?: number;
 }[];
 
 type EstimationEbsType = {
@@ -684,7 +684,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
         const ebsResourceInfo = ebsInfo as EstimationEbsType;
         const fsxwResourceInfo = fsxwInfo as EstimationFSxType;
 
-        const pricingRequest: PricingServiceRequestTypeV2 = {
+        const pricingRequest: PricingServiceRequestType = {
             compute: {
                 regionCode: region!,
                 instanceType: ec2ResourceInfo.resourceType,
@@ -714,7 +714,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             })
         };
 
-        const pricingResponse: PricingServiceResponseTypeV2 = await calculatePriceV2(
+        const pricingResponse: PricingServiceResponseType = await calculatePrice(
             pricingRequest.compute,
             pricingRequest.fsxnStorage,
             pricingRequest.vpc,
@@ -809,8 +809,7 @@ async function getFsxResourceInfo(
                 throughput: throughput!,
                 iops: iops!,
                 deploymentOption: deploymentOption!,
-                storageType: StorageType!,
-                diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
+                storageType: StorageType!
             };
         }
     );
