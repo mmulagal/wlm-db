@@ -1358,19 +1358,6 @@ const getSnapshotsToClone = (
     $responseObject | ConvertTo-Json -Depth 5
 `;
 
-console.log(
-    createVolumeClone(
-        'test-fsx',
-        'us-east-1',
-        'wlmdb_sqlsvm_1714090636810',
-        JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
-        JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
-        ['resourceid=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
-        'target-svm',
-        'testdb'
-    )
-);
-
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
