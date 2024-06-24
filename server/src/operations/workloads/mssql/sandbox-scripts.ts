@@ -1281,8 +1281,7 @@ const getSnapshotsToClone = (
     volumeids: string,
     dataVolume: string,
     sandboxName: string,
-    window = 60,
-    createdTime = 0
+    window = 60
 ) => `
     $fsxid = '${fsxId}'
     $fsxregion = '${fsxRegion}'
@@ -1290,7 +1289,6 @@ const getSnapshotsToClone = (
     $dataVolume = '${dataVolume}'
     $sandboxName = '${sandboxName}'
     $timeWindow = ${window}
-    $createdTime = ${createdTime}
     $logPrefix = "Sandbox:$($sandboxName):"
 
     Start-Transcript -Path "C:\\cfn\\log\\get_snapshots_to_clone_$sandboxName.log.txt" -Append | Out-Null
@@ -1309,7 +1307,6 @@ const getSnapshotsToClone = (
             $volumeids | ForEach-Object {
                 $volumeid = $_
                 $ApiEndpoint = "/storage/volumes/$volumeid/snapshots"
-                $ApiQueryFilter = "create_time=>=$createdTime"
     
                 $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $ApiQueryFilter
                 if ($volumeid -eq $dataVolume) {
