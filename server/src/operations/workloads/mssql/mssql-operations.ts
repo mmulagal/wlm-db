@@ -617,22 +617,24 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                     (obj as any).isDefault = !obj.instanceName.includes('$');
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
                 });
-                let defaultInstance = true;
+                let isDefaultInstance = true;
                 let selectedInstance = instancesDetails.find(
-                    (instance: { instanceState: string; instanceName: string | string[] }) =>
-                        instance.instanceState.toLocaleLowerCase() === 'running' && !instance.instanceName.includes('$') // there is a $ present in named instances
+                    ({ instanceName, instanceState }: { instanceState: string; instanceName: string | string[] }) =>
+                        instanceState.toLocaleLowerCase() === 'running' && !instanceName.includes('$') // there is a $ present in named instances
                 )?.instanceName;
 
                 if (!selectedInstance) {
-                    const runningServices = instancesDetails.filter(
-                        (instance: { instanceState: string }) =>
-                            instance.instanceState.toLocaleLowerCase() === 'running'
+                    const runningInstances = instancesDetails.filter(
+                        ({ instanceState }: { instanceState: string }) =>
+                            instanceState.toLocaleLowerCase() === 'running'
                     );
-                    selectedInstance = runningServices.length > 0 ? runningServices[0].instanceName : undefined;
-                    defaultInstance = false;
+
+                    // Select the first running instance
+                    selectedInstance = runningInstances.length > 0 ? runningInstances[0].instanceName : undefined;
+                    isDefaultInstance = false;
                 }
                 if (selectedInstance !== undefined) {
-                    const instanceName = getDatabaseInstanceName(selectedInstance, defaultInstance);
+                    const instanceName = getDatabaseInstanceName(selectedInstance, isDefaultInstance);
                     return { instanceName, instancesDetails };
                 }
 
