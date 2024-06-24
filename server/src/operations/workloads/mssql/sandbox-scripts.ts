@@ -1032,16 +1032,15 @@ const detachDbAndRemoveAccessPath = (
         ${getVolumeIdFromPath}
 
         $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
+        $windowsVolumeIds = $filePaths | ForEach-Object {
+            Get-VolumeIdFromPath -absolutePath $_
+        }
 
         if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
             $resourceType = 'SQL Server' 
             $sqlgroup = Get-ClusterResource | Where-Object ResourceType -eq $resourceType
             $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
             $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
-
-            $winvolumeIds = $filePaths | ForEach-Object {
-                Get-VolumeIdFromPath -absolutePath $_
-            }
 
             $clusterdisksToRemove = @()
             foreach ($resource in $resourcegroup) {
