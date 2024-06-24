@@ -953,7 +953,7 @@ async function createVolumeClone(
                 JSON.stringify({ name: mapping.log.volumeName, ...(snapshot && { snapshot }) }),
                 [
                     `cloned_by=${getClonedByTagValue(accountId, credentialsId)}`,
-                    `source=${destDetails.host}|${destDetails.instance}|${destDetails.database}`
+                    `source=${destDetails.host}_${destDetails.instance}`.replace(/-/g, '_')
                 ],
                 sqlVMName || mapping.svm,
                 destDetails.database,
