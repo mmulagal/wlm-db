@@ -123,12 +123,7 @@ const CreateSandboxApis = () => {
         },
         {
             skip:
-                !credId ||
-                !regionId ||
-                !selectedDbHostId ||
-                !selectedDbName ||
-                !selectedInstanceName ||
-                !fetchedDatabases
+                !credId || !regionId || !selectedDbHostId || !selectedDbName || !selectedInstanceId || !fetchedDatabases
         }
     );
 
