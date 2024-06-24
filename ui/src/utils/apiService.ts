@@ -790,6 +790,25 @@ export const sandboxApi = createApi({
             getDatabaseHostsForSandbox: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
+                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,storage&nextToken=${nextToken}`;
+                    } else {
+                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,storage`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.region
+                        };
+                    }
+                    return response;
+                }
+            }),
+            getDatabaseHostsForSandboxV2: builder.query({
+                query: ({ credentialId, region, nextToken = null }) => {
+                    if (nextToken) {
                         return `v2/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage&nextToken=${nextToken}`;
                     } else {
                         return `v2/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage`;
@@ -1016,6 +1035,7 @@ export const {
     useSplitSandboxMutation,
     useCheckIntegrityMutation,
     useGetDatabaseHostsForSandboxQuery,
+    useGetDatabaseHostsForSandboxV2Query,
     useLazyGetRollbackSnapshotsQuery
 } = sandboxApi;
 

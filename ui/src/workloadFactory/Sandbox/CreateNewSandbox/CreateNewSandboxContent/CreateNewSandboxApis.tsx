@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
 import {
     useGetDatabaseHostsForSandboxQuery,
+    useGetDatabaseHostsForSandboxV2Query,
+    useGetDatabaseListQuery,
     useGetDatabaseListV2Query,
     useGetDatabaseMountPointsQuery,
     useGetDriveInfoQuery
@@ -17,6 +19,7 @@ import {
 const CreateSandboxApis = () => {
     const dispatch = useAppDispatch();
 
+    const { isInventoryV2 } = useAppSelector(state => state.auth);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const { source, aggregatedDbHostList, getDatabaseHosts, target } = useAppSelector(state => state.createSandbox);
 
@@ -57,13 +60,39 @@ const CreateSandboxApis = () => {
             region: regionId,
             nextToken: databaseHostCursor
         },
-        { skip: !credId || !regionId || (aggregatedDbHostList.length && !databaseHostCursor) }
+        { skip: !credId || !regionId || (aggregatedDbHostList.length && !databaseHostCursor) || isInventoryV2 }
+    );
+
+    const {
+        data: databaseHostsV2,
+        isFetching: databaseHostsLoadingV2,
+        isError: databaseHostsErrorV2
+    } = useGetDatabaseHostsForSandboxV2Query(
+        {
+            credentialId: credId,
+            region: regionId,
+            nextToken: databaseHostCursor
+        },
+        { skip: !credId || !regionId || (aggregatedDbHostList.length && !databaseHostCursor) || !isInventoryV2 }
     );
 
     const {
         data: databaseList,
         isFetching: databaseListLoading,
         isError: databaseListError
+    } = useGetDatabaseListQuery(
+        {
+            credentialId: credId,
+            region: regionId,
+            id: selectedDbHostId
+        },
+        { skip: !credId || !regionId || !selectedDbHostId || isInventoryV2 }
+    );
+
+    const {
+        data: databaseListV2,
+        isFetching: databaseListLoadingV2,
+        isError: databaseListErrorV2
     } = useGetDatabaseListV2Query(
         {
             credentialId: credId,
@@ -71,7 +100,7 @@ const CreateSandboxApis = () => {
             id: selectedDbHostId,
             sqlInstanceId: selectedInstanceId
         },
-        { skip: !credId || !regionId || !selectedDbHostId || !selectedInstanceId }
+        { skip: !credId || !regionId || !selectedDbHostId || !selectedInstanceId || !isInventoryV2 }
     );
 
     const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoQuery(
@@ -103,20 +132,41 @@ const CreateSandboxApis = () => {
         }
     );
 
+    // for v1
     useEffect(() => {
-        if (!databaseHostsLoading && getDatabaseHosts?.databaseHostsLoading) {
-            dispatch(setAggregatedDbHost([...aggregatedDbHostList, ...(databaseHosts?.items || [])]));
-            setDatabaseHostCursor(databaseHosts?.nextToken || null);
+        if (!isInventoryV2) {
+            if (!databaseHostsLoading && getDatabaseHosts?.databaseHostsLoading) {
+                dispatch(setAggregatedDbHost([...aggregatedDbHostList, ...(databaseHosts?.items || [])]));
+                setDatabaseHostCursor(databaseHosts?.nextToken || null);
+            }
+            dispatch(
+                setDatabaseHostState({
+                    databaseHosts: databaseHosts?.items,
+                    databaseHostsLoading,
+                    databaseHostsError
+                })
+            );
         }
-        dispatch(
-            setDatabaseHostState({
-                databaseHosts: databaseHosts?.items,
-                databaseHostsLoading,
-                databaseHostsError
-            })
-        );
     }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
 
+    // for v2
+    useEffect(() => {
+        if (isInventoryV2) {
+            if (!databaseHostsLoadingV2 && getDatabaseHosts?.databaseHostsLoading) {
+                dispatch(setAggregatedDbHost([...aggregatedDbHostList, ...(databaseHostsV2?.items || [])]));
+                setDatabaseHostCursor(databaseHostsV2?.nextToken || null);
+            }
+            dispatch(
+                setDatabaseHostState({
+                    databaseHosts: databaseHostsV2?.items,
+                    databaseHostsLoading: databaseHostsLoadingV2,
+                    databaseHostsError: databaseHostsErrorV2
+                })
+            );
+        }
+    }, [databaseHostsV2, databaseHostsLoadingV2, databaseHostsErrorV2]);
+
+    // for v1
     useEffect(() => {
         dispatch(
             setDatabaseListState({
@@ -129,6 +179,20 @@ const CreateSandboxApis = () => {
             setFetchedDatabases(true);
         }
     }, [databaseList, databaseListLoading, databaseListError]);
+
+    // for v2
+    useEffect(() => {
+        dispatch(
+            setDatabaseListState({
+                databaseListData: databaseListV2?.items,
+                databaseListLoading: databaseListLoadingV2,
+                databaseListError: databaseListErrorV2
+            })
+        );
+        if (!databaseListLoadingV2) {
+            setFetchedDatabases(true);
+        }
+    }, [databaseListV2, databaseListLoadingV2, databaseListErrorV2]);
 
     useEffect(() => {
         if (!driveInfoListLoading) {

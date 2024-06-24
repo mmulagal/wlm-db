@@ -26,7 +26,7 @@ const SelectTarget = () => {
     const { target, source, aggregatedDbHostList, showError, dataFilePath, logFilePath } = useAppSelector(
         state => state.createSandbox
     );
-    const { isDemoMode } = useAppSelector(state => state.auth);
+    const { isDemoMode, isInventoryV2 } = useAppSelector(state => state.auth);
     const { selectedDatabaseHost, selectedDatabase, selectedDatabaseInstance } = target;
     const { selectedDatabaseHost: selectedSourceDbHost, selectedDatabaseInstance: selectedSourceDbInstance } = source;
 
@@ -34,12 +34,23 @@ const SelectTarget = () => {
     const generateTargetName = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         const filteredHosts = selectedSourceDbHost
-            ? aggregatedDbHostList.filter(
-                  (item: any) =>
-                      item?.nodeTopology?.vpcId &&
-                      item?.nodeTopology?.vpcId === selectedSourceDbHost?.data?.nodeTopology?.vpcId &&
-                      item?.databaseHostStatus?.toLowerCase() === STATUS_CONST.ONLINE.toLowerCase()
-              )
+            ? aggregatedDbHostList.filter((item: any) => {
+                  if (isInventoryV2) {
+                      return (
+                          item?.nodeTopology?.vpcId &&
+                          item?.nodeTopology?.vpcId === selectedSourceDbHost?.data?.nodeTopology?.vpcId &&
+                          item?.databaseHostStatus?.toLowerCase() === STATUS_CONST.ONLINE.toLowerCase()
+                      );
+                  } else {
+                      return (
+                          item?.topology?.fileSystemId &&
+                          item?.topology?.fileSystemId === selectedSourceDbHost?.data?.topology?.fileSystemId &&
+                          item?.topology?.vpcId &&
+                          item?.topology?.vpcId === selectedSourceDbHost?.data?.topology?.vpcId &&
+                          item?.status === STATUS_CONST.UP
+                      );
+                  }
+              })
             : [];
         filteredHosts?.map((obj, idx: number) => {
             const option = generateOptionType(obj?.id, obj?.name, '', false, '', obj);
@@ -51,25 +62,32 @@ const SelectTarget = () => {
     }, [aggregatedDbHostList, selectedSourceDbHost]);
 
     const generateTargetInstance = useMemo<optionType[]>((): optionType[] => {
-        const selectedHostData: any = aggregatedDbHostList.find(
-            (hostItem: any) => hostItem?.id === selectedDatabaseHost?.value
-        );
-        const instanceList = selectedHostData?.databaseInstancesSummary
-            ? selectedHostData.databaseInstancesSummary.map((instanceItem: any) => {
-                  return {
-                      value: instanceItem?.databaseInstanceId,
-                      label: instanceItem?.databaseInstanceName,
-                      status: instanceItem?.status,
-                      fileSystemId: instanceItem?.databaseInstanceTopology?.fileSystemId
-                  };
-              })
-            : [];
+        let instanceList = [];
+
+        if (isInventoryV2) {
+            const selectedHostData: any = aggregatedDbHostList.find(
+                (hostItem: any) => hostItem?.id === selectedDatabaseHost?.value
+            );
+            instanceList = selectedHostData?.databaseInstancesSummary
+                ? selectedHostData.databaseInstancesSummary.map((instanceItem: any) => {
+                      return {
+                          value: instanceItem?.databaseInstanceId,
+                          label: instanceItem?.databaseInstanceName,
+                          status: instanceItem?.status,
+                          fileSystemId: instanceItem?.databaseInstanceTopology?.fileSystemId
+                      };
+                  })
+                : [];
+        } else {
+            instanceList = [{ label: 'MSSQLSERVER', value: 'MSSQLSERVER' }];
+        }
         const options: optionType[] = [];
         instanceList?.map((obj: any, idx: number) => {
             const option = generateOptionType(obj?.value, obj?.label, '', false, '');
             if (
-                obj?.status?.toLowerCase() === STATUS_CONST.UP.toLowerCase() &&
-                obj?.fileSystemId === selectedSourceDbInstance?.data?.fileSystemId
+                !isInventoryV2 ||
+                (obj?.status?.toLowerCase() === STATUS_CONST.UP.toLowerCase() &&
+                    obj?.fileSystemId === selectedSourceDbInstance?.data?.fileSystemId)
             ) {
                 options.push(option);
             }
@@ -202,6 +220,7 @@ const SelectTarget = () => {
                                     isSearchable={true}
                                     options={generateTargetInstance}
                                     className={styles.selectField}
+                                    isDisabled={!isInventoryV2}
                                 />
 
                                 {windowSize.width <= 1500 && (
