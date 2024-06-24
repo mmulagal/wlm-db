@@ -385,7 +385,9 @@ const InventoryApisV2 = () => {
 
     useEffect(() => {
         // if fsx register is false and only db cred is added than call instance API
-        callInstanceApi([detectedInstanceId], false);
+        if (detectedInstanceId) {
+            callInstanceApi([detectedInstanceId], false);
+        }
     }, [detectedInstanceId]);
 
     const resetValues = () => {
@@ -479,7 +481,7 @@ const InventoryApisV2 = () => {
         });
         dispatch(addDatabaseHostsDataV2(databaseHostDataObj));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fullHostData, topologyHostData]);
+    }, [fullHostData, topologyHostData, fullHostDataLoading]);
 
     // This data is coming from discover API
     useEffect(() => {
