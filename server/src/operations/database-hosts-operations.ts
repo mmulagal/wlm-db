@@ -1420,7 +1420,7 @@ async function getDatabaseInstanceTopology(
 
     const {
         fsxn_ids: fileSystemId,
-        storageType,
+        storage_type: storageType,
         database_instance_id: databaseInstanceDetails,
         database_deployment_type: databaseDeploymentType,
         database_type: databaseType

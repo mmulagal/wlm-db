@@ -78,6 +78,7 @@ interface DatabaseInstanceRecord {
     sandboxCreated?: boolean;
     metaData?: databaseInstanceMetadata;
     databaseType: string;
+    storageType?: string;
 }
 
 async function listDeployments(
@@ -569,7 +570,8 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
         sandboxCreated,
         storageProtocol,
         metaData,
-        databaseType
+        databaseType,
+        storageType
     } = record;
 
     accountId = checkAccount(accountId);
@@ -591,7 +593,8 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             ...(storageProtocol && { storage_protocol: storageProtocol as STORAGEPROTOCOL }),
             ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
             ...(sandboxCreated && { sandbox_created: sandboxCreated }),
-            ...(metaData && { metadata: metaData as { string: string } })
+            ...(metaData && { metadata: metaData as { string: string } }),
+            ...(storageType && { storage_type: storageType as STORAGE_TYPE })
         },
         update: {
             ...(databaseInstanceName && { database_instance_name: databaseInstanceName }),
