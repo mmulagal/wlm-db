@@ -1652,7 +1652,7 @@ async function getDatabaseInstanceSummary(
     databaseInstanceDetails.status = ServerState.UP;
     if (shouldQueryServerDetails && serverDetails) {
         databaseInstanceDetails.databaseServer = serverDetails;
-        serverDetails.creationDate = creationDate || '';
+        serverDetails.creationDate = creationDate ? Date.parse(creationDate) : '';
     }
     databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
 
