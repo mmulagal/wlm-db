@@ -38,7 +38,7 @@ const ProvisionedIOPS = () => {
     useEffect(() => {
         const sizeData = getEstimatedCostData?.data?.fsxnStorage?.size;
         if (isFsxnNew(selectedFsxnType) && sizeData) {
-            setPlaceHolderText(`range should be between ${sizeData?.total * 3} - 16000 IOPS`);
+            setPlaceHolderText(`range should be between ${sizeData?.total * 3} - 160000 IOPS`);
             setTotal(sizeData?.total * 3);
         } else {
             setPlaceHolderText('range should be between 3072 - 160000 IOPS');
@@ -99,7 +99,7 @@ const ProvisionedIOPS = () => {
             iopsValue.length &&
             (Number(iopsValue) < total || Number(iopsValue) > 160000)
         ) {
-            return `range should be between ${total} - 16000 IOPS`;
+            return `range should be between ${total} - 160000 IOPS`;
         }
     };
     return (
