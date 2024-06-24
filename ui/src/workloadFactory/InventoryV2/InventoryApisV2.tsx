@@ -505,7 +505,9 @@ const InventoryApisV2 = () => {
             let removeRows: any[] = [];
             let clusterDiscoveredHost: any = {};
             // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
-            getPrimaryClusterNode(newDiscoveredHostData, removeRows, managedHostList, clusterDiscoveredHost);
+            if (!isDemoMode) {
+                getPrimaryClusterNode(newDiscoveredHostData, removeRows, managedHostList, clusterDiscoveredHost);
+            }
 
             const formattedDiscoveredInventoryTableData = formatDiscoveredInventoryData(
                 newDiscoveredHostData,

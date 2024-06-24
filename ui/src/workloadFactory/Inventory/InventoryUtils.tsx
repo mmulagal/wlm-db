@@ -193,7 +193,7 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
     return (
         <>
             {deploymentType && (
-                <div className={styles.colText}>
+                <div className={styles.azColText}>
                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
                     <Typography variant="Regular_14">
                         {deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
