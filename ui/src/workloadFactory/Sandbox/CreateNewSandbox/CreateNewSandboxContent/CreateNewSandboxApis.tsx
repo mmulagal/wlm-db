@@ -119,16 +119,11 @@ const CreateSandboxApis = () => {
             region: regionId,
             databaseHostId: selectedDbHostId,
             databaseName: selectedDbName,
-            instanceName: selectedInstanceName
+            instanceId: selectedInstanceId
         },
         {
             skip:
-                !credId ||
-                !regionId ||
-                !selectedDbHostId ||
-                !selectedDbName ||
-                !selectedInstanceName ||
-                !fetchedDatabases
+                !credId || !regionId || !selectedDbHostId || !selectedDbName || !selectedInstanceId || !fetchedDatabases
         }
     );
 
