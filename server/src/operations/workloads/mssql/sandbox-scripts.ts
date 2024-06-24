@@ -388,8 +388,7 @@ const createVolumeClone = (
     sourceSvm: string,
     dataVolume: string,
     logVolume: string,
-    resourceId: string,
-    clonedByTagValue: string,
+    tags: Array<string>,
     targetSvm: string,
     sandboxName: string,
     logPrefix?: string
@@ -400,8 +399,6 @@ const createVolumeClone = (
     $targetSvm = '${targetSvm}'
     $dataVolume = '${dataVolume}' | convertFrom-json
     $logVolume = '${logVolume}' | convertFrom-json
-    $resourceId = '${resourceId}'
-    $clonedByTagValue = '${clonedByTagValue}'
     $sandboxName = '${sandboxName}'
     $logPrefix = '${logPrefix}'
 
@@ -584,10 +581,7 @@ const createVolumeClone = (
                 $volumeid = $_.location.volume.uuid
                 $body = @"
                 {
-                    "tiering.object_tags": [
-                        "cloned_by=$clonedByTagValue",
-                        "resource_id=$resourceId"
-                    ]
+                    "tiering.object_tags": [${tags.map(tag => `"${tag}"`).join(',')}]
                 }
 "@
                 $ApiEndpoint = '/storage/volumes/' + $volumeid

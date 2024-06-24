@@ -17,6 +17,12 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string]$LogPrefix = ''
+
+    [Parameter(Mandatory = $true)]
+    [string]$InstanceName
+
+    [Parameter(Mandatory = $true)]
+    [boolean]$IsDefaultInstance
 )
 
 $null = (Start-Transcript -Path "C:\cfn\log\invoke_virtualmount_$DBName.log.txt" -Append)
@@ -98,8 +104,8 @@ try {
     $datadisknumber = $datadisk.Number
     $logdisknumber = $logdisk.Number
 
-    $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object Type -eq Basic
-    $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object Type -eq Basic
+    $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
+    $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
 
     $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
     $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
@@ -154,7 +160,7 @@ try {
         }
 
         try {
-            $SQLRoleGroup = (Get-ClusterGroup).Name -match ('SQl Server*')
+            $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($InstanceName)")
             $SQLGroup = $SQLRoleGroup[0]
 
             if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
@@ -162,8 +168,9 @@ try {
                 $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
 
                 #Add dependency on new disks in SQL Server Resource
-                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $($clusterdatadisk.Name))
-                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $($clusterlogdisk.Name))
+                $ClusterResourceName = If ($IsDefaultInstance) { "SQL Server" } Else { "SQL Server ($InstanceName)" }
+                $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterdatadisk.Name))
+                $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterlogdisk.Name))
 
                 #Rename new cluster disks to user friendly name
                 (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
@@ -189,12 +196,12 @@ try {
     Start-Sleep 5
     if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
         $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
-        $null = (Get-Partition -DiskNumber $datadisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+        $null = (Get-Partition -DiskNumber $datadisknumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
     }
 
     if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
         $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
-        $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+        $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
     }
 }catch {
         $responseObject['error'] = $_.Exception.Message
@@ -205,7 +212,7 @@ try {
     }
 
 try {
-    Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
+    Get-Partition | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
         $partition = $_
         $partition.AccessPaths | ForEach-Object {
             $accessPath = $_
