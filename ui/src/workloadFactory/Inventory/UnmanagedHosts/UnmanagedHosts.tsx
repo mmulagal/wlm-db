@@ -73,7 +73,7 @@ const UnmanagedHosts = () => {
                 id: 'exploreSavings',
                 displayName: 'Explore savings',
                 disabled: !hasEbs ? true : false,
-                infoText: !hasEbs ? GENERAL.EXPLORE_SAVINGS_DISABLED : '',
+                infoText: !hasEbs ? GENERAL.EXPLORE_SAVINGS_DISABLED : ''
             }
         ];
     };
@@ -338,7 +338,7 @@ const UnmanagedHosts = () => {
                                         }
 
                                         if (menuId === 'exploreSavings') {
-                                            onClickESHost(dispatch, rowData, isDemoMode);
+                                            onClickESHost(dispatch, rowData);
                                         }
                                     }
                                 }}
