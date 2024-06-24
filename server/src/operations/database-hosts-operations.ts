@@ -1761,8 +1761,12 @@ async function getDatabaseHostSummaryV2(
     const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLocaleLowerCase());
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
 
-    const instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
-
+    // Update the database instances detail to include storage type as FSXN
+    const instances = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+    const instancesManaged = instances.map(instance => ({
+        ...instance,
+        storage_type: STORAGE_TYPE.FSXN
+    }));
     const errormessages: { [index: string]: string } = {};
 
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
@@ -2015,7 +2019,7 @@ async function getInstanceDetails(
     databaseHostId: string,
     databaseInstanceId: string
 ) {
-    const [[resourceDetails], [databaseInstanceDetails]] = await Promise.all([
+    const [[resourceDetails], [instanceDetails]] = await Promise.all([
         listResources(accountId, databaseHostId, credentialsId, region),
         listDatabaseInstances(accountId, {
             databaseHostId,
@@ -2023,6 +2027,12 @@ async function getInstanceDetails(
             sqlInstanceId: databaseInstanceId
         })
     ]);
+
+    // Update the database instance details to include storage type as FSXN
+    const databaseInstanceDetails = {
+        ...instanceDetails,
+        storage_type: STORAGE_TYPE.FSXN
+    };
 
     if (isEmpty(resourceDetails) || isEmpty(databaseInstanceDetails)) {
         const errorMessage = `No database host by id ${databaseHostId} or instance by insatnce id ${databaseInstanceDetails} for ${accountId} is found.`;

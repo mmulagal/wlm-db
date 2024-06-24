@@ -4,8 +4,7 @@ import {
     STORAGE_TYPE,
     STORAGEPROTOCOL,
     SOURCE,
-    DATABASE_DEPLOYMENT_TYPE,
-    MANAGED_STORAGE_TYPE
+    DATABASE_DEPLOYMENT_TYPE
 } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
@@ -571,8 +570,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
         sandboxCreated,
         storageProtocol,
         metaData,
-        databaseType,
-        storageType
+        databaseType
     } = record;
 
     accountId = checkAccount(accountId);
@@ -594,8 +592,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             ...(storageProtocol && { storage_protocol: storageProtocol as STORAGEPROTOCOL }),
             ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
             ...(sandboxCreated && { sandbox_created: sandboxCreated }),
-            ...(metaData && { metadata: metaData as { string: string } }),
-            ...(storageType && { storage_type: storageType as MANAGED_STORAGE_TYPE })
+            ...(metaData && { metadata: metaData as { string: string } })
         },
         update: {
             ...(databaseInstanceName && { database_instance_name: databaseInstanceName }),
