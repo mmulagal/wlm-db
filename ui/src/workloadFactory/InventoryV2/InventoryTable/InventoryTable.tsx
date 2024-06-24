@@ -255,7 +255,7 @@ const InventoryTable = () => {
         checkForAllUnDetectInstance: boolean,
         checkForAllFileSystemNA: boolean
     ) => {
-        //Condition for if all managed then showing disable managed button with tooltip
+        //Condition if installation mode is AOAG than disable manage 
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
             return (
                 <TooltipComponent title={GENERAL.AOAG_MANAGE_DISABLE} placement="bottom" width="320px" height="50px">
