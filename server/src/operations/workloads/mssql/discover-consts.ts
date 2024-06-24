@@ -344,8 +344,8 @@ const HOST_AND_SQL_INFO_PS1 = [
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" }
           try {
             $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
-            $responseObject['windowsAuthentication'] = $True
-  
+            $responseObject['windowsAuthentication'] = $?
+    
             $responseObject['sqlServerEdition'] = $editionDBCountMachineInfoGuid[0]
             $responseObject['sqlServerEngineEdition'] = $editionDBCountMachineInfoGuid[1]
             $responseObject['databaseCount'] = $editionDBCountMachineInfoGuid[2]
