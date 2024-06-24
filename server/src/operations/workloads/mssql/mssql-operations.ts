@@ -1054,8 +1054,7 @@ async function getActiveSqlNodeAndInstanceDetails(
                     if (matchingInstance) {
                         return { nodeId, matchingInstance };
                     }
-                    const debugMessage = `Instance ${databaseInstanceName} is not running on node ${nodeId}`;
-                    logger.debug(debugMessage);
+                    logger.debug(`Instance ${databaseInstanceName} is not running on node ${nodeId}`);
                 } else {
                     logger.debug(`No active sql instances found in node ${nodeId} `);
                 }
@@ -1063,7 +1062,8 @@ async function getActiveSqlNodeAndInstanceDetails(
                 logger.error(`SSM status of node ${nodeId} is not running :${connectionStatus.Status}`);
             }
         }
-        const errorMessage = `Instance ${databaseInstanceName} is not running on node ${nodeIds}`;
+        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${nodeIds}`;
+        logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     } catch (err) {
         const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId} , ${credentialsId}, ${region}, ${nodeIds} , ${err}`;
