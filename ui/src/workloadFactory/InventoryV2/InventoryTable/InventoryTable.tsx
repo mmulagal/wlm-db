@@ -1,12 +1,4 @@
-import {
-    DsFlashingDotsLoader,
-    Popover,
-    Table,
-    TableTopBar,
-    Typography,
-    useDialog,
-    useTable
-} from '@netapp/design-system';
+import { DsFlashingDotsLoader, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -34,7 +26,8 @@ import {
     installModuleNotification,
     renderAllocatedCapacity,
     renderCellData,
-    renderEstimatedCost
+    renderEstimatedCost,
+    renderInstanceListText
 } from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
@@ -298,7 +291,7 @@ const InventoryTable = () => {
                     className={styles.detectManage}
                     onClick={() => {
                         if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-                            onClickESHost(dispatch, rowData, isDemoMode);
+                            onClickESHost(dispatch, rowData);
                         } else {
                             handleDialog(rowData);
                         }
@@ -452,45 +445,7 @@ const InventoryTable = () => {
             width: '212px',
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
-                let instanceList: any = cellData ? cellData.split(',') : null;
-                return (
-                    <>
-                        {instanceList && (
-                            <div>
-                                {instanceList?.[0] && (
-                                    <Popover
-                                        popoverClass={''}
-                                        children={instanceList[0]}
-                                        trigger="hover"
-                                        delayHide={200}
-                                        interactive={true}
-                                        container={
-                                            <Typography variant="Regular_14" className={`${styles.colText}`}>
-                                                {instanceList[0]}
-                                            </Typography>
-                                        }
-                                    />
-                                )}
-                                {instanceList?.[1] && (
-                                    <Popover
-                                        popoverClass={''}
-                                        children={instanceList[1]}
-                                        trigger="hover"
-                                        delayHide={200}
-                                        interactive={true}
-                                        container={
-                                            <Typography variant="Regular_14" className={`${styles.colText}`}>
-                                                {instanceList[1]}
-                                            </Typography>
-                                        }
-                                    />
-                                )}
-                            </div>
-                        )}
-                        {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-                    </>
-                );
+                return renderInstanceListText(cellData, rowData, styles);
             }
         },
         {

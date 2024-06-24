@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar, Popover, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTableV2.module.scss';
@@ -7,11 +7,9 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
     renderAllocatedCapacity,
-    renderDeploymentModel,
     renderEstimatedCost,
-    renderFileSystemType,
-    renderUnmanagedAZ,
-    renderUnmanagedHostName
+    renderInstanceListText,
+    renderUnmanagedAZ
 } from '../../Inventory/InventoryUtils';
 import { onClickESHost } from '../ExploreSavingsUtils';
 import { INVENTORY_STATUS } from '../../../utils/consts';
@@ -33,7 +31,11 @@ const ExploreSavingsTableV2 = () => {
             unManagedHostFormatedList?.map((perRow: any) => {
                 let instanceList: any = [];
                 perRow?.ec2Details?.map((row: any) => {
-                    instanceList.push(row?.id);
+                    if (row?.name && row?.id) {
+                        instanceList.push(row?.name + ' | ' + row?.id);
+                    } else if (row?.id) {
+                        instanceList.push(row?.id);
+                    }
                 });
                 const rowData = {
                     ...perRow,
@@ -59,7 +61,7 @@ const ExploreSavingsTableV2 = () => {
                         <div
                             className={styles.detectManage}
                             onClick={() => {
-                                onClickESHost(dispatch, rowData, isDemoMode);
+                                onClickESHost(dispatch, rowData);
                             }}
                         >
                             <Typography variant="Regular_14" className={styles.textStyle}>
@@ -134,35 +136,7 @@ const ExploreSavingsTableV2 = () => {
             width: '200px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
-                let instanceList: any = cellData ? cellData.split(',') : null;
-                return (
-                    <>
-                        {instanceList && (
-                            <div>
-                                {instanceList?.[0] && (
-                                    <Typography
-                                        variant="Regular_13"
-                                        className={`${styles.colText}`}
-                                        title={instanceList[0]}
-                                    >
-                                        {instanceList[0]}
-                                    </Typography>
-                                )}
-                                {instanceList?.[1] && (
-                                    <Typography
-                                        variant="Regular_13"
-                                        className={`${styles.colText}`}
-                                        title={instanceList[1]}
-                                    >
-                                        {instanceList[1]}
-                                    </Typography>
-                                )}
-                            </div>
-                        )}
-                        {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-                    </>
-                );
+                return renderInstanceListText(cellData, rowData, styles);
             }
         },
         {
