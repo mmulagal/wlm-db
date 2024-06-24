@@ -15,18 +15,20 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$LogSerial,
 
+    [Parameter(Mandatory = $true)]
+    [string]$InstanceName,
+
+    [Parameter(Mandatory = $true)]
+    [string]$IsDefaultInstance,
+
     [Parameter(Mandatory = $false)]
     [string]$LogPrefix = ''
-
-    [Parameter(Mandatory = $true)]
-    [string]$InstanceName
-
-    [Parameter(Mandatory = $true)]
-    [boolean]$IsDefaultInstance
 )
 
 $null = (Start-Transcript -Path "C:\cfn\log\invoke_virtualmount_$DBName.log.txt" -Append)
 $ErrorActionPreference = "Stop"
+
+$IsDefaultInstance = [System.Convert]::ToBoolean($IsDefaultInstance)
 
 try {
     $responseObject = [ordered]@{}
