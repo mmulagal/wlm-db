@@ -1,11 +1,4 @@
-import {
-    DEPLOYMENT_STATUS,
-    DEPLOYMENT_MODEL,
-    STORAGE_TYPE,
-    STORAGEPROTOCOL,
-    SOURCE,
-    DATABASE_DEPLOYMENT_TYPE
-} from '@prisma/client';
+import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL, STORAGE_TYPE, SOURCE, DATABASE_DEPLOYMENT_TYPE } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
@@ -588,7 +581,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             database_type: databaseType,
             database_deployment_type: sqlDeploymentType as DATABASE_DEPLOYMENT_TYPE,
             fsx_svm_id: fsxSvmId,
-            ...(storageProtocol && { storage_protocol: storageProtocol as STORAGEPROTOCOL }),
+            ...(storageProtocol && { storage_protocol: storageProtocol }),
             ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
             ...(sandboxCreated && { sandbox_created: sandboxCreated }),
             ...(metaData && { metadata: metaData as { string: string } })

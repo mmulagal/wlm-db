@@ -128,7 +128,7 @@ model database_instances {
   source                            SOURCE            
   number_of_user_dbs_created        Int?              @default(0)
   sandbox_created                   Boolean?          @default(value: false)
-  storage_protocol                  STORAGEPROTOCOL?  @default(iSCSI)
+  storage_protocol                  String?           @db.VarChar(30)
   fsx_svm_id                        Json     
   metadata                          Json?             @default("{}")
 
