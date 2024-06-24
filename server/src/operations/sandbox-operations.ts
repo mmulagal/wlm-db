@@ -35,7 +35,6 @@ import {
     splitFlexCloneVolumes,
     deleteExtendedPropertiesScript,
     checkDatabaseIntegrityScript,
-    readExtendedPropertiesOfSandbox,
     getSnapshotsToClone
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails, Sandbox } from '../utils/common-types';
@@ -1522,7 +1521,7 @@ async function getDatabaseMountPointInfo(
     databaseName: string
 ) {
     logger.info(
-        `Fetching mount point information`,
+        'Fetching mount point information',
         accountId,
         region,
         credentialsId,
@@ -2315,6 +2314,7 @@ async function performLifecycleUpdate(
             resourceDetails,
             {
                 ...extendedProps,
+                ...(action === SANDBOX_LIFECYCLE_REFRESH && snapshot && { baseSnapshot: snapshot }),
                 updatedAt: Date.now()
             }
         );
@@ -3054,44 +3054,29 @@ async function getSandboxSnapshots(
     }
 
     let mappingsCommand = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
-    let readExtPropsCommand = [readExtendedPropertiesOfSandbox(sandboxName, instanceName)];
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         mappingsCommand = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
-        readExtPropsCommand = [readExtendedPropertiesOfSandbox('testdb')];
     }
 
-    const [mappings, extendedProps] = await Promise.all([
-        callSsmExecution(credentialsId, region, mappingsCommand, activeNodeInstanceId),
-        callSsmExecution(credentialsId, region, readExtPropsCommand, activeNodeInstanceId)
-    ]);
+    const mappings = await callSsmExecution(credentialsId, region, mappingsCommand, activeNodeInstanceId);
 
-    if (!mappings || !extendedProps) {
+    if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume lun mapping for the database');
     }
 
     const parsedMappingResponse = sqlResponseParsing(mappings);
-    const parsedExtendedPropsResponse = sqlResponseParsing(extendedProps);
 
-    if (parsedMappingResponse.error || parsedExtendedPropsResponse.error) {
+    if (parsedMappingResponse.error) {
         logger.error(parsedMappingResponse.error);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            parsedMappingResponse.error,
-            parsedExtendedPropsResponse.error
-        );
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedMappingResponse.error);
     }
 
     if (!parsedMappingResponse?.data?.parentVolumeUuid || !parsedMappingResponse?.log?.parentVolumeUuid) {
         const errorMessage = 'The underlying volume doesnot have parents, the volume seems to be already split';
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-    }
-
-    let createdTime = 0;
-    if (!historical && parsedExtendedPropsResponse?.createdAt && !Number.isNaN(parsedExtendedPropsResponse.createdAt)) {
-        createdTime = Math.trunc(parsedExtendedPropsResponse.createdAt / 1000);
     }
 
     let snapshotsCommand = [
@@ -3101,8 +3086,7 @@ async function getSandboxSnapshots(
             JSON.stringify([parsedMappingResponse.data.parentVolumeUuid, parsedMappingResponse.log.parentVolumeUuid]),
             parsedMappingResponse.data.parentVolumeUuid,
             sandboxName,
-            TIME_WINDOW,
-            createdTime
+            TIME_WINDOW
         )
     ];
 
