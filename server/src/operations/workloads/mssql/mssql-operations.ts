@@ -1052,10 +1052,10 @@ async function getActiveSqlNodeAndInstanceDetails(
                     if (matchingInstance) {
                         return { nodeId, matchingInstance };
                     }
-                    const errorMessage = `Instance ${databaseInstanceName} is not running on node ${nodeId}`;
-                    logger.error(errorMessage);
+                    const debugMessage = `Instance ${databaseInstanceName} is not running on node ${nodeId}`;
+                    logger.debug(debugMessage);
                 } else {
-                    logger.error(`No active sql instances found in node ${nodeId} `);
+                    logger.debug(`No active sql instances found in node ${nodeId} `);
                 }
             } else {
                 logger.error(`SSM status of node ${nodeId} is not running :${connectionStatus.Status}`);
