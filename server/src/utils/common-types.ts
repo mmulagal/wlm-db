@@ -1,3 +1,6 @@
+import { STORAGEPROTOCOL } from '@prisma/client';
+import { JsonValue } from '@prisma/client/runtime/library';
+
 interface Metadata {
     node1InstanceId: string;
     node2InstanceId?: string;
@@ -169,15 +172,15 @@ interface DatabaseInstance {
     database_instance_id: string;
     database_type: string;
     is_default: boolean;
-    metadata: databaseInstanceMetadata;
-    created_time?: string;
+    metadata: databaseInstanceMetadata | JsonValue;
+    created_time?: string | Date;
     database_deployment_type?: string;
     fsxn_ids: string;
     credentials_id: string;
-    fsx_svm_id?: JSON;
+    fsx_svm_id?: JSON | JsonValue;
     fsxwId?: string;
     ebsVolumeIds?: string[];
-    storage_protocol?: string;
+    storage_protocol?: STORAGEPROTOCOL | string | null;
     region: string;
     databaseType?: string;
     storage_type?: string;

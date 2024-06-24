@@ -51,7 +51,7 @@ import { getDatabaseInstanceName, generateHash, sqlResponseParsing } from '../..
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
-import { DatabaseInstance, Metadata, ResourceDetails } from '../../../utils/common-types';
+import { DatabaseInstance, Metadata, ResourceDetails, InstanceDetails } from '../../../utils/common-types';
 import { INSTANCE_DETAILS, RESOURCE_UTILIZATION } from './ssm-script-utils';
 
 const logger = getLogger();
@@ -619,7 +619,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 });
                 let defaultInstance = true;
                 let selectedInstance = instancesDetails.find(
-                    (instance: { instanceState: string; instanceName: string | string[] }) =>
+                    (instance: InstanceDetails) =>
                         instance.instanceState.toLocaleLowerCase() === 'running' && !instance.instanceName.includes('$') // there is a $ present in named instances
                 )?.instanceName;
 

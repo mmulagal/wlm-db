@@ -1652,7 +1652,7 @@ async function getDatabaseInstanceSummary(
     databaseInstanceDetails.status = ServerState.UP;
     if (shouldQueryServerDetails && serverDetails) {
         databaseInstanceDetails.databaseServer = serverDetails;
-        serverDetails.creationDate = creationDate ? Date.parse(creationDate) : '';
+        serverDetails.creationDate = creationDate ? Date.parse(creationDate.toString()) : '';
     }
     databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
 
@@ -1830,17 +1830,15 @@ async function getDatabaseHostSummaryV2(
             let instanceResults: any;
 
             if (activeNodeInstanceId && databaseInstancesDetail.length > 0 && credentialsId && region) {
-                let runningDatabaseInstances: any[] = [];
+                let runningDatabaseInstances: DatabaseInstance[] = [];
                 if (isManagedResource) {
-                    runningDatabaseInstances = instancesManaged.filter(resource => {
-                        const matchingInstance = databaseInstancesDetail.find(
-                            (instance: { instanceState: string; instanceName: string }) =>
+                    runningDatabaseInstances = instancesManaged.filter(resource =>
+                        databaseInstancesDetail.some(
+                            (instance: InstanceDetails) =>
                                 instance.instanceState === ServerState.UP &&
                                 instance.instanceName === resource.database_instance_name
-                        );
-
-                        return matchingInstance !== undefined;
-                    });
+                        )
+                    );
                 } else {
                     runningDatabaseInstances = resourceDetail.databaseInstanceDetails || [];
                 }
