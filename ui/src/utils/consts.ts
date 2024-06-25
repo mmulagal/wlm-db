@@ -484,6 +484,8 @@ export const OS_VERSIONS_LIST = [
 
 export const SANDBOX_ACTIONS_POLLING_INTERVAL = 5000;
 
+export const MAX_IOPS_VALUE = 160000;
+
 export const INVENTORY_STATUS = {
     MANAGED: 'Managed',
     UNMANAGED: 'Unmanaged',
