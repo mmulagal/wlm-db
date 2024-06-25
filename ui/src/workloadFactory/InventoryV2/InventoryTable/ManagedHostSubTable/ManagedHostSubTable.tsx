@@ -68,8 +68,7 @@ const ManagedHostSubTable = ({
     const {
         inventoryTableData,
         inProgressInstances,
-        inventoryExpandedRowHostData: hostData,
-        managedHostLoadingState: loading
+        inventoryExpandedRowHostData: hostData
     } = useAppSelector(state => state.inventoryV2);
 
     const rowId = hostData?.id;
@@ -390,7 +389,7 @@ const ManagedHostSubTable = ({
                 let width = '';
                 let height = '';
                 let disableMenu = () => {
-                    if (loading) {
+                    if (data[0].loading) {
                         disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
                         width = '220px';
                         height = '33px';

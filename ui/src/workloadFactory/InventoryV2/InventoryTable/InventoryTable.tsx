@@ -47,8 +47,7 @@ import store from '../../../store/store';
 import {
     setInProgressInstances,
     setInventoryExpandedRowHostData,
-    setInventoryTableData,
-    setManagedHostLoadingState
+    setInventoryTableData
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 
@@ -83,15 +82,6 @@ const InventoryTable = () => {
                 fullHostDataLoading ||
                 isManagedHostListLoading ||
                 fsxCredentialStatusLoading
-        );
-        dispatch(
-            setManagedHostLoadingState(
-                databaseHostsLoading ||
-                    isDiscoverInProgress ||
-                    fullHostDataLoading ||
-                    isManagedHostListLoading ||
-                    fsxCredentialStatusLoading
-            )
         );
     }, [
         databaseHostsLoading,
