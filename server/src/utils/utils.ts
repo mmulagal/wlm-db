@@ -532,6 +532,10 @@ function getMonthlyPriceFromHourlyPrice(hourlyPrice: number) {
 function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true) {
     logger.info('Generate database instance name', { instanceName, isDefault });
 
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        return DEFAULT_MSSQL_INSTANCE_NAME;
+    }
+
     if (isDefault) {
         return DEFAULT_MSSQL_INSTANCE_NAME;
     }
