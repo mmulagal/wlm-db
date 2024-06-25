@@ -1032,7 +1032,9 @@ const detachDbAndRemoveAccessPath = (
         ${getVolumeIdFromPath}
 
         $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-        $resourceType = ${instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? 'SQL Server' : `SQL Server (${instanceName})`}
+        $resourceType = ${
+            instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? '"SQL Server"' : `'SQL Server (${instanceName})'`
+        }
         $windowsVolumeIds = $filePaths | ForEach-Object {
             Get-VolumeIdFromPath -absolutePath $_
         }
@@ -1047,7 +1049,7 @@ const detachDbAndRemoveAccessPath = (
                 $disks = $resource.GetRelated("MSCluster_Disk")
                 foreach ($disk in $disks) {
                     $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
-                    $clusterdisk = ($resource.name).replace('\r\n','')
+                    $clusterdisk = ($resource.name).replace('\\r\\n','')
                     $diskdrive = $diskpart.path
                     $disklabel = $diskpart.volumelabel
                     $diskvolume = $diskpart.VolumeGuid
