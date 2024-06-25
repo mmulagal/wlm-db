@@ -233,14 +233,14 @@ const InventoryTable = () => {
                                     msgObj
                                 );
                             } else {
-                                handleManageNotification(instances, '', instances, isDetected, dispatch, styles);
+                                handleManageNotification(instances, [], '', isDetected, dispatch, styles);
                             }
                         });
                     } else {
-                        handleManageNotification(instances, errorList[0], instances, isDetected, dispatch, styles);
+                        handleManageNotification(instances, [], errorList[0], isDetected, dispatch, styles);
                     }
                 } else {
-                    handleManageNotification(instances, '', instances, isDetected, dispatch, styles);
+                    handleManageNotification(instances, [], '', isDetected, dispatch, styles);
                 }
             }
         });
@@ -274,7 +274,7 @@ const InventoryTable = () => {
         checkForAllUnDetectInstance: boolean,
         checkForAllFileSystemNA: boolean
     ) => {
-        //Condition if installation mode is AOAG than disable manage 
+        //Condition if installation mode is AOAG than disable manage
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
             return (
                 <TooltipComponent title={GENERAL.AOAG_MANAGE_DISABLE} placement="bottom" width="320px" height="50px">
