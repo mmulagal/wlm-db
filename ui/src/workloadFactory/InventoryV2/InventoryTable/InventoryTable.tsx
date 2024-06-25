@@ -23,6 +23,7 @@ import {
     setDBHostName
 } from '../../../store/workloadFactory/createNewDBSlice';
 import {
+    errorNotification,
     installModuleNotification,
     renderAllocatedCapacity,
     renderCellData,
@@ -34,7 +35,12 @@ import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
-import { sortInventoryTableData, updateInstanceStatus } from '../InventoryUtilsV2';
+import {
+    handleManageNotification,
+    handleManageTriggerNotification,
+    sortInventoryTableData,
+    updateInstanceStatus
+} from '../InventoryUtilsV2';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
@@ -165,6 +171,7 @@ const InventoryTable = () => {
         const { inProgressInstances } = updatedState.inventoryV2;
         const inProgressIds = instances.map((instance: any) => `${rowData?.ec2InstanceId}_${instance}`);
         dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
+        handleManageTriggerNotification(instances, dispatch, styles);
         manageInstanceApi({
             credentialsId: headerSelectedCred?.data?.credentialsId,
             regionId: headerSelectedRegion?.label2,
@@ -182,25 +189,15 @@ const InventoryTable = () => {
             dispatch(setInProgressInstances(updatedInProgressInstances));
             if (res?.data?.items) {
                 let successFullInstances: any = [];
+                let failedInstances: any = [];
                 res?.data?.items.map((item: any) => {
                     if (item.status === NOTIFICATION_TYPES.SUCCESS) {
                         successFullInstances.push(item);
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                message: GENERAL.MANAGE_INSTANCE_SUCCESS_MSG(item.databaseInstanceName)
-                            })
-                        );
                     } else {
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                message: GENERAL.MANAGE_INSTANCE_FAILED_MSG(item.databaseInstanceName),
-                                additionalText: item?.errorMessage
-                            })
-                        );
+                        failedInstances.push(item);
                     }
                 });
+                handleManageNotification(instances, successFullInstances, '', isDetected, dispatch, styles);
                 const updatedInventoryTableData = updateInstanceStatus(
                     'manage',
                     rowData,
@@ -208,21 +205,43 @@ const InventoryTable = () => {
                     successFullInstances
                 );
                 dispatch(setInventoryTableData(updatedInventoryTableData));
-            }
-            if (res?.error && isDetected) {
-                let databaseInstanceObj = {
-                    databaseInstanceName: instances?.[0]
-                };
-                const updatedInventoryTableData = updateInstanceStatus('detect', rowData, databaseInstanceObj);
-                dispatch(setInventoryTableData(updatedInventoryTableData));
-                const detectedSuccessMsg = (
-                    <div className={styles.notification}>
-                        {GENERAL.INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED[0]}
-                        <span className={styles.bold}>{databaseInstanceObj?.databaseInstanceName}</span>
-                        {GENERAL.INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED[1]}
-                    </div>
-                );
-                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: detectedSuccessMsg }));
+            } else if (res?.error) {
+                if (res?.error?.status === 424) {
+                    // handle prepare API
+                    const errorList = res?.error?.data?.message?.split('\n');
+                    const isOnlyPowerShellError =
+                        errorList?.length === 1 && errorList[0].includes(API_ERRORS.POWERSHELL_7);
+                    if (!isOnlyPowerShellError) {
+                        prepareHostApi({
+                            credentialId: headerSelectedCred?.data?.credentialsId,
+                            regionId: headerSelectedRegion?.label2,
+                            instanceId: rowData?.ec2InstanceId
+                        }).then((prepareRes: any) => {
+                            if (prepareRes && !prepareRes?.error) {
+                                const msgObj =
+                                    instances.length === 1
+                                        ? isDetected
+                                            ? GENERAL.PREPARE_DETECTED_INSTANCE_INFO
+                                            : GENERAL.PREPARE_INSTANCE_INFO
+                                        : isDetected
+                                        ? GENERAL.PREPARE_DETECTED_INSTANCES_INFO
+                                        : GENERAL.PREPARE_INSTANCES_INFO;
+                                installModuleNotification(
+                                    styles,
+                                    instances.length === 1 ? instances[0] : '',
+                                    dispatch,
+                                    msgObj
+                                );
+                            } else {
+                                handleManageNotification(instances, '', instances, isDetected, dispatch, styles);
+                            }
+                        });
+                    } else {
+                        handleManageNotification(instances, errorList[0], instances, isDetected, dispatch, styles);
+                    }
+                } else {
+                    handleManageNotification(instances, '', instances, isDetected, dispatch, styles);
+                }
             }
         });
     };
