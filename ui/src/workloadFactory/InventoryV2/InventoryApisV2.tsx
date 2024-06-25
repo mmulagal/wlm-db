@@ -47,6 +47,7 @@ const InventoryApisV2 = () => {
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
@@ -223,7 +224,8 @@ const InventoryApisV2 = () => {
                 const result: any = await getDatabaseHostsFullDataApi({
                     credentialId: credId,
                     regionId: regionId,
-                    nextToken: nextToken
+                    nextToken: nextToken,
+                    isDemoMode: isDemoMode
                 });
                 if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
                     if (result && !result?.error) {
@@ -503,7 +505,9 @@ const InventoryApisV2 = () => {
             let removeRows: any[] = [];
             let clusterDiscoveredHost: any = {};
             // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
-            getPrimaryClusterNode(newDiscoveredHostData, removeRows, managedHostList, clusterDiscoveredHost);
+            if (!isDemoMode) {
+                getPrimaryClusterNode(newDiscoveredHostData, removeRows, managedHostList, clusterDiscoveredHost);
+            }
 
             const formattedDiscoveredInventoryTableData = formatDiscoveredInventoryData(
                 newDiscoveredHostData,
