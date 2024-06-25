@@ -391,7 +391,7 @@ const ManagedHostSubTable = ({
                 let disableMenu = () => {
                     if (data[0] && data[0]?.loading) {
                         disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
-                        width = '220px';
+                        width = '170px';
                         height = '33px';
                         return true;
                     }
