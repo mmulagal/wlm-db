@@ -129,6 +129,7 @@ export interface DatabaseInstancesSummaryInterface {
     databaseInstanceName?: string;
     status?: string;
     databaseCount?: number;
+    statusColText?: string;
     databaseServer?: {
         operatingSystem?: string;
         serverEdition?: string;

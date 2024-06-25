@@ -80,7 +80,7 @@ const SandboxApis = () => {
                     ...(sandboxList?.items?.filter((item: any) => !item?.error) || [])
                 ])
             );
-            dispatch(setAllSandboxList([...allSandboxList, ...sandboxList?.items]));
+            dispatch(setAllSandboxList([...(allSandboxList || []), ...(sandboxList?.items || [])]));
             setSandboxCursor(sandboxList?.nextToken || null);
         }
         dispatch(

@@ -424,7 +424,7 @@ type SandboxInfoResponseType = Static<typeof SandboxInfoResponse>;
 
 const DatabaseMountPointRequestQueryParam = Type.Object({
     databaseName: Type.String(),
-    instanceName: Type.String()
+    databaseInstanceId: Type.String()
 });
 
 const DatabaseMountPointRequestQueryParamV2 = Type.Object({

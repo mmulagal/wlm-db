@@ -47,7 +47,8 @@ import {
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES,
     PSMODULES_RELATIVE_PATH,
     DatabaseTypes,
-    OFFLINE
+    OFFLINE,
+    SQL_SERVICE_STATE
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -773,7 +774,7 @@ async function fetchUnmanagedHostsInformation(
                 clusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
             }
             const sqlServerInstance = ec2Instance?.sqlServerInstances?.find(
-                sqlInstance => sqlInstance.sqlServerState === 'Running'
+                sqlInstance => sqlInstance.sqlServerState === SQL_SERVICE_STATE.RUNNING
             );
             // ec2Instance?.sqlServerInstances?.forEach(sqlInstance => { // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
             if (!isEmpty(sqlServerInstance)) {
@@ -925,7 +926,7 @@ async function fetchUnmanagedHostsInformationV2(
                         fsxwId,
                         ebsVolumeIds,
                         database_deployment_type: sqlServerInstance.sqlServerDeploymentType,
-                        storageType: fsxnId ? STORAGE_TYPE.FSXN : fsxwId ? STORAGE_TYPE.FSXW : STORAGE_TYPE.EBS
+                        storage_type: fsxnId ? STORAGE_TYPE.FSXN : fsxwId ? STORAGE_TYPE.FSXW : STORAGE_TYPE.EBS
                     });
                 });
                 resourceDetailsList.push(resourceDetails);

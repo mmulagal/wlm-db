@@ -2,7 +2,7 @@
 
 import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
 
-// ('source', 'initialCreationDate', 'tag', 'baseSnapshot') are the extended properties saved during creation of sandbox
+// ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
 const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
 $instances = (${instances})
 
@@ -31,7 +31,7 @@ $results = foreach ($instance in $instances) {
         
             SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
             FROM (
-                SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'baseSnapshot', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
+                SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
                 FROM #properties AS p1
             ) AS grouped_properties
             GROUP BY database_name, properties
@@ -198,6 +198,30 @@ const ontapJobStatusTemplate = `
         }
 `;
 
+const getVolumeIdFromPath = `
+        Function Get-VolumeIdFromPath {
+            param(
+                [Parameter(Mandatory = $true)]
+                [string]$absolutePath
+            )
+
+            $fullPath = [string](Resolve-Path '$absolutePath')
+            $bestMatch = ''
+            $bestMatchObj = $null
+            gwmi Win32_MountPoint | % {
+                $_.Directory -match '="(.*)"' | Out-Null
+                $mountDir = $matches[1].Replace('\\\\', '\\')
+                If (!$mountDir.EndsWith('\\')) { $mountDir = $mountDir + '\\' }
+                If ($fullPath.StartsWith($mountDir, 'InvariantCultureIgnoreCase') -and $bestMatch.Length -lt $mountDir.Length) { 
+                    $bestMatch = $mountDir
+                    $bestMatchObj = $_
+                }
+            }
+            $bestMatchObj.Volume -match '{(.+?)}' | Out-Null
+            return $matches[1]
+        }
+`;
+
 const getDbMappedOntapVolumes = (
     fsxid: string,
     fsxregion: string,
@@ -326,6 +350,7 @@ const getDbMappedOntapVolumes = (
                         $obj['parentSvm'] = $volrecord.clone.parent_svm.name
                         $obj['parentVolume'] = $volrecord.clone.parent_volume.name
                         $obj['parentVolumeUuid'] = $volrecord.clone.parent_volume.uuid
+                        $obj['parentSnapshot'] = $volrecord.clone.parent_snapshot.name
                         if ($responseObject.data.volumename -eq $volrecord.name) {
                             $responseObject.data += $obj
                         } elseif ($responseObject.log.volumename -eq $volrecord.name) {
@@ -388,8 +413,7 @@ const createVolumeClone = (
     sourceSvm: string,
     dataVolume: string,
     logVolume: string,
-    resourceId: string,
-    clonedByTagValue: string,
+    tags: Array<string>,
     targetSvm: string,
     sandboxName: string,
     logPrefix?: string
@@ -400,8 +424,6 @@ const createVolumeClone = (
     $targetSvm = '${targetSvm}'
     $dataVolume = '${dataVolume}' | convertFrom-json
     $logVolume = '${logVolume}' | convertFrom-json
-    $resourceId = '${resourceId}'
-    $clonedByTagValue = '${clonedByTagValue}'
     $sandboxName = '${sandboxName}'
     $logPrefix = '${logPrefix}'
 
@@ -510,26 +532,6 @@ const createVolumeClone = (
     
             return $jobStatus
         }
-    
-        Function Get-OntapVolumes {
-            Write-Information "$logPrefix Getting cloned volumes"
-            $ApiQueryFilter = 'name='
-            @($dataVolume, $logVolume) | ForEach-Object {
-                $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($_.name) + '_clone_' + $epoch + '|'
-            }
-
-            $ApiQueryFilter = $ApiQueryFilter.TrimEnd('|')
-            $ApiQueryFields = 'fields=clone.*'
-            $ApiEndpoint = "/storage/volumes"
-            $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $ApiQueryFilter -ApiQueryFields $ApiQueryFields
-            Write-Information "$logPrefix /volumes $($response | ConvertTo-Json)"
-
-            if ($response.records.count -eq 0) {
-                $responseObject['error'] = "Could not find the cloned volumes."
-            } else {
-                return $response.records
-            }
-        }
 
         Function Add-ObjectTagsToVolume {
             Write-Information "$logPrefix Adding tags to the cloned volumes."
@@ -563,31 +565,12 @@ const createVolumeClone = (
                 }
             }
 
-            $volresponse = Get-OntapVolumes
-            if ($volresponse.count -gt 0) {
-                $volresponse | ForEach-Object {
-                    $volume = $_
-                    if ($volume.name -match $dataVolume.name) {
-                        $responseObject['data'] += @{
-                            "parentSnapshot" = $volume.clone.parent_snapshot.name
-                        }
-                    } else {
-                        $responseObject['log'] += @{
-                            "parentSnapshot" = $volume.clone.parent_snapshot.name
-                        }
-                    }
-                }
-            }
-
             $jobStatus = @()
             $response.records | ForEach-Object {
                 $volumeid = $_.location.volume.uuid
                 $body = @"
                 {
-                    "tiering.object_tags": [
-                        "cloned_by=$clonedByTagValue",
-                        "resource_id=$resourceId"
-                    ]
+                    "tiering.object_tags": [${tags.map(tag => `"${tag}"`).join(',')}]
                 }
 "@
                 $ApiEndpoint = '/storage/volumes/' + $volumeid
@@ -796,6 +779,8 @@ const cleanUpOntapResources = (
     $responseObject = @{}
 
     try {
+        ${getVolumeIdFromPath}
+
         if ($filePaths.count -ne 0) {
             $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
 
@@ -805,6 +790,47 @@ const cleanUpOntapResources = (
                 Write-Information "$logPrefix Database $dbname is in use"
                 $responseObject['error'] = 'SQLServerError: Database $dbname is in use'
                 return $responseObject | ConvertTo-Json -Depth 5
+            }
+
+            $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
+            $resourceType = ${
+                instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? 'SQL Server' : `SQL Server (${instanceName})`
+            }
+            $winvolumeIds = $filePaths | ForEach-Object {
+                Get-VolumeIdFromPath -absolutePath $_
+            }
+
+            if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
+                $sqlgroup = Get-ClusterResource | Where-Object ResourceType -eq $resourceType
+                $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+                $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
+
+                $clusterdisksToRemove = @()
+                foreach ($resource in $resourcegroup) {
+                    $disks = $resource.GetRelated("MSCluster_Disk")
+                    foreach ($disk in $disks) {
+                        $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
+                        $clusterdisk = ($resource.name).replace('\r\n','')
+                        $diskdrive = $diskpart.path
+                        $disklabel = $diskpart.volumelabel
+                        $diskvolume = $diskpart.VolumeGuid
+                        write-debug "Cluster Disk $diskvolume"
+                        if ($windowsVolumeIds -contains $diskpart.VolumeGuid) {
+                            $clusterdisksToRemove += $clusterdisk
+                        }
+                    }
+                }
+                write-Information "$logPrefix Cluster Disks to remove $clusterdisksToRemove"
+                if ($clusterdisksToRemove.count -ne 0) {
+                    $clusterdisksToRemove | ForEach-Object {
+                        $diskToRemove = $_
+                        $diskToRemove = $diskToRemove.ToString()
+                        write-Information "$logPrefix Removing disk $diskToRemove"
+                        $null = (Remove-ClusterResourceDependency -Resource $resourceType -Provider $diskToRemove)
+                        $null = (Remove-ClusterSharedVolume -Name $diskToRemove -ErrorAction SilentlyContinue)
+                        $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
+                    }
+                }
             }
         }
 
@@ -821,9 +847,19 @@ const cleanUpOntapResources = (
             }
         }
 
+        # If the cluster resource are not removed in the earlier step, remove them now
         if ($filePaths.count -ne 0) {
+            if ($clusterdisksToRemove.count -ne 0) {
+                $clusterdisksToRemove | ForEach-Object {
+                    $diskToRemove = $_
+                    $diskToRemove = $diskToRemove.ToString()
+                    write-Information "$logPrefix Removing disk $diskToRemove"
+                    $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
+                }
+            }
+
             try {
-                $deleteQuery = "SET NOCOUNT ON; DROP DATABASE $DBName;"
+                $deleteQuery = "SET NOCOUNT ON; DROP DATABASE IF EXISTS $DBName;"
                 $sqlresponse =  sqlcmd -S $instanceName -Q $deleteQuery -y 0;
                 if (-not [string]::IsNullOrEmpty($sqlresponse)) {
                     throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
@@ -831,32 +867,6 @@ const cleanUpOntapResources = (
             } catch {
                 Write-Information "$logPrefix $($_.Exception.Message)"
                 throw $_.Exception.Message
-            }
-
-            $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-
-            if ($clusterServiceStatus -eq 'Running') {
-                #Cleanup drives from SQL dependency in case of clustered configuration
-                if ($DBName.Length -gt 25) {
-                    $DBName = $DBName.Substring(0,25)
-                }
-                $datalabel = $DBName+"-Data"
-                $loglabel = $DBName+"-Log"
-
-                #Check if disks are in dependency list before cleaning up
-                $dependencylist = (Get-ClusterResourceDependency -Resource "SQL Server" -ErrorAction SilentlyContinue).DependencyExpression
-                $datafound = $dependencylist -match $datalabel
-                $logfound =  $dependencylist -match $loglabel
-
-                if ($datafound) {
-                    $null = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $datalabel)
-                    Remove-ClusterResource -Name $datalabel -Force
-                }
-
-                if ($logfound) {
-                    $null = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $loglabel)
-                    Remove-ClusterResource -Name $loglabel -Force
-                }
             }
 
             $virtualDrives = $filePaths | ForEach-Object {
@@ -1287,8 +1297,7 @@ const getSnapshotsToClone = (
     volumeids: string,
     dataVolume: string,
     sandboxName: string,
-    window = 60,
-    createdTime = 0
+    window = 60
 ) => `
     $fsxid = '${fsxId}'
     $fsxregion = '${fsxRegion}'
@@ -1296,7 +1305,6 @@ const getSnapshotsToClone = (
     $dataVolume = '${dataVolume}'
     $sandboxName = '${sandboxName}'
     $timeWindow = ${window}
-    $createdTime = ${createdTime}
     $logPrefix = "Sandbox:$($sandboxName):"
 
     Start-Transcript -Path "C:\\cfn\\log\\get_snapshots_to_clone_$sandboxName.log.txt" -Append | Out-Null
@@ -1315,7 +1323,6 @@ const getSnapshotsToClone = (
             $volumeids | ForEach-Object {
                 $volumeid = $_
                 $ApiEndpoint = "/storage/volumes/$volumeid/snapshots"
-                $ApiQueryFilter = "create_time=>=$createdTime"
     
                 $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $ApiQueryFilter
                 if ($volumeid -eq $dataVolume) {

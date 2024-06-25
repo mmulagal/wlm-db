@@ -43,7 +43,10 @@ import {
     SQL_WEB,
     VERSION_2_0,
     V2_API_PAGE_SIZE,
-    NOT_AVAILABLE
+    NOT_AVAILABLE,
+    ONLINE,
+    OFFLINE,
+    SQL_SERVICE_STATE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1418,7 +1421,7 @@ async function getDatabaseInstanceTopology(
 
     const {
         fsxn_ids: fileSystemId,
-        storageType,
+        storage_type: storageType,
         database_instance_id: databaseInstanceDetails,
         database_deployment_type: databaseDeploymentType,
         database_type: databaseType
@@ -1649,8 +1652,8 @@ async function getDatabaseInstanceSummary(
     }
     databaseInstanceDetails.status = ServerState.UP;
     if (shouldQueryServerDetails && serverDetails) {
+        serverDetails.creationDate = creationDate ? Date.parse(creationDate.toString()) : '';
         databaseInstanceDetails.databaseServer = serverDetails;
-        serverDetails.creationDate = creationDate || '';
     }
     databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
 
@@ -1710,7 +1713,8 @@ async function getDatabaseInstancesDetails(
               );
 
               const isManaged = Boolean(managedInstance);
-              const updatedInstanceState = instanceState === 'Running' ? ServerState.UP : ServerState.DOWN;
+              const updatedInstanceState =
+                  instanceState === SQL_SERVICE_STATE.RUNNING ? ServerState.UP : ServerState.DOWN;
 
               return { instanceName, instanceState: updatedInstanceState, isManaged, isDefault };
           })
@@ -1757,7 +1761,7 @@ async function getDatabaseHostSummaryV2(
     const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLocaleLowerCase());
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
 
-    const instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+    let instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         instancesManaged.map(instance => {
@@ -1767,6 +1771,12 @@ async function getDatabaseHostSummaryV2(
             return instance;
         });
     }
+    // Update the database instances detail to include storage type as FSXN
+    const instances = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+    instancesManaged = instances.map(instance => ({
+        ...instance,
+        storage_type: STORAGE_TYPE.FSXN
+    }));
     const errormessages: { [index: string]: string } = {};
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
     let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
@@ -1779,7 +1789,7 @@ async function getDatabaseHostSummaryV2(
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
         name: resourceName || '',
-        databaseHostStatus: activeNodeInstanceId ? 'ONLINE' : 'OFFLINE',
+        databaseHostStatus: activeNodeInstanceId ? ONLINE : OFFLINE,
         ssmStatus: ssmConnectionStatus || NOT_AVAILABLE
     };
 
@@ -1857,23 +1867,15 @@ async function getDatabaseHostSummaryV2(
             let instanceResults: any;
 
             if (activeNodeInstanceId && databaseInstancesDetail.length > 0 && credentialsId && region) {
-                let runningDatabaseInstances;
+                let runningDatabaseInstances: DatabaseInstance[] = [];
                 if (isManagedResource) {
-                    runningDatabaseInstances = instancesManaged
-                        .filter(instance => {
-                            const matchingInstance = databaseInstancesDetail.find(
-                                (dbInstance: { instanceName: string; instanceState: string }) =>
-                                    dbInstance.instanceName === instance.database_instance_name
-                            );
-                            return matchingInstance !== undefined;
-                        })
-                        .map(instance => ({
-                            ...instance,
-                            ...databaseInstancesDetail.find(
-                                (dbInstance: { instanceName: string; instanceState: string }) =>
-                                    dbInstance.instanceState === 'Running'
-                            )
-                        }));
+                    runningDatabaseInstances = instancesManaged.filter(resource =>
+                        databaseInstancesDetail.some(
+                            (instance: InstanceDetails) =>
+                                instance.instanceState === ServerState.UP &&
+                                instance.instanceName === resource.database_instance_name
+                        )
+                    );
                 } else {
                     runningDatabaseInstances = resourceDetail.databaseInstanceDetails || [];
                 }
@@ -1897,7 +1899,7 @@ async function getDatabaseHostSummaryV2(
             }
             [nodeTopology, usageEstimationData, instanceResults] = await Promise.all(promises);
 
-            databaseHostDetails.ssmStatus = ssmConnectionStatus || 'N/A';
+            databaseHostDetails.ssmStatus = ssmConnectionStatus || NOT_AVAILABLE;
 
             if (getUsageEstimation && usageEstimationData) {
                 databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType;
@@ -2048,7 +2050,7 @@ async function getInstanceDetails(
     databaseHostId: string,
     databaseInstanceId: string
 ) {
-    const [[resourceDetails], [databaseInstanceDetails]] = await Promise.all([
+    const [[resourceDetails], [instanceDetails]] = await Promise.all([
         listResources(accountId, databaseHostId, credentialsId, region),
         listDatabaseInstances(accountId, {
             databaseHostId,
@@ -2056,6 +2058,12 @@ async function getInstanceDetails(
             sqlInstanceId: databaseInstanceId
         })
     ]);
+
+    // Update the database instance details to include storage type as FSXN
+    const databaseInstanceDetails = {
+        ...instanceDetails,
+        storage_type: STORAGE_TYPE.FSXN
+    };
 
     if (isEmpty(resourceDetails) || isEmpty(databaseInstanceDetails)) {
         const errorMessage = `No database host by id ${databaseHostId} or instance by insatnce id ${databaseInstanceDetails} for ${accountId} is found.`;
@@ -2072,7 +2080,7 @@ async function getInstanceDetails(
     );
     const { nodeId: activeNodeInstanceId, matchingInstance } = activeNodeResponse;
     const { instanceName, instanceState } = matchingInstance;
-    if (instanceState.toLocaleLowerCase() !== 'running') {
+    if (instanceState !== SQL_SERVICE_STATE.RUNNING) {
         const errorMessage = `Instance id ${databaseInstanceId} is not running on host ${databaseHostId}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);

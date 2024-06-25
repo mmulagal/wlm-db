@@ -37,7 +37,8 @@ import {
     WF,
     ServerState,
     DATABASE_METRIC_TYPE,
-    DEFAULT_MSSQL_INSTANCE_NAME
+    DEFAULT_MSSQL_INSTANCE_NAME,
+    SQL_SERVICE_STATE
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import {
@@ -51,7 +52,7 @@ import { getDatabaseInstanceName, generateHash, sqlResponseParsing } from '../..
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
-import { DatabaseInstance, Metadata, ResourceDetails } from '../../../utils/common-types';
+import { DatabaseInstance, Metadata, ResourceDetails, InstanceDetails } from '../../../utils/common-types';
 import { INSTANCE_DETAILS, RESOURCE_UTILIZATION } from './ssm-script-utils';
 
 const logger = getLogger();
@@ -617,22 +618,23 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                     (obj as any).isDefault = !obj.instanceName.includes('$');
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
                 });
-                let defaultInstance = true;
+                let isDefaultInstance = true;
                 let selectedInstance = instancesDetails.find(
-                    (instance: { instanceState: string; instanceName: string | string[] }) =>
-                        instance.instanceState.toLocaleLowerCase() === 'running' && !instance.instanceName.includes('$') // there is a $ present in named instances
+                    (instance: InstanceDetails) =>
+                        instance.instanceState === SQL_SERVICE_STATE.RUNNING && !instance.instanceName.includes('$')
                 )?.instanceName;
 
                 if (!selectedInstance) {
-                    const runningServices = instancesDetails.filter(
-                        (instance: { instanceState: string }) =>
-                            instance.instanceState.toLocaleLowerCase() === 'running'
+                    const runningInstances = instancesDetails.filter(
+                        ({ instanceState }: { instanceState: string }) => instanceState === SQL_SERVICE_STATE.RUNNING
                     );
-                    selectedInstance = runningServices.length > 0 ? runningServices[0].instanceName : undefined;
-                    defaultInstance = false;
+
+                    // Select the first running instance
+                    selectedInstance = runningInstances.length > 0 ? runningInstances[0].instanceName : undefined;
+                    isDefaultInstance = false;
                 }
                 if (selectedInstance !== undefined) {
-                    const instanceName = getDatabaseInstanceName(selectedInstance, defaultInstance);
+                    const instanceName = getDatabaseInstanceName(selectedInstance, isDefaultInstance);
                     return { instanceName, instancesDetails };
                 }
 
@@ -1046,21 +1048,24 @@ async function getActiveSqlNodeAndInstanceDetails(
                 });
                 if (instanceDetails) {
                     const matchingInstance = instanceDetails.find(
-                        (instance: { instanceName: string }) => instance.instanceName === databaseInstanceName
+                        (instance: InstanceDetails) =>
+                            instance.instanceName === databaseInstanceName &&
+                            instance.instanceState === SQL_SERVICE_STATE.RUNNING
                     );
                     if (matchingInstance) {
                         return { nodeId, matchingInstance };
                     }
-                    const errorMessage = `Instance ${databaseInstanceName} not found on node ${nodeId}`;
-                    logger.error(errorMessage);
-                    throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+                    logger.debug(`Instance ${databaseInstanceName} is not running on node ${nodeId}`);
                 } else {
-                    logger.error(`No active sql instances found in node ${nodeId} `);
+                    logger.debug(`No active sql instances found in node ${nodeId} `);
                 }
             } else {
                 logger.error(`SSM status of node ${nodeId} is not running :${connectionStatus.Status}`);
             }
         }
+        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${nodeIds}`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     } catch (err) {
         const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId} , ${credentialsId}, ${region}, ${nodeIds} , ${err}`;
         logger.error(errorMessage);

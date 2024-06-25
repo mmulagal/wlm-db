@@ -15,18 +15,20 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$LogSerial,
 
+    [Parameter(Mandatory = $true)]
+    [string]$InstanceName,
+
+    [Parameter(Mandatory = $true)]
+    [string]$IsDefaultInstance,
+
     [Parameter(Mandatory = $false)]
     [string]$LogPrefix = ''
-
-    [Parameter(Mandatory = $true)]
-    [string]$InstanceName
-
-    [Parameter(Mandatory = $true)]
-    [boolean]$IsDefaultInstance
 )
 
 $null = (Start-Transcript -Path "C:\cfn\log\invoke_virtualmount_$DBName.log.txt" -Append)
 $ErrorActionPreference = "Stop"
+
+$IsDefaultInstance = [System.Convert]::ToBoolean($IsDefaultInstance)
 
 try {
     $responseObject = [ordered]@{}
@@ -104,8 +106,8 @@ try {
     $datadisknumber = $datadisk.Number
     $logdisknumber = $logdisk.Number
 
-    $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object Type -eq Basic
-    $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object Type -eq Basic
+    $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
+    $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
 
     $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
     $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
@@ -196,12 +198,12 @@ try {
     Start-Sleep 5
     if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
         $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
-        $null = (Get-Partition -DiskNumber $datadisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+        $null = (Get-Partition -DiskNumber $datadisknumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
     }
 
     if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
         $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
-        $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+        $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
     }
 }catch {
         $responseObject['error'] = $_.Exception.Message
@@ -212,7 +214,7 @@ try {
     }
 
 try {
-    Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
+    Get-Partition | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
         $partition = $_
         $partition.AccessPaths | ForEach-Object {
             $accessPath = $_
