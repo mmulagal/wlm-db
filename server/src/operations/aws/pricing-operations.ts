@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import { Filter, FilterType, GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
 import { compact, isEmpty } from 'lodash-es';
@@ -490,6 +491,13 @@ async function calculatePrice(
                 let fsxnStorageCost = 0;
                 let fsxnOperationalCost = 0;
                 let fsxnDiskSizes;
+
+                // This applies to pre-deployment pricing. Today we support single FSxN as storage.
+                // It is okay to throw an error.
+                // For post-deployment, diskSize(dataDisk size) is not relevant since storageCapacity is considered.
+                if (fsxResource && fsxResource.diskSize! > 133120) {
+                    throw createError(412, 'Supported FSx for ONTAP data disk size should be between 120GiB to 130TiB');
+                }
 
                 ({ fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes } = calculateFsxnCost(
                     fsxResource,
