@@ -198,6 +198,30 @@ const ontapJobStatusTemplate = `
         }
 `;
 
+const getVolumeIdFromPath = `
+        Function Get-VolumeIdFromPath {
+            param(
+                [Parameter(Mandatory = $true)]
+                [string]$absolutePath
+            )
+
+            $fullPath = [string](Resolve-Path '$absolutePath')
+            $bestMatch = ''
+            $bestMatchObj = $null
+            gwmi Win32_MountPoint | % {
+                $_.Directory -match '="(.*)"' | Out-Null
+                $mountDir = $matches[1].Replace('\\\\', '\\')
+                If (!$mountDir.EndsWith('\\')) { $mountDir = $mountDir + '\\' }
+                If ($fullPath.StartsWith($mountDir, 'InvariantCultureIgnoreCase') -and $bestMatch.Length -lt $mountDir.Length) { 
+                    $bestMatch = $mountDir
+                    $bestMatchObj = $_
+                }
+            }
+            $bestMatchObj.Volume -match '{(.+?)}' | Out-Null
+            return $matches[1]
+        }
+`;
+
 const getDbMappedOntapVolumes = (
     fsxid: string,
     fsxregion: string,
@@ -790,6 +814,8 @@ const cleanUpOntapResources = (
     $responseObject = @{}
 
     try {
+        ${getVolumeIdFromPath}
+
         if ($filePaths.count -ne 0) {
             $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
 
@@ -799,6 +825,47 @@ const cleanUpOntapResources = (
                 Write-Information "$logPrefix Database $dbname is in use"
                 $responseObject['error'] = 'SQLServerError: Database $dbname is in use'
                 return $responseObject | ConvertTo-Json -Depth 5
+            }
+
+            $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
+            $resourceType = ${
+                instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? 'SQL Server' : `SQL Server (${instanceName})`
+            }
+            $winvolumeIds = $filePaths | ForEach-Object {
+                Get-VolumeIdFromPath -absolutePath $_
+            }
+
+            if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
+                $sqlgroup = Get-ClusterResource | Where-Object ResourceType -eq $resourceType
+                $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+                $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
+
+                $clusterdisksToRemove = @()
+                foreach ($resource in $resourcegroup) {
+                    $disks = $resource.GetRelated("MSCluster_Disk")
+                    foreach ($disk in $disks) {
+                        $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
+                        $clusterdisk = ($resource.name).replace('\r\n','')
+                        $diskdrive = $diskpart.path
+                        $disklabel = $diskpart.volumelabel
+                        $diskvolume = $diskpart.VolumeGuid
+                        write-debug "Cluster Disk $diskvolume"
+                        if ($windowsVolumeIds -contains $diskpart.VolumeGuid) {
+                            $clusterdisksToRemove += $clusterdisk
+                        }
+                    }
+                }
+                write-Information "$logPrefix Cluster Disks to remove $clusterdisksToRemove"
+                if ($clusterdisksToRemove.count -ne 0) {
+                    $clusterdisksToRemove | ForEach-Object {
+                        $diskToRemove = $_
+                        $diskToRemove = $diskToRemove.ToString()
+                        write-Information "$logPrefix Removing disk $diskToRemove"
+                        $null = (Remove-ClusterResourceDependency -Resource $resourceType -Provider $diskToRemove)
+                        $null = (Remove-ClusterSharedVolume -Name $diskToRemove -ErrorAction SilentlyContinue)
+                        $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
+                    }
+                }
             }
         }
 
@@ -815,9 +882,19 @@ const cleanUpOntapResources = (
             }
         }
 
+        # If the cluster resource are not removed in the earlier step, remove them now
         if ($filePaths.count -ne 0) {
+            if ($clusterdisksToRemove.count -ne 0) {
+                $clusterdisksToRemove | ForEach-Object {
+                    $diskToRemove = $_
+                    $diskToRemove = $diskToRemove.ToString()
+                    write-Information "$logPrefix Removing disk $diskToRemove"
+                    $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
+                }
+            }
+
             try {
-                $deleteQuery = "SET NOCOUNT ON; DROP DATABASE $DBName;"
+                $deleteQuery = "SET NOCOUNT ON; DROP DATABASE IF EXISTS $DBName;"
                 $sqlresponse =  sqlcmd -S $instanceName -Q $deleteQuery -y 0;
                 if (-not [string]::IsNullOrEmpty($sqlresponse)) {
                     throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
@@ -825,32 +902,6 @@ const cleanUpOntapResources = (
             } catch {
                 Write-Information "$logPrefix $($_.Exception.Message)"
                 throw $_.Exception.Message
-            }
-
-            $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-
-            if ($clusterServiceStatus -eq 'Running') {
-                #Cleanup drives from SQL dependency in case of clustered configuration
-                if ($DBName.Length -gt 25) {
-                    $DBName = $DBName.Substring(0,25)
-                }
-                $datalabel = $DBName+"-Data"
-                $loglabel = $DBName+"-Log"
-
-                #Check if disks are in dependency list before cleaning up
-                $dependencylist = (Get-ClusterResourceDependency -Resource "SQL Server" -ErrorAction SilentlyContinue).DependencyExpression
-                $datafound = $dependencylist -match $datalabel
-                $logfound =  $dependencylist -match $loglabel
-
-                if ($datafound) {
-                    $null = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $datalabel)
-                    Remove-ClusterResource -Name $datalabel -Force
-                }
-
-                if ($logfound) {
-                    $null = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $loglabel)
-                    Remove-ClusterResource -Name $loglabel -Force
-                }
             }
 
             $virtualDrives = $filePaths | ForEach-Object {
