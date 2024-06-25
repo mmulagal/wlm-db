@@ -19,6 +19,7 @@ import { useEffect, useState } from 'react';
 import { selectFsxIops } from '../../MSSqlServer/MSSqlUtils';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import { isFsxnExisting, isFsxnNew } from '../../../../utils/utilityFunctions';
+import { MAX_IOPS_VALUE } from '../../../../utils/consts';
 
 const ProvisionedIOPS = () => {
     const dispatch = useDispatch();
@@ -38,10 +39,10 @@ const ProvisionedIOPS = () => {
     useEffect(() => {
         const sizeData = getEstimatedCostData?.data?.fsxnStorage?.size;
         if (isFsxnNew(selectedFsxnType) && sizeData) {
-            setPlaceHolderText(`range should be between ${sizeData?.total * 3} - 160000 IOPS`);
+            setPlaceHolderText(`range should be between ${sizeData?.total * 3} - ${MAX_IOPS_VALUE} IOPS`);
             setTotal(sizeData?.total * 3);
         } else {
-            setPlaceHolderText('range should be between 3072 - 160000 IOPS');
+            setPlaceHolderText(`range should be between 3072 - ${MAX_IOPS_VALUE} IOPS`);
         }
     }, [selectedFsxnType, getEstimatedCostData]);
 
@@ -89,17 +90,17 @@ const ProvisionedIOPS = () => {
             !isFsxnNew(selectedFsxnType) &&
             provisionValue === GENERAL.USER_PROVISIONED &&
             iopsValue.length &&
-            (Number(iopsValue) < 3072 || Number(iopsValue) > 160000)
+            (Number(iopsValue) < 3072 || Number(iopsValue) > MAX_IOPS_VALUE)
         ) {
-            return 'range should be between 3072 - 160000 IOPS';
+            return `range should be between 3072 - ${MAX_IOPS_VALUE} IOPS`;
         }
         if (
             isFsxnNew(selectedFsxnType) &&
             provisionValue === GENERAL.USER_PROVISIONED &&
             iopsValue.length &&
-            (Number(iopsValue) < total || Number(iopsValue) > 160000)
+            (Number(iopsValue) < total || Number(iopsValue) > MAX_IOPS_VALUE)
         ) {
-            return `range should be between ${total} - 160000 IOPS`;
+            return `range should be between ${total} - ${MAX_IOPS_VALUE} IOPS`;
         }
     };
     return (
