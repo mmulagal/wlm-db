@@ -24,21 +24,21 @@ type Res = {
     data: {
         compute: '';
         fsxnStorage: {
-            fsxStorageCost: '',
+            fsxStorageCost: '';
             fsxnCostBreakdownById: [
                 {
-                    capacityCost: '',
-                    operationalCost: '',
+                    capacityCost: '';
+                    operationalCost: '';
                     size: {
-                        data: '',
-                        log: '',
-                        tempdb: '',
-                        total: '',
-                        buffer: ''
-                    }
+                        data: '';
+                        log: '';
+                        tempdb: '';
+                        total: '';
+                        buffer: '';
+                    };
                 }
-            ]
-        }
+            ];
+        };
         total: '';
     };
 };
@@ -129,7 +129,7 @@ const EstimatedCost = () => {
                     compute: computeObj(updatedStr),
                     fsxnStorage: {
                         regionCode: updatedStr || '',
-                        fsxnResourceInfo : [
+                        fsxnResourceInfo: [
                             {
                                 diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize),
                                 throughput: fsxVolThroughput(),
@@ -314,12 +314,18 @@ const EstimatedCost = () => {
                                     <Typography variant="Regular_14">{GENERAL.TYPE}: FSx for NetApp ONTAP</Typography>
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
-                                            {GENERAL.SIZE}: {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total + ' GiB'}
+                                            {GENERAL.SIZE}:{' '}
+                                            {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total + ' GiB'}
                                         </Typography>
                                         {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total && (
                                             <TooltipInfo className={styles.tooltipClass}>
-                                                {Number(data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total || 0) > 1024
-                                                    ? SizePopover(data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size)
+                                                {Number(
+                                                    data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total ||
+                                                        0
+                                                ) > 1024
+                                                    ? SizePopover(
+                                                          data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size
+                                                      )
                                                     : GENERAL.MIN_FSX_CAPACITY_MESSAGE}
                                             </TooltipInfo>
                                         )}
@@ -337,7 +343,9 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.capacityCost).toFixed(2)}` || ''
+                                            `$${Number(
+                                                data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.capacityCost
+                                            ).toFixed(2)}` || ''
                                         )}
                                     </Typography>
 
@@ -352,7 +360,9 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.operationalCost).toFixed(2)}` || ''
+                                            `$${Number(
+                                                data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.operationalCost
+                                            ).toFixed(2)}` || ''
                                         )}
                                     </Typography>
                                 </div>
