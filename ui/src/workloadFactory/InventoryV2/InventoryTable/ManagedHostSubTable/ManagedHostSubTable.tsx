@@ -60,22 +60,21 @@ import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecond
 import useResize from '../../../../common/hooks/useResize';
 
 const ManagedHostSubTable = ({
-    rowId,
-    hostname,
-    resourceId,
-    hostData,
-    loading,
     handleManageInstances
 }: {
-    rowId: string;
-    hostname: string;
-    resourceId: string;
-    hostData: any;
-    loading: boolean;
     handleManageInstances: (rowData: any, instances: any, isDetected?: boolean) => void;
 }) => {
     const windowSize = useResize();
-    const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
+    const {
+        inventoryTableData,
+        inProgressInstances,
+        inventoryExpandedRowHostData: hostData,
+        managedHostLoadingState: loading
+    } = useAppSelector(state => state.inventoryV2);
+
+    const rowId = hostData?.id;
+    const hostname = hostData?.name;
+    const resourceId = hostData?.resourceId;
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
