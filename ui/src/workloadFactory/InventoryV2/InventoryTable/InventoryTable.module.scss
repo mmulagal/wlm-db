@@ -23,6 +23,16 @@
         }
     }
 
+    [class*='Table-module_header-row'] {
+        [class*='Table-module_header-cell'] {
+            &:nth-child(5) {
+                [class*='Table-module_right-border'] {
+                    pointer-events: none;
+                }
+            }
+        }
+    }
+
     .jobMenuPopover {
         width: fit-content;
         margin-left: -12px;
