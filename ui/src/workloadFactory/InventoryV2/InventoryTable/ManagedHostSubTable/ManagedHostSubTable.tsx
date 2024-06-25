@@ -334,7 +334,13 @@ const ManagedHostSubTable = ({
                 const menu = [];
                 let disableOption = false;
                 let disableMessage = '';
-                if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+                if (hostData?.status === INVENTORY_STATUS.OFFLINE) {
+                    disableMessage = GENERAL.HOST_DOWN;
+                    disableOption = true;
+                } else if (hostData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+                    disableMessage = GENERAL.SSM_DOWN;
+                    disableOption = true;
+                } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
                     disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                     disableOption = true;
                 }
@@ -389,6 +395,24 @@ const ManagedHostSubTable = ({
                         disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
                         width = '220px';
                         height = '33px';
+                        return true;
+                    }
+                    if (
+                        hostData?.status === INVENTORY_STATUS.OFFLINE &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.HOST_DOWN;
+                        width = '120px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        hostData?.ssmState === INVENTORY_STATUS.OFFLINE &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.SSM_DOWN;
+                        width = '250px';
+                        height = '50px';
                         return true;
                     }
                     if (
