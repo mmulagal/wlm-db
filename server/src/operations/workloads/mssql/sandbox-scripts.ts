@@ -2,7 +2,7 @@
 
 import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
 
-// ('source', 'initialCreationDate', 'tag', 'baseSnapshot') are the extended properties saved during creation of sandbox
+// ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
 const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
 $instances = (${instances})
 
@@ -31,7 +31,7 @@ $results = foreach ($instance in $instances) {
         
             SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
             FROM (
-                SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'baseSnapshot', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
+                SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
                 FROM #properties AS p1
             ) AS grouped_properties
             GROUP BY database_name, properties
@@ -326,6 +326,7 @@ const getDbMappedOntapVolumes = (
                         $obj['parentSvm'] = $volrecord.clone.parent_svm.name
                         $obj['parentVolume'] = $volrecord.clone.parent_volume.name
                         $obj['parentVolumeUuid'] = $volrecord.clone.parent_volume.uuid
+                        $obj['parentSnapshot'] = $volrecord.clone.parent_snapshot.name
                         if ($responseObject.data.volumename -eq $volrecord.name) {
                             $responseObject.data += $obj
                         } elseif ($responseObject.log.volumename -eq $volrecord.name) {
@@ -507,26 +508,6 @@ const createVolumeClone = (
     
             return $jobStatus
         }
-    
-        Function Get-OntapVolumes {
-            Write-Information "$logPrefix Getting cloned volumes"
-            $ApiQueryFilter = 'name='
-            @($dataVolume, $logVolume) | ForEach-Object {
-                $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($_.name) + '_clone_' + $epoch + '|'
-            }
-
-            $ApiQueryFilter = $ApiQueryFilter.TrimEnd('|')
-            $ApiQueryFields = 'fields=clone.*'
-            $ApiEndpoint = "/storage/volumes"
-            $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $ApiQueryFilter -ApiQueryFields $ApiQueryFields
-            Write-Information "$logPrefix /volumes $($response | ConvertTo-Json)"
-
-            if ($response.records.count -eq 0) {
-                $responseObject['error'] = "Could not find the cloned volumes."
-            } else {
-                return $response.records
-            }
-        }
 
         Function Add-ObjectTagsToVolume {
             Write-Information "$logPrefix Adding tags to the cloned volumes."
@@ -557,22 +538,6 @@ const createVolumeClone = (
                     $responseObject['data'] = $volume
                 } else {
                     $responseObject['log'] = $volume
-                }
-            }
-
-            $volresponse = Get-OntapVolumes
-            if ($volresponse.count -gt 0) {
-                $volresponse | ForEach-Object {
-                    $volume = $_
-                    if ($volume.name -match $dataVolume.name) {
-                        $responseObject['data'] += @{
-                            "parentSnapshot" = $volume.clone.parent_snapshot.name
-                        }
-                    } else {
-                        $responseObject['log'] += @{
-                            "parentSnapshot" = $volume.clone.parent_snapshot.name
-                        }
-                    }
                 }
             }
 
