@@ -1169,3 +1169,115 @@ export const saveFsxInCredRegisteredObj = (fsxId: string, dispatch: any) => {
         return false;
     }
 };
+
+export const handleManageTriggerNotification = (instancesToManage: any, dispatch: any, styles: any) => {
+    if (instancesToManage.length === 1) {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: (
+                    <div className={styles.notification}>
+                        {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
+                        <span className={styles.bold}>{instancesToManage[0]}</span>
+                        {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
+                    </div>
+                )
+            })
+        );
+    } else {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: (
+                    <div className={styles.notification}>
+                        {GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[0]}
+                        <span className={styles.bold}>{instancesToManage.length}</span>
+                        {GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[1]}
+                    </div>
+                )
+            })
+        );
+    }
+};
+
+export const handleManageNotification = (
+    instancesToManage: any,
+    successfullInstances: any,
+    additionalError: any = '',
+    isDetected: any,
+    dispatch: any,
+    styles: any
+) => {
+    if (instancesToManage.length === 1) {
+        if (successfullInstances.length === 1) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                    message: (
+                        <div className={styles.notification}>
+                            {GENERAL.MANAGE_INSTANCE_SUCCESS_MSG[0]}
+                            <span className={styles.bold}>{instancesToManage[0]}</span>
+                            {GENERAL.MANAGE_INSTANCE_SUCCESS_MSG[1]}
+                        </div>
+                    )
+                })
+            );
+        } else {
+            const msgObj = isDetected ? GENERAL.DETECT_MANAGE_INSTANCE_FAILED_MSG : GENERAL.MANAGE_INSTANCE_FAILED_MSG;
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: (
+                        <div className={styles.notification}>
+                            {msgObj[0]}
+                            <span className={styles.bold}>{instancesToManage[0]}</span>
+                            {msgObj[1]}
+                            {additionalError}
+                        </div>
+                    )
+                })
+            );
+        }
+    } else {
+        if (successfullInstances.length === 0) {
+            const msgObj = isDetected
+                ? GENERAL.MULTIPLE_INSTANCE_DETECT_MANAGE_FAILED
+                : GENERAL.MULTIPLE_INSTANCE_MANAGE_FAILED;
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: (
+                        <div className={styles.notification}>
+                            {msgObj[0]}
+                            <span className={styles.bold}>{instancesToManage.length}</span>
+                            {msgObj[1]}
+                            {additionalError}
+                        </div>
+                    )
+                })
+            );
+        } else if (successfullInstances.length < instancesToManage.length) {
+            const msgObj = isDetected
+                ? GENERAL.MULTIPLE_INSTANCE_DETECT_MANAGE_PARTIAL_SUCCESS
+                : GENERAL.MULTIPLE_INSTANCE_MANAGE_PARTIAL_SUCCESS;
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: `${successfullInstances.length}${msgObj[0]}${instancesToManage.length}${msgObj[1]}`
+                })
+            );
+        } else {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                    message: (
+                        <div className={styles.notification}>
+                            <span className={styles.bold}>{instancesToManage.length}</span>
+                            {GENERAL.MUTLI_INSTANCE_MANAGE_SUCCESS[0]}
+                        </div>
+                    )
+                })
+            );
+        }
+    }
+};
