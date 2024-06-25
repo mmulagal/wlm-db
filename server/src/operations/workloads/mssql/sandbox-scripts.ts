@@ -205,7 +205,7 @@ const getVolumeIdFromPath = `
                 [string]$absolutePath
             )
 
-            $fullPath = [string](Resolve-Path '$absolutePath')
+            $fullPath = [string](Resolve-Path $absolutePath)
             $bestMatch = ''
             $bestMatchObj = $null
             gwmi Win32_MountPoint | % {
@@ -794,12 +794,13 @@ const cleanUpOntapResources = (
 
             $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
             $resourceType = ${
-                instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? 'SQL Server' : `SQL Server (${instanceName})`
+                instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? '"SQL Server"' : `'SQL Server (${instanceName})'`
             }
-            $winvolumeIds = $filePaths | ForEach-Object {
+            $windowsVolumeIds = $filePaths | ForEach-Object {
                 Get-VolumeIdFromPath -absolutePath $_
             }
 
+            Write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
             if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
                 $sqlgroup = Get-ClusterResource | Where-Object ResourceType -eq $resourceType
                 $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
@@ -810,7 +811,7 @@ const cleanUpOntapResources = (
                     $disks = $resource.GetRelated("MSCluster_Disk")
                     foreach ($disk in $disks) {
                         $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
-                        $clusterdisk = ($resource.name).replace('\r\n','')
+                        $clusterdisk = ($resource.name).replace('\\r\\n','')
                         $diskdrive = $diskpart.path
                         $disklabel = $diskpart.volumelabel
                         $diskvolume = $diskpart.VolumeGuid
