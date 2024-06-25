@@ -1401,18 +1401,7 @@ Resources:
                         g-restart-computer:
                             command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
                             waitAfterCompletion: forever
-                        h-set-maxdop:
-                            command: !Join
-                                - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\common\SetMaxDOP.ps1 -DomainAdminUser '
-                                  - !Ref 'DomainAdminUser'
-                                  - "' -Parentstackname '"
-                                  - !Ref 'ParentStackName'
-                                  - "' -NetBIOSName '"
-                                  - !Ref 'SqlFSxServerNetBIOSName2'
-                                  - '''"'
-                            waitAfterCompletion: '0'
-                        i-update-sqltag:
+                        h-update-sqltag:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Update-SQLNodeTag.ps1
