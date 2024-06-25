@@ -40,7 +40,7 @@ const BXP_SVC_TOKEN_CACHE = new LRUCache({
 
 const SSM_COMMAND_CACHE = new LRUCache({
     max: 1000,
-    ttl: ms('60m')
+    ttl: ms('10m')
 });
 
 const REQUEST_IN_PROGRESS_CACHE = new LRUCache({
