@@ -13,9 +13,7 @@ import {
     getSandboxesInfo,
     getDatabaseMountPointInfo,
     deleteSandbox,
-    deleteSandboxV2,
     updateSandboxLifeCycle,
-    updateSandboxLifeCycleV2,
     splitSandbox,
     checkDatabaseIntegrity,
     getSandboxSnapshots
@@ -105,25 +103,10 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            '10E53042-04E8-40C9-AE69-26E56CB0D216',
             'testdb1'
         );
         expect(resp.jobId).toBeDefined();
-    });
-
-    it('Delete the sandbox of given SQL Server instance', async () => {
-        try {
-            const resp = await deleteSandboxV2(
-                ACCOUNT_ID,
-                'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
-                'ap-southeast-1',
-                '36E53042-04E8-40C9-AE69-26E56CB0D216',
-                'testdb1',
-                'NO_SUCH_INSTANCE'
-            );
-            expect(resp.jobId).toBeDefined();
-        } catch (error: any) {
-            expect(error.message).toEqual('NO_SUCH_INSTANCE is not a managed SQL Server instance.');
-        }
     });
 
     it('Refreshes the sandbox', async () => {
@@ -132,27 +115,11 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            '12E53042-2418-40C9-AE69-26E56CB0D216',
             'testdb1',
             SANDBOX_LIFECYCLE_REFRESH
         );
         expect(resp.jobId).toBeDefined();
-    });
-
-    it('Refreshes the sandbox of SQL Server instance', async () => {
-        try {
-            const resp = await updateSandboxLifeCycleV2(
-                ACCOUNT_ID,
-                'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
-                'ap-southeast-1',
-                '36E53042-04E8-40C9-AE69-26E56CB0D216',
-                'testdb1',
-                'NO_SUCH_INSTANCE',
-                SANDBOX_LIFECYCLE_REFRESH
-            );
-            expect(resp.jobId).toBeDefined();
-        } catch (error: any) {
-            expect(error.message).toEqual('NO_SUCH_INSTANCE is not a managed SQL Server instance.');
-        }
     });
 
     it('Re-baselines the sandbox', async () => {
@@ -161,27 +128,11 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            '12E53042-2418-40C9-AE69-26E56CB0D216',
             'testdb1',
             SANDBOX_LIFECYCLE_REBASELINE
         );
         expect(resp.jobId).toBeDefined();
-    });
-
-    it('Re-baselines the sandbox of SQL Server instance', async () => {
-        try {
-            const resp = await updateSandboxLifeCycleV2(
-                ACCOUNT_ID,
-                'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
-                'ap-southeast-1',
-                '36E53042-04E8-40C9-AE69-26E56CB0D216',
-                'testdb1',
-                'NO_SUCH_INSTANCE',
-                SANDBOX_LIFECYCLE_REBASELINE
-            );
-            expect(resp.jobId).toBeDefined();
-        } catch (error: any) {
-            expect(error.message).toEqual('NO_SUCH_INSTANCE is not a managed SQL Server instance.');
-        }
     });
 
     it('Splits the sandbox', async () => {
@@ -190,6 +141,7 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            '1AE53042-04E8-40C9-AE69-26E56CB0D216',
             'testdb1'
         );
         expect(resp.jobId).toBeDefined();
