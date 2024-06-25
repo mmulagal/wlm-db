@@ -1765,15 +1765,16 @@ async function getDatabaseHostSummaryV2(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         instancesManaged.map(instance => {
+            const hostResourceName = resourceDetail?.resource_name || '';
+
             if (!instance.is_default) {
-                instance.database_instance_name = instance.database_instance_name.replace(/[^#]+-/, '');
+                instance.database_instance_name = instance.database_instance_name.replace(hostResourceName, '');
             }
             return instance;
         });
     }
     // Update the database instances detail to include storage type as FSXN
-    const instances = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
-    instancesManaged = instances.map(instance => ({
+    instancesManaged = instancesManaged.map(instance => ({
         ...instance,
         storage_type: STORAGE_TYPE.FSXN
     }));
@@ -1800,14 +1801,14 @@ async function getDatabaseHostSummaryV2(
     try {
         if (credentialsId && region) {
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-                const HostResourceName = resourceDetail?.resource_name || '';
+                const hostResourceName = resourceDetail?.resource_name || '';
                 instancesDetails = instancesDetails!
                     .filter((instance: { instanceName: string | (string | null)[] }) => {
                         if (instance.instanceName.includes('$')) {
                             return true; // Exclude instances with '$' from filtering
                         }
                         return (
-                            instance.instanceName.includes(HostResourceName) || instance.instanceName === 'MSSQLSERVER'
+                            instance.instanceName.includes(hostResourceName) || instance.instanceName === 'MSSQLSERVER'
                         );
                     })
                     .map((instance: { instanceName: { replace: (arg0: string | null, arg1: string) => any } }) => ({

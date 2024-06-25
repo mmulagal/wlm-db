@@ -1,12 +1,12 @@
 import randomize from 'randomatic';
 import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
-import { STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
+import { DatabaseTypes, RESOURCE_SOURCE, STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
 import getLogger from '../logger';
 import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
-import { listConfig } from '../../lib/database/db';
+import { listConfig, upsertDatabaseInstance } from '../../lib/database/db';
 import { saveConfig } from '../../operations/database/database-operations';
 import { getAsyncLocalStorageResource } from '../async-local-storage';
 import { listJobs } from '../../lib/database/job';
@@ -21,15 +21,16 @@ function createDemoResources(
     region: string,
     credentialsId: string,
     awsAccountId: string,
-    demoServerName?: string,
-    storageProtocol?: string
+    serverName: string,
+    storageProtocol?: string,
+    resourceId?: string
 ) {
     logger.info('Creating demo database resources and corresponding details.');
     const stackName = randomize('A', 10);
     const stackId = randomize('A0', 10);
     const sqlDeploymentMode = 'FCI';
     const fsxFilSystemId = `fs-${randomize('a0', 10)}`;
-    const serverName = demoServerName || `sqldatabase${randomize('a', 4)}`;
+    // const serverName = demoServerName || `sqldatabase${randomize('a', 4)}`;
 
     createDeploymentMockDataInDB(
         accountId!,
@@ -42,7 +43,8 @@ function createDemoResources(
         awsAccountId,
         serverName,
         true,
-        storageProtocol
+        storageProtocol,
+        resourceId
     );
 }
 
@@ -129,31 +131,143 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     if (isEmpty(jobs)) {
         // create 2 new resources and configurations
         logger.info('Creating demo resources');
-        const demoResources = [
-            // {
-            //     instanceName: 'SQLServer-Prod-01',
-            //     storageProtocol: STORAGE_PROTOCOLS.ISCSI
-            // },
-            // {
-            //     instanceName: 'SQLServer-Dev-01',
-            //     storageProtocol: STORAGE_PROTOCOLS.ISCSI
-            // },
-            {
-                instanceName: 'SQLServer-Dev-04',
-                storageProtocol: STORAGE_PROTOCOLS.ISCSI
-            }
-        ];
+        // const demoResources = [
+        //     {
+        //         instanceName: 'SQLServer-Prod-01',
+        //         storageProtocol: STORAGE_PROTOCOLS.ISCSI
+        //     },
+        //     {
+        //         instanceName: 'SQLServer-Dev-01',
+        //         storageProtocol: STORAGE_PROTOCOLS.ISCSI
+        //     },
+        //     {
+        //         instanceName: 'SQLServer-Dev-04',
+        //         storageProtocol: STORAGE_PROTOCOLS.SMB
+        //     }
+        // ];
 
-        demoResources.forEach(demoResource => {
-            createDemoResources(
-                accountId,
-                demoDefaultRegion,
-                credentialsId,
-                awsAccountId,
-                demoResource.instanceName,
-                demoResource.storageProtocol
-            );
-        });
+        // demoResources.forEach(demoResource => {
+        const prodOneResourceId = randomUUID();
+        const devOneResourceId = randomUUID();
+        const devFourResourceId = randomUUID();
+
+        createDemoResources(
+            accountId,
+            demoDefaultRegion,
+            credentialsId,
+            awsAccountId,
+            'SQLServer-Prod-01',
+            STORAGE_PROTOCOLS.ISCSI,
+            prodOneResourceId
+        );
+
+        createDemoResources(
+            accountId,
+            demoDefaultRegion,
+            credentialsId,
+            awsAccountId,
+            'SQLServer-Dev-01',
+            STORAGE_PROTOCOLS.ISCSI,
+            devOneResourceId
+        );
+
+        createDemoResources(
+            accountId,
+            demoDefaultRegion,
+            credentialsId,
+            awsAccountId,
+            'SQLServer-Dev-04',
+            STORAGE_PROTOCOLS.SMB,
+            devFourResourceId
+        );
+
+        createDatabaseInstances(
+            accountId,
+            devOneResourceId,
+            'SQLServer-Dev-01BETA',
+            credentialsId,
+            demoDefaultRegion,
+            `fs-${randomize('A0', 17)}`,
+            STORAGE_PROTOCOLS.ISCSI,
+            {}
+        );
+
+        createDatabaseInstances(
+            accountId,
+            devOneResourceId,
+            'SQLServer-Dev-01DELTA',
+            credentialsId,
+            demoDefaultRegion,
+            `fs-${randomize('A0', 17)}`,
+            STORAGE_PROTOCOLS.ISCSI,
+            {}
+        );
+
+        createDatabaseInstances(
+            accountId,
+            devOneResourceId,
+            'SQLServer-Dev-01GAMMA',
+            credentialsId,
+            demoDefaultRegion,
+            `fs-${randomize('A0', 17)}`,
+            STORAGE_PROTOCOLS.ISCSI,
+            {}
+        );
+
+        createDatabaseInstances(
+            accountId,
+            prodOneResourceId,
+            'SQLServer-Prod-01AMAZON',
+            credentialsId,
+            demoDefaultRegion,
+            `fs-${randomize('A0', 17)}`,
+            STORAGE_PROTOCOLS.ISCSI,
+            {}
+        );
+
+        createDatabaseInstances(
+            accountId,
+            prodOneResourceId,
+            'SQLServer-Prod-01ANTMAN',
+            credentialsId,
+            demoDefaultRegion,
+            `fs-${randomize('A0', 17)}`,
+            STORAGE_PROTOCOLS.ISCSI,
+            {}
+        );
+
+        createDatabaseInstances(
+            accountId,
+            devOneResourceId,
+            'SQLServer-Prod-01ANTMAN',
+            credentialsId,
+            demoDefaultRegion,
+            `fs-${randomize('A0', 17)}`,
+            STORAGE_PROTOCOLS.ISCSI,
+            {}
+        );
+
+        createDatabaseInstances(
+            accountId,
+            devFourResourceId,
+            'SQLServer-Dev-04BOSTON',
+            credentialsId,
+            demoDefaultRegion,
+            `fs-${randomize('A0', 17)}`,
+            STORAGE_PROTOCOLS.ISCSI,
+            {}
+        );
+
+        createDatabaseInstances(
+            accountId,
+            devFourResourceId,
+            'SQLServer-Dev-04EPSILON',
+            credentialsId,
+            demoDefaultRegion,
+            `fs-${randomize('A0', 17)}`,
+            STORAGE_PROTOCOLS.ISCSI,
+            {}
+        );
     }
 
     if (isEmpty(configs)) {
@@ -187,6 +301,37 @@ async function returnInventorydata(instances?: string[]) {
         count: inventoryData.count,
         items: inventoryData.items
     };
+}
+
+async function createDatabaseInstances(
+    accountId: string,
+    resourceId: string,
+    databaseInstanceName: string,
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    storageProtocol: string,
+    databaseMetadata: any
+) {
+    const instanceRecord = {
+        resourceId,
+        credentialsId,
+        region,
+        databaseInstanceId: randomUUID(),
+        databaseInstanceName,
+        fsxnIds: fsxId,
+        isDefault: false,
+        source: RESOURCE_SOURCE.DEPLOY,
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
+        numberofUserDbsCreated: 1,
+        sandboxCreated: true,
+        storageProtocol,
+        metaData: databaseMetadata,
+        databaseType: DatabaseTypes.MS_SQL_SERVER
+    };
+
+    await upsertDatabaseInstance(accountId, instanceRecord);
 }
 
 export { creadteDemoDBData, returnInventorydata };

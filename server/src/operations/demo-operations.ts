@@ -117,7 +117,8 @@ async function createDeploymentMockDataInDB(
     awsAccountId: string,
     serverName: string,
     createSandbox: boolean = false,
-    storageProtocol?: string
+    storageProtocol?: string,
+    resourceId?: string
 ) {
     logger.info('create deployment, resource and job table mock data in database', {
         accountId,
@@ -155,7 +156,7 @@ async function createDeploymentMockDataInDB(
         }
     });
 
-    const resourceId = randomUUID();
+    resourceId = resourceId || randomUUID();
     const fsxId = `fs-${randomize('A0', 17)}`;
 
     const metadata: Metadata = {
@@ -238,25 +239,8 @@ async function createDeploymentMockDataInDB(
             }
         ]
     };
-    const instanceRecord1 = {
-        resourceId,
-        credentialsId,
-        region,
-        databaseInstanceId: randomUUID(),
-        databaseInstanceName: 'SQLServer-Dev-04-BOSTON',
-        fsxnIds: fsxId,
-        isDefault: false,
-        source: RESOURCE_SOURCE.DEPLOY,
-        sqlDeploymentType: 'FCI',
-        fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
-        numberofUserDbsCreated: 1,
-        sandboxCreated: true,
-        storageProtocol,
-        metaData: databaseMetadata,
-        databaseType: DatabaseTypes.MS_SQL_SERVER,
-        storageType: STORAGE_TYPE.FSXN
-    };
-    const instanceRecord2 = {
+
+    const instanceRecord = {
         resourceId,
         credentialsId,
         region,
@@ -275,8 +259,7 @@ async function createDeploymentMockDataInDB(
         storageType: STORAGE_TYPE.FSXN
     };
 
-    await upsertDatabaseInstance(accountId, instanceRecord1);
-    await upsertDatabaseInstance(accountId, instanceRecord2);
+    await upsertDatabaseInstance(accountId, instanceRecord);
 
     const data = await createJobMockData(
         accountId,
