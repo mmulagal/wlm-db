@@ -24,6 +24,7 @@ import {
     DatabaseTypes,
     HttpErrorCodes,
     RESOURCESTYPE,
+    SQL_SERVICE_STATE,
     SSM_COMMAND_CACHE_TYPE
 } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
@@ -220,7 +221,8 @@ async function getDriveInfoFromSSM(
 
         const isInstanceRunning = instancesDetails.some(
             instance =>
-                instance.instanceName === instanceDetail.database_instance_name && instance.instanceState === 'Running'
+                instance.instanceName === instanceDetail.database_instance_name &&
+                instance.instanceState === SQL_SERVICE_STATE.RUNNING
         );
 
         if (!isInstanceRunning) {
@@ -558,7 +560,7 @@ async function invokeSSMForDatabaseDeployment(
             const isInstanceRunning = instancesDetails.some(
                 instance =>
                     instance.instanceName === instanceDetail.database_instance_name &&
-                    instance.instanceState === 'Running'
+                    instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 
             if (!isInstanceRunning && selectedInstanceName) {
@@ -1504,7 +1506,7 @@ async function getCollationDetails(
             const isInstanceRunning = instancesDetails.some(
                 instance =>
                     instance.instanceName === instanceDetail.database_instance_name &&
-                    instance.instanceState === 'Running'
+                    instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 
             if (!isInstanceRunning && selectedInstanceName) {

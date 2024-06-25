@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import { compact, groupBy } from 'lodash-es';
 import { _InstanceType } from '@aws-sdk/client-ec2';
 import { STORAGE_TYPE } from '@prisma/client';
-import { FINDING, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
+import { FINDING, HttpErrorCodes, SQL_SERVICE_STATE, SqlServerDeploymentModel } from '../utils/consts';
 import { getInstanceRecommendations } from './aws/compute-optimizer-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { ENTERPRISE_CHECK_QUERY } from './workloads/mssql/queries';
@@ -99,7 +99,7 @@ async function getLicenseRecommendations(
     const runningEnterpriseEditionSqlServerInstances = sqlServerInstances.filter(
         sqlServerInstance =>
             sqlServerInstance.sqlServerEngineEdition === ENT_ENGINE_EDITION &&
-            sqlServerInstance.sqlServerState === 'Running' &&
+            sqlServerInstance.sqlServerState === SQL_SERVICE_STATE.RUNNING &&
             sqlServerInstance.sqlServerDeploymentType === sqlServerDeploymentType
     );
 

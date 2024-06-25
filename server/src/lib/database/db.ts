@@ -78,6 +78,7 @@ interface DatabaseInstanceRecord {
     sandboxCreated?: boolean;
     metaData?: databaseInstanceMetadata;
     databaseType: string;
+    storageType?: string;
 }
 
 async function listDeployments(
