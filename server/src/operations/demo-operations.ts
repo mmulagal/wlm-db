@@ -7,10 +7,18 @@ import {
     DATABASE_TYPE,
     MSSQL_DATABASE_TYPES,
     ONLINE,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    RESOURCE_SOURCE,
+    DatabaseTypes
 } from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
-import { checkAccount, createDeployment, createResource, updateResourceMetaData } from '../lib/database/db';
+import {
+    checkAccount,
+    createDeployment,
+    createResource,
+    updateResourceMetaData,
+    upsertDatabaseInstance
+} from '../lib/database/db';
 import { Metadata, Sandbox } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
@@ -146,6 +154,10 @@ async function createDeploymentMockDataInDB(
             fileSystemType: STORAGE_TYPE.FSXN
         }
     });
+
+    const resourceId = randomUUID();
+    const fsxId = `fs-${randomize('A0', 17)}`;
+
     const metadata: Metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
         node1InstanceId: `i-${randomize('A0', 17)}`,
@@ -188,17 +200,83 @@ async function createDeploymentMockDataInDB(
         metadata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
     }
     await createResource(accountId, {
-        resourceId: randomUUID(),
+        resourceId,
         credentialsId,
         storageType: STORAGE_TYPE.FSXN,
         resourceName,
         cloudProviderAccountId: cloudProviderId,
         cloudProviderName: CloudProviders.AWS,
         resourceType: RESOURCESTYPE.MSSQL,
-        coRelationId: `fs-${randomize('A0', 17)}`,
+        coRelationId: fsxId,
         region,
         metadata
     });
+
+    const databaseMetadata = {
+        sandboxes: [
+            {
+                databaseName: 'RetailBanking_sandbox',
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                tag: 'Development',
+                baseSnapshot: `netapp_wf_${Date.now()}`
+            }
+        ],
+        userDatabase: [
+            {
+                name: 'RetailBanking_sandbox',
+                size: 16777216,
+                type: 'User Database',
+                status: 'ONLINE',
+                protection: {
+                    isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
+                    isFsxOntapSnapshotsEnabled: false,
+                    isSqlNativeEnabled: false
+                },
+                collation: SQL_DEFAULT_COLLATION
+            }
+        ]
+    };
+    const instanceRecord1 = {
+        resourceId,
+        credentialsId,
+        region,
+        databaseInstanceId: randomUUID(),
+        databaseInstanceName: 'SQLServer-Dev-04-BOSTON',
+        fsxnIds: fsxId,
+        isDefault: false,
+        source: RESOURCE_SOURCE.DEPLOY,
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
+        numberofUserDbsCreated: 1,
+        sandboxCreated: true,
+        storageProtocol,
+        metaData: databaseMetadata,
+        databaseType: DatabaseTypes.MS_SQL_SERVER,
+        storageType: STORAGE_TYPE.FSXN
+    };
+    const instanceRecord2 = {
+        resourceId,
+        credentialsId,
+        region,
+        databaseInstanceId: randomUUID(),
+        databaseInstanceName: DEFAULT_INSTANCE_NAME,
+        fsxnIds: fsxId,
+        isDefault: true,
+        source: RESOURCE_SOURCE.DEPLOY,
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
+        numberofUserDbsCreated: 1,
+        sandboxCreated: true,
+        storageProtocol,
+        metaData: databaseMetadata,
+        databaseType: DatabaseTypes.MS_SQL_SERVER,
+        storageType: STORAGE_TYPE.FSXN
+    };
+
+    await upsertDatabaseInstance(accountId, instanceRecord1);
+    await upsertDatabaseInstance(accountId, instanceRecord2);
 
     const data = await createJobMockData(
         accountId,

@@ -1759,11 +1759,23 @@ async function getDatabaseHostSummaryV2(
 
     const instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
 
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        instancesManaged.map(instance => {
+            if (!instance.is_default) {
+                instance.database_instance_name = instance.database_instance_name.replace(/[^#]+-/, '');
+            }
+            return instance;
+        });
+    }
     const errormessages: { [index: string]: string } = {};
-
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-    const { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } =
-        await getActiveSqlNode(credentialsId, region!, node1InstanceId, node2InstanceId, resourceId);
+    let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
+        credentialsId,
+        region!,
+        node1InstanceId,
+        node2InstanceId,
+        resourceId
+    );
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
         name: resourceName || '',
@@ -1777,6 +1789,23 @@ async function getDatabaseHostSummaryV2(
 
     try {
         if (credentialsId && region) {
+            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                const HostResourceName = resourceDetail?.resource_name || '';
+                instancesDetails = instancesDetails!
+                    .filter((instance: { instanceName: string | (string | null)[] }) => {
+                        if (instance.instanceName.includes('$')) {
+                            return true; // Exclude instances with '$' from filtering
+                        }
+                        return (
+                            instance.instanceName.includes(HostResourceName) || instance.instanceName === 'MSSQLSERVER'
+                        );
+                    })
+                    .map((instance: { instanceName: { replace: (arg0: string | null, arg1: string) => any } }) => ({
+                        ...instance,
+                        instanceName: instance.instanceName.replace(resourceName, '')
+                    }));
+            }
+
             databaseInstancesDetail = await getDatabaseInstancesDetails(
                 credentialsId,
                 region,
@@ -1853,7 +1882,7 @@ async function getDatabaseHostSummaryV2(
                         const instanceResult = await getDatabaseInstanceSummary(
                             accountId,
                             credentialsId,
-                            activeNodeInstanceId,
+                            activeNodeInstanceId!,
                             region,
                             instance,
                             fields

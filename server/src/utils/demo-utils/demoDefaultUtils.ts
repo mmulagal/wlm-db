@@ -82,7 +82,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     const matchingCredentials = credentialsList?.find(
         (item: { name: string }) => item.name === 'DemoDefaultCredential'
     );
-    let credentialsId;
+    let credentialsId: string;
     const awsAccountId = randomize('0', 12);
     if (matchingCredentials) {
         logger.info('DemoDefaultCredential credential exists', matchingCredentials.credentialsId);
@@ -129,31 +129,33 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     if (isEmpty(jobs)) {
         // create 2 new resources and configurations
         logger.info('Creating demo resources');
-        createDemoResources(
-            accountId,
-            demoDefaultRegion,
-            credentialsId,
-            awsAccountId,
-            'SQLServer-Prod-01',
-            STORAGE_PROTOCOLS.ISCSI
-        );
-        createDemoResources(
-            accountId,
-            demoDefaultRegion,
-            credentialsId,
-            awsAccountId,
-            'SQLServer-Dev-01',
-            STORAGE_PROTOCOLS.ISCSI
-        );
-        createDemoResources(
-            accountId,
-            demoDefaultRegion,
-            credentialsId,
-            awsAccountId,
-            'SQLServer-Dev-04',
-            STORAGE_PROTOCOLS.SMB
-        );
+        const demoResources = [
+            // {
+            //     instanceName: 'SQLServer-Prod-01',
+            //     storageProtocol: STORAGE_PROTOCOLS.ISCSI
+            // },
+            // {
+            //     instanceName: 'SQLServer-Dev-01',
+            //     storageProtocol: STORAGE_PROTOCOLS.ISCSI
+            // },
+            {
+                instanceName: 'SQLServer-Dev-04',
+                storageProtocol: STORAGE_PROTOCOLS.ISCSI
+            }
+        ];
+
+        demoResources.forEach(demoResource => {
+            createDemoResources(
+                accountId,
+                demoDefaultRegion,
+                credentialsId,
+                awsAccountId,
+                demoResource.instanceName,
+                demoResource.storageProtocol
+            );
+        });
     }
+
     if (isEmpty(configs)) {
         logger.info('Creating demo and templates');
         createConfigurations(accountId, awsAccountId, credentialsId);
