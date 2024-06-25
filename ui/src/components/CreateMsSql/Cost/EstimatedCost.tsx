@@ -314,7 +314,7 @@ const EstimatedCost = () => {
                                     <Typography variant="Regular_14">{GENERAL.TYPE}: FSx for NetApp ONTAP</Typography>
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
-                                            {GENERAL.SIZE}:{' '}
+                                            {GENERAL.SIZE}:
                                             {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total + ' GiB'}
                                         </Typography>
                                         {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total && (
