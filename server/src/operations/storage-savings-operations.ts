@@ -509,14 +509,20 @@ async function retrieveComputeAndLicenseCost(
                         sqlServerEdition: eSqlServerEdition,
                         licenseHourlyPrice: eLicensePrice,
                         licenseIncluded: !!(eLicensePrice && eLicensePrice > 0),
-                        licenseMonthlyPrice: eLicensePrice ? getMonthlyPriceFromHourlyPrice(eLicensePrice) : undefined,
+                        licenseMonthlyPrice:
+                            eLicensePrice !== undefined && eLicensePrice >= 0
+                                ? getMonthlyPriceFromHourlyPrice(eLicensePrice)
+                                : undefined,
                         hoursInMonth: HOURS_IN_MONTH
                     },
                     recommended: {
                         sqlServerEdition: rSqlServerEdition,
                         licenseHourlyPrice: rLicensePrice,
                         licenseIncluded: !!(rLicensePrice && rLicensePrice > 0),
-                        licenseMonthlyPrice: rLicensePrice ? getMonthlyPriceFromHourlyPrice(rLicensePrice) : undefined,
+                        licenseMonthlyPrice:
+                            rLicensePrice !== undefined && rLicensePrice >= 0
+                                ? getMonthlyPriceFromHourlyPrice(rLicensePrice)
+                                : undefined,
                         hoursInMonth: HOURS_IN_MONTH,
                         message: licenseMessage
                     }
