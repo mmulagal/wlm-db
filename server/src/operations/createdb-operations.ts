@@ -540,6 +540,7 @@ async function invokeSSMForDatabaseDeployment(
     let standbyNodeInstanceId;
     let sqlInstanceName;
     let instancesDetails;
+    let databaseInstanceId;
     try {
         ({
             isSSMConnected,
@@ -569,6 +570,7 @@ async function invokeSSMForDatabaseDeployment(
                 throw createError(errorMessage);
             }
             sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
+            databaseInstanceId = instanceDetail.database_instance_id;
         }
 
         if (isClustered === 'true' && standbyNodeInstanceId) {
@@ -594,7 +596,8 @@ async function invokeSSMForDatabaseDeployment(
             parentJobId,
             activeNodeInstanceId as string,
             collation,
-            sqlInstanceName
+            sqlInstanceName,
+            databaseInstanceId
         );
 
         const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
@@ -1218,7 +1221,8 @@ async function validateParams(
     parentJobId: string,
     activeNodeInstanceId: string,
     collation: string,
-    instanceName: string
+    instanceName: string,
+    databaseInstanceId?: string
 ) {
     logger.info('validating parameters for database user creation', {
         accountId,
@@ -1291,7 +1295,15 @@ async function validateParams(
             throw createError(412, 'Collation should not be empty');
         }
 
-        const { collationList } = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
+        const { collationList } = await getCollationDetails(
+            accountId,
+            databaseHostId,
+            credentialsId,
+            region,
+            undefined,
+            activeNodeInstanceId,
+            instanceName
+        );
 
         const collationExists = collationList?.some(item => item?.name?.toLowerCase() === collation.toLowerCase());
 
@@ -1309,7 +1321,8 @@ async function validateParams(
             credentialsId,
             region,
             false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+            CUSTOM_SSM_EXECUTION_TIMEOUT,
+            databaseInstanceId
         );
 
         // check whether the drive selection detail is right
@@ -1446,12 +1459,25 @@ async function checkDriveExists(
     return true;
 }
 
+async function getCollationForInstance(credentialsId: string, region: string, activeNode: string, sqlInstance: string) {
+    const { defaultCollation, mssqlVersion } = await getDefaultCollationAndVersion(
+        credentialsId,
+        region,
+        activeNode,
+        sqlInstance
+    );
+
+    return getCollationForMSSQLVersion(mssqlVersion, defaultCollation);
+}
+
 async function getCollationDetails(
     accountId: string,
     databaseHostId: string,
     credentialsId: string,
     region: string,
-    databaseInstanceId?: string
+    databaseInstanceId?: string,
+    activeNode?: string,
+    sqlInstance?: string
 ) {
     logger.info('Getting collation details from the database host', {
         accountId,
@@ -1462,6 +1488,9 @@ async function getCollationDetails(
     });
 
     try {
+        if (activeNode && sqlInstance) {
+            return getCollationForInstance(credentialsId, region, activeNode as string, sqlInstance);
+        }
         const {
             items: [resourceDetail]
         } = await getResources(accountId, databaseHostId, credentialsId, region, RESOURCESTYPE.MSSQL);
@@ -1516,15 +1545,7 @@ async function getCollationDetails(
             }
             sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
         }
-
-        const { defaultCollation, mssqlVersion } = await getDefaultCollationAndVersion(
-            credentialsId,
-            region,
-            activeNodeInstanceId as string,
-            sqlInstanceName
-        );
-
-        return getCollationForMSSQLVersion(mssqlVersion, defaultCollation);
+        return getCollationForInstance(credentialsId, region, activeNodeInstanceId as string, sqlInstanceName);
     } catch (error: any) {
         const errorMessage = `Unable to get collation information. ${error?.message}.`;
         logger.error(errorMessage);
