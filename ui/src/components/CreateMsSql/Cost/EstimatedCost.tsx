@@ -24,12 +24,21 @@ type Res = {
     data: {
         compute: '';
         fsxnStorage: {
-            capacity: '';
-            throughput: '';
-            size: {
-                total: '';
-            };
-        };
+            fsxStorageCost: '',
+            fsxnCostBreakdownById: [
+                {
+                    capacityCost: '',
+                    operationalCost: '',
+                    size: {
+                        data: '',
+                        log: '',
+                        tempdb: '',
+                        total: '',
+                        buffer: ''
+                    }
+                }
+            ]
+        }
         total: '';
     };
 };
@@ -120,13 +129,17 @@ const EstimatedCost = () => {
                     compute: computeObj(updatedStr),
                     fsxnStorage: {
                         regionCode: updatedStr || '',
-                        diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize),
-                        throughput: fsxVolThroughput(),
-                        iops: iopsValueType === GENERAL.USER_PROVISIONED ? Number(iopsValue) : 0,
-                        deploymentOption:
-                            deploymentModel?.label === GENERAL.SINGLE_INSTANCE
-                                ? FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                                : FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                        fsxnResourceInfo : [
+                            {
+                                diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize),
+                                throughput: fsxVolThroughput(),
+                                iops: iopsValueType === GENERAL.USER_PROVISIONED ? Number(iopsValue) : 0,
+                                deploymentOption:
+                                    deploymentModel?.label === GENERAL.SINGLE_INSTANCE
+                                        ? FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                                        : FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                            }
+                        ]
                     }
                 };
             } else {
@@ -134,7 +147,11 @@ const EstimatedCost = () => {
                     compute: computeObj(updatedStr),
                     fsxnStorage: {
                         regionCode: updatedStr || '',
-                        diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize)
+                        fsxnResourceInfo: [
+                            {
+                                diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize)
+                            }
+                        ]
                     }
                 };
             }
@@ -297,12 +314,12 @@ const EstimatedCost = () => {
                                     <Typography variant="Regular_14">{GENERAL.TYPE}: FSx for NetApp ONTAP</Typography>
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
-                                            {GENERAL.SIZE}: {data?.data?.fsxnStorage?.size?.total + ' GiB'}
+                                            {GENERAL.SIZE}: {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total + ' GiB'}
                                         </Typography>
-                                        {data?.data?.fsxnStorage?.size?.total && (
+                                        {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total && (
                                             <TooltipInfo className={styles.tooltipClass}>
-                                                {Number(data?.data?.fsxnStorage?.size?.total || 0) > 1024
-                                                    ? SizePopover(data?.data?.fsxnStorage?.size)
+                                                {Number(data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total || 0) > 1024
+                                                    ? SizePopover(data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size)
                                                     : GENERAL.MIN_FSX_CAPACITY_MESSAGE}
                                             </TooltipInfo>
                                         )}
@@ -320,7 +337,7 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(data?.data?.fsxnStorage?.capacityCost).toFixed(2)}` || ''
+                                            `$${Number(data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.capacityCost).toFixed(2)}` || ''
                                         )}
                                     </Typography>
 
@@ -335,7 +352,7 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(data?.data?.fsxnStorage?.operationalCost).toFixed(2)}` || ''
+                                            `$${Number(data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.operationalCost).toFixed(2)}` || ''
                                         )}
                                     </Typography>
                                 </div>
