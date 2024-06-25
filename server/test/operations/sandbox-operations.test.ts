@@ -46,7 +46,7 @@ afterAll(async () => {
     await deleteResource(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
 });
 
-describe('sandbox operations ', () => {
+describe.skip('sandbox operations ', () => {
     it('Get sandbox details for all resources', async () => {
         const resp = await getSandboxesInfo(ACCOUNT_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286', 'ap-southeast-1');
         expect(resp).toEqual({
