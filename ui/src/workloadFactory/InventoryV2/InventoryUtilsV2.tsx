@@ -258,24 +258,28 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 (perRow?.storage?.fsxn?.size || 0) +
                 (perRow?.storage?.fsxw?.size || 0) +
                 (perRow?.storage?.ebs?.size || 0);
-            return {
-                ...perRow,
-                databaseInstanceId: perRow?.databaseInstanceId,
-                databaseInstanceName: instRow?.databaseInstanceName,
-                status: perRow?.status,
-                databaseCount: perRow?.databaseCount,
-                statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED,
-                fileSystemDeploymentMode: getFileSystemDeploymentMode(
-                    perRow?.databaseInstanceTopology?.fileSystemDeploymentMode
-                ),
-                fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType,
-                protection: perRow?.protection,
-                performance: perRow?.performance,
-                storage: perRow?.storage,
-                storageSavingsText: getStorageSavingsText(perRow || {}),
-                allocatedCapacity: allocatedCapacity,
-                allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
-            };
+            if (perRow) {
+                return {
+                    ...perRow,
+                    databaseInstanceId: perRow?.databaseInstanceId,
+                    databaseInstanceName: instRow?.databaseInstanceName,
+                    status: perRow?.status,
+                    databaseCount: perRow?.databaseCount,
+                    statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED,
+                    fileSystemDeploymentMode: getFileSystemDeploymentMode(
+                        perRow?.databaseInstanceTopology?.fileSystemDeploymentMode
+                    ),
+                    fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType,
+                    protection: perRow?.protection,
+                    performance: perRow?.performance,
+                    storage: perRow?.storage,
+                    storageSavingsText: getStorageSavingsText(perRow || {}),
+                    allocatedCapacity: allocatedCapacity,
+                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
+                };
+            } else {
+                return instRow;
+            }
         });
     }
 

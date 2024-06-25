@@ -952,6 +952,8 @@ export const GENERAL = {
     REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
     REFRESH_CURRENT_RADIO: 'Refresh to current time',
     REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot',
+    HOST_DOWN: 'Host is down.',
+    SSM_DOWN: 'SSM is not connected.',
     SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
