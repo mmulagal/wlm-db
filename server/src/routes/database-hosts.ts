@@ -246,7 +246,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         })
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/database-instances/:databaseInstanceId/:sandboxName/connection-string`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/connection-string`,
             { schema: GetSandboxConnectionStringSchema },
             async (request, reply) => {
                 const {
