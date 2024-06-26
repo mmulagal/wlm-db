@@ -175,8 +175,7 @@ async function createDeploymentMockDataInDB(
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
                     source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
-                    tag: 'Development',
-                    baseSnapshot: `netapp_wf_${Date.now()}`
+                    tag: 'Development'
                 }
             ],
             userDatabase: [

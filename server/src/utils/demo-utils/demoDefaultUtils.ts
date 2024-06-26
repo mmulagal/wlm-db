@@ -129,145 +129,63 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
 
     const jobs = await listJobs(accountId, credentialsId, demoDefaultRegion);
     if (isEmpty(jobs)) {
-        // create 2 new resources and configurations
+        // create 3 new resources and configurations
         logger.info('Creating demo resources');
-        // const demoResources = [
-        //     {
-        //         instanceName: 'SQLServer-Prod-01',
-        //         storageProtocol: STORAGE_PROTOCOLS.ISCSI
-        //     },
-        //     {
-        //         instanceName: 'SQLServer-Dev-01',
-        //         storageProtocol: STORAGE_PROTOCOLS.ISCSI
-        //     },
-        //     {
-        //         instanceName: 'SQLServer-Dev-04',
-        //         storageProtocol: STORAGE_PROTOCOLS.SMB
-        //     }
-        // ];
 
-        // demoResources.forEach(demoResource => {
         const prodOneResourceId = randomUUID();
         const devOneResourceId = randomUUID();
         const devFourResourceId = randomUUID();
 
-        createDemoResources(
-            accountId,
-            demoDefaultRegion,
-            credentialsId,
-            awsAccountId,
-            'SQLServer-Prod-01',
-            STORAGE_PROTOCOLS.ISCSI,
-            prodOneResourceId
-        );
+        const instances = [
+            {
+                resourceId: prodOneResourceId,
+                name: 'SQLServer-Prod-01',
+                protocol: STORAGE_PROTOCOLS.ISCSI,
+                sqlInstances: ['SQLServer-Prod-01AMAZON', 'SQLServer-Prod-01ANTMAN']
+            },
+            {
+                resourceId: devOneResourceId,
+                name: 'SQLServer-Dev-01',
+                protocol: STORAGE_PROTOCOLS.ISCSI,
+                sqlInstances: [
+                    'SQLServer-Dev-01BETA',
+                    'SQLServer-Dev-01DELTA',
+                    'SQLServer-Dev-01GAMMA',
+                    'SQLServer-Prod-01ANTMAN'
+                ]
+            },
+            {
+                resourceId: devFourResourceId,
+                name: 'SQLServer-Dev-04',
+                protocol: STORAGE_PROTOCOLS.SMB,
+                sqlInstances: ['SQLServer-Dev-04BOSTON', 'SQLServer-Dev-04EPSILON']
+            }
+        ];
 
-        createDemoResources(
-            accountId,
-            demoDefaultRegion,
-            credentialsId,
-            awsAccountId,
-            'SQLServer-Dev-01',
-            STORAGE_PROTOCOLS.ISCSI,
-            devOneResourceId
-        );
+        instances.forEach(async ({ resourceId, name, protocol, sqlInstances }) => {
+            await createDemoResources(
+                accountId,
+                demoDefaultRegion,
+                credentialsId,
+                awsAccountId,
+                name,
+                protocol,
+                resourceId
+            );
 
-        createDemoResources(
-            accountId,
-            demoDefaultRegion,
-            credentialsId,
-            awsAccountId,
-            'SQLServer-Dev-04',
-            STORAGE_PROTOCOLS.SMB,
-            devFourResourceId
-        );
-
-        createDatabaseInstances(
-            accountId,
-            devOneResourceId,
-            'SQLServer-Dev-01BETA',
-            credentialsId,
-            demoDefaultRegion,
-            `fs-${randomize('A0', 17)}`,
-            STORAGE_PROTOCOLS.ISCSI,
-            {}
-        );
-
-        createDatabaseInstances(
-            accountId,
-            devOneResourceId,
-            'SQLServer-Dev-01DELTA',
-            credentialsId,
-            demoDefaultRegion,
-            `fs-${randomize('A0', 17)}`,
-            STORAGE_PROTOCOLS.ISCSI,
-            {}
-        );
-
-        createDatabaseInstances(
-            accountId,
-            devOneResourceId,
-            'SQLServer-Dev-01GAMMA',
-            credentialsId,
-            demoDefaultRegion,
-            `fs-${randomize('A0', 17)}`,
-            STORAGE_PROTOCOLS.ISCSI,
-            {}
-        );
-
-        createDatabaseInstances(
-            accountId,
-            prodOneResourceId,
-            'SQLServer-Prod-01AMAZON',
-            credentialsId,
-            demoDefaultRegion,
-            `fs-${randomize('A0', 17)}`,
-            STORAGE_PROTOCOLS.ISCSI,
-            {}
-        );
-
-        createDatabaseInstances(
-            accountId,
-            prodOneResourceId,
-            'SQLServer-Prod-01ANTMAN',
-            credentialsId,
-            demoDefaultRegion,
-            `fs-${randomize('A0', 17)}`,
-            STORAGE_PROTOCOLS.ISCSI,
-            {}
-        );
-
-        createDatabaseInstances(
-            accountId,
-            devOneResourceId,
-            'SQLServer-Prod-01ANTMAN',
-            credentialsId,
-            demoDefaultRegion,
-            `fs-${randomize('A0', 17)}`,
-            STORAGE_PROTOCOLS.ISCSI,
-            {}
-        );
-
-        createDatabaseInstances(
-            accountId,
-            devFourResourceId,
-            'SQLServer-Dev-04BOSTON',
-            credentialsId,
-            demoDefaultRegion,
-            `fs-${randomize('A0', 17)}`,
-            STORAGE_PROTOCOLS.ISCSI,
-            {}
-        );
-
-        createDatabaseInstances(
-            accountId,
-            devFourResourceId,
-            'SQLServer-Dev-04EPSILON',
-            credentialsId,
-            demoDefaultRegion,
-            `fs-${randomize('A0', 17)}`,
-            STORAGE_PROTOCOLS.ISCSI,
-            {}
-        );
+            sqlInstances.forEach(instanceName => {
+                createDatabaseInstances(
+                    accountId,
+                    resourceId,
+                    instanceName,
+                    credentialsId,
+                    demoDefaultRegion,
+                    `fs-${randomize('A0', 17)}`,
+                    protocol,
+                    {}
+                );
+            });
+        });
     }
 
     if (isEmpty(configs)) {
@@ -292,6 +210,13 @@ async function returnInventorydata(instances?: string[]) {
             };
         }
         const instanceDetails = inventoryData.items.find(item => item.ec2InstanceId === instances[0])!;
+        // for random EC2 instance ID need to send generic value will be updated in phase 2
+        if (!instanceDetails) {
+            return {
+                count: 1,
+                items: []
+            };
+        }
         return {
             count: 1,
             items: [instanceDetails]

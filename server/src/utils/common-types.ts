@@ -48,7 +48,7 @@ interface Sandbox {
     updatedAt: number;
     source: string;
     tag: string;
-    baseSnapshot: string;
+    baseSnapshot?: string;
 }
 
 interface NodeDetails {
