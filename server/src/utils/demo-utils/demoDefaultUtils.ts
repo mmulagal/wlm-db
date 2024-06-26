@@ -30,7 +30,6 @@ function createDemoResources(
     const stackId = randomize('A0', 10);
     const sqlDeploymentMode = 'FCI';
     const fsxFilSystemId = `fs-${randomize('a0', 10)}`;
-    // const serverName = demoServerName || `sqldatabase${randomize('a', 4)}`;
 
     createDeploymentMockDataInDB(
         accountId!,
@@ -41,7 +40,7 @@ function createDemoResources(
         sqlDeploymentMode,
         fsxFilSystemId,
         awsAccountId,
-        serverName,
+        serverName || `sqldatabase${randomize('a', 4)}`,
         true,
         storageProtocol,
         resourceId

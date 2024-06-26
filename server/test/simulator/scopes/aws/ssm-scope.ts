@@ -316,7 +316,7 @@ const getOntapSandboxVolumeSavingsParams = {
 };
 
 const getSandboxDetails = {
-    commands: [GET_SANDBOX_DETAILS(['"."'])]
+    commands: [GET_SANDBOX_DETAILS(['$env:computername'])]
 };
 
 const instanceDetails = {
