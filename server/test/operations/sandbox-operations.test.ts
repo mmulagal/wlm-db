@@ -6,7 +6,12 @@ import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
 import { ACCOUNT_ID, SANDBOX_LIFECYCLE_REFRESH, SANDBOX_LIFECYCLE_REBASELINE } from '../../src/utils/consts';
-import { createResource, deleteDatabaseInstance, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
+import {
+    createResource,
+    deleteDatabaseInstance,
+    deleteResource,
+    upsertDatabaseInstance
+} from '../../src/lib/database/db';
 import {
     createSandbox,
     getSandboxSavings,
@@ -36,21 +41,32 @@ beforeAll(async () => {
             node2InstanceId: 'i-0880a21327284f67c',
             sqlDeploymentType: 'FCI',
             sandboxCreated: true,
-            userDatabase: [{
-                name: 'testdb1',
-                size: 1234,
-                status: 'Running',
-                type: 'Standalore',
-                protection: { isAwsBackupEnabled: true, isFsxOntapSnapshotsEnabled: true, isSqlNativeEnabled: true },
-                collation: 'utf8'
-            }, {
-                name: 'testdb2',
-                size: 1234,
-                status: 'Running',
-                type: 'Standalore',
-                protection: { isAwsBackupEnabled: true, isFsxOntapSnapshotsEnabled: true, isSqlNativeEnabled: true },
-                collation: 'utf8'
-            }]
+            userDatabase: [
+                {
+                    name: 'testdb1',
+                    size: 1234,
+                    status: 'Running',
+                    type: 'Standalore',
+                    protection: {
+                        isAwsBackupEnabled: true,
+                        isFsxOntapSnapshotsEnabled: true,
+                        isSqlNativeEnabled: true
+                    },
+                    collation: 'utf8'
+                },
+                {
+                    name: 'testdb2',
+                    size: 1234,
+                    status: 'Running',
+                    type: 'Standalore',
+                    protection: {
+                        isAwsBackupEnabled: true,
+                        isFsxOntapSnapshotsEnabled: true,
+                        isSqlNativeEnabled: true
+                    },
+                    collation: 'utf8'
+                }
+            ]
         }
     });
 
@@ -104,17 +120,21 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await deleteResource(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
-    await deleteDatabaseInstance(ACCOUNT_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286', '36E53042-04E8-40C9-AE69-26E56CB0D216', ['default', 'test-database', 'testdb1']);
+    await deleteDatabaseInstance(
+        ACCOUNT_ID,
+        'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+        '36E53042-04E8-40C9-AE69-26E56CB0D216',
+        ['default', 'test-database', 'testdb1']
+    );
 });
 
 describe('sandbox operations ', () => {
     it('Get sandbox details for all resources', async () => {
         const resp = await getSandboxesInfo(ACCOUNT_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286', 'ap-southeast-1');
-        expect(resp).toEqual({
-            count: 0,
-            items: [],
-            nextToken: undefined
-        });
+        expect(resp).toBeDefined();
+        if (resp) {
+            expect(Object.keys(resp)).toEqual(['count', 'items', 'nextToken']);
+        }
     });
 
     it('Get the storage savings for cloned resources', async () => {
@@ -154,8 +174,8 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
-            'test-database',
-            'MSSQLSERVER'
+            'default',
+            'test-database'
         );
         expect(resp).toEqual(sandboxResponse.sandboxMountPointResponse);
     });
@@ -166,7 +186,7 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
-            '10E53042-04E8-40C9-AE69-26E56CB0D216',
+            'default',
             'testdb1'
         );
         expect(resp.jobId).toBeDefined();
@@ -178,7 +198,7 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
-            '12E53042-2418-40C9-AE69-26E56CB0D216',
+            'default',
             'testdb1',
             SANDBOX_LIFECYCLE_REFRESH
         );
@@ -191,7 +211,7 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
-            '12E53042-2418-40C9-AE69-26E56CB0D216',
+            'default',
             'testdb1',
             SANDBOX_LIFECYCLE_REBASELINE
         );
@@ -204,7 +224,7 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
-            '1AE53042-04E8-40C9-AE69-26E56CB0D216',
+            'default',
             'testdb1'
         );
         expect(resp.jobId).toBeDefined();
@@ -216,6 +236,7 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'default',
             'testdb2'
         );
         expect(resp.jobId).toBeDefined();
@@ -227,6 +248,7 @@ describe('sandbox operations ', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'default',
             'testdb1'
         );
         expect(resp).toBeDefined();

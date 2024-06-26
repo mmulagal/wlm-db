@@ -2572,32 +2572,20 @@ async function checkDatabaseIntegrity(
     credentialsId: string,
     region: string,
     databaseHostId: string,
+    databaseInstanceId: string,
     databaseName: string
 ) {
-    logger.info('Check database integrity', { accountId, credentialsId, region, databaseHostId, databaseName });
-
-    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
-
-    if (isEmpty(resourceDetails)) {
-        throw createError(HttpErrorCodes.NOT_FOUND, 'Could not find the database host');
-    }
-
-    const { node1InstanceId, node2InstanceId } = resourceDetails.metadata as unknown as Metadata;
-
-    const { isSSMConnected, instanceName, activeNodeInstanceId } = await getActiveSqlNode(
+    logger.info('Check database integrity', {
+        accountId,
         credentialsId,
         region,
-        node1InstanceId,
-        node2InstanceId,
-        databaseHostId
-    );
+        databaseHostId,
+        databaseInstanceId,
+        databaseName
+    });
 
-    if (!isSSMConnected) {
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            'SSM connection could not be established with the host'
-        );
-    }
+    const source = { host: databaseHostId, instance: databaseInstanceId, database: databaseName };
+    const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
     const databaseDetails = await checkDatabaseExists(
         accountId,
@@ -2605,21 +2593,21 @@ async function checkDatabaseIntegrity(
         region,
         databaseHostId,
         databaseName,
-        activeNodeInstanceId!,
-        instanceName
+        srcDetails.activeNodeInstanceId,
+        srcDetails.instanceName
     );
 
     if (!databaseDetails) {
         throw createError(
             HttpErrorCodes.NOT_FOUND,
-            `Database ${databaseName} does not exists on source host ${resourceDetails.resource_name}`
+            `Database ${databaseName} does not exists on source host ${srcDetails.resourceName}`
         );
     }
 
     const checkDataIntegrityJob = await registerJob(accountId, credentialsId, region, {
-        description: `Check data integrity for sandbox ${databaseName} in ${resourceDetails.resource_name}`,
+        description: `Check data integrity for sandbox ${srcDetails.instanceName}\\${databaseName} in host ${srcDetails.resourceName}`,
         startTime: Date.now(),
-        name: `Check data integrity for sandbox ${databaseName}`,
+        name: `Check data integrity for sandbox ${srcDetails.instanceName}\\${databaseName}`,
         status: JOBSTATUS.IN_PROGRESS,
         type: JOBTYPE.SANDBOX,
         resourceName: databaseName
@@ -2631,8 +2619,8 @@ async function checkDatabaseIntegrity(
         region,
         checkDataIntegrityJob.id,
         databaseName,
-        instanceName!,
-        activeNodeInstanceId!
+        srcDetails.instanceName,
+        srcDetails.activeNodeInstanceId
     );
 
     return { jobId: checkDataIntegrityJob.id };
@@ -2685,6 +2673,7 @@ async function getSandboxSnapshots(
     credentialsId: string,
     region: string,
     databaseHostId: string,
+    databaseInstanceId: string,
     sandboxName: string,
     historical = false
 ) {
@@ -2693,42 +2682,21 @@ async function getSandboxSnapshots(
         credentialsId,
         region,
         databaseHostId,
+        databaseInstanceId,
         sandboxName,
         historical
     });
 
-    const [{ metadata, co_relation_id: fileSystemId }] = await listResources(
-        accountId,
-        databaseHostId,
-        credentialsId,
-        region
-    );
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const source = { host: databaseHostId, instance: databaseInstanceId, database: sandboxName };
+    const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-    const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
-        credentialsId,
-        region,
-        node1InstanceId,
-        node2InstanceId
-    );
-
-    if (!isSSMConnected) {
-        logger.error('Failed to connect to the host through SSM', { databaseHostId });
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to connect to the host through SSM');
-    }
-
-    if (!activeNodeInstanceId || !instanceName || !fileSystemId) {
-        logger.error('Failed to get the active node instance id', { databaseHostId });
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the active node instance id');
-    }
-
-    let mappingsCommand = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
+    let mappingsCommand = [getDbMappedOntapVolumes(srcDetails.fsxId, region, sandboxName, srcDetails.instanceName)];
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         mappingsCommand = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
     }
 
-    const mappings = await callSsmExecution(credentialsId, region, mappingsCommand, activeNodeInstanceId);
+    const mappings = await callSsmExecution(credentialsId, region, mappingsCommand, srcDetails.activeNodeInstanceId);
 
     if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
@@ -2750,7 +2718,7 @@ async function getSandboxSnapshots(
 
     let snapshotsCommand = [
         getSnapshotsToClone(
-            fileSystemId,
+            srcDetails.fsxId,
             region,
             JSON.stringify([parsedMappingResponse.data.parentVolumeUuid, parsedMappingResponse.log.parentVolumeUuid]),
             parsedMappingResponse.data.parentVolumeUuid,
@@ -2775,7 +2743,7 @@ async function getSandboxSnapshots(
         credentialsId,
         region,
         snapshotsCommand,
-        activeNodeInstanceId,
+        srcDetails.activeNodeInstanceId,
         accountId,
         false
     );

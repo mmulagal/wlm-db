@@ -432,28 +432,29 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/check-integrity`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/check-integrity`,
             { schema: CheckSandboxIntegritySchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceId }
                 } = request;
                 const response = await checkDatabaseIntegrity(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
+                    databaseInstanceId,
                     sandboxName
                 );
                 return reply.send(response);
             }
         )
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/snapshots`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/snapshots`,
             { schema: GetSandboxSnapshotsSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName },
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceId },
                     query: { historical }
                 } = request;
                 const response = await getSandboxSnapshots(
@@ -461,6 +462,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     region,
                     databaseHostId,
+                    databaseInstanceId,
                     sandboxName,
                     historical
                 );
