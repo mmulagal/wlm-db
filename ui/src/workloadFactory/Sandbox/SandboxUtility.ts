@@ -168,5 +168,3 @@ export const isValidSandboxName = (name: any) => {
     }
     return true;
 };
-
-export const resetRefreshDialogState = (dispatch: any) => {};
