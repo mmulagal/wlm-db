@@ -1028,6 +1028,49 @@ const detachDbAndRemoveAccessPath = (
             $responseObject['error'] = $sqlresponse
             return $responseObject | ConvertTo-Json -Depth 5
         }
+        
+        ${getVolumeIdFromPath}
+
+        $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
+        $resourceType = ${
+            instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? '"SQL Server"' : `'SQL Server (${instanceName})'`
+        }
+        $windowsVolumeIds = $filePaths | ForEach-Object {
+            Get-VolumeIdFromPath -absolutePath $_
+        }
+
+        if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
+            $sqlgroup = Get-ClusterResource | Where-Object ResourceType -eq $resourceType
+            $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+            $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
+
+            $clusterdisksToRemove = @()
+            foreach ($resource in $resourcegroup) {
+                $disks = $resource.GetRelated("MSCluster_Disk")
+                foreach ($disk in $disks) {
+                    $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
+                    $clusterdisk = ($resource.name).replace('\\r\\n','')
+                    $diskdrive = $diskpart.path
+                    $disklabel = $diskpart.volumelabel
+                    $diskvolume = $diskpart.VolumeGuid
+                    write-debug "Cluster Disk $diskvolume"
+                    if ($windowsVolumeIds -contains $diskpart.VolumeGuid) {
+                        $clusterdisksToRemove += $clusterdisk
+                    }
+                }
+            }
+            write-Information "$logPrefix Cluster Disks to remove $clusterdisksToRemove"
+            if ($clusterdisksToRemove.count -ne 0) {
+                $clusterdisksToRemove | ForEach-Object {
+                    $diskToRemove = $_
+                    $diskToRemove = $diskToRemove.ToString()
+                    write-Information "$logPrefix Removing disk $diskToRemove"
+                    $null = (Remove-ClusterResourceDependency -Resource $resourceType -Provider $diskToRemove)
+                    $null = (Remove-ClusterSharedVolume -Name $diskToRemove -ErrorAction SilentlyContinue)
+                    $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
+                }
+            }
+        }
 
         $disklist = Get-disk | Where-Object { $serialNumbers -contains $_.SerialNumber }
 

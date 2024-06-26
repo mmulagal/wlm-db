@@ -400,6 +400,7 @@ interface HostAndDbInfo extends DbInfo {
     svm: string;
     activeNodeInstanceId: string;
     metadata: Metadata;
+    databaseInstanceName?: string;
 }
 
 interface ClonedVolume {
@@ -933,7 +934,7 @@ async function invokeVirtualMount(
             const isDefaultSqlServerInstance: boolean = destDetails.instanceName === DEFAULT_INSTANCE_NAME;
 
             let command = [
-                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -InstanceName '${destDetails.instanceName}' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
+                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -InstanceName '${destDetails.databaseInstanceName}' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
             ];
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -3252,6 +3253,7 @@ async function runSandboxPreValidations(
             fsxId: srcInstanceDetail.fsxn_ids!,
             activeNodeInstanceId: srcStatus.activeNodeInstanceId!,
             metadata: srcResourceDetail.metadata as unknown as Metadata,
+            databaseInstanceName: srcInstanceDetail.database_instance_name,
             instanceName: getDatabaseInstanceName(
                 srcInstanceDetail.database_instance_name,
                 srcInstanceDetail.is_default
@@ -3264,6 +3266,8 @@ async function runSandboxPreValidations(
             fsxId: destInstanceDetail.fsxn_ids!,
             activeNodeInstanceId: destStatus.activeNodeInstanceId!,
             metadata: destResourceDetail.metadata as unknown as Metadata,
+            databaseInstanceName: destInstanceDetail.database_instance_name, // e.g. 'MSSQLSERVER', 'KFSQLSERVER'
+            // executable instance path required for '-S'. eg. "$env:COMPUTERNAME\KFSQLSERVER", "$env:COMPUTERNAME"
             instanceName: getDatabaseInstanceName(
                 destInstanceDetail.database_instance_name,
                 destInstanceDetail.is_default
