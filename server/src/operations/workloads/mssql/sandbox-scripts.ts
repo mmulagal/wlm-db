@@ -1368,8 +1368,9 @@ const getSnapshotsToClone = (
             $volumeids | ForEach-Object {
                 $volumeid = $_
                 $ApiEndpoint = "/storage/volumes/$volumeid/snapshots"
+                $ApiQueryFields = 'fields=create_time'
     
-                $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $ApiQueryFilter
+                $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFields $ApiQueryFields
                 if ($volumeid -eq $dataVolume) {
                     $response | Add-Member -MemberType NoteProperty -Name primary -Value $True
                 }
