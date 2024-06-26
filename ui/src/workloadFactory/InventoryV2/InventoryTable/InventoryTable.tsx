@@ -153,14 +153,6 @@ const InventoryTable = () => {
         ];
     };
 
-    const ExpandedRow = useCallback(({ rowData }: any) => {
-        if (rowData?.ssmState === INVENTORY_STATUS.ONLINE || rowData?.totalInstance !== 0) {
-            dispatch(setInventoryExpandedRowHostData(rowData));
-            return <ManagedHostSubTable handleManageInstances={handleManageInstances} />;
-        }
-        return <OfflineComponent />;
-    }, []);
-
     const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState.inventoryV2;
@@ -168,8 +160,8 @@ const InventoryTable = () => {
         dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
         handleManageTriggerNotification(instances, dispatch, styles);
         manageInstanceApi({
-            credentialsId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2,
+            credentialsId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
+            regionId: updatedState?.headers?.headerSelectedRegion?.label2,
             payload: {
                 ec2InstanceId: rowData?.ec2InstanceId,
                 databaseInstanceNames: instances
@@ -240,6 +232,14 @@ const InventoryTable = () => {
             }
         });
     };
+
+    const ExpandedRow = useCallback(({ rowData }: any) => {
+        if (rowData?.ssmState === INVENTORY_STATUS.ONLINE || rowData?.totalInstance !== 0) {
+            dispatch(setInventoryExpandedRowHostData(rowData));
+            return <ManagedHostSubTable handleManageInstances={handleManageInstances} />;
+        }
+        return <OfflineComponent />;
+    }, []);
 
     const handleDialog = (rowData: any) => {
         setDialog(
