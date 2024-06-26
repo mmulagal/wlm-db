@@ -14,7 +14,8 @@ import {
     convertGiBToBytes,
     sqlResponseParsing,
     getCollationForMSSQLVersion,
-    getDatabaseInstanceName
+    getDatabaseInstanceName,
+    isDemo
 } from '../utils/utils';
 import {
     ACCOUNT_ID,
@@ -36,10 +37,10 @@ import {
     FileConfigType
 } from '../routes/types/database-hosts.types';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
-import { DatabaseInstance, Metadata } from '../utils/common-types';
+import { DatabaseInstance, Metadata, databaseInstanceMetadata } from '../utils/common-types';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
-import { updateUserDBIntoResourceData } from './demo-operations';
+import { updateUserDBIntoInstanceTable, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 import { updateResourceMetaData } from '../lib/database/db';
@@ -634,9 +635,19 @@ async function invokeSSMForDatabaseDeployment(
                 error: undefined
             });
 
-            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            if (isDemo()) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
+                if (instanceDetail) {
+                    const { metadata: instanceMetadata, database_instance_id: instanceId } = instanceDetail!;
+
+                    updateUserDBIntoInstanceTable(
+                        accountId,
+                        instanceId,
+                        databaseName,
+                        instanceMetadata as databaseInstanceMetadata
+                    );
+                }
             }
 
             // clearning all the ssm command cache so that we will get the fresh data once the database is created
@@ -741,9 +752,20 @@ async function invokeSSMForDatabaseDeployment(
 
             await updateCreateDbMetrics(accountId, resourceId, metaData as Metadata);
 
-            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            if (isDemo()) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
+
+                if (instanceDetail) {
+                    const { metadata: instanceMetadata, database_instance_id: instanceId } = instanceDetail!;
+
+                    updateUserDBIntoInstanceTable(
+                        accountId,
+                        instanceId,
+                        databaseName,
+                        instanceMetadata as databaseInstanceMetadata
+                    );
+                }
             }
 
             // clearning all the ssm command cache so that we will get the fresh data once the database is created
@@ -829,7 +851,7 @@ async function createDatabase(
     });
 
     let createDatabaseCommand;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         createDatabaseCommand = [
             `${CREATEDBSCRIPT} -SQLServer Draculla  -DBName tempdb9  -DataPath J:\\MSSQL\\data\\tempdb9_data.mdf  -LogPath K:\\MSSQL\\data\\tempdb9_log.ldf`
         ];
@@ -929,7 +951,7 @@ async function configureLuns(
     });
 
     let configureLuncommands;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         configureLuncommands = [
             `${CONFIGURELUNSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataLunSize 1074  -FSxLogLunSize 1074 -LogNew false -DataNew false`
         ];
@@ -1046,7 +1068,7 @@ async function newDBInitialization(
         isDefaultInstance
     });
     let dbInitializecommands;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         dbInitializecommands = [
             `${INITIALIZEDBSCRIPT} -DBName tempdb9  -IsClustered false  -DataDrive J  -LogDrive K -LogNew true -DataNew true`
         ];
@@ -1168,7 +1190,7 @@ async function cleanUpDatabaseDeployment(
     let errMsg;
     try {
         let cleaupCommand;
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemo()) {
             cleaupCommand = [
                 `${CLEANUPSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataVolumeName wlmdb_sqldata_1708948249  -FSxLogVolumeName wlmdb_sqllog_1708948249 -IGROUP wlmdb_sqligroup_1708791218786`
             ];
@@ -1284,7 +1306,8 @@ async function validateParams(
             databaseHostId,
             databaseName,
             activeNodeInstanceId,
-            instanceName
+            instanceName,
+            databaseInstanceId
         );
 
         if (databaseExists) {

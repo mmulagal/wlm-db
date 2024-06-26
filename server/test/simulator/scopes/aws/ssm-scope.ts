@@ -361,8 +361,7 @@ const addExtendedPropertiesCommand = {
         addExtendedProperties('testdb', '$env:computername', {
             tag: 'demo',
             cloned_by: 'netapp_wf',
-            source: 'resource|instance|testdb',
-            baseSnapshot: 'parentSnapshot'
+            source: 'resource|instance|testdb'
         })
     ]
 };
