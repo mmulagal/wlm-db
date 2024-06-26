@@ -95,7 +95,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
         },
         {
             Header: 'Storage type',
-            accessor: 'storageType',
+            accessor: 'fileSystemType',
             id: '3',
             width: '180px',
             filterOptions: 'auto',

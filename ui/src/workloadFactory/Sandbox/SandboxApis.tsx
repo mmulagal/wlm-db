@@ -18,7 +18,7 @@ const SandboxApis = () => {
     );
     const { isRefreshed } = useAppSelector(state => state.inventory);
 
-    const { selectedDatabaseHostId, selectedSandboxName } = connectionInfo;
+    const { selectedDatabaseHostId, selectedSandboxName, selectedDatabaseInstanceId } = connectionInfo;
 
     const [credId, setCredId] = useState(null);
     const [regionId, setRegionId] = useState(null);
@@ -65,10 +65,11 @@ const SandboxApis = () => {
             credentialsId: credId,
             regionId: regionId,
             databaseHostId: selectedDatabaseHostId,
+            instanceId: selectedDatabaseInstanceId,
             sandboxName: selectedSandboxName
         },
         {
-            skip: !credId || !regionId || !selectedDatabaseHostId || !selectedSandboxName
+            skip: !credId || !regionId || !selectedDatabaseHostId || !selectedSandboxName || !selectedDatabaseInstanceId
         }
     );
 
@@ -80,7 +81,7 @@ const SandboxApis = () => {
                     ...(sandboxList?.items?.filter((item: any) => !item?.error) || [])
                 ])
             );
-            dispatch(setAllSandboxList([...allSandboxList, ...sandboxList?.items]));
+            dispatch(setAllSandboxList([...(allSandboxList || []), ...(sandboxList?.items || [])]));
             setSandboxCursor(sandboxList?.nextToken || null);
         }
         dispatch(
@@ -107,6 +108,7 @@ const SandboxApis = () => {
             dispatch(
                 updateConnectionInfo({
                     selectedDatabaseHostId,
+                    selectedDatabaseInstanceId,
                     selectedSandboxName,
                     connectionString: connectionInfoData,
                     isLoading: false
@@ -116,6 +118,7 @@ const SandboxApis = () => {
             dispatch(
                 updateConnectionInfo({
                     selectedDatabaseHostId,
+                    selectedDatabaseInstanceId,
                     selectedSandboxName,
                     connectionString: '',
                     isLoading: true

@@ -13,7 +13,7 @@ const StorageCapacityTable = () => {
     const [sizeData, setSizeData] = useState<any>([]);
 
     useEffect(() => {
-        const sizeData = getEstimatedCostData?.data?.fsxnStorage?.size;
+        const sizeData = getEstimatedCostData?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size;
         let newList = [];
         newList.push({
             id: 1,
@@ -56,7 +56,7 @@ const StorageCapacityTable = () => {
             // For existing FSX removing buffer size
             size: isFsxnNew(fsxNType)
                 ? sizeData?.total
-                : sizeData?.data + sizeData?.log + sizeData?.tempdb + sizeData?.quorum || 0,
+                : (sizeData?.data || 0) + (sizeData?.log || 0) + (sizeData?.tempdb || 0) + (sizeData?.quorum || 0),
             calculation: `Total FSx for ONTAP file system SSD capacity`
         });
         setSizeData(newList);

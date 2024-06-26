@@ -34,6 +34,10 @@ New-IscsiTargetPortal -TargetPortalAddress $TargetPortalAddress -TargetPortalPor
 
 #Add MPIO support for iSCSI
 New-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9
+
+#Enable PathVerificationState
+Set-MPIOSetting -NewPathVerificationState Enabled
+
 #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
 1..5 | %{Foreach($TargetPortalAddress in $TargetPortalAddresses){Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $TargetPortalAddress -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true} }
 #Set the MPIO Policy to Round Robin

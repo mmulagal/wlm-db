@@ -60,24 +60,20 @@ import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecond
 import useResize from '../../../../common/hooks/useResize';
 
 const ManagedHostSubTable = ({
-    rowId,
-    hostname,
-
-    resourceId,
-    hostData,
-    loading,
     handleManageInstances
 }: {
-    rowId: string;
-    hostname: string;
-
-    resourceId: string;
-    hostData: any;
-    loading: boolean;
     handleManageInstances: (rowData: any, instances: any, isDetected?: boolean) => void;
 }) => {
     const windowSize = useResize();
-    const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
+    const {
+        inventoryTableData,
+        inProgressInstances,
+        inventoryExpandedRowHostData: hostData
+    } = useAppSelector(state => state.inventoryV2);
+
+    const rowId = hostData?.id;
+    const hostname = hostData?.name;
+    const resourceId = hostData?.resourceId;
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -334,31 +330,53 @@ const ManagedHostSubTable = ({
 
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
+                let disableOption = false;
+                let disableMessage = '';
+                if (hostData?.status === INVENTORY_STATUS.OFFLINE) {
+                    disableMessage = GENERAL.HOST_DOWN;
+                    disableOption = true;
+                } else if (hostData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+                    disableMessage = GENERAL.SSM_DOWN;
+                    disableOption = true;
+                } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+                    disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+                    disableOption = true;
+                }
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
-                        displayName: 'Detect'
+                        displayName: 'Detect',
+                        disabled: disableOption,
+                        infoText: disableMessage
                     });
                 } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     menu.push({
                         id: 'manage',
-                        displayName: 'Manage'
+                        displayName: 'Manage',
+                        disabled: disableOption,
+                        infoText: disableMessage
                     });
                 } else {
                     menu.push(
                         {
                             id: 'viewInstance',
-                            displayName: 'View instance'
+                            displayName: 'View instance',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
 
                         {
                             id: 'viewDatabases',
-                            displayName: 'View databases'
+                            displayName: 'View databases',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
 
                         {
                             id: 'createUserDb',
-                            displayName: 'Create user database'
+                            displayName: 'Create user database',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
                         {
                             id: 'unManage',
@@ -371,13 +389,34 @@ const ManagedHostSubTable = ({
                 let width = '';
                 let height = '';
                 let disableMenu = () => {
-                    if (loading) {
+                    if (data[0] && data[0]?.loading) {
                         disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
-                        width = '220px';
+                        width = '170px';
                         height = '33px';
                         return true;
                     }
-                    if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+                    if (
+                        hostData?.status === INVENTORY_STATUS.OFFLINE &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.HOST_DOWN;
+                        width = '120px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        hostData?.ssmState === INVENTORY_STATUS.OFFLINE &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.SSM_DOWN;
+                        width = '250px';
+                        height = '50px';
+                        return true;
+                    }
+                    if (
+                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
                         disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                         width = '220px';
                         height = '33px';
@@ -401,6 +440,15 @@ const ManagedHostSubTable = ({
                         height = '90px';
                         return true;
                     }
+                    if (
+                        hostData?.serverInstallationMode === GENERAL.AOAG &&
+                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
+                    ) {
+                        disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
+                        width = '320px';
+                        height = '50px';
+                        return true;
+                    }
                     return false;
                 };
 
@@ -416,11 +464,6 @@ const ManagedHostSubTable = ({
                             <MenuPopover
                                 isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
                                 menuItems={[...menu]}
-                                isDisabled={
-                                    rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                                    (rowData.fileSystemType === GENERAL.EBS ||
-                                        rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
-                                }
                                 toggleMenu={(toggleType: string, menuId: string) => {
                                     if (toggleType === 'close') {
                                         menuOpenedRowDetail.current = null;
@@ -434,7 +477,7 @@ const ManagedHostSubTable = ({
                                         setOpenedRow(null);
 
                                         if (menuId === 'manage') {
-                                            handleManageInstances(hostData, [rowData?.databaseInstanceName]);
+                                            handleManageInstances(hostData, [rowData?.databaseInstanceName], false);
                                         }
                                         if (menuId === 'viewInstance') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));

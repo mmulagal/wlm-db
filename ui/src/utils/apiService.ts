@@ -713,11 +713,19 @@ export const inventoryApiV2 = createApi({
     endpoints: builder => {
         return {
             getDatabaseHostsFullDataV2: builder.query({
-                query: ({ credentialId, regionId, nextToken = null }) => {
-                    if (nextToken) {
-                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2&nextToken=${nextToken}`;
+                query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
+                    if (isDemoMode) {
+                        if (nextToken) {
+                            return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                        } else {
+                            return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation`;
+                        }
                     } else {
-                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2`;
+                        if (nextToken) {
+                            return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2&nextToken=${nextToken}`;
+                        } else {
+                            return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2`;
+                        }
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -806,6 +814,25 @@ export const sandboxApi = createApi({
                     return response;
                 }
             }),
+            getDatabaseHostsForSandboxV2: builder.query({
+                query: ({ credentialId, region, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v2/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage&nextToken=${nextToken}`;
+                    } else {
+                        return `v2/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.region
+                        };
+                    }
+                    return response;
+                }
+            }),
             getSandboxList: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
@@ -838,48 +865,48 @@ export const sandboxApi = createApi({
                 })
             }),
             getConnectionInfo: builder.query({
-                query: ({ regionId, credentialsId, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/connection-string`
+                query: ({ regionId, credentialsId, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/connection-string`
                 })
             }),
             getSplitEstimateInfo: builder.query({
-                query: ({ regionId, credentialsId, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split-estimate`
+                query: ({ regionId, credentialsId, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/split-estimate`
                 })
             }),
             getDatabaseMountPoints: builder.query({
-                query: ({ region, credentialId, databaseHostId, databaseName, instanceName }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-mount-points?databaseName=${databaseName}&instanceName=${instanceName}`
+                query: ({ region, credentialId, databaseHostId, databaseName, instanceId }) => ({
+                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-mount-points?databaseName=${databaseName}&databaseInstanceId=${instanceId}`
                 })
             }),
             deleteSandbox: builder.mutation({
-                query: ({ credentialsId, regionId, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}`,
+                query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}`,
                     method: 'DELETE'
                 })
             }),
             updateSandbox: builder.mutation({
-                query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}`,
+                query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName, payload }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}`,
                     method: 'PATCH',
                     body: payload
                 })
             }),
             splitSandbox: builder.mutation({
-                query: ({ credentialsId, regionId, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split`,
+                query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/split`,
                     method: 'POST'
                 })
             }),
             checkIntegrity: builder.mutation({
-                query: ({ credentialsId, regionId, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/check-integrity`,
+                query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/check-integrity`,
                     method: 'POST'
                 })
             }),
             getRollbackSnapshots: builder.query({
-                query: ({ credentialId, region, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/snapshots`
+                query: ({ credentialId, region, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/snapshots`
                 })
             })
         };
@@ -952,7 +979,8 @@ export const { useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeA
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
-export const { useLazyGetResourceDetailsV2Query, useLazyGetDatabaseListV2Query } = workloadFactoryResourceApiV2;
+export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
+    workloadFactoryResourceApiV2;
 
 export const {
     useGetJobsListQuery,
@@ -1015,6 +1043,7 @@ export const {
     useSplitSandboxMutation,
     useCheckIntegrityMutation,
     useGetDatabaseHostsForSandboxQuery,
+    useGetDatabaseHostsForSandboxV2Query,
     useLazyGetRollbackSnapshotsQuery
 } = sandboxApi;
 

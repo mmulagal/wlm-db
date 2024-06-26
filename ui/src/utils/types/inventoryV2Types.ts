@@ -23,6 +23,7 @@ export interface InventorySliceData {
     detectOntapUsername: string;
     detectOntapPassword: string;
     detectedInstanceId: string;
+    inventoryExpandedRowHostData: any;
 }
 
 export interface InventoryTableData {
@@ -129,6 +130,7 @@ export interface DatabaseInstancesSummaryInterface {
     databaseInstanceName?: string;
     status?: string;
     databaseCount?: number;
+    statusColText?: string;
     databaseServer?: {
         operatingSystem?: string;
         serverEdition?: string;

@@ -43,7 +43,10 @@ import {
     SQL_WEB,
     VERSION_2_0,
     V2_API_PAGE_SIZE,
-    NOT_AVAILABLE
+    NOT_AVAILABLE,
+    ONLINE,
+    OFFLINE,
+    SQL_SERVICE_STATE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -133,12 +136,14 @@ type EstimationEc2Type = {
 };
 
 type EstimationFSxType = {
+    id: string;
     storageCapacity: number;
     throughput: number;
     iops: number;
     deploymentOption: string;
     storageType: string;
-};
+    diskSize?: number;
+}[];
 
 type EstimationEbsType = {
     id: string;
@@ -666,13 +671,24 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             throw new Error('Unable to fetch usage estimation data as region is not available');
         }
 
+        const fsxnIds = fsxnId
+            ? [fsxnId]
+            : resourceDetail.databaseInstanceDetails?.flatMap(f => (f.fsxn_ids ? [f.fsxn_ids] : []));
+        const fsxwIds = fsxwId
+            ? [fsxwId]
+            : resourceDetail.databaseInstanceDetails?.flatMap(f => (f.fsxwId ? [f.fsxwId] : []));
+
         const [ec2Info, fsxnInfo, ebsInfo, fsxwInfo] = await Promise.all([
             getEc2ResourceInfo(credentialsId, region, activeNodeInstanceId),
-            ...(fsxnId ? [getFsxResourceInfo(credentialsId, region, fsxnId!)] : [Promise.resolve()]),
+            ...(fsxnIds && !isEmpty(fsxnIds)
+                ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxnIds!)])]
+                : [Promise.resolve()]),
             ...(ebsVolumeIds && !isEmpty(ebsVolumeIds)
                 ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds)]
                 : [Promise.resolve()]),
-            ...(fsxwId ? [getFsxResourceInfo(credentialsId, region, fsxwId!)] : [Promise.resolve()])
+            ...(fsxwIds && !isEmpty(fsxwIds)
+                ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxnIds!)])]
+                : [Promise.resolve()])
         ]);
 
         const ec2ResourceInfo = ec2Info as EstimationEc2Type;
@@ -690,11 +706,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             ...(fsxnResourceInfo && {
                 fsxnStorage: {
                     regionCode: region!,
-                    storageCapacity: fsxnResourceInfo.storageCapacity,
-                    throughput: fsxnResourceInfo.throughput,
-                    iops: fsxnResourceInfo.iops,
-                    deploymentOption: fsxnResourceInfo.deploymentOption,
-                    diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
+                    fsxnResourceInfo: fsxnResourceInfo || []
                 }
             }),
             ...(ebsResourceInfo && {
@@ -709,12 +721,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             ...(fsxwResourceInfo && {
                 fsxwStorage: {
                     regionCode: region!,
-                    storageCapacity: fsxwResourceInfo.storageCapacity,
-                    throughput: fsxwResourceInfo.throughput,
-                    iops: fsxwResourceInfo.iops,
-                    deploymentOption: fsxwResourceInfo.deploymentOption,
-                    storageType: fsxwResourceInfo.storageType,
-                    diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
+                    fsxwResourceInfo: fsxwResourceInfo || []
                 }
             })
         };
@@ -729,14 +736,12 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
         return {
             compute: pricingResponse?.compute || 0,
             storage: {
-                fsxn:
-                    (pricingResponse?.fsxnStorage?.capacityCost || 0) +
-                    (pricingResponse?.fsxnStorage?.operationalCost || 0),
-                fsxw:
-                    (pricingResponse?.fsxwStorage?.capacityCost || 0) +
-                    (pricingResponse?.fsxwStorage?.operationalCost || 0),
+                fsxn: pricingResponse?.fsxnStorage?.fsxStorageCost,
+                fsxw: pricingResponse?.fsxwStorage?.fsxwStorageCost,
                 ebs: pricingResponse.ebsStorage?.ebsStorageCost,
-                ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType
+                ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
+                fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById,
+                fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById
             },
             connectivity: pricingResponse?.vpc || 0,
             others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
@@ -794,26 +799,34 @@ async function getEc2ResourceInfo(
 async function getFsxResourceInfo(
     credentialsId: string,
     region: string,
-    filesystemId: string
+    filesystemIds: string[]
 ): Promise<EstimationFSxType> {
-    logger.info('Getting FSx resource info:', { credentialsId, region, filesystemId });
+    logger.info('Getting FSx resource info:', { credentialsId, region, filesystemIds });
 
-    const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [filesystemId] });
+    const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: filesystemIds });
     logger.info('Estimation info for FSx:', fsxInfo);
 
-    const [{ StorageCapacity, OntapConfiguration, StorageType, WindowsConfiguration }] = fsxInfo?.FileSystems || [];
-    const storageCapacity = StorageCapacity || 0;
-    const throughput = OntapConfiguration?.ThroughputCapacity || WindowsConfiguration?.ThroughputCapacity;
-    const iops = OntapConfiguration?.DiskIopsConfiguration?.Iops || WindowsConfiguration?.DiskIopsConfiguration?.Iops;
-    const deploymentOption = OntapConfiguration?.DeploymentType || WindowsConfiguration?.DeploymentType;
+    const filesystems = fsxInfo?.FileSystems || [];
+    const response = filesystems.map(
+        ({ FileSystemId, StorageCapacity, OntapConfiguration, StorageType, WindowsConfiguration }) => {
+            const storageCapacity = StorageCapacity || 0;
+            const throughput = OntapConfiguration?.ThroughputCapacity || WindowsConfiguration?.ThroughputCapacity;
+            const iops =
+                OntapConfiguration?.DiskIopsConfiguration?.Iops || WindowsConfiguration?.DiskIopsConfiguration?.Iops;
+            const deploymentOption = OntapConfiguration?.DeploymentType || WindowsConfiguration?.DeploymentType;
 
-    return {
-        storageCapacity,
-        throughput: throughput!,
-        iops: iops!,
-        deploymentOption: deploymentOption!,
-        storageType: StorageType!
-    };
+            return {
+                id: FileSystemId!,
+                storageCapacity,
+                throughput: throughput!,
+                iops: iops!,
+                deploymentOption: deploymentOption!,
+                storageType: StorageType!
+            };
+        }
+    );
+
+    return response;
 }
 
 async function getEbsResourceInfo(
@@ -1421,7 +1434,7 @@ async function getDatabaseInstanceTopology(
 
     const {
         fsxn_ids: fileSystemId,
-        storageType,
+        storage_type: storageType,
         database_instance_id: databaseInstanceDetails,
         database_deployment_type: databaseDeploymentType,
         database_type: databaseType
@@ -1652,8 +1665,8 @@ async function getDatabaseInstanceSummary(
     }
     databaseInstanceDetails.status = ServerState.UP;
     if (shouldQueryServerDetails && serverDetails) {
+        serverDetails.creationDate = creationDate ? Date.parse(creationDate.toString()) : '';
         databaseInstanceDetails.databaseServer = serverDetails;
-        serverDetails.creationDate = creationDate || '';
     }
     databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
 
@@ -1713,7 +1726,8 @@ async function getDatabaseInstancesDetails(
               );
 
               const isManaged = Boolean(managedInstance);
-              const updatedInstanceState = instanceState === 'Running' ? ServerState.UP : ServerState.DOWN;
+              const updatedInstanceState =
+                  instanceState === SQL_SERVICE_STATE.RUNNING ? ServerState.UP : ServerState.DOWN;
 
               return { instanceName, instanceState: updatedInstanceState, isManaged, isDefault };
           })
@@ -1760,8 +1774,12 @@ async function getDatabaseHostSummaryV2(
     const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLocaleLowerCase());
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
 
-    const instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
-
+    // Update the database instances detail to include storage type as FSXN
+    const instances = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+    const instancesManaged = instances.map(instance => ({
+        ...instance,
+        storage_type: STORAGE_TYPE.FSXN
+    }));
     const errormessages: { [index: string]: string } = {};
 
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
@@ -1770,7 +1788,7 @@ async function getDatabaseHostSummaryV2(
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
         name: resourceName || '',
-        databaseHostStatus: activeNodeInstanceId ? 'ONLINE' : 'OFFLINE',
+        databaseHostStatus: activeNodeInstanceId ? ONLINE : OFFLINE,
         ssmStatus: ssmConnectionStatus || NOT_AVAILABLE
     };
 
@@ -1831,23 +1849,15 @@ async function getDatabaseHostSummaryV2(
             let instanceResults: any;
 
             if (activeNodeInstanceId && databaseInstancesDetail.length > 0 && credentialsId && region) {
-                let runningDatabaseInstances;
+                let runningDatabaseInstances: DatabaseInstance[] = [];
                 if (isManagedResource) {
-                    runningDatabaseInstances = instancesManaged
-                        .filter(instance => {
-                            const matchingInstance = databaseInstancesDetail.find(
-                                (dbInstance: { instanceName: string; instanceState: string }) =>
-                                    dbInstance.instanceName === instance.database_instance_name
-                            );
-                            return matchingInstance !== undefined;
-                        })
-                        .map(instance => ({
-                            ...instance,
-                            ...databaseInstancesDetail.find(
-                                (dbInstance: { instanceName: string; instanceState: string }) =>
-                                    dbInstance.instanceState === 'Running'
-                            )
-                        }));
+                    runningDatabaseInstances = instancesManaged.filter(resource =>
+                        databaseInstancesDetail.some(
+                            (instance: InstanceDetails) =>
+                                instance.instanceState === ServerState.UP &&
+                                instance.instanceName === resource.database_instance_name
+                        )
+                    );
                 } else {
                     runningDatabaseInstances = resourceDetail.databaseInstanceDetails || [];
                 }
@@ -1871,10 +1881,12 @@ async function getDatabaseHostSummaryV2(
             }
             [nodeTopology, usageEstimationData, instanceResults] = await Promise.all(promises);
 
-            databaseHostDetails.ssmStatus = ssmConnectionStatus || 'N/A';
+            databaseHostDetails.ssmStatus = ssmConnectionStatus || NOT_AVAILABLE;
 
             if (getUsageEstimation && usageEstimationData) {
                 databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType;
+                databaseHostDetails.fsxnResourceInfo = usageEstimationData?.storage?.fsxnBreakDownById;
+                databaseHostDetails.fsxwResourceInfo = usageEstimationData?.storage?.fsxwBreakDownById;
                 databaseHostDetails.estimatedUsageCost = usageEstimationData;
             }
 
@@ -2058,7 +2070,7 @@ async function getInstanceDetails(
     databaseHostId: string,
     databaseInstanceId: string
 ) {
-    const [[resourceDetails], [databaseInstanceDetails]] = await Promise.all([
+    const [[resourceDetails], [instanceDetails]] = await Promise.all([
         listResources(accountId, databaseHostId, credentialsId, region),
         listDatabaseInstances(accountId, {
             databaseHostId,
@@ -2066,6 +2078,12 @@ async function getInstanceDetails(
             sqlInstanceId: databaseInstanceId
         })
     ]);
+
+    // Update the database instance details to include storage type as FSXN
+    const databaseInstanceDetails = {
+        ...instanceDetails,
+        storage_type: STORAGE_TYPE.FSXN
+    };
 
     if (isEmpty(resourceDetails) || isEmpty(databaseInstanceDetails)) {
         const errorMessage = `No database host by id ${databaseHostId} or instance by instance id ${databaseInstanceDetails} for ${accountId} is found.`;
@@ -2082,7 +2100,7 @@ async function getInstanceDetails(
     );
     const { nodeId: activeNodeInstanceId, matchingInstance } = activeNodeResponse;
     const { instanceName, instanceState } = matchingInstance;
-    if (instanceState.toLocaleLowerCase() !== 'running') {
+    if (instanceState !== SQL_SERVICE_STATE.RUNNING) {
         const errorMessage = `Instance id ${databaseInstanceId} is not running on host ${databaseHostId}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);

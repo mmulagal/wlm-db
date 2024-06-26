@@ -10,14 +10,12 @@ import {
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
     CreateDatabaseParams,
-    CreateDatabaseParamsV2,
     DriveInfoResponseBody,
     CloneDatabaseHostBody,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,
     SandboxInfoResponseBody,
     DatabaseMountPointRequestQueryParam,
-    DatabaseMountPointRequestQueryParamV2,
     GetDriveQueryString,
     DatabaseMountPointResponseBody,
     SandboxParams,
@@ -175,17 +173,6 @@ const GetSandboxesMountPointSchema = {
     }
 };
 
-const GetSandboxesMountPointSchemaV2 = {
-    params: CreateDatabaseParamsV2,
-    querystring: DatabaseMountPointRequestQueryParamV2,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Get the mount point information of database',
-    description: 'Get the data and log file mount point drive information of database',
-    response: {
-        200: DatabaseMountPointResponseBody
-    }
-};
-
 const PatchResourceForSandboxSchema = {
     ...databaseHostsRequest,
     tags: [RouteTags.SANDBOX],
@@ -247,16 +234,6 @@ const GetSandboxSplitEstimateSchema = {
     }
 };
 
-const GetSandboxSplitEstimateSchemaV2 = {
-    params: SandboxParamsV2,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Get Sandbox split estimate',
-    description: 'Get split estimate of all the mapped ontap volumes for the given sandbox',
-    response: {
-        200: SplitEstimatesResponse
-    }
-};
-
 const DeleteSandboxSchema = {
     params: SandboxParams,
     tags: [RouteTags.SANDBOX],
@@ -269,33 +246,8 @@ const DeleteSandboxSchema = {
     }
 };
 
-const DeleteSandboxSchemaV2 = {
-    params: SandboxParamsV2,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Delete sandbox of given SQL Server instance.',
-    description: 'Delete sandbox of given SQL Server instance in the database host',
-    response: {
-        200: {
-            jobId: Type.String()
-        }
-    }
-};
-
 const SandboxLifeCycleSchema = {
     params: SandboxParams,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Sandbox lifecycle',
-    description: 'Sandbox lifecycle operations',
-    body: SandboxLifeCycleBody,
-    response: {
-        200: {
-            jobId: Type.String()
-        }
-    }
-};
-
-const SandboxLifeCycleSchemaV2 = {
-    params: SandboxParamsV2,
     tags: [RouteTags.SANDBOX],
     summary: 'Sandbox lifecycle',
     description: 'Sandbox lifecycle operations',
@@ -395,15 +347,11 @@ export {
     PatchResourceForSandboxSchema,
     RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
-    GetSandboxesMountPointSchemaV2,
     GetSandboxConnectionStringSchema,
     GetSandboxConnectionStringSchemaV2,
     DeleteSandboxSchema,
-    DeleteSandboxSchemaV2,
     GetSandboxSplitEstimateSchema,
-    GetSandboxSplitEstimateSchemaV2,
     SandboxLifeCycleSchema,
-    SandboxLifeCycleSchemaV2,
     SandboxSplitSchema,
     DatabaseHostsSummarySchemaV2,
     DatabaseHostDetailsSchemaV2,

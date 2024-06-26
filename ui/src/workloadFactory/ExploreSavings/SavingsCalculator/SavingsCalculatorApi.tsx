@@ -65,7 +65,7 @@ const SavingsCalculatorApi = () => {
                     }
                 }
             }
-            setESInstanceData(selectedRow[0], isDemoMode, selectedDeploymentModel, dispatch);
+            setESInstanceData(selectedRow[0], dispatch);
             // dispatch(setSelectedHostDetails(selectedRow[0]));
         } else {
             dispatch(setSelectedHostDetails({}));

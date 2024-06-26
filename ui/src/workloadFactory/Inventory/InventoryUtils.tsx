@@ -1,4 +1,4 @@
-import { Button, DsFlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
+import { Button, DsFlashingDotsLoader, Popover, TooltipInfo, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../utils/appConstants';
 import { formatFractionalNumber, getDiscoveredHostDeployment, isAwsBackupEnabled } from '../../utils/utilityFunctions';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
@@ -193,7 +193,7 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
     return (
         <>
             {deploymentType && (
-                <div className={styles.colText}>
+                <div className={styles.azColText}>
                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
                     <Typography variant="Regular_14">
                         {deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
@@ -247,4 +247,46 @@ export const errorNotification = (dispatch: any, errText: string, managedFailedM
     } else {
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
     }
+};
+
+export const renderInstanceListText = (cellData: any, rowData: any, styles: any) => {
+    let instanceList: any = cellData ? cellData.split(',') : null;
+    return (
+        <>
+            {instanceList && (
+                <div>
+                    {instanceList?.[0] && (
+                        <Popover
+                            popoverClass={''}
+                            children={instanceList[0]}
+                            trigger="hover"
+                            delayHide={200}
+                            interactive={true}
+                            container={
+                                <Typography variant="Regular_14" className={`${styles.colText}`}>
+                                    {instanceList[0]}
+                                </Typography>
+                            }
+                        />
+                    )}
+                    {instanceList?.[1] && (
+                        <Popover
+                            popoverClass={''}
+                            children={instanceList[1]}
+                            trigger="hover"
+                            delayHide={200}
+                            interactive={true}
+                            container={
+                                <Typography variant="Regular_14" className={`${styles.colText}`}>
+                                    {instanceList[1]}
+                                </Typography>
+                            }
+                        />
+                    )}
+                </div>
+            )}
+            {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
+            {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+        </>
+    );
 };

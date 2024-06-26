@@ -334,8 +334,7 @@ const cloneVolumeCommand = {
             'wlmdb_sqlsvm_1714090636810',
             JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
             JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
-            'test-res-id',
-            'netapp_wf_test_account_test_cred',
+            ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
             'target-svm',
             'testdb'
         )
