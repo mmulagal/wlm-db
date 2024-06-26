@@ -16,10 +16,11 @@ import {
     checkAccount,
     createDeployment,
     createResource,
+    updateInstanceMetadata,
     updateResourceMetaData,
     upsertDatabaseInstance
 } from '../lib/database/db';
-import { Metadata, Sandbox } from '../utils/common-types';
+import { Metadata, Sandbox, databaseInstanceMetadata } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
@@ -356,6 +357,40 @@ async function updateUserDBIntoResourceData(
     }
 }
 
+async function updateUserDBIntoInstanceTable(
+    accountId: string,
+    instanceId: string,
+    databaseName: string,
+    metaData: databaseInstanceMetadata
+) {
+    logger.info('updating user db into resource meta data', accountId, instanceId, databaseName);
+
+    const existingDatabases = metaData.userDatabase || [];
+    const hasExistingDatabase = existingDatabases.some(db => db.name === databaseName);
+
+    if (!hasExistingDatabase) {
+        const databaseDetails = {
+            name: databaseName,
+            size: 16777216,
+            type: MSSQL_DATABASE_TYPES.USER,
+            status: ONLINE,
+            protection: {
+                isAwsBackupEnabled: {
+                    fsxn: false,
+                    fsxw: false,
+                    ebs: false
+                },
+                isFsxOntapSnapshotsEnabled: false,
+                isSqlNativeEnabled: false
+            },
+            collation: SQL_DEFAULT_COLLATION
+        };
+        metaData.userDatabase = [...existingDatabases, databaseDetails];
+
+        await updateInstanceMetadata(accountId, instanceId, metaData);
+    }
+}
+
 async function updateSandboxDBIntoResourceData(
     accountId: string,
     resourceId: string,
@@ -420,5 +455,6 @@ export {
     updateUserDBIntoResourceData,
     updateSandboxDBIntoResourceData,
     createSandboxJobMockData,
-    getVolumeIdsFromStorage
+    getVolumeIdsFromStorage,
+    updateUserDBIntoInstanceTable
 };

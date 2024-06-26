@@ -1030,11 +1030,7 @@ async function getDatabaseHostSummary(
                     })
                 )
             );
-            if (
-                (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') &&
-                shouldQueryServerDetails &&
-                shouldQueryTopology
-            ) {
+            if (isDemo() && shouldQueryServerDetails && shouldQueryTopology) {
                 serverDetails.dbCount = serverDetails?.dbCount || 0;
                 serverDetails.dbCount += userDatabase.length;
                 if (topologyData?.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
@@ -1165,7 +1161,7 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
             })
         );
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemo()) {
             const demoResponse = [...response, ...userDatabase];
             return {
                 count: demoResponse.length,
@@ -1656,14 +1652,14 @@ async function getDatabaseInstanceSummary(
         );
     }
 
-    if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && shouldQueryServerDetails) {
-        serverDetails.dbCount = serverDetails?.dbCount || 0;
-        serverDetails.dbCount += userDatabase.length;
-    }
     databaseInstanceDetails.status = ServerState.UP;
     if (shouldQueryServerDetails && serverDetails) {
         serverDetails.creationDate = creationDate ? Date.parse(creationDate.toString()) : '';
         databaseInstanceDetails.databaseServer = serverDetails;
+    }
+
+    if (process.env.NODE_ENV === 'demo' || (process.env.NODE_ENV === 'simulator' && databasesCount)) {
+        databasesCount.totalCount += userDatabase.length;
     }
     databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
 
@@ -1773,7 +1769,7 @@ async function getDatabaseHostSummaryV2(
 
     let instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
 
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         instancesManaged.map(instance => {
             const hostResourceName = resourceDetail?.resource_name || '';
 
@@ -1810,7 +1806,7 @@ async function getDatabaseHostSummaryV2(
 
     try {
         if (credentialsId && region) {
-            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            if (isDemo()) {
                 const hostResourceName = resourceDetail?.resource_name || '';
                 instancesDetails = instancesDetails!
                     .filter((instance: { instanceName: string | (string | null)[] }) => {
@@ -2036,7 +2032,7 @@ async function getDatabasesV2(
             })
         );
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemo()) {
             const demoResponse = [...response, ...userDatabase];
             return {
                 count: demoResponse.length,
