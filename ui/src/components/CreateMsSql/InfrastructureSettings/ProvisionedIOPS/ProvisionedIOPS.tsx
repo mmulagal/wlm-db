@@ -37,7 +37,7 @@ const ProvisionedIOPS = () => {
     const [isDisable, setIsDisable] = useState(false);
 
     useEffect(() => {
-        const sizeData = getEstimatedCostData?.data?.fsxnStorage?.size;
+        const sizeData = getEstimatedCostData?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size;
         if (isFsxnNew(selectedFsxnType) && sizeData) {
             setPlaceHolderText(`range should be between ${sizeData?.total * 3} - ${MAX_IOPS_VALUE} IOPS`);
             setTotal(sizeData?.total * 3);
