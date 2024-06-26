@@ -372,30 +372,49 @@ const getMappedOntapVolumesScript = (
 
         $sqlqueryresponse =  sqlcmd -S "${instanceName}" -Q $sqlqueryfordatabaseandvolumelist -y 0;   
 
+        Function Get-VolumeIdsList($sqlqueryresponse) {        
+            $sqlJsonResponse = $sqlqueryresponse | convertFrom-Json
+        
+            # Create an array to store the database-volume ids
+            $volumeIds = @()
+        
+            foreach ($record in $sqlJsonResponse) {    
+                # Add the ids to the array only if they're not already there
+                if ($volumeIds -notcontains $record.volumeId) {
+                    $volumeIds += $record.volumeId
+                }
+            }
+        
+            # Output the array
+            $volumeIds
+        }
+
         Function Get-SerialNumberOfWinVolumes {
             param(
                 [Parameter(Mandatory = $true)]
-                [string[]]$sqlresponse
+                [string[]]$winvolumes
             )
-
+        
             try {
-                $winvolumes = $sqlresponse | convertFrom-Json
                 $Lunserialnumbers = @()
                 $VolumeSerialMapping = @{}
-
+        
                 Write-Debug "win volumes: $($winvolumes | ConvertTo-Json)"
-
-                foreach ($winvolume in $winvolumes) {
-                    if ($null -eq $winvolume.volumeid) {
+        
+                $allDisks = Get-Disk | Select SerialNumber, Number
+        
+                foreach ($volumeid in $winvolumes) {
+                    if ($null -eq $volumeid) {
                         Write-Debug "Skipping volume with null volumeid"
                         continue
                     }
-
-                    $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber
-                    $VolumeSerialMapping[$winvolume.VolumeId] = $vol.serialnumber
-                    $Lunserialnumbers += $vol.serialnumber
+        
+                    $vol = Get-Volume -Path $volumeid | Get-Partition | Where-Object DiskNumber -in $allDisks.Number
+                    $serialNumber = $allDisks | Where-Object Number -eq $vol.DiskNumber | Select -ExpandProperty SerialNumber
+        
+                    $VolumeSerialMapping[$volumeid] = $serialNumber
+                    $Lunserialnumbers += $serialNumber
                 }
-
                 return @{
                     Lunserialnumbers = $Lunserialnumbers | select -Unique
                     VolumeSerialMapping = $VolumeSerialMapping
@@ -576,7 +595,9 @@ const getMappedOntapVolumesScript = (
         }    
         Write-Debug "query List: $sqlqueryresponse"
 
-        $result = Get-SerialNumberOfWinVolumes $sqlqueryresponse
+        $volumeIds = Get-VolumeIdsList $sqlqueryresponse
+
+        $result = Get-SerialNumberOfWinVolumes $volumeIds
         $SerialNumbers = $result.Lunserialnumbers
         
         # if (!($SerialNumbers.count -gt 0)) {
