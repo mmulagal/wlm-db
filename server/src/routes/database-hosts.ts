@@ -246,17 +246,18 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         })
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/connection-string`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/database-instances/:databaseInstanceId/:sandboxName/connection-string`,
             { schema: GetSandboxConnectionStringSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
                 } = request;
                 const response = await getSandboxConnectionString(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
+                    databaseInstanceId,
                     sandboxName
                 );
                 return reply.send(response);

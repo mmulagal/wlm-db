@@ -1452,9 +1452,17 @@ async function getSandboxConnectionString(
     credentialsId: string,
     region: string,
     databaseHostId: string,
+    databaseInstanceId: string,
     sandboxName: string
 ) {
-    logger.info('Get connection string', { accountId, credentialsId, region, databaseHostId, sandboxName });
+    logger.info('Get connection string', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        sandboxName
+    });
     try {
         const [{ metadata, resource_name: resourceName }] = await listResources(
             accountId,
