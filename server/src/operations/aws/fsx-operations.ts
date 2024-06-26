@@ -39,11 +39,6 @@ interface FsxStorage {
     storage: number;
 }
 
-interface MappedOnTapVolumeResponse {
-    volumeUuids: string[];
-    volumeDBMap: any;
-}
-
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
 const TWENTYFOUR_HOURS = '24h';
@@ -285,20 +280,18 @@ async function isFsxnAwsBackupEnabled(
     credentialsId: string,
     region: string,
     fileSystemId: string,
+    volumeUuids: string[],
+    volumeDBMap: any,
     activeNodeInstanceId?: string
 ) {
     logger.info('Check if FSX for NetApp ONTAP AWS backup is enabled', {
         credentialsId,
         region,
-        fileSystemId
-    });
-
-    const { volumeUuids, volumeDBMap } = ((await getMappedOntapVolumes(
-        credentialsId,
-        region,
         fileSystemId,
+        volumeUuids,
+        volumeDBMap,
         activeNodeInstanceId
-    )) as MappedOnTapVolumeResponse) || { volumeUuids: [], volumeDBMap: {} };
+    });
 
     if (!isEmpty(volumeUuids)) {
         const { volumeIds, uuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
@@ -370,22 +363,19 @@ async function getOntapVolumesSnapshotCount(
     credentialsId: string,
     region: string,
     fileSystemId: string,
+    volumeUuids: string[],
+    volumeDBMap: any,
     activeNodeInstanceId?: string
 ) {
     logger.info('Fetching ontap snapshots count ', {
         credentialsId,
         region,
-        fileSystemId
+        fileSystemId,
+        volumeDBMap,
+        volumeUuids
     });
 
     try {
-        const { volumeUuids, volumeDBMap } = ((await getMappedOntapVolumes(
-            credentialsId,
-            region,
-            fileSystemId,
-            activeNodeInstanceId
-        )) as MappedOnTapVolumeResponse) || { volumeUuids: [], volumeDBMap: {} };
-
         if (!isEmpty(volumeUuids)) {
             const apiEndpoint = '/storage/volumes';
             let apiFilter = `uuid=${volumeUuids?.join()}`;
