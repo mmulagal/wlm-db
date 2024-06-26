@@ -62,13 +62,7 @@ import useResize from '../../../../common/hooks/useResize';
 const ManagedHostSubTable = ({
     handleManageInstances
 }: {
-    handleManageInstances: (
-        rowData: any,
-        instances: any,
-        isDetected?: boolean,
-        headerSelectedCred?: any,
-        headerSelectedRegion?: any
-    ) => void;
+    handleManageInstances: (rowData: any, instances: any, isDetected?: boolean) => void;
 }) => {
     const windowSize = useResize();
     const {
@@ -483,13 +477,7 @@ const ManagedHostSubTable = ({
                                         setOpenedRow(null);
 
                                         if (menuId === 'manage') {
-                                            handleManageInstances(
-                                                hostData,
-                                                [rowData?.databaseInstanceName],
-                                                false,
-                                                headerSelectedCred,
-                                                headerSelectedRegion
-                                            );
+                                            handleManageInstances(hostData, [rowData?.databaseInstanceName], false);
                                         }
                                         if (menuId === 'viewInstance') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));

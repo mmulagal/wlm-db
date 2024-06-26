@@ -153,21 +153,15 @@ const InventoryTable = () => {
         ];
     };
 
-    const handleManageInstances = (
-        rowData: any,
-        instances: any,
-        isDetected?: boolean | undefined,
-        selectedHeaderCred?: any,
-        selectedHeaderRegion?: any
-    ) => {
+    const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState.inventoryV2;
         const inProgressIds = instances.map((instance: any) => `${rowData?.ec2InstanceId}_${instance}`);
         dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
         handleManageTriggerNotification(instances, dispatch, styles);
         manageInstanceApi({
-            credentialsId: selectedHeaderCred?.data?.credentialsId,
-            regionId: selectedHeaderRegion?.label2,
+            credentialsId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
+            regionId: updatedState?.headers?.headerSelectedRegion?.label2,
             payload: {
                 ec2InstanceId: rowData?.ec2InstanceId,
                 databaseInstanceNames: instances
