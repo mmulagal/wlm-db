@@ -14,11 +14,14 @@ import { WLF_TABS } from '../../../utils/consts';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
-    setDBHostName
+    setDBHostName,
+    setInstanceId,
+    setInstanceName
 } from '../../../store/workloadFactory/createNewDBSlice';
 import { GENERAL } from '../../../utils/appConstants';
 import CustomContentInfo from '../../../common/CustomContentInfo/CustomContentInfo';
 import DatabaseHostOverviewApiV2 from './DatabaseHostOverviewApiV2';
+import { updateResourceId } from '../../../store/authSlice';
 
 const DatabaseHostOverviewV2 = () => {
     const navigate = useNavigate();
@@ -29,7 +32,9 @@ const DatabaseHostOverviewV2 = () => {
     const {
         resourceLoading: resourceLoadingState,
         selectedHostname,
-        selectedDatabaseInstanceName
+        selectedDatabaseInstanceName,
+        selectedDatabaseInstance,
+        selectedResourceId
     } = useAppSelector(state => state.workloadFactoryResource);
 
     DatabaseHostOverviewApiV2();
@@ -66,6 +71,9 @@ const DatabaseHostOverviewV2 = () => {
                             if (!resourceLoadingState) {
                                 dispatch(addInitialDBCreateData(initialCreateNewUserState));
                                 dispatch(setDBHostName(selectedHostname));
+                                dispatch(updateResourceId(selectedResourceId));
+                                dispatch(setInstanceId(selectedDatabaseInstance));
+                                dispatch(setInstanceName(selectedDatabaseInstanceName));
                                 navigate('../create-new-user');
                             }
                         }}
