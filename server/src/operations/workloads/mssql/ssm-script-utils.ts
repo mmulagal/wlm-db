@@ -360,7 +360,6 @@ const getMappedOntapVolumesScript = (
             WHERE 
                 vs.volume_mount_point != 'C:\\'
                 AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
-                AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
             FOR JSON PATH;
 "@
 
@@ -372,28 +371,6 @@ const getMappedOntapVolumesScript = (
         }
 
         $sqlqueryresponse =  sqlcmd -S "${instanceName}" -Q $sqlqueryfordatabaseandvolumelist -y 0;   
-
-        Function Get-DatabaseMappedInVolume($sqlqueryresponse) {        
-            $sqlJsonResponse = $sqlqueryresponse | convertFrom-Json
-        
-            # Create an array to store the database-volume objects
-            $databaseVolumes = @()
-        
-            foreach ($record in $sqlJsonResponse) {
-                # Create a new object with properties databaseName and volumeId
-                $object = New-Object PSObject -Property @{
-                    databaseName = $record.DatabaseName
-                    volumeId = $record.volumeId
-                    volumeName = $record.VolumeName
-                }
-        
-                # Add the object to the array
-                $databaseVolumes += $object
-            }
-        
-            # Output the array
-            $databaseVolumes
-        }
 
         Function Get-SerialNumberOfWinVolumes {
             param(
@@ -574,19 +551,17 @@ const getMappedOntapVolumesScript = (
             return $volumeIds
         }
 
-        Function updateVolumeMappings($volumeDatabaseMapping, $volumeNameMapping) {
+        Function updateVolumeMappings($sqlqueryresponse, $volumeNameMapping) {
             try {
+                $sqlJsonResponse = $sqlqueryresponse | convertFrom-Json
                 $newArray = @()
-                foreach ($dbMapping in $volumeDatabaseMapping) {
-                    $volumeId = $dbMapping.volumeId
+                foreach ($dbMapping in $sqlJsonResponse) {
+                    $volumeId = $dbMapping.VolumeId
         
                     if ($null -ne $volumeId -and $null -ne $volumeNameMapping -and $volumeNameMapping.ContainsKey($volumeId)) {
                         $value = $volumeNameMapping[$volumeId]
                         $newObject = @{
-                            "databaseName" = $dbMapping.databaseName
-                            "driveVolumeName" = $dbMapping.volumeName
-                            "driveVolumeId" = $dbMapping.volumeId
-                            "ontapVolumeName" = $value["name"]
+                            "databaseName" = $dbMapping.DatabaseName
                             "ontapVolumeuuid" = $value["uuid"]
                         }
 
@@ -595,22 +570,19 @@ const getMappedOntapVolumesScript = (
                 }
                 return $newArray;
             } catch {
-                Write-Host "Volume Ids: $($volumeDatabaseMapping | ConvertTo-Json)"
+                Write-Debug "Volume Ids: $($sqlqueryresponse | convertFrom-Json)"
                 Write-Error $_.Exception.Message
             }
         }    
-
-        $volumeDatabaseMapping = Get-DatabaseMappedInVolume $sqlqueryresponse
-
-        Write-Debug "Volume id Database name Mapping: $($volumeDatabaseMapping | ConvertTo-Json)"
+        Write-Debug "query List: $sqlqueryresponse"
 
         $result = Get-SerialNumberOfWinVolumes $sqlqueryresponse
         $SerialNumbers = $result.Lunserialnumbers
         
-        #if (!($SerialNumbers.count -gt 0)) {
+        # if (!($SerialNumbers.count -gt 0)) {
         #    write-error "Couldn't get windows volume serial numbers"
         #    return
-        #}
+        # }
 
         Write-Debug "Serial Numbers: $SerialNumbers"
         Write-Debug "Volume Serial Mapping: $($result.VolumeSerialMapping | ConvertTo-Json)"
@@ -649,7 +621,7 @@ const getMappedOntapVolumesScript = (
             }
         } 
         
-        $volumeDBMap = updateVolumeMappings $volumeDatabaseMapping $volumeNameMapping
+        $volumeDBMap = updateVolumeMappings $sqlqueryresponse $volumeNameMapping
         
         Write-Debug "final volue details: $($volumeDBMap | ConvertTo-Json)"
 

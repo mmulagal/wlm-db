@@ -61,7 +61,8 @@ import {
     isFsxnAwsBackupEnabled,
     getOntapVolumesSnapshotCount,
     getCostAllocationTagFsxResource,
-    isFsxwAwsBackupEnabled
+    isFsxwAwsBackupEnabled,
+    getMappedOntapVolumes
 } from './aws/fsx-operations';
 import {
     DatabaseInstance,
@@ -106,6 +107,11 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     7: 'nodeTopology'
 };
 
+interface MappedOnTapVolumeResponse {
+    volumeUuids: string[];
+    volumeDBMap: any;
+}
+
 // type VolumeSpaceRecord = {
 //     uuid: string;
 //     name: string;
@@ -141,6 +147,10 @@ type EstimationEbsType = {
     iops: number;
     volumeType: string;
 }[];
+
+interface BackupType {
+    [key: string]: boolean;
+}
 
 async function getTopology(
     accountId: string,
@@ -526,25 +536,23 @@ async function getProtectionStatus(
     }
 
     try {
-        const [nativeSqlProtection, fsxnBackup = {}, ontapProtection = {}, fsxwBackup, ebsBackup] = await Promise.all([
-            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName),
-
-            fsxnId ? isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, activeNodeInstanceId) : Promise.resolve(),
-            fsxnId
-                ? getOntapVolumesSnapshotCount(credentialsId, region, fsxnId, activeNodeInstanceId)
-                : Promise.resolve(),
+        const [nativeSqlProtection, protectionResponse, fsxwBackup, ebsBackup] = await Promise.all([
+            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName), // one ssm call
+            fsxnId ? getProtectionDetails(credentialsId, region, fsxnId, activeNodeInstanceId) : Promise.resolve(), // 2 ssm call
             fsxwId ? isFsxwAwsBackupEnabled(credentialsId, region, fsxwId) : Promise.resolve(),
             ebsVolumeIds ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeIds) : Promise.resolve() // returns true if backup is enabled on any of the ebs ID associated with the resource; revisit this to return information for each ebs
         ]);
 
+        const awsBackup = protectionResponse ? protectionResponse.awsBackup : {};
+        const ontapBackup = protectionResponse ? protectionResponse.ontapBackup : {};
         return {
             isSqlNativeEnabled: Boolean(nativeSqlProtection),
             isAwsBackupEnabled: {
-                fsxn: Boolean(checkAllTrue(fsxnBackup)),
+                fsxn: checkAllTrue(awsBackup),
                 fsxw: Boolean(fsxwBackup),
                 ebs: Boolean(ebsBackup)
             },
-            isFsxOntapSnapshotsEnabled: Boolean(checkAllTrue(ontapProtection)),
+            isFsxOntapSnapshotsEnabled: checkAllTrue(ontapBackup),
             protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
         };
     } catch (error) {
@@ -553,10 +561,6 @@ async function getProtectionStatus(
             `Error while getting protection status: ${resourceDetail} ${error}`
         );
     }
-}
-
-function checkAllTrue(obj: { [key: string]: boolean }): boolean {
-    return Object.keys(obj).length > 0 && Object.values(obj).every(value => value === true);
 }
 
 async function getBillingOrPriceEstimation(
@@ -1113,12 +1117,11 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
 
-    const [{ databases }, backedupDatabases, awsBackup = {}, ontapBackup = {}] = await Promise.all(
+    const [{ databases }, backedupDatabases, { awsBackup, ontapBackup }] = await Promise.all(
         [
             getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
             getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
-            isFsxnAwsBackupEnabled(credentialsId, region, fileSystemId, activeNodeInstanceId),
-            getOntapVolumesSnapshotCount(credentialsId, region, fileSystemId, activeNodeInstanceId)
+            getProtectionDetails(credentialsId, region, fileSystemId, activeNodeInstanceId)
         ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
     );
     try {
@@ -1139,12 +1142,12 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
                     : MSSQL_DATABASE_TYPES.USER,
                 protection: {
                     isAwsBackupEnabled: {
-                        fsxn: awsBackup[database.databaseName]
+                        fsxn: checkKey(awsBackup, database.databaseName)
                     },
-                    isFsxOntapSnapshotsEnabled: ontapBackup[database.databaseName],
+                    isFsxOntapSnapshotsEnabled: checkKey(ontapBackup, database.databaseName),
                     isSqlNativeEnabled: Boolean(
                         backedupDatabases &&
-                            backedupDatabases.find(
+                            backedupDatabases?.find(
                                 (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
                             )
                     )
@@ -1954,12 +1957,11 @@ async function getDatabasesV2(
     const { userDatabase = [] } = metadata as unknown as databaseInstanceMetadata;
     const instanceName = getDatabaseInstanceName(savedInstanceName, isdefaultInstance);
 
-    const [{ databases }, backedupDatabases, awsBackup = {}, ontapBackup = {}] = await Promise.all(
+    const [{ databases }, backedupDatabases, { awsBackup, ontapBackup }] = await Promise.all(
         [
             getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
             getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
-            isFsxnAwsBackupEnabled(credentialsId, region, fileSystemId, activeNodeInstanceId),
-            getOntapVolumesSnapshotCount(credentialsId, region, fileSystemId, activeNodeInstanceId)
+            getProtectionDetails(credentialsId, region, fileSystemId, activeNodeInstanceId)
         ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
     );
     try {
@@ -1979,9 +1981,9 @@ async function getDatabasesV2(
                     : MSSQL_DATABASE_TYPES.USER,
                 protection: {
                     isAwsBackupEnabled: {
-                        fsxn: awsBackup[database.databaseName]
+                        fsxn: checkKey(awsBackup, database.databaseName)
                     },
-                    isFsxOntapSnapshotsEnabled: ontapBackup[database.databaseName],
+                    isFsxOntapSnapshotsEnabled: checkKey(ontapBackup, database.databaseName),
                     isSqlNativeEnabled: Boolean(
                         backedupDatabases &&
                             backedupDatabases.find(
@@ -2012,6 +2014,43 @@ async function getDatabasesV2(
     }
 }
 
+async function getProtectionDetails(
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    activeNodeInstanceId?: string
+): Promise<{ awsBackup: BackupType; ontapBackup: BackupType }> {
+    logger.info('Getting Proteciton details', { credentialsId, region, fileSystemId, activeNodeInstanceId });
+
+    // Getting the map between database name and associated volume uuid
+    const { volumeUuids, volumeDBMap } = ((await getMappedOntapVolumes(
+        credentialsId,
+        region,
+        fileSystemId,
+        activeNodeInstanceId
+    )) as MappedOnTapVolumeResponse) || { volumeUuids: [], volumeDBMap: {} };
+    const awsBackup =
+        (await isFsxnAwsBackupEnabled(
+            credentialsId,
+            region,
+            fileSystemId,
+            volumeUuids,
+            volumeDBMap,
+            activeNodeInstanceId
+        )) || {};
+    const ontapBackup =
+        (await getOntapVolumesSnapshotCount(
+            credentialsId,
+            region,
+            fileSystemId,
+            volumeUuids,
+            volumeDBMap,
+            activeNodeInstanceId
+        )) || {};
+
+    return { awsBackup, ontapBackup };
+}
+
 async function getInstanceDetails(
     accountId: string,
     credentialsId: string,
@@ -2029,7 +2068,7 @@ async function getInstanceDetails(
     ]);
 
     if (isEmpty(resourceDetails) || isEmpty(databaseInstanceDetails)) {
-        const errorMessage = `No database host by id ${databaseHostId} or instance by insatnce id ${databaseInstanceDetails} for ${accountId} is found.`;
+        const errorMessage = `No database host by id ${databaseHostId} or instance by instance id ${databaseInstanceDetails} for ${accountId} is found.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
@@ -2056,6 +2095,21 @@ async function getInstanceDetails(
 
     return { activeNodeInstanceId, newDatabaseInstanceDetails };
 }
+
+function checkKey(obj: any, key: string) {
+    if (obj && key in obj) {
+        return obj[key];
+    }
+    return 'N/A';
+}
+
+function checkAllTrue(obj: { [key: string]: boolean }) {
+    if (!obj || Object.keys(obj).length === 0) {
+        return 'N/A';
+    }
+    return Object.values(obj).every(value => value === true);
+}
+
 export {
     getDatabaseHostsSummary,
     getDatabaseHostSummary,

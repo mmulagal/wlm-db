@@ -42,6 +42,8 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
+            fsxResponse.volumeMap.volumeUuids,
+            fsxResponse.volumeMap.volumeDBMap,
             `i-${faker.string.alpha(17)}`
         );
         expect(response.master).toEqual(true);
@@ -51,7 +53,9 @@ describe('Testcases for Amazon FSx resources operations', () => {
         const response = await getOntapVolumesSnapshotCount(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
-            FSX_FILESYSTEM_ID
+            FSX_FILESYSTEM_ID,
+            fsxResponse.volumeMap.volumeUuids,
+            fsxResponse.volumeMap.volumeDBMap
         );
         expect(response.master).toBeTruthy();
     });
