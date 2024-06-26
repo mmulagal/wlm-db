@@ -913,6 +913,7 @@ async function fetchUnmanagedHostsInformationV2(
                     });
 
                     resourceDetails.ebsVolumeIds = ebsVolumeIds;
+
                     resourceDetails.databaseInstanceDetails?.push({
                         database_instance_id: sqlServerInstance.serverGuid || '',
                         database_instance_name: sqlServerInstance.sqlServerInstance,
@@ -923,7 +924,7 @@ async function fetchUnmanagedHostsInformationV2(
                         credentials_id: credentialsId,
                         metadata: { userDatabase: [] },
                         fsxn_ids: fsxnId || '',
-                        fsxwId,
+                        fsxwId: fsxwId || '',
                         ebsVolumeIds,
                         database_deployment_type: sqlServerInstance.sqlServerDeploymentType,
                         storage_type: fsxnId ? STORAGE_TYPE.FSXN : fsxwId ? STORAGE_TYPE.FSXW : STORAGE_TYPE.EBS

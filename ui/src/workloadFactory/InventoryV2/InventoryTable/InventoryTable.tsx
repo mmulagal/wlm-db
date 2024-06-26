@@ -5,7 +5,7 @@ import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import styles from './InventoryTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import { WLF_TABS, STATUS_CONST, INVENTORY_STATUS, INVENTORY_ACTIONS, API_ERRORS } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -44,7 +44,11 @@ import {
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
-import { setInProgressInstances, setInventoryTableData } from '../../../store/workloadFactory/inventoryV2Slice';
+import {
+    setInProgressInstances,
+    setInventoryExpandedRowHostData,
+    setInventoryTableData
+} from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 
 const InventoryTable = () => {
@@ -52,12 +56,11 @@ const InventoryTable = () => {
     const navigate = useNavigate();
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
+
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
-    const [menuOpenedRow, setOpenedRow] = useState(null);
-    const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
 
     const [resetPage, setResetPage] = useState(false);
@@ -150,22 +153,6 @@ const InventoryTable = () => {
         ];
     };
 
-    const ExpandedRow = ({ rowData }: any) => {
-        if (rowData?.ssmState === INVENTORY_STATUS.ONLINE || rowData?.totalInstance !== 0) {
-            return (
-                <ManagedHostSubTable
-                    rowId={rowData?.id}
-                    hostname={rowData?.name}
-                    resourceId={rowData?.resourceId}
-                    handleManageInstances={handleManageInstances}
-                    hostData={rowData}
-                    loading={loading}
-                />
-            );
-        }
-        return <OfflineComponent />;
-    };
-
     const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState.inventoryV2;
@@ -173,8 +160,8 @@ const InventoryTable = () => {
         dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
         handleManageTriggerNotification(instances, dispatch, styles);
         manageInstanceApi({
-            credentialsId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2,
+            credentialsId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
+            regionId: updatedState?.headers?.headerSelectedRegion?.label2,
             payload: {
                 ec2InstanceId: rowData?.ec2InstanceId,
                 databaseInstanceNames: instances
@@ -245,6 +232,14 @@ const InventoryTable = () => {
             }
         });
     };
+
+    const ExpandedRow = useCallback(({ rowData }: any) => {
+        if (rowData?.ssmState === INVENTORY_STATUS.ONLINE || rowData?.totalInstance !== 0) {
+            dispatch(setInventoryExpandedRowHostData(rowData));
+            return <ManagedHostSubTable handleManageInstances={handleManageInstances} />;
+        }
+        return <OfflineComponent />;
+    }, []);
 
     const handleDialog = (rowData: any) => {
         setDialog(

@@ -26,13 +26,17 @@ const initialInventoryV2State: InventorySliceData = {
     detectManagePassword: '',
     detectOntapUsername: '',
     detectOntapPassword: '',
-    detectedInstanceId: ''
+    detectedInstanceId: '',
+    inventoryExpandedRowHostData: null
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setInventoryExpandedRowHostData: (state, action: PayloadAction<any>) => {
+            state.inventoryExpandedRowHostData = action.payload;
+        },
         setValuesForForm: (state, action: PayloadAction<any>) => {
             state.valuesNotFilled = action.payload;
         },
@@ -98,6 +102,8 @@ const inventoryV2Slice = createSlice({
 
 export const {
     setValuesForForm,
+
+    setInventoryExpandedRowHostData,
     setInventoryTableData,
     setInventoryChartData,
     setIsManagedHostListLoading,

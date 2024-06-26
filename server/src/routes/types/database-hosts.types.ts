@@ -179,7 +179,7 @@ const UsageCostPerStorageTypeResponse = Type.Optional(
     Type.Object({
         compute: Type.Number({ description: 'Compute cost in dollars' }),
         storage: Type.Object({
-            fsxn: Type.Number({ description: 'FSX for NetApp ONTAP Storage  cost in dollars' }),
+            fsxn: Type.Optional(Type.Number({ description: 'FSX for NetApp ONTAP Storage  cost in dollars' })),
             fsxw: Type.Optional(Type.Number({ description: 'FSX for Windows Storage cost in dollars' })),
             ebs: Type.Optional(Type.Number({ description: 'EBS Storage cost in dollars' }))
         }),
@@ -252,6 +252,15 @@ const EbsResourceInfoResponse = Type.Optional(
             throughput: Type.Optional(Type.Number()), // Optional for gp2 volumes
             iops: Type.Optional(Type.Number()), // Optional for st1
             volumeType: Type.String()
+        })
+    )
+);
+const FsxResourceInfoResponse = Type.Optional(
+    Type.Array(
+        Type.Object({
+            id: Type.String(),
+            capacityCost: Type.Number(),
+            operationalCost: Type.Number()
         })
     )
 );
@@ -546,6 +555,8 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
+    fsxnResourceInfo: Type.Optional(FsxResourceInfoResponse),
+    fsxwResourceInfo: Type.Optional(FsxResourceInfoResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
     databaseInstancesSummary: Type.Optional(Type.Array(DatabaseHostInstanceSummaryResponse)),
     clusterNodeDetails: Type.Optional(

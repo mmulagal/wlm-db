@@ -60,22 +60,20 @@ import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecond
 import useResize from '../../../../common/hooks/useResize';
 
 const ManagedHostSubTable = ({
-    rowId,
-    hostname,
-    resourceId,
-    hostData,
-    loading,
     handleManageInstances
 }: {
-    rowId: string;
-    hostname: string;
-    resourceId: string;
-    hostData: any;
-    loading: boolean;
     handleManageInstances: (rowData: any, instances: any, isDetected?: boolean) => void;
 }) => {
     const windowSize = useResize();
-    const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
+    const {
+        inventoryTableData,
+        inProgressInstances,
+        inventoryExpandedRowHostData: hostData
+    } = useAppSelector(state => state.inventoryV2);
+
+    const rowId = hostData?.id;
+    const hostname = hostData?.name;
+    const resourceId = hostData?.resourceId;
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -391,9 +389,9 @@ const ManagedHostSubTable = ({
                 let width = '';
                 let height = '';
                 let disableMenu = () => {
-                    if (loading) {
+                    if (data[0] && data[0]?.loading) {
                         disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
-                        width = '220px';
+                        width = '170px';
                         height = '33px';
                         return true;
                     }
@@ -479,7 +477,7 @@ const ManagedHostSubTable = ({
                                         setOpenedRow(null);
 
                                         if (menuId === 'manage') {
-                                            handleManageInstances(hostData, [rowData?.databaseInstanceName]);
+                                            handleManageInstances(hostData, [rowData?.databaseInstanceName], false);
                                         }
                                         if (menuId === 'viewInstance') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));

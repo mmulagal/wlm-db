@@ -11,14 +11,19 @@ const PricingServiceRequest = Type.Object({
     fsxnStorage: Type.Optional(
         Type.Object({
             regionCode: Type.String({ minLength: 1 }),
-            diskSize: Type.Number({ description: 'Database "data" volume size in GiB' }),
-            throughput: Type.Optional(Type.Number({ description: 'Throughput is in MBps' })),
-            iops: Type.Optional(Type.Number()),
-            deploymentOption: Type.Optional(Type.String({ enum: [SINGLE_AZ, MULTI_AZ] })),
-            storageCapacity: Type.Optional(
-                Type.Number({
-                    description:
-                        'The total FSxN storage capacity in GB. "storageCapacity" and "diskSize" are mutually exclusive'
+            fsxnResourceInfo: Type.Array(
+                Type.Object({
+                    id: Type.Optional(Type.String({ description: 'Unique identifier for the FSx filesystem' })),
+                    diskSize: Type.Optional(Type.Number({ description: 'Database "data" volume size in GiB' })),
+                    throughput: Type.Optional(Type.Number({ description: 'Throughput is in MBps' })),
+                    iops: Type.Optional(Type.Number()),
+                    deploymentOption: Type.Optional(Type.String({ enum: [SINGLE_AZ, MULTI_AZ] })),
+                    storageCapacity: Type.Optional(
+                        Type.Number({
+                            description:
+                                'The total FSxN storage capacity in GB. "storageCapacity" and "diskSize" are mutually exclusive'
+                        })
+                    )
                 })
             )
         })
@@ -45,40 +50,57 @@ const PricingServiceRequest = Type.Object({
     fsxwStorage: Type.Optional(
         Type.Object({
             regionCode: Type.String({ minLength: 1 }),
-            diskSize: Type.Number({ description: 'Database "data" volume size in GiB' }),
-            throughput: Type.Number({ description: 'Throughput is in MBps' }),
-            iops: Type.Number(),
-            deploymentOption: Type.String({ enum: ['Single-AZ', 'Multi-AZ'] }),
-            storageCapacity: Type.Number({
-                description:
-                    'The total FSxN storage capacity in GB. "storageCapacity" and "diskSize" are mutually exclusive'
-            }),
-            storageType: Type.String({ enum: ['HDD', 'SSD'] })
+            fsxwResourceInfo: Type.Array(
+                Type.Object({
+                    id: Type.String({ description: 'Unique identifier for the FSx filesystem' }),
+                    diskSize: Type.Optional(Type.Number({ description: 'Database "data" volume size in GiB' })),
+                    throughput: Type.Number({ description: 'Throughput is in MBps' }),
+                    iops: Type.Number(),
+                    deploymentOption: Type.String({ enum: ['Single-AZ', 'Multi-AZ'] }),
+                    storageCapacity: Type.Number({
+                        description:
+                            'The total FSxN storage capacity in GB. "storageCapacity" and "diskSize" are mutually exclusive'
+                    }),
+                    storageType: Type.String({ enum: ['HDD', 'SSD'] })
+                })
+            )
         })
     )
 });
 
+const FsxnCostBreakdown = Type.Object({
+    id: Type.Optional(Type.String()),
+    capacityCost: Type.Number(),
+    operationalCost: Type.Number(),
+    size: Type.Optional(
+        Type.Object(
+            {
+                data: Type.Number(),
+                log: Type.Number(),
+                tempdb: Type.Number(),
+                quorum: Type.Optional(Type.Number()),
+                buffer: Type.Optional(Type.Number()),
+                total: Type.Number()
+            },
+            {
+                description: 'All the sizes are in GiB'
+            }
+        )
+    )
+});
+
+const FsxwCostBreakdown = Type.Object({
+    id: Type.String(),
+    capacityCost: Type.Number(),
+    operationalCost: Type.Number(),
+    size: Type.Number()
+});
 const PricingServiceResponse = Type.Object({
     compute: Type.Number(),
     fsxnStorage: Type.Optional(
         Type.Object({
-            capacityCost: Type.Number(),
-            operationalCost: Type.Number(),
-            size: Type.Optional(
-                Type.Object(
-                    {
-                        data: Type.Number(),
-                        log: Type.Number(),
-                        tempdb: Type.Number(),
-                        quorum: Type.Optional(Type.Number()),
-                        buffer: Type.Optional(Type.Number()),
-                        total: Type.Number()
-                    },
-                    {
-                        description: 'All the sizes are in GiB'
-                    }
-                )
-            )
+            fsxStorageCost: Type.Number(),
+            fsxnCostBreakdownById: Type.Array(FsxnCostBreakdown)
         })
     ),
     vpc: Type.Optional(Type.Number()),
@@ -99,15 +121,23 @@ const PricingServiceResponse = Type.Object({
     ),
     fsxwStorage: Type.Optional(
         Type.Object({
-            capacityCost: Type.Number(),
-            operationalCost: Type.Number(),
-            size: Type.Number()
+            fsxwStorageCost: Type.Number(),
+            fsxwCostBreakdownById: Type.Array(FsxwCostBreakdown)
         })
     ),
     total: Type.Number()
 });
 
+type FsxnCostBreakdownType = Static<typeof FsxnCostBreakdown>;
+type FsxwCostBreakdownType = Static<typeof FsxwCostBreakdown>;
 type PricingServiceRequestType = Static<typeof PricingServiceRequest>;
 type PricingServiceResponseType = Static<typeof PricingServiceResponse>;
 
-export { PricingServiceRequest, PricingServiceResponse, PricingServiceRequestType, PricingServiceResponseType };
+export {
+    PricingServiceRequest,
+    PricingServiceResponse,
+    PricingServiceRequestType,
+    PricingServiceResponseType,
+    FsxnCostBreakdownType,
+    FsxwCostBreakdownType
+};
