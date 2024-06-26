@@ -14,6 +14,7 @@ import {
     SQL_DEPLOYMENT_MODE
 } from '../../utils/consts';
 import {
+    DatabaseInstanceDetailsInterface,
     DatabaseInstancesSummaryInterface,
     DiscoverHostInterface,
     DiscoveredStorageObj,
@@ -933,30 +934,178 @@ export const updateInventoryDatawithInstancesRes = (
             sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow)
         };
     } else if (!instanceRow?.isManagedHost) {
-        const allocatedCapacity = getAllocatedCapacity(instanceRow?.data);
-        const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
-        result = {
-            ...inventoryRow,
-            name: inventoryRow?.name || instanceRow?.data?.name,
-            isManagedHost: instanceRow?.isManagedHost,
-            loading: instanceRow?.loading,
-            ec2Details: ec2Details?.length > 0 ? ec2Details : inventoryRow?.ec2Details,
-            estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
-            totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
-            allocatedCapacity: allocatedCapacity,
-            allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
-            hasInstanceData: true,
-            sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow),
-            //For explore savings
-            ebsResourceInfo: instanceRow?.data?.ebsResourceInfo,
-            clusterNodeDetails: instanceRow?.data?.clusterNodeDetails
-        };
+        let partnerInstanceId = '';
+        let partnerInstanceData: any = null;
+        if (instanceRow?.data && inventoryRow?.ec2InstanceId) {
+            partnerInstanceId = getPartnerInstanceId(instanceRow?.data, inventoryRow?.ec2InstanceId);
+        }
+        if (partnerInstanceId) {
+            partnerInstanceData = partnerNodeInstanceData(partnerInstanceId);
+        }
+
+        if (partnerInstanceData && partnerInstanceData?.loading) {
+            result = {
+                ...inventoryRow,
+                isManagedHost: partnerInstanceData?.isManagedHost,
+                loading: partnerInstanceData?.loading
+            };
+        } else if (partnerInstanceData && !partnerInstanceData?.loading) {
+            const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
+            let mergedCost = mergeEstimatedCost(instanceRow, partnerInstanceData);
+            let allocatedCapacity = getMergedAllocatedCapacity(
+                inventoryRow?.serverInstallationMode,
+                instanceRow?.data,
+                partnerInstanceData?.data
+            );
+            let ebsResourceInfo = mergeEbsResourceInfo(instanceRow, partnerInstanceData);
+            result = {
+                ...inventoryRow,
+                name: inventoryRow?.name || instanceRow?.data?.name,
+                isManagedHost: instanceRow?.isManagedHost,
+                loading: instanceRow?.loading,
+                ec2Details: ec2Details?.length > 0 ? ec2Details : inventoryRow?.ec2Details,
+                estimatedUsageCost: mergedCost,
+                totalCost: getTotalCost(mergedCost || {}),
+                allocatedCapacity: allocatedCapacity,
+                allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
+                hasInstanceData: true,
+                sqlServerInstances: updateSqlServerInstancesForBothNodes(
+                    instanceRow?.data,
+                    partnerInstanceData?.data,
+                    inventoryRow
+                ),
+                //For explore savings
+                ebsResourceInfo: ebsResourceInfo,
+                clusterNodeDetails: instanceRow?.data?.clusterNodeDetails
+            };
+        } else {
+            const allocatedCapacity = getAllocatedCapacity(instanceRow?.data);
+            const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
+            result = {
+                ...inventoryRow,
+                name: inventoryRow?.name || instanceRow?.data?.name,
+                isManagedHost: instanceRow?.isManagedHost,
+                loading: instanceRow?.loading,
+                ec2Details: ec2Details?.length > 0 ? ec2Details : inventoryRow?.ec2Details,
+                estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
+                totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
+                allocatedCapacity: allocatedCapacity,
+                allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
+                hasInstanceData: true,
+                sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow),
+                //For explore savings
+                ebsResourceInfo: instanceRow?.data?.ebsResourceInfo,
+                clusterNodeDetails: instanceRow?.data?.clusterNodeDetails
+            };
+        }
     } else {
         result = {
             ...inventoryRow
         };
     }
     return result;
+};
+
+export const partnerNodeInstanceData = (partnerInstanceId: string) => {
+    let updatedState = store.getState();
+    let { mssqlInstancesData }: any = updatedState?.inventoryV2;
+    return mssqlInstancesData?.[partnerInstanceId];
+};
+
+export const mergeEstimatedCost = (instanceData: any, partnerInstanceData: any) => {
+    let fsxnCost = 0;
+    let fsxwCost = 0;
+    let uniqueFsxnId: Array<String> = [];
+    let uniqueFsxwId: Array<String> = [];
+    instanceData?.data?.fsxnResourceInfo?.map((perFsx: any) => {
+        if (!uniqueFsxnId.includes(perFsx?.id)) {
+            fsxnCost += perFsx?.capacityCost;
+            fsxnCost += perFsx?.operationalCost;
+            uniqueFsxnId.push(perFsx?.id);
+        }
+    });
+    partnerInstanceData?.data?.fsxnResourceInfo?.map((perFsx: any) => {
+        if (!uniqueFsxnId.includes(perFsx?.id)) {
+            fsxnCost += perFsx?.capacityCost;
+            fsxnCost += perFsx?.operationalCost;
+            uniqueFsxnId.push(perFsx?.id);
+        }
+    });
+
+    instanceData?.data?.fsxwResourceInfo?.map((perFsxw: any) => {
+        if (!uniqueFsxwId.includes(perFsxw?.id)) {
+            fsxwCost += perFsxw?.capacityCost;
+            fsxwCost += perFsxw?.operationalCost;
+            uniqueFsxwId.push(perFsxw?.id);
+        }
+    });
+    partnerInstanceData?.data?.fsxwResourceInfo?.map((perFsxw: any) => {
+        if (!uniqueFsxwId.includes(perFsxw?.id)) {
+            fsxwCost += perFsxw?.capacityCost;
+            fsxwCost += perFsxw?.operationalCost;
+            uniqueFsxwId.push(perFsxw?.id);
+        }
+    });
+    let estimatedUsageCost = {
+        compute:
+            (instanceData?.data?.estimatedUsageCost?.compute || 0) +
+            (partnerInstanceData?.data?.estimatedUsageCost?.compute || 0),
+        storage: {
+            fsxw: fsxwCost
+                ? fsxwCost
+                : (instanceData?.data?.estimatedUsageCost?.storage?.fsxw || 0) +
+                  (partnerInstanceData?.data?.estimatedUsageCost?.storage?.fsxw || 0),
+            fsxn: fsxnCost
+                ? fsxnCost
+                : (instanceData?.data?.estimatedUsageCost?.storage?.fsxn || 0) +
+                  (partnerInstanceData?.data?.estimatedUsageCost?.storage?.fsxn || 0),
+            ebs:
+                (instanceData?.data?.estimatedUsageCost?.connectivity?.storage?.ebs || 0) +
+                (partnerInstanceData?.data?.estimatedUsageCost?.connectivity?.storage?.ebs || 0)
+        },
+        connectivity:
+            (instanceData?.data?.estimatedUsageCost?.connectivity || 0) +
+            (partnerInstanceData?.data?.estimatedUsageCost?.connectivity || 0),
+        others:
+            (instanceData?.data?.estimatedUsageCost?.others || 0) +
+            (partnerInstanceData?.data?.estimatedUsageCost?.others || 0),
+        estimationType:
+            instanceData?.data?.estimatedUsageCost?.estimationType ||
+            partnerInstanceData?.data?.estimatedUsageCost?.estimationType
+    };
+    return estimatedUsageCost;
+};
+
+export const mergeEbsResourceInfo = (instanceRow: any, partnerInstanceData: any) => {
+    let instanceEbsData = instanceRow?.data?.ebsResourceInfo || [];
+    let partnerInstanceEbsData = partnerInstanceData?.data?.ebsResourceInfo || [];
+    return [...instanceEbsData, ...partnerInstanceEbsData];
+};
+
+export const getMergedAllocatedCapacity = (
+    installationMode: string | undefined,
+    node: ManagedHostsRowInterface | undefined,
+    partner: ManagedHostsRowInterface | undefined
+) => {
+    let allocatedCapacity = 0;
+    if (node?.databaseInstancesSummary && node?.databaseInstancesSummary?.length > 0) {
+        node?.databaseInstancesSummary?.map(perRow => {
+            allocatedCapacity +=
+                (perRow?.storage?.fsxn?.size || 0) +
+                (perRow?.storage?.fsxw?.size || 0) +
+                (perRow?.storage?.ebs?.size || 0);
+        });
+    }
+    // Do we need to check only for AOAG -> installationMode === GENERAL.AOAG
+    if (partner?.databaseInstancesSummary && partner?.databaseInstancesSummary?.length > 0) {
+        partner?.databaseInstancesSummary?.map(perRow => {
+            allocatedCapacity +=
+                (perRow?.storage?.fsxn?.size || 0) +
+                (perRow?.storage?.fsxw?.size || 0) +
+                (perRow?.storage?.ebs?.size || 0);
+        });
+    }
+    return allocatedCapacity;
 };
 
 export const getEc2DetailsForUnmanagedHost = (instanceRow: InstancesObjectInterface) => {
@@ -998,6 +1147,75 @@ export const getEc2DetailsForUnmanagedHost = (instanceRow: InstancesObjectInterf
         }
     }
     return ec2Details;
+};
+
+export const updateSqlServerInstancesForBothNodes = (
+    instanceData: InstancesHostsRowInterface | undefined,
+    partnerData: InstancesHostsRowInterface | undefined,
+    existingInstanceRow: InventoryTableData
+) => {
+    let instanceRows;
+    if (existingInstanceRow) {
+        instanceRows = existingInstanceRow?.sqlServerInstances;
+    }
+    if (instanceData?.databaseInstancesSummary && instanceData?.databaseInstancesSummary?.length > 0) {
+        instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
+            const perRowNode = instanceData?.databaseInstancesSummary?.find(
+                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+            );
+            const perRowNodeStatus = instanceData?.databaseInstanceDetails?.find(
+                (per: DatabaseInstanceDetailsInterface) => per?.instanceName === instRow?.databaseInstanceName
+            );
+            const perRowPartner = partnerData?.databaseInstancesSummary?.find(
+                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+            );
+            const perRowPartnerStatus = partnerData?.databaseInstanceDetails?.find(
+                (per: DatabaseInstanceDetailsInterface) => per?.instanceName === instRow?.databaseInstanceName
+            );
+            let perRow: any;
+            if (
+                perRowNodeStatus?.instanceState &&
+                perRowNodeStatus?.instanceState?.toLowerCase() === INVENTORY_STATUS.UP
+            ) {
+                perRow = perRowNode;
+            } else if (
+                perRowPartnerStatus?.instanceState &&
+                perRowPartnerStatus?.instanceState?.toLowerCase() === INVENTORY_STATUS.UP
+            ) {
+                perRow = perRowPartner;
+            } else {
+                perRow = perRowNode;
+            }
+            let allocatedCapacity = 0;
+            if (getDiscoveredHostDeploymentV2(perRow) === GENERAL.AOAG) {
+                allocatedCapacity =
+                    (perRowNode?.storage?.fsxn?.size || 0) +
+                    (perRowNode?.storage?.fsxw?.size || 0) +
+                    (perRowNode?.storage?.ebs?.size || 0) +
+                    (perRowPartner?.storage?.fsxn?.size || 0) +
+                    (perRowPartner?.storage?.fsxw?.size || 0) +
+                    (perRowPartner?.storage?.ebs?.size || 0);
+            } else {
+                allocatedCapacity =
+                    (perRow?.storage?.fsxn?.size || 0) +
+                    (perRow?.storage?.fsxw?.size || 0) +
+                    (perRow?.storage?.ebs?.size || 0);
+            }
+
+            return {
+                ...instRow,
+                fileSystemType: instRow?.fileSystemType || perRow?.databaseInstanceTopology?.fileSystemType,
+                protection: perRow?.protection,
+                performance: perRow?.performance,
+                storage: perRow?.storage,
+                storageSavingsText: getStorageSavingsText(perRow || {}),
+                allocatedCapacity: allocatedCapacity,
+                allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
+                databaseServer: perRow?.databaseServer
+            };
+        });
+    }
+    return instanceRows;
 };
 
 export const updateSqlServerInstancesForUnmanaged = (
@@ -1280,4 +1498,17 @@ export const handleManageNotification = (
             );
         }
     }
+};
+
+export const getPartnerInstanceId = (instanceRow: InstancesHostsRowInterface, instanceId: string) => {
+    let partnerInstanceId: string = '';
+    if (instanceRow?.clusterNodeDetails) {
+        if (instanceId) {
+            let partnerNode = instanceRow?.clusterNodeDetails?.filter(perInst => perInst?.ec2InstanceId !== instanceId);
+            if (partnerNode && partnerNode?.length > 0) {
+                partnerInstanceId = partnerNode[0]?.ec2InstanceId || '';
+            }
+        }
+    }
+    return partnerInstanceId;
 };
