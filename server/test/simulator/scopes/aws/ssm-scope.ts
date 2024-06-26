@@ -58,7 +58,8 @@ import {
     deleteExtendedPropertiesScript,
     checkDatabaseIntegrityScript,
     getSnapshotsToClone,
-    readExtendedPropertiesOfSandbox
+    readExtendedPropertiesOfSandbox,
+    getConnectionInfo
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -453,6 +454,10 @@ const readExtendedPropertiesCommand = {
     commands: [readExtendedPropertiesOfSandbox('testdb1_clone')]
 };
 
+const getConnectionInforCommand = {
+    commands: [getConnectionInfo('MSSQLSERVER')]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -581,7 +586,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getSnapshotsToCloneCommand })
     .resolves(listSendCommandCommandResponse.getSnapshotsToCloneCommand)
     .on(SendCommandCommand, { Parameters: readExtendedPropertiesCommand })
-    .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand);
+    .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand)
+    .on(SendCommandCommand, { Parameters: getConnectionInforCommand })
+    .resolves(listSendCommandCommandResponse.getConnectionInfoCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -711,7 +718,11 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-readExtendedPropertiesCommand'
     })
-    .resolves(getCommandInvocationResponse.readExtendedPropertiesResponse);
+    .resolves(getCommandInvocationResponse.readExtendedPropertiesResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getConnectionInfoCommand'
+    })
+    .resolves(getCommandInvocationResponse.getConnectionInfoResp);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

@@ -15,7 +15,6 @@ import {
     RESOURCESTYPE,
     SANDBOX_API_SIZE,
     SSM_COMMAND_CACHE_TYPE,
-    SSM_PARAM_PREFIX,
     SandboxLifecycleAction,
     SANDBOX_LIFECYCLE_REFRESH,
     SQL_SERVICE_STATE
@@ -34,15 +33,11 @@ import {
     splitFlexCloneVolumes,
     deleteExtendedPropertiesScript,
     checkDatabaseIntegrityScript,
-    getSnapshotsToClone
+    getSnapshotsToClone,
+    getConnectionInfo
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails, Sandbox } from '../utils/common-types';
-import {
-    checkDatabaseExists,
-    getActiveSqlNode,
-    getSqlServerVersion,
-    getDatabaseEnvironmentDetails
-} from './workloads/mssql/mssql-operations';
+import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getDatabaseInstanceName, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
@@ -52,7 +47,6 @@ import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
 import { updateSandboxDBIntoResourceData, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
-import { getParameter } from '../lib/aws/ssm';
 import { getDriveInfo } from './createdb-operations';
 import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 
@@ -1464,27 +1458,19 @@ async function getSandboxConnectionString(
         sandboxName
     });
     try {
-        const [{ metadata, resource_name: resourceName }] = await listResources(
-            accountId,
-            databaseHostId,
-            credentialsId
-        );
+        const source = { host: databaseHostId, instance: databaseInstanceId, database: sandboxName };
 
-        const { node1InstanceId, node2InstanceId, stackname, activeDirectoryName } = metadata as unknown as Metadata;
+        const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-        const { instanceName } = await getActiveSqlNode(
-            credentialsId,
-            region,
-            node1InstanceId,
-            node2InstanceId,
-            databaseHostId
-        );
+        const { databaseInstanceName, activeNodeInstanceId } = srcDetails;
 
-        if (!instanceName) {
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the connection string');
+        let command = [getConnectionInfo(databaseInstanceName === DEFAULT_INSTANCE_NAME ? '' : databaseInstanceName)];
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [getConnectionInfo('MSSQLSERVER')];
         }
 
-        const resp = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${stackname}`);
+        const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
 
         if (!resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the connection string');
@@ -1492,87 +1478,17 @@ async function getSandboxConnectionString(
 
         const parsedResp = sqlResponseParsing(resp);
 
+        if (parsedResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+        }
+
         return {
-            server:
-                instanceName === DEFAULT_MSSQL_INSTANCE_NAME
-                    ? `${resourceName}.${activeDirectoryName}`
-                    : `${instanceName}.${activeDirectoryName}`,
-            database: sandboxName,
-            userId:
-                process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
-                    ? 'admin'
-                    : parsedResp?.domain?.username
+            server: parsedResp.server,
+            database: sandboxName
         };
     } catch (e: any) {
         logger.error(`Failed to get the connection string for sandbox ${sandboxName} in host ${databaseHostId}, ${e}`);
         throw createError(e.statusCode, e.message);
-    }
-}
-
-async function getSandboxConnectionStringV2(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    sandboxName: string,
-    databaseInstanceName: string
-) {
-    logger.info('Get SQL Server sandbox connection string', {
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        sandboxName,
-        databaseInstanceName
-    });
-    try {
-        const [{ metadata, resource_name: resourceName }] = await listResources(
-            accountId,
-            databaseHostId,
-            credentialsId,
-            region
-        );
-
-        const { stackname, activeDirectoryName, node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-
-        const { isDefaultInstance, isManagedDatabaseInstance } = await getDatabaseEnvironmentDetails(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceName,
-            node1InstanceId,
-            node2InstanceId
-        );
-
-        if (!isManagedDatabaseInstance) {
-            throw createError(
-                HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                `${databaseInstanceName} is not a managed SQL Server instance.`
-            );
-        }
-
-        const resp = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${stackname}`);
-        if (!resp) {
-            logger.error(`Failed to get SSM parameter details for resourceId: ${databaseHostId}`);
-        }
-        const parsedResp = sqlResponseParsing(resp || '{}');
-
-        return {
-            server: isDefaultInstance
-                ? `${resourceName}.${activeDirectoryName}`
-                : `${databaseInstanceName}.${activeDirectoryName}`,
-            database: sandboxName,
-            userId:
-                process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
-                    ? 'admin'
-                    : parsedResp?.domain?.username
-        };
-    } catch (error: any) {
-        logger.error(
-            `Failed to get the connection string for sandbox ${sandboxName} in host ${databaseHostId}, ${error}`
-        );
-        throw createError(error.statusCode, error.message);
     }
 }
 
@@ -2935,7 +2851,6 @@ export {
     revertMetadataForSanboxTesting,
     getDatabaseMountPointInfo,
     getSandboxConnectionString,
-    getSandboxConnectionStringV2,
     deleteSandbox,
     getSandboxSplitEstimate,
     updateSandboxLifeCycle,

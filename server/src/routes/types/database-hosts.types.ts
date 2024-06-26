@@ -455,14 +455,6 @@ const SandboxParams = Type.Composite([
     })
 ]);
 
-const SandboxParamsV2 = Type.Composite([
-    DatabaseHostSummaryParams,
-    Type.Object({
-        sandboxName: Type.String(),
-        databaseInstanceName: Type.String({ description: 'SQL Server instance name' })
-    })
-]);
-
 const SplitEstimatesResponse = Type.Object({
     volumes: Type.Array(
         Type.Object({
@@ -658,7 +650,6 @@ export {
     DatabaseMountPointResponseBody,
     DatabaseMountPointResponseType,
     SandboxParams,
-    SandboxParamsV2,
     SplitEstimatesResponse,
     SandboxLifeCycleBody,
     SandboxSnapshotsResponse,

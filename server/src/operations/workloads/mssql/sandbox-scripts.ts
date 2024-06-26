@@ -1417,6 +1417,21 @@ const getSnapshotsToClone = (
     $responseObject | ConvertTo-Json -Depth 5
 `;
 
+const getConnectionInfo = (instanceName: string) => `
+
+$responseObject = @{}
+
+try {
+    $ip = (Invoke-WebRequest -URI http://169.254.169.254/latest/meta-data/local-ipv4 -UseBasicParsing).Content;
+    $port = SQLCMD -S "$ip\\${instanceName}" -Q "SET NOCOUNT ON; SELECT DISTINCT local_tcp_port FROM sys.dm_exec_connections  WHERE local_tcp_port IS NOT NULL" -y 0;
+    $responseObject['server'] = "$($ip):$($port)${instanceName ? '\\' + instanceName : ''}"
+} catch {
+    $responseObject['error'] = "Failed to get connection info: $_.Exception.Message"
+}
+
+$responseObject | ConvertTo-Json -Depth 5
+`;
+
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
@@ -1433,5 +1448,6 @@ export {
     deleteExtendedPropertiesScript,
     checkDatabaseIntegrityScript,
     readExtendedPropertiesOfSandbox,
-    getSnapshotsToClone
+    getSnapshotsToClone,
+    getConnectionInfo
 };

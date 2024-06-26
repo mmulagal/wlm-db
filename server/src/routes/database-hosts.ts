@@ -24,7 +24,6 @@ import {
     RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
     GetSandboxConnectionStringSchema,
-    GetSandboxConnectionStringSchemaV2,
     DeleteSandboxSchema,
     GetSandboxSplitEstimateSchema,
     SandboxLifeCycleSchema,
@@ -41,7 +40,6 @@ import {
 import {
     createSandbox,
     getSandboxConnectionString,
-    getSandboxConnectionStringV2,
     getSandboxesInfo,
     getDatabaseMountPointInfo,
     getSandboxSavings,
@@ -259,25 +257,6 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseHostId,
                     databaseInstanceId,
                     sandboxName
-                );
-                return reply.send(response);
-            }
-        )
-        .get(
-            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceName/sandboxes/:sandboxName/connection-string`,
-            { schema: GetSandboxConnectionStringSchemaV2 },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceName }
-                } = request;
-
-                const response = await getSandboxConnectionStringV2(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    sandboxName,
-                    databaseInstanceName
                 );
                 return reply.send(response);
             }
