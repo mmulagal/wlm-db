@@ -58,7 +58,8 @@ import {
     deleteExtendedPropertiesScript,
     checkDatabaseIntegrityScript,
     getSnapshotsToClone,
-    readExtendedPropertiesOfSandbox
+    readExtendedPropertiesOfSandbox,
+    getConnectionInfo
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -587,7 +588,7 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getSnapshotsToCloneCommand)
     .on(SendCommandCommand, { Parameters: readExtendedPropertiesCommand })
     .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand)
-    .on(SendCommandCommand, { Parameters: getDomainCommand })
+    .on(SendCommandCommand, { Parameters: getConnectionInforCommand })
     .resolves(listSendCommandCommandResponse.getConnectionInfoCommand);
 
 ssmMock
