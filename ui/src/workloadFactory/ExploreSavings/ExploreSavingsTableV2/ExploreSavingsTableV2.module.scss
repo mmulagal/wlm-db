@@ -22,6 +22,16 @@
         gap: 16px;
     }
 
+    [class*='Table-module_header-row'] {
+        [class*='Table-module_header-cell'] {
+            &:nth-child(4) {
+                [class*='Table-module_right-border'] {
+                    pointer-events: none;
+                }
+            }
+        }
+    }
+
     .statusIcon {
         width: 10px;
         height: 10px;

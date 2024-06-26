@@ -13,7 +13,7 @@ const StorageCapacityTable = () => {
     const [sizeData, setSizeData] = useState<any>([]);
 
     useEffect(() => {
-        const sizeData = getEstimatedCostData?.data?.fsxnStorage?.size;
+        const sizeData = getEstimatedCostData?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size;
         let newList = [];
         newList.push({
             id: 1,

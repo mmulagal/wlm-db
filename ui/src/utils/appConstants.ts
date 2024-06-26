@@ -760,6 +760,8 @@ export const GENERAL = {
         'tab.'
     ],
     INSTANCE_MANAGE_REQUEST: ['Your request to manage the SQL Server instance ', ' is in progress.'],
+    MULTI_INSTANCE_MANAGE_REQUEST: ['Your request to manage ', ' SQL Server instances is in progress.'],
+
     INSTANCE_SUCCESS_DETECTED: ['Instance ', ' successfully detected.'],
     INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED: ['Instance ', ' successfully detected but failed to become managed. '],
     HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
@@ -773,6 +775,30 @@ export const GENERAL = {
     PREPARE_HOST_INFO_TAB2: [
         'Host ',
         ' is unable to become a managed host because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
+    PREPARE_DETECTED_INSTANCE_INFO: [
+        'Instance ',
+        ' state is changed to unmanaged but is unable to become a managed instance because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
+    PREPARE_DETECTED_INSTANCES_INFO: [
+        'Instances ',
+        'state has been changed to unmanaged but are unable to become managed instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
+    PREPARE_INSTANCE_INFO: [
+        'Instance ',
+        ' is unable to become a managed instance because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
+    PREPARE_INSTANCES_INFO: [
+        'Instances ',
+        'are unable to become managed instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
         'Job monitoring',
         ' to see when the modules have been installed.'
     ],
@@ -952,6 +978,8 @@ export const GENERAL = {
     REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
     REFRESH_CURRENT_RADIO: 'Refresh to current time',
     REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot',
+    HOST_DOWN: 'Host is down.',
+    SSM_DOWN: 'SSM is not connected.',
     SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
@@ -963,8 +991,29 @@ export const GENERAL = {
         'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
     ALL_UNDETECT_TEXT:
         'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
-    MANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) => `Database instance ${instanceName} managed successfully.`,
-    MANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to manage.`,
+    MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
+    MANAGE_INSTANCE_FAILED_MSG: [
+        'The attempt to manage the SQL Server instance ',
+        ' was unsuccessful. Please try again or contact support if the problem persists.'
+    ],
+    DETECT_MANAGE_INSTANCE_FAILED_MSG: [
+        'The attempt to manage the SQL Server instance ',
+        ' was unsuccessful. The instance state has been changed to unmanaged. Please try again or contact support if the problem persists.'
+    ],
+    MULTIPLE_INSTANCE_MANAGE_FAILED: [
+        'The attempt to manage ',
+        ' SQL Server instances was unsuccessful. Please try again or contact support if the problem persists.'
+    ],
+    MULTIPLE_INSTANCE_DETECT_MANAGE_FAILED: [
+        'The attempt to manage ',
+        ' SQL Server instances was unsuccessful. The instaces state has been changed to unmanaged. Please try again or contact support if the problem persists.'
+    ],
+    MULTIPLE_INSTANCE_MANAGE_PARTIAL_SUCCESS: [' out of ', ' SQL Server instances have been successfully managed.'],
+    MULTIPLE_INSTANCE_DETECT_MANAGE_PARTIAL_SUCCESS: [
+        ' out of ',
+        ' SQL Server instances have been successfully managed. The rest of the instances have been moved to unmanaged'
+    ],
+    MUTLI_INSTANCE_MANAGE_SUCCESS: [' SQL Server instances have been successfully managed.'],
     UNMANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) =>
         `Database instance ${instanceName} unmanaged successfully.`,
     UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unmanage.`,
