@@ -2041,24 +2041,18 @@ async function getProtectionDetails(
         fileSystemId,
         activeNodeInstanceId
     )) as MappedOnTapVolumeResponse) || { volumeUuids: [], volumeDBMap: {} };
-    const awsBackup =
-        (await isFsxnAwsBackupEnabled(
+
+    const [awsBackup = {}, ontapBackup = {}] = await Promise.all([
+        isFsxnAwsBackupEnabled(credentialsId, region, fileSystemId, volumeUuids, volumeDBMap, activeNodeInstanceId),
+        getOntapVolumesSnapshotCount(
             credentialsId,
             region,
             fileSystemId,
             volumeUuids,
             volumeDBMap,
             activeNodeInstanceId
-        )) || {};
-    const ontapBackup =
-        (await getOntapVolumesSnapshotCount(
-            credentialsId,
-            region,
-            fileSystemId,
-            volumeUuids,
-            volumeDBMap,
-            activeNodeInstanceId
-        )) || {};
+        )
+    ]);
 
     return { awsBackup, ontapBackup };
 }
