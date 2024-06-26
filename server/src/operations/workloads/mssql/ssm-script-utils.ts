@@ -176,6 +176,10 @@ const validateSQLInstanceConnectivity = (
     ec2instanceId: string,
     sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => `
+        $destinationPath = $env:PSModulePath.split(';')[0]
+        $CommonmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.Common"
+        $ssmmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.SimpleSystemsManagement"
+        Import-Module -Name $CommonmodulePath, $ssmmodulePath
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
@@ -209,17 +213,31 @@ const validateSQLInstanceConnectivity = (
             }
             $username = $sqlCredentials.username
             $password = $sqlCredentials.password
+            
+            $serverInstanceName = "$env:COMPUTERNAME"
+            If($sqlinstancename -ne '${DEFAULT_MSSQL_INSTANCE_NAME}') {
+                $serverInstanceName = "$env:COMPUTERNAME\\$sqlinstancename"
+                
+            }
 
             if ($username -eq $null -or $password -eq $null) {
                 $errorMessage = "SQL credentials not found for the instance $sqlinstancename"
                 throw $errorMessage
             }
-            $sqlresult = Sqlcmd -U $username -P $password -Q $sqlcmd -y 0
-            $sqlresult | ConvertFrom-Json | ForEach-Object {
-                $responseObject.add('sqlEdition', $_.sqlEdition)
-                $responseObject.add('noOfDatabases', $_.noOfDatabases)
+
+            $sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlcmd -y 0 -r1 2> $null
+
+            if([string]::IsNullOrEmpty($sqlresult)) {
+                $responseObject.add('sqlInstanceConnectivity', $False)
+                $responseObject.add('sqlerror', "SQLCMD execution failed. Verify credentials.")
             }
-            $responseObject.add('sqlInstanceConnectivity', $True)
+            else {
+                $sqlresult | ConvertFrom-Json | ForEach-Object {
+                    $responseObject.add('sqlEdition', $_.sqlEdition)
+                    $responseObject.add('noOfDatabases', $_.noOfDatabases)
+                }
+                $responseObject.add('sqlInstanceConnectivity', $True)
+            }
         }
     } catch {
         $responseObject.add('sqlerror', $_.Exception.Message)
@@ -231,6 +249,11 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
+
+    $destinationPath = $env:PSModulePath.split(';')[0]
+    $CommonmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.Common"
+    $ssmmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.SimpleSystemsManagement"
+    Import-Module -Name $CommonmodulePath, $ssmmodulePath
 
     try {
         $FSxID = '${fsxid}'
@@ -431,7 +454,7 @@ const getMappedOntapVolumesScript = (
             $QueryFilter = ''
             foreach ($SerialNumber in $SerialNumbers) {
                 if ($SerialNumber -ne '') {
-                    $QueryFilter += $SerialNumber + '|'
+                    $QueryFilter += [System.Web.HttpUtility]::UrlEncode($SerialNumber) + '|'
                 }
             }
             $QueryFilter = $QueryFilter.TrimEnd('|')
@@ -476,7 +499,7 @@ const getMappedOntapVolumesScript = (
             $QueryFilter = ''
             foreach ($Name in $Names) {
                 if ($Name -ne '') {
-                    $QueryFilter += $Name + '|'
+                    $QueryFilter += [System.Web.HttpUtility]::UrlEncode($Name) + '|'
                 }
             }
             $QueryFilter = $QueryFilter.TrimEnd('|')
@@ -527,7 +550,7 @@ const getMappedOntapVolumesScript = (
             foreach ($SmbShare in $SmbShares) {
                     $volname = $SmbShare.volumename
                     if ($volname -ne '') {
-                        $QueryFilter += $volname + '|'
+                        $QueryFilter += [System.Web.HttpUtility]::UrlEncode($volname) + '|'
                     }
                 }
             $QueryFilter = $QueryFilter.TrimEnd('|')

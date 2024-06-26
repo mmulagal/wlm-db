@@ -453,8 +453,16 @@ async function retrieveComputeAndLicenseCost(
     return Promise.all(
         ec2HostDetailsList.map(async ec2HostDetails => {
             const {
-                existingCompute: { price: ePrice = undefined, baseInstancePrice: eBasePrice = undefined } = {},
-                existingLicense: { sqlServerEdition: eSqlServerEdition = '', price: eLicensePrice = undefined } = {},
+                existingCompute: {
+                    price: ePrice = undefined,
+                    finding: eComputeFinding = '',
+                    baseInstancePrice: eBasePrice = undefined
+                } = {},
+                existingLicense: {
+                    sqlServerEdition: eSqlServerEdition = '',
+                    finding: eLicenseFinding = '',
+                    price: eLicensePrice = undefined
+                } = {},
                 recommendedCompute: {
                     instanceType: rInstanceType = '',
                     price: rPrice = undefined,
@@ -476,6 +484,7 @@ async function retrieveComputeAndLicenseCost(
                 compute: {
                     existing: {
                         instanceType: existingInstanceType,
+                        finding: eComputeFinding,
                         windowsOsVersion,
                         computeHourlyPrice: eBasePrice,
                         computeMonthlyPrice: eBasePrice ? getMonthlyPriceFromHourlyPrice(eBasePrice) : undefined,
@@ -496,17 +505,24 @@ async function retrieveComputeAndLicenseCost(
                 },
                 license: {
                     existing: {
+                        finding: eLicenseFinding,
                         sqlServerEdition: eSqlServerEdition,
                         licenseHourlyPrice: eLicensePrice,
                         licenseIncluded: !!(eLicensePrice && eLicensePrice > 0),
-                        licenseMonthlyPrice: eLicensePrice ? getMonthlyPriceFromHourlyPrice(eLicensePrice) : undefined,
+                        licenseMonthlyPrice:
+                            eLicensePrice !== undefined && eLicensePrice >= 0
+                                ? getMonthlyPriceFromHourlyPrice(eLicensePrice)
+                                : undefined,
                         hoursInMonth: HOURS_IN_MONTH
                     },
                     recommended: {
                         sqlServerEdition: rSqlServerEdition,
                         licenseHourlyPrice: rLicensePrice,
                         licenseIncluded: !!(rLicensePrice && rLicensePrice > 0),
-                        licenseMonthlyPrice: rLicensePrice ? getMonthlyPriceFromHourlyPrice(rLicensePrice) : undefined,
+                        licenseMonthlyPrice:
+                            rLicensePrice !== undefined && rLicensePrice >= 0
+                                ? getMonthlyPriceFromHourlyPrice(rLicensePrice)
+                                : undefined,
                         hoursInMonth: HOURS_IN_MONTH,
                         message: licenseMessage
                     }

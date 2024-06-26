@@ -14,6 +14,16 @@ export interface InventorySliceData {
     fsxCredentialStatusObj: any;
     fsxCredentialStatusLoading: boolean;
     mssqlInstancesData: any;
+    inProgressInstances: any;
+    manageHostSelectedRows: any;
+    valuesNotFilled: boolean;
+    detectHostRadio: string;
+    detectManageUserName: string;
+    detectManagePassword: string;
+    detectOntapUsername: string;
+    detectOntapPassword: string;
+    detectedInstanceId: string;
+    inventoryExpandedRowHostData: any;
 }
 
 export interface InventoryTableData {
@@ -31,55 +41,73 @@ export interface InventoryTableData {
     vpcCidr?: string;
     action?: string;
     actionDisable?: boolean;
-    ec2Details?: Array<{
-        id?: string;
-        name?: string;
-        ebsVolumeId?: string;
-    }>;
+    ec2Details?: Array<EC2DetailsInterface>;
     estimatedUsageCost?: EstimatedUsageCostInterface;
     allocatedCapacity?: number;
     isManagedHost?: boolean;
     loading?: boolean;
     isDetected?: boolean;
     storageType?: string;
-    sqlServerInstances?: Array<{
-        databaseInstanceId?: string;
-        databaseInstanceName?: string;
-        status?: string;
-        databaseCount?: number;
-        isDetected?: boolean;
-        isManaged?: boolean;
-        fileSystemDeploymentMode?: string;
-        fileSystemType?: string;
-        protection?: {
-            isAwsBackupEnabled?: { fsxn?: boolean; fsxw?: boolean; ebs?: boolean };
-            isFsxOntapSnapshotsEnabled?: boolean;
-            isSqlNativeEnabled?: boolean;
-            protectedDatabases?: number;
+    sqlServerInstances?: Array<InventoryTableInstanceDatInterface>;
+    hasInstanceData?: boolean;
+}
+
+export interface InventoryTableInstanceDatInterface {
+    databaseInstanceId?: string;
+    databaseInstanceName?: string;
+    status?: string;
+    databaseCount?: number;
+    isDetected?: boolean;
+    isManaged?: boolean;
+    fileSystemDeploymentMode?: string;
+    fileSystemType?: string;
+    protection?: {
+        isAwsBackupEnabled?: { fsxn?: boolean; fsxw?: boolean; ebs?: boolean };
+        isFsxOntapSnapshotsEnabled?: boolean;
+        isSqlNativeEnabled?: boolean;
+        protectedDatabases?: number;
+    };
+    performance?: {
+        assessment?: string;
+    };
+    storage?: {
+        fsxn?: {
+            protocol?: Array<String>;
+            size?: number;
+            used?: number;
+            spaceSavings?: number;
+            spaceSavingsPercentage?: number;
         };
-        performance?: {
-            assessment?: string;
+        fsxw?: {
+            size?: number;
+            used?: number;
+            spaceSavings?: number;
+            spaceSavingsPercentage?: number;
         };
-        storage?: {
-            fsxn?: {
-                protocol?: Array<String>;
-                size?: number;
-                used?: number;
-                spaceSavings?: number;
-                spaceSavingsPercentage?: number;
-            };
-            fsxw?: {
-                size?: number;
-                used?: number;
-                spaceSavings?: number;
-                spaceSavingsPercentage?: number;
-            };
-            ebs?: {
-                size?: number;
-            };
+        ebs?: {
+            size?: number;
         };
-        allocatedCapacity?: number;
-    }>;
+    };
+    allocatedCapacity?: number;
+}
+
+export interface StorageInterface {
+    fsxn?: {
+        protocol?: Array<String>;
+        size?: number;
+        used?: number;
+        spaceSavings?: number;
+        spaceSavingsPercentage?: number;
+    };
+    fsxw?: {
+        size?: number;
+        used?: number;
+        spaceSavings?: number;
+        spaceSavingsPercentage?: number;
+    };
+    ebs?: {
+        size?: number;
+    };
 }
 
 export interface InventoryChartData {
@@ -102,6 +130,7 @@ export interface DatabaseInstancesSummaryInterface {
     databaseInstanceName?: string;
     status?: string;
     databaseCount?: number;
+    statusColText?: string;
     databaseServer?: {
         operatingSystem?: string;
         serverEdition?: string;
@@ -188,6 +217,7 @@ export interface ManagedHostsRowInterface {
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     databaseHostStatus?: string;
     ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
+    loading?: boolean;
     databaseInstanceDetails?: Array<{
         instanceName?: string;
         instanceState?: string;
@@ -207,14 +237,61 @@ export interface ManagedHostsRowInterface {
         vpcName?: string;
         vpcCidr?: string;
         keyPairName?: string;
-        ec2Details?: Array<{
-            id?: string;
+        ec2Details?: Array<EC2DetailsInterface>;
+        activeDirectoryDetails?: {
             name?: string;
-            ebsVolumeId?: string;
-            instanceType?: string;
-            availabilityZone?: string;
-            subnetId?: string;
-        }>;
+            address?: string;
+        };
+    };
+    ebsResourceInfo?: Array<{
+        id?: string;
+        size?: number;
+        cost?: number;
+        throughput?: number;
+        iops?: number;
+        volumeType?: string;
+    }>;
+    estimatedUsageCost?: EstimatedUsageCostInterface;
+    databaseInstancesSummary?: Array<DatabaseInstancesSummaryInterface>;
+    nodeInstanceError?: string;
+}
+
+export interface EC2DetailsInterface {
+    id?: string;
+    name?: string;
+    ebsVolumeId?: string;
+    instanceType?: string;
+    availabilityZone?: string;
+    subnetId?: string;
+}
+
+export interface InstancesHostsRowInterface {
+    id?: string;
+    name?: string;
+    nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
+    databaseHostStatus?: string;
+    ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
+    loading?: boolean;
+    databaseInstanceDetails?: Array<{
+        instanceName?: string;
+        instanceState?: string;
+        isManaged?: boolean;
+        databaseInstanceStatus?: string; // up, down
+    }>;
+    clusterNodeDetails?: Array<{
+        ec2InstanceId?: string;
+        ec2InstancePrivateIpAddress?: string;
+        ec2InstanceType?: string;
+        ec2InstanceName?: string;
+    }>;
+    nodeTopology?: {
+        awsAccount?: string;
+        region?: string;
+        vpcId?: string;
+        vpcName?: string;
+        vpcCidr?: string;
+        keyPairName?: string;
+        ec2Details?: Array<EC2DetailsInterface>;
         activeDirectoryDetails?: {
             name?: string;
             address?: string;
@@ -281,7 +358,19 @@ export interface DiscoveredStorageObj {
 }
 
 export interface StatusObjInterface {
-    status: string;
-    name: string;
-    storageType: any;
+    status?: string;
+    name?: string;
+    storageType?: any;
+    fsxId?: string;
+    isFsxRegistered?: boolean;
+    detectOption?: string;
+    detectOptionDisableMsg?: string;
 }
+
+export interface InstancesObjectInterface {
+    data?: InstancesHostsRowInterface;
+    loading?: boolean;
+    isManagedHost?: boolean;
+}
+
+export type InstanceActions = 'manage' | 'unmanage' | 'detect';

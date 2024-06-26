@@ -10,8 +10,26 @@
     }
 
     .colText {
+        gap: 16px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 180px;
+    }
+
+    .azColText {
         display: flex;
         gap: 16px;
+    }
+
+    [class*='Table-module_header-row'] {
+        [class*='Table-module_header-cell'] {
+            &:nth-child(4) {
+                [class*='Table-module_right-border'] {
+                    pointer-events: none;
+                }
+            }
+        }
     }
 
     .statusIcon {

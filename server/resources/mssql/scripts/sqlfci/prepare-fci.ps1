@@ -60,7 +60,7 @@ if (Test-Path -Path "C:\SQLServerSetup\setup.exe") {
 else {
     $SQLMediaPath = 'C:\cfn\Installer\SQLServerSetup\setup.exe'
     If (Test-Path -path "C:\SQL*") {
-        $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname
+        $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname | Sort-Object -Property Length
         If($SQLInstallerPaths -is 'string')
         {
         $SQLMediaPath = $SQLInstallerPaths

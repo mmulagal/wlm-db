@@ -6,22 +6,44 @@ import DotComponent from '../../../../common/DotComponent/DotComponent';
 import { useEffect, useRef, useState } from 'react';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useDispatch } from 'react-redux';
+import { setManageHostSelectedRows } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const ManagedHostDialog = ({ dialogData }: any) => {
+    const { inProgressInstances } = useAppSelector(state => state?.inventoryV2);
+
     const [data, setData] = useState<any>([]);
 
     const defaultRef: any = useRef();
+    const dispatch = useDispatch();
 
     useEffect(() => {
-        let output = dialogData.map((obj: any) => {
-            if (obj.status === 'inProgress' || obj.status === 'managed') {
-                return { ...obj, cellProps: { isDisabled: true } };
+        const dbInstances = dialogData?.sqlServerInstances;
+        let output = dbInstances.map((obj: any) => {
+            const isInstanceInProgress = inProgressInstances.has(
+                `${dialogData?.ec2InstanceId}_${obj?.databaseInstanceName}`
+            );
+            if (
+                isInstanceInProgress ||
+                obj.statusColText === INVENTORY_STATUS.MANAGED ||
+                obj.statusColText === INVENTORY_STATUS.UNDETECTED
+            ) {
+                return {
+                    ...obj,
+                    cellProps: { isDisabled: true },
+                    statusColText: isInstanceInProgress ? INVENTORY_STATUS.IN_PROGRESS : obj.statusColText,
+                    storageType: dialogData?.storageType
+                };
             } else {
-                return { ...obj, cellProps: { isDisabled: false } };
+                return { ...obj, cellProps: { isDisabled: false }, storageType: dialogData?.storageType };
             }
         });
-        let defaultSelection = dialogData.map((item: any) => {
-            if (item.status === 'inProgress' || item.status === 'managed') {
+        let defaultSelection = dbInstances.map((item: any) => {
+            const isInstanceInProgress = inProgressInstances.has(
+                `${dialogData?.ec2InstanceId}_${item?.databaseInstanceName}`
+            );
+            if (isInstanceInProgress || item.statusColText === 'managed') {
                 return item.id;
             }
         });
@@ -37,7 +59,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
     const managedHostDialogColDefs: ColumnProps[] = [
         {
             Header: 'SQL Server instance',
-            accessor: 'serverInstance',
+            accessor: 'databaseInstanceName',
             id: '1',
             isSortable: true,
             width: '212px',
@@ -47,30 +69,33 @@ const ManagedHostDialog = ({ dialogData }: any) => {
         },
         {
             Header: 'Status',
-            accessor: 'status',
+            accessor: 'statusColText',
             id: '2',
             width: '192px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                if (rowData.status === INVENTORY_STATUS.UNMANAGED) {
+                if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
                 }
-                if (rowData.status === 'inProgress') {
+                if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
+                }
+                if (rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
                         <div className={styles.inProgress}>
                             <SmallLoader />
-                            <DsTypography variant="Regular_14">In progress</DsTypography>
+                            <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
                         </div>
                     );
                 }
-                if (rowData.status === 'managed') {
+                if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
                     return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
                 }
             }
         },
         {
             Header: 'Storage type',
-            accessor: 'storageType',
+            accessor: 'fileSystemType',
             id: '3',
             width: '180px',
             filterOptions: 'auto',
@@ -100,6 +125,17 @@ const ManagedHostDialog = ({ dialogData }: any) => {
         //@ts-ignore
         defaultSelectedRows: defaultRef.current
     });
+
+    useEffect(() => {
+        let selectedRows: any = [];
+        const selectionStateRows: any = tableProps.selectionState?.rows;
+        Object.keys(selectionStateRows).map(key => {
+            if (selectionStateRows[key]) {
+                selectedRows.push(data[parseInt(key)]);
+            }
+        });
+        dispatch(setManageHostSelectedRows(selectedRows));
+    }, [tableProps.selectionState, data]);
 
     return (
         <div className={styles.managedHostDialog}>

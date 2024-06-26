@@ -484,6 +484,8 @@ export const OS_VERSIONS_LIST = [
 
 export const SANDBOX_ACTIONS_POLLING_INTERVAL = 5000;
 
+export const MAX_IOPS_VALUE = 160000;
+
 export const INVENTORY_STATUS = {
     MANAGED: 'Managed',
     UNMANAGED: 'Unmanaged',
@@ -494,7 +496,11 @@ export const INVENTORY_STATUS = {
     OFFLINE: 'Offline',
     UNKNOWN: 'Unknown',
     SSM_ONLINE: 'online',
-    SSM_CONNECTED: 'connected'
+    SSM_CONNECTED: 'connected',
+    HOST_ONLINE: 'online',
+    NOT_AVAILABLE: 'N/A',
+    UP: 'up',
+    DOWN: 'down'
 };
 
 export const INVENTORY_ACTIONS = {

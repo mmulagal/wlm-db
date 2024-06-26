@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar, Popover, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTableV2.module.scss';
@@ -7,15 +7,14 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
     renderAllocatedCapacity,
-    renderDeploymentModel,
     renderEstimatedCost,
-    renderFileSystemType,
-    renderUnmanagedAZ,
-    renderUnmanagedHostName
+    renderInstanceListText,
+    renderUnmanagedAZ
 } from '../../Inventory/InventoryUtils';
 import { onClickESHost } from '../ExploreSavingsUtils';
 import { INVENTORY_STATUS } from '../../../utils/consts';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { useEffect, useState } from 'react';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -24,6 +23,31 @@ const ExploreSavingsTableV2 = () => {
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const [tableData, setTableData] = useState<any>([]);
+
+    useEffect(() => {
+        if (unManagedHostFormatedList) {
+            let result: any = [];
+            unManagedHostFormatedList?.map((perRow: any) => {
+                let instanceList: any = [];
+                perRow?.ec2Details?.map((row: any) => {
+                    if (row?.name && row?.id) {
+                        instanceList.push(row?.name + ' | ' + row?.id);
+                    } else if (row?.id) {
+                        instanceList.push(row?.id);
+                    }
+                });
+                const rowData = {
+                    ...perRow,
+                    instanceListText: instanceList.join(',')
+                };
+                result.push(rowData);
+            });
+            setTableData(result);
+        } else {
+            setTableData([]);
+        }
+    }, [unManagedHostFormatedList]);
 
     const lastColDetails = () => {
         return {
@@ -37,7 +61,7 @@ const ExploreSavingsTableV2 = () => {
                         <div
                             className={styles.detectManage}
                             onClick={() => {
-                                onClickESHost(dispatch, rowData, isDemoMode);
+                                onClickESHost(dispatch, rowData);
                             }}
                         >
                             <Typography variant="Regular_14" className={styles.textStyle}>
@@ -107,32 +131,12 @@ const ExploreSavingsTableV2 = () => {
         },
         {
             Header: GENERAL.DB_HOST_INSTANCE_ID,
-            accessor: 'clusterEc2Instances',
+            accessor: 'instanceListText',
             id: '3',
             width: '200px',
-            accessorForTextFilter: 'clusterEc2Instances',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        {cellData && (
-                            <div>
-                                {cellData?.[0] && (
-                                    <Typography variant="Regular_13" className={styles.colText}>
-                                        {cellData[0]}
-                                    </Typography>
-                                )}
-                                {cellData?.[1] && (
-                                    <Typography variant="Regular_13" className={styles.colText}>
-                                        {cellData[1]}
-                                    </Typography>
-                                )}
-                            </div>
-                        )}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && cellData !== 0 && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-                    </>
-                );
+                return renderInstanceListText(cellData, rowData, styles);
             }
         },
         {
@@ -180,7 +184,7 @@ const ExploreSavingsTableV2 = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: ExploreSavingsColDefs,
-        rows: unManagedHostFormatedList || [],
+        rows: tableData || [],
         pageSize: 50,
         isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
     });

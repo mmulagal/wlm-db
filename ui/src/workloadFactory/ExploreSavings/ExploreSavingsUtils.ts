@@ -6,10 +6,10 @@ import {
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { GENERAL } from '../../utils/appConstants';
-import { GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, TIB_IN_BYTE, WLF_TABS } from '../../utils/consts';
+import { GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import { formatFractionalNumber } from '../../utils/utilityFunctions';
 
-export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
+export const onClickESHost = (dispatch: any, rowData: any) => {
     const deploymentModel = (() => {
         return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
@@ -17,168 +17,20 @@ export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
     dispatch(setSelectedInstanceId(rowData?.id));
     dispatch(setSelectedDeploymentModel(deploymentModel));
     dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || GENERAL.ES_SERVER_NAME));
-    setESInstanceData(rowData, isDemoMode, deploymentModel, dispatch);
+    setESInstanceData(rowData, dispatch);
 };
 
-export const setESInstanceData = (data: any, isDemoMode: any, type: string, dispatch: any) => {
-    if (isDemoMode) {
-        let demoData = {};
-        if (type === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            demoData = {
-                ...data,
-                topology: {
-                    ...data?.topology,
-                    ec2Details: [
-                        {
-                            ...data?.topology?.ec2Details?.[0],
-                            instanceType: 'm5.2xlarge'
-                        }
-                    ]
-                },
-                serverInstallationMode: GENERAL.STANDALONE,
-                databaseServer: {
-                    ...data?.databaseServer,
-                    activeNode: 'SQLserver-Finance-01',
-                    serverEdition: 'SQL Server Standard Edition'
-                },
-                databaseCount: 2,
-                ebsResourceInfo: [
-                    {
-                        id: 'vol1',
-                        size: 2 * TIB_IN_BYTE,
-                        volumeType: 'io2',
-                        iops: 40000,
-                        throughput: 128
-                    },
-                    {
-                        id: 'vol2',
-                        size: 2 * TIB_IN_BYTE,
-                        volumeType: 'io2',
-                        iops: 40000,
-                        throughput: 128
-                    }
-                ],
-                recommendedInstance: {
-                    serverInstallationMode: GENERAL.STANDALONE,
-                    serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
-                    serverVersion: 'Microsoft SQL Server 2019',
-                    instanceType: ['m5.2xlarge']
-                },
-                storage: {
-                    ebs: {
-                        size: 4 * TIB_IN_BYTE
-                    }
-                }
-            };
-        } else {
-            demoData = {
-                ...data,
-                topology: {
-                    ...data?.topology,
-                    ec2Details: [
-                        {
-                            ...data?.topology?.ec2Details?.[0],
-                            instanceType: 'm5.2xlarge'
-                        },
-                        {
-                            ...data?.topology?.ec2Details?.[0],
-                            instanceType: 'm5.2xlarge'
-                        }
-                    ]
-                },
-                serverInstallationMode: GENERAL.AOAG,
-                databaseServer: {
-                    ...data?.databaseServer,
-                    activeNode: 'SQLserver-PLM',
-                    serverEdition: 'SQL Server Enterprise Edition'
-                },
-                databaseCount: 2,
-                ebsResourceInfo: [
-                    {
-                        id: 'vol1',
-                        size: 5 * TIB_IN_BYTE,
-                        volumeType: 'io2',
-                        iops: 40000,
-                        throughput: 128
-                    },
-                    {
-                        id: 'vol2',
-                        size: 5 * TIB_IN_BYTE,
-                        volumeType: 'io2',
-                        iops: 40000,
-                        throughput: 128
-                    }
-                ],
-                recommendedInstance: {
-                    serverInstallationMode: GENERAL.FAILOVER_CLUSTER_INSTANCES,
-                    serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
-                    serverVersion: 'Microsoft SQL Server 2019',
-                    instanceType: ['m5.2xlarge']
-                },
-                storage: {
-                    ebs: {
-                        size: 10 * TIB_IN_BYTE
-                    }
-                }
-            };
-        }
-        dispatch(setSelectedHostDetails(demoData));
-    } else {
-        dispatch(
-            setSelectedHostDetails({
-                ...data,
-                recommendedInstance: {
-                    serverInstallationMode: data?.serverInstallationMode,
-                    serverEdition: data?.databaseServer?.serverEdition,
-                    serverVersion: data?.databaseServer?.serverVersion,
-                    instanceType: data?.topology?.ec2Details?.map((inst: any) => inst?.instanceType)
-                }
-            })
-        );
-    }
-};
-
-export const updateDemoEbsRows = (data: any) => {
-    const updatedNonFsxnStorageList = data?.map((perRow: any) => {
-        if (perRow?.sqlServerInstances?.[0]?.sqlServerNodes?.length <= 1) {
-            return {
-                ...perRow,
-                sizeformat: '4 TiB',
-                azType: 'Single AZ',
-                sqlServerInstances: perRow?.sqlServerInstances?.map((perInst: any) => {
-                    return {
-                        ...perInst,
-                        deploymentTypes: [
-                            {
-                                type: 'SINGLE_AZ_1',
-                                zones: ['availability-zone-3']
-                            }
-                        ]
-                    };
-                })
-            };
-        } else if (perRow?.sqlServerInstances?.[0]?.sqlServerNodes) {
-            return {
-                ...perRow,
-                sizeformat: '10 TiB',
-                azType: 'Multi AZ',
-                sqlServerInstances: perRow?.sqlServerInstances?.map((perInst: any) => {
-                    return {
-                        ...perInst,
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
-                    };
-                })
-            };
-        } else {
-            return { ...perRow };
-        }
-    });
-    return updatedNonFsxnStorageList;
+export const setESInstanceData = (data: any, dispatch: any) => {
+    dispatch(
+        setSelectedHostDetails({
+            ...data,
+            recommendedInstance: {
+                serverInstallationMode: data?.serverInstallationMode,
+                serverVersion:
+                    data?.databaseServer?.serverVersion || data?.sqlServerInstances?.[0]?.databaseServer?.serverVersion
+            }
+        })
+    );
 };
 
 export const formatCalcSize = (val: any) => {

@@ -20,9 +20,15 @@ const DatabaseHostObjectParams = Type.Object({
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
 const DatabaseHostSummaryParams = Type.Composite([CredentialsIdParams, Type.Object({ databaseHostId: Type.String() })]);
+
 const DatabaseHostInstanceSummaryParams = Type.Composite([
     DatabaseHostSummaryParams,
     Type.Object({ databaseInstanceId: Type.String() })
+]);
+
+const DatabaseHostOptionalInstanceSummaryParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Optional(Type.Object({ databaseInstanceId: Type.String() }))
 ]);
 
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
@@ -173,7 +179,7 @@ const UsageCostPerStorageTypeResponse = Type.Optional(
     Type.Object({
         compute: Type.Number({ description: 'Compute cost in dollars' }),
         storage: Type.Object({
-            fsxn: Type.Number({ description: 'FSX for NetApp ONTAP Storage  cost in dollars' }),
+            fsxn: Type.Optional(Type.Number({ description: 'FSX for NetApp ONTAP Storage  cost in dollars' })),
             fsxw: Type.Optional(Type.Number({ description: 'FSX for Windows Storage cost in dollars' })),
             ebs: Type.Optional(Type.Number({ description: 'EBS Storage cost in dollars' }))
         }),
@@ -249,6 +255,15 @@ const EbsResourceInfoResponse = Type.Optional(
         })
     )
 );
+const FsxResourceInfoResponse = Type.Optional(
+    Type.Array(
+        Type.Object({
+            id: Type.String(),
+            capacityCost: Type.Number(),
+            operationalCost: Type.Number()
+        })
+    )
+);
 const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
@@ -316,7 +331,8 @@ const CreateDatabseRequestBody = Type.Object({
     databaseName: Type.String({ minLength: 1, maxLength: 123 }),
     dataFileConfig: FileConfig,
     logFileConfig: FileConfig,
-    collation: Type.String()
+    collation: Type.String(),
+    databaseInstanceId: Type.Optional(Type.String())
 });
 
 const DatabasesCreateResponse = Type.Object({
@@ -396,7 +412,8 @@ const SandboxInfoResponse = Type.Object({
     sandboxName: Type.Optional(Type.String()),
     databaseHostName: Type.String(),
     databaseHostId: Type.String(),
-    databaseInstanceName: Type.String(),
+    databaseInstanceName: Type.Optional(Type.String()),
+    databaseInstanceId: Type.Optional(Type.String()),
     sourceDatabaseName: Type.Optional(Type.String()),
     sourceDatabaseHostName: Type.Optional(Type.String()),
     sourceDatabaseInstanceName: Type.Optional(Type.String()),
@@ -417,7 +434,7 @@ type SandboxInfoResponseType = Static<typeof SandboxInfoResponse>;
 
 const DatabaseMountPointRequestQueryParam = Type.Object({
     databaseName: Type.String(),
-    instanceName: Type.String()
+    databaseInstanceId: Type.String()
 });
 
 const DatabaseMountPointRequestQueryParamV2 = Type.Object({
@@ -430,7 +447,13 @@ const DatabaseMountPointResponseBody = Type.Object({
 });
 type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
 
-const SandboxParams = Type.Composite([DatabaseHostSummaryParams, Type.Object({ sandboxName: Type.String() })]);
+const SandboxParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Object({
+        sandboxName: Type.String(),
+        databaseInstanceId: Type.String({ description: 'SQL Server instance id' })
+    })
+]);
 
 const SandboxParamsV2 = Type.Composite([
     DatabaseHostSummaryParams,
@@ -494,7 +517,7 @@ const NodeTopologyResponse = Type.Object({
 const DatabaseInstanceTopology = Type.Object({
     serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
-    fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows'] }),
+    fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows', NOT_AVAILABLE] }),
     fileSystemId: Type.Optional(Type.String()),
     fileSystemName: Type.Optional(Type.String()),
     fileSystemDeploymentMode: Type.Optional(Type.String()),
@@ -514,6 +537,7 @@ const DatabaseHostInstanceSummaryResponse = Type.Object({
     status: Type.String({ enum: [ServerState.UP, ServerState.DOWN, NOT_AVAILABLE] }),
     databaseCount: Type.Optional(Type.Number()),
     databaseServer: Type.Optional(DatabaseServerMetadataResponse),
+    nodeTopology: Type.Optional(NodeTopologyResponse),
     databaseInstanceTopology: Type.Optional(DatabaseInstanceTopology),
     protection: Type.Optional(ProtectionPerStorageTypeResponse),
     performance: Type.Optional(PerformanceResponse),
@@ -538,6 +562,8 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
+    fsxnResourceInfo: Type.Optional(FsxResourceInfoResponse),
+    fsxwResourceInfo: Type.Optional(FsxResourceInfoResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
     databaseInstancesSummary: Type.Optional(Type.Array(DatabaseHostInstanceSummaryResponse)),
     clusterNodeDetails: Type.Optional(
@@ -644,5 +670,6 @@ export {
     DatabaseHostInstanceSummaryResponse,
     DatabaseHostInstanceSummaryResponseType,
     DatabaseInstanceTopologyType,
-    DatabaseHostInstanceSummaryParams
+    DatabaseHostInstanceSummaryParams,
+    DatabaseHostOptionalInstanceSummaryParams
 };

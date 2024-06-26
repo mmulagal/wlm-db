@@ -7,18 +7,74 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { formatSizeTwoPrecision, isAwsBackupEnabled } from '../../../../utils/utilityFunctions';
-import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
+import {
+    createDetectHostPayload,
+    formatSizeTwoPrecision,
+    isAwsBackupEnabled
+} from '../../../../utils/utilityFunctions';
+import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
+import {
+    useManageMssqlInstanceMutation,
+    useRegisterResourceCredentialsMutation,
+    useUnmanageMssqlInstanceMutation
+} from '../../../../utils/apiService';
+import {
+    setDetectManagePassword,
+    setDetectManageUserName,
+    setDetectONTAPPassword,
+    setDetectONTAPUserName,
+    setDetectedInstanceId,
+    setInProgressInstances,
+    setInventoryTableData,
+    setRadioValueDetect,
+    setValuesForForm
+} from '../../../../store/workloadFactory/inventoryV2Slice';
+import store from '../../../../store/store';
+import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
+import {
+    resetWorkloadFactoryResourceData,
+    setSelectedDatabaseInstance,
+    setSelectedDatabaseInstanceName,
+    setSelectedHostname,
+    setSelectedResourceId
+} from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
+import {
+    addInitialDBCreateData,
+    initialCreateNewUserState,
+    setDBHostName,
+    setInstanceId,
+    setInstanceName
+} from '../../../../store/workloadFactory/createNewDBSlice';
+import { updateResourceId } from '../../../../store/authSlice';
+import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatus } from '../../InventoryUtilsV2';
+import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
+import UndetectedHostDialogContentV2 from '../UndetectedHostDialogContent/UndetectedHostDialogContentV2';
+import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecondDialogV2';
+import useResize from '../../../../common/hooks/useResize';
 
-const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollPosition: any }) => {
-    const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
+const ManagedHostSubTable = ({
+    handleManageInstances
+}: {
+    handleManageInstances: (rowData: any, instances: any, isDetected?: boolean) => void;
+}) => {
+    const windowSize = useResize();
+    const {
+        inventoryTableData,
+        inProgressInstances,
+        inventoryExpandedRowHostData: hostData
+    } = useAppSelector(state => state.inventoryV2);
+
+    const rowId = hostData?.id;
+    const hostname = hostData?.name;
+    const resourceId = hostData?.resourceId;
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
@@ -29,9 +85,12 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
 
     const dispatch = useDispatch();
 
+    const [unmanageApi] = useUnmanageMssqlInstanceMutation();
+    const [registerResourceCred] = useRegisterResourceCredentialsMutation();
+
     useEffect(() => {
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
-            const newTable = inventoryTableData?.[rowId]?.sqlServerInstances?.map(perRow => {
+            const newTable = inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
                 let protectionText = '';
                 if (
                     isAwsBackupEnabled(perRow) ||
@@ -48,7 +107,10 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                     protectionText: protectionText,
                     allocatedCapacityText: perRow?.allocatedCapacity
                         ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
-                        : ''
+                        : '',
+                    statusColText: inProgressInstances.has(`${hostData?.ec2InstanceId}_${perRow.databaseInstanceName}`)
+                        ? INVENTORY_STATUS.IN_PROGRESS
+                        : perRow.statusColText
                 };
             });
             setData(newTable);
@@ -57,7 +119,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
         }
     }, [rowId, inventoryTableData]);
 
-    const handleDialog = () => {
+    const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
                 header={'Unmanage instance'}
@@ -75,7 +137,42 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                 primaryButton={'Unmanage'}
                 secondaryButton={'Close'}
                 callback={() => {
-                    console.log('action');
+                    const updatedState = store.getState();
+                    const { inProgressInstances } = updatedState.inventoryV2;
+                    const inProgressId = `${hostData?.ec2InstanceId}_${rowData?.databaseInstanceName}`;
+                    dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
+                    unmanageApi({
+                        credentialsId: headerSelectedCred?.data?.credentialsId,
+                        regionId: headerSelectedRegion?.label2,
+                        resourceId,
+                        dbInstanceId: rowData?.databaseInstanceId
+                    }).then((res: any) => {
+                        const updatedState = store.getState();
+                        const { inProgressInstances } = updatedState?.inventoryV2;
+                        let updatedInProgressInstances = new Set([...inProgressInstances]);
+                        updatedInProgressInstances.delete(inProgressId);
+                        dispatch(setInProgressInstances(updatedInProgressInstances));
+                        if (res?.data?.items) {
+                            if (res?.data?.items?.[0]?.errorMessage) {
+                                dispatch(
+                                    addNotification({
+                                        notificationType: NOTIFICATION_TYPES.ERROR,
+                                        message: GENERAL.UNMANAGE_INSTANCE_FAILED_MSG(rowData?.databaseInstanceName),
+                                        additionalText: res?.data?.items?.[0]?.errorMessage
+                                    })
+                                );
+                            } else {
+                                const updatedInventoryTableData = updateInstanceStatus('unmanage', hostData, rowData);
+                                dispatch(setInventoryTableData(updatedInventoryTableData));
+                                dispatch(
+                                    addNotification({
+                                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                        message: GENERAL.UNMANAGE_INSTANCE_SUCCESS_MSG(rowData?.databaseInstanceName)
+                                    })
+                                );
+                            }
+                        }
+                    });
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -85,25 +182,144 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
         );
     };
 
-    //Function to manage the row
-    const handleManage = (rowData: any) => {
-        let output = data.map((obj: any) => {
-            if (obj.name === rowData.name) {
-                return { ...obj, cellProps: { isDisabled: true }, statusColText: INVENTORY_STATUS.IN_PROGRESS };
-            }
-            return obj;
-        });
-        setData(output);
+    const resourceAction = (rowData: any) => {
+        dispatch(resetWorkloadFactoryResourceData());
+        dispatch(setSelectedHostname(hostname));
+        dispatch(setSelectedResourceId(resourceId));
+        dispatch(setSelectedDatabaseInstance(rowData?.databaseInstanceId));
+        dispatch(setSelectedDatabaseInstanceName(rowData?.databaseInstanceName));
+    };
 
-        setTimeout(() => {
-            let output = data.map((obj: any) => {
-                if (obj.name === rowData.name) {
-                    return { ...obj, cellProps: { isDisabled: false }, statusColText: INVENTORY_STATUS.MANAGED };
+    const resetDialogValues = () => {
+        // reset all detect host dialog fields if dialog is closed.
+        dispatch(setIsDetectHostError(''));
+        dispatch(setDetectManageUserName(''));
+        dispatch(setDetectManagePassword(''));
+        dispatch(setDetectONTAPUserName(''));
+        dispatch(setDetectONTAPPassword(''));
+    };
+
+    // This function is used to check if user wants to manage the detected host vis workload factory
+    const handleMoveToManage = async (rowData: any, fsxId: any, isFsxRegister?: boolean) => {
+        const state = store.getState();
+        const detectHostRadio = state.inventoryV2.detectHostRadio;
+        if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
+            handleManageInstances(hostData, [rowData?.databaseInstanceName], true);
+            const manageStartMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
+                    <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
+                    {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: manageStartMsg }));
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
+        } else {
+            const updatedInventoryTableData = updateInstanceStatus('detect', hostData, rowData);
+            dispatch(setInventoryTableData(updatedInventoryTableData));
+            const detectedSuccessMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.INSTANCE_SUCCESS_DETECTED[0]}
+                    <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
+                    {GENERAL.INSTANCE_SUCCESS_DETECTED[1]}
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: detectedSuccessMsg }));
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
+        }
+        // if fsx register is false and only db cred is added than call instance API
+        if (!isFsxRegister) {
+            dispatch(setDetectedInstanceId(hostData?.ec2InstanceId));
+        }
+    };
+
+    // This function is to register credentials on detect host
+    const handleRegisterResourceCred = async (rowData: any, fsxId: string) => {
+        if (!detectFieldsValidation(rowData)) {
+            dispatch(setValuesForForm(true));
+        } else {
+            dispatch(setValuesForForm(false));
+            dispatch(setIsDetectHostLoading(true));
+            const sqlServerInstance = rowData?.sqlServerInstance || '';
+            try {
+                const result: any = await registerResourceCred({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instanceId: hostData?.ec2InstanceId,
+                    payload: createDetectHostPayload(sqlServerInstance, fsxId)
+                });
+                if (result && !result?.error) {
+                    if (result?.data?.sqlServerError || result?.data?.fsxnError) {
+                        let error = [];
+                        error.push(result?.data?.sqlServerError || '');
+                        error.push(result?.data?.fsxnError || '');
+                        dispatch(setIsDetectHostError(error.join(' ')));
+                        dispatch(setIsDetectHostLoading(false));
+                    } else {
+                        dispatch(setIsDetectHostLoading(false));
+
+                        // store fsx cred in register obj if payload has fsx register
+                        let isFsxRegister = saveFsxInCredRegisteredObj(fsxId, dispatch);
+
+                        if (rowData?.storage && rowData?.storage?.length > 0) {
+                            setTimeout(() => {
+                                setDialog(
+                                    <DialogComponent
+                                        header={
+                                            <div className={styles.headerDialog}>
+                                                <DsTypography variant="Regular_20">
+                                                    {GENERAL.DETECT_INSTANCE}
+                                                </DsTypography>
+                                                <DsTypography variant="Semibold_14">
+                                                    {GENERAL.DETECT_HOST_STEPS[1]}
+                                                </DsTypography>
+                                            </div>
+                                        }
+                                        content={<UndetectedSecondDialogV2 data={rowData} apiResult={result?.data} />}
+                                        primaryButton={GENERAL.DONE}
+                                        callback={() => handleMoveToManage(rowData, fsxId, isFsxRegister)}
+                                    />
+                                );
+                            }, 0);
+                            resetDialogValues();
+                        } else {
+                            dispatch(setIsDetectHostError(GENERAL.DETECT_FAILED_WITH_NO_STORAGE));
+                        }
+                    }
+                } else {
+                    dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));
+                    dispatch(setIsDetectHostLoading(false));
                 }
-                return obj;
-            });
-            setData(output);
-        }, 5000);
+            } catch (error) {
+                dispatch(setIsDetectHostError(error || GENERAL.FAILED_TO_DETECT_HOST));
+                dispatch(setIsDetectHostLoading(false));
+            }
+        }
+    };
+
+    // To open detect host dialog
+    const handleDetectDialog = (rowData: any) => {
+        dispatch(setIsDetectHostError(''));
+
+        setDialog(
+            <DialogComponent
+                header={
+                    <div className={styles.headerDialog}>
+                        <DsTypography variant="Regular_20">{GENERAL.DETECT_INSTANCE}</DsTypography>
+                        <DsTypography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[0]}</DsTypography>
+                    </div>
+                }
+                content={<UndetectedHostDialogContentV2 rowData={rowData} />}
+                primaryButton={GENERAL.DETECT}
+                secondaryButton={GENERAL.CLOSE}
+                callback={() => handleRegisterResourceCred(rowData, rowData?.fsxId)}
+                closeCallback={() => {
+                    closeDialog();
+                    resetDialogValues();
+                }}
+                dialogFrom={FROM_DIALOG.DETECT_HOST}
+            />
+        );
     };
 
     const lastColDetails = () => {
@@ -114,31 +330,53 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
 
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
+                let disableOption = false;
+                let disableMessage = '';
+                if (hostData?.status === INVENTORY_STATUS.OFFLINE) {
+                    disableMessage = GENERAL.HOST_DOWN;
+                    disableOption = true;
+                } else if (hostData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+                    disableMessage = GENERAL.SSM_DOWN;
+                    disableOption = true;
+                } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+                    disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+                    disableOption = true;
+                }
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
-                        displayName: 'Detect'
+                        displayName: 'Detect',
+                        disabled: disableOption,
+                        infoText: disableMessage
                     });
                 } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     menu.push({
                         id: 'manage',
-                        displayName: 'Manage'
+                        displayName: 'Manage',
+                        disabled: disableOption,
+                        infoText: disableMessage
                     });
                 } else {
                     menu.push(
                         {
                             id: 'viewInstance',
-                            displayName: 'View instance'
+                            displayName: 'View instance',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
 
                         {
                             id: 'viewDatabases',
-                            displayName: 'View databases'
+                            displayName: 'View databases',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
 
                         {
                             id: 'createUserDb',
-                            displayName: 'Create user database'
+                            displayName: 'Create user database',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
                         {
                             id: 'unManage',
@@ -147,17 +385,77 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                     );
                 }
 
+                let disableMsg = '';
+                let width = '';
+                let height = '';
+                let disableMenu = () => {
+                    if (data[0] && data[0]?.loading) {
+                        disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
+                        width = '170px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        hostData?.status === INVENTORY_STATUS.OFFLINE &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.HOST_DOWN;
+                        width = '120px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        hostData?.ssmState === INVENTORY_STATUS.OFFLINE &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.SSM_DOWN;
+                        width = '250px';
+                        height = '50px';
+                        return true;
+                    }
+                    if (
+                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+                        width = '220px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        rowData?.detectOption === DETECT_HOST_VAR.DISABLE ||
+                        rowData?.detectOption === DETECT_HOST_VAR.HIDE
+                    ) {
+                        disableMsg = rowData?.detectOptionDisableMsg;
+                        width = '240px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
+                    ) {
+                        disableMsg = GENERAL.EBS_TOOLTIP_MESSAGE;
+                        width = '320px';
+                        height = '90px';
+                        return true;
+                    }
+                    if (
+                        hostData?.serverInstallationMode === GENERAL.AOAG &&
+                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
+                    ) {
+                        disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
+                        width = '320px';
+                        height = '50px';
+                        return true;
+                    }
+                    return false;
+                };
+
                 return (
                     <div className={styles.jobMenuPopover}>
-                        {rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        (rowData.fileSystemType === GENERAL.EBS ||
-                            rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS) ? (
-                            <TooltipComponent
-                                placement={'bottom'}
-                                title={GENERAL.EBS_TOOLTIP_MESSAGE}
-                                width="320px"
-                                height="90px"
-                            >
+                        {disableMenu() ? (
+                            <TooltipComponent placement={'bottom'} title={disableMsg} width={width} height={height}>
                                 <div className={styles.menuPointerDisabled}>
                                     <span className={styles.menuPointer}>...</span>
                                 </div>
@@ -166,11 +464,6 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                             <MenuPopover
                                 isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
                                 menuItems={[...menu]}
-                                isDisabled={
-                                    rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                                    (rowData.fileSystemType === GENERAL.EBS ||
-                                        rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
-                                }
                                 toggleMenu={(toggleType: string, menuId: string) => {
                                     if (toggleType === 'close') {
                                         menuOpenedRowDetail.current = null;
@@ -184,21 +477,31 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                                         setOpenedRow(null);
 
                                         if (menuId === 'manage') {
-                                            handleManage(rowData);
+                                            handleManageInstances(hostData, [rowData?.databaseInstanceName], false);
                                         }
                                         if (menuId === 'viewInstance') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
                                             dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
+                                            resourceAction(rowData);
                                         }
                                         if (menuId === 'viewDatabases') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
                                             dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
+                                            resourceAction(rowData);
                                         }
                                         if (menuId === 'createUserDb') {
+                                            dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                            dispatch(updateResourceId(hostData?.resourceId));
+                                            dispatch(setDBHostName(hostData?.name));
+                                            dispatch(setInstanceId(rowData?.databaseInstanceId));
+                                            dispatch(setInstanceName(rowData?.databaseInstanceName));
                                             navigate('../create-new-user');
                                         }
                                         if (menuId === 'unManage') {
-                                            handleDialog();
+                                            handleDialog(rowData);
+                                        }
+                                        if (menuId === 'detect') {
+                                            handleDetectDialog(rowData);
                                         }
                                     }
                                 }}
@@ -217,6 +520,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             isSticky: true
         };
     };
+
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'SQL Server instance',
@@ -244,7 +548,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                     return (
                         <div className={styles.inProgress}>
                             <SmallLoader />
-                            <DsTypography variant="Regular_14">In progress</DsTypography>
+                            <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
                         </div>
                     );
                 }
@@ -259,8 +563,8 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             id: '3',
             width: '160px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -285,8 +589,8 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             id: '5',
             width: '193px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -330,9 +634,14 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             renderCell: (cellData: string | number, rowData: any) => {
                 return renderAllocatedCapacity(cellData, rowData);
             }
-        },
-        lastColDetails()
+        }
     ];
+
+    if (windowSize.width > 1500) {
+        managedHostSubTableColDefs.push(lastColDetails());
+    } else {
+        managedHostSubTableColDefs.unshift(lastColDetails());
+    }
 
     const tableProps = useTable({
         isSorting: false,
@@ -348,7 +657,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             {/* <div className={styles.topDiv} /> */}
             <div className={styles.extraDiv2} />
 
-            <span className={styles.managedSubTable} style={{ position: 'relative', left: `${scrollPosition}px` }}>
+            <span className={styles.managedSubTable}>
                 <Table
                     //@ts-ignore
 
@@ -356,6 +665,8 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                     variant="innerTable"
                 />
             </span>
+
+            <div className={styles.extraDivRight} />
 
             {/* <div className={styles.topDiv} /> */}
         </div>

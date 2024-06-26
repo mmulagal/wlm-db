@@ -55,9 +55,16 @@ function generateDeploymentParams(
     FSxDataLunSize: number,
     isExistingFSx: boolean,
     sqlDeploymentType: string = 'fci',
-    fsxVolThroughput: number
+    fsxVolThroughput: number,
+    fsxIOPS: number
 ) {
-    logger.info('Generate deployment params', { FSxDataLunSize, isExistingFSx, sqlDeploymentType, fsxVolThroughput });
+    logger.info('Generate deployment params', {
+        FSxDataLunSize,
+        isExistingFSx,
+        sqlDeploymentType,
+        fsxVolThroughput,
+        fsxIOPS
+    });
 
     const prefix = WLMDB;
     const suffix = Date.now();
@@ -79,6 +86,20 @@ function generateDeploymentParams(
     // https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/performance.html
     if (fsxVolThroughput === FSX_VOL_THROUGHPUT && fsxStorageCapacity <= FSX_STORAGE_MIN_CAPACITY_IN_GIB) {
         throw createError(412, 'Supported FSx for ONTAP Storage Capactiy should be minumum of 5,120 GiB');
+    }
+
+    // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
+    // Automatic (3 IOPS per GiB of SSD storage)
+    // User-Provisioned (it should be calculated by 3 times of fsxStorageCapacity as minimum size)
+    if (fsxIOPS !== 3 && fsxVolThroughput !== FSX_VOL_THROUGHPUT && !isExistingFSx) {
+        // accepted iops values
+        const acceptedIOPS = fsxStorageCapacity * 3;
+        if (fsxIOPS < acceptedIOPS) {
+            throw createError(412, `Provisioned SSD IOPS should be at least ${acceptedIOPS}`);
+        }
+        if (fsxIOPS < 3072 || fsxIOPS > 80000) {
+            throw createError(412, 'Provisioned SSD IOPS should be between 3072 and 80000');
+        }
     }
 
     const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
@@ -280,7 +301,8 @@ async function sleep(ms: number) {
 }
 
 function generateHash(value: string) {
-    const hash = crypto.createHash('sha256');
+    // changing it to md5 to keep the resource_id smaller in size, as we don't have a unique constraint on resource_id
+    const hash = crypto.createHash('md5');
     hash.update(value);
     return hash.digest('hex');
 }
@@ -406,7 +428,14 @@ function convertMetricsIntoJson(input: Array<string>) {
     return metrics;
 }
 
+/*
+ * AWS considers the value of tag 'Name' as the resource name.
+ * If tag 'Name' is present, return its corresponding Value.
+ * Otherwise, returns undefined.
+ */
 function getResourceNameFromTags(tags?: Tag[]) {
+    logger.debug('Find resource name from the tags', { tags });
+
     const { Value: name } = tags?.find(tag => tag?.Key === 'Name') || {};
     return name;
 }
@@ -509,6 +538,10 @@ function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true
     return `${DEFAULT_MSSQL_INSTANCE_NAME}\\${instanceName.replace(/^.+\$/, '')}`;
 }
 
+function isDemo() {
+    return process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -543,5 +576,6 @@ export {
     camelizeKeys,
     convertToBytes,
     getMonthlyPriceFromHourlyPrice,
-    getDatabaseInstanceName
+    getDatabaseInstanceName,
+    isDemo
 };

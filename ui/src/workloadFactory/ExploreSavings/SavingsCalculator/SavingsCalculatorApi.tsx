@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetMssqlInstanceDataMutation,
+    useGetMssqlInstanceDataV2Mutation,
     useGetStorageSavingsMutation,
     useGetViewCalculationsMutation
 } from '../../../utils/apiService';
@@ -36,10 +37,12 @@ const SavingsCalculatorApi = () => {
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
     const [getViewCalculationsApi] = useGetViewCalculationsMutation();
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataMutation();
+    const [getMssqlInstanceDataApiV2] = useGetMssqlInstanceDataV2Mutation();
 
     useEffect(() => {
         const selectedRow = unManagedHostFormatedList.filter((item: any) => item?.id === selectedInstanceId);
@@ -62,7 +65,7 @@ const SavingsCalculatorApi = () => {
                     }
                 }
             }
-            setESInstanceData(selectedRow[0], isDemoMode, selectedDeploymentModel, dispatch);
+            setESInstanceData(selectedRow[0], dispatch);
             // dispatch(setSelectedHostDetails(selectedRow[0]));
         } else {
             dispatch(setSelectedHostDetails({}));
@@ -163,12 +166,22 @@ const SavingsCalculatorApi = () => {
         };
         dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataLoad }));
         try {
-            const result: any = await getMssqlInstanceDataApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
-                instances: selectedInstanceId,
-                nextToken: ''
-            });
+            let result: any;
+            if (isInventoryV2) {
+                result = await getMssqlInstanceDataApiV2({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instances: selectedInstanceId,
+                    nextToken: ''
+                });
+            } else {
+                result = await getMssqlInstanceDataApi({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instances: selectedInstanceId,
+                    nextToken: ''
+                });
+            }
 
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
@@ -206,12 +219,22 @@ const SavingsCalculatorApi = () => {
     const getMssqlDataForPartnerNode = async () => {
         dispatch(setGetPartnerHostDetailsLoading(true));
         try {
-            const result: any = await getMssqlInstanceDataApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
-                instances: selectedPartnerInstanceId,
-                nextToken: ''
-            });
+            let result: any;
+            if (isInventoryV2) {
+                result = await getMssqlInstanceDataApiV2({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instances: selectedPartnerInstanceId,
+                    nextToken: ''
+                });
+            } else {
+                result = await getMssqlInstanceDataApi({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instances: selectedPartnerInstanceId,
+                    nextToken: ''
+                });
+            }
 
             if (result && !result?.error) {
                 dispatch(setSelectedPartnerHostDetails(result?.data?.items?.[0]));

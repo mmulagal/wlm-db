@@ -624,8 +624,8 @@ const SandboxTable = () => {
             width: '200px'
         },
         {
-            Header: GENERAL.SANDBOX_DB_HOST_NAME,
-            accessor: 'hostName',
+            Header: GENERAL.SANDBOX_DB_INSTANCE_NAME,
+            accessor: 'instanceName',
             id: '2',
             width: '220px',
             filterOptions: 'auto'
@@ -638,17 +638,17 @@ const SandboxTable = () => {
             isSortable: true
         },
         {
-            Header: GENERAL.SANDBOX_SOURCE_DB_HOST_NAME,
-            accessor: 'sourceHost',
+            Header: GENERAL.SANDBOX_SOURCE_DB_INSTANCE_NAME,
+            accessor: 'sourceInstanceName',
             id: '4',
-            width: '256px',
+            width: '276px',
             filterOptions: 'auto'
         },
         {
             Header: GENERAL.SANDBOX_LAST_UPDATED,
             accessor: 'actualUpdated',
             id: '5',
-            width: '220px',
+            width: '200px',
             isSortable: true,
             renderCell: (cellData: any) => {
                 return <DsTypography variant="Regular_14">{formatDateWithTime(cellData)}</DsTypography>;

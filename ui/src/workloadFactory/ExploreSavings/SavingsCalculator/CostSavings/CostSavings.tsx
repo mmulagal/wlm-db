@@ -1,4 +1,4 @@
-import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
 import { ReactComponent as CostSavingsImage } from '../../../../assets/cost-savings.svg';
 import styles from './CostSavings.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -6,17 +6,23 @@ import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
+import useResize from '../../../../common/hooks/useResize';
 
 const CostSavings = () => {
     const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
+    const windowSize = useResize();
 
     const [savings, setSavings] = useState<any>(0);
     const [savingsPer, setSavingsPer] = useState<any>(0);
     const [costZeroCase, setCostZeroCase] = useState(false);
 
     useEffect(() => {
-        const fsxTotal = storageSavingsResponse?.totalSummary?.recommended ? Number(storageSavingsResponse?.totalSummary?.recommended) : 0;
-        const ebsTotal = storageSavingsResponse?.totalSummary?.existing ? Number(storageSavingsResponse?.totalSummary?.existing ) : 0;
+        const fsxTotal = storageSavingsResponse?.totalSummary?.recommended
+            ? Number(storageSavingsResponse?.totalSummary?.recommended)
+            : 0;
+        const ebsTotal = storageSavingsResponse?.totalSummary?.existing
+            ? Number(storageSavingsResponse?.totalSummary?.existing)
+            : 0;
         if (storageSavingsResponse && fsxTotal && ebsTotal && fsxTotal <= ebsTotal) {
             setSavings(ebsTotal - fsxTotal);
             const percent = 100 * ((ebsTotal - fsxTotal) / ebsTotal);
@@ -64,13 +70,31 @@ const CostSavings = () => {
             </div>
 
             <div className={costZeroCase ? `${styles.separator} ${styles.separatorNewWidth}` : styles.separator} />
-            {costZeroCase && (
+            {costZeroCase && windowSize.width > 1500 && (
                 <div className={styles.costZeroCase}>
                     <div>
                         <InfoIcon />
                     </div>
 
                     <DsTypography variant="Regular_14">{GENERAL.NOTICE_MESSAGE_COST_SAVINGS}</DsTypography>
+                </div>
+            )}
+            {costZeroCase && windowSize.width < 1500 && (
+                <div className={styles.costZeroCaseSmallRes}>
+                    <div>
+                        <InfoIcon />
+                    </div>
+
+                    <Popover
+                        popoverClass={styles['popover']}
+                        children={GENERAL.NOTICE_MESSAGE_COST_SAVINGS}
+                        trigger="hover"
+                        container={
+                            <DsTypography variant="Regular_14" className={styles.smallResolutionMessage}>
+                                {GENERAL.NOTICE_MESSAGE_COST_SAVINGS}
+                            </DsTypography>
+                        }
+                    />
                 </div>
             )}
 

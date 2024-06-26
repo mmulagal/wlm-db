@@ -57,6 +57,11 @@ try {
          
     }
     Write-Output "Sql server name $ServerInstanceName."
+    
+    $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+    if($vcpus -gt 8) {
+        $dop = 8
+    }
 
     $SetupMaxDOPPs={
         $sql = "EXEC sp_configure 'show advanced options', 1; RECONFIGURE WITH OVERRIDE; EXEC sp_configure 'max degree of parallelism', " + $Using:dop + "; RECONFIGURE WITH OVERRIDE; "

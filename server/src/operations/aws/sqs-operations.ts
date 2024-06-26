@@ -615,16 +615,18 @@ async function processCloudFormationMessages() {
 
                                                         await Promise.all(
                                                             instanceNames.map(async (instanceName: string) => {
-                                                                const defaultInstance = !instanceName.includes('$');
-                                                                const modifiedInstanceName = getDatabaseInstanceName(
-                                                                    instanceName,
-                                                                    defaultInstance
-                                                                );
+                                                                const isDefaultInstance = !instanceName.includes('$');
+                                                                const modifiedInstanceName = instanceName.includes('$')
+                                                                    ? instanceName.replace(/^.+\$/, '')
+                                                                    : instanceName;
 
                                                                 const sqlInstanceGuid = await getMssqlInstanceGuid(
                                                                     credentialsId,
                                                                     region,
-                                                                    modifiedInstanceName,
+                                                                    getDatabaseInstanceName(
+                                                                        instanceName,
+                                                                        isDefaultInstance
+                                                                    ),
                                                                     nodeIds
                                                                 );
 
@@ -633,9 +635,9 @@ async function processCloudFormationMessages() {
                                                                     resourceId,
                                                                     region,
                                                                     databaseInstanceId: sqlInstanceGuid,
-                                                                    databaseInstanceName: instanceName,
+                                                                    databaseInstanceName: modifiedInstanceName,
                                                                     fsxnIds: fsxId,
-                                                                    isDefault: defaultInstance,
+                                                                    isDefault: isDefaultInstance,
                                                                     source: RESOURCE_SOURCE.DEPLOY,
                                                                     fsxSvmId: { [fsxId]: fsxSvmId },
                                                                     sqlDeploymentType,

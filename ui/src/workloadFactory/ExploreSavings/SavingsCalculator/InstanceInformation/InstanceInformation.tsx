@@ -17,9 +17,9 @@ const InstanceInformation = () => {
     useEffect(() => {
         setLoading(selectedHostDetails?.loading);
         const findingsComputeData =
-            storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.findings || '-');
+            storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.finding || '-');
         const findingsLicenseData =
-            storageSavingsResponse && (storageSavingsResponse?.license?.existing?.findings || '-');
+            storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
         if (isInventoryV2) {
             let instanceTypelist = [];
             if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
@@ -126,12 +126,9 @@ const InstanceInformation = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return !storageSavingsLoading ? (
                     <>
-                        {rowData?.findings === 'NOT-OPTIMIZED' && (
+                        {rowData?.findings === 'NOT_OPTIMIZED' && (
                             <div className={styles.findings}>
-                                <TooltipInfo>
-                                    Your SQL license is Enterprise and could be replaced with Standard while using FSxN,
-                                    since replication and other Enterprise features are not in use anymore.
-                                </TooltipInfo>
+                                <TooltipInfo>{GENERAL.NOT_OPTIMIZED}</TooltipInfo>
                                 <DsTypography variant="Regular_14">Not optimized</DsTypography>
                             </div>
                         )}

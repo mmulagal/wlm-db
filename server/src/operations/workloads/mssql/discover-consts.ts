@@ -342,41 +342,40 @@ const HOST_AND_SQL_INFO_PS1 = [
         Get-Command -Type Application sqlcmd > $null 2> $null
         If ($? -eq $True) {
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" }
-          $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
-          $responseObject['windowsAuthentication'] = $?
+          try {
+            $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
+            $responseObject['windowsAuthentication'] = $?
+    
+            $responseObject['sqlServerEdition'] = $editionDBCountMachineInfoGuid[0]
+            $responseObject['sqlServerEngineEdition'] = $editionDBCountMachineInfoGuid[1]
+            $responseObject['databaseCount'] = $editionDBCountMachineInfoGuid[2]
+            $responseObject['sqlServerName'] = $editionDBCountMachineInfoGuid[3]
+            $responseObject['serverGuid'] = $editionDBCountMachineInfoGuid[4]
   
-          $responseObject['sqlServerEdition'] = $editionDBCountMachineInfoGuid[0]
-          $responseObject['sqlServerEngineEdition'] = $editionDBCountMachineInfoGuid[1]
-          $responseObject['databaseCount'] = $editionDBCountMachineInfoGuid[2]
-          $responseObject['sqlServerName'] = $editionDBCountMachineInfoGuid[3]
-          $responseObject['serverGuid'] = $editionDBCountMachineInfoGuid[4]
-  
-          $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails($serverInstance)
+            $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails($serverInstance)
           
-          if ($? -eq $False) {
-            $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
-          }
-  
-          $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
-            
-            if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
-            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetterOrPath] }}
-            elseif ($SMBConnections -contains $sqlInstanceDriveLetterOrPath) {
-            New-Object -TypeName PSObject -Property @{ SmbSharePath = $sqlInstanceDriveLetterOrPath }     
+            if ($? -eq $False) {
+              $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
             }
-            elseif($MappedDrivesWithPath.Keys -contains $sqlInstanceDriveLetterOrPath) { 
-
+  
+            $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
+              if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
+                New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetterOrPath] }
+              } elseif ($SMBConnections -contains $sqlInstanceDriveLetterOrPath) {
+                New-Object -TypeName PSObject -Property @{ SmbSharePath = $sqlInstanceDriveLetterOrPath }     
+              } elseif ($MappedDrivesWithPath.Keys -contains $sqlInstanceDriveLetterOrPath) { 
                   New-Object -TypeName PSObject -Property @{ SmbSharePath = $MappedDrivesWithPath[$sqlInstanceDriveLetterOrPath] }  
-                  
+              }
             }
-            }
-          
+            $responseObject['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
+          } catch {
+            $responseObject['windowsAuthentication'] = $False
+          }
         } else {
           $responseObject['failureInfo'] += "\${instanceName}: SQLCMD.EXE not available\`n"
         }
       }
-
-      $responseObject['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
+      
       $instanceSectionEndTime = Get-Date
       $responseObject['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
       Echo $responseObject

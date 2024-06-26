@@ -3,7 +3,12 @@ import { Filter, FilterType, GetProductsCommandInput, GetProductsCommandOutput }
 import { LazyJsonString } from '@smithy/smithy-client';
 import { compact, isEmpty } from 'lodash-es';
 import numeral from 'numeral';
-import { PricingServiceRequestType, PricingServiceResponseType } from '../../routes/types/pricing.types';
+import {
+    FsxnCostBreakdownType,
+    FsxwCostBreakdownType,
+    PricingServiceRequestType,
+    PricingServiceResponseType
+} from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
 import { calculateFsxnStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
 import {
@@ -14,7 +19,6 @@ import {
     MAX_WRITE_REQUEST_FSXN,
     MIN_DISKSIZE,
     MIN_THROUGHPUT,
-    CUSTOM,
     SINGLE_AZ,
     SQL_SOFTWARE_TYPES,
     SQL_STD,
@@ -53,6 +57,8 @@ const storageProductFamily: Filter = {
     Field: 'productFamily',
     Value: 'Storage'
 };
+
+// const BYOL = 'Bring your own license';
 
 function getPriceUtil(rate: number, quantity: number, resourceCount = 1): number {
     logger.debug('Calculate price util', { rate, quantity, resourceCount });
@@ -126,6 +132,12 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
                     Type: FilterType.TERM_MATCH,
                     Field: 'CapacityStatus',
                     Value: 'Used' // On-demand
+                },
+                {
+                    // No license required for windows
+                    Type: FilterType.TERM_MATCH,
+                    Field: 'licenseModel',
+                    Value: 'No License required'
                 }
             ],
             ...ec2Service,
@@ -133,7 +145,7 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
         }
     };
     // add this filter based on whether its windows sql based ami or not
-    if (compute.sqlSoftwareType && compute.sqlSoftwareType !== CUSTOM) {
+    if (compute.sqlSoftwareType) {
         const sqlFilter = getSqlSoftwareEdition(compute.sqlSoftwareType);
         filters.input.Filters.push(sqlFilter);
     }
@@ -296,9 +308,6 @@ function getInputs(
     let inputList: ProductInput[] = [
         getEc2InstaceInput(compute),
         getEc2StorageInput(compute),
-        ...((fsxnStorage && [getProductsInputForFSxN(fsxnStorage.regionCode, fsxnStorage.deploymentOption!)]) || []),
-        ...((fsxwStorage && [getProductsInputForFSxWindows(fsxwStorage.regionCode, fsxwStorage.deploymentOption!)]) ||
-            []),
         ...((vpc && [getVpcInput(vpc)]) || [])
     ];
 
@@ -307,6 +316,20 @@ function getInputs(
             getEbsStorageInput(ebsStorage.regionCode, ebsResource.volumeType)
         );
         inputList = inputList.concat(ebsStorageProductInputList);
+    }
+
+    if (fsxnStorage && fsxnStorage.fsxnResourceInfo.length > 0) {
+        const fsxStorageProductInputList = fsxnStorage.fsxnResourceInfo.map(fsxResource =>
+            getProductsInputForFSxN(fsxnStorage.regionCode, fsxResource.deploymentOption!)
+        );
+        inputList = inputList.concat(fsxStorageProductInputList);
+    }
+
+    if (fsxwStorage && fsxwStorage.fsxwResourceInfo.length > 0) {
+        const fswStorageProductInputList = fsxwStorage.fsxwResourceInfo.map(fsxResource =>
+            getProductsInputForFSxWindows(fsxwStorage.regionCode, fsxResource.deploymentOption!)
+        );
+        inputList = inputList.concat(fswStorageProductInputList);
     }
 
     return inputList;
@@ -448,10 +471,6 @@ async function calculatePrice(
         fsxwStorage
     });
 
-    if (fsxnStorage && fsxnStorage?.diskSize > 133120) {
-        throw createError(412, 'Supported FSx for ONTAP data disk size should be between 120GiB to 130TiB');
-    }
-
     const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));
     const productRates = await getProductRates(inputList);
 
@@ -464,15 +483,47 @@ async function calculatePrice(
     const ec2Cost = calculateEc2Cost(ec2InstanceRate, ec2StorageRate, compute?.sqlDeploymentMode);
     const vpcCost = vpcRate ? getPriceUtil(vpcRate, HOURS_IN_MONTH, 1) : 0;
 
-    let fsxnStorageCost = 0;
-    let fsxnOperationalCost = 0;
-    let fsxnDiskSizes;
+    let totalFsxnCost = 0;
+    const fsxnCostBreakdownById: FsxnCostBreakdownType[] = [];
     if (fsxnStorage) {
-        ({ fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes } = calculateFsxnCost(
-            fsxnStorage,
-            productRates.fsxnStorage,
-            compute?.sqlDeploymentMode
-        ));
+        await Promise.all(
+            fsxnStorage.fsxnResourceInfo.map(async fsxResource => {
+                let fsxnStorageCost = 0;
+                let fsxnOperationalCost = 0;
+                let fsxnDiskSizes;
+
+                // This applies to pre-deployment pricing. Today we support single FSxN as storage.
+                // It is okay to throw an error.
+                // For post-deployment, diskSize(dataDisk size) is not relevant since storageCapacity is considered.
+                if (fsxResource && fsxResource.diskSize! > 133120) {
+                    throw createError(412, 'Supported FSx for ONTAP data disk size should be between 120GiB to 130TiB');
+                }
+
+                ({ fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes } = calculateFsxnCost(
+                    fsxResource,
+                    productRates.fsxnStorage,
+                    compute?.sqlDeploymentMode
+                ));
+                totalFsxnCost = totalFsxnCost + fsxnStorageCost + fsxnOperationalCost;
+                fsxnCostBreakdownById.push({
+                    id: fsxResource.id!,
+                    capacityCost: fsxnStorageCost,
+                    operationalCost: fsxnOperationalCost,
+                    ...(fsxnDiskSizes && {
+                        size: {
+                            data: sizeInGigaBytes(fsxnDiskSizes?.FSxDataVolumeSize),
+                            log: sizeInGigaBytes(fsxnDiskSizes?.FSxLogVolumeSize),
+                            tempdb: sizeInGigaBytes(fsxnDiskSizes?.FSxTempDbVolumeSize),
+                            buffer: sizeInGigaBytes(fsxnDiskSizes?.FSxBufferVolumeSize),
+                            total: fsxnDiskSizes?.FSxStorageCapacity,
+                            ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
+                                quorum: sizeInGigaBytes(fsxnDiskSizes?.FSxQuorumVolumeSize)
+                            })
+                        }
+                    })
+                });
+            })
+        );
     }
 
     const ebsBreakdownByVolumeType: {
@@ -508,31 +559,32 @@ async function calculatePrice(
         );
     }
 
-    let fsxwStorageCost = 0;
-    let fsxwOperationalCost = 0;
+    let totalFsxwCost = 0;
+    const fsxwCostBreakdownById: FsxwCostBreakdownType[] = [];
     if (fsxwStorage) {
-        ({ fsxwStorageCost, fsxwOperationalCost } = calculateFsxwCost(fsxwStorage, productRates.fsxwStorage));
+        await Promise.all(
+            fsxwStorage.fsxwResourceInfo.map(async fsxResource => {
+                let fsxwStorageCost = 0;
+                let fsxwOperationalCost = 0;
+
+                ({ fsxwStorageCost, fsxwOperationalCost } = calculateFsxwCost(fsxResource, productRates.fsxwStorage));
+                totalFsxwCost = totalFsxwCost + fsxwStorageCost + fsxwOperationalCost;
+                fsxwCostBreakdownById.push({
+                    id: fsxResource.id!,
+                    capacityCost: fsxwStorageCost,
+                    operationalCost: fsxwOperationalCost,
+                    size: sizeInGigaBytes(fsxResource.storageCapacity) || 0
+                });
+            })
+        );
     }
 
     return {
         compute: ec2Cost,
         ...(fsxnStorage && {
             fsxnStorage: {
-                capacityCost: fsxnStorageCost,
-                operationalCost: fsxnOperationalCost,
-                // This is optional and only needed to display in UI
-                ...(fsxnDiskSizes && {
-                    size: {
-                        data: sizeInGigaBytes(fsxnDiskSizes?.FSxDataVolumeSize),
-                        log: sizeInGigaBytes(fsxnDiskSizes?.FSxLogVolumeSize),
-                        tempdb: sizeInGigaBytes(fsxnDiskSizes?.FSxTempDbVolumeSize),
-                        buffer: sizeInGigaBytes(fsxnDiskSizes?.FSxBufferVolumeSize),
-                        total: fsxnDiskSizes?.FSxStorageCapacity,
-                        ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
-                            quorum: sizeInGigaBytes(fsxnDiskSizes?.FSxQuorumVolumeSize)
-                        })
-                    }
-                })
+                fsxStorageCost: totalFsxnCost,
+                fsxnCostBreakdownById
             }
         }),
         ...(vpc && { vpc: vpcCost }),
@@ -553,20 +605,15 @@ async function calculatePrice(
         }),
         ...(fsxwStorage && {
             fsxwStorage: {
-                capacityCost: fsxwStorageCost,
-                operationalCost: fsxwOperationalCost,
-                size: sizeInGigaBytes(fsxwStorage.storageCapacity) || 0
+                fsxwStorageCost: totalFsxwCost,
+                fsxwCostBreakdownById
             }
         }),
-        total: ec2Cost + vpcCost + fsxnStorageCost + fsxnOperationalCost + totalEbsStorageCost + fsxwStorageCost
+        total: ec2Cost + vpcCost + totalFsxnCost + totalEbsStorageCost + totalFsxwCost
     };
 }
 
-function calculateFsxnCost(
-    fsxnStorage: PricingServiceRequestType['fsxnStorage'],
-    fsxnStorageRates: any,
-    sqlDeploymentMode: string
-) {
+function calculateFsxnCost(fsxnStorage: any, fsxnStorageRates: any, sqlDeploymentMode: string) {
     logger.info('Calculating cost for FSx Netapp storage', { fsxnStorage, fsxnStorageRates, sqlDeploymentMode });
 
     if (!isEmpty(fsxnStorage) && !fsxnStorage.diskSize && !fsxnStorage.storageCapacity) {
@@ -685,7 +732,7 @@ function calculateEbsCost(
     return totalMonthlyCost;
 }
 
-function calculateFsxwCost(fsxwStorage: PricingServiceRequestType['fsxwStorage'], fsxwStorageRates: any) {
+function calculateFsxwCost(fsxwStorage: any, fsxwStorageRates: any) {
     logger.info('Calculating cost for FSx Windows storage', { fsxwStorage, fsxwStorageRates });
 
     let fsxwStorageCost = 0;
@@ -856,4 +903,4 @@ async function getSqlInstancePricingDetails(
     return pricingDetails;
 }
 
-export { getProductRates, calculatePrice, calculateFsxWindowsCapacityPrice, getSqlInstancePricingDetails };
+export { getProductRates, calculateFsxWindowsCapacityPrice, getSqlInstancePricingDetails, calculatePrice };

@@ -41,7 +41,7 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                     </Typography>
                 </div>
 
-                {resourceDetails?.topology?.ec2Details.length && (
+                {resourceDetails?.topology?.ec2Details?.length && (
                     <>
                         <div className={commonStyles.row}>
                             <Typography variant="Semibold_14" className={commonStyles.heading}>
@@ -71,7 +71,7 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                     </>
                 )}
 
-                {resourceDetails?.topology?.ec2Details.length > 1 && (
+                {resourceDetails?.topology?.ec2Details?.length > 1 && (
                     <>
                         <div className={commonStyles.row}>
                             <Typography variant="Semibold_14" className={commonStyles.heading}>
