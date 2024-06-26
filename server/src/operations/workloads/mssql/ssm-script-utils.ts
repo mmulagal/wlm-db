@@ -175,7 +175,10 @@ Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 const validateSQLInstanceConnectivity = (
     ec2instanceId: string,
     sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
-) => `
+) => ` 
+        
+        $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'
+
         $destinationPath = $env:PSModulePath.split(';')[0]
         $CommonmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.Common"
         $ssmmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.SimpleSystemsManagement"
