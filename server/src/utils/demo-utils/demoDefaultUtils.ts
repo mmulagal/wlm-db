@@ -131,7 +131,6 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     if (isEmpty(jobs)) {
         // create 3 new resources and configurations
         logger.info('Creating demo resources');
-
         const prodOneResourceId = randomUUID();
         const devOneResourceId = randomUUID();
         const devFourResourceId = randomUUID();
