@@ -19,7 +19,6 @@ import {
     GetDriveQueryString,
     DatabaseMountPointResponseBody,
     SandboxParams,
-    SandboxParamsV2,
     SplitEstimatesResponse,
     SandboxLifeCycleBody,
     DatabaseHostSummaryForMultiInstanceListResponse,
@@ -210,20 +209,6 @@ const GetSandboxConnectionStringSchema = {
     }
 };
 
-const GetSandboxConnectionStringSchemaV2 = {
-    params: SandboxParamsV2,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Get Sandbox connection string',
-    description: 'Get sandbox connection string for sql server connection',
-    response: {
-        200: {
-            server: Type.String(),
-            database: Type.String(),
-            userId: Type.Optional(Type.String())
-        }
-    }
-};
-
 const GetSandboxSplitEstimateSchema = {
     params: SandboxParams,
     tags: [RouteTags.SANDBOX],
@@ -348,7 +333,6 @@ export {
     RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
     GetSandboxConnectionStringSchema,
-    GetSandboxConnectionStringSchemaV2,
     DeleteSandboxSchema,
     GetSandboxSplitEstimateSchema,
     SandboxLifeCycleSchema,
