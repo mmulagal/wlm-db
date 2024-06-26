@@ -412,7 +412,8 @@ const SandboxInfoResponse = Type.Object({
     sandboxName: Type.Optional(Type.String()),
     databaseHostName: Type.String(),
     databaseHostId: Type.String(),
-    databaseInstanceName: Type.String(),
+    databaseInstanceName: Type.Optional(Type.String()),
+    databaseInstanceId: Type.Optional(Type.String()),
     sourceDatabaseName: Type.Optional(Type.String()),
     sourceDatabaseHostName: Type.Optional(Type.String()),
     sourceDatabaseInstanceName: Type.Optional(Type.String()),
@@ -446,7 +447,13 @@ const DatabaseMountPointResponseBody = Type.Object({
 });
 type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
 
-const SandboxParams = Type.Composite([DatabaseHostSummaryParams, Type.Object({ sandboxName: Type.String() })]);
+const SandboxParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Object({
+        sandboxName: Type.String(),
+        databaseInstanceId: Type.String({ description: 'SQL Server instance id' })
+    })
+]);
 
 const SandboxParamsV2 = Type.Composite([
     DatabaseHostSummaryParams,

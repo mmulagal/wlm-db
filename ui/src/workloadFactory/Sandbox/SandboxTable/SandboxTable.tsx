@@ -121,12 +121,12 @@ const SandboxTable = () => {
                 displayName: 'Split'
             },
             {
-                id: 'delete',
-                displayName: 'Delete'
-            },
-            {
                 id: 'integrityCheck',
                 displayName: 'Check integrity'
+            },
+            {
+                id: 'delete',
+                displayName: 'Delete'
             }
         ];
     };
@@ -290,6 +290,7 @@ const SandboxTable = () => {
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name,
                         payload: { action: 'RE-BASELINE', snapshot: rowData?.baseSnapshot }
                     }).then((res: any) => {
@@ -375,6 +376,7 @@ const SandboxTable = () => {
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name
                     }).then((res: any) => {
                         handleJob(res, rowData, 'delete');
@@ -390,11 +392,12 @@ const SandboxTable = () => {
 
     const handleSplit = (rowData: any) => {
         dispatch(updateSplitEstimateLoading(true));
-        const { databaseHostId, name } = rowData;
+        const { databaseHostId, name, instanceId } = rowData;
         getSplitEstimateApi({
             credentialsId: headerSelectedCred?.data?.credentialsId,
             regionId: headerSelectedRegion?.label2,
             databaseHostId: databaseHostId,
+            instanceId,
             sandboxName: name
         }).then((splitEstimateRes: any) => {
             dispatch(updateSplitEstimateLoading(false));
@@ -429,6 +432,7 @@ const SandboxTable = () => {
                                 credentialsId: headerSelectedCred?.data?.credentialsId,
                                 regionId: headerSelectedRegion?.label2,
                                 databaseHostId: rowData?.databaseHostId,
+                                instanceId: rowData?.instanceId,
                                 sandboxName: rowData?.name
                             }).then((res: any) => {
                                 handleJob(res, rowData, 'split');
@@ -488,10 +492,11 @@ const SandboxTable = () => {
     };
 
     const handleShowConnectionInfo = (rowData: any) => {
-        const { databaseHostId, name } = rowData;
+        const { databaseHostId, name, instanceId } = rowData;
         dispatch(
             updateConnectionInfo({
                 selectedDatabaseHostId: databaseHostId,
+                selectedDatabaseInstanceId: instanceId,
                 selectedSandboxName: name,
                 connectionString: connectionInfo?.connectionString,
                 isLoading: false
@@ -529,6 +534,7 @@ const SandboxTable = () => {
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name
                     }).then((res: any) => {
                         handleJob(res, rowData, 'integrityCheck');

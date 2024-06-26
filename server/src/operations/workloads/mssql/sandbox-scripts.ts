@@ -5,8 +5,9 @@ import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
 // ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
 const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
 $instances = (${instances})
+$results = @()
 
-$results = foreach ($instance in $instances) {
+foreach ($instance in $instances) {
     try {
         $query = @"
         SET NOCOUNT ON;
@@ -41,16 +42,16 @@ $results = foreach ($instance in $instances) {
         $output = sqlcmd -S $instance -Q $query -y 0 2> $null
 
         if ($output) {
-            [PSCustomObject]@{
+            $results += [PSCustomObject]@{
                 Instance = $instance
                 Output = $output
-            } | ConvertTo-Json
+            }
         }
         else {
-            [PSCustomObject]@{
+            $results += [PSCustomObject]@{
                 Instance = $instance
                 Output = "No sandboxes created for the instance"
-            } | ConvertTo-Json
+            }
         }
     }
     catch {
@@ -61,7 +62,7 @@ $results = foreach ($instance in $instances) {
     }
 }
 
-$results
+$results | ConvertTo-Json -Depth 5
 `;
 
 const checkDatabaseExists = (dbCloneName: string, instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `

@@ -865,13 +865,13 @@ export const sandboxApi = createApi({
                 })
             }),
             getConnectionInfo: builder.query({
-                query: ({ regionId, credentialsId, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/connection-string`
+                query: ({ regionId, credentialsId, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/connection-string`
                 })
             }),
             getSplitEstimateInfo: builder.query({
-                query: ({ regionId, credentialsId, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split-estimate`
+                query: ({ regionId, credentialsId, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/split-estimate`
                 })
             }),
             getDatabaseMountPoints: builder.query({
@@ -880,33 +880,33 @@ export const sandboxApi = createApi({
                 })
             }),
             deleteSandbox: builder.mutation({
-                query: ({ credentialsId, regionId, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}`,
+                query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}`,
                     method: 'DELETE'
                 })
             }),
             updateSandbox: builder.mutation({
-                query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}`,
+                query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName, payload }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}`,
                     method: 'PATCH',
                     body: payload
                 })
             }),
             splitSandbox: builder.mutation({
-                query: ({ credentialsId, regionId, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split`,
+                query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/split`,
                     method: 'POST'
                 })
             }),
             checkIntegrity: builder.mutation({
-                query: ({ credentialsId, regionId, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/check-integrity`,
+                query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/check-integrity`,
                     method: 'POST'
                 })
             }),
             getRollbackSnapshots: builder.query({
-                query: ({ credentialId, region, databaseHostId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/snapshots`
+                query: ({ credentialId, region, databaseHostId, instanceId, sandboxName }) => ({
+                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/snapshots`
                 })
             })
         };
