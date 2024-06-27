@@ -14,7 +14,8 @@ import { GENERAL } from '../../../../utils/appConstants';
 import {
     createDetectHostPayload,
     formatSizeTwoPrecision,
-    isAwsBackupEnabled
+    isAwsBackupEnabled,
+    isSmbProtocol
 } from '../../../../utils/utilityFunctions';
 import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
@@ -332,6 +333,8 @@ const ManagedHostSubTable = ({
                 const menu = [];
                 let disableOption = false;
                 let disableMessage = '';
+                const disableCreateDb = isSmbProtocol(rowData?.storage?.fsxn?.protocol);
+                const disableCreateDbMsg = disableCreateDb ? GENERAL.SMB_PROTOCOL_DISABLED : '';
                 if (hostData?.status === INVENTORY_STATUS.OFFLINE) {
                     disableMessage = GENERAL.HOST_DOWN;
                     disableOption = true;
@@ -375,8 +378,8 @@ const ManagedHostSubTable = ({
                         {
                             id: 'createUserDb',
                             displayName: 'Create user database',
-                            disabled: disableOption,
-                            infoText: disableMessage
+                            disabled: disableOption || disableCreateDb,
+                            infoText: disableMessage || disableCreateDbMsg
                         },
                         {
                             id: 'unManage',
