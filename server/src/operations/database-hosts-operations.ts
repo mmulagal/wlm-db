@@ -1182,7 +1182,7 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
             items: response
         };
     } catch (error) {
-        const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId}, ${error}`;
+        const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
@@ -2059,7 +2059,7 @@ async function getDatabasesV2(
             items: response
         };
     } catch (error) {
-        const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId}, ${error}`;
+        const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
