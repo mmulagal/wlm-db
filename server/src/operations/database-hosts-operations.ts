@@ -543,7 +543,9 @@ async function getProtectionStatus(
     try {
         const [nativeSqlProtection, protectionResponse, fsxwBackup, ebsBackup] = await Promise.all([
             getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName),
-            fsxnId ? getProtectionDetails(credentialsId, region, fsxnId, activeNodeInstanceId) : Promise.resolve(),
+            fsxnId
+                ? getProtectionDetails(credentialsId, region, fsxnId, true, activeNodeInstanceId)
+                : Promise.resolve(),
             fsxwId ? isFsxwAwsBackupEnabled(credentialsId, region, fsxwId) : Promise.resolve(),
             ebsVolumeIds ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeIds) : Promise.resolve() // returns true if backup is enabled on any of the ebs ID associated with the resource; revisit this to return information for each ebs
         ]);
@@ -2008,6 +2010,7 @@ async function getProtectionDetails(
     credentialsId: string,
     region: string,
     fileSystemId: string,
+    isSystemDatabase: boolean = false,
     activeNodeInstanceId?: string
 ): Promise<{ awsBackup: BackupType; ontapBackup: BackupType }> {
     logger.info('Getting Proteciton details', { credentialsId, region, fileSystemId, activeNodeInstanceId });
@@ -2017,6 +2020,7 @@ async function getProtectionDetails(
         credentialsId,
         region,
         fileSystemId,
+        isSystemDatabase,
         activeNodeInstanceId
     )) as MappedOnTapVolumeResponse) || { volumeUuids: [], volumeDBMap: {} };
 
@@ -2117,7 +2121,7 @@ async function getDatabaseDetails(
                         ? [getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName)]
                         : [Promise.resolve()]), // Fetch native sql protection status
                     ...(activeNodeInstanceId && getProtection
-                        ? [getProtectionDetails(credentialsId, region, fileSystemId, activeNodeInstanceId)]
+                        ? [getProtectionDetails(credentialsId, region, fileSystemId, false, activeNodeInstanceId)]
                         : [Promise.resolve()]) // Fetch protection status
                 ].map(p =>
                     p.catch(error => {
