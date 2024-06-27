@@ -1074,14 +1074,16 @@ async function getActiveSqlNodeAndInstanceDetails(
                     logger.debug(`No active sql instances found in node ${nodeId} `);
                 }
             } else {
-                logger.error(`SSM status of node ${nodeId} is not running :${connectionStatus.Status}`);
+                logger.error(
+                    `SSM status of node ${nodeId} is not running :${connectionStatus.Status}  for resourceid: ${resourceId}`
+                );
             }
         }
-        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${nodeIds}`;
+        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${nodeIds} for resourceid: ${resourceId}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     } catch (err) {
-        const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId} credentiialsId: ${credentialsId}, region: ${region}, nodeIds:${nodeIds} , ${err}`;
+        const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId} credentialsId: ${credentialsId}, region: ${region}, nodeIds:${nodeIds} , ${err}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }

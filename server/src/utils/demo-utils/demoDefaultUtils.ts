@@ -211,11 +211,6 @@ async function returnInventorydata(instances?: string[]) {
         const instanceDetails = inventoryData.items.find(item => item.ec2InstanceId === instances[0])!;
         // for random EC2 instance ID need to send generic value will be updated in phase 2
         if (!instanceDetails) {
-            // return {
-            //     count: 0,
-            //     // items: [instanceDetails]
-            //     items: []
-            // };
             return instanceDemoData(fsxId, instances[0]);
         }
     }
