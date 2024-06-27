@@ -27,7 +27,8 @@ import {
     DatabaseHostSummaryForMultiInstanceResponse,
     DatabaseHostInstanceSummaryParams,
     DatabaseHostInstanceSummaryResponse,
-    DatabaseHostOptionalInstanceSummaryParams
+    DatabaseHostOptionalInstanceSummaryParams,
+    DatabaseQueryString
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -68,6 +69,7 @@ const DatabasesListSchema = {
     description:
         'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
     params: DatabaseHostSummaryParams,
+    querystring: DatabaseQueryString,
     response: {
         200: DatabasesListResponse
     }
@@ -302,6 +304,7 @@ const DatabasesListSchemaV2 = {
     description:
         'Fetch details about databases in a server - name, protection status, availability status, size and type of database V2',
     params: DatabaseHostInstanceSummaryParams,
+    querystring: DatabaseQueryString,
     response: {
         200: DatabasesListResponse
     }

@@ -50,6 +50,7 @@ import InventoryV2 from '../../InventoryV2/InventoryV2';
 import InventoryApisV2 from '../../InventoryV2/InventoryApisV2';
 import DatabaseHostOverviewV2 from '../../ResourcePage/ResourceHomePage/DatabaseHostOverviewV2';
 import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import { updateRefreshBlocked } from '../../../store/authSlice';
 
 type Tab = {
     tab: string;
@@ -181,10 +182,13 @@ const HeaderComponent = ({ tab }: Tab) => {
     }, []);
 
     const refreshPage = () => {
+        dispatch(updateRefreshBlocked(false));
         dispatch(setRefreshTime(getCurrentDateTime()));
         if (selectedHeaderTab === WLF_TABS.DASHBOARD) {
             resetDBHomePageState(dispatch);
             dispatch(setDashboardRefresh(true));
+            dispatch(inventoryApi.util.resetApiState());
+            dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS) {
             resetDBHomePageState(dispatch);
@@ -236,6 +240,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                             localStorage.removeItem('selectedCred');
                                         }
                                         localStorage.setItem('selectedCred', JSON.stringify(selectedOptions));
+                                        dispatch(updateRefreshBlocked(false));
                                         dispatch(setHeaderSelectedCred(selectedOptions));
                                     }}
                                     placeholder="Select a Credential"
@@ -260,6 +265,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                             localStorage.removeItem('selectedRegion');
                                         }
                                         localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
+                                        dispatch(updateRefreshBlocked(false));
                                         dispatch(setHeaderSelectedRegion(selectedOptions));
                                     }}
                                     placeholder="Select a Region"

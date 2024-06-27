@@ -11,7 +11,8 @@ import {
     setIsDiscoveredHostData,
     setIsFullHostDataLoading,
     setIsManagedHostListLoading,
-    setMssqlInstancesData
+    setMssqlInstancesData,
+    setResetManagedData
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
     useGetMssqlInstanceDataV2Mutation,
@@ -35,6 +36,7 @@ import {
 } from './InventoryUtilsV2';
 import { setIsRefreshed } from '../../store/workloadFactory/inventorySlice';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
+import store from '../../store/store';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
@@ -48,6 +50,7 @@ const InventoryApisV2 = () => {
     const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
@@ -193,6 +196,7 @@ const InventoryApisV2 = () => {
                     nextToken: nextToken
                 });
                 if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    dispatch(setResetManagedData(false));
                     if (result && !result?.error) {
                         result?.data?.items?.map((perRow: any) => {
                             if (perRow?.id) {
@@ -234,6 +238,7 @@ const InventoryApisV2 = () => {
                     isDemoMode: isDemoMode
                 });
                 if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    dispatch(setResetManagedData(false));
                     if (result && !result?.error) {
                         result?.data?.items?.map((perRow: any) => {
                             if (perRow?.id) {
@@ -417,6 +422,7 @@ const InventoryApisV2 = () => {
     }, [partnerInstanceList]);
 
     const resetValues = () => {
+        dispatch(setResetManagedData(true));
         // reset for getManagedHostList
         setManagedHostList([]);
         setManagedHostListLoading(true);
@@ -449,40 +455,42 @@ const InventoryApisV2 = () => {
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
     useEffect(() => {
-        let managedList: string[] = [];
-        let fullHostData: any = {};
-        let topologyHostData: any = {};
-        let discoveredList: any = [];
-        if (credId && regionId) {
-            resetValues();
-            setTimeout(() => {
-                getManagedHostList(managedList, null, credId, regionId);
-                getDatabaseHostsList(topologyHostData, null, credId, regionId);
-                getDatabaseHostsFullData(fullHostData, null, credId, regionId);
-                getDiscoveryHostsList(discoveredList, null, credId, regionId);
-            }, 1);
+        if (!refreshBlocked) {
+            let managedList: string[] = [];
+            let fullHostData: any = {};
+            let topologyHostData: any = {};
+            let discoveredList: any = [];
+            if (credId && regionId) {
+                resetValues();
+                setTimeout(() => {
+                    getManagedHostList(managedList, null, credId, regionId);
+                    getDatabaseHostsList(topologyHostData, null, credId, regionId);
+                    getDatabaseHostsFullData(fullHostData, null, credId, regionId);
+                    getDiscoveryHostsList(discoveredList, null, credId, regionId);
+                }, 10);
+            }
         }
-    }, [credId, regionId]);
+    }, [credId, regionId, refreshBlocked]);
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
     useEffect(() => {
-        let managedList: string[] = [];
-        let fullHostData: any = {};
-        let topologyHostData: any = {};
-        let discoveredList: any = [];
-        if (credId && regionId && isRefreshed) {
-            resetValues();
-            setTimeout(() => {
-                getManagedHostList(managedList, null, credId, regionId);
-                getDatabaseHostsList(topologyHostData, null, credId, regionId);
-                getDatabaseHostsFullData(fullHostData, null, credId, regionId);
-                getDiscoveryHostsList(discoveredList, null, credId, regionId);
-            }, 1);
-        }
-        if (isRefreshed) {
+        if (!refreshBlocked && isRefreshed) {
+            let managedList: string[] = [];
+            let fullHostData: any = {};
+            let topologyHostData: any = {};
+            let discoveredList: any = [];
+            if (credId && regionId && isRefreshed) {
+                resetValues();
+                setTimeout(() => {
+                    getManagedHostList(managedList, null, credId, regionId);
+                    getDatabaseHostsList(topologyHostData, null, credId, regionId);
+                    getDatabaseHostsFullData(fullHostData, null, credId, regionId);
+                    getDiscoveryHostsList(discoveredList, null, credId, regionId);
+                }, 10);
+            }
             dispatch(setIsRefreshed(false));
         }
-    }, [isRefreshed]);
+    }, [isRefreshed, refreshBlocked]);
 
     useEffect(() => {
         if (headerSelectedCred && headerSelectedRegion) {
@@ -493,22 +501,26 @@ const InventoryApisV2 = () => {
 
     // This will combine fullHostData (getDatabaseHostsFullData) and topologyHostData (getDatabaseHostsList) data and store in single object.
     useEffect(() => {
-        let databaseHostDataObj: any = {};
-        Object.keys(topologyHostData).map((key: string) => {
-            if (key in fullHostData) {
-                const perObj = {
-                    ...topologyHostData[key],
-                    ...fullHostData[key],
-                    loading: false,
-                    databaseHostStatus: topologyHostData[key]?.databaseHostStatus
-                };
-                databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
-            } else {
-                const perObj = { ...topologyHostData[key], loading: fullHostDataLoading ? true : false };
-                databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
-            }
-        });
-        dispatch(addDatabaseHostsDataV2(databaseHostDataObj));
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData) {
+            let databaseHostDataObj: any = {};
+            Object.keys(topologyHostData).map((key: string) => {
+                if (key in fullHostData) {
+                    const perObj = {
+                        ...topologyHostData[key],
+                        ...fullHostData[key],
+                        loading: false,
+                        databaseHostStatus: topologyHostData[key]?.databaseHostStatus
+                    };
+                    databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
+                } else {
+                    const perObj = { ...topologyHostData[key], loading: fullHostDataLoading ? true : false };
+                    databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
+                }
+            });
+            dispatch(addDatabaseHostsDataV2(databaseHostDataObj));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fullHostData, topologyHostData, fullHostDataLoading]);
 
