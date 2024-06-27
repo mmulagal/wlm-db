@@ -9,6 +9,7 @@ import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { setManageHostSelectedRows } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const ManagedHostDialog = ({ dialogData }: any) => {
     const { inProgressInstances } = useAppSelector(state => state?.inventoryV2);
@@ -27,7 +28,8 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             if (
                 isInstanceInProgress ||
                 obj.statusColText === INVENTORY_STATUS.MANAGED ||
-                obj.statusColText === INVENTORY_STATUS.UNDETECTED
+                obj.statusColText === INVENTORY_STATUS.UNDETECTED ||
+                obj.fileSystemType !== GENERAL.FSX_FOR_ONTAP
             ) {
                 return {
                     ...obj,

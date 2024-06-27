@@ -18,7 +18,8 @@ import {
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../../store/store';
-import { setMssqlInstancesData } from '../../../store/workloadFactory/inventorySlice';
+import { setMssqlInstancesData as setMssqlInstancesDataV1 } from '../../../store/workloadFactory/inventorySlice';
+import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
 import { GENERAL } from '../../../utils/appConstants';
 
@@ -60,7 +61,7 @@ const SavingsCalculatorApi = () => {
                     partnerInstanceRow[0].ec2InstanceId !== selectedPartnerInstanceId
                 ) {
                     dispatch(setSelectedPartnerInstanceId(partnerInstanceRow[0].ec2InstanceId));
-                    if (!isDemoMode) {
+                    if (!isDemoMode && !isInventoryV2) {
                         dispatch(setGetPartnerHostDetailsLoading(true));
                     }
                 }
@@ -146,8 +147,11 @@ const SavingsCalculatorApi = () => {
     useEffect(() => {
         if (savingsCalculatorRefresh) {
             if (!isDemoMode && selectedPartnerInstanceId) {
+                dispatch(setSelectedPartnerHostDetails(null));
+                dispatch(setGetPartnerHostDetailsLoading(true));
                 getMssqlDataForPartnerNode();
             }
+            dispatch(setSelectedHostDetails(null));
             getMssqlData();
             triggerRefreshApi();
         }
@@ -157,14 +161,20 @@ const SavingsCalculatorApi = () => {
     // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance.
     const getMssqlData = async () => {
         const state = store.getState();
-        const mssqlInstancesData = state.inventory.mssqlInstancesData;
+        const mssqlInstancesDataV1 = state.inventory.mssqlInstancesData;
+        const mssqlInstancesDataV2 = state.inventoryV2.mssqlInstancesData;
         let mssqlInstancesDataLoad: any = {};
         mssqlInstancesDataLoad[selectedInstanceId] = {
             loading: true,
             data: null,
             error: null
         };
-        dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataLoad }));
+        if (isInventoryV2) {
+            dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataLoad }));
+        } else {
+            dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataLoad }));
+        }
+
         try {
             let result: any;
             if (isInventoryV2) {
@@ -186,32 +196,58 @@ const SavingsCalculatorApi = () => {
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    if (mssqlInstancesData[host?.id]) {
-                        mssqlInstancesDataRes[host?.id] = {
-                            loading: false,
-                            data: host,
-                            error: host?.errors
-                        };
+                    if (isInventoryV2) {
+                        if (mssqlInstancesDataV2[host?.id]) {
+                            mssqlInstancesDataRes[host?.id] = {
+                                loading: false,
+                                data: host,
+                                error: host?.errors,
+                                isManagedHost: false
+                            };
+                        }
+                    } else {
+                        if (mssqlInstancesDataV1[host?.id]) {
+                            mssqlInstancesDataRes[host?.id] = {
+                                loading: false,
+                                data: host,
+                                error: host?.errors,
+                                isManagedHost: false
+                            };
+                        }
                     }
                 });
-                dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataRes }));
+                if (isInventoryV2) {
+                    dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataRes }));
+                } else {
+                    dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataRes }));
+                }
             } else {
                 let mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[selectedInstanceId] = {
                     loading: false,
                     data: null,
-                    error: result?.error?.data?.message
+                    error: result?.error?.data?.message,
+                    isManagedHost: false
                 };
-                dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataErr }));
+                if (isInventoryV2) {
+                    dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
+                } else {
+                    dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataErr }));
+                }
             }
         } catch (error) {
             let mssqlInstancesDataErr: any = {};
             mssqlInstancesDataErr[selectedInstanceId] = {
                 loading: false,
                 data: null,
-                error: error
+                error: error,
+                isManagedHost: false
             };
-            dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataErr }));
+            if (isInventoryV2) {
+                dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
+            } else {
+                dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataErr }));
+            }
         }
     };
 
@@ -251,7 +287,12 @@ const SavingsCalculatorApi = () => {
 
     useEffect(() => {
         if (!isDemoMode) {
-            if (selectedPartnerInstanceId && headerSelectedCred?.data?.credentialsId && headerSelectedRegion?.label2) {
+            if (
+                selectedPartnerInstanceId &&
+                !isInventoryV2 &&
+                headerSelectedCred?.data?.credentialsId &&
+                headerSelectedRegion?.label2
+            ) {
                 getMssqlDataForPartnerNode();
             }
         }
