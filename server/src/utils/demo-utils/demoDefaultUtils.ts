@@ -12,6 +12,7 @@ import { getAsyncLocalStorageResource } from '../async-local-storage';
 import { listJobs } from '../../lib/database/job';
 import { inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
+import { instanceDemoData } from './instancesResponse';
 
 const logger = getLogger();
 const demoDefaultRegion = 'us-east-1';
@@ -211,15 +212,13 @@ async function returnInventorydata(instances?: string[]) {
         const instanceDetails = inventoryData.items.find(item => item.ec2InstanceId === instances[0])!;
         // for random EC2 instance ID need to send generic value will be updated in phase 2
         if (!instanceDetails) {
-            return {
-                count: 1,
-                items: []
-            };
+            // return {
+            //     count: 0,
+            //     // items: [instanceDetails]
+            //     items: []
+            // };
+            return instanceDemoData(fsxId, instances[0]);
         }
-        return {
-            count: 1,
-            items: [instanceDetails]
-        };
     }
     return {
         count: inventoryData.count,
