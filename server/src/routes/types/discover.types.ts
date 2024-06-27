@@ -214,7 +214,8 @@ const DatabaseInstanceQueryString = Type.Object({
 const MsSqlInstancesRequestQuery = Type.Object({
     instances: Type.String({
         description: 'Comma separated Ec2 instance ID associated with the MS SQL Server instance.'
-    })
+    }),
+    fields: Type.Optional(Type.String())
 });
 
 export {
