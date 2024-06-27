@@ -11,6 +11,7 @@ describe('authSlice reducers', () => {
         features: {};
         isWorkloadFactory: boolean;
         isInventoryV2: boolean;
+        refreshBlocked: boolean;
     };
 
     beforeEach(() => {
@@ -23,7 +24,8 @@ describe('authSlice reducers', () => {
             pathname: '',
             features: {},
             isWorkloadFactory: false,
-            isInventoryV2: false
+            isInventoryV2: false,
+            refreshBlocked: false
         };
     });
 

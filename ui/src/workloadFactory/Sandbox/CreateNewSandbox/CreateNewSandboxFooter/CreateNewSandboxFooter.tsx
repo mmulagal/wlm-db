@@ -11,6 +11,7 @@ import { WLF_TABS } from '../../../../utils/consts';
 import { useCreateSandboxMutation } from '../../../../utils/apiService';
 import { setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
 import { setShowError } from '../../../../store/workloadFactory/createSandboxSlice';
+import { updateRefreshBlocked } from '../../../../store/authSlice';
 
 const CreateNewSandboxFooter = () => {
     const navigate = useNavigate();
@@ -19,6 +20,7 @@ const CreateNewSandboxFooter = () => {
     const state = useAppSelector(state => state);
 
     const closeHandler = () => {
+        dispatch(updateRefreshBlocked(true));
         navigate('../databases');
     };
 
@@ -51,6 +53,7 @@ const CreateNewSandboxFooter = () => {
                                 variant="text"
                                 onClick={() => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                    dispatch(updateRefreshBlocked(true));
                                     navigate('../databases');
                                     dispatch(clearNotifications());
                                 }}
@@ -65,6 +68,7 @@ const CreateNewSandboxFooter = () => {
                             message: msgData
                         })
                     );
+                    dispatch(updateRefreshBlocked(true));
                     navigate('../databases');
                 }
             } catch (error) {
