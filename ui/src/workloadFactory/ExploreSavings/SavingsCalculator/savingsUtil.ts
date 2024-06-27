@@ -1044,18 +1044,6 @@ export const ExploreSaveConfiguration = (
     return '';
 };
 
-// export const mergeAoagVolumesList = (listA: any, listB: any) => {
-//     let mergedList: any = [];
-//     if (listA && listB) {
-//         mergedList = [...listA, ...listB];
-//     } else if (listA) {
-//         mergedList = [...listA];
-//     } else if (listB) {
-//         mergedList = [...listB];
-//     }
-//     return mergedList;
-// };
-
 export const mergeAoagVolumesList = (listA: any[], listB: any[]) => {
     const mergedMap = new Map();
     const addToMap = (list: any[]) => {

@@ -1,9 +1,7 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
 import {
-    setFsxCredentialStatus,
-    setInProgressInstances,
-    setInventoryTableData
+    setFsxCredentialStatus
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {

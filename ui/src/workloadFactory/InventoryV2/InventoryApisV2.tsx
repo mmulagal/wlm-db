@@ -34,9 +34,7 @@ import {
     updateInstancesApiResponse
 } from './InventoryUtilsV2';
 import { setIsRefreshed } from '../../store/workloadFactory/inventorySlice';
-import InventoryTableData from './InventoryTableData.json';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
-import store from '../../store/store';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
