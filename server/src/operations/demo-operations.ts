@@ -415,7 +415,7 @@ async function updateSandboxDBIntoInstanceData(
     accountId: string,
     instanceID: string,
     sandboxDetails: Sandbox,
-    metaData: Metadata
+    metaData: databaseInstanceMetadata
 ) {
     logger.info('updating sandbox db into resource meta data', accountId, instanceID, sandboxDetails);
 
