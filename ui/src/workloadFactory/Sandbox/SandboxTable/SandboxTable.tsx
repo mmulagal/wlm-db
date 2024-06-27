@@ -336,6 +336,7 @@ const SandboxTable = () => {
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name,
                         payload: isRollbackSelected
                             ? { action: 'REFRESH', snapshot: selectedRollbackSnapshot?.value }
