@@ -1661,10 +1661,12 @@ async function getDatabaseInstanceSummary(
         databaseInstanceDetails.databaseServer = serverDetails;
     }
 
-    if (process.env.NODE_ENV === 'demo' || (process.env.NODE_ENV === 'simulator' && databasesCount)) {
+    if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && databasesCount && getDbCount) {
         databasesCount.totalCount += userDatabase.length;
     }
-    databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
+    if (getDbCount && databasesCount.totalCount) {
+        databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
+    }
 
     if (shouldQueryNodeTopology && nodeTopologyData) {
         databaseInstanceDetails.nodeTopology = nodeTopologyData;
