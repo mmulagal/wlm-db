@@ -105,9 +105,10 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             { schema: DatabasesListSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, databaseHostId }
+                    params: { accountId, databaseHostId },
+                    query: { fields }
                 } = request;
-                const response = await getDatabases(accountId, databaseHostId);
+                const response = await getDatabases(accountId, databaseHostId, fields);
                 return reply.send(response);
             }
         )
@@ -399,14 +400,16 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             { schema: DatabasesListSchemaV2 },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    query: { fields }
                 } = request;
                 const response = await getDatabasesV2(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
-                    databaseInstanceId
+                    databaseInstanceId,
+                    fields
                 );
                 return reply.send(response);
             }

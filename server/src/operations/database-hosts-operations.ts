@@ -1092,8 +1092,12 @@ async function getDatabaseHostSummary(
     return databaseHostDetails;
 }
 
-async function getDatabases(accountId: string, databaseHostId: string): Promise<DatabasesListResponseType> {
-    logger.info('Fetching details about a database installtion ', accountId, databaseHostId);
+async function getDatabases(
+    accountId: string,
+    databaseHostId: string,
+    fields?: string
+): Promise<DatabasesListResponseType> {
+    logger.info('Getting database list', accountId, databaseHostId, fields);
 
     const [resourceDetail] = await listResources(accountId, databaseHostId);
 
@@ -1113,6 +1117,15 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `FSX ID not found for ${databaseHostId}`);
     }
 
+    let fieldsValues: Array<string> = [];
+
+    if (fields) {
+        // remove the empty spaces in the string & split the fields by comma separated array values
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    }
+
+    const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
+
     // Check SSM Connection status
     const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
         credentialsId,
@@ -1126,60 +1139,17 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
     try {
-        const [{ databases } = { databases: {} }, backedupDatabases, { awsBackup, ontapBackup }] = await Promise.all(
-            [
-                getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
-                getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
-                getProtectionDetails(credentialsId, region, fileSystemId, activeNodeInstanceId)
-            ].map(p =>
-                p.catch(error => {
-                    logger.error(`Error while fetching data: ${error?.message}.`);
-                })
-            )
+        return await getDatabaseDetails(
+            accountId,
+            region,
+            credentialsId,
+            databaseHostId,
+            fileSystemId,
+            getProtection,
+            userDatabase,
+            activeNodeInstanceId,
+            instanceName
         );
-        // protection status added for each database
-        const response = databases?.map(
-            (database: {
-                databaseName: string;
-                databaseSize: number;
-                databaseStatus: string;
-                collationName: string;
-            }) => ({
-                name: database.databaseName,
-                size: database.databaseSize,
-                status: database.databaseStatus,
-                collation: database.collationName,
-                type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
-                    ? MSSQL_DATABASE_TYPES.SYSTEM
-                    : MSSQL_DATABASE_TYPES.USER,
-                protection: {
-                    isAwsBackupEnabled: {
-                        fsxn: checkKey(awsBackup, database.databaseName)
-                    },
-                    isFsxOntapSnapshotsEnabled: checkKey(ontapBackup, database.databaseName),
-                    isSqlNativeEnabled: Boolean(
-                        backedupDatabases &&
-                            backedupDatabases?.find(
-                                (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
-                            )
-                    )
-                }
-            })
-        );
-
-        if (isDemo()) {
-            const demoResponse = [...response, ...userDatabase];
-            return {
-                count: demoResponse.length,
-                nextToken: '',
-                items: demoResponse
-            };
-        }
-        return {
-            count: response.length,
-            nextToken: '',
-            items: response
-        };
     } catch (error) {
         const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
         logger.error(errorMessage);
@@ -1984,8 +1954,11 @@ async function getDatabasesV2(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    fields?: string
 ): Promise<DatabasesListResponseType> {
+    logger.info('Getting v2 database list', accountId, region, databaseHostId, databaseInstanceId, fields);
+
     const { activeNodeInstanceId, newDatabaseInstanceDetails } = await getInstanceDetails(
         accountId,
         credentialsId,
@@ -2001,61 +1974,28 @@ async function getDatabasesV2(
     } = newDatabaseInstanceDetails;
     const { userDatabase = [] } = metadata as unknown as databaseInstanceMetadata;
     const instanceName = getDatabaseInstanceName(savedInstanceName, isdefaultInstance);
+
+    let fieldsValues: Array<string> = [];
+
+    if (fields) {
+        // remove the empty spaces in the string & split the fields by comma separated array values
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    }
+
+    const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
+
     try {
-        const [{ databases } = { databases: {} }, backedupDatabases, { awsBackup, ontapBackup }] = await Promise.all(
-            [
-                getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
-                getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
-                getProtectionDetails(credentialsId, region, fileSystemId, activeNodeInstanceId)
-            ].map(p =>
-                p.catch(error => {
-                    logger.error(`Error while fetching data: ${error?.message}.`);
-                })
-            )
+        return await getDatabaseDetails(
+            accountId,
+            region,
+            credentialsId,
+            databaseHostId,
+            fileSystemId,
+            getProtection,
+            userDatabase,
+            activeNodeInstanceId,
+            instanceName
         );
-
-        const response = databases?.map(
-            (database: {
-                databaseName: string;
-                databaseSize: number;
-                databaseStatus: string;
-                collationName: string;
-            }) => ({
-                name: database.databaseName,
-                size: database.databaseSize,
-                status: database.databaseStatus,
-                collation: database.collationName,
-                type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
-                    ? MSSQL_DATABASE_TYPES.SYSTEM
-                    : MSSQL_DATABASE_TYPES.USER,
-                protection: {
-                    isAwsBackupEnabled: {
-                        fsxn: checkKey(awsBackup, database.databaseName)
-                    },
-                    isFsxOntapSnapshotsEnabled: checkKey(ontapBackup, database.databaseName),
-                    isSqlNativeEnabled: Boolean(
-                        backedupDatabases &&
-                            backedupDatabases.find(
-                                (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
-                            )
-                    )
-                }
-            })
-        );
-
-        if (isDemo()) {
-            const demoResponse = [...response, ...userDatabase];
-            return {
-                count: demoResponse.length,
-                nextToken: '',
-                items: demoResponse
-            };
-        }
-        return {
-            count: response.length,
-            nextToken: '',
-            items: response
-        };
     } catch (error) {
         const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
         logger.error(errorMessage);
@@ -2143,6 +2083,97 @@ async function getInstanceDetails(
     } as unknown as DatabaseInstance;
 
     return { activeNodeInstanceId, newDatabaseInstanceDetails };
+}
+
+async function getDatabaseDetails(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    databaseHostId: string,
+    fileSystemId: string,
+    getProtection: boolean,
+    userDatabase: any,
+    activeNodeInstanceId?: string,
+    instanceName?: string
+) {
+    logger.info('Getting database details', {
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        fileSystemId,
+        activeNodeInstanceId,
+        instanceName,
+        getProtection
+    });
+
+    try {
+        const [{ databases } = { databases: {} }, backedupDatabases, { awsBackup = {}, ontapBackup = {} } = {}] =
+            await Promise.all(
+                [
+                    getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
+                    ...(activeNodeInstanceId && getProtection
+                        ? [getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName)]
+                        : [Promise.resolve()]), // Fetch native sql protection status
+                    ...(activeNodeInstanceId && getProtection
+                        ? [getProtectionDetails(credentialsId, region, fileSystemId, activeNodeInstanceId)]
+                        : [Promise.resolve()]) // Fetch protection status
+                ].map(p =>
+                    p.catch(error => {
+                        logger.error(`Error while fetching database details: ${error?.message}.`);
+                    })
+                )
+            );
+        // protection status added for each database
+        const response = databases?.map(
+            (database: {
+                databaseName: string;
+                databaseSize: number;
+                databaseStatus: string;
+                collationName: string;
+            }) => ({
+                name: database.databaseName,
+                size: database.databaseSize,
+                status: database.databaseStatus,
+                collation: database.collationName,
+                type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
+                    ? MSSQL_DATABASE_TYPES.SYSTEM
+                    : MSSQL_DATABASE_TYPES.USER,
+                ...(getProtection && {
+                    protection: {
+                        isAwsBackupEnabled: {
+                            fsxn: checkKey(awsBackup, database.databaseName)
+                        },
+                        isFsxOntapSnapshotsEnabled: checkKey(ontapBackup, database.databaseName),
+                        isSqlNativeEnabled: Boolean(
+                            backedupDatabases &&
+                                backedupDatabases?.find(
+                                    (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
+                                )
+                        )
+                    }
+                })
+            })
+        );
+
+        if (isDemo()) {
+            const demoResponse = [...response, ...userDatabase];
+            return {
+                count: demoResponse.length,
+                nextToken: '',
+                items: demoResponse
+            };
+        }
+        return {
+            count: response.length,
+            nextToken: '',
+            items: response
+        };
+    } catch (error: any) {
+        const errorMessage = error.message;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
 }
 
 function checkKey(obj: any, key: string) {
