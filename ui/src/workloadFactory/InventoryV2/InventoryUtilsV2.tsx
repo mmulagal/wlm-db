@@ -910,12 +910,13 @@ export const updateInventoryDatawithInstancesRes = (
     instanceRow: InstancesObjectInterface
 ) => {
     let result = {};
-    if (inventoryRow?.hasInstanceData) {
-        return {
-            ...inventoryRow,
-            loading: false
-        };
-    }
+    // Need to check if really required
+    // if (inventoryRow?.hasInstanceData) {
+    //     return {
+    //         ...inventoryRow,
+    //         loading: false
+    //     };
+    // }
     if (instanceRow?.loading) {
         result = {
             ...inventoryRow,
@@ -991,7 +992,7 @@ export const updateInventoryDatawithInstancesRes = (
                 totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
                 allocatedCapacity: allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
-                hasInstanceData: true,
+                hasInstanceData: false,
                 sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow),
                 //For explore savings
                 ebsResourceInfo: instanceRow?.data?.ebsResourceInfo,
@@ -1060,8 +1061,8 @@ export const mergeEstimatedCost = (instanceData: any, partnerInstanceData: any) 
                 : (instanceData?.data?.estimatedUsageCost?.storage?.fsxn || 0) +
                   (partnerInstanceData?.data?.estimatedUsageCost?.storage?.fsxn || 0),
             ebs:
-                (instanceData?.data?.estimatedUsageCost?.connectivity?.storage?.ebs || 0) +
-                (partnerInstanceData?.data?.estimatedUsageCost?.connectivity?.storage?.ebs || 0)
+                (instanceData?.data?.estimatedUsageCost?.storage?.ebs || 0) +
+                (partnerInstanceData?.data?.estimatedUsageCost?.storage?.ebs || 0)
         },
         connectivity:
             (instanceData?.data?.estimatedUsageCost?.connectivity || 0) +
