@@ -48,6 +48,7 @@ const InventoryApisV2 = () => {
     const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
@@ -449,40 +450,44 @@ const InventoryApisV2 = () => {
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
     useEffect(() => {
-        let managedList: string[] = [];
-        let fullHostData: any = {};
-        let topologyHostData: any = {};
-        let discoveredList: any = [];
-        if (credId && regionId) {
-            resetValues();
-            setTimeout(() => {
-                getManagedHostList(managedList, null, credId, regionId);
-                getDatabaseHostsList(topologyHostData, null, credId, regionId);
-                getDatabaseHostsFullData(fullHostData, null, credId, regionId);
-                getDiscoveryHostsList(discoveredList, null, credId, regionId);
-            }, 1);
+        if (!refreshBlocked) {
+            let managedList: string[] = [];
+            let fullHostData: any = {};
+            let topologyHostData: any = {};
+            let discoveredList: any = [];
+            if (credId && regionId) {
+                resetValues();
+                setTimeout(() => {
+                    getManagedHostList(managedList, null, credId, regionId);
+                    getDatabaseHostsList(topologyHostData, null, credId, regionId);
+                    getDatabaseHostsFullData(fullHostData, null, credId, regionId);
+                    getDiscoveryHostsList(discoveredList, null, credId, regionId);
+                }, 1);
+            }
         }
-    }, [credId, regionId]);
+    }, [credId, regionId, refreshBlocked]);
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
     useEffect(() => {
-        let managedList: string[] = [];
-        let fullHostData: any = {};
-        let topologyHostData: any = {};
-        let discoveredList: any = [];
-        if (credId && regionId && isRefreshed) {
-            resetValues();
-            setTimeout(() => {
-                getManagedHostList(managedList, null, credId, regionId);
-                getDatabaseHostsList(topologyHostData, null, credId, regionId);
-                getDatabaseHostsFullData(fullHostData, null, credId, regionId);
-                getDiscoveryHostsList(discoveredList, null, credId, regionId);
-            }, 1);
+        if (!refreshBlocked) {
+            let managedList: string[] = [];
+            let fullHostData: any = {};
+            let topologyHostData: any = {};
+            let discoveredList: any = [];
+            if (credId && regionId && isRefreshed) {
+                resetValues();
+                setTimeout(() => {
+                    getManagedHostList(managedList, null, credId, regionId);
+                    getDatabaseHostsList(topologyHostData, null, credId, regionId);
+                    getDatabaseHostsFullData(fullHostData, null, credId, regionId);
+                    getDiscoveryHostsList(discoveredList, null, credId, regionId);
+                }, 1);
+            }
+            if (isRefreshed) {
+                dispatch(setIsRefreshed(false));
+            }
         }
-        if (isRefreshed) {
-            dispatch(setIsRefreshed(false));
-        }
-    }, [isRefreshed]);
+    }, [isRefreshed, refreshBlocked]);
 
     useEffect(() => {
         if (headerSelectedCred && headerSelectedRegion) {

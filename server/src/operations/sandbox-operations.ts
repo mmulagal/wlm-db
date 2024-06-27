@@ -39,12 +39,17 @@ import {
 import { Metadata, ResourceDetails, Sandbox } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
-import { getDatabaseInstanceName, sleep, sqlResponseParsing } from '../utils/utils';
+import { getDatabaseInstanceName, isDemo, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
-import { updateSandboxDBIntoResourceData, updateUserDBIntoResourceData } from './demo-operations';
+import {
+    updateSandboxDBIntoInstanceData,
+    updateSandboxDBIntoResourceData,
+    updateUserDBIntoInstanceTable,
+    updateUserDBIntoResourceData
+} from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { getDriveInfo } from './createdb-operations';
@@ -109,15 +114,13 @@ async function getSandboxDetails(
                         managedInstance => managedInstance.database_instance_name === instance.instanceName
                     )
             )
-            .map(instance => {
+            .map(instance => ({
                 // Add databaseInstanceId to the instance
-                return {
-                    ...instance,
-                    databaseInstanceId: managedInstances.find(
-                        managedInstance => managedInstance.database_instance_name === instance.instanceName
-                    )?.database_instance_id
-                };
-            }) || [];
+                ...instance,
+                databaseInstanceId: managedInstances.find(
+                    managedInstance => managedInstance.database_instance_name === instance.instanceName
+                )?.database_instance_id
+            })) || [];
 
     const errorResponse = (errorMessage: any) => [
         {
@@ -237,7 +240,7 @@ async function getSandboxDetails(
     );
     if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && sandboxes) {
         const demoSandboxInfo = sandboxes.map(item => {
-            const { databaseName: sandboxName, source, createdAt, updatedAt, tag } = item;
+            const { databaseName: sandboxName, source, createdAt, updatedAt, tag, databaseInstanceId } = item;
 
             const databaseObject = {
                 sandboxName,
@@ -249,7 +252,8 @@ async function getSandboxDetails(
                 sourceDatabaseName: source.split('|')[2],
                 createdAt,
                 updatedAt,
-                tag
+                tag,
+                databaseInstanceId
             };
             return databaseObject;
         });
@@ -487,6 +491,10 @@ async function createSandbox(
     });
 
     const { srcDetails, destDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, dest);
+    if (isDemo()) {
+        srcDetails.databaseInstanceName = srcDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
+        destDetails.databaseInstanceName = destDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
+    }
 
     const job = await registerJob(accountId, credentialsId, region, {
         name: `Creating sandbox ${dest.database} in the target host ${srcDetails.resourceName}`,
@@ -561,7 +569,7 @@ async function startSandboxCreation(
         await createExtendedProperties(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, {
             tag,
             cloned_by: 'netapp_wf',
-            source: `${srcDetails.resourceName}|${srcDetails.instanceName}|${srcDetails.database}`,
+            source: `${srcDetails.resourceName}|${srcDetails.databaseInstanceName}|${srcDetails.database}`,
             createdAt: Date.now(), // to be used for calculating age
             updatedAt: Date.now(), // to be used for getting the last update
             accountId
@@ -992,7 +1000,7 @@ async function invokeVirtualMount(
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
                 command = [
-                    `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve`
+                    `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve -InstanceName MSSQLSERVER -IsDefaultInstance true`
                 ];
             }
 
@@ -1185,10 +1193,27 @@ async function createExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             // this is used to retreive the newly created user databases in database list for demo using meta data
+
             const props = {
                 databaseName: destDetails.database,
+                databaseInstanceId: destDetails.instance,
                 ...extendedProps
             } as Sandbox;
+
+            const updatedInstanceMetadata = await updateSandboxDBIntoInstanceData(
+                accountId,
+                srcDetails.host,
+                props,
+                srcDetails.metadata
+            );
+
+            await updateUserDBIntoInstanceTable(
+                accountId,
+                srcDetails.host,
+                destDetails.database,
+                updatedInstanceMetadata
+            );
+
             const updatedMetadata: Metadata = await updateSandboxDBIntoResourceData(
                 accountId,
                 srcDetails.host,
