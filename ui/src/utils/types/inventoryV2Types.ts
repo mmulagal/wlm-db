@@ -24,6 +24,7 @@ export interface InventorySliceData {
     detectOntapPassword: string;
     detectedInstanceId: string;
     inventoryExpandedRowHostData: any;
+    resetManagedData: boolean;
 }
 
 export interface InventoryTableData {

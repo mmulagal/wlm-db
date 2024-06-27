@@ -187,6 +187,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (selectedHeaderTab === WLF_TABS.DASHBOARD) {
             resetDBHomePageState(dispatch);
             dispatch(setDashboardRefresh(true));
+            dispatch(inventoryApi.util.resetApiState());
+            dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS) {
             resetDBHomePageState(dispatch);

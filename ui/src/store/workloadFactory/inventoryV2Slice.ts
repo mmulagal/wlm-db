@@ -27,7 +27,8 @@ const initialInventoryV2State: InventorySliceData = {
     detectOntapUsername: '',
     detectOntapPassword: '',
     detectedInstanceId: '',
-    inventoryExpandedRowHostData: null
+    inventoryExpandedRowHostData: null,
+    resetManagedData: false
 };
 
 const inventoryV2Slice = createSlice({
@@ -96,13 +97,15 @@ const inventoryV2Slice = createSlice({
         },
         setDetectedInstanceId: (state, action: PayloadAction<any>) => {
             state.detectedInstanceId = action.payload;
+        },
+        setResetManagedData: (state, action: PayloadAction<any>) => {
+            state.resetManagedData = action.payload;
         }
     }
 });
 
 export const {
     setValuesForForm,
-
     setInventoryExpandedRowHostData,
     setInventoryTableData,
     setInventoryChartData,
@@ -122,7 +125,8 @@ export const {
     setDetectManagePassword,
     setDetectONTAPUserName,
     setDetectONTAPPassword,
-    setDetectedInstanceId
+    setDetectedInstanceId,
+    setResetManagedData
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

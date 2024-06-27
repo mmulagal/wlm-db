@@ -1,8 +1,6 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
-import {
-    setFsxCredentialStatus
-} from '../../store/workloadFactory/inventoryV2Slice';
+import { setFsxCredentialStatus } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
@@ -1356,7 +1354,7 @@ export const detectFieldsValidation = (entryData: any) => {
 
 export const getDiscoveredHostDeploymentV2 = (host: any) => {
     // This will get deployment type in case of unmanaged hosts
-    const sqlServerDeploymentType = host.sqlServerDeploymentType || '';
+    const sqlServerDeploymentType = host?.sqlServerDeploymentType || '';
     let type = '';
 
     if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
