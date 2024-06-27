@@ -39,7 +39,7 @@ import {
 import { Metadata, ResourceDetails, Sandbox } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
-import { getDatabaseInstanceName, sleep, sqlResponseParsing } from '../utils/utils';
+import { getDatabaseInstanceName, isDemo, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
@@ -491,6 +491,10 @@ async function createSandbox(
     });
 
     const { srcDetails, destDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, dest);
+    if (isDemo()) {
+        srcDetails.databaseInstanceName = srcDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
+        destDetails.databaseInstanceName = destDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
+    }
 
     const job = await registerJob(accountId, credentialsId, region, {
         name: `Creating sandbox ${dest.database} in the target host ${srcDetails.resourceName}`,
@@ -565,7 +569,7 @@ async function startSandboxCreation(
         await createExtendedProperties(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, {
             tag,
             cloned_by: 'netapp_wf',
-            source: `${srcDetails.resourceName}|${srcDetails.instanceName}|${srcDetails.database}`,
+            source: `${srcDetails.resourceName}|${srcDetails.databaseInstanceName}|${srcDetails.database}`,
             createdAt: Date.now(), // to be used for calculating age
             updatedAt: Date.now(), // to be used for getting the last update
             accountId
@@ -1172,8 +1176,7 @@ async function createExtendedProperties(
                 addExtendedProperties('testdb', DEFAULT_MSSQL_INSTANCE_NAME, {
                     tag: 'demo',
                     cloned_by: 'netapp_wf',
-                    source: 'resource|instance|testdb',
-                    databaseInstanceId: destDetails.instance
+                    source: 'resource|instance|testdb'
                 })
             ];
         }
@@ -1193,7 +1196,7 @@ async function createExtendedProperties(
 
             const props = {
                 databaseName: destDetails.database,
-                // databaseInstanceId: destDetails
+                databaseInstanceId: destDetails.instance,
                 ...extendedProps
             } as Sandbox;
 
