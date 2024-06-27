@@ -895,7 +895,8 @@ async function fetchUnmanagedHostsInformationV2(
                 },
                 clusterNodeDetails,
                 databaseInstanceDetails: [],
-                co_relation_id: null
+                co_relation_id: null,
+                ebsVolumeIds: []
             };
             if (ec2Instance?.sqlServerInstances && ec2Instance?.sqlServerInstances.length > 0) {
                 ec2Instance?.sqlServerInstances?.forEach(sqlServerInstance => {
@@ -912,7 +913,7 @@ async function fetchUnmanagedHostsInformationV2(
                         fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
                     });
 
-                    resourceDetails.ebsVolumeIds = ebsVolumeIds;
+                    resourceDetails.ebsVolumeIds = resourceDetails.ebsVolumeIds?.concat(ebsVolumeIds);
 
                     resourceDetails.databaseInstanceDetails?.push({
                         database_instance_id: sqlServerInstance.serverGuid || '',
