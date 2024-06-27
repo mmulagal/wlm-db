@@ -1776,7 +1776,7 @@ async function getSandboxSplitEstimate(
     if (!parsedResp?.data?.parentVolume || !parsedResp?.log?.parentVolume) {
         throw createError(
             HttpErrorCodes.VALIDATION_ERROR,
-            'The sandbox seems to be already split and hence cannot be altered!'
+            'The sandbox seems to be already split and hence cannot be altered.'
         );
     }
 
@@ -1899,7 +1899,7 @@ async function performLifecycleUpdate(
         if (!mappings.data.parentVolume || !mappings.log.parentVolume) {
             throw createError(
                 HttpErrorCodes.VALIDATION_ERROR,
-                'The sandbox seems to be already split and hence cannot be altered!'
+                'The sandbox seems to be already split and hence cannot be altered.'
             );
         }
 
@@ -2286,6 +2286,13 @@ async function performSplitOperation(
             resDetails,
             resDetails.database
         )) as VolumeLunMapping;
+
+        if (!mappings.data.parentVolume || !mappings.log.parentVolume) {
+            throw createError(
+                HttpErrorCodes.VALIDATION_ERROR,
+                'The sandbox seems to be already split and hence cannot be altered.'
+            );
+        }
 
         await splitVolumes(
             accountId,
