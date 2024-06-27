@@ -1134,7 +1134,6 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
             ].map(p =>
                 p.catch(error => {
                     logger.error(`Error while fetching data: ${error?.message}.`);
-                    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${error?.message}`);
                 })
             )
         );
@@ -2011,7 +2010,6 @@ async function getDatabasesV2(
             ].map(p =>
                 p.catch(error => {
                     logger.error(`Error while fetching data: ${error?.message}.`);
-                    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${error?.message}`);
                 })
             )
         );
