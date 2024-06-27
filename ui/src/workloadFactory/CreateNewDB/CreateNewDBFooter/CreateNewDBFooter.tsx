@@ -10,6 +10,7 @@ import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './CreateNewUserFooter.module.scss';
+import { updateRefreshBlocked } from '../../../store/authSlice';
 
 const CreateNewUserFooter = () => {
     const navigate = useNavigate();
@@ -21,6 +22,7 @@ const CreateNewUserFooter = () => {
     const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
 
     const closeHandler = () => {
+        dispatch(updateRefreshBlocked(true));
         navigate('../databases');
     };
 
@@ -51,6 +53,7 @@ const CreateNewUserFooter = () => {
                                 variant="text"
                                 onClick={() => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                    dispatch(updateRefreshBlocked(true));
                                     navigate('../databases');
                                     dispatch(clearNotifications());
                                 }}
@@ -75,6 +78,7 @@ const CreateNewUserFooter = () => {
                             })
                         );
                     }
+                    dispatch(updateRefreshBlocked(true));
                     navigate('../databases');
                 }
             } catch (error) {

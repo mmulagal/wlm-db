@@ -641,7 +641,8 @@ async function processCloudFormationMessages() {
                                                                     source: RESOURCE_SOURCE.DEPLOY,
                                                                     fsxSvmId: { [fsxId]: fsxSvmId },
                                                                     sqlDeploymentType,
-                                                                    databaseType: DatabaseTypes.MS_SQL_SERVER
+                                                                    databaseType: DatabaseTypes.MS_SQL_SERVER,
+                                                                    storageProtocol: STORAGE_PROTOCOLS.ISCSI
                                                                 };
 
                                                                 await upsertDatabaseInstance(
