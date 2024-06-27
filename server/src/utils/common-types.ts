@@ -49,6 +49,7 @@ interface Sandbox {
     source: string;
     tag: string;
     baseSnapshot?: string;
+    databaseInstanceId?: string;
 }
 
 interface NodeDetails {
