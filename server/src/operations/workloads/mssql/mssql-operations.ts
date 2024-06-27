@@ -114,26 +114,31 @@ async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: st
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get active instance information');
     }
 
-    let dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId, instanceName);
-    dbCount = dbCount?.totalCount || 0;
+    try {
+        let dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId, instanceName);
+        dbCount = dbCount?.totalCount || 0;
 
-    const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
-    const batchQueries: string[] = [];
-    for (let i = 0, offset = 0; i < rowscount; i++) {
-        batchQueries.push(`sqlcmd -S "${instanceName}" -Q "${DATABASES(offset, DB_ROWS_COUNT)}" -y 0`);
-        offset += DB_ROWS_COUNT;
+        const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
+        const batchQueries: string[] = [];
+        for (let i = 0, offset = 0; i < rowscount; i++) {
+            batchQueries.push(`sqlcmd -S "${instanceName}" -Q "${DATABASES(offset, DB_ROWS_COUNT)}" -y 0`);
+            offset += DB_ROWS_COUNT;
+        }
+
+        const responses = await Promise.map(
+            batchQueries,
+            async query => callSsmExecution(credentialsId, region, [query], activeNodeInstanceId!),
+            { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+        );
+        const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
+        // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
+        const cleanDBSummanry = sqlResponseParsing(dbSummary);
+
+        return { databases: cleanDBSummanry };
+    } catch (error: any) {
+        logger.error('Failed to get databases summary', error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Failed to get databases summary. ${error?.message}`);
     }
-
-    const responses = await Promise.map(
-        batchQueries,
-        async query => callSsmExecution(credentialsId, region, [query], activeNodeInstanceId!),
-        { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
-    );
-    const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
-    // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
-    const cleanDBSummanry = sqlResponseParsing(dbSummary);
-
-    return { databases: cleanDBSummanry };
 }
 
 async function getAllResourceUtilisationDetails(

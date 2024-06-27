@@ -542,8 +542,8 @@ async function getProtectionStatus(
 
     try {
         const [nativeSqlProtection, protectionResponse, fsxwBackup, ebsBackup] = await Promise.all([
-            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName), // one ssm call
-            fsxnId ? getProtectionDetails(credentialsId, region, fsxnId, activeNodeInstanceId) : Promise.resolve(), // 2 ssm call
+            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName),
+            fsxnId ? getProtectionDetails(credentialsId, region, fsxnId, activeNodeInstanceId) : Promise.resolve(),
             fsxwId ? isFsxwAwsBackupEnabled(credentialsId, region, fsxwId) : Promise.resolve(),
             ebsVolumeIds ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeIds) : Promise.resolve() // returns true if backup is enabled on any of the ebs ID associated with the resource; revisit this to return information for each ebs
         ]);
@@ -1125,17 +1125,20 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
         const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
-
-    const [{ databases }, backedupDatabases, { awsBackup, ontapBackup }] = await Promise.all(
-        [
-            getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
-            getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
-            getProtectionDetails(credentialsId, region, fileSystemId, activeNodeInstanceId)
-        ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
-    );
     try {
+        const [{ databases } = { databases: {} }, backedupDatabases, { awsBackup, ontapBackup }] = await Promise.all(
+            [
+                getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
+                getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
+                getProtectionDetails(credentialsId, region, fileSystemId, activeNodeInstanceId)
+            ].map(p =>
+                p.catch(error => {
+                    logger.error(`Error while fetching data: ${error?.message}.`);
+                })
+            )
+        );
         // protection status added for each database
-        const response = databases.map(
+        const response = databases?.map(
             (database: {
                 databaseName: string;
                 databaseSize: number;
@@ -1178,7 +1181,7 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
             items: response
         };
     } catch (error) {
-        const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId}, ${error}`;
+        const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
@@ -1998,16 +2001,20 @@ async function getDatabasesV2(
     } = newDatabaseInstanceDetails;
     const { userDatabase = [] } = metadata as unknown as databaseInstanceMetadata;
     const instanceName = getDatabaseInstanceName(savedInstanceName, isdefaultInstance);
-
-    const [{ databases }, backedupDatabases, { awsBackup, ontapBackup }] = await Promise.all(
-        [
-            getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
-            getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
-            getProtectionDetails(credentialsId, region, fileSystemId, activeNodeInstanceId)
-        ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
-    );
     try {
-        const response = databases.map(
+        const [{ databases } = { databases: {} }, backedupDatabases, { awsBackup, ontapBackup }] = await Promise.all(
+            [
+                getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
+                getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
+                getProtectionDetails(credentialsId, region, fileSystemId, activeNodeInstanceId)
+            ].map(p =>
+                p.catch(error => {
+                    logger.error(`Error while fetching data: ${error?.message}.`);
+                })
+            )
+        );
+
+        const response = databases?.map(
             (database: {
                 databaseName: string;
                 databaseSize: number;
@@ -2050,7 +2057,7 @@ async function getDatabasesV2(
             items: response
         };
     } catch (error) {
-        const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId}, ${error}`;
+        const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
