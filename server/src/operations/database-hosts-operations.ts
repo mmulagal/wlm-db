@@ -1661,7 +1661,7 @@ async function getDatabaseInstanceSummary(
         databaseInstanceDetails.databaseServer = serverDetails;
     }
 
-    if (process.env.NODE_ENV === 'demo' || (process.env.NODE_ENV === 'simulator' && databasesCount && getDbCount)) {
+    if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && databasesCount && getDbCount) {
         databasesCount.totalCount += userDatabase.length;
     }
     if (getDbCount && databasesCount.totalCount) {
