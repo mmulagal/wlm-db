@@ -175,7 +175,10 @@ Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 const validateSQLInstanceConnectivity = (
     ec2instanceId: string,
     sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
-) => `
+) => ` 
+        
+        $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'
+
         $destinationPath = $env:PSModulePath.split(';')[0]
         $CommonmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.Common"
         $ssmmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.SimpleSystemsManagement"
@@ -360,7 +363,6 @@ const getMappedOntapVolumesScript = (
             WHERE 
                 vs.volume_mount_point != 'C:\\'
                 AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
-                AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
             FOR JSON PATH;
 "@
 
@@ -373,52 +375,49 @@ const getMappedOntapVolumesScript = (
 
         $sqlqueryresponse =  sqlcmd -S "${instanceName}" -Q $sqlqueryfordatabaseandvolumelist -y 0;   
 
-        Function Get-DatabaseMappedInVolume($sqlqueryresponse) {        
+        Function Get-VolumeIdsList($sqlqueryresponse) {        
             $sqlJsonResponse = $sqlqueryresponse | convertFrom-Json
         
-            # Create an array to store the database-volume objects
-            $databaseVolumes = @()
+            # Create an array to store the database-volume ids
+            $volumeIds = @()
         
-            foreach ($record in $sqlJsonResponse) {
-                # Create a new object with properties databaseName and volumeId
-                $object = New-Object PSObject -Property @{
-                    databaseName = $record.DatabaseName
-                    volumeId = $record.volumeId
-                    volumeName = $record.VolumeName
+            foreach ($record in $sqlJsonResponse) {    
+                # Add the ids to the array only if they're not already there
+                if ($volumeIds -notcontains $record.volumeId) {
+                    $volumeIds += $record.volumeId
                 }
-        
-                # Add the object to the array
-                $databaseVolumes += $object
             }
         
             # Output the array
-            $databaseVolumes
+            $volumeIds
         }
 
         Function Get-SerialNumberOfWinVolumes {
             param(
                 [Parameter(Mandatory = $true)]
-                [string[]]$sqlresponse
+                [string[]]$winvolumes
             )
-
+        
             try {
-                $winvolumes = $sqlresponse | convertFrom-Json
                 $Lunserialnumbers = @()
                 $VolumeSerialMapping = @{}
-
+        
                 Write-Debug "win volumes: $($winvolumes | ConvertTo-Json)"
-
-                foreach ($winvolume in $winvolumes) {
-                    if ($null -eq $winvolume.volumeid) {
+        
+                $allDisks = Get-Disk | Select SerialNumber, Number
+        
+                foreach ($volumeid in $winvolumes) {
+                    if ($null -eq $volumeid) {
                         Write-Debug "Skipping volume with null volumeid"
                         continue
                     }
-
-                    $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber
-                    $VolumeSerialMapping[$winvolume.VolumeId] = $vol.serialnumber
-                    $Lunserialnumbers += $vol.serialnumber
+        
+                    $vol = Get-Volume -Path $volumeid | Get-Partition | Where-Object DiskNumber -in $allDisks.Number
+                    $serialNumber = $allDisks | Where-Object Number -eq $vol.DiskNumber | Select -ExpandProperty SerialNumber
+        
+                    $VolumeSerialMapping[$volumeid] = $serialNumber
+                    $Lunserialnumbers += $serialNumber
                 }
-
                 return @{
                     Lunserialnumbers = $Lunserialnumbers | select -Unique
                     VolumeSerialMapping = $VolumeSerialMapping
@@ -574,19 +573,17 @@ const getMappedOntapVolumesScript = (
             return $volumeIds
         }
 
-        Function updateVolumeMappings($volumeDatabaseMapping, $volumeNameMapping) {
+        Function updateVolumeMappings($sqlqueryresponse, $volumeNameMapping) {
             try {
+                $sqlJsonResponse = $sqlqueryresponse | convertFrom-Json
                 $newArray = @()
-                foreach ($dbMapping in $volumeDatabaseMapping) {
-                    $volumeId = $dbMapping.volumeId
+                foreach ($dbMapping in $sqlJsonResponse) {
+                    $volumeId = $dbMapping.VolumeId
         
                     if ($null -ne $volumeId -and $null -ne $volumeNameMapping -and $volumeNameMapping.ContainsKey($volumeId)) {
                         $value = $volumeNameMapping[$volumeId]
                         $newObject = @{
-                            "databaseName" = $dbMapping.databaseName
-                            "driveVolumeName" = $dbMapping.volumeName
-                            "driveVolumeId" = $dbMapping.volumeId
-                            "ontapVolumeName" = $value["name"]
+                            "databaseName" = $dbMapping.DatabaseName
                             "ontapVolumeuuid" = $value["uuid"]
                         }
 
@@ -595,22 +592,21 @@ const getMappedOntapVolumesScript = (
                 }
                 return $newArray;
             } catch {
-                Write-Host "Volume Ids: $($volumeDatabaseMapping | ConvertTo-Json)"
+                Write-Debug "Volume Ids: $($sqlqueryresponse | convertFrom-Json)"
                 Write-Error $_.Exception.Message
             }
         }    
+        Write-Debug "query List: $sqlqueryresponse"
 
-        $volumeDatabaseMapping = Get-DatabaseMappedInVolume $sqlqueryresponse
+        $volumeIds = Get-VolumeIdsList $sqlqueryresponse
 
-        Write-Debug "Volume id Database name Mapping: $($volumeDatabaseMapping | ConvertTo-Json)"
-
-        $result = Get-SerialNumberOfWinVolumes $sqlqueryresponse
+        $result = Get-SerialNumberOfWinVolumes $volumeIds
         $SerialNumbers = $result.Lunserialnumbers
         
-        #if (!($SerialNumbers.count -gt 0)) {
+        # if (!($SerialNumbers.count -gt 0)) {
         #    write-error "Couldn't get windows volume serial numbers"
         #    return
-        #}
+        # }
 
         Write-Debug "Serial Numbers: $SerialNumbers"
         Write-Debug "Volume Serial Mapping: $($result.VolumeSerialMapping | ConvertTo-Json)"
@@ -649,7 +645,7 @@ const getMappedOntapVolumesScript = (
             }
         } 
         
-        $volumeDBMap = updateVolumeMappings $volumeDatabaseMapping $volumeNameMapping
+        $volumeDBMap = updateVolumeMappings $sqlqueryresponse $volumeNameMapping
         
         Write-Debug "final volue details: $($volumeDBMap | ConvertTo-Json)"
 

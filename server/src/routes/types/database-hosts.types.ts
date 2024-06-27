@@ -116,11 +116,11 @@ type TopologyResponseType = Static<typeof TopologyResponse>;
 const ProtectionPerStorageTypeResponse = Type.Object({
     isSqlNativeEnabled: Type.Boolean({ default: false }),
     isAwsBackupEnabled: Type.Object({
-        fsxn: Type.Boolean({ default: false }),
+        fsxn: Type.Union([Type.Boolean({ default: false }), Type.String({ enum: ['N/A'] })]),
         fsxw: Type.Boolean({ default: false }),
         ebs: Type.Boolean({ default: false })
     }),
-    isFsxOntapSnapshotsEnabled: Type.Boolean({ default: false }),
+    isFsxOntapSnapshotsEnabled: Type.Union([Type.Boolean({ default: false }), Type.String({ enum: ['N/A'] })]),
     protectedDatabases: Type.Optional(Type.Number({ description: 'Number of protected databases' }))
 });
 type ProtectionPerStorageTypeResponseType = Static<typeof ProtectionPerStorageTypeResponse>;
@@ -455,14 +455,6 @@ const SandboxParams = Type.Composite([
     })
 ]);
 
-const SandboxParamsV2 = Type.Composite([
-    DatabaseHostSummaryParams,
-    Type.Object({
-        sandboxName: Type.String(),
-        databaseInstanceName: Type.String({ description: 'SQL Server instance name' })
-    })
-]);
-
 const SplitEstimatesResponse = Type.Object({
     volumes: Type.Array(
         Type.Object({
@@ -658,7 +650,6 @@ export {
     DatabaseMountPointResponseBody,
     DatabaseMountPointResponseType,
     SandboxParams,
-    SandboxParamsV2,
     SplitEstimatesResponse,
     SandboxLifeCycleBody,
     SandboxSnapshotsResponse,

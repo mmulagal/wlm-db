@@ -1,12 +1,12 @@
 import randomize from 'randomatic';
 import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
-import { STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
+import { DatabaseTypes, RESOURCE_SOURCE, STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
 import getLogger from '../logger';
 import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
-import { listConfig } from '../../lib/database/db';
+import { listConfig, upsertDatabaseInstance } from '../../lib/database/db';
 import { saveConfig } from '../../operations/database/database-operations';
 import { getAsyncLocalStorageResource } from '../async-local-storage';
 import { listJobs } from '../../lib/database/job';
@@ -21,15 +21,16 @@ function createDemoResources(
     region: string,
     credentialsId: string,
     awsAccountId: string,
-    demoServerName?: string,
-    storageProtocol?: string
+    serverName: string,
+    storageProtocol?: string,
+    resourceId?: string
 ) {
     logger.info('Creating demo database resources and corresponding details.');
     const stackName = randomize('A', 10);
     const stackId = randomize('A0', 10);
     const sqlDeploymentMode = 'FCI';
     const fsxFilSystemId = `fs-${randomize('a0', 10)}`;
-    const serverName = demoServerName || `sqldatabase${randomize('a', 4)}`;
+    // const serverName = demoServerName || `sqldatabase${randomize('a', 4)}`;
 
     createDeploymentMockDataInDB(
         accountId!,
@@ -42,7 +43,8 @@ function createDemoResources(
         awsAccountId,
         serverName,
         true,
-        storageProtocol
+        storageProtocol,
+        resourceId
     );
 }
 
@@ -82,7 +84,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     const matchingCredentials = credentialsList?.find(
         (item: { name: string }) => item.name === 'DemoDefaultCredential'
     );
-    let credentialsId;
+    let credentialsId: string;
     const awsAccountId = randomize('0', 12);
     if (matchingCredentials) {
         logger.info('DemoDefaultCredential credential exists', matchingCredentials.credentialsId);
@@ -127,33 +129,64 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
 
     const jobs = await listJobs(accountId, credentialsId, demoDefaultRegion);
     if (isEmpty(jobs)) {
-        // create 2 new resources and configurations
+        // create 3 new resources and configurations
         logger.info('Creating demo resources');
-        createDemoResources(
-            accountId,
-            demoDefaultRegion,
-            credentialsId,
-            awsAccountId,
-            'SQLServer-Prod-01',
-            STORAGE_PROTOCOLS.ISCSI
-        );
-        createDemoResources(
-            accountId,
-            demoDefaultRegion,
-            credentialsId,
-            awsAccountId,
-            'SQLServer-Dev-01',
-            STORAGE_PROTOCOLS.ISCSI
-        );
-        createDemoResources(
-            accountId,
-            demoDefaultRegion,
-            credentialsId,
-            awsAccountId,
-            'SQLServer-Dev-04',
-            STORAGE_PROTOCOLS.SMB
-        );
+        const prodOneResourceId = randomUUID();
+        const devOneResourceId = randomUUID();
+        const devFourResourceId = randomUUID();
+
+        const instances = [
+            {
+                resourceId: prodOneResourceId,
+                name: 'SQLServer-Prod-01',
+                protocol: STORAGE_PROTOCOLS.ISCSI,
+                sqlInstances: ['SQLServer-Prod-01AMAZON', 'SQLServer-Prod-01ANTMAN']
+            },
+            {
+                resourceId: devOneResourceId,
+                name: 'SQLServer-Dev-01',
+                protocol: STORAGE_PROTOCOLS.ISCSI,
+                sqlInstances: [
+                    'SQLServer-Dev-01BETA',
+                    'SQLServer-Dev-01DELTA',
+                    'SQLServer-Dev-01GAMMA',
+                    'SQLServer-Prod-01ANTMAN'
+                ]
+            },
+            {
+                resourceId: devFourResourceId,
+                name: 'SQLServer-Dev-04',
+                protocol: STORAGE_PROTOCOLS.SMB,
+                sqlInstances: ['SQLServer-Dev-04BOSTON', 'SQLServer-Dev-04EPSILON']
+            }
+        ];
+
+        instances.forEach(async ({ resourceId, name, protocol, sqlInstances }) => {
+            await createDemoResources(
+                accountId,
+                demoDefaultRegion,
+                credentialsId,
+                awsAccountId,
+                name,
+                protocol,
+                resourceId
+            );
+
+            sqlInstances.forEach(instanceName => {
+                createDatabaseInstances(
+                    accountId,
+                    resourceId,
+                    instanceName,
+                    credentialsId,
+                    demoDefaultRegion,
+                    `fs-${randomize('A0', 17)}`,
+                    protocol,
+                    {}
+                );
+            });
+        });
     }
+
     if (isEmpty(configs)) {
         logger.info('Creating demo and templates');
         createConfigurations(accountId, awsAccountId, credentialsId);
@@ -176,6 +209,13 @@ async function returnInventorydata(instances?: string[]) {
             };
         }
         const instanceDetails = inventoryData.items.find(item => item.ec2InstanceId === instances[0])!;
+        // for random EC2 instance ID need to send generic value will be updated in phase 2
+        if (!instanceDetails) {
+            return {
+                count: 1,
+                items: []
+            };
+        }
         return {
             count: 1,
             items: [instanceDetails]
@@ -185,6 +225,37 @@ async function returnInventorydata(instances?: string[]) {
         count: inventoryData.count,
         items: inventoryData.items
     };
+}
+
+async function createDatabaseInstances(
+    accountId: string,
+    resourceId: string,
+    databaseInstanceName: string,
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    storageProtocol: string,
+    databaseMetadata: any
+) {
+    const instanceRecord = {
+        resourceId,
+        credentialsId,
+        region,
+        databaseInstanceId: randomUUID(),
+        databaseInstanceName,
+        fsxnIds: fsxId,
+        isDefault: false,
+        source: RESOURCE_SOURCE.DEPLOY,
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
+        numberofUserDbsCreated: 1,
+        sandboxCreated: true,
+        storageProtocol,
+        metaData: databaseMetadata,
+        databaseType: DatabaseTypes.MS_SQL_SERVER
+    };
+
+    await upsertDatabaseInstance(accountId, instanceRecord);
 }
 
 export { creadteDemoDBData, returnInventorydata };

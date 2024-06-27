@@ -70,6 +70,7 @@ export interface SandboxItemEntities {
     sandboxName: string;
     databaseHostName: string;
     databaseHostId: string;
+    databaseInstanceId: string;
     databaseInstanceName: string;
     sourceDatabaseName: string;
     sourceDatabaseHostName: string;
@@ -102,6 +103,7 @@ export interface SandboxEntities {
     };
     connectionInfo: {
         selectedDatabaseHostId?: string | null;
+        selectedDatabaseInstanceId?: string | null;
         selectedSandboxName?: string | null;
         connectionString?: string | null;
         isLoading: boolean;

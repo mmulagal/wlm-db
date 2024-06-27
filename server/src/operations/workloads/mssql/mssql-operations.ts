@@ -930,7 +930,8 @@ async function checkDatabaseExists(
     databaseHostId: string,
     databaseName: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlInstanceId?: string
 ) {
     logger.info('Checking Database name exists', {
         accountId,
@@ -942,6 +943,14 @@ async function checkDatabaseExists(
     });
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (sqlInstanceId) {
+            const { userDatabase } = ((await listDatabaseInstances(accountId, { sqlInstanceId, credentialsId }))[0]
+                ?.metadata || {
+                userDatabase: undefined
+            }) as { userDatabase: any[] };
+            return userDatabase?.some(db => db.name === databaseName) ?? false;
+        }
+
         const { userDatabase } = ((await listResources(accountId, databaseHostId, credentialsId))[0]?.metadata || {
             userDatabase: undefined
         }) as { userDatabase: any[] };

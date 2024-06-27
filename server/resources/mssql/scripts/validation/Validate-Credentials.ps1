@@ -30,6 +30,8 @@
     
     Start-Transcript -Path C:\cfn\log\validatecredentials.ps1.txt -Append
 
+    $env:PSModulePath += ';C:\Windows\system32\WindowsPowerShell\v1.0\Modules\aws_ssm'
+
     #get Instance ID
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
     $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id

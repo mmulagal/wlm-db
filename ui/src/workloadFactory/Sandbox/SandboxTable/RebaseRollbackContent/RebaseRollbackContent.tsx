@@ -30,6 +30,7 @@ const RebaseRollbackContent = ({ rowData }: any) => {
             credentialId: headerSelectedCred?.data?.credentialsId,
             region: headerSelectedRegion?.label2,
             databaseHostId: rowData?.databaseHostId,
+            instanceId: rowData?.instanceId,
             sandboxName: rowData?.name
         }).then((res: any) => {
             if (res?.data?.snapshots) {
