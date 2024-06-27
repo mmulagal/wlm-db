@@ -2262,6 +2262,13 @@ async function performSplitOperation(
             resDetails.database
         )) as VolumeLunMapping;
 
+        if (!mappings.data.parentVolume || !mappings.log.parentVolume) {
+            throw createError(
+                HttpErrorCodes.VALIDATION_ERROR,
+                'The sandbox seems to be already split and hence cannot be altered!'
+            );
+        }
+
         await splitVolumes(
             accountId,
             credentialsId,
