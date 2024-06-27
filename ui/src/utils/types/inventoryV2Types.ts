@@ -265,6 +265,13 @@ export interface EC2DetailsInterface {
     subnetId?: string;
 }
 
+export interface DatabaseInstanceDetailsInterface {
+    instanceName?: string;
+    instanceState?: string;
+    isManaged?: boolean;
+    databaseInstanceStatus?: string; // up, down
+}
+
 export interface InstancesHostsRowInterface {
     id?: string;
     name?: string;
@@ -272,12 +279,7 @@ export interface InstancesHostsRowInterface {
     databaseHostStatus?: string;
     ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
     loading?: boolean;
-    databaseInstanceDetails?: Array<{
-        instanceName?: string;
-        instanceState?: string;
-        isManaged?: boolean;
-        databaseInstanceStatus?: string; // up, down
-    }>;
+    databaseInstanceDetails?: Array<DatabaseInstanceDetailsInterface>;
     clusterNodeDetails?: Array<{
         ec2InstanceId?: string;
         ec2InstancePrivateIpAddress?: string;

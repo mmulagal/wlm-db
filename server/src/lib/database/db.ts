@@ -545,6 +545,22 @@ async function updateResourceMetaData(accountId: string, resourceId: string, met
     });
 }
 
+async function updateInstanceMetadata(accountId: string, instanceId: string, metaData: any) {
+    logger.info('Updating instance metadata', { accountId, instanceId });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.database_instances.updateMany({
+        where: {
+            account_id: accountId,
+            database_instance_id: instanceId
+        },
+        data: {
+            ...(!isEmpty(metaData) && { metadata: metaData })
+        }
+    });
+}
+
 async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanceRecord) {
     logger.info('Upserting a database instance record', { accountId, record });
 
@@ -697,5 +713,6 @@ export {
     listDatabaseInstances,
     updateDatabaseInstanceMetadata,
     deleteDatabaseInstance,
-    DatabaseInstanceRecord
+    DatabaseInstanceRecord,
+    updateInstanceMetadata
 };

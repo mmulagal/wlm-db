@@ -977,6 +977,9 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
         // Capacity
         if (fsxData?.totalStorageCapacity) {
             let size = fsxData?.totalStorageCapacity ? fsxData?.totalStorageCapacity / GIB_IN_BYTE : 0;
+            if (size < 1024) {
+                size = 1024;
+            }
             const unitOption = generateOptionType('GiB', 'GiB', '', false, '');
             result = {
                 ...result,
@@ -1041,14 +1044,22 @@ export const ExploreSaveConfiguration = (
     return '';
 };
 
-export const mergeAoagVolumesList = (listA: any, listB: any) => {
-    let mergedList: any = [];
-    if (listA && listB) {
-        mergedList = [...listA, ...listB];
-    } else if (listA) {
-        mergedList = [...listA];
-    } else if (listB) {
-        mergedList = [...listB];
+export const mergeAoagVolumesList = (listA: any[], listB: any[]) => {
+    const mergedMap = new Map();
+    const addToMap = (list: any[]) => {
+        list.forEach(item => {
+            if (mergedMap.has(item.id)) {
+                mergedMap.set(item.id, { ...mergedMap.get(item.id), ...item });
+            } else {
+                mergedMap.set(item.id, item);
+            }
+        });
+    };
+    if (listA) {
+        addToMap(listA);
     }
-    return mergedList;
+    if (listB) {
+        addToMap(listB);
+    }
+    return Array.from(mergedMap.values());
 };

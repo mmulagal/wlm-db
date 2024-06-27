@@ -7,11 +7,20 @@ import {
     DATABASE_TYPE,
     MSSQL_DATABASE_TYPES,
     ONLINE,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    RESOURCE_SOURCE,
+    DatabaseTypes
 } from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
-import { checkAccount, createDeployment, createResource, updateResourceMetaData } from '../lib/database/db';
-import { Metadata, Sandbox } from '../utils/common-types';
+import {
+    checkAccount,
+    createDeployment,
+    createResource,
+    updateInstanceMetadata,
+    updateResourceMetaData,
+    upsertDatabaseInstance
+} from '../lib/database/db';
+import { Metadata, Sandbox, databaseInstanceMetadata } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
@@ -109,7 +118,8 @@ async function createDeploymentMockDataInDB(
     awsAccountId: string,
     serverName: string,
     createSandbox: boolean = false,
-    storageProtocol?: string
+    storageProtocol?: string,
+    resourceId?: string
 ) {
     logger.info('create deployment, resource and job table mock data in database', {
         accountId,
@@ -146,6 +156,10 @@ async function createDeploymentMockDataInDB(
             fileSystemType: STORAGE_TYPE.FSXN
         }
     });
+
+    resourceId = resourceId || randomUUID();
+    const fsxId = `fs-${randomize('A0', 17)}`;
+
     const metadata: Metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
         node1InstanceId: `i-${randomize('A0', 17)}`,
@@ -162,8 +176,7 @@ async function createDeploymentMockDataInDB(
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
                     source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
-                    tag: 'Development',
-                    baseSnapshot: `netapp_wf_${Date.now()}`
+                    tag: 'Development'
                 }
             ],
             userDatabase: [
@@ -188,17 +201,65 @@ async function createDeploymentMockDataInDB(
         metadata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
     }
     await createResource(accountId, {
-        resourceId: randomUUID(),
+        resourceId,
         credentialsId,
         storageType: STORAGE_TYPE.FSXN,
         resourceName,
         cloudProviderAccountId: cloudProviderId,
         cloudProviderName: CloudProviders.AWS,
         resourceType: RESOURCESTYPE.MSSQL,
-        coRelationId: `fs-${randomize('A0', 17)}`,
+        coRelationId: fsxId,
         region,
         metadata
     });
+
+    const databaseMetadata = {
+        sandboxes: [
+            {
+                databaseName: 'RetailBanking_sandbox',
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                tag: 'Development',
+                baseSnapshot: `netapp_wf_${Date.now()}`
+            }
+        ],
+        userDatabase: [
+            {
+                name: 'RetailBanking_sandbox',
+                size: 16777216,
+                type: 'User Database',
+                status: 'ONLINE',
+                protection: {
+                    isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
+                    isFsxOntapSnapshotsEnabled: false,
+                    isSqlNativeEnabled: false
+                },
+                collation: SQL_DEFAULT_COLLATION
+            }
+        ]
+    };
+
+    const instanceRecord = {
+        resourceId,
+        credentialsId,
+        region,
+        databaseInstanceId: randomUUID(),
+        databaseInstanceName: DEFAULT_INSTANCE_NAME,
+        fsxnIds: fsxId,
+        isDefault: true,
+        source: RESOURCE_SOURCE.DEPLOY,
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
+        numberofUserDbsCreated: 1,
+        sandboxCreated: true,
+        storageProtocol,
+        metaData: databaseMetadata,
+        databaseType: DatabaseTypes.MS_SQL_SERVER,
+        storageType: STORAGE_TYPE.FSXN
+    };
+
+    await upsertDatabaseInstance(accountId, instanceRecord);
 
     const data = await createJobMockData(
         accountId,
@@ -296,6 +357,40 @@ async function updateUserDBIntoResourceData(
     }
 }
 
+async function updateUserDBIntoInstanceTable(
+    accountId: string,
+    instanceId: string,
+    databaseName: string,
+    metaData: databaseInstanceMetadata
+) {
+    logger.info('updating user db into resource meta data', accountId, instanceId, databaseName);
+
+    const existingDatabases = metaData.userDatabase || [];
+    const hasExistingDatabase = existingDatabases.some(db => db.name === databaseName);
+
+    if (!hasExistingDatabase) {
+        const databaseDetails = {
+            name: databaseName,
+            size: 16777216,
+            type: MSSQL_DATABASE_TYPES.USER,
+            status: ONLINE,
+            protection: {
+                isAwsBackupEnabled: {
+                    fsxn: false,
+                    fsxw: false,
+                    ebs: false
+                },
+                isFsxOntapSnapshotsEnabled: false,
+                isSqlNativeEnabled: false
+            },
+            collation: SQL_DEFAULT_COLLATION
+        };
+        metaData.userDatabase = [...existingDatabases, databaseDetails];
+
+        await updateInstanceMetadata(accountId, instanceId, metaData);
+    }
+}
+
 async function updateSandboxDBIntoResourceData(
     accountId: string,
     resourceId: string,
@@ -360,5 +455,6 @@ export {
     updateUserDBIntoResourceData,
     updateSandboxDBIntoResourceData,
     createSandboxJobMockData,
-    getVolumeIdsFromStorage
+    getVolumeIdsFromStorage,
+    updateUserDBIntoInstanceTable
 };

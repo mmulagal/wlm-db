@@ -24,7 +24,6 @@ import {
     RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
     GetSandboxConnectionStringSchema,
-    GetSandboxConnectionStringSchemaV2,
     DeleteSandboxSchema,
     GetSandboxSplitEstimateSchema,
     SandboxLifeCycleSchema,
@@ -41,7 +40,6 @@ import {
 import {
     createSandbox,
     getSandboxConnectionString,
-    getSandboxConnectionStringV2,
     getSandboxesInfo,
     getDatabaseMountPointInfo,
     getSandboxSavings,
@@ -246,7 +244,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         })
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/database-instances/:databaseInstanceId/:sandboxName/connection-string`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/connection-string`,
             { schema: GetSandboxConnectionStringSchema },
             async (request, reply) => {
                 const {
@@ -259,25 +257,6 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseHostId,
                     databaseInstanceId,
                     sandboxName
-                );
-                return reply.send(response);
-            }
-        )
-        .get(
-            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceName/sandboxes/:sandboxName/connection-string`,
-            { schema: GetSandboxConnectionStringSchemaV2 },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceName }
-                } = request;
-
-                const response = await getSandboxConnectionStringV2(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    sandboxName,
-                    databaseInstanceName
                 );
                 return reply.send(response);
             }
