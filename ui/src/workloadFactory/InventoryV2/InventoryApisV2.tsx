@@ -28,12 +28,12 @@ import {
     getFsxIdsFromdiscover,
     getInventoryDataCount,
     getMhUnmanagedInstances,
+    getPartnerInstanceId,
     getPrimaryClusterNode,
     getUnmanagedHostInstances,
     updateInstancesApiResponse
 } from './InventoryUtilsV2';
 import { setIsRefreshed } from '../../store/workloadFactory/inventorySlice';
-import InventoryTableData from './InventoryTableData.json';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 
 const InventoryApisV2 = () => {
@@ -51,6 +51,7 @@ const InventoryApisV2 = () => {
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
+    const [partnerInstanceList, setPartnerInstanceList] = useState<any>([]);
 
     // getManagedHostList function values update
     const [getManagedHostListAPI] = useLazyGetManagedHostDataQuery();
@@ -78,6 +79,11 @@ const InventoryApisV2 = () => {
     const regionIdRef = useRef();
     const fsxCredentialStatusObjRef: any = useRef();
     const mssqlInstancesDataRef: any = useRef();
+    const runningInstanceListRef: any = useRef();
+
+    useEffect(() => {
+        runningInstanceListRef.current = runningInstanceList;
+    }, [runningInstanceList]);
 
     useEffect(() => {
         fsxCredentialStatusObjRef.current = fsxCredentialStatusObj;
@@ -322,6 +328,15 @@ const InventoryApisV2 = () => {
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
+                    let partnerInstanceId = getPartnerInstanceId(host, host?.id);
+                    if (
+                        partnerInstanceId &&
+                        !runningInstanceListRef.current.includes(partnerInstanceId) &&
+                        !mssqlInstancesDataRef.current[host?.id]?.isManagedHost &&
+                        !partnerInstanceList.includes(partnerInstanceId)
+                    ) {
+                        setPartnerInstanceList([...partnerInstanceList, ...[partnerInstanceId]]);
+                    }
                     if (mssqlInstancesDataRef.current[host?.id]) {
                         mssqlInstancesDataRes[host?.id] = {
                             isManagedHost: mssqlInstancesDataRef.current[host?.id]?.isManagedHost,
@@ -363,9 +378,10 @@ const InventoryApisV2 = () => {
     // If any new row added than it will trigger getMssqlData (API2) function to get unmanagaed row data.
     const callInstanceApi = (instancesList: Array<string>, isManagedHost: boolean) => {
         let mssqlInstancesDataLoad: any = {};
+        let noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
             instancesList?.map((ec2InstanceId: any) => {
-                if (runningInstanceList.find(inst => inst === ec2InstanceId)) {
+                if (runningInstanceListRef.current.includes(ec2InstanceId)) {
                     return;
                 }
                 mssqlInstancesDataLoad[ec2InstanceId] = {
@@ -374,13 +390,14 @@ const InventoryApisV2 = () => {
                     data: null,
                     error: null
                 };
+                noRunningList.push(ec2InstanceId);
             });
-            dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataLoad }));
-            setRunningInstanceList([...runningInstanceList, ...instancesList]);
-            instancesList?.map((ec2InstanceId: any) => {
+            dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataLoad }));
+            setRunningInstanceList([...runningInstanceListRef.current, ...noRunningList]);
+            noRunningList?.map((ec2InstanceId: any) => {
                 setTimeout(() => {
                     getMssqlData(ec2InstanceId, isManagedHost);
-                }, 0);
+                }, 1);
             });
         }
     };
@@ -392,6 +409,13 @@ const InventoryApisV2 = () => {
         }
     }, [detectedInstanceId]);
 
+    useEffect(() => {
+        // if partner instance ID
+        if (partnerInstanceList) {
+            callInstanceApi(partnerInstanceList, false);
+        }
+    }, [partnerInstanceList]);
+
     const resetValues = () => {
         // reset for getManagedHostList
         setManagedHostList([]);
@@ -402,6 +426,7 @@ const InventoryApisV2 = () => {
         setTopologyHostData({});
         // reset for getDatabaseHostsFullData
         dispatch(setIsFullHostDataLoading(true));
+        dispatch(addDatabaseHostsDataV2(null));
         setFullHostData({});
         // reset for discovery
         dispatch(setIsDiscoveredHostData(null));
@@ -418,6 +443,8 @@ const InventoryApisV2 = () => {
         dispatch(setUnmanagedExploreSavingsHost([]));
         // chart counts
         dispatch(setInventoryChartData(null));
+        // Partner instance list reset
+        setPartnerInstanceList([]);
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -517,7 +544,7 @@ const InventoryApisV2 = () => {
 
             let unmanagedHostList = getUnmanagedHostInstances(
                 formattedDiscoveredInventoryTableData,
-                runningInstanceList
+                runningInstanceListRef.current
             );
             if (unmanagedHostList && unmanagedHostList?.length > 0) {
                 callInstanceApi(unmanagedHostList, false);
@@ -525,8 +552,8 @@ const InventoryApisV2 = () => {
 
             // To Avoid overriding
             let updatedResult = { ...inventoryTableData, ...formattedDiscoveredInventoryTableData };
-            if (mssqlInstancesData) {
-                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesData, updatedResult);
+            if (mssqlInstancesDataRef.current) {
+                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
             } else {
                 dispatch(setInventoryTableData(updatedResult));
@@ -539,15 +566,18 @@ const InventoryApisV2 = () => {
         if (databaseHostsData) {
             const formattedInventoryTableData = formatInventoryTableData(databaseHostsData);
 
-            let unmanagedInstanceList = getMhUnmanagedInstances(formattedInventoryTableData, runningInstanceList);
+            let unmanagedInstanceList = getMhUnmanagedInstances(
+                formattedInventoryTableData,
+                runningInstanceListRef.current
+            );
             if (unmanagedInstanceList && unmanagedInstanceList?.length > 0) {
                 callInstanceApi(unmanagedInstanceList, true);
             }
 
             // To Avoid overriding
             let updatedResult = { ...inventoryTableData, ...formattedInventoryTableData };
-            if (mssqlInstancesData) {
-                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesData, updatedResult);
+            if (mssqlInstancesDataRef.current) {
+                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
             } else {
                 dispatch(setInventoryTableData(updatedResult));
@@ -556,8 +586,8 @@ const InventoryApisV2 = () => {
     }, [databaseHostsData]);
 
     useEffect(() => {
-        if (mssqlInstancesData && inventoryTableData) {
-            const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesData, inventoryTableData);
+        if (mssqlInstancesDataRef.current && inventoryTableData) {
+            const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, inventoryTableData);
             dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
         }
     }, [mssqlInstancesData]);
