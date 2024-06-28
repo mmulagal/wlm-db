@@ -850,7 +850,8 @@ async function fetchUnmanagedHostsInformationV2(
     accountId: string,
     credentialsId: string,
     region: string,
-    instances: string[] = []
+    instances: string[] = [],
+    fields?: string
 ) {
     logger.info('Fetching hosts information:', { accountId, credentialsId, region, instances });
 
@@ -951,7 +952,8 @@ async function fetchUnmanagedHostsInformationV2(
                 resourceDetail.resource_id,
                 credentialsId,
                 region,
-                'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
+                fields ||
+                    'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
                 resourceDetail,
                 false // unmanaged host,
             )
