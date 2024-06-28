@@ -1477,21 +1477,21 @@ async function updateMetadataForSanboxDeletion(
     const { metadata } = resourceDetail;
     const newMetadata = metadata as unknown as Metadata;
 
-    newMetadata.sandboxes = newMetadata.sandboxes?.filter(sandbox => sandbox.databaseName !== databaseNameToRemove);
-    if (!isSplit) {
-        newMetadata.userDatabase = newMetadata.userDatabase?.filter(db => db.name !== databaseNameToRemove);
-    }
-
     const newInstanceMetadata = instanceMetadata as unknown as databaseInstanceMetadata;
 
     newInstanceMetadata.sandboxes = instanceMetadata?.sandboxes?.filter(
         sandbox => sandbox.databaseName !== databaseNameToRemove
     );
+
+    newMetadata.sandboxes = newMetadata.sandboxes?.filter(sandbox => sandbox.databaseName !== databaseNameToRemove);
+
     if (!isSplit) {
+        newMetadata.userDatabase = newMetadata.userDatabase?.filter(db => db.name !== databaseNameToRemove);
         newInstanceMetadata.userDatabase = newInstanceMetadata.userDatabase?.filter(
             db => db.name !== databaseNameToRemove
         );
     }
+
     try {
         await updateResourceMetaData(accountId, databaseHostId, newMetadata);
         await updateInstanceMetadata(accountId, databaseInstanceId, newInstanceMetadata);

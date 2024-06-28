@@ -415,18 +415,20 @@ async function updateSandboxDBIntoInstanceData(
     accountId: string,
     instanceID: string,
     sandboxDetails: Sandbox,
-    metaData: databaseInstanceMetadata
+    instanceMetaData: databaseInstanceMetadata
 ) {
-    logger.info('updating sandbox db into resource meta data', accountId, instanceID, sandboxDetails);
+    logger.info('updating sandbox db into database instance  meta data', accountId, instanceID, sandboxDetails);
 
     // this is used to retreive the newly created user databases in database list for demo using meta data
-    if (metaData.sandboxes) {
-        metaData.sandboxes = metaData.sandboxes.filter(sandbox => sandbox.databaseName !== sandboxDetails.databaseName);
+    if (instanceMetaData.sandboxes) {
+        instanceMetaData.sandboxes = instanceMetaData.sandboxes.filter(
+            sandbox => sandbox.databaseName !== sandboxDetails.databaseName
+        );
     }
-    metaData.sandboxes = [...(metaData.sandboxes || []), sandboxDetails];
+    instanceMetaData.sandboxes = [...(instanceMetaData.sandboxes || []), sandboxDetails];
 
-    await updateInstanceMetadata(accountId, instanceID, metaData);
-    return metaData;
+    await updateInstanceMetadata(accountId, instanceID, instanceMetaData);
+    return instanceMetaData;
 }
 
 async function createSandboxJobMockData(
