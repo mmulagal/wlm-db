@@ -763,10 +763,10 @@ export const inventoryApiV2 = createApi({
                 }
             }),
             getMssqlInstanceDataV2: builder.mutation({
-                query: ({ credentialId, regionId, instances, nextToken = null }) => ({
+                query: ({ credentialId, regionId, instances, fields, nextToken = null }) => ({
                     url: nextToken
-                        ? `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&nextToken=${nextToken}`
-                        : `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}`,
+                        ? `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&fields=${fields}&nextToken=${nextToken}`
+                        : `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&fields=${fields}`,
                     method: 'GET'
                 })
             }),
