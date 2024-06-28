@@ -44,14 +44,7 @@ const RebaseRollbackContent = ({ rowData }: any) => {
 
     //Function to generate the options for Select Field
     const generateRollbackOptions = useMemo<optionType[]>((): optionType[] => {
-        const frequency = isDemoMode
-            ? [
-                  'DB 1 | May 1, 2024, 12:15:11',
-                  'DB 1 | May 2, 2024, 12:15:11',
-                  'DB 1 | May 3, 2024, 12:15:11',
-                  'DB 1 | May 4, 2024, 12:15:11'
-              ]
-            : rollbackSnapshotList;
+        const frequency = rollbackSnapshotList;
         const options: optionType[] = [];
         frequency?.map((val: any, idx: number) => {
             const label = `${val?.name} | ${formatDateWithTime(val?.created)}`;
