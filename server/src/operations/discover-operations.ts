@@ -48,7 +48,8 @@ import {
     PSMODULES_RELATIVE_PATH,
     DatabaseTypes,
     OFFLINE,
-    SQL_SERVICE_STATE
+    SQL_SERVICE_STATE,
+    NOT_AVAILABLE
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -92,6 +93,7 @@ import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 interface SsmTargetsInfo {
     ec2InstanceId: string;
@@ -929,7 +931,13 @@ async function fetchUnmanagedHostsInformationV2(
                         fsxwId: fsxwId || '',
                         ebsVolumeIds,
                         database_deployment_type: sqlServerInstance.sqlServerDeploymentType,
-                        storage_type: fsxnId ? STORAGE_TYPE.FSXN : fsxwId ? STORAGE_TYPE.FSXW : STORAGE_TYPE.EBS
+                        storage_type: fsxnId
+                            ? STORAGE_TYPE.FSXN
+                            : fsxwId
+                            ? STORAGE_TYPE.FSXW
+                            : ebsVolumeIds
+                            ? STORAGE_TYPE.EBS
+                            : NOT_AVAILABLE
                     });
                 });
                 resourceDetailsList.push(resourceDetails);
@@ -1653,14 +1661,16 @@ async function manageSqlServerV2(
     credentialsId: string,
     region: string,
     ec2InstanceId: string,
-    databaseInstanceNameList: string[]
+    databaseInstanceNameList: string[],
+    databaseHostId?: string
 ) {
     logger.info('Manage SQL Server instances (v2):', {
         accountId,
         credentialsId,
         region,
         ec2InstanceId,
-        databaseInstanceList: databaseInstanceNameList
+        databaseInstanceList: databaseInstanceNameList,
+        databaseHostId
     });
 
     try {
@@ -1741,28 +1751,33 @@ async function manageSqlServerV2(
                 node2InstanceId = temp.ec2InstanceId;
             }
         }
+        let resourceId;
+        let isResourceTobeCreated: boolean;
+        if (isDemoFlow && databaseHostId) {
+            resourceId = databaseHostId;
+            isResourceTobeCreated = false;
+        } else {
+            // A resource ID is a hash generated using available EC2 instance IDs.
+            const [resourceId1, resourceId2] = [
+                getMsSqlResourceId(node1InstanceId, node2InstanceId),
+                getMsSqlResourceId(node2InstanceId || '', node1InstanceId)
+            ];
 
-        // A resource ID is a hash generated using available EC2 instance IDs.
-        const [resourceId1, resourceId2] = [
-            getMsSqlResourceId(node1InstanceId, node2InstanceId),
-            getMsSqlResourceId(node2InstanceId || '', node1InstanceId)
-        ];
+            const [
+                {
+                    items: [resourceDetails1]
+                },
+                {
+                    items: [resourceDetails2]
+                }
+            ] = await Promise.all([
+                getResources(accountId, resourceId1, credentialsId, region),
+                getResources(accountId, resourceId2, credentialsId, region)
+            ]);
 
-        const [
-            {
-                items: [resourceDetails1]
-            },
-            {
-                items: [resourceDetails2]
-            }
-        ] = await Promise.all([
-            getResources(accountId, resourceId1, credentialsId, region),
-            getResources(accountId, resourceId2, credentialsId, region)
-        ]);
-
-        let isResourceTobeCreated: boolean = isEmpty(resourceDetails1) && isEmpty(resourceDetails2);
-        const resourceId = !isEmpty(resourceDetails1) ? resourceId1 : resourceId2;
-
+            isResourceTobeCreated = isEmpty(resourceDetails1) && isEmpty(resourceDetails2);
+            resourceId = !isEmpty(resourceDetails1) ? resourceId1 : resourceId2;
+        }
         const alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
             credentialsId,
             resourceId
