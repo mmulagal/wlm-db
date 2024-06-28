@@ -254,7 +254,7 @@ const HOST_AND_SQL_INFO_PS1 = [
    return $SMBConnections
   }
 
-  Function GetSQLInstanceDriveDetails($serverInstance, $SqlUsername, $SqlPassword) {
+  Function GetSQLInstanceDriveDetails($serverInstance, $sqlUsername, $sqlPassword) {
     $sqlInstancePaths = $null
 
     try {
@@ -263,11 +263,11 @@ const HOST_AND_SQL_INFO_PS1 = [
         $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance 2> $null
       }
     } catch {
-      if (-Not [string]::IsNullOrEmpty($sqlUsername) -And -Not [string]::IsNullOrEmpty($SqlPassword)) {
+      if (-Not [string]::IsNullOrEmpty($sqlUsername) -And -Not [string]::IsNullOrEmpty($sqlPassword)) {
         try {
-          $sqlInstancePaths = sqlcmd -U $SqlUsername -P $SqlPassword -Q " SET NOCOUNT ON; SELECT physical_name FROM sys.master_files " -h -1 -b -C -W -S $serverInstance 2> $null
+          $sqlInstancePaths = sqlcmd -U $sqlUsername -P $sqlPassword -Q " SET NOCOUNT ON; SELECT physical_name FROM sys.master_files " -h -1 -b -C -W -S $serverInstance 2> $null
           if($sqlInstancePaths -eq $null) { 
-            $sqlInstancePaths = sqlcmd -U $SqlUsername -P $SqlPassword -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance 2> $null
+            $sqlInstancePaths = sqlcmd -U $sqlUsername -P $sqlPassword -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance 2> $null
           }
         } catch {
           # NOOP
