@@ -313,7 +313,8 @@ const installPowerShellModule = (module: string) => `
 const getMappedOntapVolumesScript = (
     fsxid: string,
     fsxregion: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    isSystemDatabase: string = '$false'
 ) => `
     $WarningPreference = 'SilentlyContinue';
     if ($responseObject -eq $null) {
@@ -340,14 +341,44 @@ const getMappedOntapVolumesScript = (
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
         Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
 
-        $sqlquery = @"
-            SET NOCOUNT ON;
-            SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
-            CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
-            WHERE vs.volume_mount_point != 'C:\\'
-            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
-            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
-            FOR JSON PATH;
+        if (${isSystemDatabase}) {
+            $sqlquery = @"
+                SET NOCOUNT ON;
+                SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
+                INNER JOIN sys.databases d ON mf.database_id = d.database_id
+                CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                WHERE vs.volume_mount_point != 'C:\\'
+                AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
+                AND d.name IN ('master', 'model', 'msdb', 'tempdb')
+                FOR JSON PATH;
+"@
+            $sqlqueryfordatabaseandvolumelist = @"
+                SET NOCOUNT ON;
+                SELECT DISTINCT 
+                    DB_NAME(mf.database_id) AS DatabaseName,
+                    vs.logical_volume_name as VolumeName,
+                    vs.volume_id as VolumeId
+                FROM 
+                    sys.master_files AS mf
+                INNER JOIN 
+                    sys.databases d ON mf.database_id = d.database_id
+                CROSS APPLY 
+                    sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                WHERE 
+                    vs.volume_mount_point != 'C:\\'
+                    AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
+                    AND d.name IN ('master', 'model', 'msdb', 'tempdb')
+                FOR JSON PATH;
+"@
+        } else {
+            $sqlquery = @"
+                SET NOCOUNT ON;
+                SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
+                CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                WHERE vs.volume_mount_point != 'C:\\'
+                AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
+                AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
+                FOR JSON PATH;
 "@
         # Get the windows volumes of the databases with the mdf file volume name
         $sqlqueryfordatabaseandvolumelist = @"
@@ -365,6 +396,8 @@ const getMappedOntapVolumesScript = (
                 AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
             FOR JSON PATH;
 "@
+        }
+
 
         $sqlresponse =  sqlcmd -S "${instanceName}" -Q $sqlquery -y 0;
 
