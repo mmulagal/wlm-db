@@ -61,7 +61,12 @@ describe('Testcases for Amazon FSx resources operations', () => {
     });
 
     it('Get Ontap mapped volumes', async () => {
-        const response = await getMappedOntapVolumes(DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID);
+        const response = await getMappedOntapVolumes(
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            FSX_FILESYSTEM_ID,
+            false
+        );
         expect(response).toEqual(fsxResponse.volumeMap);
     });
 
