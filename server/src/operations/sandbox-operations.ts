@@ -4,7 +4,12 @@ import { compact, groupBy, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
-import { listDatabaseInstances, listResources, updateResourceMetaData } from '../lib/database/db';
+import {
+    listDatabaseInstances,
+    listResources,
+    updateInstanceMetadata,
+    updateResourceMetaData
+} from '../lib/database/db';
 import {
     ACCOUNTID,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
@@ -36,7 +41,7 @@ import {
     getSnapshotsToClone,
     getConnectionInfo
 } from './workloads/mssql/sandbox-scripts';
-import { Metadata, ResourceDetails, Sandbox } from '../utils/common-types';
+import { DatabaseInstance, Metadata, ResourceDetails, Sandbox, databaseInstanceMetadata } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getDatabaseInstanceName, isDemo, sleep, sqlResponseParsing } from '../utils/utils';
@@ -58,6 +63,7 @@ import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 const logger = getLogger();
 const TIME_WINDOW = 60; // 60 seconds
 
+const isDemoFlow = isDemo();
 interface SandboxObject {
     sandbox_properties: { name: string; value: string }[];
 }
@@ -238,25 +244,37 @@ async function getSandboxDetails(
             }
         })
     );
-    if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && sandboxes) {
-        const demoSandboxInfo = sandboxes.map(item => {
-            const { databaseName: sandboxName, source, createdAt, updatedAt, tag, databaseInstanceId } = item;
-
-            const databaseObject = {
-                sandboxName,
-                databaseHostName: resourceDetails.resource_name!,
-                databaseHostId: resourceDetails.resource_id!,
-                databaseInstanceName: DEFAULT_INSTANCE_NAME,
-                sourceDatabaseHostName: source.split('|')[0],
-                sourceDatabaseInstanceName: source.split('|')[1],
-                sourceDatabaseName: source.split('|')[2],
-                createdAt,
-                updatedAt,
-                tag,
-                databaseInstanceId
-            };
-            return databaseObject;
+    if (isDemoFlow && sandboxes) {
+        const demoSandboxInfo = (managedInstances || []).flatMap(instance => {
+            const {
+                database_instance_id: databaseInstanceId,
+                metadata: instanceMetadata,
+                database_instance_name: databaseInstanceName
+            } = instance as DatabaseInstance;
+            const updatedDatabaseInstanceName = databaseInstanceName.replace(resourceName!, '');
+            const instanceSandboxes = (instanceMetadata as databaseInstanceMetadata)?.sandboxes || [];
+            if (instanceSandboxes.length === 0) {
+                return [];
+            }
+            return instanceSandboxes.map(sandbox => {
+                const { databaseName: sandboxName, source, createdAt, updatedAt, tag } = sandbox;
+                const databaseObject = {
+                    sandboxName,
+                    databaseHostName: resourceDetails.resource_name!,
+                    databaseHostId: resourceDetails.resource_id!,
+                    databaseInstanceName: updatedDatabaseInstanceName,
+                    sourceDatabaseHostName: source.split('|')[0],
+                    sourceDatabaseInstanceName: source.split('|')[1],
+                    sourceDatabaseName: source.split('|')[2],
+                    createdAt,
+                    updatedAt,
+                    tag,
+                    databaseInstanceId
+                };
+                return databaseObject;
+            });
         });
+
         if (demoSandboxInfo.length > 0) {
             sandboxInfo = sandboxInfo.concat(demoSandboxInfo);
         }
@@ -273,7 +291,7 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
         region,
         RESOURCESTYPE.MSSQL,
         undefined,
-        process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator' ? undefined : { sandboxCreated: true },
+        isDemoFlow ? undefined : { sandboxCreated: true },
         SANDBOX_API_SIZE,
         nextToken
     );
@@ -326,7 +344,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
             region,
             RESOURCESTYPE.MSSQL,
             undefined,
-            process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
+            isDemoFlow
                 ? undefined
                 : {
                       sandboxCreated: true
@@ -368,7 +386,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                 ];
 
                                 // DEMO FSX ID AND REGION
-                                if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                                if (isDemoFlow) {
                                     command = [
                                         getStorageSavingsFromOntap(
                                             'test-fsx',
@@ -392,7 +410,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     let { savedStorage, consumedStorage } = sqlResponseParsing(response);
 
                                     // Increase storage savings per sandbox for demo
-                                    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                                    if (isDemoFlow) {
                                         savedStorage *= sandboxes?.length || 0;
                                         consumedStorage *= sandboxes?.length || 0;
                                     }
@@ -458,6 +476,7 @@ interface HostAndDbInfo extends DbInfo {
     activeNodeInstanceId: string;
     metadata: Metadata;
     databaseInstanceName?: string;
+    instanceMetadata?: databaseInstanceMetadata;
 }
 
 interface ClonedVolume {
@@ -718,7 +737,7 @@ async function validateCloneParams(
             );
         }
 
-        if (!srcDatabaseExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
+        if (!srcDatabaseExists && !isDemoFlow) {
             throw createError(
                 412,
                 `Database ${srcDetails.database} does not exists on source host ${destDetails.host}`
@@ -789,7 +808,7 @@ async function getMappings(
             getDbMappedOntapVolumes(fsxId, region, database, srcDetails.instanceName, `Sandbox:${sandboxName}:`)
         ];
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
         }
 
@@ -890,7 +909,7 @@ async function createVolumeClone(
                 `Sandbox:${destDetails.database}:`
             )
         ];
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             command = [
                 CreateVolumeCloneScript(
                     'test-fsx',
@@ -998,7 +1017,7 @@ async function invokeVirtualMount(
                 `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -InstanceName '${destDetails.databaseInstanceName}' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
             ];
 
-            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            if (isDemoFlow) {
                 command = [
                     `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve -InstanceName MSSQLSERVER -IsDefaultInstance true`
                 ];
@@ -1092,7 +1111,7 @@ async function createCloneDb(
             )
         ];
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             command = [
                 createCloneDbScript('testdb', DEFAULT_MSSQL_INSTANCE_NAME, [
                     'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
@@ -1171,7 +1190,7 @@ async function createExtendedProperties(
     try {
         let command = [addExtendedProperties(destDetails.database, destDetails.instanceName, extendedProps)];
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             command = [
                 addExtendedProperties('testdb', DEFAULT_MSSQL_INSTANCE_NAME, {
                     tag: 'demo',
@@ -1191,7 +1210,7 @@ async function createExtendedProperties(
             await updateMetadataForSanbox(accountId, credentialsId, region, destDetails.host);
         }
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             // this is used to retreive the newly created user databases in database list for demo using meta data
 
             const props = {
@@ -1204,12 +1223,13 @@ async function createExtendedProperties(
                 accountId,
                 srcDetails.host,
                 props,
-                srcDetails.metadata
+                srcDetails.instanceMetadata!
             );
 
-            await updateUserDBIntoInstanceTable(
+            await updateInstanceMetadata(accountId, destDetails.instance, updatedInstanceMetadata);
+            updateUserDBIntoInstanceTable(
                 accountId,
-                srcDetails.host,
+                destDetails.instance,
                 destDetails.database,
                 updatedInstanceMetadata
             );
@@ -1287,7 +1307,7 @@ async function startCleanup(
             )
         ];
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             command = [
                 cleanUpOntapResources(
                     'test-fsx',
@@ -1435,11 +1455,16 @@ async function updateMetadataForSanboxDeletion(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseHostId: string,
-    databaseNameToRemove: string,
+    resourceDetails: HostAndDbInfo,
     isSplit: boolean = false
 ) {
-    logger.info('Updating metadata for sandbox operation', accountId, credentialsId, region, databaseHostId);
+    logger.info('Updating metadata for sandbox operation', accountId, credentialsId, region);
+    const {
+        host: databaseHostId,
+        database: databaseNameToRemove,
+        instance: databaseInstanceId,
+        instanceMetadata
+    } = resourceDetails;
     const {
         items: [resourceDetail]
     } = await getResources(accountId, databaseHostId);
@@ -1452,12 +1477,24 @@ async function updateMetadataForSanboxDeletion(
     const { metadata } = resourceDetail;
     const newMetadata = metadata as unknown as Metadata;
 
+    const newInstanceMetadata = instanceMetadata as unknown as databaseInstanceMetadata;
+
+    newInstanceMetadata.sandboxes = instanceMetadata?.sandboxes?.filter(
+        sandbox => sandbox.databaseName !== databaseNameToRemove
+    );
+
     newMetadata.sandboxes = newMetadata.sandboxes?.filter(sandbox => sandbox.databaseName !== databaseNameToRemove);
+
     if (!isSplit) {
         newMetadata.userDatabase = newMetadata.userDatabase?.filter(db => db.name !== databaseNameToRemove);
+        newInstanceMetadata.userDatabase = newInstanceMetadata.userDatabase?.filter(
+            db => db.name !== databaseNameToRemove
+        );
     }
+
     try {
         await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateInstanceMetadata(accountId, databaseInstanceId, newInstanceMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
     } catch (err) {
         const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${err}`;
@@ -1491,7 +1528,7 @@ async function getSandboxConnectionString(
 
         let command = [getConnectionInfo(databaseInstanceName === DEFAULT_INSTANCE_NAME ? '' : databaseInstanceName)];
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             command = [getConnectionInfo('MSSQLSERVER')];
         }
 
@@ -1539,7 +1576,7 @@ async function getDatabaseMountPointInfo(
     const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, src, src);
 
     try {
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             databaseName = 'test-database';
         }
 
@@ -1560,7 +1597,7 @@ async function getDatabaseMountPointInfo(
             const driveType = item.filetype === 'Data' ? 'databaseDataPath' : 'databaseLogPath';
             result[driveType].push(item.filepath);
         });
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             const updatedResult = {
                 databaseDataPath: result.databaseDataPath.map(path => path.replace('test-database', databaseName)),
                 databaseLogPath: result.databaseLogPath.map(path => path.replace('test-database', databaseName))
@@ -1654,8 +1691,8 @@ async function performSandboxDeletion(
             error: errorMsg,
             endTime: Date.now()
         });
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-            updateMetadataForSanboxDeletion(accountId, credentialsId, region, resDetails.host, resDetails.database);
+        if (isDemoFlow) {
+            updateMetadataForSanboxDeletion(accountId, credentialsId, region, resDetails);
         }
     }
 }
@@ -1693,7 +1730,7 @@ async function validateDeleteSandboxParams(
             resourceDetails.instanceName
         );
 
-        if (!dbExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
+        if (!dbExists && !isDemoFlow) {
             throw createError(
                 412,
                 `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`
@@ -1749,7 +1786,7 @@ async function getSandboxSplitEstimate(
         )
     ];
 
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemoFlow) {
         command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
     }
 
@@ -1791,7 +1828,7 @@ async function getSandboxSplitEstimate(
         )
     ];
 
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemoFlow) {
         estimateCommand = [
             restGetUtilForOntap(
                 'test-fsx',
@@ -1950,7 +1987,7 @@ async function performLifecycleUpdate(
 
         await createCloneDb(accountId, credentialsId, region, parentJobId, resourceDetails, mountPaths);
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             const existingProps = resourceDetails.metadata.sandboxes?.find(
                 ({ databaseName }) => databaseName === resourceDetails.database
             );
@@ -2065,7 +2102,7 @@ async function validateLifeCycleParams(
             instanceName
         );
 
-        if (!dbExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
+        if (!dbExists && !isDemoFlow) {
             throw createError(
                 412,
                 `Database ${resourceDetails.database} does not exists on host ${resourceDetails.resourceName}`
@@ -2128,7 +2165,7 @@ async function detachSandboxAndAccessPath(
             )
         ];
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             command = [
                 detachDbAndRemoveAccessPath(
                     'test-db',
@@ -2354,7 +2391,7 @@ async function validateSplitParams(
             resourceDetails.instanceName
         );
 
-        if (!dbExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
+        if (!dbExists && !isDemoFlow) {
             throw createError(
                 412,
                 `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`
@@ -2478,7 +2515,7 @@ async function deleteExtendedProperties(
             ])
         ];
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             command = [
                 deleteExtendedPropertiesScript('test-db', DEFAULT_MSSQL_INSTANCE_NAME, [
                     'cloned_by',
@@ -2497,15 +2534,8 @@ async function deleteExtendedProperties(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to delete the extended properties');
         }
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-            await updateMetadataForSanboxDeletion(
-                accountId,
-                credentialsId,
-                region,
-                resourceDetail.host,
-                resourceDetail.database,
-                true
-            );
+        if (isDemoFlow) {
+            await updateMetadataForSanboxDeletion(accountId, credentialsId, region, resourceDetail, true);
         }
 
         status = JOBSTATUS.COMPLETED;
@@ -2596,7 +2626,7 @@ async function performIntegrityCheck(
     try {
         let command = [checkDatabaseIntegrityScript(databaseName, instanceName, `SandBox:${databaseName}:`)];
 
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemoFlow) {
             command = [checkDatabaseIntegrityScript('test-db', '.')];
         }
 
@@ -2648,7 +2678,7 @@ async function getSandboxSnapshots(
 
     let mappingsCommand = [getDbMappedOntapVolumes(srcDetails.fsxId, region, sandboxName, srcDetails.instanceName)];
 
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemoFlow) {
         mappingsCommand = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
     }
 
@@ -2683,7 +2713,7 @@ async function getSandboxSnapshots(
         )
     ];
 
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemoFlow) {
         snapshotsCommand = [
             getSnapshotsToClone(
                 'test-fsx',
@@ -2843,6 +2873,8 @@ async function runSandboxPreValidations(
             'Source or destination instance is not running, please check the instance status'
         );
     }
+    const { metadata: srcInstanceMetadata } = srcInstanceDetail as { metadata: databaseInstanceMetadata };
+    const { metadata: destInstanceMetadata } = destInstanceDetail as { metadata: databaseInstanceMetadata };
 
     return {
         srcDetails: {
@@ -2856,7 +2888,8 @@ async function runSandboxPreValidations(
             instanceName: getDatabaseInstanceName(
                 srcInstanceDetail.database_instance_name,
                 srcInstanceDetail.is_default
-            )
+            ),
+            instanceMetadata: srcInstanceMetadata
         },
         destDetails: {
             ...dest,
@@ -2870,7 +2903,8 @@ async function runSandboxPreValidations(
             instanceName: getDatabaseInstanceName(
                 destInstanceDetail.database_instance_name,
                 destInstanceDetail.is_default
-            )
+            ),
+            instanceMetadata: destInstanceMetadata
         }
     };
 }
