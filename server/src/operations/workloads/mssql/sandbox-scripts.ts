@@ -976,6 +976,14 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, clonedBy: 
     $responseObject | ConvertTo-Json -Depth 5
 `;
 
+/*
+    Order of the events plays an important role in the detachDbAndRemoveAccessPath script.
+    1. Get the extended properties of the database.
+    2. Get the volume id of the windows volumes from file path.
+    3. Remove the access path of the partitions.
+    4. Remove the cluster disks.
+    5. Detach the database.
+*/
 const detachDbAndRemoveAccessPath = (
     dbName: string,
     serialNumbers: string,
@@ -1019,25 +1027,35 @@ const detachDbAndRemoveAccessPath = (
             $responseObject | Add-Member -MemberType NoteProperty -Name $_.name -Value $_.value
         }
 
-        $detach = "EXEC sp_detach_db '$dbname', 'true'"
-        $sqlresponse =  sqlcmd -S $instanceName -Q $detach -y 0;
-
-        Write-Information "$logPrefix Detach response: $sqlresponse"
-
-        if ($sqlresponse -ne $null) {
-            Write-Information "$logPrefix Failed to detach the database $sqlresponse"
-            $responseObject['error'] = $sqlresponse
-            return $responseObject | ConvertTo-Json -Depth 5
-        }
-        
         ${getVolumeIdFromPath}
 
         $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
         $resourceType = ${
-            instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? '"SQL Server"' : `'SQL Server (${instanceName})'`
+            instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? '"SQL Server"' : `"SQL Server (${instanceName})"`
         }
         $windowsVolumeIds = $filePaths | ForEach-Object {
             Get-VolumeIdFromPath -absolutePath $_
+        }
+        write-Information "Windows Volume Ids: $windowsVolumeIds"
+
+        $disklist = Get-disk | Where-Object { $serialNumbers -contains $_.SerialNumber }
+
+        $mountPoints = $filePaths | ForEach-Object {
+            $splits = $_.Split('\\')
+            $splits[0] + '\\' + $splits[1] + '\\'
+        }
+        Write-Information "$logPrefix Mount Points: $($mountPoints | ConvertTo-Json)"
+
+        $disklist | ForEach-Object {
+            $disk = $_
+            $partition = Get-Partition -DiskNumber $disk.Number -PartitionNumber 2
+            Write-Information "$logPrefix Partition: $($partition.PartitionNumber) $($partition.AccessPaths)"
+            $partition.AccessPaths | ForEach-Object {
+                $accesspath = $_
+                if ($accesspath -and ($mountPoints -contains $accesspath) -and ($accesspath -notmatch 'Volume')) {
+                    Remove-PartitionAccessPath -DiskNumber $disk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $accesspath
+                }
+            }
         }
 
         if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
@@ -1073,24 +1091,15 @@ const detachDbAndRemoveAccessPath = (
             }
         }
 
-        $disklist = Get-disk | Where-Object { $serialNumbers -contains $_.SerialNumber }
+        $detach = "EXEC sp_detach_db '$dbname', 'true'"
+        $sqlresponse =  sqlcmd -S $instanceName -Q $detach -y 0;
 
-        $mountPoints = $filePaths | ForEach-Object {
-            $splits = $_.Split('\\')
-            $splits[0] + '\\' + $splits[1] + '\\'
-        }
-        Write-Information "$logPrefix Mount Points: $($mountPoints | ConvertTo-Json)"
+        Write-Information "$logPrefix Detach response: $sqlresponse"
 
-        $disklist | ForEach-Object {
-            $disk = $_
-            $partition = Get-Partition -DiskNumber $disk.Number -PartitionNumber 2
-            Write-Information "$logPrefix Partition: $($partition.PartitionNumber) $($partition.AccessPaths)"
-            $partition.AccessPaths | ForEach-Object {
-                $accesspath = $_
-                if ($accesspath -and ($mountPoints -contains $accesspath) -and ($accesspath -notmatch 'Volume')) {
-                    Remove-PartitionAccessPath -DiskNumber $disk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $accesspath
-                }
-            }
+        if ($sqlresponse -ne $null) {
+            Write-Information "$logPrefix Failed to detach the database $sqlresponse"
+            $responseObject['error'] = $sqlresponse
+            return $responseObject | ConvertTo-Json -Depth 5
         }
     } catch {
         Write-Information "$logPrefix $($_.Exception.Message)"
