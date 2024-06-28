@@ -324,7 +324,12 @@ const InventoryApisV2 = () => {
     };
 
     // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance.
-    const getMssqlData = async (instanceId: any, isManagedHost: boolean, fields: Array<string>, nextToken: string | null = '') => {
+    const getMssqlData = async (
+        instanceId: any,
+        isManagedHost: boolean,
+        fields: Array<string>,
+        nextToken: string | null = ''
+    ) => {
         try {
             const result: any = await getMssqlInstanceDataApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
@@ -418,14 +423,24 @@ const InventoryApisV2 = () => {
     useEffect(() => {
         // if fsx register is false and only db cred is added than call instance API
         if (detectedInstanceId) {
-            callInstanceApi([detectedInstanceId], false, ["databaseInstanceTopology", "usageEstimation", "storage", "databaseServer"]);
+            callInstanceApi([detectedInstanceId], false, [
+                'databaseInstanceTopology',
+                'usageEstimation',
+                'storage',
+                'databaseServer'
+            ]);
         }
     }, [detectedInstanceId]);
 
     useEffect(() => {
         // if partner instance ID
         if (partnerInstanceList) {
-            callInstanceApi(partnerInstanceList, false, ["databaseInstanceTopology", "usageEstimation", "storage", "databaseServer"]);
+            callInstanceApi(partnerInstanceList, false, [
+                'databaseInstanceTopology',
+                'usageEstimation',
+                'storage',
+                'databaseServer'
+            ]);
         }
     }, [partnerInstanceList]);
 
@@ -571,7 +586,12 @@ const InventoryApisV2 = () => {
                 runningInstanceListRef.current
             );
             if (unmanagedHostList && unmanagedHostList?.length > 0) {
-                callInstanceApi(unmanagedHostList, false, ["databaseInstanceTopology", "usageEstimation", "storage", "databaseServer"]);
+                callInstanceApi(unmanagedHostList, false, [
+                    'databaseInstanceTopology',
+                    'usageEstimation',
+                    'storage',
+                    'databaseServer'
+                ]);
             }
 
             // To Avoid overriding
@@ -595,7 +615,7 @@ const InventoryApisV2 = () => {
                 runningInstanceListRef.current
             );
             if (unmanagedInstanceList && unmanagedInstanceList?.length > 0) {
-                callInstanceApi(unmanagedInstanceList, true, ["databaseInstanceTopology", "storage", "databaseServer"]);
+                callInstanceApi(unmanagedInstanceList, true, ['databaseInstanceTopology', 'storage', 'databaseServer']);
             }
 
             // To Avoid overriding

@@ -224,7 +224,11 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
         let fsxTypeValue = val?.storage?.[fsxType] || {};
         storagePercent = fsxTypeValue ? (Number(fsxTypeValue?.spaceSavings) / Number(fsxTypeValue?.used)) * 100 : 0;
         if (val?.storage?.[fsxType]?.spaceSavings && val?.storage?.[fsxType]?.used) {
-            storageSavingsText = formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(Number(fsxTypeValue?.spaceSavings)) +')';
+            storageSavingsText =
+                formatFractionalNumber(storagePercent, 2) +
+                '% (' +
+                formatSizeOnePrecision(Number(fsxTypeValue?.spaceSavings)) +
+                ')';
         } else if (val?.storage?.[fsxType]?.spaceSavings === 0) {
             storageSavingsText = '0%';
         } else {
@@ -1234,12 +1238,14 @@ export const updateSqlServerInstancesForUnmanaged = (
         instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
             if (instRow?.statusColText !== INVENTORY_STATUS.MANAGED) {
                 const perRow = instanceData?.databaseInstancesSummary?.find(
-                    (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+                    (per: DatabaseInstancesSummaryInterface) =>
+                        per?.databaseInstanceName === instRow?.databaseInstanceName
                 );
-                const allocatedCapacity = instRow?.allocatedCapacity ? instRow?.allocatedCapacity :
-                    (perRow?.storage?.fsxn?.size || 0) +
-                    (perRow?.storage?.fsxw?.size || 0) +
-                    (perRow?.storage?.ebs?.size || 0);
+                const allocatedCapacity = instRow?.allocatedCapacity
+                    ? instRow?.allocatedCapacity
+                    : (perRow?.storage?.fsxn?.size || 0) +
+                      (perRow?.storage?.fsxw?.size || 0) +
+                      (perRow?.storage?.ebs?.size || 0);
                 return {
                     ...instRow,
                     fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
@@ -1254,9 +1260,8 @@ export const updateSqlServerInstancesForUnmanaged = (
             } else {
                 return {
                     ...instRow
-                }
+                };
             }
-            
         });
     }
     return instanceRows;
