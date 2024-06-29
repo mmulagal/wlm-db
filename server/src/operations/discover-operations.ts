@@ -1748,7 +1748,12 @@ async function manageSqlServerV2(
             );
             const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
             if (!isEmpty(temp)) {
-                node2InstanceId = temp.ec2InstanceId;
+                if (
+                    !isDemoFlow &&
+                    sqlServerInstances?.[0]?.sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+                ) {
+                    node2InstanceId = temp.ec2InstanceId;
+                }
             }
         }
         let resourceId;
