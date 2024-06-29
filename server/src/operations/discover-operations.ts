@@ -1740,6 +1740,13 @@ async function manageSqlServerV2(
         let node2InstanceId;
 
         if (clusterNetworkIpDetailsJson.clusterNetworkIps.length > 1) {
+            // if (
+            //     isDemoFlow &&
+            //     sqlServerInstances?.[0]?.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+            // ) {
+            //     clusterNetworkIpDetailsJson.clusterNetworkIps = [clusterNetworkIpDetailsJson.clusterNetworkIps[0]];
+            // }
+
             // FCI/AOAG environment
             const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
                 credentialsId,
@@ -1748,7 +1755,12 @@ async function manageSqlServerV2(
             );
             const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
             if (!isEmpty(temp)) {
-                node2InstanceId = temp.ec2InstanceId;
+                if (
+                    !isDemoFlow &&
+                    sqlServerInstances?.[0]?.sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+                ) {
+                    node2InstanceId = temp.ec2InstanceId;
+                }
             }
         }
         let resourceId;
