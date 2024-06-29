@@ -48,7 +48,12 @@ export const getInventoryDataCount = (data: { [key: string]: InventoryTableData 
     let undetectedHostCount = 0;
     let managedInst = 0;
     let totalInstance = 0;
+    const state = store.getState();
+    const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
     Object.keys(data).map((key: string) => {
+        if (removeSecNodeDiscoveredList.includes(key)) {
+            return;
+        }
         if (
             data[key]?.action === INVENTORY_ACTIONS.MANAGE ||
             (data[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && data[key]?.isDetected)
@@ -213,16 +218,22 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
     }
 
     if (fsxType) {
+        if (fsxType === 'fsxw') {
+            let a = 1;
+        }
         let fsxTypeValue = val?.storage?.[fsxType] || {};
         storagePercent = fsxTypeValue ? (Number(fsxTypeValue?.spaceSavings) / Number(fsxTypeValue?.used)) * 100 : 0;
-        storageSavingsText =
-            (val?.storage?.[fsxType]?.spaceSavings &&
-                val?.storage?.[fsxType]?.used &&
+        if (val?.storage?.[fsxType]?.spaceSavings && val?.storage?.[fsxType]?.used) {
+            storageSavingsText =
                 formatFractionalNumber(storagePercent, 2) +
-                    '% (' +
-                    formatSizeOnePrecision(Number(fsxTypeValue?.spaceSavings)) +
-                    ')') ||
-            '';
+                '% (' +
+                formatSizeOnePrecision(Number(fsxTypeValue?.spaceSavings)) +
+                ')';
+        } else if (val?.storage?.[fsxType]?.spaceSavings === 0) {
+            storageSavingsText = '0%';
+        } else {
+            storageSavingsText = '';
+        }
     }
     return storageSavingsText;
 };
@@ -1201,10 +1212,10 @@ export const updateSqlServerInstancesForBothNodes = (
 
             return {
                 ...instRow,
-                fileSystemType: instRow?.fileSystemType || perRow?.databaseInstanceTopology?.fileSystemType,
-                protection: perRow?.protection,
-                performance: perRow?.performance,
-                storage: perRow?.storage,
+                fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
+                protection: instRow?.protection || perRow?.protection,
+                performance: instRow?.performance || perRow?.performance,
+                storage: instRow?.storage || perRow?.storage,
                 storageSavingsText: getStorageSavingsText(perRow || {}),
                 allocatedCapacity: allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
@@ -1225,24 +1236,32 @@ export const updateSqlServerInstancesForUnmanaged = (
     }
     if (instanceData?.databaseInstancesSummary && instanceData?.databaseInstancesSummary?.length > 0) {
         instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
-            const perRow = instanceData?.databaseInstancesSummary?.find(
-                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
-            );
-            const allocatedCapacity =
-                (perRow?.storage?.fsxn?.size || 0) +
-                (perRow?.storage?.fsxw?.size || 0) +
-                (perRow?.storage?.ebs?.size || 0);
-            return {
-                ...instRow,
-                fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType,
-                protection: perRow?.protection,
-                performance: perRow?.performance,
-                storage: perRow?.storage,
-                storageSavingsText: getStorageSavingsText(perRow || {}),
-                allocatedCapacity: allocatedCapacity,
-                allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
-                databaseServer: perRow?.databaseServer
-            };
+            if (instRow?.statusColText !== INVENTORY_STATUS.MANAGED) {
+                const perRow = instanceData?.databaseInstancesSummary?.find(
+                    (per: DatabaseInstancesSummaryInterface) =>
+                        per?.databaseInstanceName === instRow?.databaseInstanceName
+                );
+                const allocatedCapacity = instRow?.allocatedCapacity
+                    ? instRow?.allocatedCapacity
+                    : (perRow?.storage?.fsxn?.size || 0) +
+                      (perRow?.storage?.fsxw?.size || 0) +
+                      (perRow?.storage?.ebs?.size || 0);
+                return {
+                    ...instRow,
+                    fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
+                    protection: instRow?.protection || perRow?.protection,
+                    performance: instRow?.performance || perRow?.performance,
+                    storage: instRow?.storage || perRow?.storage,
+                    storageSavingsText: getStorageSavingsText(perRow || {}),
+                    allocatedCapacity: allocatedCapacity,
+                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
+                    databaseServer: instRow?.databaseServer || perRow?.databaseServer
+                };
+            } else {
+                return {
+                    ...instRow
+                };
+            }
         });
     }
     return instanceRows;
@@ -1250,8 +1269,13 @@ export const updateSqlServerInstancesForUnmanaged = (
 
 export const getExploreSavingsRows = (inventoryTableData: { [key: string]: InventoryTableData }) => {
     let nonFsxnStorageList: Array<InventoryTableData> = [];
+    const state = store.getState();
+    const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
     Object.keys(inventoryTableData).map((key: string) => {
         let item = inventoryTableData[key];
+        if (removeSecNodeDiscoveredList.includes(key)) {
+            return;
+        }
         if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && !item?.actionDisable) {
             nonFsxnStorageList.push(item);
         }
