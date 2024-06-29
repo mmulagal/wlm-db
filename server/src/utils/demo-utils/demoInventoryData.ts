@@ -106,7 +106,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerEdition: 'Standard Edition (64-bit)',
                         sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2017,
-                        sqlServerInstance: 'PreProd-INST_D',
+                        sqlServerInstance: 'PreProd-BusinessIntelligence',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6j',
                         sqlServerState: 'Running',
                         isDefaultInstance: false,
