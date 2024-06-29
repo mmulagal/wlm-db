@@ -28,7 +28,8 @@ const initialInventoryV2State: InventorySliceData = {
     detectOntapPassword: '',
     detectedInstanceId: '',
     inventoryExpandedRowHostData: null,
-    resetManagedData: false
+    resetManagedData: false,
+    removeSecNodeDiscoveredList: []
 };
 
 const inventoryV2Slice = createSlice({
@@ -100,6 +101,9 @@ const inventoryV2Slice = createSlice({
         },
         setResetManagedData: (state, action: PayloadAction<any>) => {
             state.resetManagedData = action.payload;
+        },
+        setRemoveSecNodeDiscoveredList: (state, action: PayloadAction<any>) => {
+            state.removeSecNodeDiscoveredList = action.payload;
         }
     }
 });
@@ -126,7 +130,8 @@ export const {
     setDetectONTAPUserName,
     setDetectONTAPPassword,
     setDetectedInstanceId,
-    setResetManagedData
+    setResetManagedData,
+    setRemoveSecNodeDiscoveredList
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

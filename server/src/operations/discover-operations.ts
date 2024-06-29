@@ -536,7 +536,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes = [sqlServerNodes];
                     }
 
-                    const sqlServerAuthentication = ec2SqlParametersInfo.some(
+                    const sqlServerAuthentication = ec2SqlParametersInfo?.some(
                         (elem: { sqlinstancename: string }) => elem.sqlinstancename === sqlServerInstance
                     );
 
@@ -551,7 +551,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerProductYear,
                         ...(sqlServerEngineEdition && { sqlServerEngineEdition: Number(sqlServerEngineEdition) }),
                         ...(sqlServerEdition && { sqlServerEdition }),
-                        serverGuid,
+                        ...(serverGuid && { serverGuid }),
                         isDefaultInstance,
                         ...(failureInfo && { failureInfo }),
                         windowsAuthentication,

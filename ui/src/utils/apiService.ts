@@ -380,8 +380,10 @@ export const workloadFactoryResourceApi = createApi({
                 })
             }),
             getDatabaseList: builder.query({
-                query: ({ credentialId, region, id }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/databases`
+                query: ({ credentialId, region, id, fields = false }) => ({
+                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/databases${
+                        fields ? '?fields=protection' : ''
+                    }`
                 })
             })
         };
@@ -399,8 +401,10 @@ export const workloadFactoryResourceApiV2 = createApi({
                 })
             }),
             getDatabaseListV2: builder.query({
-                query: ({ credentialId, region, id, sqlInstanceId }) => ({
-                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}/databases`
+                query: ({ credentialId, region, id, sqlInstanceId, fields = false }) => ({
+                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}/databases${
+                        fields ? '?fields=protection' : ''
+                    }`
                 })
             })
         };
@@ -759,10 +763,10 @@ export const inventoryApiV2 = createApi({
                 }
             }),
             getMssqlInstanceDataV2: builder.mutation({
-                query: ({ credentialId, regionId, instances, nextToken = null }) => ({
+                query: ({ credentialId, regionId, instances, fields, nextToken = null }) => ({
                     url: nextToken
-                        ? `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&nextToken=${nextToken}`
-                        : `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}`,
+                        ? `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&fields=${fields}&nextToken=${nextToken}`
+                        : `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&fields=${fields}`,
                     method: 'GET'
                 })
             }),

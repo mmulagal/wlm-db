@@ -58,7 +58,8 @@ enum HEADERS {
     SIMULATOR = 'x-simulator',
     REFERER = 'referer',
     ACTIVE_TRACE_ID = 'active-trace-id',
-    X_NETAPP_REFERER = 'x-netapp-referer'
+    X_NETAPP_REFERER = 'x-netapp-referer',
+    X_NETAPP_CACHE_CONTROL = 'x-netapp-cache-control'
 }
 
 const API_PATH_HEALTH: string = '/health';

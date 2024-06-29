@@ -25,6 +25,7 @@ export interface InventorySliceData {
     detectedInstanceId: string;
     inventoryExpandedRowHostData: any;
     resetManagedData: boolean;
+    removeSecNodeDiscoveredList: Array<string>;
 }
 
 export interface InventoryTableData {
@@ -62,6 +63,8 @@ export interface InventoryTableInstanceDatInterface {
     isManaged?: boolean;
     fileSystemDeploymentMode?: string;
     fileSystemType?: string;
+    statusColText?: string;
+    storageSavingsText?: string;
     protection?: {
         isAwsBackupEnabled?: { fsxn?: boolean; fsxw?: boolean; ebs?: boolean };
         isFsxOntapSnapshotsEnabled?: boolean;
@@ -90,6 +93,16 @@ export interface InventoryTableInstanceDatInterface {
         };
     };
     allocatedCapacity?: number;
+    databaseServer?: {
+        activeConnections?: string;
+        activeNode?: string;
+        collation?: string;
+        creationDate?: string;
+        nodeNames?: Array<string>;
+        operatingSystem?: string;
+        serverEdition?: string;
+        serverVersion?: string;
+    };
 }
 
 export interface StorageInterface {

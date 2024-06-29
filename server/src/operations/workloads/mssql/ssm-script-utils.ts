@@ -195,7 +195,7 @@ const validateSQLInstanceConnectivity = (
         $sqlcmdInstalled = (Get-Command -Type Application sqlcmd 2> $null) -ne $null
 
         if (-not $sqlcmdInstalled) {
-            $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed, ensure the "Path" environment variable contains the path of the command and retry the operation')
+            $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed,,  ensure the "Path" environment variable contains the path of the command and retry the operation')
             $responseObject.add('sqlInstanceConnectivity', $False)
         } else {
             $sqlcmd = @"
