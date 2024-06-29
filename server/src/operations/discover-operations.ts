@@ -1740,13 +1740,6 @@ async function manageSqlServerV2(
         let node2InstanceId;
 
         if (clusterNetworkIpDetailsJson.clusterNetworkIps.length > 1) {
-            // if (
-            //     isDemoFlow &&
-            //     sqlServerInstances?.[0]?.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT
-            // ) {
-            //     clusterNetworkIpDetailsJson.clusterNetworkIps = [clusterNetworkIpDetailsJson.clusterNetworkIps[0]];
-            // }
-
             // FCI/AOAG environment
             const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
                 credentialsId,
