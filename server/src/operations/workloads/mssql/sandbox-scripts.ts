@@ -978,11 +978,12 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, clonedBy: 
 
 /*
     Order of the events plays an important role in the detachDbAndRemoveAccessPath script.
-    1. Get the extended properties of the database.
-    2. Get the volume id of the windows volumes from file path.
-    3. Remove the access path of the partitions.
-    4. Remove the cluster disks.
-    5. Detach the database.
+    1. Check if the database is in use.
+    2. Get the extended properties of the database.
+    3. Get the volume id of the windows volumes from file path.
+    4. Drop the database.
+    5. Remove the access path of the partitions.
+    6. Remove the cluster disks.
 */
 const detachDbAndRemoveAccessPath = (
     dbName: string,
@@ -1038,7 +1039,20 @@ const detachDbAndRemoveAccessPath = (
         }
         write-Information "Windows Volume Ids: $windowsVolumeIds"
 
+        try {
+            $deleteQuery = "SET NOCOUNT ON; DROP DATABASE IF EXISTS $DBName;"
+            $sqlresponse =  sqlcmd -S $instanceName -Q $deleteQuery -y 0;
+            if (-not [string]::IsNullOrEmpty($sqlresponse)) {
+                throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
+            }
+        } catch {
+            Write-Information "$logPrefix $($_.Exception.Message)"
+            throw $_.Exception.Message
+        }
+
         $disklist = Get-disk | Where-Object { $serialNumbers -contains $_.SerialNumber }
+        write-Information "$logPrefix Disk List: $disklist"
+        write-Information "$logPrefix Serial Numbers: $serialNumbers"
 
         $mountPoints = $filePaths | ForEach-Object {
             $splits = $_.Split('\\')
@@ -1089,17 +1103,6 @@ const detachDbAndRemoveAccessPath = (
                     $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
                 }
             }
-        }
-
-        $detach = "EXEC sp_detach_db '$dbname', 'true'"
-        $sqlresponse =  sqlcmd -S $instanceName -Q $detach -y 0;
-
-        Write-Information "$logPrefix Detach response: $sqlresponse"
-
-        if ($sqlresponse -ne $null) {
-            Write-Information "$logPrefix Failed to detach the database $sqlresponse"
-            $responseObject['error'] = $sqlresponse
-            return $responseObject | ConvertTo-Json -Depth 5
         }
     } catch {
         Write-Information "$logPrefix $($_.Exception.Message)"
@@ -1433,7 +1436,7 @@ $responseObject = @{}
 try {
     $ip = (Invoke-WebRequest -URI http://169.254.169.254/latest/meta-data/local-ipv4 -UseBasicParsing).Content;
     $port = SQLCMD -S "$ip\\${instanceName}" -Q "SET NOCOUNT ON; SELECT DISTINCT local_tcp_port FROM sys.dm_exec_connections  WHERE local_tcp_port IS NOT NULL" -y 0;
-    $responseObject['server'] = "$($ip):$($port)${instanceName ? '\\' + instanceName : ''}"
+    $responseObject['server'] = "$($ip):$($port)${instanceName ? `\\${instanceName}` : ''}"
 } catch {
     $responseObject['error'] = "Failed to get connection info: $_.Exception.Message"
 }

@@ -2191,9 +2191,9 @@ async function detachSandboxAndAccessPath(
         status = JOBSTATUS.COMPLETED;
         return jsonResp;
     } catch (e: any) {
-        logger.error('Failed to detach sandbox and access path', e);
+        logger.error('Failed to detach sandbox and delete access path', e);
         status = JOBSTATUS.FAILED;
-        errMsg = e.message || 'Internal Server Error';
+        errMsg = e.message || e || 'Internal Server Error';
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, detachJob.id, {
@@ -2260,9 +2260,9 @@ async function reAttachSandboxAndAccessPath(
         status = JOBSTATUS.COMPLETED;
         return jsonResp;
     } catch (e: any) {
-        logger.error('Failed to detach sandbox and access path', e);
+        logger.error('Failed to re-attach sandbox and add access path', e);
         status = JOBSTATUS.FAILED;
-        errMsg = e.message || 'Internal Server Error';
+        errMsg = e.message || e || 'Internal Server Error';
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, detachJob.id, {
