@@ -2059,7 +2059,7 @@ async function getInstanceDetails(
     const [[resourceDetails], [instanceDetails]] = await Promise.all([
         listResources(accountId, databaseHostId, credentialsId, region),
         listDatabaseInstances(accountId, {
-            databaseHostId,
+            resourceId: databaseHostId,
             credentialsId,
             sqlInstanceId: databaseInstanceId
         })
