@@ -789,7 +789,7 @@ const cleanUpOntapResources = (
 
             if (-not [string]::IsNullOrEmpty($sqlres)) {
                 Write-Information "$logPrefix Database $dbname is in use"
-                $responseObject['error'] = 'SQLServerError: Database $dbname is in use'
+                $responseObject['error'] = "SQLServerError: Database $dbname is in use"
                 return $responseObject | ConvertTo-Json -Depth 5
             }
 
