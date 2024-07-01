@@ -636,10 +636,10 @@ const getMappedOntapVolumesScript = (
         $result = Get-SerialNumberOfWinVolumes $volumeIds
         $SerialNumbers = $result.Lunserialnumbers
         
-        if (!($SerialNumbers.count -gt 0)) {
-           write-error "Couldn't get windows volume serial numbers"
-           return
-        }
+        // if (!($SerialNumbers.count -gt 0)) {
+        //    write-error "Couldn't get windows volume serial numbers"
+        //    return
+        // }
 
         Write-Debug "Serial Numbers: $SerialNumbers"
         Write-Debug "Volume Serial Mapping: $($result.VolumeSerialMapping | ConvertTo-Json)"
