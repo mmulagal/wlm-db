@@ -247,7 +247,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             );
             return {
                 ...perRow,
-                databaseInstanceId: '',
+                databaseInstanceId: perRow?.databaseInstanceId,
                 databaseInstanceName: perRow?.instanceName,
                 status: perRow?.instanceState,
                 statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED
@@ -269,7 +269,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             if (perRow) {
                 return {
                     ...perRow,
-                    databaseInstanceId: perRow?.databaseInstanceId,
+                    databaseInstanceId: perRow?.databaseInstanceId || instRow?.databaseInstanceId,
                     databaseInstanceName: instRow?.databaseInstanceName,
                     status: perRow?.status,
                     databaseCount: perRow?.databaseCount,

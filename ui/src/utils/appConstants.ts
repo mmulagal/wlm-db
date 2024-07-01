@@ -988,6 +988,8 @@ export const GENERAL = {
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
     EBS_TOOLTIP_MESSAGE:
         'Management of SQL Server instances using EBS (Elastic Block Store) storage is currently not supported. Please select a supported storage option to proceed.',
+    FSXW_TOOLTIP_MESSAGE:
+        'Management of SQL Server instances using FSx for Windows storage is currently not supported. Please select a supported storage option to proceed.',
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
         'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',

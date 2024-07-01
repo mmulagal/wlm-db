@@ -233,6 +233,7 @@ export interface ManagedHostsRowInterface {
     ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
     loading?: boolean;
     databaseInstanceDetails?: Array<{
+        databaseInstanceId?: string;
         instanceName?: string;
         instanceState?: string;
         isManaged?: boolean;
