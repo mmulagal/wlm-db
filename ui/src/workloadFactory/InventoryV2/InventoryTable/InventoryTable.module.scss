@@ -66,6 +66,23 @@
     .firstColText {
         display: flex;
         gap: 8px;
+        align-items: center;
+
+        .ssmOffline:hover {
+            span {
+                svg {
+                    path {
+                        fill: var(--tooltip-icon-hover);
+                    }
+                }
+            }
+        }
+
+        .ssmLink {
+            span {
+                text-transform: none !important;
+            }
+        }
     }
 
     .colText {
