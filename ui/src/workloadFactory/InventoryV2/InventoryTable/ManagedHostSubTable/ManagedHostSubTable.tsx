@@ -436,9 +436,18 @@ const ManagedHostSubTable = ({
                     }
                     if (
                         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
+                        rowData.fileSystemType === GENERAL.EBS
                     ) {
                         disableMsg = GENERAL.EBS_TOOLTIP_MESSAGE;
+                        width = '320px';
+                        height = '90px';
+                        return true;
+                    }
+                    if (
+                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                        rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS
+                    ) {
+                        disableMsg = GENERAL.FSXW_TOOLTIP_MESSAGE;
                         width = '320px';
                         height = '90px';
                         return true;
