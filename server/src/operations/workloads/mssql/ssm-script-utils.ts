@@ -418,7 +418,7 @@ const getMappedOntapVolumesScript = (
             foreach ($record in $sqlJsonResponse) {    
                 if ($null -ne $record.volumeId) {
                     # remove the empty spaces and new lines from the volume id
-                    $cleanVolumeId =$record.volumeId -replace '\s', '' 
+                    $cleanVolumeId = $record.volumeId.Replace(" ", "").Replace("\`r","").Replace("\`n","")
                     # Add the ids to the array only if they're not already there
                     if ($volumeIds -notcontains $cleanVolumeId) {
                         $volumeIds += $cleanVolumeId
