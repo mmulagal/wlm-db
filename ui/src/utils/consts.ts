@@ -107,7 +107,8 @@ export const FROM_DIALOG = {
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',
     HEADER_CROSS: 'header_cross',
-    DETECT_HOST: 'detect_host'
+    DETECT_HOST: 'detect_host',
+    SANDBOX_REFRESH: 'sandbox_refresh'
 };
 
 export const API_NAME = {

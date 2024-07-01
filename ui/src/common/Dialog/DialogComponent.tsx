@@ -47,6 +47,7 @@ const DialogComponent = ({
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
     const detectHostError = useAppSelector(state => state.msSqlAction.isDetectHostError);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
+    const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
 
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() => {
@@ -76,6 +77,9 @@ const DialogComponent = ({
         closeCallback();
         closeDialog(null);
     };
+
+    const refreshSandboxDisabled =
+        dialogFrom === FROM_DIALOG.SANDBOX_REFRESH && isRollbackSelected && !selectedRollbackSnapshot;
 
     const disabledCheck = () => {
         if (primaryButtonDisabled) {
@@ -109,7 +113,7 @@ const DialogComponent = ({
                     variant={'primary'}
                     className={'continue-button'}
                     isThin={true}
-                    isDisabled={disabledCheck()}
+                    isDisabled={disabledCheck() || refreshSandboxDisabled}
                     isLoading={primaryButtonLoad}
                     onClick={primaryButtonClick}
                 >

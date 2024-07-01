@@ -56,7 +56,7 @@ const InventoryTable = () => {
     const navigate = useNavigate();
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
-
+    const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
@@ -95,6 +95,9 @@ const InventoryTable = () => {
         if (inventoryTableData) {
             let result: any = [];
             Object.keys(inventoryTableData).map((key: string) => {
+                if (removeSecNodeDiscoveredList.includes(key)) {
+                    return;
+                }
                 let instanceList: any = [];
                 const allocatedCapacity = inventoryTableData[key]?.allocatedCapacity || '';
                 inventoryTableData[key]?.ec2Details?.map((row: any) => {
@@ -193,7 +196,8 @@ const InventoryTable = () => {
                     'manage',
                     rowData,
                     instances,
-                    successFullInstances
+                    successFullInstances,
+                    res?.data?.resourceId
                 );
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             } else if (res?.error) {

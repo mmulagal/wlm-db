@@ -46,7 +46,8 @@ import {
     NOT_AVAILABLE,
     ONLINE,
     OFFLINE,
-    SQL_SERVICE_STATE
+    SQL_SERVICE_STATE,
+    UNKNOWN
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1674,7 +1675,7 @@ async function getDatabaseInstanceSummary(
 async function getDatabaseInstancesDetails(
     credentialsId: string,
     region: string,
-    instancesManaged: Array<{ database_instance_name: string; is_default: boolean }>,
+    instancesManaged: DatabaseInstance[],
     resourceId: string,
     instanceDetails?: InstanceDetails[] | undefined
 ) {
@@ -1684,14 +1685,13 @@ async function getDatabaseInstancesDetails(
         instancesManaged,
         resourceId
     });
-    const managedInstancesName = instancesManaged.map(
-        (item: { database_instance_name: string; is_default: boolean }) => ({
-            instanceName: item.database_instance_name,
-            isDefault: item.is_default,
-            instanceState: ServerState.DOWN,
-            isManaged: true
-        })
-    );
+    const managedInstancesName = instancesManaged.map((item: DatabaseInstance) => ({
+        instanceName: item.database_instance_name,
+        isDefault: item.is_default,
+        instanceState: ServerState.DOWN,
+        isManaged: true,
+        databaseInstanceId: item.database_instance_id
+    }));
 
     const updatedInstanceDetails = instanceDetails
         ? instanceDetails.map(({ instanceName, instanceState, isDefault }) => {
@@ -1702,8 +1702,15 @@ async function getDatabaseInstancesDetails(
               const isManaged = Boolean(managedInstance);
               const updatedInstanceState =
                   instanceState === SQL_SERVICE_STATE.RUNNING ? ServerState.UP : ServerState.DOWN;
+              const databaseInstanceId = managedInstance?.databaseInstanceId;
 
-              return { instanceName, instanceState: updatedInstanceState, isManaged, isDefault };
+              return {
+                  instanceName,
+                  instanceState: updatedInstanceState,
+                  isManaged,
+                  isDefault,
+                  databaseInstanceId
+              };
           })
         : managedInstancesName;
 
@@ -1777,7 +1784,7 @@ async function getDatabaseHostSummaryV2(
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
         name: resourceName || '',
-        databaseHostStatus: activeNodeInstanceId ? ONLINE : OFFLINE,
+        databaseHostStatus: activeNodeInstanceId ? ONLINE : instancesDetails ? OFFLINE : UNKNOWN,
         ssmStatus: ssmConnectionStatus || NOT_AVAILABLE
     };
 
@@ -1865,7 +1872,10 @@ async function getDatabaseHostSummaryV2(
                         )
                     );
                 } else {
-                    runningDatabaseInstances = resourceDetail.databaseInstanceDetails || [];
+                    runningDatabaseInstances =
+                        resourceDetail.databaseInstanceDetails?.filter(
+                            instance => instance.instanceState === 'Running'
+                        ) ?? [];
                 }
                 if (runningDatabaseInstances.length > 0) {
                     const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
@@ -2049,7 +2059,7 @@ async function getInstanceDetails(
     const [[resourceDetails], [instanceDetails]] = await Promise.all([
         listResources(accountId, databaseHostId, credentialsId, region),
         listDatabaseInstances(accountId, {
-            databaseHostId,
+            resourceId: databaseHostId,
             credentialsId,
             sqlInstanceId: databaseInstanceId
         })

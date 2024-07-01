@@ -401,7 +401,6 @@ const deleteExtendedPropertiesCommand = {
     commands: [
         deleteExtendedPropertiesScript('test-db', '$env:computername', [
             'cloned_by',
-            'baseSnapshot',
             'source',
             'createdAt',
             'updatedAt',

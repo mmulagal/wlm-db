@@ -178,12 +178,11 @@ const validateSQLInstanceConnectivity = (
     ec2instanceId: string,
     sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => ` 
-        
-        $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'
+        $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
 
         $destinationPath = $env:PSModulePath.split(';')[0]
-        $CommonmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.Common"
-        $ssmmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.SimpleSystemsManagement"
+        $CommonmodulePath = $destinationPath + "\\AWS.Tools.Common"
+        $ssmmodulePath = $destinationPath + "\\AWS.Tools.SimpleSystemsManagement"
         Import-Module -Name $CommonmodulePath, $ssmmodulePath
     if ($responseObject -eq $null) {
         $responseObject = @{}
@@ -197,7 +196,7 @@ const validateSQLInstanceConnectivity = (
         $sqlcmdInstalled = (Get-Command -Type Application sqlcmd 2> $null) -ne $null
 
         if (-not $sqlcmdInstalled) {
-            $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed, ensure the "Path" environment variable contains the path of the command and retry the operation')
+            $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed,,  ensure the "Path" environment variable contains the path of the command and retry the operation')
             $responseObject.add('sqlInstanceConnectivity', $False)
         } else {
             $sqlcmd = @"
@@ -220,7 +219,7 @@ const validateSQLInstanceConnectivity = (
             $password = $sqlCredentials.password
             
             $serverInstanceName = "$env:COMPUTERNAME"
-            If($sqlinstancename -ne '${DEFAULT_MSSQL_INSTANCE_NAME}') {
+            If($sqlinstancename -ne $serverInstanceName) {
                 $serverInstanceName = "$env:COMPUTERNAME\\$sqlinstancename"
                 
             }
@@ -256,8 +255,8 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
     }
 
     $destinationPath = $env:PSModulePath.split(';')[0]
-    $CommonmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.Common"
-    $ssmmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.SimpleSystemsManagement"
+    $CommonmodulePath = $destinationPath + "\\AWS.Tools.Common"
+    $ssmmodulePath = $destinationPath + "\\AWS.Tools.SimpleSystemsManagement"
     Import-Module -Name $CommonmodulePath, $ssmmodulePath
 
     try {
@@ -803,7 +802,8 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
 
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\aws_ssm.zip"
-            $Null = Expand-Archive -Path "$Env:Temp\\aws_ssm.zip" -DestinationPath $destinationPath -Force
+            $Null = Expand-Archive -Path "$Env:Temp\\aws_ssm.zip" -DestinationPath $Env:Temp -Force
+            $Null = Copy-Item -Path "$Env:Temp\\aws_ssm\\*" -Destination $destinationPath -Recurse
 
             # Ensure the modules are available for use
             $allInstalled = Check-ModuleInstalled -moduleNames $moduleNames

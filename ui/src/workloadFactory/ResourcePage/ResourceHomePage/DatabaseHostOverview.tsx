@@ -59,7 +59,8 @@ const DatabaseHostOverview = () => {
     } = useGetDatabaseListQuery({
         credentialId: headerSelectedCred?.data?.credentialsId,
         region: headerSelectedRegion?.label2,
-        id: resourceId
+        id: resourceId,
+        fields: true
     });
 
     useEffect(() => {

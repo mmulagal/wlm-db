@@ -22,6 +22,7 @@ export const initialSandboxState: SandboxEntities = {
     },
     connectionInfo: {
         selectedDatabaseHostId: null,
+        selectedDatabaseInstanceId: null,
         selectedSandboxName: null,
         connectionString: null,
         isLoading: false
@@ -69,6 +70,12 @@ const sandboxSlice = createSlice({
         },
         updateSelectedRollbackSnapshot: (state, action: PayloadAction<any>) => {
             state.selectedRollbackSnapshot = action.payload;
+        },
+        resetRefreshDialog: state => {
+            state.rollbackSnapshotsLoading = false;
+            state.rollbackSnapshotList = [];
+            state.isRollbackSelected = false;
+            state.selectedRollbackSnapshot = null;
         }
     }
 });
@@ -84,7 +91,8 @@ export const {
     updateRollbackSnapshotsLoading,
     updateRollbackSnapshotList,
     updateIsRollbackSelected,
-    updateSelectedRollbackSnapshot
+    updateSelectedRollbackSnapshot,
+    resetRefreshDialog
 } = sandboxSlice.actions;
 
 export default sandboxSlice;

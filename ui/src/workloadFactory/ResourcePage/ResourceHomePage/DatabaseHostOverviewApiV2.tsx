@@ -65,7 +65,8 @@ const DatabaseHostOverviewApiV2 = () => {
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 region: headerSelectedRegion?.label2,
                 id: selectedResourceId,
-                sqlInstanceId: selectedDatabaseInstance
+                sqlInstanceId: selectedDatabaseInstance,
+                fields: true
             });
             if (result && !result?.error) {
                 dispatch(setDatabaseList(result?.data?.items || []));
