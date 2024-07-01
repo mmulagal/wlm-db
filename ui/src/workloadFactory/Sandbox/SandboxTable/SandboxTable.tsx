@@ -33,6 +33,7 @@ import {
 } from '../../../utils/apiService';
 import {
     CRED_PLACEHOLDERS,
+    FROM_DIALOG,
     JOB_MONITORING_STATUS,
     SANDBOX_ACTIONS_POLLING_INTERVAL,
     UPDATE_SANDBOX_CURL_REQ_TEMPLATE,
@@ -313,7 +314,6 @@ const SandboxTable = () => {
                     <RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} rowData={rowData} />
                 }
                 primaryButton={'Refresh'}
-                primaryButtonDisabled={isRollbackSelected && !selectedRollbackSnapshot}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
                     let output = data.map((obj: any) => {
@@ -349,6 +349,7 @@ const SandboxTable = () => {
                     closeDialog();
                 }}
                 customClass={styles.setWidth}
+                dialogFrom={FROM_DIALOG.SANDBOX_REFRESH}
             />
         );
     };
