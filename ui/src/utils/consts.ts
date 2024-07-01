@@ -508,3 +508,16 @@ export const INVENTORY_ACTIONS = {
     MANAGE: 'Manage',
     EXPLORE_SAVINGS: 'Explore savings'
 };
+
+export const INSTANCE_API_FIELDS = {
+    UNMANAGED_DEFAULT: [
+        'databaseInstanceTopology',
+        'usageEstimation',
+        'storage',
+        'databaseServer',
+        'serverDetails',
+        'nodeTopology'
+    ],
+    SUB_TABLE_FIELDS: ['protection', 'performance'],
+    MIXED_STATUS_FIELDS: ['databaseInstanceTopology', 'storage', 'databaseServer', 'serverDetails', 'nodeTopology']
+};
