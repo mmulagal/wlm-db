@@ -47,9 +47,11 @@ import store from '../../../store/store';
 import {
     setInProgressInstances,
     setInventoryExpandedRowHostData,
-    setInventoryTableData
+    setInventoryTableData,
+    setUnManagedPerfInstanceIdsList
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { StatusObjInterface } from '../../../utils/types/inventoryV2Types';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
@@ -70,6 +72,8 @@ const InventoryTable = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
+    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+
     const [loading, setLoading] = useState(false);
 
     const [manageInstanceApi] = useManageMssqlInstanceMutation();
@@ -270,6 +274,22 @@ const InventoryTable = () => {
         );
     };
 
+    const addInstanceIdToGetPerf = (rowData: any) => {
+        // First check if this is already opened or closed. If this data is already available or not.
+        if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
+            // If this has unmanaged rows or not ?
+            let unmanagedRows = rowData?.sqlServerInstances?.filter(
+                (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
+            );
+            if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
+                dispatch(
+                    setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]])
+                );
+            }
+            // This has to be called even if any row is becoming unmanaged row or managed row - ToDo
+        }
+    };
+
     const lastColJSX = (
         rowData: any,
         checkForAllManaged: boolean,
@@ -392,6 +412,7 @@ const InventoryTable = () => {
                                 onClick={(e: any) => {
                                     e.stopPropagation();
                                     expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    addInstanceIdToGetPerf(rowData);
                                 }}
                             />
                         </div>
@@ -426,12 +447,6 @@ const InventoryTable = () => {
                                 {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
                                 {!rowData?.status && !rowData?.loading && 'Unknown'}
                             </Typography>
-                            {/* <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">
-                                {rowData?.topology?.serverType}
-                                {!rowData?.topology?.serverType && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.topology?.serverType && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-                            </Typography> */}
                         </div>
                     </div>
                 );

@@ -14,6 +14,7 @@ export interface InventorySliceData {
     fsxCredentialStatusObj: any;
     fsxCredentialStatusLoading: boolean;
     mssqlInstancesData: any;
+    perfMssqlInstancesData: any;
     inProgressInstances: any;
     manageHostSelectedRows: any;
     valuesNotFilled: boolean;
@@ -26,6 +27,7 @@ export interface InventorySliceData {
     inventoryExpandedRowHostData: any;
     resetManagedData: boolean;
     removeSecNodeDiscoveredList: Array<string>;
+    unManagedPerfInstanceIdsList: Array<string>;
 }
 
 export interface InventoryTableData {

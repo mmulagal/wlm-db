@@ -1,6 +1,6 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
-import { setFsxCredentialStatus } from '../../store/workloadFactory/inventoryV2Slice';
+import { setFsxCredentialStatus, setUnManagedPerfInstanceIdsList } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
@@ -313,7 +313,8 @@ export const getPrimaryClusterNode = (
     newDiscoveredHostData: Array<DiscoverHostInterface>,
     removeRows: Array<string>,
     managedHostsList: string[],
-    clusterDiscoveredHost: any
+    clusterDiscoveredHost: any,
+    isDemoMode: boolean | undefined
 ) => {
     let testedNodes: string[] = [];
 
@@ -338,7 +339,7 @@ export const getPrimaryClusterNode = (
                 }
             })?.[0];
 
-            if (partnerNode) {
+            if (partnerNode && !isDemoMode) {
                 let isManagedNode1;
                 let isManagedNode2;
                 if (host?.ec2InstanceId) {
@@ -1209,12 +1210,13 @@ export const updateSqlServerInstancesForBothNodes = (
                     (perRow?.storage?.fsxw?.size || 0) +
                     (perRow?.storage?.ebs?.size || 0);
             }
-
+            const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
             return {
                 ...instRow,
+                loading: perfData?.loading,
                 fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
-                protection: instRow?.protection || perRow?.protection,
-                performance: instRow?.performance || perRow?.performance,
+                protection: perfData?.protection || instRow?.protection || perRow?.protection,
+                performance: perfData?.performance || instRow?.performance || perRow?.performance,
                 storage: instRow?.storage || perRow?.storage,
                 storageSavingsText: getStorageSavingsText(perRow || {}),
                 allocatedCapacity: allocatedCapacity,
@@ -1246,11 +1248,13 @@ export const updateSqlServerInstancesForUnmanaged = (
                     : (perRow?.storage?.fsxn?.size || 0) +
                       (perRow?.storage?.fsxw?.size || 0) +
                       (perRow?.storage?.ebs?.size || 0);
+                const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
                 return {
                     ...instRow,
                     fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
-                    protection: instRow?.protection || perRow?.protection,
-                    performance: instRow?.performance || perRow?.performance,
+                    loading: perfData?.loading,
+                    protection: instRow?.protection || perfData?.protection,
+                    performance: instRow?.performance || perfData?.performance,
                     storage: instRow?.storage || perRow?.storage,
                     storageSavingsText: getStorageSavingsText(perRow || {}),
                     allocatedCapacity: allocatedCapacity,
@@ -1258,13 +1262,47 @@ export const updateSqlServerInstancesForUnmanaged = (
                     databaseServer: instRow?.databaseServer || perRow?.databaseServer
                 };
             } else {
+                const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
                 return {
-                    ...instRow
+                    ...instRow,
+                    loading: false,
+                    protection: instRow?.protection || perfData?.protection,
+                    performance: instRow?.performance || perfData?.performance
                 };
             }
         });
     }
     return instanceRows;
+};
+
+export const getPerfUnmanagedData = (instanceId: string, instRow: any) => {
+    const updatedState = store.getState();
+    const perfMssqlInstancesData = updatedState.inventoryV2.perfMssqlInstancesData;
+    if (perfMssqlInstancesData?.[instanceId]) {
+        let perfData = perfMssqlInstancesData?.[instanceId];
+        if (perfData?.loading) {
+            return {
+                loading: true,
+                protection: null,
+                performance: null
+            };
+        } else if (perfData?.data?.databaseInstancesSummary && perfData?.data?.databaseInstancesSummary?.length > 0) {
+            const perRow = perfData?.data?.databaseInstancesSummary?.find(
+                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+            );
+            return {
+                loading: false,
+                protection: perRow?.protection,
+                performance: perRow?.performance
+            };
+        } else {
+            return {
+                loading: false,
+                protection: null,
+                performance: null
+            };
+        }
+    }
 };
 
 export const getExploreSavingsRows = (inventoryTableData: { [key: string]: InventoryTableData }) => {
@@ -1532,4 +1570,92 @@ export const getPartnerInstanceId = (instanceRow: InstancesHostsRowInterface, in
         }
     }
     return partnerInstanceId;
+};
+
+export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
+    let awsProtection = val?.protection?.isAwsBackupEnabled;
+    let protectionText: any = '';
+    if (fsxType) {
+        if (awsProtection?.[fsxType] && awsProtection?.[fsxType] !== GENERAL.NOT_AVAILABLE) {
+            protectionText = true;
+        } else if (awsProtection?.[fsxType] === GENERAL.NOT_AVAILABLE) {
+            protectionText = GENERAL.NOT_AVAILABLE;
+        } else if (!awsProtection?.[fsxType]) {
+            protectionText = false;
+        } else {
+            protectionText = GENERAL.NOT_AVAILABLE;
+        }
+    } else {
+        if (
+            (awsProtection?.fsxn && awsProtection?.fsxn !== GENERAL.NOT_AVAILABLE) ||
+            (awsProtection?.fsxw && awsProtection?.fsxw !== GENERAL.NOT_AVAILABLE) ||
+            (awsProtection?.ebs && awsProtection?.ebs !== GENERAL.NOT_AVAILABLE)
+        ) {
+            protectionText = true;
+        } else if (
+            awsProtection?.fsxn === GENERAL.NOT_AVAILABLE ||
+            awsProtection?.fsxw === GENERAL.NOT_AVAILABLE ||
+            awsProtection?.ebs === GENERAL.NOT_AVAILABLE
+        ) {
+            protectionText = GENERAL.NOT_AVAILABLE;
+        } else if (awsProtection) {
+            protectionText = false;
+        } else {
+            protectionText = GENERAL.NOT_AVAILABLE;
+        }
+    }
+
+    return protectionText;
+};
+
+export const getProtectionText = (data: any) => {
+    let protectionText = '';
+    let fsxType = '';
+    let fileSystemType = data?.fileSystemType || '';
+    if (fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
+        fsxType = 'fsxn';
+    } else if (fileSystemType.includes(GENERAL.FSX_FOR_WINDOWS)) {
+        fsxType = 'fsxw';
+    } else if (fileSystemType.includes(GENERAL.EBS)) {
+        fsxType = 'ebs';
+    }
+
+    let awsBackupEnabled = isAwsBackupEnabledText(data, fsxType);
+    let fsxOntapEnabled = data?.protection?.isFsxOntapSnapshotsEnabled;
+    let sqlNativeEnabled = data?.protection?.isSqlNativeEnabled;
+
+    if (fsxType === 'ebs' || fsxType === 'fsxw') {
+        if (
+            (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
+            (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
+        ) {
+            protectionText = 'Yes';
+        } else if (awsBackupEnabled === GENERAL.NOT_AVAILABLE || sqlNativeEnabled === GENERAL.NOT_AVAILABLE) {
+            protectionText = '';
+        } else if (data?.protection) {
+            protectionText = 'No';
+        } else {
+            protectionText = '';
+        }
+    } else {
+        if (
+            (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
+            (fsxOntapEnabled && fsxOntapEnabled !== GENERAL.NOT_AVAILABLE) ||
+            (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
+        ) {
+            protectionText = 'Yes';
+        } else if (
+            awsBackupEnabled === GENERAL.NOT_AVAILABLE ||
+            fsxOntapEnabled === GENERAL.NOT_AVAILABLE ||
+            sqlNativeEnabled === GENERAL.NOT_AVAILABLE
+        ) {
+            protectionText = '';
+        } else if (data?.protection) {
+            protectionText = 'No';
+        } else {
+            protectionText = '';
+        }
+    }
+
+    return protectionText;
 };

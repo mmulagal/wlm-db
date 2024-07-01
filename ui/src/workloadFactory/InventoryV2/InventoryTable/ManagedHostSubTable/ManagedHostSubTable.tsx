@@ -11,21 +11,12 @@ import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import {
-    createDetectHostPayload,
-    formatSizeTwoPrecision,
-    isAwsBackupEnabled,
-    isSmbProtocol
-} from '../../../../utils/utilityFunctions';
+import { createDetectHostPayload, formatSizeTwoPrecision, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
-import {
-    useManageMssqlInstanceMutation,
-    useRegisterResourceCredentialsMutation,
-    useUnmanageMssqlInstanceMutation
-} from '../../../../utils/apiService';
+import { useRegisterResourceCredentialsMutation, useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import {
     setDetectManagePassword,
     setDetectManageUserName,
@@ -35,6 +26,7 @@ import {
     setInProgressInstances,
     setInventoryTableData,
     setRadioValueDetect,
+    setUnManagedPerfInstanceIdsList,
     setValuesForForm
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import store from '../../../../store/store';
@@ -54,7 +46,12 @@ import {
     setInstanceName
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../../store/authSlice';
-import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatus } from '../../InventoryUtilsV2';
+import {
+    detectFieldsValidation,
+    getProtectionText,
+    saveFsxInCredRegisteredObj,
+    updateInstanceStatus
+} from '../../InventoryUtilsV2';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import UndetectedHostDialogContentV2 from '../UndetectedHostDialogContent/UndetectedHostDialogContentV2';
 import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecondDialogV2';
@@ -76,6 +73,7 @@ const ManagedHostSubTable = ({
     const hostname = hostData?.name;
     const resourceId = hostData?.resourceId;
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
@@ -92,19 +90,11 @@ const ManagedHostSubTable = ({
     useEffect(() => {
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
             const newTable = inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
-                let protectionText = '';
-                if (
-                    isAwsBackupEnabled(perRow) ||
-                    perRow?.protection?.isFsxOntapSnapshotsEnabled ||
-                    perRow?.protection?.isSqlNativeEnabled
-                ) {
-                    protectionText = 'Yes';
-                } else if (perRow?.protection) {
-                    protectionText = 'No';
-                }
+                let protectionText = getProtectionText(perRow);
                 return {
                     ...perRow,
                     loading: inventoryTableData?.[rowId]?.loading,
+                    subLoading: perRow?.loading,
                     protectionText: protectionText,
                     allocatedCapacityText: perRow?.allocatedCapacity
                         ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
@@ -229,6 +219,7 @@ const ManagedHostSubTable = ({
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         }
         // if fsx register is false and only db cred is added than call instance API
+        dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[hostData?.ec2InstanceId]]));
         if (!isFsxRegister) {
             dispatch(setDetectedInstanceId(hostData?.ec2InstanceId));
         }
@@ -612,11 +603,12 @@ const ManagedHostSubTable = ({
             width: '135px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
+                const loading = rowData?.loading || rowData?.subLoading;
                 return (
                     <>
                         {cellData && <div>{cellData}</div>}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                        {!cellData && loading && <DsFlashingDotsLoader />}
+                        {!cellData && !loading && GENERAL.NOT_AVAILABLE}
                     </>
                 );
             }
@@ -628,11 +620,12 @@ const ManagedHostSubTable = ({
             width: '160px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
+                const loading = rowData?.loading || rowData?.subLoading;
                 return (
                     <>
                         {cellData && <div>{cellData}</div>}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                        {!cellData && loading && <DsFlashingDotsLoader />}
+                        {!cellData && !loading && GENERAL.NOT_AVAILABLE}
                     </>
                 );
             }
