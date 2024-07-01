@@ -1,13 +1,30 @@
-import { DsFlashingDotsLoader, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
-import { useNavigate } from 'react-router-dom';
+import {
+    Button,
+    DsFlashingDotsLoader,
+    DsTooltipInfo,
+    Popover,
+    Table,
+    TableTopBar,
+    Typography,
+    useDialog,
+    useTable
+} from '@netapp/design-system';
+
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
+import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import styles from './InventoryTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import MenuPopover from '../../../common/MenuPopover/MenuPopover';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST, INVENTORY_STATUS, INVENTORY_ACTIONS, API_ERRORS } from '../../../utils/consts';
+import {
+    STATUS_CONST,
+    INVENTORY_STATUS,
+    INVENTORY_ACTIONS,
+    API_ERRORS,
+    SSM_TROUBLESHOOTING_LINK
+} from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
@@ -53,7 +70,6 @@ import { NOTIFICATION_TYPES, addNotification } from '../../../store/notification
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
@@ -505,8 +521,37 @@ const InventoryTable = () => {
                             <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                         )}
                         {rowData?.ssmState === INVENTORY_STATUS.OFFLINE && (
-                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                            <>
+                                <div className={styles.ssmOffline}>
+                                    <Popover
+                                        popoverClass={''}
+                                        children={
+                                            <div>
+                                                <Typography variant="Regular_14">
+                                                    {GENERAL.SSM_NO_CONNECTION_MSG}
+                                                </Typography>
+                                                <Button
+                                                    className={styles.ssmLink}
+                                                    variant="link"
+                                                    onClick={() =>
+                                                        window.open(SSM_TROUBLESHOOTING_LINK, '_blank', 'noopener')
+                                                    }
+                                                >
+                                                    {GENERAL.SSM_NO_CONNECTION_LINK}
+                                                </Button>
+                                            </div>
+                                        }
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={<TooltipIcon />}
+                                    />
+                                </div>
+
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                            </>
                         )}
+
                         <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
                     </div>
                 );

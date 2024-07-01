@@ -78,7 +78,12 @@ const UndetectedHostDialogContentV2 = ({ rowData }: DialogProps) => {
     return (
         <div className={styles.undetectedHostContent}>
             <div className={styles.dialogMsg}>
-                <Typography variant="Regular_14">{GENERAL.DETECT_INSTANCE_DESC}</Typography>&nbsp;
+                <Typography variant="Regular_14">
+                    {rowData && (rowData?.fileSystemType === 'FSx for ONTAP' || rowData?.fileSystemType === 'EBS')
+                        ? GENERAL.DETECT_ONLY_INSTANCE
+                        : GENERAL.DETECT_INSTANCE_DESC}
+                </Typography>
+                &nbsp;
                 <Typography variant="Semibold_14">{rowData?.databaseInstanceName}</Typography>
             </div>
 
