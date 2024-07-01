@@ -1525,7 +1525,18 @@ async function getSandboxConnectionString(
 
         const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-        const { databaseInstanceName, activeNodeInstanceId } = srcDetails;
+        const { databaseInstanceName, activeNodeInstanceId, metadata, resourceName } = srcDetails;
+
+        const { activeDirectoryName } = metadata;
+
+        if (activeDirectoryName) {
+            return {
+                server: `${resourceName}.${activeDirectoryName}${
+                    databaseInstanceName !== DEFAULT_INSTANCE_NAME ? `\\${databaseInstanceName}` : ''
+                }`,
+                database: sandboxName
+            };
+        }
 
         let command = [getConnectionInfo(databaseInstanceName === DEFAULT_INSTANCE_NAME ? '' : databaseInstanceName)];
 
