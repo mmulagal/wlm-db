@@ -1321,7 +1321,13 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
     return nonFsxnStorageList;
 };
 
-export const updateInstanceStatus = (action: InstanceActions, hostData: any, instanceData: any, responseData?: any) => {
+export const updateInstanceStatus = (
+    action: InstanceActions,
+    hostData: any,
+    instanceData: any,
+    responseData?: any,
+    resourceId?: any
+) => {
     let updatedState = store.getState();
     let { inventoryTableData }: any = updatedState?.inventoryV2;
     const targettedHostId = inventoryTableData[hostData.resourceId] ? hostData.resourceId : hostData.ec2InstanceId;
@@ -1349,6 +1355,7 @@ export const updateInstanceStatus = (action: InstanceActions, hostData: any, ins
             actionDisable:
                 inventoryTableData[targettedHostId].totalInstance ===
                     inventoryTableData[targettedHostId].managedInstance + responseData?.length || 0,
+            resourceId,
             sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
                 const instanceInRes = responseData.find(
                     (item: any) => item?.databaseInstanceName === instanceItem?.databaseInstanceName

@@ -516,8 +516,8 @@ async function createSandbox(
     }
 
     const job = await registerJob(accountId, credentialsId, region, {
-        name: `Creating sandbox ${dest.database} in the target host ${srcDetails.resourceName}`,
-        description: `Creating sandbox ${dest.database} in the target host ${destDetails.resourceName}`,
+        name: `Create sandbox ${dest.database} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
+        description: `Create sandbox ${dest.database} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
         resourceName: dest.database,
         initiator: 'SYSTEM',
         startTime: Date.now(),
@@ -678,9 +678,9 @@ async function validateCloneParams(
     let errMsg;
 
     const validationJob = await registerJob(accountId, credentialsId, region, {
-        description: `Validate if the sandbox ${destDetails.database} already exists in the target host ${destDetails.resourceName}`,
+        name: `Validate if sandbox ${destDetails.database} and mount point drives already exists`,
+        description: `Validate if the sandbox ${destDetails.database} and mount point drives already exists in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
         startTime: Date.now(),
-        name: 'Validate if sandbox already exists and mount point drives are existing.',
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
@@ -792,9 +792,9 @@ async function getMappings(
     let errorMsg;
 
     const mappingJob = await registerJob(accountId, credentialsId, region, {
-        description: `Get the volume LUN mapping for the database ${srcDetails.database} of the host ${srcDetails.resourceName}`,
+        name: `Get volume LUN mapping for the source database ${srcDetails.database}`,
+        description: `Get the volume LUN mapping for the source database ${srcDetails.database} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
         startTime: Date.now(),
-        name: `Get volume LUN mappings for database ${srcDetails.database}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
@@ -986,9 +986,9 @@ async function invokeVirtualMount(
     let errorMsg;
 
     const invokeMountJob = await registerJob(accountId, credentialsId, region, {
-        description: `Discover cloned LUNs and create virtual mount points in the target host ${destDetails.resourceName}`,
-        startTime: Date.now(),
         name: 'Discover cloned LUNs and create virtual mount point',
+        description: `Discover cloned LUNs and create virtual mount points in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
+        startTime: Date.now(),
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
@@ -1091,9 +1091,10 @@ async function createCloneDb(
     let errorMsg;
 
     const createCloneDbJob = await registerJob(accountId, credentialsId, region, {
-        description: `Create sandbox ${destDetails.database} on the target host ${destDetails.resourceName}`,
-        startTime: Date.now(),
         name: `Create sandbox ${destDetails.database}`,
+        description: `Create sandbox ${destDetails.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
+        startTime: Date.now(),
+
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
@@ -1178,7 +1179,7 @@ async function createExtendedProperties(
     let errorMsg;
 
     const createExtendedPropertiesJob = await registerJob(accountId, credentialsId, region, {
-        description: `Add extended properties to sandbox ${destDetails.database} on the target host ${destDetails.resourceName}`,
+        description: `Add extended properties to sandbox ${destDetails.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
         startTime: Date.now(),
         name: `Add extended properties to sandbox ${destDetails.database}`,
         status,
@@ -1285,9 +1286,9 @@ async function startCleanup(
     let errorMsg;
 
     const cleanupJob = await registerJob(accountId, credentialsId, region, {
-        description: `Clean up resource for sandbox ${destDetails.database}`,
+        description: `Clean up resources for sandbox ${destDetails.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
         startTime: Date.now(),
-        name: 'Clean up resources',
+        name: `Clean up resources for sandbox ${destDetails.database}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
@@ -1524,7 +1525,18 @@ async function getSandboxConnectionString(
 
         const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-        const { databaseInstanceName, activeNodeInstanceId } = srcDetails;
+        const { databaseInstanceName, activeNodeInstanceId, metadata, resourceName } = srcDetails;
+
+        const { activeDirectoryName } = metadata;
+
+        if (activeDirectoryName) {
+            return {
+                server: `${resourceName}.${activeDirectoryName}${
+                    databaseInstanceName !== DEFAULT_INSTANCE_NAME ? `\\${databaseInstanceName}` : ''
+                }`,
+                database: sandboxName
+            };
+        }
 
         let command = [getConnectionInfo(databaseInstanceName === DEFAULT_INSTANCE_NAME ? '' : databaseInstanceName)];
 
@@ -1635,7 +1647,7 @@ async function deleteSandbox(
 
     const job = await registerJob(accountId, credentialsId, region, {
         name: `Delete sandbox ${databaseName}`,
-        description: `Delete sandbox ${srcDetails.instanceName}\\${databaseName} in the host ${srcDetails.resourceName}`,
+        description: `Delete sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
         resourceName: databaseName,
         initiator: 'SYSTEM',
         startTime: Date.now(),
@@ -1710,9 +1722,9 @@ async function validateDeleteSandboxParams(
     let errorMsg;
 
     const validationJob = await registerJob(accountId, credentialsId, region, {
-        description: `Validate if the sandbox ${resourceDetails.database} exists in the target host ${resourceDetails.resourceName}`,
+        name: `Validate if sandbox ${resourceDetails.database} exists`,
+        description: `Validate if the sandbox ${resourceDetails.database} exists in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
         startTime: Date.now(),
-        name: 'Validate if sandbox exists',
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: resourceDetails.database,
@@ -1890,10 +1902,12 @@ async function updateSandboxLifeCycle(
     const job = await registerJob(accountId, credentialsId, region, {
         name: `${
             action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
-        } sandbox ${srcDetails.instanceName}\\${databaseName}`,
+        } sandbox ${databaseName}`,
         description: `${
             action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
-        } sandbox ${srcDetails.instanceName}\\${databaseName} in the host ${srcDetails.resourceName}`,
+        } sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${
+            srcDetails.databaseInstanceName
+        }`,
         initiator: 'SYSTEM',
         type: JOBTYPE.SANDBOX,
         status: JOBSTATUS.IN_PROGRESS,
@@ -2083,7 +2097,9 @@ async function validateLifeCycleParams(
         } parameters for sandbox ${resourceDetails.database}`,
         description: `Validate ${
             action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
-        } parameters for sandbox ${resourceDetails.database}`,
+        } parameters for sandbox ${resourceDetails.database} in the database instance ${
+            resourceDetails.resourceName
+        }\\${resourceDetails.databaseInstanceName}`,
         resourceName: resourceDetails.database,
         startTime: Date.now(),
         parentJobId
@@ -2145,9 +2161,9 @@ async function detachSandboxAndAccessPath(
     let errMsg;
 
     const detachJob = await registerJob(accountId, credentialsId, region, {
-        description: `Detach sandbox and access path for database ${resourceDetails.database}`,
+        name: `Detach sandbox and remove access path for ${resourceDetails.database}`,
         startTime: Date.now(),
-        name: `Detach sandbox and access path for database ${resourceDetails.database}`,
+        description: `Detach sandbox and access path for ${resourceDetails.database} in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: resourceDetails.database,
@@ -2226,9 +2242,9 @@ async function reAttachSandboxAndAccessPath(
     let errMsg;
 
     const detachJob = await registerJob(accountId, credentialsId, region, {
-        description: `Re-attach sandbox and access path for database ${resourceDetails.database}`,
+        name: `Re-attach sandbox and access path for ${resourceDetails.database}`,
         startTime: Date.now(),
-        name: `Re-attach sandbox and access path for database ${resourceDetails.database}`,
+        description: `Re-attach sandbox and access path for ${resourceDetails.database} in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: resourceDetails.database,
@@ -2287,8 +2303,8 @@ async function splitSandbox(
     const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
     const job = await registerJob(accountId, credentialsId, region, {
-        name: `Split sandbox ${databaseName}`,
-        description: `Split sandbox ${srcDetails.instanceName}\\${databaseName} in the host ${srcDetails.resourceName}`,
+        name: `Split sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
+        description: `Split sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
         initiator: 'SYSTEM',
         type: JOBTYPE.SANDBOX,
         status: JOBSTATUS.IN_PROGRESS,
@@ -2371,9 +2387,9 @@ async function validateSplitParams(
     let errorMsg;
 
     const validationJob = await registerJob(accountId, credentialsId, region, {
-        description: `Validate if the sandbox ${resourceDetails.database} exists in the target host ${resourceDetails.resourceName}`,
+        description: `Validate if the sandbox ${resourceDetails.database} exists in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
         startTime: Date.now(),
-        name: 'Validate if sandbox exists',
+        name: `Validate if sandbox ${resourceDetails.database} exists`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: resourceDetails.database,
@@ -2426,8 +2442,8 @@ async function splitVolumes(
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
     const splitJob = await registerJob(accountId, credentialsId, region, {
-        name: `Split volumes for ${resourceDetail.database}`,
-        description: `Split volumes for ${resourceDetail.database} in the host ${resourceDetail.resourceName}`,
+        name: `Split volumes for sandbox ${resourceDetail.database}`,
+        description: `Split volumes for sandbox ${resourceDetail.database} in the database instance ${resourceDetail.resourceName}\\${resourceDetail.databaseInstanceName}`,
         type: JOBTYPE.SANDBOX,
         status,
         resourceName: resourceDetail.database,
@@ -2494,9 +2510,9 @@ async function deleteExtendedProperties(
     let errorMsg;
 
     const deleteJob = await registerJob(accountId, credentialsId, region, {
-        description: `Delete extended properties for ${resourceDetail.database}`,
+        name: `Delete extended properties for sandbox ${resourceDetail.database}`,
         startTime: Date.now(),
-        name: `Delete extended properties for ${resourceDetail.database}`,
+        description: `Delete extended properties for sandbox ${resourceDetail.database} in the database instance ${resourceDetail.resourceName}\\${resourceDetail.databaseInstanceName}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: resourceDetail.database,
@@ -2591,9 +2607,9 @@ async function checkDatabaseIntegrity(
     }
 
     const checkDataIntegrityJob = await registerJob(accountId, credentialsId, region, {
-        description: `Check data integrity for sandbox ${srcDetails.instanceName}\\${databaseName} in host ${srcDetails.resourceName}`,
+        name: `Check data integrity for sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
+        description: `Check data integrity for sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
         startTime: Date.now(),
-        name: `Check data integrity for sandbox ${srcDetails.instanceName}\\${databaseName}`,
         status: JOBSTATUS.IN_PROGRESS,
         type: JOBTYPE.SANDBOX,
         resourceName: databaseName

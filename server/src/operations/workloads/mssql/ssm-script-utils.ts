@@ -1,5 +1,7 @@
 import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
 
+/* eslint-disable no-useless-escape */
+
 const GET_ACTIVE_NODE_DRIVE_INFO = (
     deploymentType: string
 ) => ` $disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
@@ -326,7 +328,7 @@ const getMappedOntapVolumesScript = (
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
 
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True -ErrorAction Stop).Value | Out-String | ConvertFrom-Json  
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
         $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
@@ -414,21 +416,20 @@ const getMappedOntapVolumesScript = (
             $volumeIds = @()
         
             foreach ($record in $sqlJsonResponse) {    
-                # Add the ids to the array only if they're not already there
-                if ($volumeIds -notcontains $record.volumeId) {
-                    $volumeIds += $record.volumeId
+                if ($null -ne $record.volumeId) {
+                    # remove the empty spaces and new lines from the volume id
+                    $cleanVolumeId = $record.volumeId.Replace(" ", "").Replace("\`r","").Replace("\`n","")
+                    # Add the ids to the array only if they're not already there
+                    if ($volumeIds -notcontains $cleanVolumeId) {
+                        $volumeIds += $cleanVolumeId
+                    }
                 }
             }
-        
             # Output the array
             $volumeIds
         }
 
-        Function Get-SerialNumberOfWinVolumes {
-            param(
-                [Parameter(Mandatory = $true)]
-                [string[]]$winvolumes
-            )
+        Function Get-SerialNumberOfWinVolumes($winvolumes) {
         
             try {
                 $Lunserialnumbers = @()

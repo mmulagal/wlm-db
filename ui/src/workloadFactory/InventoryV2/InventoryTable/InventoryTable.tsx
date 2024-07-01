@@ -200,7 +200,8 @@ const InventoryTable = () => {
                     'manage',
                     rowData,
                     instances,
-                    successFullInstances
+                    successFullInstances,
+                    res?.data?.resourceId
                 );
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             } else if (res?.error) {
