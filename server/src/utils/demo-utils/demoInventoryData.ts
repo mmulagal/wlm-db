@@ -106,7 +106,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerEdition: 'Standard Edition (64-bit)',
                         sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2017,
-                        sqlServerInstance: 'INST_D',
+                        sqlServerInstance: 'PreProd-BusinessIntelligence',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6j',
                         sqlServerState: 'Running',
                         isDefaultInstance: false,
@@ -244,6 +244,34 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
+                    },
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2019,
+                        sqlServerInstance: 'Prod-HelpDesk',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5d',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-Prod-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
                     }
                 ]
             },
@@ -264,6 +292,34 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5e',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-Dev-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2019,
+                        sqlServerInstance: 'Dev-VendorManagement',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5e',
                         isDefaultInstance: false,
                         sqlServerState: 'Running',
@@ -433,6 +489,34 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5i',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-UAT-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'UAT-QualityControl',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5i',
                         isDefaultInstance: false,
                         sqlServerState: 'Running',

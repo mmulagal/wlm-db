@@ -140,24 +140,24 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
                 resourceId: prodOneResourceId,
                 name: 'SQLServer-Prod-01',
                 protocol: STORAGE_PROTOCOLS.ISCSI,
-                sqlInstances: ['SQLServer-Prod-01AMAZON', 'SQLServer-Prod-01ANTMAN']
+                sqlInstances: ['SQLServer-Prod-01PROD-MarketingCampaigns', 'SQLServer-Prod-01PROD-SupplierManagement']
             },
             {
                 resourceId: devOneResourceId,
                 name: 'SQLServer-Dev-01',
                 protocol: STORAGE_PROTOCOLS.ISCSI,
                 sqlInstances: [
-                    'SQLServer-Dev-01BETA',
-                    'SQLServer-Dev-01DELTA',
-                    'SQLServer-Dev-01GAMMA',
-                    'SQLServer-Prod-01ANTMAN'
+                    'SQLServer-Dev-01DEV-FinancialAccounts',
+                    'SQLServer-Dev-01DEV-EmployeeDirectory',
+                    'SQLServer-Dev-01DEV-InventoryControl',
+                    'SQLServer-Prod-01PROD-SupplierManagement'
                 ]
             },
             {
                 resourceId: devFourResourceId,
                 name: 'SQLServer-Dev-04',
                 protocol: STORAGE_PROTOCOLS.SMB,
-                sqlInstances: ['SQLServer-Dev-04BOSTON', 'SQLServer-Dev-04EPSILON']
+                sqlInstances: ['SQLServer-Dev-04DEV-SalesAnalytics', 'SQLServer-Dev-04DEV-ProjectManagement']
             }
         ];
 
