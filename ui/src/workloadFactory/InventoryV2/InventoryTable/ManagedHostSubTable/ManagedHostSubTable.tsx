@@ -118,7 +118,7 @@ const ManagedHostSubTable = ({
         } else {
             setData([]);
         }
-    }, [rowId, inventoryTableData]);
+    }, [rowId, inventoryTableData, inProgressInstances]);
 
     const handleDialog = (rowData: any) => {
         setDialog(
@@ -139,14 +139,19 @@ const ManagedHostSubTable = ({
                 secondaryButton={'Close'}
                 callback={() => {
                     const updatedState = store.getState();
-                    const { inProgressInstances } = updatedState.inventoryV2;
+                    const { inProgressInstances, inventoryTableData }: any = updatedState.inventoryV2;
+                    const targettedHost =
+                        inventoryTableData[hostData.resourceId] || inventoryTableData[hostData.ec2InstanceId];
+                    const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
+                        (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
+                    );
                     const inProgressId = `${hostData?.ec2InstanceId}_${rowData?.databaseInstanceName}`;
                     dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
                     unmanageApi({
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
-                        resourceId,
-                        dbInstanceId: rowData?.databaseInstanceId
+                        resourceId: targettedHost?.resourceId,
+                        dbInstanceId: targettedDbInstance?.databaseInstanceId
                     }).then((res: any) => {
                         const updatedState = store.getState();
                         const { inProgressInstances } = updatedState?.inventoryV2;
@@ -184,11 +189,17 @@ const ManagedHostSubTable = ({
     };
 
     const resourceAction = (rowData: any) => {
+        const updatedState = store.getState();
+        const { inventoryTableData }: any = updatedState.inventoryV2;
+        const targettedHost = inventoryTableData[hostData.resourceId] || inventoryTableData[hostData.ec2InstanceId];
+        const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
+            (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
+        );
         dispatch(resetWorkloadFactoryResourceData());
         dispatch(setSelectedHostname(hostname));
-        dispatch(setSelectedResourceId(resourceId));
-        dispatch(setSelectedDatabaseInstance(rowData?.databaseInstanceId));
-        dispatch(setSelectedDatabaseInstanceName(rowData?.databaseInstanceName));
+        dispatch(setSelectedResourceId(targettedHost?.resourceId));
+        dispatch(setSelectedDatabaseInstance(targettedDbInstance?.databaseInstanceId));
+        dispatch(setSelectedDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
     };
 
     const resetDialogValues = () => {
