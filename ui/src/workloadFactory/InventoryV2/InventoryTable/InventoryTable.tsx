@@ -286,7 +286,7 @@ const InventoryTable = () => {
                     setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]])
                 );
             }
-            // This has to be called even if any row is becoming unmanaged row or managed row - ToDo
+            // This has to be called even if any row is becoming unmanaged row or managed row 
         }
     };
 
