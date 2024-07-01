@@ -2430,9 +2430,9 @@ async function deleteExtendedProperties(
     let errorMsg;
 
     const deleteJob = await registerJob(accountId, credentialsId, region, {
-        description: `Delete extended properties for sandbox ${resourceDetail.database}`,
+        name: `Delete extended properties for sandbox ${resourceDetail.database}`,
         startTime: Date.now(),
-        name: `Delete extended properties for sandbox ${resourceDetail.database} in the database instance ${resourceDetail.resourceName}\\${resourceDetail.databaseInstanceName}`,
+        description: `Delete extended properties for sandbox ${resourceDetail.database} in the database instance ${resourceDetail.resourceName}\\${resourceDetail.databaseInstanceName}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: resourceDetail.database,
