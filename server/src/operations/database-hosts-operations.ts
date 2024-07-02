@@ -690,7 +690,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds)]
                 : [Promise.resolve()]),
             ...(fsxwIds && !isEmpty(fsxwIds)
-                ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxnIds!)])]
+                ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxwIds!)])]
                 : [Promise.resolve()])
         ]);
 
@@ -2021,9 +2021,16 @@ async function getProtectionDetails(
     region: string,
     fileSystemId: string,
     isSystemDatabase: boolean = false,
-    activeNodeInstanceId?: string
+    activeNodeInstanceId?: string,
+    instanceName?: string
 ): Promise<{ awsBackup: BackupType; ontapBackup: BackupType }> {
-    logger.info('Getting Proteciton details', { credentialsId, region, fileSystemId, activeNodeInstanceId });
+    logger.info('Getting Proteciton details', {
+        credentialsId,
+        region,
+        fileSystemId,
+        activeNodeInstanceId,
+        instanceName
+    });
 
     // Getting the map between database name and associated volume uuid
     const { volumeUuids, volumeDBMap } = ((await getMappedOntapVolumes(
@@ -2031,7 +2038,8 @@ async function getProtectionDetails(
         region,
         fileSystemId,
         isSystemDatabase,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        instanceName
     )) as MappedOnTapVolumeResponse) || { volumeUuids: [], volumeDBMap: {} };
 
     const [awsBackup = {}, ontapBackup = {}] = await Promise.all([
@@ -2131,7 +2139,16 @@ async function getDatabaseDetails(
                         ? [getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName)]
                         : [Promise.resolve()]), // Fetch native sql protection status
                     ...(activeNodeInstanceId && getProtection
-                        ? [getProtectionDetails(credentialsId, region, fileSystemId, false, activeNodeInstanceId)]
+                        ? [
+                              getProtectionDetails(
+                                  credentialsId,
+                                  region,
+                                  fileSystemId,
+                                  false,
+                                  activeNodeInstanceId,
+                                  instanceName
+                              )
+                          ]
                         : [Promise.resolve()]) // Fetch protection status
                 ].map(p =>
                     p.catch(error => {

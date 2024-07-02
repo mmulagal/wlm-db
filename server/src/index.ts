@@ -10,7 +10,7 @@ import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import sensible from '@fastify/sensible';
 import SwaggerParser from '@apidevtools/swagger-parser';
-import getLogger from './utils/logger';
+import getLogger, { getTraceData } from './utils/logger';
 import {
     ACCOUNT_ID,
     API_PATH_HEALTH,
@@ -26,7 +26,11 @@ import {
     SSM_COMMAND_CACHE_TYPE
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
-import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
+import {
+    getAsyncLocalStorageResource,
+    getLocalStorage,
+    setAsyncLocalStorageResource
+} from './utils/async-local-storage';
 import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
@@ -177,6 +181,7 @@ const app = fastify({
                             const payload = (await verifyToken(authorization.replace('Bearer ', ''))) as JwtPayload;
                             await authorizeJwt(authorization, payload, accountId);
                             request.headers.user = payload[JWKS_FULL_NAME] ? payload[JWKS_FULL_NAME] : 'SYSTEM';
+                            request.headers.principal = payload.sub;
                         } catch (err) {
                             logger.error('Token verification error', err);
                             reply.unauthorized();
@@ -212,7 +217,7 @@ const app = fastify({
                 Params: Params;
                 Headers: Headers;
             }>,
-            reply: FastifyReply,
+            _reply: FastifyReply,
             done
         ) => {
             // If the route is invalid, don't call the below functions
@@ -230,7 +235,6 @@ const app = fastify({
                         params: { accountId },
                         id: requestId
                     } = request;
-                    logger.debug(url, reply);
                     setAsyncLocalStorageResource(REQUEST_ID, requestId);
                     setAsyncLocalStorageResource(USER_TOKEN, authorization);
                     setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
@@ -238,8 +242,21 @@ const app = fastify({
                     setAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER, xNetappReferer);
                     setAsyncLocalStorageResource(HEADERS.X_NETAPP_CACHE_CONTROL, xNetappCacheControl);
 
-                    if (!url.includes(API_PATH_HEALTH)) {
-                        accessLogger.info(`[${method}] [${url}]`);
+                    if (!url.includes(API_PATH_HEALTH) && !url.includes('/wlmdb/documentation/yaml')) {
+                        const traceData = getTraceData();
+                        accessLogger.info({
+                            requestId,
+                            time: Date.now(),
+                            accountId: getAsyncLocalStorageResource(ACCOUNT_ID),
+                            method,
+                            traceId: traceData?.traceId,
+                            spanId: traceData?.spanId,
+                            url,
+                            params: request.params,
+                            reqBody: request.body,
+                            principal: request.headers.principal,
+                            referer: request.headers.referrer
+                        });
                     }
                     // Added for testing purpose when we want to clear the ssm cache
                     if (xNetappCacheControl === 'true') {
@@ -257,14 +274,32 @@ const app = fastify({
             }
         }
     )
-    .addHook('onResponse', (request, reply, done) => {
-        if (!request.url.includes(API_PATH_HEALTH)) {
-            accessLogger.info(`[${request.method}] [${request.url}] [${reply.statusCode}]`);
-        }
-        done();
-    })
     .setErrorHandler((error, request, reply) => errorHandler(error, request, reply))
     .addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
+        const { url, params, method, id: requestId, body } = request;
+        if (!url.includes(API_PATH_HEALTH) && !url.includes('/wlmdb/documentation/yaml')) {
+            const traceData = getTraceData();
+            let replyBody = payload;
+            try {
+                replyBody = JSON.parse(payload as unknown as string);
+            } catch (e) {}
+
+            accessLogger.info({
+                requestId,
+                time: Date.now(),
+                accountId: getAsyncLocalStorageResource(ACCOUNT_ID),
+                method,
+                traceId: traceData?.traceId,
+                spanId: traceData?.spanId,
+                url,
+                params,
+                statusCode: reply.statusCode,
+                replyBody,
+                reqBody: body,
+                principal: request.headers.principal,
+                referer: request.headers.referrer
+            });
+        }
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
 
         // Don't update audit record until BXP integration decision is made.

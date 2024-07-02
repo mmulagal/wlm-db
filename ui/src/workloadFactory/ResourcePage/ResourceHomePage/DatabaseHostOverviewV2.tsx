@@ -51,7 +51,7 @@ const DatabaseHostOverviewV2 = () => {
                             }
                         },
                         {
-                            title: selectedHostname + ' / ' + selectedDatabaseInstanceName
+                            title: selectedHostname + ' \\ ' + selectedDatabaseInstanceName
                         }
                     ]}
                 />

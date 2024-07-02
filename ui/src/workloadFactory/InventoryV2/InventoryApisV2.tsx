@@ -12,8 +12,10 @@ import {
     setIsFullHostDataLoading,
     setIsManagedHostListLoading,
     setMssqlInstancesData,
+    setPerfMssqlInstancesData,
     setRemoveSecNodeDiscoveredList,
-    setResetManagedData
+    setResetManagedData,
+    setUnManagedPerfInstanceIdsList
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
     useGetMssqlInstanceDataV2Mutation,
@@ -38,6 +40,7 @@ import {
 import { setIsRefreshed } from '../../store/workloadFactory/inventorySlice';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../store/store';
+import { INSTANCE_API_FIELDS } from '../../utils/consts';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
@@ -51,8 +54,11 @@ const InventoryApisV2 = () => {
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
+    const [runningPerfInstanceList, setRunningPerfInstanceList] = useState<Array<string>>([]);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
+    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+    const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
@@ -84,7 +90,14 @@ const InventoryApisV2 = () => {
     const regionIdRef = useRef();
     const fsxCredentialStatusObjRef: any = useRef();
     const mssqlInstancesDataRef: any = useRef();
+    const perfMssqlInstancesDataRef: any = useRef();
     const runningInstanceListRef: any = useRef();
+
+    const runningPerfInstanceListRef: any = useRef();
+
+    useEffect(() => {
+        runningPerfInstanceListRef.current = runningPerfInstanceList;
+    }, [runningPerfInstanceList]);
 
     useEffect(() => {
         runningInstanceListRef.current = runningInstanceList;
@@ -97,6 +110,10 @@ const InventoryApisV2 = () => {
     useEffect(() => {
         mssqlInstancesDataRef.current = mssqlInstancesData;
     }, [mssqlInstancesData]);
+
+    useEffect(() => {
+        perfMssqlInstancesDataRef.current = perfMssqlInstancesData;
+    }, [perfMssqlInstancesData]);
 
     useEffect(() => {
         credIdRef.current = credId;
@@ -420,29 +437,119 @@ const InventoryApisV2 = () => {
         }
     };
 
+    // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance.
+    const getUnmanagedPerfMssqlData = async (
+        instanceId: any,
+        isManagedHost: boolean,
+        fields: Array<string>,
+        nextToken: string | null = ''
+    ) => {
+        try {
+            const result: any = await getMssqlInstanceDataApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                instances: instanceId,
+                fields: fields.join(','),
+                nextToken: nextToken
+            });
+            if (result && !result?.error) {
+                let mssqlInstancesDataRes: any = {};
+                result?.data?.items?.map((host: any) => {
+                    if (perfMssqlInstancesDataRef.current[host?.id]) {
+                        mssqlInstancesDataRes[host?.id] = {
+                            isManagedHost: perfMssqlInstancesDataRef.current[host?.id]?.isManagedHost,
+                            loading: false,
+                            data: host,
+                            error: host?.errors,
+                            fields: perfMssqlInstancesDataRef.current[host?.id]?.fields
+                        };
+                    }
+                });
+                if (!mssqlInstancesDataRes?.[instanceId]) {
+                    mssqlInstancesDataRes[instanceId] = {
+                        isManagedHost: perfMssqlInstancesDataRef.current[instanceId]?.isManagedHost,
+                        loading: false,
+                        data: null,
+                        error: null,
+                        fields: perfMssqlInstancesDataRef.current[instanceId]?.fields
+                    };
+                }
+                dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataRes }));
+            } else {
+                let mssqlInstancesDataErr: any = {};
+                mssqlInstancesDataErr[instanceId] = {
+                    isManagedHost: isManagedHost,
+                    data: null,
+                    error: result?.error?.data?.message,
+                    fields: fields
+                };
+                dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataErr }));
+            }
+        } catch (error) {
+            let mssqlInstancesDataErr: any = {};
+            mssqlInstancesDataErr[instanceId] = {
+                isManagedHost: isManagedHost,
+                data: null,
+                error: error,
+                fields: fields
+            };
+            dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataErr }));
+        }
+    };
+
+    // This is to call instance API to get perf and protection data
+    const callUnmanagedPerfInstanceApi = (
+        instancesList: Array<string>,
+        isManagedHost: boolean,
+        fields: Array<string>
+    ) => {
+        let mssqlInstancesDataLoad: any = {};
+        let noRunningList: Array<string> = [];
+        if (instancesList && instancesList.length > 0) {
+            instancesList?.map((ec2InstanceId: any) => {
+                if (runningPerfInstanceListRef.current.includes(ec2InstanceId)) {
+                    return;
+                }
+                mssqlInstancesDataLoad[ec2InstanceId] = {
+                    isManagedHost: isManagedHost,
+                    loading: true,
+                    data: null,
+                    error: null,
+                    fields: fields
+                };
+                noRunningList.push(ec2InstanceId);
+            });
+            dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataLoad }));
+            setRunningPerfInstanceList([...runningPerfInstanceListRef.current, ...noRunningList]);
+            noRunningList?.map((ec2InstanceId: any) => {
+                setTimeout(() => {
+                    getUnmanagedPerfMssqlData(ec2InstanceId, isManagedHost, fields);
+                }, 1);
+            });
+        }
+    };
+
     useEffect(() => {
         // if fsx register is false and only db cred is added than call instance API
         if (detectedInstanceId) {
-            callInstanceApi([detectedInstanceId], false, [
-                'databaseInstanceTopology',
-                'usageEstimation',
-                'storage',
-                'databaseServer'
-            ]);
+            callInstanceApi([detectedInstanceId], false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
+            callUnmanagedPerfInstanceApi([detectedInstanceId], false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
         }
     }, [detectedInstanceId]);
 
     useEffect(() => {
         // if partner instance ID
         if (partnerInstanceList) {
-            callInstanceApi(partnerInstanceList, false, [
-                'databaseInstanceTopology',
-                'usageEstimation',
-                'storage',
-                'databaseServer'
-            ]);
+            callInstanceApi(partnerInstanceList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
         }
     }, [partnerInstanceList]);
+
+    useEffect(() => {
+        // if partner instance ID
+        if (unManagedPerfInstanceIdsList) {
+            callUnmanagedPerfInstanceApi(unManagedPerfInstanceIdsList, false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
+        }
+    }, [unManagedPerfInstanceIdsList]);
 
     const resetValues = () => {
         dispatch(setResetManagedData(true));
@@ -474,6 +581,11 @@ const InventoryApisV2 = () => {
         dispatch(setInventoryChartData(null));
         // Partner instance list reset
         setPartnerInstanceList([]);
+        // reset partner list in FCI and AOAG
+        dispatch(setRemoveSecNodeDiscoveredList([]));
+        // Perf and protection call for unmanaged rows
+        dispatch(setUnManagedPerfInstanceIdsList([]));
+        dispatch(setPerfMssqlInstancesData({}));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -567,9 +679,13 @@ const InventoryApisV2 = () => {
             let removeRows: any[] = [];
             let clusterDiscoveredHost: any = {};
             // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
-            if (!isDemoMode) {
-                getPrimaryClusterNode(newDiscoveredHostData, removeRows, managedHostList, clusterDiscoveredHost);
-            }
+            getPrimaryClusterNode(
+                newDiscoveredHostData,
+                removeRows,
+                managedHostList,
+                clusterDiscoveredHost,
+                isDemoMode
+            );
 
             const formattedDiscoveredInventoryTableData = formatDiscoveredInventoryData(
                 newDiscoveredHostData,
@@ -586,12 +702,7 @@ const InventoryApisV2 = () => {
                 runningInstanceListRef.current
             );
             if (unmanagedHostList && unmanagedHostList?.length > 0) {
-                callInstanceApi(unmanagedHostList, false, [
-                    'databaseInstanceTopology',
-                    'usageEstimation',
-                    'storage',
-                    'databaseServer'
-                ]);
+                callInstanceApi(unmanagedHostList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
             }
 
             // To Avoid overriding
@@ -615,7 +726,7 @@ const InventoryApisV2 = () => {
                 runningInstanceListRef.current
             );
             if (unmanagedInstanceList && unmanagedInstanceList?.length > 0) {
-                callInstanceApi(unmanagedInstanceList, true, ['databaseInstanceTopology', 'storage', 'databaseServer']);
+                callInstanceApi(unmanagedInstanceList, true, INSTANCE_API_FIELDS.MIXED_STATUS_FIELDS);
             }
 
             // To Avoid overriding
@@ -634,7 +745,7 @@ const InventoryApisV2 = () => {
             const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, inventoryTableData);
             dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
         }
-    }, [mssqlInstancesData]);
+    }, [mssqlInstancesData, perfMssqlInstancesData]);
 
     useEffect(() => {
         if (inventoryTableData) {

@@ -9,6 +9,16 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+    .dialogFooterDialog:hover {
+        span {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+    }
 }
 
 .errorIcon {

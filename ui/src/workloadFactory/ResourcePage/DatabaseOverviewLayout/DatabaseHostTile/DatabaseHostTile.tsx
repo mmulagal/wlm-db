@@ -22,7 +22,7 @@ const DatabaseHostTile = () => {
                     ) : (
                         <Typography variant="Semibold_14">
                             {isInventoryV2
-                                ? selectedHostname + ' / ' + selectedDatabaseInstanceName
+                                ? selectedHostname + ' \\ ' + selectedDatabaseInstanceName
                                 : resourceDetails?.name}
                         </Typography>
                     )}
