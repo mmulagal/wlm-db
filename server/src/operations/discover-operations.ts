@@ -136,7 +136,7 @@ async function getHostAndSqlServerInfo(
 ): Promise<DiscoverMsSqlResponseBodyType> {
     logger.info('Get host and SQL Server info:', { accountId, credentialsId, region, nextToken, instances });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return returnInventorydata(instances);
+        return returnInventorydata(instances) as unknown as DiscoverMsSqlResponseBodyType;
     }
     let api1StartTime;
     let api1EndTime;
@@ -1905,12 +1905,22 @@ async function manageSqlServerV2(
                         node2InstanceId
                     );
 
+                    let dbInstanceName;
+                    if (isDemoFlow) {
+                        dbInstanceName =
+                            sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
+                                ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
+                                : sqlInstanceInfo.sqlServerInstance;
+                    } else {
+                        dbInstanceName = sqlInstanceInfo.sqlServerInstance;
+                    }
+
                     await upsertDatabaseInstance(accountId, {
                         credentialsId,
                         resourceId,
                         region,
                         databaseInstanceId: serverGuid!,
-                        databaseInstanceName: sqlInstanceInfo.sqlServerInstance,
+                        databaseInstanceName: dbInstanceName,
                         fsxnIds: storageInfo!.id,
                         isDefault: sqlInstanceInfo.isDefaultInstance,
                         source: RESOURCE_SOURCE.DISCOVER,
