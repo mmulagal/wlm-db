@@ -29,10 +29,10 @@ function hideSecretsValues(obj: any) {
     return obj;
 }
 
-function getActiveTraceId() {
+function getTraceData() {
     const activeCtx = context?.active();
     const span = trace?.getSpan(activeCtx);
-    return span?.spanContext().traceId;
+    return span?.spanContext();
 }
 
 function initialize() {
@@ -52,7 +52,7 @@ function initialize() {
                         return requestId || 'system';
                     },
                     accountId: () => getAsyncLocalStorageResource<string>(ACCOUNT_ID) || 'unknown',
-                    traceId: () => getActiveTraceId() || 'unknown',
+                    traceId: () => getTraceData()?.traceId || 'unknown',
                     message: loggingEvent =>
                         format(
                             ...loggingEvent.data.map(log =>
@@ -80,4 +80,4 @@ export default function getLogger(category: 'server' | 'got' | 'simulator' | 'ac
     return log4js.getLogger(category);
 }
 
-export { hideSecretsValues, getActiveTraceId };
+export { hideSecretsValues, getTraceData };

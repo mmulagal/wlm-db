@@ -47,7 +47,7 @@
             "backups": 10,
             "layout": {
                 "type": "pattern",
-                "pattern": "[%d] [%p] [%h] [%f{1}:%l] [%x{requestId}] [%x{accountId}] [%x{traceId}] %x{message}"
+                "pattern": "%x{message}"
             }
         }
     },
