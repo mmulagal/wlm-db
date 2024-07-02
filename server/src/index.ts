@@ -271,7 +271,6 @@ const app = fastify({
     .addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
         const { url, params, method, id: requestId, body } = request;
         if (!url.includes(API_PATH_HEALTH) && !url.includes('/wlmdb/documentation/yaml')) {
-            logger.info('PAYLOAD>>>', payload);
             const traceData = getTraceData();
             let replyBody = payload;
             try {
