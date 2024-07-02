@@ -5,7 +5,7 @@ import {
     DialogHeader,
     DialogLayout,
     DsTypography,
-    TooltipInfo,
+    Popover,
     useDialog
 } from '@netapp/design-system';
 import { ReactNode } from 'react';
@@ -13,6 +13,7 @@ import { useAppSelector } from '../../store/storeHooks';
 import { FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
 import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
+import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
 import { GENERAL } from '../../utils/appConstants';
 
 type DialogProps = {
@@ -105,7 +106,17 @@ const DialogComponent = ({
                         <DsTypography variant="Regular_13" className={styles.errorMsgText}>
                             {detectHostError}
                         </DsTypography>
-                        <TooltipInfo>{detectHostError}</TooltipInfo>
+                        <div className={styles.dialogFooterDialog}>
+                            <Popover
+                                popoverClass={''}
+                                children={detectHostError}
+                                trigger="hover"
+                                delayHide={200}
+                                interactive={true}
+                                isAppendedToBody={true}
+                                container={<TooltipIcon />}
+                            />
+                        </div>
                     </div>
                 )}
 

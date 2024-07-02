@@ -1,7 +1,6 @@
 import {
     Button,
     DsFlashingDotsLoader,
-    DsTooltipInfo,
     Popover,
     Table,
     TableTopBar,
@@ -27,20 +26,12 @@ import {
 } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
-import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 
 import { isSmbProtocol, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
-import { updateResourceId } from '../../../store/authSlice';
-import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
-import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
+
 import {
-    addInitialDBCreateData,
-    initialCreateNewUserState,
-    setDBHostName
-} from '../../../store/workloadFactory/createNewDBSlice';
-import {
-    errorNotification,
     installModuleNotification,
     renderAllocatedCapacity,
     renderCellData,
@@ -67,8 +58,7 @@ import {
     setInventoryTableData,
     setUnManagedPerfInstanceIdsList
 } from '../../../store/workloadFactory/inventoryV2Slice';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
-import { StatusObjInterface } from '../../../utils/types/inventoryV2Types';
+import { NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
