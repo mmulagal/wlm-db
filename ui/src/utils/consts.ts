@@ -501,7 +501,11 @@ export const INVENTORY_STATUS = {
     HOST_ONLINE: 'online',
     NOT_AVAILABLE: 'N/A',
     UP: 'up',
-    DOWN: 'down'
+    DOWN: 'down',
+    RUNNING: 'Running',
+    STOPPED: 'Stopped',
+    CASE_SENSITIVE_UP: 'Up',
+    CASE_SENSITIVE_DOWN: 'Down'
 };
 
 export const INVENTORY_ACTIONS = {
