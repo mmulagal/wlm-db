@@ -519,7 +519,14 @@ export const INSTANCE_API_FIELDS = {
         'nodeTopology'
     ],
     SUB_TABLE_FIELDS: ['protection', 'performance'],
-    MIXED_STATUS_FIELDS: ['databaseInstanceTopology', 'storage', 'databaseServer', 'serverDetails', 'nodeTopology']
+    MIXED_STATUS_FIELDS: [
+        'databaseInstanceTopology',
+        'storage',
+        'databaseServer',
+        'serverDetails',
+        'nodeTopology',
+        'usageEstimation'
+    ]
 };
 
 export const PROTECTION_TEXT_STATUS = {
