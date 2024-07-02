@@ -157,18 +157,18 @@ function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMo
     FSxStorageCapacity = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize + FsxBufferVolumeSize
 
     fsxDataVolumeSize = FSxDataLunSize + 10% of FSxDataLunSize = 1.1 fsxLunSize
-    FSxLogVolumeSize = 25% of fsxDataVolumeSize
-    FSxTempDbVolumeSize = 10% of fsxDataVolumeSize
+    FSxLogVolumeSize = 25% of fsxDataVolumeSize = 0.25 * 1.1 fsxLunSize
+    FSxTempDbVolumeSize = 10% of fsxDataVolumeSize = 0.1 * 1.1 fsxLunSize
     FSxQuorumVolumeSize = 12GB || O GB(for Standalone)
 
     fsxDataVolumeSize = 1.1 fsxLunSize
 
-    fsxStorageCapacity = 1.1 fsxLunSize + 0.25 * 1.1 fsxLunSize + 0.1 * 1.1 fsxLunSize + 12GB || 0 GB(for Standalone) = (1.1 + 0.275 + 0.11) fsxLunSize + 12 || 0 GB + fsxBufferVolumeSize
+    fsxStorageCapacity = (1.1 * fsxLunSize) + 0.25 * (1.1 * fsxLunSize) + 0.1 * (1.1 * fsxLunSize) + 12GB || 0 GB(for Standalone) = (1.1 + 0.275 + 0.11) fsxLunSize + 12 || 0 GB + fsxBufferVolumeSize
     fsxStorageCapacity = 1.485 fsxLunSize + 12 || 0 GB + fsxBufferVolumeSize
     fsxLunSize = (fsxStorageCapacity - 12 || 0 GB - fsxBufferVolumeSize) / 1.485
     */
 
-    const fsxQuorumVolumeSize = sqlDeploymentMode !== STANDALONE ? convertGiBToBytes(12) : 0;
+    const fsxQuorumVolumeSize = sqlDeploymentMode === STANDALONE ? 0 : 12 * 1000 * 1000 * 1000; // in calculateFsxnStorageCapacity FSxQuorumVolumeSize = 12000(MB); // 12GB
 
     const fsxDataLunSize = (fsxStorageCapacity - fsxQuorumVolumeSize - fsxBufferVolumeSize) / 1.485;
 
