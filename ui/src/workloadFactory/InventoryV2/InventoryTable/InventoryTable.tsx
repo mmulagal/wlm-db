@@ -303,7 +303,7 @@ const InventoryTable = () => {
                     setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]])
                 );
             }
-            // This has to be called even if any row is becoming unmanaged row or managed row 
+            // This has to be called even if any row is becoming unmanaged row or managed row
         }
     };
 
@@ -585,12 +585,12 @@ const InventoryTable = () => {
         {
             id: '8',
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-            accessor: 'allocatedCapacityText',
+            accessor: 'allocatedCapacity',
             isSortable: true,
             width: '216px',
             accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
-                return renderAllocatedCapacity(cellData, rowData);
+                return renderAllocatedCapacity(rowData?.allocatedCapacityText, rowData);
             }
         },
         lastColDetails()
