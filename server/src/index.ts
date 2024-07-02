@@ -259,7 +259,7 @@ const app = fastify({
                         });
                     }
                     // Added for testing purpose when we want to clear the ssm cache
-                    if (xNetappCacheControl === 'true') {
+                    if (xNetappCacheControl === 'no-cache') {
                         resetCache(SSM_COMMAND_CACHE_TYPE);
                     }
                     // Don't update audit record until BXP integration decision is made.
