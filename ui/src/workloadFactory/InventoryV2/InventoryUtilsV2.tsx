@@ -1,12 +1,13 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
-import { setFsxCredentialStatus, setUnManagedPerfInstanceIdsList } from '../../store/workloadFactory/inventoryV2Slice';
+import { setFsxCredentialStatus } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
     FSX_DEPLOYMENT_MODE,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
+    PROTECTION_TEXT_STATUS,
     SQL_DEPLOYMENT_MODE
 } from '../../utils/consts';
 import {
@@ -1636,11 +1637,11 @@ export const getProtectionText = (data: any) => {
             (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
             (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
         ) {
-            protectionText = 'Yes';
+            protectionText = PROTECTION_TEXT_STATUS.YES;
         } else if (awsBackupEnabled === GENERAL.NOT_AVAILABLE || sqlNativeEnabled === GENERAL.NOT_AVAILABLE) {
             protectionText = '';
         } else if (data?.protection) {
-            protectionText = 'No';
+            protectionText = PROTECTION_TEXT_STATUS.NO;
         } else {
             protectionText = '';
         }
@@ -1650,7 +1651,7 @@ export const getProtectionText = (data: any) => {
             (fsxOntapEnabled && fsxOntapEnabled !== GENERAL.NOT_AVAILABLE) ||
             (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
         ) {
-            protectionText = 'Yes';
+            protectionText = PROTECTION_TEXT_STATUS.YES;
         } else if (
             awsBackupEnabled === GENERAL.NOT_AVAILABLE ||
             fsxOntapEnabled === GENERAL.NOT_AVAILABLE ||
@@ -1658,7 +1659,7 @@ export const getProtectionText = (data: any) => {
         ) {
             protectionText = '';
         } else if (data?.protection) {
-            protectionText = 'No';
+            protectionText = PROTECTION_TEXT_STATUS.NO;
         } else {
             protectionText = '';
         }
