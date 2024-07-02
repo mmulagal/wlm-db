@@ -251,7 +251,7 @@ const app = fastify({
                             params: request.params,
                             reqBody: request.body,
                             principal: request.headers.principal,
-                            referer: request.headers.referrer
+                            referer: request.headers.referer
                         });
                     }
 
@@ -290,7 +290,7 @@ const app = fastify({
                 replyBody,
                 reqBody: body,
                 principal: request.headers.principal,
-                referer: request.headers.referrer
+                referer: request.headers.referer
             });
         }
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
