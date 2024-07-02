@@ -2024,7 +2024,13 @@ async function getProtectionDetails(
     activeNodeInstanceId?: string,
     instanceName?: string
 ): Promise<{ awsBackup: BackupType; ontapBackup: BackupType }> {
-    logger.info('Getting Proteciton details', { credentialsId, region, fileSystemId, activeNodeInstanceId });
+    logger.info('Getting Proteciton details', {
+        credentialsId,
+        region,
+        fileSystemId,
+        activeNodeInstanceId,
+        instanceName
+    });
 
     // Getting the map between database name and associated volume uuid
     const { volumeUuids, volumeDBMap } = ((await getMappedOntapVolumes(

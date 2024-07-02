@@ -445,7 +445,8 @@ async function getMappedOntapVolumes(
         region,
         fileSystemId,
         activeNodeInstanceId,
-        isSystemDatabase
+        isSystemDatabase,
+        instanceName
     });
 
     try {
