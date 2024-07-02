@@ -527,10 +527,16 @@ const InventoryTable = () => {
                 return (
                     <div className={styles.firstColText}>
                         {rowData?.ssmState === INVENTORY_STATUS.ONLINE && (
-                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                            <>
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                                <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
+                            </>
                         )}
                         {rowData?.ssmState === INVENTORY_STATUS.OFFLINE && (
                             <>
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                                <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
+
                                 <div className={styles.ssmOffline}>
                                     <Popover
                                         popoverClass={''}
@@ -553,15 +559,12 @@ const InventoryTable = () => {
                                         trigger="hover"
                                         delayHide={200}
                                         interactive={true}
+                                        isAppendedToBody={true}
                                         container={<TooltipIcon />}
                                     />
                                 </div>
-
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                             </>
                         )}
-
-                        <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
                     </div>
                 );
             }
