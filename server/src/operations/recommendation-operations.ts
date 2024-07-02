@@ -525,7 +525,9 @@ export default async function getSqlInstanceLicenseRecommendations(
                 recommendedLicense
             };
         }
-        throw createError('Unable to determine the SQL Server instance configuration.');
+        const errMsg = `Unable to determine the SQL Server instance configuration. Instance ID: ${instanceId}`;
+        logger.error(errMsg);
+        throw createError(errMsg);
     }
     throw createError('No SQL Server instances found for the provided EC2 instance.');
 }
