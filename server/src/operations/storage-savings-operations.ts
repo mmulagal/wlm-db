@@ -14,7 +14,7 @@ import {
     invokeMarketingApi
 } from './cloud-manager/marketing-operations';
 import getLogger from '../utils/logger';
-import { getMonthlyPriceFromHourlyPrice } from '../utils/utils';
+import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice } from '../utils/utils';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import getSqlInstanceLicenseRecommendations from './recommendation-operations';
@@ -146,7 +146,7 @@ async function aoagStorageSavingsCalculations(
             )
         ]);
 
-        const [{ ebs: allEbsDetails }, { ebs, fsx, fsx_calculation: fsxCalculationData }] = await Promise.all([
+        const [{ ebs: allEbsDetails }, { ebs, fsx, fsxCalculation }] = await Promise.all([
             invokeMarketingApi(
                 accountId,
                 credentialsId,
@@ -166,9 +166,12 @@ async function aoagStorageSavingsCalculations(
         ]);
 
         const allNodesComputeLicenseDetails = currentNodeComputeLicenseDetails.concat(partnerNodeComputeLicenseDetails);
-        const instanceType = `${allNodesComputeLicenseDetails
+
+        // existing compute and license details
+        const existingInstanceType = `${allNodesComputeLicenseDetails
             .map((node: { ec2InstanceType: any }) => node.ec2InstanceType)
             .join(',')}`;
+
         const allNodesExistingComputePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -183,6 +186,19 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
+
+        const existingComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingComputePrice);
+
+        const existingSqlServerLicenseEdition = `${allNodesComputeLicenseDetails
+            .map(
+                ({
+                    license: {
+                        existing: { sqlServerEdition: eSqlServerEdition }
+                    }
+                }) => eSqlServerEdition
+            )
+            .join(',')}`;
+
         const allNodesExistingLicensePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -197,18 +213,18 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
+        const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice);
 
-        const existingComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingComputePrice);
-        const licenseType = `${allNodesComputeLicenseDetails
+        // recommended compute and license details
+        const recommendedInstanceType = `${allNodesComputeLicenseDetails
             .map(
                 ({
-                    license: {
-                        existing: { licenseType: eLicenseType }
+                    compute: {
+                        recommended: { instanceType: rInstanceType }
                     }
-                }) => eLicenseType
+                }) => rInstanceType
             )
             .join(',')}`;
-        const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice);
         const allNodesRecommendedComputePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -223,6 +239,17 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
+        const recommendedComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedComputePrice);
+
+        const recommendedSqlServerLicenseEdition = `${allNodesComputeLicenseDetails
+            .map(
+                ({
+                    license: {
+                        recommended: { sqlServerEdition: rSqlServerEdition }
+                    }
+                }) => rSqlServerEdition
+            )
+            .join(',')}`;
         const allNodesRecommendedLicensePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -237,16 +264,6 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
-        const recommendedComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedComputePrice);
-        const recommendedLicenseType = `${allNodesComputeLicenseDetails
-            .map(
-                ({
-                    license: {
-                        existing: { licenseType: eLicenseType }
-                    }
-                }) => eLicenseType
-            )
-            .join(',')}`;
         const recommendedLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedLicensePrice);
 
         const [
@@ -254,34 +271,35 @@ async function aoagStorageSavingsCalculations(
                 compute: {
                     recommended: { message: recommendedComputeMessage }
                 }
-            }
-        ] = allNodesComputeLicenseDetails;
-        const [
+            },
             {
                 license: {
                     recommended: { message: recommendedLicenseMessage }
                 }
             }
         ] = allNodesComputeLicenseDetails;
+
+        const fsxCalculationData = handleMarketingApiFsxCalculationObject(fsxCalculation);
+
         return {
             compute: {
                 existing: {
-                    instanceType,
+                    instanceType: existingInstanceType,
                     computeMonthlyPrice: existingComputeMonthlyPrice
                 },
                 recommended: {
-                    instanceType,
+                    instanceType: recommendedInstanceType,
                     computeMonthlyPrice: recommendedComputeMonthlyPrice,
                     message: recommendedComputeMessage
                 }
             },
             license: {
                 existing: {
-                    licenseType,
+                    sqlServerEdition: existingSqlServerLicenseEdition,
                     licenseMonthlyPrice: existingLicenseMonthlyPrice
                 },
                 recommended: {
-                    licenseType: recommendedLicenseType,
+                    sqlServerEdition: recommendedSqlServerLicenseEdition,
                     licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
                     message: recommendedLicenseMessage
                 }
@@ -307,7 +325,11 @@ async function aoagStorageSavingsCalculations(
                     existingLicenseMonthlyPrice!,
                 recommended: fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
             },
-            fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
+            fsxCalculation,
+            fsxBreakdown: fsxStorageCapacityBreakdown(
+                fsxCalculationData.totalStorageCapacity,
+                SqlServerDeploymentModel.SQL_AOAG_SHORT
+            )
         };
     }
     throw createError(
@@ -436,8 +458,16 @@ async function retrieveComputeAndLicenseCost(
     return Promise.all(
         ec2HostDetailsList.map(async ec2HostDetails => {
             const {
-                existingCompute: { price: ePrice = undefined, baseInstancePrice: eBasePrice = undefined } = {},
-                existingLicense: { licenseType: eLicenseType = undefined, price: eLicensePrice = undefined } = {},
+                existingCompute: {
+                    price: ePrice = undefined,
+                    finding: eComputeFinding = '',
+                    baseInstancePrice: eBasePrice = undefined
+                } = {},
+                existingLicense: {
+                    sqlServerEdition: eSqlServerEdition = '',
+                    finding: eLicenseFinding = '',
+                    price: eLicensePrice = undefined
+                } = {},
                 recommendedCompute: {
                     instanceType: rInstanceType = '',
                     price: rPrice = undefined,
@@ -445,12 +475,12 @@ async function retrieveComputeAndLicenseCost(
                     message: computeMessage = undefined
                 } = {},
                 recommendedLicense: {
-                    licenseType: rLicenseType = undefined,
+                    sqlServerEdition: rSqlServerEdition = undefined,
                     price: rLicensePrice = undefined,
                     message: licenseMessage = undefined
                 } = {}
             } = (await getSqlInstanceLicenseRecommendations(accountId, credentialsId, region, ec2HostDetails)) || {};
-            const [{ sqlServerEdition }] = ec2HostDetails.sqlServerInstances || [];
+            const [{ windowsOsVersion }] = ec2HostDetails.sqlServerInstances || [];
             const existingInstanceType = ec2HostDetails.ec2InstanceType;
 
             return {
@@ -459,6 +489,8 @@ async function retrieveComputeAndLicenseCost(
                 compute: {
                     existing: {
                         instanceType: existingInstanceType,
+                        finding: eComputeFinding,
+                        windowsOsVersion,
                         computeHourlyPrice: eBasePrice,
                         computeMonthlyPrice: eBasePrice ? getMonthlyPriceFromHourlyPrice(eBasePrice) : undefined,
                         instanceMonthlyPrice: ePrice ? getMonthlyPriceFromHourlyPrice(ePrice) : undefined,
@@ -466,6 +498,7 @@ async function retrieveComputeAndLicenseCost(
                     },
                     recommended: {
                         instanceType: rInstanceType,
+                        windowsOsVersion,
                         computeHourlyPrice: rBasePrice,
                         computeMonthlyPrice: rBasePrice ? getMonthlyPriceFromHourlyPrice(rBasePrice) : undefined,
                         instanceMonthlyPrice: rPrice // inclusive of license
@@ -477,19 +510,24 @@ async function retrieveComputeAndLicenseCost(
                 },
                 license: {
                     existing: {
-                        sqlServerEdition,
-                        licenseType: eLicenseType,
+                        finding: eLicenseFinding,
+                        sqlServerEdition: eSqlServerEdition,
                         licenseHourlyPrice: eLicensePrice,
                         licenseIncluded: !!(eLicensePrice && eLicensePrice > 0),
-                        licenseMonthlyPrice: eLicensePrice ? getMonthlyPriceFromHourlyPrice(eLicensePrice) : undefined,
+                        licenseMonthlyPrice:
+                            eLicensePrice !== undefined && eLicensePrice >= 0
+                                ? getMonthlyPriceFromHourlyPrice(eLicensePrice)
+                                : undefined,
                         hoursInMonth: HOURS_IN_MONTH
                     },
                     recommended: {
-                        sqlServerEdition,
-                        licenseType: rLicenseType,
+                        sqlServerEdition: rSqlServerEdition,
                         licenseHourlyPrice: rLicensePrice,
                         licenseIncluded: !!(rLicensePrice && rLicensePrice > 0),
-                        licenseMonthlyPrice: rLicensePrice ? getMonthlyPriceFromHourlyPrice(rLicensePrice) : undefined,
+                        licenseMonthlyPrice:
+                            rLicensePrice !== undefined && rLicensePrice >= 0
+                                ? getMonthlyPriceFromHourlyPrice(rLicensePrice)
+                                : undefined,
                         hoursInMonth: HOURS_IN_MONTH,
                         message: licenseMessage
                     }
@@ -535,23 +573,26 @@ async function performStorageSavingsCalculations(
         params
     );
 
-    const [[{ compute, license }], { ebs, fsx, fsx_calculation: fsxCalculationData }] = await Promise.all([
+    const [[{ compute, license }], { ebs, fsx, fsxCalculation }] = await Promise.all([
         recommendationPromise,
         marketingPromise
     ]);
 
     const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
     const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
+    const fsxCalculationData = handleMarketingApiFsxCalculationObject(fsxCalculation);
+
     return {
         compute,
         license,
         ebs,
         fsx,
         totalSummary: {
-            existing: ebs['gp3']?.ebs.total || 0 + existingComputeLicensePrice,
+            existing: ebs.gp3?.ebs.total || 0 + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
         },
-        fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
+        fsxCalculation: fsxCalculationData,
+        fsxBreakdown: fsxStorageCapacityBreakdown(fsxCalculationData.totalStorageCapacity, sqlServerDeploymentType!)
     };
 }
 

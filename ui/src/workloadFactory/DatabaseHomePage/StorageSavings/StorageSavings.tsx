@@ -13,11 +13,14 @@ type StorageSavingsProps = {
 };
 
 const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
+    const hostDataToShow = hostsLoading
+        ? { storageSavingsPercent: 0, storageConsumes: '0 B', storageSavings: '0 B' }
+        : hostData;
     const handleProgressBar = () => {
         if (
-            hostData?.storageSavingsPercent !== 0 &&
+            hostDataToShow?.storageSavingsPercent !== 0 &&
             //@ts-ignore
-            hostData?.storageSavingsPercent <= 1
+            hostDataToShow?.storageSavingsPercent <= 1
         ) {
             return (
                 <>
@@ -32,16 +35,16 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
             );
         }
         if (
-            hostData?.storageSavingsPercent !== 0 &&
+            hostDataToShow?.storageSavingsPercent !== 0 &&
             //@ts-ignore
-            hostData?.storageSavingsPercent >= 1
+            hostDataToShow?.storageSavingsPercent >= 1
         ) {
             return (
                 <>
                     <div
                         className={`${styles.progress} ${styles.leftCurveBar}`}
                         style={{
-                            width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
+                            width: `${100 - (hostDataToShow?.storageSavingsPercent || 0)}%`,
                             backgroundColor: 'var(--chart-9)'
                         }}
                     ></div>
@@ -49,7 +52,7 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
-                            width: `${hostData?.storageSavingsPercent}%`,
+                            width: `${hostDataToShow?.storageSavingsPercent}%`,
                             backgroundColor: 'var(--chart-4)'
                         }}
                     ></div>
@@ -57,7 +60,7 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
             );
         }
 
-        if (hostData?.storageSavingsPercent === 0) {
+        if (hostDataToShow?.storageSavingsPercent === 0) {
             return (
                 <>
                     <div
@@ -101,7 +104,7 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                     <FlashingDotsLoader />
                 ) : (
                     <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                        {formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%
+                        {formatFractionalNumber(hostDataToShow?.storageSavingsPercent, 2)}%
                     </Typography>
                 )}
             </div>
@@ -113,13 +116,13 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={hostData?.storageConsumes || GENERAL.NOT_AVAILABLE}
+                        value={hostDataToShow?.storageConsumes || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-9)"
                         text={'Storage Consumed'}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={hostData?.storageSavings || GENERAL.NOT_AVAILABLE}
+                        value={hostDataToShow?.storageSavings || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-4)"
                         text={'Storage Savings'}
                     />

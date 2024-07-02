@@ -36,7 +36,7 @@ describe('Marketing API operations', () => {
 
         expect(resp.ebs).toBeDefined();
         expect(resp.fsx).toBeDefined();
-        expect(resp.fsx_calculation).toBeDefined();
+        expect(resp.fsxCalculation).toBeDefined();
     });
 
     it('should format metrics correctly', async () => {
@@ -55,13 +55,13 @@ describe('Marketing API operations', () => {
             'AOAG'
         );
 
-        expect(result.ebsCalculation).toBeDefined();
+        expect(result.ebsCalculationBreakdown).toBeDefined();
         expect(result.fsxCloneCalculation).toBeDefined();
         expect(result.fsxOntapCalculation).toBeDefined();
     });
 
     it('should handle fsx calculation object', async () => {
-        const { fsx_calculation: fsxCalcObject } = await invokeMarketingApi(
+        const { fsxCalculation: fsxCalcObject } = await invokeMarketingApi(
             ACCOUNT_ID,
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,

@@ -13,7 +13,7 @@ import {
     listRelationshipsResources,
     updateConfig,
     listEvents,
-    DatabaseInstance,
+    DatabaseInstanceRecord,
     upsertDatabaseInstance,
     listDatabaseInstances,
     deleteDatabaseInstance
@@ -63,7 +63,7 @@ describe('List deployments', () => {
             region: DEFAULT_AWS_REGION
         });
         const resp = await listResources(ACCOUNT_ID);
-        const createdResource = resp.find(res => res.resource_id === 'i-1a2b3c4d5e');
+        const createdResource = resp.find((res: { resource_id: string }) => res.resource_id === 'i-1a2b3c4d5e');
         expect(createdResource).toBeDefined();
 
         await deleteResource(ACCOUNT_ID, resource.resource_id);
@@ -161,7 +161,7 @@ describe('List deployments', () => {
 
 describe('Database instance operations', () => {
     it('Create/update/list/delete database instance record', async () => {
-        const DATABASE_INSTANCE_RECORD: DatabaseInstance = {
+        const DATABASE_INSTANCE_RECORD: DatabaseInstanceRecord = {
             credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
             resourceId: '02bff58ecf20c32b5bbf86de997c4296ab9cd45e88d4ff3b3d0c918b7f96a5bx',
@@ -170,7 +170,7 @@ describe('Database instance operations', () => {
             isDefault: true,
             source: 'deployment',
             sqlDeploymentType: 'FCI',
-            fsxSvmId: 'svm-0123456789abcdef0',
+            fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
             fsxnIds: 'fs-0f53fbecdd3d85fb2',
             databaseType: '' // Add the missing property 'databaseType'
         };
@@ -190,7 +190,7 @@ describe('Database instance operations', () => {
             isDefault: true,
             source: 'deployment',
             sqlDeploymentType: 'FCI',
-            fsxSvmId: 'fs',
+            fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
             fsxnIds: 'fs-00001111',
             databaseType: ''
         });

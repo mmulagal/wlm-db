@@ -151,7 +151,10 @@ async function getInstanceRecommendations(
                 JSON.stringify(computeOptimizerInstanceRecommendations)
             );
 
-            const [{ currentInstanceType = '', recommendationOptions = [] }] =
+            if (isEmpty(computeOptimizerInstanceRecommendations?.instanceRecommendations)) {
+                throw new Error('No instance recommendations available for the instance');
+            }
+            const [{ currentInstanceType = '', recommendationOptions = [] } = {}] =
                 computeOptimizerInstanceRecommendations?.instanceRecommendations || [];
             const cheaperRecommendationOption = await identifyCheaperRecommendationOption(
                 accountId,

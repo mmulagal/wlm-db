@@ -17,7 +17,7 @@ try
     else {
         
         If (Test-Path -path "C:\SQL*") {
-            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname
+            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname | Sort-Object -Property Length
             If($SQLInstallerPaths -is 'string')
             {
             $SQLMediaPath = $SQLInstallerPaths
@@ -49,7 +49,15 @@ try
     If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
         $SQLInstanceName = $SQLInstanceNames[0]
     }
-    Write-Output "SQL instance name $SQLInstanceName."
+    
+    try {
+    $SqlEdition = (Get-ItemProperty -Path "HKLM:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL*$SQLInstanceName\Setup").Edition 
+    }catch {
+        Write-Host "Error while fetching SQL server edition. $_"
+        $SqlEdition = ''
+    }
+
+    Write-Output "SQL instance name $SQLInstanceName. Edition $SqlEdition."
 
     If ((get-ec2image $AMIID).UsageOperation -eq 'RunInstances:0002')
     {

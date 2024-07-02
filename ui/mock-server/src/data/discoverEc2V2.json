@@ -1,0 +1,1256 @@
+{
+    "count": 28,
+    "items": [
+        {
+            "ec2InstanceId": "i-0a6c761f84a4adfd1",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-39466-rashid",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "16.0.4015.1",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-39466",
+                        "sqlnode2-39466"
+                    ],
+                    "nodeIps": [
+                        "172.31.48.90",
+                        "172.31.9.72"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-09adb571ab7dd6c17",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode-79946",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "SIGMA",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.1000.6",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Developer Edition (64-bit)",
+                    "sqlServerEngineEdition": 3,
+                    "sqlServerName": "Rheo",
+                    "serverGuid": "491FF39F-8759-4B06-9D0C-C995FFD81CA9",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "Rheo"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "svmId": "svm-016ca6b33367055c1",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0058178336b854ea9",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-69338",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "13.0.6404.1",
+                    "sqlServerProductYear": 2016,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-69338",
+                        "sqlnode2-69338"
+                    ],
+                    "nodeIps": [
+                        "10.0.138.100",
+                        "10.0.27.149"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0756aefb9a361daa9",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "rranga-ec2",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "EAGLE",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.1000.6",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-3UTIH78",
+                    "serverGuid": "0A63AA51-6120-48A4-AF08-18EF0B68E84C",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH78"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c73fa01e4e64ba60"
+                        }
+                    ],
+                    "deploymentTypes": []
+                },
+                {
+                    "sqlServerInstance": "NEO",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.1000.6",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-3UTIH78",
+                    "serverGuid": "78D8D6A3-E93F-43CC-9BD7-501D832831BA",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH78"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c73fa01e4e64ba60"
+                        }
+                    ],
+                    "deploymentTypes": []
+                },
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4115.5",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-3UTIH78",
+                    "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH78"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c73fa01e4e64ba60"
+                        }
+                    ],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0d9afbdd87c7bc4a5",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode-96753",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "13.0.6435.1",
+                    "sqlServerProductYear": 2016,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQLDBAPFKD",
+                    "serverGuid": "CB5F9F8D-C315-42E7-8169-A4BC16A0FEA5",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqldbapfkd"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 7,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0367e252fb7672965",
+                            "svmId": "svm-02e883295b466185a",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "SINGLE_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-04eebc22cce223f53",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-52601",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.4365.2",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-FC7VH9R",
+                    "serverGuid": "40CE7485-4BF5-4BEC-811B-48E06A8C4F4A",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-FC7VH9R"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-078ccd469b92353ad"
+                        }
+                    ],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-024105dac56a661b1",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-46551",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-46551",
+                        "sqlnode2-46551"
+                    ],
+                    "nodeIps": [
+                        "10.0.135.21",
+                        "10.0.17.225"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-008b54cdabafdbc58",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-17126",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "14.0.3460.9",
+                    "sqlServerProductYear": 2017,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Enterprise Evaluation Edition (64-bit)",
+                    "sqlServerEngineEdition": 3,
+                    "sqlServerName": "WEBER",
+                    "serverGuid": "FF715E64-E06E-4623-B2C8-EC86F98DAEF9",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-17126",
+                        "sqlnode2-17126"
+                    ],
+                    "nodeIps": [
+                        "172.31.48.44",
+                        "172.31.10.206"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "svmId": "svm-03ecf75504bab65d5",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0cb8e992e9057e820",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-85618",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-85618",
+                        "sqlnode2-85618"
+                    ],
+                    "nodeIps": [
+                        "10.0.130.208",
+                        "10.0.20.168"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0d019ce843759d080",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-12926",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-12926",
+                        "sqlnode2-12926"
+                    ],
+                    "nodeIps": [
+                        "10.0.134.162",
+                        "10.0.28.85"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-01f9a1ec6014c6eb1",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-37687",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "13.0.6404.1",
+                    "sqlServerProductYear": 2016,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-37687",
+                        "sqlnode2-37687"
+                    ],
+                    "nodeIps": [
+                        "10.0.143.197",
+                        "10.0.19.151"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-01112f492c27439e6",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-17126",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "14.0.3460.9",
+                    "sqlServerProductYear": 2017,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-17126",
+                        "sqlnode2-17126"
+                    ],
+                    "nodeIps": [
+                        "172.31.48.44",
+                        "172.31.10.206"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-07a29eb681ba37679",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "AD_WLM_COM",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.1000.6",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Exception: The term 'sqlcmd' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.\n",
+                    "sqlServerNodes": [
+                        "ADWLMCOM"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "sqlServerAuthentication": true,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-059bc0d13180bda67",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "SQL2k22_EBS_Nithin",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "ALPHA",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.1000.6",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\nException: Sqlcmd: Error: Microsoft ODBC Driver 17 for SQL Server : Login failed for user 'WORKGROUP\\EC2AMAZ-SRFHK18$'..\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-SRFHK18"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0a5c1035cf85c1bd0",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "AD_WLMNEW_COM",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.2000.5",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\nException: The term 'sqlcmd' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.\n",
+                    "sqlServerNodes": [
+                        "ADWLMNEWCOM"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "sqlServerAuthentication": true,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-01c74698fe83d9f0d",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-31974",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-0100cefdf732ef9e9",
+                "name": "wlmdb-private-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-31974",
+                        "sqlnode2-31974"
+                    ],
+                    "nodeIps": [
+                        "10.0.139.193",
+                        "10.0.177.176"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-04e474c26d377a39d",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-49314",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-0100cefdf732ef9e9",
+                "name": "wlmdb-private-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-49314",
+                        "sqlnode2-49314"
+                    ],
+                    "nodeIps": [
+                        "10.0.135.211",
+                        "10.0.180.149"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0397e170050487f1c",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-39466-rashid",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4015.1",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SNAPMAY22",
+                    "serverGuid": "C14E3B5A-C8AD-410E-A040-391BB922FEDC",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-39466",
+                        "sqlnode2-39466"
+                    ],
+                    "nodeIps": [
+                        "172.31.48.90",
+                        "172.31.9.72"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 36,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "svmId": "svm-08e8ca172db7dea8c",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0b8da23acc3e1db9a",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "TCO",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "SQL19DEV",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.2000.5",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Developer Edition (64-bit)",
+                    "sqlServerEngineEdition": 3,
+                    "sqlServerName": "EC2AMAZ-6F4OJSL",
+                    "serverGuid": "11EA0C97-50CE-4A80-9955-771008DE63BF",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 5,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-058229dab6d33d374"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0f1ae0046501426a3"
+                        }
+                    ],
+                    "deploymentTypes": []
+                },
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4120.1",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-6F4OJSL",
+                    "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 5,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-058229dab6d33d374"
+                        }
+                    ],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0f540c740d3c2673b",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-85618",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQLDBVYB5E",
+                    "serverGuid": "5B07DF94-C03F-47ED-8BE3-AC4C189C2754",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-85618",
+                        "sqlnode2-85618"
+                    ],
+                    "nodeIps": [
+                        "10.0.130.208",
+                        "10.0.20.168"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-077fae8021fb3e878",
+                            "svmId": "svm-07c3ef6587ade627e",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1a",
+                                "ap-southeast-1c"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-070f85c1685928c00",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-37687",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "13.0.6404.1",
+                    "sqlServerProductYear": 2016,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-37687",
+                        "sqlnode2-37687"
+                    ],
+                    "nodeIps": [
+                        "10.0.143.197",
+                        "10.0.19.151"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-065dddc35ba1046ac",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-69338",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "13.0.6404.1",
+                    "sqlServerProductYear": 2016,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQLDBVY0AI",
+                    "serverGuid": "DE3E7E2E-1C54-4865-9BDB-F529725FF07D",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-69338",
+                        "sqlnode2-69338"
+                    ],
+                    "nodeIps": [
+                        "10.0.138.100",
+                        "10.0.27.149"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 6,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0f32f6c69fb7e40ac",
+                            "svmId": "svm-06fb2e894cbc0af67",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1a",
+                                "ap-southeast-1c"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-01b173ab60fd120f5",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-46551",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-46551",
+                        "sqlnode2-46551"
+                    ],
+                    "nodeIps": [
+                        "10.0.135.21",
+                        "10.0.17.225"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-06c7cbaaf972c9a3a",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-12926",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-12926",
+                        "sqlnode2-12926"
+                    ],
+                    "nodeIps": [
+                        "10.0.134.162",
+                        "10.0.28.85"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0dcdde0082d218cfc",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode-67343",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4095.4",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "sqldbapnsr",
+                    "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqldbapnsr"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 7,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-05b5f70d82465d172",
+                            "svmId": "svm-089f6557affd61f29",
+                            "protocol": "iSCSI"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-00fe731a6a395c48b"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "SINGLE_AZ_1",
+                            "zones": [
+                                "ap-southeast-1a"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0104822eca198b0b5",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-52601",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-52601"
+                    ],
+                    "nodeIps": [
+                        "1",
+                        "0",
+                        ".",
+                        "0",
+                        ".",
+                        "1",
+                        "4",
+                        "0",
+                        ".",
+                        "1",
+                        "0",
+                        "3"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0aa85d4735ae74bf6",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-31974",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-0100cefdf732ef9e9",
+                "name": "wlmdb-private-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQPVTVYPHZ",
+                    "serverGuid": "70385C91-5ECB-4608-9071-AE95DCCBB950",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-31974",
+                        "sqlnode2-31974"
+                    ],
+                    "nodeIps": [
+                        "10.0.139.193",
+                        "10.0.177.176"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 6,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0420e46c6ee7561ed",
+                            "svmId": "svm-04872c9b40448895e",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1a",
+                                "ap-southeast-1b"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0c6146aac5a55b55a",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-49314",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-0100cefdf732ef9e9",
+                "name": "wlmdb-private-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQPVTVY0H8",
+                    "serverGuid": "AFE32784-B15B-4A2C-8BEB-8FC34D46797D",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "sqlnode1-49314",
+                        "sqlnode2-49314"
+                    ],
+                    "nodeIps": [
+                        "10.0.135.211",
+                        "10.0.180.149"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d508f8caf99e4198",
+                            "svmId": "svm-0beb16100b4ea7d24",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1a",
+                                "ap-southeast-1b"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "nextToken": ""
+}

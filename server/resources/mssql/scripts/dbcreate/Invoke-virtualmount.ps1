@@ -13,17 +13,28 @@ param(
     [string]$DataSerial,
 
     [Parameter(Mandatory = $true)]
-    [string]$LogSerial
+    [string]$LogSerial,
+
+    [Parameter(Mandatory = $true)]
+    [string]$InstanceName,
+
+    [Parameter(Mandatory = $true)]
+    [string]$IsDefaultInstance,
+
+    [Parameter(Mandatory = $false)]
+    [string]$LogPrefix = ''
 )
 
 $null = (Start-Transcript -Path "C:\cfn\log\invoke_virtualmount_$DBName.log.txt" -Append)
 $ErrorActionPreference = "Stop"
 
+$IsDefaultInstance = [System.Convert]::ToBoolean($IsDefaultInstance)
+
 try {
     $responseObject = [ordered]@{}
 
     if ($DataFilePath -eq $null -or $LogFilePath -eq $null -or $DataSerial -eq $null -or $LogSerial -eq $null) {
-        write-debug "DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
+        Write-Information "$LogPrefix DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
         throw "DataFilePath or LogFilePath or DataSerial or LogSerial is null"
     }
 
@@ -51,7 +62,7 @@ try {
         $retry++
     } until (($retry -eq 4) -Or ($diskcount -ge $2))
 
-    write-debug "Disklist: $disklist"
+    Write-Information "$LogPrefix Disklist: $disklist"
 
     #Adding Silently Continue for Set-Disk as warning caused output to have the string an API considered failure despite success
     #If warning is indeed serious the next step to initialize will fail and that will be caught
@@ -76,7 +87,7 @@ try {
     }
 }
 catch {
-    write-debug "Error: $($_.Exception)"
+    Write-Information "$LogPrefix Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to modify disks'
     return ($responseObject | ConvertTo-Json -Depth 5)
@@ -95,13 +106,13 @@ try {
     $datadisknumber = $datadisk.Number
     $logdisknumber = $logdisk.Number
 
-    $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object Type -eq Basic
-    $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object Type -eq Basic
+    $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
+    $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
 
     $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
     $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
-    write-debug "DataFolder: $datafolder $logfolder"
+    Write-Information "$LogPrefix DataFolder: $datafolder $logfolder"
 
 
     Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
@@ -109,7 +120,7 @@ try {
 
 }
 catch {
-    write-debug "Error: $($_.Exception)"
+    Write-Information "$LogPrefix Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to initialize disks'
     return ($responseObject | ConvertTo-Json -Depth 5)
@@ -142,16 +153,16 @@ try {
         $clusterlogdisk = Get-ClusterResource -Name $loglabel -ErrorAction SilentlyContinue
 
         if ([string]::IsNullOrEmpty($clusterdatadisk)) {
-            $availabledatadisk = Get-ClusterAvailableDisk | Where-Object { $_.Number -eq $datadisknumber }
+            $availabledatadisk = Get-Disk | Where-Object { $_.Number -eq $datadisknumber }
             $clusterdatadisk = ($availabledatadisk | Add-ClusterDisk -ErrorAction stop)
             }
         if ([string]::IsNullOrEmpty($clusterlogdisk)) {
-            $availablelogdisk = Get-ClusterAvailableDisk | Where-Object { $_.Number -eq $logdisknumber }
+            $availablelogdisk = Get-Disk | Where-Object { $_.Number -eq $logdisknumber }
             $clusterlogdisk = ($availablelogdisk | Add-ClusterDisk -ErrorAction stop)
         }
 
         try {
-            $SQLRoleGroup = (Get-ClusterGroup).Name -match ('SQl Server*')
+            $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($InstanceName)")
             $SQLGroup = $SQLRoleGroup[0]
 
             if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
@@ -159,8 +170,9 @@ try {
                 $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
 
                 #Add dependency on new disks in SQL Server Resource
-                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $($clusterdatadisk.Name))
-                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $($clusterlogdisk.Name))
+                $ClusterResourceName = If ($IsDefaultInstance) { "SQL Server" } Else { "SQL Server ($InstanceName)" }
+                $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterdatadisk.Name))
+                $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterlogdisk.Name))
 
                 #Rename new cluster disks to user friendly name
                 (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
@@ -186,12 +198,12 @@ try {
     Start-Sleep 5
     if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
         $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
-        $null = (Get-Partition -DiskNumber $datadisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+        $null = (Get-Partition -DiskNumber $datadisknumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
     }
 
     if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
         $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
-        $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+        $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
     }
 }catch {
         $responseObject['error'] = $_.Exception.Message
@@ -202,14 +214,14 @@ try {
     }
 
 try {
-    Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
+    Get-Partition | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
         $partition = $_
         $partition.AccessPaths | ForEach-Object {
             $accessPath = $_
-            write-debug "AccessPath: $accessPath"
+            Write-Information "$LogPrefix AccessPath: $accessPath"
             if ($accessPath) {
                 $matched = $accessPath -match '^[A-Z]:\\$'
-                write-debug "Matched: $matched"
+                Write-Information "$LogPrefix Matched: $matched"
                 if ($matched -eq $True -and $accessPath -notcontains $DataDriveLetter -and $accessPath -notcontains $logDriveLetter) {
                     $accessDrive = $matches[0]
                     $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
@@ -221,7 +233,7 @@ try {
     Get-ChildItem -Path $datafolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
     Get-ChildItem -Path $logfolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
 } catch {
-    write-debug "Failed to remove stale junction paths"
+    Write-Information "$LogPrefix Failed to remove stale junction paths"
 }
 
 try {
@@ -232,7 +244,7 @@ try {
     if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
         $responseObject['dataPath'] = $newDataFilePath
         $responseObject['logPath'] = $newLogFilePath
-        write-debug "NewFilePaths: $newDataFilePath $newLogFilePath"
+        Write-Information "$LogPrefix NewFilePaths: $newDataFilePath $newLogFilePath"
     }
     else {
         throw 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ReactComponent as DatabaseIllustration } from '../../../assets/Database Illustration 2.svg';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import styles from './DatabaseHost.module.scss';
@@ -9,6 +9,13 @@ import { GENERAL } from '../../../utils/appConstants';
 const DatabaseHost = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedHostsCount);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const databaseHostsLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
+    const fullHostDataLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        setLoading(databaseHostsLoading || fullHostDataLoading || databaseHostsLoadingV2 || fullHostDataLoadingV2);
+    }, [databaseHostsLoading, fullHostDataLoading, databaseHostsLoadingV2, fullHostDataLoadingV2]);
 
     return (
         <div className={styles.databaseHost}>
@@ -22,7 +29,7 @@ const DatabaseHost = () => {
                         <Typography variant="Regular_14" className={styles.databaseText}>
                             {GENERAL.HOSTS}
                         </Typography>
-                        {databaseHostsLoading && <FlashingDotsLoader />}
+                        {loading && <FlashingDotsLoader />}
                     </div>
                 </div>
                 <div className={styles.dbHostSeparator} />
@@ -34,7 +41,7 @@ const DatabaseHost = () => {
                         <Typography variant="Regular_14" className={styles.databaseText}>
                             {GENERAL.DATABASES}
                         </Typography>
-                        {(databaseHostsLoading || fullHostDataLoading) && <FlashingDotsLoader />}
+                        {loading && <FlashingDotsLoader />}
                     </div>
                 </div>
 
@@ -47,7 +54,7 @@ const DatabaseHost = () => {
                             <Typography variant="Regular_14" className={styles.databaseText}>
                                 {GENERAL.MICROSOFT_SQL}
                             </Typography>
-                            {databaseHostsLoading && <FlashingDotsLoader />}
+                            {loading && <FlashingDotsLoader />}
                         </div>
                     </div>
 

@@ -20,10 +20,14 @@ describe('Pricing Operations', () => {
             },
             fsxnStorage: {
                 regionCode: 'ap-southeast-1',
-                diskSize: 102400,
-                throughput: 1024,
-                iops: 0,
-                deploymentOption: 'MULTI_AZ_1'
+                fsxnResourceInfo: [
+                    {
+                        diskSize: 102400,
+                        throughput: 1024,
+                        iops: 0,
+                        deploymentOption: 'MULTI_AZ_1'
+                    }
+                ]
             },
             ebsStorage: {
                 regionCode: 'ap-southeast-1',

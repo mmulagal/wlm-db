@@ -52,7 +52,7 @@
             "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
             "Lifecycle": "AVAILABLE",
             "NetworkInterfaceIds": ["eni-0f5884c4d92452685"],
-            "OpenZFSConfiguration": {
+            "OntapConfiguration": {
                 "AutomaticBackupRetentionDays": 30,
                 "CopyTagsToBackups": false,
                 "CopyTagsToVolumes": false,

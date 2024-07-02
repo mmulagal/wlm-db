@@ -1,3 +1,5 @@
+import { JsonValue } from '@prisma/client/runtime/library';
+
 interface Metadata {
     node1InstanceId: string;
     node2InstanceId?: string;
@@ -46,7 +48,8 @@ interface Sandbox {
     updatedAt: number;
     source: string;
     tag: string;
-    baseSnapshot: string;
+    baseSnapshot?: string;
+    databaseInstanceId?: string;
 }
 
 interface NodeDetails {
@@ -66,12 +69,13 @@ interface ResourceDetails {
     cloud_provider_name: string | null;
     region: string | null;
     credentials_id: string;
-    storage_type: string;
+    storage_type?: string;
     metadata: unknown;
     ebsVolumeIds?: string[]; // internal field used to store the ebs volume id for the unmanaged MSSQL resource
     fsxwId?: string; // internal field used to store the windows fsx ID for the unmanaged MSSQL resource,
     sqlServerDeploymentType?: string;
     clusterNodeDetails?: NodeDetails[];
+    databaseInstanceDetails?: DatabaseInstance[];
 }
 
 interface DeploymentDetails {
@@ -164,19 +168,28 @@ interface MissingPermissionInterface {
 
 interface DatabaseInstance {
     database_instance_name: string;
-    instanceState: string;
+    instanceState?: string;
     database_instance_id: string;
+    database_type: string;
     is_default: boolean;
-    metadata: databaseInstanceMetadata;
-    created_time: string;
-    database_deployment_type: string;
+    metadata: databaseInstanceMetadata | JsonValue;
+    created_time?: string | Date;
+    database_deployment_type?: string;
     fsxn_ids: string;
     credentials_id: string;
-    fsxwId: string;
-    ebsVolumeIds: string[];
-    storage_protocol: string;
+    fsx_svm_id?: JSON | JsonValue;
+    fsxwId?: string;
+    ebsVolumeIds?: string[];
+    storage_protocol?: string | null;
     region: string;
-    databaseType: string;
+    databaseType?: string;
+    storage_type?: string;
+}
+
+interface InstanceDetails {
+    instanceName: string;
+    instanceState: string;
+    isDefault?: boolean;
 }
 
 export {
@@ -195,5 +208,6 @@ export {
     MissingPermissionInterface,
     databaseInstanceMetadata,
     Sandbox,
-    DatabaseInstance
+    DatabaseInstance,
+    InstanceDetails
 };

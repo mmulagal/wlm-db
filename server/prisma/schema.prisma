@@ -118,7 +118,7 @@ model database_instances {
   region                            String            @db.VarChar(30)
   resource_id                       String            @db.VarChar(255)
   database_instance_id              String            @db.VarChar(36)
-  database_instance_name            String            @db.VarChar(16)
+  database_instance_name            String            @db.VarChar(36)
   fsxn_ids                          String            @db.VarChar(255)
   is_default                        Boolean           @default(value: false)
   database_deployment_type          DATABASE_DEPLOYMENT_TYPE            
@@ -128,7 +128,7 @@ model database_instances {
   source                            SOURCE            
   number_of_user_dbs_created        Int?              @default(0)
   sandbox_created                   Boolean?          @default(value: false)
-  storage_protocol                  STORAGEPROTOCOL?  @default(iSCSI)
+  storage_protocol                  String?           @db.VarChar(30)
   fsx_svm_id                        Json     
   metadata                          Json?             @default("{}")
 
@@ -145,11 +145,6 @@ enum JOBSTATUS {
   IN_PROGRESS
   COMPLETED
   FAILED
-}
-
-enum STORAGEPROTOCOL {
-  SMB
-  iSCSI
 }
 
 enum JOBTYPE {

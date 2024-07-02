@@ -260,3 +260,9 @@
         background-color: var(--grey-65);
     }
 }
+
+@media screen and (max-width: 1500px) {
+    .codebox {
+        width: 476px !important;
+    }
+}

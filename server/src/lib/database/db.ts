@@ -1,11 +1,4 @@
-import {
-    DEPLOYMENT_STATUS,
-    DEPLOYMENT_MODEL,
-    STORAGE_TYPE,
-    STORAGEPROTOCOL,
-    SOURCE,
-    DATABASE_DEPLOYMENT_TYPE
-} from '@prisma/client';
+import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL, STORAGE_TYPE, SOURCE, DATABASE_DEPLOYMENT_TYPE } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
@@ -62,7 +55,7 @@ interface Config {
     data?: object;
 }
 
-interface DatabaseInstance {
+interface DatabaseInstanceRecord {
     credentialsId: string;
     resourceId: string;
     region: string;
@@ -72,12 +65,13 @@ interface DatabaseInstance {
     isDefault: boolean;
     source: string;
     sqlDeploymentType: string;
-    fsxSvmId: string;
+    fsxSvmId: object;
     storageProtocol?: string;
     numberofUserDbsCreated?: number;
     sandboxCreated?: boolean;
     metaData?: databaseInstanceMetadata;
     databaseType: string;
+    storageType?: string;
 }
 
 async function listDeployments(
@@ -551,7 +545,23 @@ async function updateResourceMetaData(accountId: string, resourceId: string, met
     });
 }
 
-async function upsertDatabaseInstance(accountId: string, record: DatabaseInstance) {
+async function updateInstanceMetadata(accountId: string, instanceId: string, metaData: any) {
+    logger.info('Updating instance metadata', { accountId, instanceId });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.database_instances.updateMany({
+        where: {
+            account_id: accountId,
+            database_instance_id: instanceId
+        },
+        data: {
+            ...(!isEmpty(metaData) && { metadata: metaData })
+        }
+    });
+}
+
+async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanceRecord) {
     logger.info('Upserting a database instance record', { accountId, record });
 
     const {
@@ -588,10 +598,10 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             database_type: databaseType,
             database_deployment_type: sqlDeploymentType as DATABASE_DEPLOYMENT_TYPE,
             fsx_svm_id: fsxSvmId,
-            ...(storageProtocol && { storage_protocol: storageProtocol as STORAGEPROTOCOL }),
+            ...(storageProtocol && { storage_protocol: storageProtocol }),
             ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
             ...(sandboxCreated && { sandbox_created: sandboxCreated }),
-            ...(metaData && { metadata: metaData as {} })
+            ...(metaData && { metadata: metaData as { string: string } })
         },
         update: {
             ...(databaseInstanceName && { database_instance_name: databaseInstanceName }),
@@ -703,5 +713,6 @@ export {
     listDatabaseInstances,
     updateDatabaseInstanceMetadata,
     deleteDatabaseInstance,
-    DatabaseInstance
+    DatabaseInstanceRecord,
+    updateInstanceMetadata
 };

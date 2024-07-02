@@ -5,8 +5,8 @@
         "ec2InstanceName": "sqlnode1-37211",
         "resourceId": "resource-id-1",
         "name": "Database hostname 1",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Failover Cluster Instances",
@@ -15,6 +15,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Manage",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -36,11 +38,15 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for ONTAP",
+        "isDetected": true,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -74,9 +80,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -110,9 +118,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -146,9 +156,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -189,8 +201,8 @@
         "ec2InstanceName": "sqlnode1-37212",
         "resourceId": "resource-id-2",
         "name": "Database hostname 2",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 2,
         "serverInstallationMode": "Standalone",
@@ -199,6 +211,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Manage",
         "actionDisable": false,
+        "isManagedHost": true,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -215,11 +229,15 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for ONTAP",
+        "isDetected": true,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
-                "isDetected": true,
-                "isManaged": true,
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -253,9 +271,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
-                "isDetected": true,
-                "isManaged": true,
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -289,9 +309,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -325,9 +347,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -368,8 +392,8 @@
         "ec2InstanceName": "sqlnode1-37213",
         "resourceId": "resource-id-3",
         "name": "Database hostname 3",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 4,
         "serverInstallationMode": "Failover Cluster Instances",
@@ -378,6 +402,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Manage",
         "actionDisable": true,
+        "isManagedHost": true,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -399,11 +425,15 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for ONTAP",
+        "isDetected": true,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
-                "isDetected": true,
-                "isManaged": true,
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -437,9 +467,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
-                "isDetected": true,
-                "isManaged": true,
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -473,9 +505,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
-                "isDetected": true,
-                "isManaged": true,
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -509,9 +543,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
-                "isDetected": true,
-                "isManaged": true,
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -552,16 +588,18 @@
         "ec2InstanceName": "sqlnode1-37214",
         "resourceId": "resource-id-4",
         "name": "Database hostname 4",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Standalone",
         "vpcId": "vpc1",
         "vpcName": "wlmdb-vpc1",
         "vpcCidr": "10.20.30.0/24",
-        "action": "Manage",
+        "action": "",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -578,11 +616,15 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for ONTAP",
+        "isDetected": false,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -616,9 +658,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -652,9 +696,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -688,9 +734,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -731,9 +779,14 @@
         "ec2InstanceId": "i-02dbf20711b3c8315",
         "ec2InstanceName": "sqlnode1-37215",
         "name": "Database hostname 5",
-        "ssmState": "not connected",
-        "action": "Manage",
+        "status": "Unknown",
+        "ssmState": "Offline",
+        "action": "",
         "actionDisable": true,
+        "isManagedHost": false,
+        "loading": false,
+        "storageType": "",
+        "isDetected": false,
         "sqlServerInstances": []
     },
     "host6": {
@@ -742,8 +795,8 @@
         "ec2InstanceName": "sqlnode1-37216",
         "resourceId": "resource-id-6",
         "name": "Database hostname 6",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Always On Availability Group",
@@ -752,6 +805,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -773,11 +828,15 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "EBS",
+        "isDetected": true,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -797,9 +856,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -819,9 +880,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -841,9 +904,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -870,8 +935,8 @@
         "ec2InstanceName": "sqlnode1-37217",
         "resourceId": "resource-id-7",
         "name": "Database hostname 7",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Standalone",
@@ -880,6 +945,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -896,11 +963,15 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "EBS",
+        "isDetected": true,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -920,9 +991,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -942,9 +1015,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -964,9 +1039,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -993,8 +1070,8 @@
         "ec2InstanceName": "sqlnode1-37218",
         "resourceId": "resource-id-8",
         "name": "Database hostname 8",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Standalone",
@@ -1003,6 +1080,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": true,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1019,11 +1098,15 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "EBS",
+        "isDetected": false,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1043,9 +1126,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1065,9 +1150,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1087,9 +1174,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1116,8 +1205,8 @@
         "ec2InstanceName": "sqlnode1-37219",
         "resourceId": "resource-id-9",
         "name": "Database hostname 9",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Always On Availability Group",
@@ -1126,6 +1215,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1147,11 +1238,15 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for Windows",
+        "isDetected": true,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1175,9 +1270,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1198,9 +1295,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1224,9 +1323,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1257,8 +1358,8 @@
         "ec2InstanceName": "sqlnode1-372110",
         "resourceId": "resource-id-10",
         "name": "Database hostname 10",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Standalone",
@@ -1267,6 +1368,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": false,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1283,11 +1386,15 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for Windows",
+        "isDetected": true,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1311,9 +1418,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1337,9 +1446,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1363,9 +1474,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
-                "isDetected": true,
-                "isManaged": false,
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1396,8 +1509,8 @@
         "ec2InstanceName": "sqlnode1-372111",
         "resourceId": "resource-id-11",
         "name": "Database hostname 11",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Standalone",
@@ -1406,6 +1519,8 @@
         "vpcCidr": "10.20.30.0/24",
         "action": "Explore savings",
         "actionDisable": true,
+        "isManagedHost": false,
+        "loading": false,
         "ec2Details": [
             {
                 "id": "i-1234",
@@ -1422,11 +1537,15 @@
         },
         "totalCost": 1024,
         "allocatedCapacity": 22122173950853,
+        "storageType": "FSx for Windows",
+        "isDetected": false,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1450,9 +1569,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1476,9 +1597,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1502,9 +1625,11 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
-                "isDetected": false,
-                "isManaged": false,
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {

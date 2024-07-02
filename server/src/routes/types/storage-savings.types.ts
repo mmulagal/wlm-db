@@ -1,5 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { CredentialsIdParams } from './generic.types';
+import { FINDING } from '../../utils/consts';
 
 const StorageSavingsRequestParams = Type.Composite([
     CredentialsIdParams,
@@ -27,21 +28,6 @@ const StorageMetrics = Type.Object({
     iops: Type.Number(),
     throughput: Type.Number(),
     snapshots: Type.Number(),
-    compute: Type.Optional(
-        Type.Object({
-            cost: Type.Optional(Type.Number()),
-            instanceType: Type.String(),
-            message: Type.Optional(Type.String())
-        })
-    ),
-    license: Type.Optional(
-        Type.Object({
-            sqlEdition: Type.String(),
-            sqlServerVersion: Type.String(),
-            licenseCost: Type.Optional(Type.Number()),
-            message: Type.Optional(Type.String())
-        })
-    ),
     clones: Type.Number(),
     total: Type.Number()
 });
@@ -49,12 +35,19 @@ const StorageMetrics = Type.Object({
 const StorageSavingsCompute = Type.Object({
     instanceType: Type.String(),
     computeMonthlyPrice: Type.Optional(Type.Number()),
+    windowsOsVersion: Type.Optional(Type.String()),
+    finding: Type.Optional(
+        Type.String({ enum: [FINDING.OPTIMIZED, FINDING.NOT_OPTIMIZED, FINDING.INSUFFICIENT_DATA] })
+    ),
     message: Type.Optional(Type.String())
 });
 
 const StorageSavingsLicense = Type.Object({
-    licenseType: Type.Optional(Type.String()),
+    sqlServerEdition: Type.Optional(Type.String()),
     licenseMonthlyPrice: Type.Optional(Type.Number()),
+    finding: Type.Optional(
+        Type.String({ enum: [FINDING.OPTIMIZED, FINDING.NOT_OPTIMIZED, FINDING.INSUFFICIENT_DATA] })
+    ),
     message: Type.Optional(Type.String())
 });
 const StorageSavingsResponse = Type.Object({
@@ -81,6 +74,15 @@ const StorageSavingsResponse = Type.Object({
         useCase: Type.String(),
         regionName: Type.String(),
         monthlySnapshotCapacity: Type.Number()
+    }),
+    fsxBreakdown: Type.Object({
+        fsxDataLunSize: Type.Number(),
+        fsxDataVolumeSize: Type.Number(),
+        fsxLogVolumeSize: Type.Number(),
+        fsxTempDbVolumeSize: Type.Number(),
+        fsxQuorumVolumeSize: Type.Number(),
+        fsxBufferVolumeSize: Type.Number(),
+        fsxStorageCapacity: Type.Number()
     })
 });
 
@@ -99,7 +101,6 @@ const ComputeCalculationObject = Type.Object({
 });
 const LicenseCalculationObject = Type.Object({
     sqlServerEdition: Type.Optional(Type.String()),
-    licenseType: Type.Optional(Type.String()),
     licenseHourlyPrice: Type.Optional(Type.Number()),
     licenseIncluded: Type.Optional(Type.Boolean()),
     hoursInMonth: Type.Number()
@@ -230,6 +231,7 @@ type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
 
 const ComputeDetails = Type.Object({
     instanceType: Type.String(),
+    windowsOsVersion: Type.Optional(Type.String()),
     computeHourlyPrice: Type.Optional(Type.Number()),
     instanceHourlyPrice: Type.Optional(Type.Number()),
     computeMonthlyPrice: Type.Optional(Type.Number()),
@@ -240,7 +242,6 @@ const ComputeDetails = Type.Object({
 
 const LicenseDetails = Type.Object({
     sqlServerEdition: Type.Optional(Type.String()),
-    licenseType: Type.Optional(Type.String()),
     licenseHourlyPrice: Type.Optional(Type.Number()),
     licenseIncluded: Type.Optional(Type.Boolean()),
     licenseMonthlyPrice: Type.Optional(Type.Number()),

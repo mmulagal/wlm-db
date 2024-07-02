@@ -29,7 +29,8 @@ import {
     MAX_FSX_STORAGE_IN_GIB,
     FSX_VOL_THROUGHPUT,
     FSX_STORAGE_MIN_CAPACITY_IN_GIB,
-    HOURS_IN_MONTH
+    HOURS_IN_MONTH,
+    DEFAULT_MSSQL_INSTANCE_NAME
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -54,9 +55,16 @@ function generateDeploymentParams(
     FSxDataLunSize: number,
     isExistingFSx: boolean,
     sqlDeploymentType: string = 'fci',
-    fsxVolThroughput: number
+    fsxVolThroughput: number,
+    fsxIOPS: number
 ) {
-    logger.info('Generate deployment params', { FSxDataLunSize, isExistingFSx, sqlDeploymentType, fsxVolThroughput });
+    logger.info('Generate deployment params', {
+        FSxDataLunSize,
+        isExistingFSx,
+        sqlDeploymentType,
+        fsxVolThroughput,
+        fsxIOPS
+    });
 
     const prefix = WLMDB;
     const suffix = Date.now();
@@ -78,6 +86,20 @@ function generateDeploymentParams(
     // https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/performance.html
     if (fsxVolThroughput === FSX_VOL_THROUGHPUT && fsxStorageCapacity <= FSX_STORAGE_MIN_CAPACITY_IN_GIB) {
         throw createError(412, 'Supported FSx for ONTAP Storage Capactiy should be minumum of 5,120 GiB');
+    }
+
+    // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
+    // Automatic (3 IOPS per GiB of SSD storage)
+    // User-Provisioned (it should be calculated by 3 times of fsxStorageCapacity as minimum size)
+    if (fsxIOPS !== 3 && fsxVolThroughput !== FSX_VOL_THROUGHPUT && !isExistingFSx) {
+        // accepted iops values
+        const acceptedIOPS = fsxStorageCapacity * 3;
+        if (fsxIOPS < acceptedIOPS) {
+            throw createError(412, `Provisioned SSD IOPS should be at least ${acceptedIOPS}`);
+        }
+        if (fsxIOPS < 3072 || fsxIOPS > 80000) {
+            throw createError(412, 'Provisioned SSD IOPS should be between 3072 and 80000');
+        }
     }
 
     const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
@@ -116,6 +138,60 @@ function generateDeploymentParams(
     }
 
     return params;
+}
+
+function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMode: string) {
+    logger.info('FSx Storage Capacity Breakdown', { fsxStorageCapacity, sqlDeploymentMode });
+
+    fsxStorageCapacity = Math.max(fsxStorageCapacity, convertGiBToBytes(FSX_SSD_MIN_SIZE));
+    fsxStorageCapacity = Math.min(fsxStorageCapacity, convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB));
+
+    logger.info('FSx Storage Capacity', { fsxStorageCapacity });
+    /*
+        fsxCapacity = fsxDataVolumeSize + fsxLogVolumeSize + fsxTempDbVolumeSize + fsxQuorumVolumeSize
+        fsxBuffer = 20% of fsxCapacity
+        fsxStorageCapacity = fsxCapacity + fsxBuffer = fsxCapacity + 20% of fsxCapacity = 1.2 * fsxCapacity
+        fsxCapacity = fsxStorageCapacity / 1.2
+        fsxBuffer = (0.2) * fsxStorageCapacity/1.2
+    */
+
+    let fsxBufferVolumeSize = Math.ceil((0.2 * fsxStorageCapacity) / 1.2);
+    if (fsxStorageCapacity + fsxBufferVolumeSize >= convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB)) {
+        fsxBufferVolumeSize = Math.ceil(convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB) - fsxStorageCapacity);
+    }
+    /*
+
+    FSxStorageCapacity = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize + FsxBufferVolumeSize
+
+    fsxDataVolumeSize = FSxDataLunSize + 10% of FSxDataLunSize = 1.1 fsxLunSize
+    FSxLogVolumeSize = 25% of fsxDataVolumeSize = 0.25 * 1.1 fsxLunSize
+    FSxTempDbVolumeSize = 10% of fsxDataVolumeSize = 0.1 * 1.1 fsxLunSize
+    FSxQuorumVolumeSize = 12GB || O GB(for Standalone)
+
+    fsxDataVolumeSize = 1.1 fsxLunSize
+
+    fsxStorageCapacity = (1.1 * fsxLunSize) + 0.25 * (1.1 * fsxLunSize) + 0.1 * (1.1 * fsxLunSize) + 12GB || 0 GB(for Standalone) + fsxBufferVolumeSize = (1.1 + 0.275 + 0.11) fsxLunSize + 12 || 0 GB + fsxBufferVolumeSize
+    fsxStorageCapacity = 1.485 fsxLunSize + fsxQuorumVolumeSize + fsxBufferVolumeSize
+    fsxLunSize = (fsxStorageCapacity - fsxQuorumVolumeSize - fsxBufferVolumeSize) / 1.485
+    */
+
+    const fsxQuorumVolumeSize = sqlDeploymentMode === STANDALONE ? 0 : 12 * 1000 * 1000 * 1000; // in calculateFsxnStorageCapacity FSxQuorumVolumeSize = 12000(MB); // 12GB
+
+    const fsxDataLunSize = Math.ceil(fsxStorageCapacity - fsxQuorumVolumeSize) / 1.485;
+
+    const fsxDataVolumeSize = Math.ceil(1.1 * fsxDataLunSize);
+    const fsxLogVolumeSize = Math.ceil(0.25 * fsxDataVolumeSize);
+    const fsxTempDbVolumeSize = Math.ceil(0.1 * fsxDataVolumeSize);
+
+    return {
+        fsxDataLunSize,
+        fsxDataVolumeSize,
+        fsxLogVolumeSize,
+        fsxTempDbVolumeSize,
+        fsxQuorumVolumeSize,
+        fsxBufferVolumeSize,
+        fsxStorageCapacity
+    };
 }
 
 function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode: string) {
@@ -279,7 +355,8 @@ async function sleep(ms: number) {
 }
 
 function generateHash(value: string) {
-    const hash = crypto.createHash('sha256');
+    // changing it to md5 to keep the resource_id smaller in size, as we don't have a unique constraint on resource_id
+    const hash = crypto.createHash('md5');
     hash.update(value);
     return hash.digest('hex');
 }
@@ -405,7 +482,14 @@ function convertMetricsIntoJson(input: Array<string>) {
     return metrics;
 }
 
+/*
+ * AWS considers the value of tag 'Name' as the resource name.
+ * If tag 'Name' is present, return its corresponding Value.
+ * Otherwise, returns undefined.
+ */
 function getResourceNameFromTags(tags?: Tag[]) {
+    logger.debug('Find resource name from the tags', { tags });
+
     const { Value: name } = tags?.find(tag => tag?.Key === 'Name') || {};
     return name;
 }
@@ -499,6 +583,20 @@ function getMonthlyPriceFromHourlyPrice(hourlyPrice: number) {
     return hourlyPrice * HOURS_IN_MONTH;
 }
 
+function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true) {
+    logger.info('Generate database instance name', { instanceName, isDefault });
+
+    if (isDemo() || isDefault) {
+        return DEFAULT_MSSQL_INSTANCE_NAME;
+    }
+
+    return `${DEFAULT_MSSQL_INSTANCE_NAME}\\${instanceName.replace(/^.+\$/, '')}`;
+}
+
+function isDemo() {
+    return process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -514,6 +612,7 @@ export {
     getFsxArn,
     getEc2Arn,
     generateHash,
+    fsxStorageCapacityBreakdown,
     calculateFsxnStorageCapacity,
     sizeInGigaBytes,
     waitForResolution,
@@ -532,5 +631,7 @@ export {
     getCollationForMSSQLVersion,
     camelizeKeys,
     convertToBytes,
-    getMonthlyPriceFromHourlyPrice
+    getMonthlyPriceFromHourlyPrice,
+    getDatabaseInstanceName,
+    isDemo
 };

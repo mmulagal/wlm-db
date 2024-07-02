@@ -7,7 +7,6 @@ import { Text } from '../../../../ui-components/Typography';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
-import { formatViewCalcInstance } from '../../ExploreSavingsUtils';
 
 const TableLayout = ({ data }: any) => {
     const styleHandler = (data: any) => {
@@ -56,15 +55,6 @@ const OntapCalculation = () => {
     const { viewCalculationsResponse, selectedDeploymentModel, viewCalculationsLoading, selectedHostDetails } =
         useAppSelector(state => state.exploreSavings);
     const [viewLoading, setViewLoading] = useState(false);
-    const [fsxInstance, setFsxInstance] = useState<any>(null);
-
-    useEffect(() => {
-        if (!selectedHostDetails?.loading) {
-            setFsxInstance({
-                fsxInstanceCalculation: formatViewCalcInstance(selectedDeploymentModel, selectedHostDetails)
-            });
-        }
-    }, [selectedHostDetails]);
 
     useEffect(() => {
         setViewLoading(selectedHostDetails?.loading || viewCalculationsLoading);
@@ -103,11 +93,11 @@ const OntapCalculation = () => {
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >
-                {viewCalculationsResponse && fsxInstance && (
+                {viewCalculationsResponse && (
                     <AccordionCardContent>
                         <DsTypography className={styles.accordionContentSet}>
                             {viewCalculation(
-                                { ...fsxInstance, ...viewCalculationsResponse },
+                                viewCalculationsResponse,
                                 selectedDeploymentModel
                             ).Ec2InstanceCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
@@ -115,10 +105,7 @@ const OntapCalculation = () => {
                                 )
                             )}
                             <div style={{ marginTop: '16px' }}>
-                                {viewCalculation(
-                                    { ...fsxInstance, ...viewCalculationsResponse },
-                                    selectedDeploymentModel
-                                ).FSxNCalculation.map(
+                                {viewCalculation(viewCalculationsResponse, selectedDeploymentModel).FSxNCalculation.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
                                         <TableLayout key={index} data={data} />
                                     )
@@ -126,7 +113,7 @@ const OntapCalculation = () => {
                             </div>
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculation(
-                                    { ...fsxInstance, ...viewCalculationsResponse },
+                                    viewCalculationsResponse,
                                     selectedDeploymentModel
                                 ).SnapshotCalculation.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
@@ -136,7 +123,7 @@ const OntapCalculation = () => {
                             </div>
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculation(
-                                    { ...fsxInstance, ...viewCalculationsResponse },
+                                    viewCalculationsResponse,
                                     selectedDeploymentModel
                                 ).cloneCalculation.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (

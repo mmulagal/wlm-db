@@ -12,6 +12,7 @@ interface AuthState {
     features: any;
     isWorkloadFactory: boolean;
     isInventoryV2: boolean;
+    refreshBlocked: boolean;
 }
 
 interface PayloadAuthSuccess {
@@ -19,11 +20,11 @@ interface PayloadAuthSuccess {
 }
 
 const checkLocalStorageValue = () => {
-    const value = localStorage.getItem('inventoryV2');
+    const value = localStorage.getItem('inventoryV1');
     if (value === 'true') {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 };
 
 const initialState: AuthState = {
@@ -41,6 +42,7 @@ const initialState: AuthState = {
         }
     },
     isWorkloadFactory: false,
+    refreshBlocked: false,
     isInventoryV2: checkLocalStorageValue() // This flag is added to check if new inventory has to run or old.
 };
 
@@ -79,6 +81,9 @@ const authSlice = createSlice({
         },
         updateIsWorkloadfactory: (state, action: PayloadAction<boolean>) => {
             state.isWorkloadFactory = action.payload;
+        },
+        updateRefreshBlocked: (state, action: PayloadAction<boolean>) => {
+            state.refreshBlocked = action.payload;
         }
     }
 });
@@ -93,7 +98,8 @@ export const {
     updateIsLoading,
     updateIsDemoMode,
     updateIsWorkloadfactory,
-    updateFeatures
+    updateFeatures,
+    updateRefreshBlocked
 } = authSlice.actions;
 
 export default authSlice;

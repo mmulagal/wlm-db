@@ -11,7 +11,6 @@ import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import RebaseLineContent from './RebaseLineContent/RebaseLineContent';
 import RebaseSplitContent from './RebaseSplitContent/RebaseSplitContent';
-import RebaseRollbackContent from './RebaseRollbackContent/RebaseRollbackContent';
 import ViewDialog from '../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { useDispatch } from 'react-redux';
@@ -24,6 +23,7 @@ import {
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import {
     getBaseUrl,
+    useCheckIntegrityMutation,
     useDeleteSandboxMutation,
     useLazyGetSandboxSavingsQuery,
     useLazyGetSplitEstimateInfoQuery,
@@ -33,7 +33,9 @@ import {
 } from '../../../utils/apiService';
 import {
     CRED_PLACEHOLDERS,
+    FROM_DIALOG,
     JOB_MONITORING_STATUS,
+    SANDBOX_ACTIONS_POLLING_INTERVAL,
     UPDATE_SANDBOX_CURL_REQ_TEMPLATE,
     WLF_TABS
 } from '../../../utils/consts';
@@ -43,11 +45,14 @@ import RefreshContent from './RefreshContent/RefreshContent';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
 import { formatDateWithTime } from '../../../utils/utilityFunctions';
+import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { aggregatedSandboxList, connectionInfo } = useAppSelector(state => state.sandbox);
+    const { aggregatedSandboxList, connectionInfo, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
+        state => state.sandbox
+    );
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
 
@@ -63,6 +68,7 @@ const SandboxTable = () => {
     const [getSplitEstimateApi] = useLazyGetSplitEstimateInfoQuery();
     const [updateSandboxApi] = useUpdateSandboxMutation();
     const [splitSandboxApi] = useSplitSandboxMutation();
+    const [checkIntegrityApi] = useCheckIntegrityMutation();
 
     useEffect(() => {
         if (aggregatedSandboxList[0] && 'id' in aggregatedSandboxList[0]) {
@@ -116,14 +122,18 @@ const SandboxTable = () => {
                 displayName: 'Split'
             },
             {
+                id: 'integrityCheck',
+                displayName: 'Check integrity'
+            },
+            {
                 id: 'delete',
                 displayName: 'Delete'
             }
         ];
     };
 
-    const showJobNotification = (action: 'delete' | 'refresh' | 'rebaseline' | 'split', resourceName: string) => {
-        const notificationObj = GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS[action];
+    const showJobInProgressNotification = (action: SandboxActions, resourceName: string) => {
+        const notificationObj = GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.IN_PROGRESS[action];
         const msgData = (
             <div className={styles.notification}>
                 {notificationObj[0]}
@@ -149,6 +159,119 @@ const SandboxTable = () => {
         );
     };
 
+    const handleJob = (res: any, rowData: any, action: SandboxActions) => {
+        if (res?.data) {
+            showJobInProgressNotification(action, rowData?.name);
+            const jobInterval = setInterval(() => {
+                getJobDetailApi({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    region: headerSelectedRegion?.label2,
+                    id: res?.data?.jobId
+                }).then((jobRes: any) => {
+                    const status = jobRes?.data?.status;
+                    const state = store.getState();
+                    const { aggregatedSandboxList } = state?.sandbox;
+                    const resourceName =
+                        action === 'rebaseline' || action === 'refresh' ? rowData?.source : rowData?.name;
+                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                        dispatch(
+                            setSandboxSavingsState({
+                                sandboxSavings: {
+                                    consumedStorage: 0,
+                                    savedStorage: 0,
+                                    sandboxSavingsPercentage: 0
+                                },
+                                sandboxSavingsLoading: true,
+                                sandboxSavingsError: ''
+                            })
+                        );
+                        clearInterval(jobInterval);
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                message: `${GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.SUCCESS[action][0]}${resourceName}${GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.SUCCESS[action][1]}`
+                            })
+                        );
+                        let output =
+                            action === 'delete'
+                                ? aggregatedSandboxList.filter((item: any) => rowData?.id !== item?.id)
+                                : aggregatedSandboxList.map((obj: any) => {
+                                      if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                          return {
+                                              ...obj,
+                                              cellProps: { isDisabled: false },
+                                              status: 'active',
+                                              menuDisable: false
+                                          };
+                                      }
+                                      return obj;
+                                  });
+                        dispatch(setAggregatedSandboxList(output));
+                        getSandboxSavingsApi({
+                            credentialId: headerSelectedCred?.data?.credentialsId,
+                            region: headerSelectedRegion?.label2
+                        }).then((savingsRes: any) => {
+                            if (savingsRes?.data) {
+                                dispatch(
+                                    setSandboxSavingsState({
+                                        sandboxSavings: savingsRes?.data,
+                                        sandboxSavingsLoading: false,
+                                        sandboxSavingsError: ''
+                                    })
+                                );
+                            } else {
+                                dispatch(
+                                    setSandboxSavingsState({
+                                        sandboxSavings: {
+                                            consumedStorage: 0,
+                                            savedStorage: 0,
+                                            sandboxSavingsPercentage: 0
+                                        },
+                                        sandboxSavingsLoading: false,
+                                        sandboxSavingsError: ''
+                                    })
+                                );
+                            }
+                        });
+                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                        let output = aggregatedSandboxList.map((obj: any) => {
+                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                return {
+                                    ...obj,
+                                    cellProps: { isDisabled: false },
+                                    status: 'active',
+                                    menuDisable: false
+                                };
+                            }
+                            return obj;
+                        });
+                        dispatch(setAggregatedSandboxList(output));
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                message: `${GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.FAILED[action][0]}${resourceName}${GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.FAILED[action][1]}`
+                            })
+                        );
+                        clearInterval(jobInterval);
+                    }
+                });
+            }, SANDBOX_ACTIONS_POLLING_INTERVAL);
+        } else {
+            let output = aggregatedSandboxList.map((obj: any) => {
+                if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                    return {
+                        ...obj,
+                        cellProps: { isDisabled: false },
+                        status: 'active',
+                        menuDisable: false
+                    };
+                }
+                return obj;
+            });
+            dispatch(setAggregatedSandboxList(output));
+        }
+    };
+
     const handleRebaseLine = (rowData: any) => {
         setDialog(
             <DialogComponent
@@ -168,114 +291,11 @@ const SandboxTable = () => {
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name,
                         payload: { action: 'RE-BASELINE', snapshot: rowData?.baseSnapshot }
                     }).then((res: any) => {
-                        if (res?.data) {
-                            showJobNotification('rebaseline', rowData?.name);
-                            const jobInterval = setInterval(() => {
-                                getJobDetailApi({
-                                    credentialId: headerSelectedCred?.data?.credentialsId,
-                                    region: headerSelectedRegion?.label2,
-                                    id: res?.data?.jobId
-                                }).then((jobRes: any) => {
-                                    const status = jobRes?.data?.status;
-                                    const state = store.getState();
-                                    const { aggregatedSandboxList } = state?.sandbox;
-                                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                                        dispatch(
-                                            setSandboxSavingsState({
-                                                sandboxSavings: {
-                                                    consumedStorage: 0,
-                                                    savedStorage: 0,
-                                                    sandboxSavingsPercentage: 0
-                                                },
-                                                sandboxSavingsLoading: true,
-                                                sandboxSavingsError: ''
-                                            })
-                                        );
-                                        clearInterval(jobInterval);
-                                        dispatch(
-                                            addNotification({
-                                                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                message: `Sandbox of database ${rowData?.source} re-baselined successfully. Sandbox returned to its original version.`
-                                            })
-                                        );
-                                        let output = aggregatedSandboxList.map((obj: any) => {
-                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
-                                                return {
-                                                    ...obj,
-                                                    cellProps: { isDisabled: false },
-                                                    status: 'active',
-                                                    menuDisable: false
-                                                };
-                                            }
-                                            return obj;
-                                        });
-                                        dispatch(setAggregatedSandboxList(output));
-                                        getSandboxSavingsApi({
-                                            credentialId: headerSelectedCred?.data?.credentialsId,
-                                            region: headerSelectedRegion?.label2
-                                        }).then((savingsRes: any) => {
-                                            if (savingsRes?.data) {
-                                                dispatch(
-                                                    setSandboxSavingsState({
-                                                        sandboxSavings: savingsRes?.data,
-                                                        sandboxSavingsLoading: false,
-                                                        sandboxSavingsError: ''
-                                                    })
-                                                );
-                                            } else {
-                                                dispatch(
-                                                    setSandboxSavingsState({
-                                                        sandboxSavings: {
-                                                            consumedStorage: 0,
-                                                            savedStorage: 0,
-                                                            sandboxSavingsPercentage: 0
-                                                        },
-                                                        sandboxSavingsLoading: false,
-                                                        sandboxSavingsError: ''
-                                                    })
-                                                );
-                                            }
-                                        });
-                                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                                        let output = aggregatedSandboxList.map((obj: any) => {
-                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
-                                                return {
-                                                    ...obj,
-                                                    cellProps: { isDisabled: false },
-                                                    status: 'active',
-                                                    menuDisable: false
-                                                };
-                                            }
-                                            return obj;
-                                        });
-                                        dispatch(setAggregatedSandboxList(output));
-                                        dispatch(
-                                            addNotification({
-                                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                                message: `Re-baseline of sandbox of database ${rowData?.source} failed.`
-                                            })
-                                        );
-                                        clearInterval(jobInterval);
-                                    }
-                                });
-                            }, 5000);
-                        } else {
-                            let output = aggregatedSandboxList.map((obj: any) => {
-                                if (obj?.id === rowData?.id && obj.name === rowData.name) {
-                                    return {
-                                        ...obj,
-                                        cellProps: { isDisabled: false },
-                                        status: 'active',
-                                        menuDisable: false
-                                    };
-                                }
-                                return obj;
-                            });
-                            dispatch(setAggregatedSandboxList(output));
-                        }
+                        handleJob(res, rowData, 'rebaseline');
                     });
                 }}
                 closeCallback={() => {
@@ -290,137 +310,46 @@ const SandboxTable = () => {
         setDialog(
             <DialogComponent
                 header={'Refresh'}
-                content={<RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} />}
+                content={
+                    <RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} rowData={rowData} />
+                }
                 primaryButton={'Refresh'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
                     let output = data.map((obj: any) => {
                         if ((obj?.id === rowData?.id && obj.name) === rowData.name) {
-                            return { ...obj, cellProps: { isDisabled: true }, status: 'refresh', menuDisable: true };
+                            return {
+                                ...obj,
+                                cellProps: { isDisabled: true },
+                                status: 'refresh',
+                                menuDisable: true
+                            };
                         }
                         return obj;
                     });
                     dispatch(setAggregatedSandboxList(output));
 
+                    const updatedState = store.getState();
+                    const { isRollbackSelected, selectedRollbackSnapshot } = updatedState?.sandbox;
+
                     updateSandboxApi({
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name,
-                        payload: { action: 'REFRESH' }
+                        payload: isRollbackSelected
+                            ? { action: 'REFRESH', snapshot: selectedRollbackSnapshot?.value }
+                            : { action: 'REFRESH' }
                     }).then((res: any) => {
-                        if (res?.data) {
-                            showJobNotification('refresh', rowData?.name);
-                            const jobInterval = setInterval(() => {
-                                getJobDetailApi({
-                                    credentialId: headerSelectedCred?.data?.credentialsId,
-                                    region: headerSelectedRegion?.label2,
-                                    id: res?.data?.jobId
-                                }).then((jobRes: any) => {
-                                    const status = jobRes?.data?.status;
-                                    const state = store.getState();
-                                    const { aggregatedSandboxList } = state?.sandbox;
-                                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                                        dispatch(
-                                            setSandboxSavingsState({
-                                                sandboxSavings: {
-                                                    consumedStorage: 0,
-                                                    savedStorage: 0,
-                                                    sandboxSavingsPercentage: 0
-                                                },
-                                                sandboxSavingsLoading: true,
-                                                sandboxSavingsError: ''
-                                            })
-                                        );
-                                        let output = aggregatedSandboxList.map((obj: any) => {
-                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
-                                                return {
-                                                    ...obj,
-                                                    cellProps: { isDisabled: false },
-                                                    status: 'active',
-                                                    menuDisable: false
-                                                };
-                                            }
-                                            return obj;
-                                        });
-                                        dispatch(setAggregatedSandboxList(output));
-                                        clearInterval(jobInterval);
-                                        dispatch(
-                                            addNotification({
-                                                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                message: `Sandbox of database ${rowData?.source} refreshed successfully.`
-                                            })
-                                        );
-                                        getSandboxSavingsApi({
-                                            credentialId: headerSelectedCred?.data?.credentialsId,
-                                            region: headerSelectedRegion?.label2
-                                        }).then((savingsRes: any) => {
-                                            if (savingsRes?.data) {
-                                                dispatch(
-                                                    setSandboxSavingsState({
-                                                        sandboxSavings: savingsRes?.data,
-                                                        sandboxSavingsLoading: false,
-                                                        sandboxSavingsError: ''
-                                                    })
-                                                );
-                                            } else {
-                                                dispatch(
-                                                    setSandboxSavingsState({
-                                                        sandboxSavings: {
-                                                            consumedStorage: 0,
-                                                            savedStorage: 0,
-                                                            sandboxSavingsPercentage: 0
-                                                        },
-                                                        sandboxSavingsLoading: false,
-                                                        sandboxSavingsError: ''
-                                                    })
-                                                );
-                                            }
-                                        });
-                                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                                        let output = aggregatedSandboxList.map((obj: any) => {
-                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
-                                                return {
-                                                    ...obj,
-                                                    cellProps: { isDisabled: false },
-                                                    status: 'active',
-                                                    menuDisable: false
-                                                };
-                                            }
-                                            return obj;
-                                        });
-                                        dispatch(setAggregatedSandboxList(output));
-                                        dispatch(
-                                            addNotification({
-                                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                                message: `Sandbox of database ${rowData?.source} refresh failed.`
-                                            })
-                                        );
-                                        clearInterval(jobInterval);
-                                    }
-                                });
-                            }, 5000);
-                        } else {
-                            let output = aggregatedSandboxList.map((obj: any) => {
-                                if (obj?.id === rowData?.id && obj.name === rowData.name) {
-                                    return {
-                                        ...obj,
-                                        cellProps: { isDisabled: false },
-                                        status: 'active',
-                                        menuDisable: false
-                                    };
-                                }
-                                return obj;
-                            });
-
-                            dispatch(setAggregatedSandboxList(output));
-                        }
+                        handleJob(res, rowData, 'refresh');
                     });
                 }}
                 closeCallback={() => {
                     closeDialog();
                 }}
                 customClass={styles.setWidth}
+                dialogFrom={FROM_DIALOG.SANDBOX_REFRESH}
             />
         );
     };
@@ -449,92 +378,10 @@ const SandboxTable = () => {
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name
                     }).then((res: any) => {
-                        if (res?.data) {
-                            showJobNotification('delete', rowData?.name);
-                            const jobInterval = setInterval(() => {
-                                getJobDetailApi({
-                                    credentialId: headerSelectedCred?.data?.credentialsId,
-                                    region: headerSelectedRegion?.label2,
-                                    id: res?.data?.jobId
-                                }).then((jobRes: any) => {
-                                    const status = jobRes?.data?.status;
-                                    const state = store.getState();
-                                    const { aggregatedSandboxList } = state?.sandbox;
-                                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                                        dispatch(
-                                            setSandboxSavingsState({
-                                                sandboxSavings: {
-                                                    consumedStorage: 0,
-                                                    savedStorage: 0,
-                                                    sandboxSavingsPercentage: 0
-                                                },
-                                                sandboxSavingsLoading: true,
-                                                sandboxSavingsError: ''
-                                            })
-                                        );
-                                        const updatedSandboxList = aggregatedSandboxList.filter(
-                                            (item: any) => rowData?.id !== item?.id
-                                        );
-                                        dispatch(setAggregatedSandboxList(updatedSandboxList));
-                                        clearInterval(jobInterval);
-                                        dispatch(
-                                            addNotification({
-                                                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                message: `Sandbox database ${rowData?.name} deleted successfully.`
-                                            })
-                                        );
-                                        getSandboxSavingsApi({
-                                            credentialId: headerSelectedCred?.data?.credentialsId,
-                                            region: headerSelectedRegion?.label2
-                                        }).then((savingsRes: any) => {
-                                            if (savingsRes?.data) {
-                                                dispatch(
-                                                    setSandboxSavingsState({
-                                                        sandboxSavings: savingsRes?.data,
-                                                        sandboxSavingsLoading: false,
-                                                        sandboxSavingsError: ''
-                                                    })
-                                                );
-                                            } else {
-                                                dispatch(
-                                                    setSandboxSavingsState({
-                                                        sandboxSavings: {
-                                                            consumedStorage: 0,
-                                                            savedStorage: 0,
-                                                            sandboxSavingsPercentage: 0
-                                                        },
-                                                        sandboxSavingsLoading: false,
-                                                        sandboxSavingsError: ''
-                                                    })
-                                                );
-                                            }
-                                        });
-                                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                                        let output = aggregatedSandboxList.map((obj: any) => {
-                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
-                                                return {
-                                                    ...obj,
-                                                    cellProps: { isDisabled: false },
-                                                    status: 'active',
-                                                    menuDisable: false
-                                                };
-                                            }
-                                            return obj;
-                                        });
-                                        dispatch(setAggregatedSandboxList(output));
-                                        dispatch(
-                                            addNotification({
-                                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                                message: `Sandbox database ${rowData?.name} failed to delete.`
-                                            })
-                                        );
-                                        clearInterval(jobInterval);
-                                    }
-                                });
-                            }, 5000);
-                        }
+                        handleJob(res, rowData, 'delete');
                     });
                 }}
                 closeCallback={() => {
@@ -547,11 +394,12 @@ const SandboxTable = () => {
 
     const handleSplit = (rowData: any) => {
         dispatch(updateSplitEstimateLoading(true));
-        const { databaseHostId, name } = rowData;
+        const { databaseHostId, name, instanceId } = rowData;
         getSplitEstimateApi({
             credentialsId: headerSelectedCred?.data?.credentialsId,
             regionId: headerSelectedRegion?.label2,
             databaseHostId: databaseHostId,
+            instanceId,
             sandboxName: name
         }).then((splitEstimateRes: any) => {
             dispatch(updateSplitEstimateLoading(false));
@@ -586,92 +434,10 @@ const SandboxTable = () => {
                                 credentialsId: headerSelectedCred?.data?.credentialsId,
                                 regionId: headerSelectedRegion?.label2,
                                 databaseHostId: rowData?.databaseHostId,
+                                instanceId: rowData?.instanceId,
                                 sandboxName: rowData?.name
                             }).then((res: any) => {
-                                if (res?.data) {
-                                    showJobNotification('split', rowData?.name);
-                                    const jobInterval = setInterval(() => {
-                                        getJobDetailApi({
-                                            credentialId: headerSelectedCred?.data?.credentialsId,
-                                            region: headerSelectedRegion?.label2,
-                                            id: res?.data?.jobId
-                                        }).then((jobRes: any) => {
-                                            const status = jobRes?.data?.status;
-                                            const state = store.getState();
-                                            const { aggregatedSandboxList } = state?.sandbox;
-                                            if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                                                dispatch(
-                                                    setSandboxSavingsState({
-                                                        sandboxSavings: {
-                                                            consumedStorage: 0,
-                                                            savedStorage: 0,
-                                                            sandboxSavingsPercentage: 0
-                                                        },
-                                                        sandboxSavingsLoading: true,
-                                                        sandboxSavingsError: ''
-                                                    })
-                                                );
-                                                const updatedSandboxList = aggregatedSandboxList.filter(
-                                                    (item: any) => rowData?.id !== item?.id
-                                                );
-                                                dispatch(setAggregatedSandboxList(updatedSandboxList));
-                                                clearInterval(jobInterval);
-                                                dispatch(
-                                                    addNotification({
-                                                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                        message: `Sandbox database ${rowData?.name} split successfully.`
-                                                    })
-                                                );
-                                                getSandboxSavingsApi({
-                                                    credentialId: headerSelectedCred?.data?.credentialsId,
-                                                    region: headerSelectedRegion?.label2
-                                                }).then((savingsRes: any) => {
-                                                    if (savingsRes?.data) {
-                                                        dispatch(
-                                                            setSandboxSavingsState({
-                                                                sandboxSavings: savingsRes?.data,
-                                                                sandboxSavingsLoading: false,
-                                                                sandboxSavingsError: ''
-                                                            })
-                                                        );
-                                                    } else {
-                                                        dispatch(
-                                                            setSandboxSavingsState({
-                                                                sandboxSavings: {
-                                                                    consumedStorage: 0,
-                                                                    savedStorage: 0,
-                                                                    sandboxSavingsPercentage: 0
-                                                                },
-                                                                sandboxSavingsLoading: false,
-                                                                sandboxSavingsError: ''
-                                                            })
-                                                        );
-                                                    }
-                                                });
-                                            } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                                                let output = aggregatedSandboxList.map((obj: any) => {
-                                                    if (obj?.id === rowData?.id && obj.name === rowData.name) {
-                                                        return {
-                                                            ...obj,
-                                                            cellProps: { isDisabled: false },
-                                                            status: 'active',
-                                                            menuDisable: false
-                                                        };
-                                                    }
-                                                    return obj;
-                                                });
-                                                dispatch(setAggregatedSandboxList(output));
-                                                dispatch(
-                                                    addNotification({
-                                                        notificationType: NOTIFICATION_TYPES.ERROR,
-                                                        message: `Sandbox database ${rowData?.name} failed to split.`
-                                                    })
-                                                );
-                                                clearInterval(jobInterval);
-                                            }
-                                        });
-                                    }, 5000);
-                                }
+                                handleJob(res, rowData, 'split');
                             });
                         }}
                         closeCallback={() => {
@@ -682,24 +448,6 @@ const SandboxTable = () => {
                 );
             }
         });
-    };
-
-    const handleRollback = () => {
-        setDialog(
-            <DialogComponent
-                header={'Roll-back'}
-                content={<RebaseRollbackContent />}
-                primaryButton={'Roll-back'}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    console.log('action');
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                customClass={styles.setWidth}
-            />
-        );
     };
 
     const handleConnectToTools = (rowData: any) => {
@@ -746,16 +494,60 @@ const SandboxTable = () => {
     };
 
     const handleShowConnectionInfo = (rowData: any) => {
-        const { databaseHostId, name } = rowData;
+        const { databaseHostId, name, instanceId } = rowData;
         dispatch(
             updateConnectionInfo({
                 selectedDatabaseHostId: databaseHostId,
+                selectedDatabaseInstanceId: instanceId,
                 selectedSandboxName: name,
                 connectionString: connectionInfo?.connectionString,
                 isLoading: false
             })
         );
         setConnectionInfoClicked(true);
+    };
+
+    const handleIntegrityCheck = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={'Check integrity'}
+                content={
+                    <DsTypography variant="Regular_14">
+                        Do you want to perform integrity check for sandbox{' '}
+                        <span style={{ fontWeight: '590' }}>{rowData.name}</span>?
+                    </DsTypography>
+                }
+                primaryButton={'Check integrity'}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    let output = data.map((obj: any) => {
+                        if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                            return {
+                                ...obj,
+                                cellProps: { isDisabled: true },
+                                status: 'integrityCheck',
+                                menuDisable: true
+                            };
+                        }
+                        return obj;
+                    });
+                    dispatch(setAggregatedSandboxList(output));
+                    checkIntegrityApi({
+                        credentialsId: headerSelectedCred?.data?.credentialsId,
+                        regionId: headerSelectedRegion?.label2,
+                        databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
+                        sandboxName: rowData?.name
+                    }).then((res: any) => {
+                        handleJob(res, rowData, 'integrityCheck');
+                    });
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.setWidth}
+            />
+        );
     };
 
     const lastColDetails = () => {
@@ -804,6 +596,10 @@ const SandboxTable = () => {
                                             case 'showConnectionInfo':
                                                 handleShowConnectionInfo(rowData);
                                                 break;
+
+                                            case 'integrityCheck':
+                                                handleIntegrityCheck(rowData);
+                                                break;
                                         }
                                     }
                                 }}
@@ -836,8 +632,8 @@ const SandboxTable = () => {
             width: '200px'
         },
         {
-            Header: GENERAL.SANDBOX_DB_HOST_NAME,
-            accessor: 'hostName',
+            Header: GENERAL.SANDBOX_DB_INSTANCE_NAME,
+            accessor: 'instanceName',
             id: '2',
             width: '220px',
             filterOptions: 'auto'
@@ -850,17 +646,17 @@ const SandboxTable = () => {
             isSortable: true
         },
         {
-            Header: GENERAL.SANDBOX_SOURCE_DB_HOST_NAME,
-            accessor: 'sourceHost',
+            Header: GENERAL.SANDBOX_SOURCE_DB_INSTANCE_NAME,
+            accessor: 'sourceInstanceName',
             id: '4',
-            width: '256px',
+            width: '276px',
             filterOptions: 'auto'
         },
         {
             Header: GENERAL.SANDBOX_LAST_UPDATED,
             accessor: 'actualUpdated',
             id: '5',
-            width: '220px',
+            width: '200px',
             isSortable: true,
             renderCell: (cellData: any) => {
                 return <DsTypography variant="Regular_14">{formatDateWithTime(cellData)}</DsTypography>;
@@ -868,10 +664,13 @@ const SandboxTable = () => {
         },
         {
             Header: GENERAL.AGE,
-            accessor: 'age',
+            accessor: 'ageForSorting',
             id: '6',
             width: '128px',
-            filterOptions: 'auto'
+            isSortable: true,
+            renderCell: (cellData: any, rowData: any) => {
+                return <DsTypography variant="Regular_14">{rowData?.age}</DsTypography>;
+            }
         },
 
         {
@@ -918,6 +717,12 @@ const SandboxTable = () => {
                             <>
                                 <SmallLoader />
                                 <DsTypography variant="Regular_14">{GENERAL.SPLIT}</DsTypography>
+                            </>
+                        )}
+                        {cellData === 'integrityCheck' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">{GENERAL.INTEGRITY_CHECK}</DsTypography>
                             </>
                         )}
                     </div>

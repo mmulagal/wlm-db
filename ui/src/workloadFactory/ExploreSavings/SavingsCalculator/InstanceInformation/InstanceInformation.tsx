@@ -1,4 +1,4 @@
-import { Table, useTable, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, DsFlashingDotsLoader, TooltipInfo } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { DsTypography } from '@netapp/design-system';
 import styles from './InstanceInformation.module.scss';
@@ -8,44 +8,92 @@ import { useEffect, useState } from 'react';
 
 const InstanceInformation = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
+    const { storageSavingsResponse, storageSavingsLoading }: any = useAppSelector(state => state.exploreSavings);
+    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     const [tableData, setTableData] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setLoading(selectedHostDetails?.loading);
-        let instanceTypelist = [];
-        if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
-            instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
-        } else {
-            instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
-        }
-        let data: any = [
-            {
-                details: 'Instance type',
-                value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
-                id: '1'
-            },
-            {
-                details: 'SQL Edition',
-                value: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
-                id: '2'
-            },
-            {
-                details: 'Deployment model',
-                value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-                id: '3'
+        const findingsComputeData =
+            storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.finding || '-');
+        const findingsLicenseData =
+            storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
+        if (isInventoryV2) {
+            let instanceTypelist = [];
+            if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
+                instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
+            } else {
+                instanceTypelist = selectedHostDetails?.ec2Details?.map((inst: any) => inst?.instanceType);
             }
-        ];
-        setTableData(data);
-    }, [selectedHostDetails]);
+            let serverEdition: any = [];
+            selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
+                if (
+                    perRow?.databaseServer?.serverEdition &&
+                    !serverEdition.includes(perRow?.databaseServer?.serverEdition)
+                ) {
+                    serverEdition.push(perRow?.databaseServer?.serverEdition);
+                }
+            });
+            let data: any = [
+                {
+                    details: 'Instance type',
+                    value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
+                    id: '1',
+                    findings: findingsComputeData
+                },
+                {
+                    details: 'SQL Edition',
+                    value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
+                    id: '2',
+                    findings: findingsLicenseData
+                },
+                {
+                    details: 'Deployment model',
+                    value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+                    id: '3',
+                    findings: ''
+                }
+            ];
+            setTableData(data);
+        } else {
+            let instanceTypelist = [];
+            if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
+                instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
+            } else {
+                instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
+            }
+            let data: any = [
+                {
+                    details: 'Instance type',
+                    value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
+                    id: '1',
+                    findings: findingsComputeData
+                },
+                {
+                    details: 'SQL Edition',
+                    value: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
+                    id: '2',
+                    findings: findingsLicenseData
+                },
+                {
+                    details: 'Deployment model',
+                    value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+                    id: '3',
+                    findings: ''
+                }
+            ];
+            setTableData(data);
+        }
+    }, [selectedHostDetails, storageSavingsResponse]);
 
     const InstanceColDefs: ColumnProps[] = [
         {
             Header: 'Details',
             accessor: 'details',
             id: '1',
-            width: '190px',
+            width: '178px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <DsTypography variant="Regular_14" style={{ minWidth: '125px' }}>
@@ -59,12 +107,36 @@ const InstanceInformation = () => {
             Header: 'Value',
             accessor: 'value',
             id: '2',
-            width: '386px',
+            width: '220px',
             renderCell: (cellData: any, rowData: any) => {
                 return !loading ? (
                     <DsTypography variant="Regular_14" style={{ minWidth: '200px' }}>
                         {rowData.value}
                     </DsTypography>
+                ) : (
+                    <DsFlashingDotsLoader />
+                );
+            }
+        },
+        {
+            Header: 'Findings',
+            accessor: 'findings',
+            id: '3',
+            width: '192px',
+            renderCell: (cellData: any, rowData: any) => {
+                return !storageSavingsLoading ? (
+                    <>
+                        {rowData?.findings === 'NOT_OPTIMIZED' && (
+                            <div className={styles.findings}>
+                                <TooltipInfo>{GENERAL.NOT_OPTIMIZED}</TooltipInfo>
+                                <DsTypography variant="Regular_14">Not optimized</DsTypography>
+                            </div>
+                        )}
+
+                        {rowData?.findings === 'OPTIMIZED' && (
+                            <DsTypography variant="Regular_14">Optimized</DsTypography>
+                        )}
+                    </>
                 ) : (
                     <DsFlashingDotsLoader />
                 );

@@ -1,4 +1,4 @@
-import { SqlServerDeploymentModel, HOURS_IN_MONTH } from '../../utils/consts';
+import { SqlServerDeploymentModel, HOURS_IN_MONTH, STORAGE_SERVICE_DEFAULT_REGION } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { EbsSummary, EbsCostCalculation, getStorageSavings } from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType } from '../../routes/types/storage-savings.types';
@@ -71,19 +71,48 @@ async function invokeMarketingApi(
 ) {
     // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        ebsVolumeIds = await getVolumeIdsFromStorage(accountId, credentialsId, region);
+        // Setting to default region as us-east-1 to make the call to storage service, where we have the instance and volume details for demo
+        region = STORAGE_SERVICE_DEFAULT_REGION;
+        const response = (await getVolumeIdsFromStorage(accountId, credentialsId, region)) || [];
+        ebsVolumeIds = response.length ? [] : ebsVolumeIds;
+        // Randomly picking one volume id from the list of volume ids
+        const randomIndex = Math.floor(Math.random() * response.length);
+        ebsVolumeIds.push(response[randomIndex]);
+        logger.debug('Randomly selected volume id for demo:', ebsVolumeIds);
     }
-    const { gp2, gp3, io1, io2, st1, fsx, fsx_calculation, fsx_cost_calculation_no_snapshot, fsx_snapshot_cost_calculation, fsx_clone_cost_calculation } = await getStorageSavings(
+    const {
+        gp2,
+        gp3,
+        io1,
+        io2,
+        st1,
+        fsx,
+        fsx_calculation: fsxCalculation,
+        fsx_cost_calculation_no_snapshot: fsxNoSnapshotCalculation,
+        fsx_snapshot_cost_calculation: fsxSnapshotCostCalculation,
+        fsx_clone_cost_calculation: fsxCloneCostCalculation
+    } = await getStorageSavings(
         accountId,
         credentialsId,
         region,
         getMarketingApiRequestBody(ebsVolumeIds, params, sqlServerDeploymentType)
     );
-    return { ebs: { gp2, gp3, io1, io2, st1 }, fsx, fsx_calculation, fsx_cost_calculation_no_snapshot, fsx_snapshot_cost_calculation, fsx_clone_cost_calculation };
+    return {
+        ebs: { gp2, gp3, io1, io2, st1 },
+        fsx,
+        fsxCalculation,
+        fsxNoSnapshotCalculation,
+        fsxSnapshotCostCalculation,
+        fsxCloneCostCalculation
+    };
 }
 
-function formatEbsCalculationObject(ebsStorageType: string, ebsSummary: EbsSummary, ebsCostCalculationObject: EbsCostCalculation, clonedCopiesCount: number) {
-
+function formatEbsCalculationObject(
+    ebsStorageType: string,
+    ebsSummary: EbsSummary,
+    ebsCostCalculationObject: EbsCostCalculation,
+    clonedCopiesCount: number
+) {
     const { capacity, iops, throughput, snapshots, total, clones } = ebsSummary;
 
     const {
@@ -185,8 +214,8 @@ async function formatStorageSavingsCalculationMetrics(
         params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
 
     const {
-        ebs : { gp2, gp3, io1, st1, io2 },
-        fsx_cost_calculation_no_snapshot: {
+        ebs: { gp2, gp3, io1, st1, io2 },
+        fsxNoSnapshotCalculation: {
             desiredStorageCapacityGB: { size: desiredStorageCapacitySize, unit: desiredStorageCapacityUnit },
             numberOfVolumes,
             FSXnCapacityPrice: { price: fsxnCapacityPriceWithoutSnapshot, unit: fsxnCapacityUnitWithoutSnapshot },
@@ -234,7 +263,7 @@ async function formatStorageSavingsCalculationMetrics(
             totalThroughputIOPSRequestsChargeMonthly: totalThroughputAndIopsMonthly,
             FSXnIOPSPrice
         },
-        fsx_snapshot_cost_calculation: {
+        fsxSnapshotCostCalculation: {
             FSXnSSDPrice: { price: fsxnSsdPrice, unit: fsxnSsdPriceUnit },
             FSXnCapacityPrice: { price: fsxnCapacityPrice, unit: fsxnCapacityPriceUnit },
             desiredSnapshotStorageCapacityGB: {
@@ -261,7 +290,7 @@ async function formatStorageSavingsCalculationMetrics(
             totalMonthlyCostForCapacity,
             totalSnapshotMonthlyCost
         },
-        fsx_clone_cost_calculation: {
+        fsxCloneCostCalculation: {
             desiredStorageCapacityGB: { size: cloneDesiredStorageCapacityGB, unit: cloneDesiredStorageCapacityGBUnit },
             percentageOfDataOnSSDStorage: percentageOfDataOnSSDStorageClone,
             savingsFromCompressionAndDeduplication: savingsFromCompressionAndDeduplicationClone,
@@ -283,21 +312,31 @@ async function formatStorageSavingsCalculationMetrics(
 
     const ebsCalculationBreakdown = [];
     if (gp2) {
-        ebsCalculationBreakdown.push(formatEbsCalculationObject('gp2', gp2.ebs, gp2.ebs_cost_calculation, totalMonthlyClonedCopiesCount));
+        ebsCalculationBreakdown.push(
+            formatEbsCalculationObject('gp2', gp2.ebs, gp2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        );
     }
     if (gp3) {
-        ebsCalculationBreakdown.push(formatEbsCalculationObject('gp3', gp3.ebs, gp3.ebs_cost_calculation, totalMonthlyClonedCopiesCount));
+        ebsCalculationBreakdown.push(
+            formatEbsCalculationObject('gp3', gp3.ebs, gp3.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        );
     }
     if (io1) {
-        ebsCalculationBreakdown.push(formatEbsCalculationObject('io1', io1.ebs, io1.ebs_cost_calculation, totalMonthlyClonedCopiesCount));
+        ebsCalculationBreakdown.push(
+            formatEbsCalculationObject('io1', io1.ebs, io1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        );
     }
 
     if (io2) {
-        ebsCalculationBreakdown.push(formatEbsCalculationObject('io2', io2.ebs, io2.ebs_cost_calculation, totalMonthlyClonedCopiesCount));
+        ebsCalculationBreakdown.push(
+            formatEbsCalculationObject('io2', io2.ebs, io2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        );
     }
 
     if (st1) {
-        ebsCalculationBreakdown.push(formatEbsCalculationObject('st1', st1.ebs, st1.ebs_cost_calculation, totalMonthlyClonedCopiesCount));
+        ebsCalculationBreakdown.push(
+            formatEbsCalculationObject('st1', st1.ebs, st1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        );
     }
 
     return {

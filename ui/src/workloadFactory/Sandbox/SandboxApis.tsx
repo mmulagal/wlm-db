@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     setAggregatedSandboxList,
+    setAllSandboxList,
     setSandboxListState,
     setSandboxSavingsState,
     updateConnectionInfo
@@ -12,9 +13,13 @@ const SandboxApis = () => {
     const dispatch = useAppDispatch();
 
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
-    const { getSandboxList, aggregatedSandboxList, connectionInfo } = useAppSelector(state => state.sandbox);
+    const { getSandboxList, aggregatedSandboxList, connectionInfo, allSandboxList } = useAppSelector(
+        state => state.sandbox
+    );
+    const { isRefreshed } = useAppSelector(state => state.inventory);
+    const { refreshBlocked } = useAppSelector(state => state?.auth);
 
-    const { selectedDatabaseHostId, selectedSandboxName } = connectionInfo;
+    const { selectedDatabaseHostId, selectedSandboxName, selectedDatabaseInstanceId } = connectionInfo;
 
     const [credId, setCredId] = useState(null);
     const [regionId, setRegionId] = useState(null);
@@ -24,7 +29,8 @@ const SandboxApis = () => {
         setCredId(headerSelectedCred?.data?.credentialsId);
         setRegionId(headerSelectedRegion?.label2);
         dispatch(setAggregatedSandboxList([]));
-    }, [headerSelectedCred, headerSelectedRegion]);
+        dispatch(setAllSandboxList([]));
+    }, [headerSelectedCred, headerSelectedRegion, isRefreshed]);
 
     const {
         data: sandboxList,
@@ -36,7 +42,7 @@ const SandboxApis = () => {
             region: regionId,
             nextToken: sandboxCursor
         },
-        { skip: !credId || !regionId || (aggregatedSandboxList.length && !sandboxCursor) }
+        { skip: !credId || !regionId || (allSandboxList.length && !sandboxCursor) || refreshBlocked }
     );
 
     const {
@@ -48,7 +54,7 @@ const SandboxApis = () => {
             credentialId: credId,
             region: regionId
         },
-        { skip: !credId || !regionId }
+        { skip: !credId || !regionId || refreshBlocked }
     );
 
     const {
@@ -60,10 +66,11 @@ const SandboxApis = () => {
             credentialsId: credId,
             regionId: regionId,
             databaseHostId: selectedDatabaseHostId,
+            instanceId: selectedDatabaseInstanceId,
             sandboxName: selectedSandboxName
         },
         {
-            skip: !credId || !regionId || !selectedDatabaseHostId || !selectedSandboxName
+            skip: !credId || !regionId || !selectedDatabaseHostId || !selectedSandboxName || !selectedDatabaseInstanceId
         }
     );
 
@@ -75,6 +82,7 @@ const SandboxApis = () => {
                     ...(sandboxList?.items?.filter((item: any) => !item?.error) || [])
                 ])
             );
+            dispatch(setAllSandboxList([...(allSandboxList || []), ...(sandboxList?.items || [])]));
             setSandboxCursor(sandboxList?.nextToken || null);
         }
         dispatch(
@@ -101,6 +109,7 @@ const SandboxApis = () => {
             dispatch(
                 updateConnectionInfo({
                     selectedDatabaseHostId,
+                    selectedDatabaseInstanceId,
                     selectedSandboxName,
                     connectionString: connectionInfoData,
                     isLoading: false
@@ -110,6 +119,7 @@ const SandboxApis = () => {
             dispatch(
                 updateConnectionInfo({
                     selectedDatabaseHostId,
+                    selectedDatabaseInstanceId,
                     selectedSandboxName,
                     connectionString: '',
                     isLoading: true

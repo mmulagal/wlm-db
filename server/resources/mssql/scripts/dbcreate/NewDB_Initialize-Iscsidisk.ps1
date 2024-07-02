@@ -25,7 +25,13 @@ param(
     [string]$DataSerial,
 
     [Parameter(Mandatory = $true)]
-    [string]$LogSerial             
+    [string]$LogSerial,
+    
+    [Parameter(Mandatory = $true)]
+    [string]$InstanceName,
+    
+    [Parameter(Mandatory = $true)]
+    [string]$isDefaultInstance
 )
 $null = (Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append)
 $ErrorActionPreference = "Stop"
@@ -270,7 +276,7 @@ catch {
 try {
     if ($IsClustered -ne "false") {
         #Fetch the SQL Server role from the WSFC. In discovered instances the instance name could be anything other than MSSQLSERVER, this handles that.
-        $SQLRoleGroup = (Get-ClusterGroup).Name -match ('SQl Server*')
+        $SQLRoleGroup = (Get-ClusterGroup).Name -like "SQL Server ($InstanceName)*"
         $SQLGroup = $SQLRoleGroup[0]
 
         if ( ($LogNew -ne "false") -And ($DataNew -ne "false")) {
@@ -281,8 +287,14 @@ try {
             $null = (Move-ClusterResource -Name $datavol -Group $SQLGroup) 
 
             #Add dependency on new disks in SQL Server Resource
-            $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol)
-            $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
+            if ($isDefaultInstance -eq "true") {
+                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol)
+                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
+            }
+            else {
+                $null = (Add-ClusterResourceDependency -Resource "SQL Server ($InstanceName)" -Provider $datavol)
+                $null = (Add-ClusterResourceDependency -Resource "SQL Server ($InstanceName)" -Provider $logvol)
+            }
 
             #Rename new cluster disks to user friendly name
     (Get-ClusterResource -Name $datavol).name = $datalabel
@@ -293,8 +305,14 @@ try {
             $logvol = $logdisk.Name
             $null = (Move-ClusterResource -Name $logvol -Group $SQLGroup)
 
-            #Add dependency on new disks in SQL Server Resource
-            $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
+                        #Add dependency on new disks in SQL Server Resource
+
+            if($isDefaultInstance -eq "true") {
+                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
+            }
+            else {
+                $null = (Add-ClusterResourceDependency -Resource "SQL Server ($InstanceName)" -Provider $logvol)
+            }
 
             #Rename new cluster disks to user friendly name
     (Get-ClusterResource -Name $logvol).name = $loglabel

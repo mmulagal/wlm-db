@@ -70,6 +70,7 @@ export interface SandboxItemEntities {
     sandboxName: string;
     databaseHostName: string;
     databaseHostId: string;
+    databaseInstanceId: string;
     databaseInstanceName: string;
     sourceDatabaseName: string;
     sourceDatabaseHostName: string;
@@ -90,6 +91,7 @@ export interface SandboxEntities {
         sandboxListError: string;
     };
     aggregatedSandboxList: SandboxListEntities;
+    allSandboxList: SandboxListEntities;
     getSandboxSavings: {
         sandboxSavings: {
             consumedStorage: number;
@@ -101,9 +103,16 @@ export interface SandboxEntities {
     };
     connectionInfo: {
         selectedDatabaseHostId?: string | null;
+        selectedDatabaseInstanceId?: string | null;
         selectedSandboxName?: string | null;
         connectionString?: string | null;
         isLoading: boolean;
     };
     splitEstimateLoading: boolean;
+    rollbackSnapshotsLoading: boolean;
+    rollbackSnapshotList: any;
+    isRollbackSelected: boolean;
+    selectedRollbackSnapshot: any;
 }
+
+export type SandboxActions = 'delete' | 'refresh' | 'rebaseline' | 'split' | 'integrityCheck';

@@ -23,14 +23,15 @@ import {
     WLMDB_COST_ALLOCATION_TAG,
     CF_STACK_RESOURCE_TYPE,
     RESOURCE_SOURCE,
-    DEFAULT_INSTANCE_NAME,
-    STORAGE_PROTOCOLS
+    STORAGE_PROTOCOLS,
+    DatabaseTypes
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
     convertMetricsIntoJson,
     deployedStackUrl,
     derivePropertiesFromARN,
+    getDatabaseInstanceName,
     getDescriptionForMatchingName,
     getQueueUrl
 } from '../../utils/utils';
@@ -43,7 +44,8 @@ import {
     listEvents,
     updateDeployment,
     upsertDeployment,
-    upsertDatabaseInstance
+    upsertDatabaseInstance,
+    DatabaseInstanceRecord
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getAllInstanceDetails, getMsSqlResourceId, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
@@ -605,35 +607,50 @@ async function processCloudFormationMessages() {
                                                             region,
                                                             nodeIds
                                                         );
+
                                                         const instanceNames = deployedInstances.map(
                                                             (instance: { instanceName: string }) =>
                                                                 instance.instanceName
                                                         );
-                                                        const instanceDetailsList: any = instanceNames.map(
-                                                            async (instanceName: string) => {
+
+                                                        await Promise.all(
+                                                            instanceNames.map(async (instanceName: string) => {
+                                                                const isDefaultInstance = !instanceName.includes('$');
+                                                                const modifiedInstanceName = instanceName.includes('$')
+                                                                    ? instanceName.replace(/^.+\$/, '')
+                                                                    : instanceName;
+
                                                                 const sqlInstanceGuid = await getMssqlInstanceGuid(
                                                                     credentialsId,
                                                                     region,
-                                                                    instanceName,
+                                                                    getDatabaseInstanceName(
+                                                                        instanceName,
+                                                                        isDefaultInstance
+                                                                    ),
                                                                     nodeIds
                                                                 );
 
-                                                                return {
+                                                                const instanceDetails: DatabaseInstanceRecord = {
                                                                     credentialsId,
                                                                     resourceId,
                                                                     region,
                                                                     databaseInstanceId: sqlInstanceGuid,
-                                                                    databaseInstanceName: DEFAULT_INSTANCE_NAME,
+                                                                    databaseInstanceName: modifiedInstanceName,
                                                                     fsxnIds: fsxId,
-                                                                    isDefault: true,
+                                                                    isDefault: isDefaultInstance,
                                                                     source: RESOURCE_SOURCE.DEPLOY,
-                                                                    fsxSvmId: { fsxId: fsxSvmId },
+                                                                    fsxSvmId: { [fsxId]: fsxSvmId },
                                                                     sqlDeploymentType,
-                                                                    databaseType: 'MSSQL'
+                                                                    databaseType: DatabaseTypes.MS_SQL_SERVER,
+                                                                    storageProtocol: STORAGE_PROTOCOLS.ISCSI
                                                                 };
-                                                            }
+
+                                                                await upsertDatabaseInstance(
+                                                                    accountId,
+                                                                    instanceDetails
+                                                                );
+                                                            })
                                                         );
-                                                        await upsertDatabaseInstance(accountId, instanceDetailsList);
                                                     } catch (error) {
                                                         logger.error(
                                                             'Failed to add details to database instance table',

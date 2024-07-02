@@ -2,6 +2,24 @@
     display: flex;
     gap: 24px;
 
+    .tooltipContainer {
+        display: flex;
+        gap: 8px;
+        padding: 12px 0 16px 0;
+
+        span:hover {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+    }
+
+    .ec2Separator {
+        border-bottom: 1px solid var(--border);
+    }
+
     [class*='Table-module_row'] {
         [class*='Table-module_cell']:nth-child(2) {
             // box-shadow: 3px 2px 6px 0px var(--border);
@@ -21,8 +39,15 @@
             // background-color: transparent !important;
             border-bottom: 1px solid var(--content-background) !important;
         }
-        span {
-            background-color: var(--content-background) !important;
+    }
+
+    [class*='Table-module_header-row'] {
+        [class*='Table-module_header-cell'] {
+            &:nth-child(5) {
+                [class*='Table-module_right-border'] {
+                    pointer-events: none;
+                }
+            }
         }
     }
 
@@ -39,9 +64,11 @@
 
     .arrow {
         svg {
+            transform: rotate(90deg);
+            -webkit-transform: rotate(90deg);
             &.arrow-down {
-                transform: rotate(90deg);
-                -webkit-transform: rotate(90deg);
+                transform: rotate(270deg);
+                -webkit-transform: rotate(270deg);
             }
         }
     }
@@ -57,11 +84,70 @@
     .firstColText {
         display: flex;
         gap: 8px;
+        align-items: center;
+
+        .ssmOffline {
+            margin-left: 24px;
+            position: relative;
+            top: 2px;
+        }
+    }
+
+    .ec2Container {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+
+    .copy {
+        width: 100px;
+        display: flex;
+        justify-content: flex-end;
+        height: 20px;
+        .copy-popover {
+            width: 140px;
+            font-size: 13px;
+            line-height: 20px;
+            text-align: center;
+            padding: 2px 2px;
+        }
+
+        svg {
+            cursor: pointer;
+            &:hover {
+                fill: var(--icon-primary);
+            }
+        }
+    }
+
+    .ssmOffline:hover {
+        span:first-child {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+    }
+
+    .ssmLink {
+        span {
+            text-transform: none !important;
+        }
     }
 
     .colText {
-        display: flex;
+        // display: flex;
         gap: 16px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 150px;
     }
 
     .protection {
@@ -88,19 +174,16 @@
         align-self: center;
         &.circle {
             border-radius: 50%;
-            margin-top: 2px;
+            // margin-top: 2px;
         }
-        &.up {
+        &.online {
             background-color: var(--green-60);
         }
-        &.down {
-            background-color: var(--orange-60);
-        }
-        &.initializing {
-            background-color: var(--cyan-30);
-        }
-        &.failed {
+        &.offline {
             background-color: var(--red-30);
+        }
+        &.unknown {
+            background-color: var(--grey-25);
         }
     }
 
@@ -153,5 +236,19 @@
             margin-top: 2px;
             color: var(--text-button-disabled);
         }
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .table {
+        width: 1107px !important;
+        margin-top: 16px !important;
+    }
+}
+
+.notification {
+    font-weight: 400;
+    .bold {
+        font-weight: 540;
     }
 }

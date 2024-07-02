@@ -465,11 +465,17 @@ Resources:
                                     - '}'
                                 - ' { "IsEnabled" : false}'
                     commands:
-                        a-enableSSM:
+                        a-installssmscript:
+                            command: echo try{Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"}catch{Write-Host $_.exception} > C:/install-ssm.ps1
+                            waitAfterCompletion: '0'
+                        b-installssm:
+                            command: powershell.exe -Command C:/install-ssm.ps1
+                            waitAfterCompletion: '30'
+                        c-enableSSM:
                             command: powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType
                                 Automatic"
                             waitAfterCompletion: '30'
-                        b-restartSSM:
+                        d-restartSSM:
                             command: powershell.exe -Command "Restart-Service AmazonSSMAgent -Force"
                             waitAfterCompletion: '30'
                 FetchResources:
@@ -878,7 +884,18 @@ Resources:
                                   - !Ref 'SqlFSxFCIName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        l-update-sqltag:
+                        l-set-maxdop:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\SetMaxDOP.ps1 -DomainAdminUser '
+                                  - !Ref 'DomainAdminUser'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
+                                  - "' -NetBIOSName '"
+                                  - !Ref 'SqlFSxServerNetBIOSName1'
+                                  - '''"'
+                            waitAfterCompletion: '0'
+                        m-update-sqltag:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Update-SQLNodeTag.ps1
@@ -886,7 +903,7 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '"'
                             waitAfterCompletion: 0
-                        m-query-sqltag:
+                        n-query-sqltag:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Query-SQLNodeTags.ps1
@@ -896,7 +913,7 @@ Resources:
                                   - '2'
                                   - '"'
                             waitAfterCompletion: 0
-                        n-create-fsxparameter:
+                        o-create-fsxparameter:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1 -FSxID '
@@ -1055,11 +1072,17 @@ Resources:
                                     - '}'
                                 - ' { "IsEnabled" : false}'
                     commands:
-                        a-enableSSM:
+                        a-installssmscript:
+                            command: echo try{Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"}catch{Write-Host $_.exception} > C:/install-ssm.ps1
+                            waitAfterCompletion: '0'
+                        b-installssm:
+                            command: powershell.exe -Command C:/install-ssm.ps1
+                            waitAfterCompletion: '30'
+                        c-enableSSM:
                             command: powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType
                                 Automatic"
                             waitAfterCompletion: '30'
-                        b-restartSSM:
+                        d-restartSSM:
                             command: powershell.exe -Command "Restart-Service AmazonSSMAgent -Force"
                             waitAfterCompletion: '30'
                 FetchResources:

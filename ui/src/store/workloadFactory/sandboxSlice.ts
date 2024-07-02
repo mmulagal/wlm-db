@@ -10,6 +10,7 @@ export const initialSandboxState: SandboxEntities = {
         sandboxListError: ''
     },
     aggregatedSandboxList: [],
+    allSandboxList: [],
     getSandboxSavings: {
         sandboxSavings: {
             consumedStorage: 0,
@@ -21,11 +22,16 @@ export const initialSandboxState: SandboxEntities = {
     },
     connectionInfo: {
         selectedDatabaseHostId: null,
+        selectedDatabaseInstanceId: null,
         selectedSandboxName: null,
         connectionString: null,
         isLoading: false
     },
-    splitEstimateLoading: false
+    splitEstimateLoading: false,
+    rollbackSnapshotsLoading: false,
+    rollbackSnapshotList: [],
+    isRollbackSelected: false,
+    selectedRollbackSnapshot: null
 };
 
 const sandboxSlice = createSlice({
@@ -38,6 +44,9 @@ const sandboxSlice = createSlice({
         setAggregatedSandboxList: (state, action: PayloadAction<any>) => {
             state.aggregatedSandboxList = action.payload;
         },
+        setAllSandboxList: (state, action: PayloadAction<any>) => {
+            state.allSandboxList = action.payload;
+        },
         setSandboxSavingsState: (state, action: PayloadAction<any>) => {
             state.getSandboxSavings = action.payload;
         },
@@ -49,6 +58,24 @@ const sandboxSlice = createSlice({
         },
         updateSplitEstimateLoading: (state, action: PayloadAction<any>) => {
             state.splitEstimateLoading = action.payload;
+        },
+        updateRollbackSnapshotsLoading: (state, action: PayloadAction<any>) => {
+            state.rollbackSnapshotsLoading = action.payload;
+        },
+        updateRollbackSnapshotList: (state, action: PayloadAction<any>) => {
+            state.rollbackSnapshotList = action.payload;
+        },
+        updateIsRollbackSelected: (state, action: PayloadAction<any>) => {
+            state.isRollbackSelected = action.payload;
+        },
+        updateSelectedRollbackSnapshot: (state, action: PayloadAction<any>) => {
+            state.selectedRollbackSnapshot = action.payload;
+        },
+        resetRefreshDialog: state => {
+            state.rollbackSnapshotsLoading = false;
+            state.rollbackSnapshotList = [];
+            state.isRollbackSelected = false;
+            state.selectedRollbackSnapshot = null;
         }
     }
 });
@@ -56,10 +83,16 @@ const sandboxSlice = createSlice({
 export const {
     setSandboxListState,
     setAggregatedSandboxList,
+    setAllSandboxList,
     setSandboxSavingsState,
     setShowBanner,
     updateConnectionInfo,
-    updateSplitEstimateLoading
+    updateSplitEstimateLoading,
+    updateRollbackSnapshotsLoading,
+    updateRollbackSnapshotList,
+    updateIsRollbackSelected,
+    updateSelectedRollbackSnapshot,
+    resetRefreshDialog
 } = sandboxSlice.actions;
 
 export default sandboxSlice;

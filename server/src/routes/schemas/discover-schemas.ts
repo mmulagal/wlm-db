@@ -1,5 +1,8 @@
 import { RouteTags } from '../../utils/consts';
-import { DatabaseHostSummaryPerStorageTypeListResponse } from '../types/database-hosts.types';
+import {
+    DatabaseHostSummaryForMultiInstanceListResponse,
+    DatabaseHostSummaryPerStorageTypeListResponse
+} from '../types/database-hosts.types';
 import {
     DiscoverMsSqlResponseBody,
     DiscoverMsSqlQuery,
@@ -9,7 +12,9 @@ import {
     DiscoverCredentialsResponse,
     MsSqlInstancesRequestQuery,
     PrepareResourceResponseBody,
-    MultiInstanceManagementResponseBody,
+    MultiInstanceManageMsSqlRequestBody,
+    MultiInstanceManageResponseBody,
+    MultiInstanceUnmanageResponseBody,
     UnmanageInstanceParams,
     DatabaseInstanceQueryString
 } from '../types/discover.types';
@@ -75,7 +80,18 @@ const UnManageMsSqlSchema = {
     summary: 'Unmanage SQL Server database instances.',
     description: 'Unmanage SQL Server database instances managed by Workload Factory.',
     response: {
-        200: MultiInstanceManagementResponseBody
+        200: MultiInstanceUnmanageResponseBody
+    }
+};
+
+const ManageMsSqlSchemaV2 = {
+    ...DiscoveryBaseRequest,
+    params: CredentialsIdParams,
+    body: MultiInstanceManageMsSqlRequestBody,
+    summary: 'Manage SQL Server instances',
+    description: 'Manage SQL Server instances',
+    response: {
+        200: MultiInstanceManageResponseBody
     }
 };
 
@@ -102,11 +118,25 @@ const MsSqlInstancesSchema = {
         200: DatabaseHostSummaryPerStorageTypeListResponse
     }
 };
+
+const MsSqlInstancesSchemaV2 = {
+    Headers: GenericHeaders,
+    tags: [RouteTags.DISCOVER],
+    params: CredentialsIdParams,
+    querystring: MsSqlInstancesRequestQuery,
+    summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
+    description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
+    response: {
+        200: DatabaseHostSummaryForMultiInstanceListResponse
+    }
+};
 export {
     DiscoverCredentialsSchema,
     DiscoverMsSqlSchema,
     ManageMsSqlSchema,
     MsSqlInstancesSchema,
     PrepareForManageSchema,
-    UnManageMsSqlSchema
+    MsSqlInstancesSchemaV2,
+    UnManageMsSqlSchema,
+    ManageMsSqlSchemaV2
 };

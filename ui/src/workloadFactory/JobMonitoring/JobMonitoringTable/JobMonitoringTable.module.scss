@@ -111,6 +111,14 @@
         }
     }
 
+    .arrow-disabled {
+        svg {
+            path {
+                fill: var(--text-disabled);
+            }
+        }
+    }
+
     .statusCol {
         display: flex;
         gap: 16px;

@@ -6,10 +6,10 @@ import {
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { GENERAL } from '../../utils/appConstants';
-import { GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, TIB_IN_BYTE, WLF_TABS } from '../../utils/consts';
+import { GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import { formatFractionalNumber } from '../../utils/utilityFunctions';
 
-export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
+export const onClickESHost = (dispatch: any, rowData: any) => {
     const deploymentModel = (() => {
         return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
@@ -17,168 +17,20 @@ export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
     dispatch(setSelectedInstanceId(rowData?.id));
     dispatch(setSelectedDeploymentModel(deploymentModel));
     dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || GENERAL.ES_SERVER_NAME));
-    setESInstanceData(rowData, isDemoMode, deploymentModel, dispatch);
+    setESInstanceData(rowData, dispatch);
 };
 
-export const setESInstanceData = (data: any, isDemoMode: any, type: string, dispatch: any) => {
-    if (isDemoMode) {
-        let demoData = {};
-        if (type === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            demoData = {
-                ...data,
-                topology: {
-                    ...data?.topology,
-                    ec2Details: [
-                        {
-                            ...data?.topology?.ec2Details?.[0],
-                            instanceType: 'm5.2xlarge'
-                        }
-                    ]
-                },
-                serverInstallationMode: GENERAL.STANDALONE,
-                databaseServer: {
-                    ...data?.databaseServer,
-                    activeNode: 'SQLserver-Finance-01',
-                    serverEdition: 'SQL Server Standard Edition'
-                },
-                databaseCount: 2,
-                ebsResourceInfo: [
-                    {
-                        id: 'vol1',
-                        size: 2 * TIB_IN_BYTE,
-                        volumeType: 'io2',
-                        iops: 40000,
-                        throughput: 128
-                    },
-                    {
-                        id: 'vol2',
-                        size: 2 * TIB_IN_BYTE,
-                        volumeType: 'io2',
-                        iops: 40000,
-                        throughput: 128
-                    }
-                ],
-                recommendedInstance: {
-                    serverInstallationMode: GENERAL.STANDALONE,
-                    serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
-                    serverVersion: 'Microsoft SQL Server 2019',
-                    instanceType: ['m5.2xlarge']
-                },
-                storage: {
-                    ebs: {
-                        size: 4 * TIB_IN_BYTE
-                    }
-                }
-            };
-        } else {
-            demoData = {
-                ...data,
-                topology: {
-                    ...data?.topology,
-                    ec2Details: [
-                        {
-                            ...data?.topology?.ec2Details?.[0],
-                            instanceType: 'm5.2xlarge'
-                        },
-                        {
-                            ...data?.topology?.ec2Details?.[0],
-                            instanceType: 'm5.2xlarge'
-                        }
-                    ]
-                },
-                serverInstallationMode: GENERAL.AOAG,
-                databaseServer: {
-                    ...data?.databaseServer,
-                    activeNode: 'SQLserver-PLM',
-                    serverEdition: 'SQL Server Enterprise Edition'
-                },
-                databaseCount: 2,
-                ebsResourceInfo: [
-                    {
-                        id: 'vol1',
-                        size: 5 * TIB_IN_BYTE,
-                        volumeType: 'io2',
-                        iops: 40000,
-                        throughput: 128
-                    },
-                    {
-                        id: 'vol2',
-                        size: 5 * TIB_IN_BYTE,
-                        volumeType: 'io2',
-                        iops: 40000,
-                        throughput: 128
-                    }
-                ],
-                recommendedInstance: {
-                    serverInstallationMode: GENERAL.FAILOVER_CLUSTER_INSTANCES,
-                    serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
-                    serverVersion: 'Microsoft SQL Server 2019',
-                    instanceType: ['m5.2xlarge']
-                },
-                storage: {
-                    ebs: {
-                        size: 10 * TIB_IN_BYTE
-                    }
-                }
-            };
-        }
-        dispatch(setSelectedHostDetails(demoData));
-    } else {
-        dispatch(
-            setSelectedHostDetails({
-                ...data,
-                recommendedInstance: {
-                    serverInstallationMode: data?.serverInstallationMode,
-                    serverEdition: data?.databaseServer?.serverEdition,
-                    serverVersion: data?.databaseServer?.serverVersion,
-                    instanceType: data?.topology?.ec2Details?.map((inst: any) => inst?.instanceType)
-                }
-            })
-        );
-    }
-};
-
-export const updateDemoEbsRows = (data: any) => {
-    const updatedNonFsxnStorageList = data?.map((perRow: any) => {
-        if (perRow?.sqlServerInstances?.[0]?.sqlServerNodes?.length <= 1) {
-            return {
-                ...perRow,
-                sizeformat: '4 TiB',
-                azType: 'Single AZ',
-                sqlServerInstances: perRow?.sqlServerInstances?.map((perInst: any) => {
-                    return {
-                        ...perInst,
-                        deploymentTypes: [
-                            {
-                                type: 'SINGLE_AZ_1',
-                                zones: ['availability-zone-3']
-                            }
-                        ]
-                    };
-                })
-            };
-        } else if (perRow?.sqlServerInstances?.[0]?.sqlServerNodes) {
-            return {
-                ...perRow,
-                sizeformat: '10 TiB',
-                azType: 'Multi AZ',
-                sqlServerInstances: perRow?.sqlServerInstances?.map((perInst: any) => {
-                    return {
-                        ...perInst,
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
-                    };
-                })
-            };
-        } else {
-            return { ...perRow };
-        }
-    });
-    return updatedNonFsxnStorageList;
+export const setESInstanceData = (data: any, dispatch: any) => {
+    dispatch(
+        setSelectedHostDetails({
+            ...data,
+            recommendedInstance: {
+                serverInstallationMode: data?.serverInstallationMode,
+                serverVersion:
+                    data?.databaseServer?.serverVersion || data?.sqlServerInstances?.[0]?.databaseServer?.serverVersion
+            }
+        })
+    );
 };
 
 export const formatCalcSize = (val: any) => {
@@ -186,6 +38,14 @@ export const formatCalcSize = (val: any) => {
         return String(Number(val / GIB_IN_BYTE).toLocaleString()) + ' GiB';
     } else {
         return '0 GiB';
+    }
+};
+
+export const formatPrice = (val: any) => {
+    if (val || val === 0) {
+        return '$' + Number(val).toLocaleString();
+    } else {
+        return GENERAL.NOT_AVAILABLE;
     }
 };
 
@@ -205,7 +65,12 @@ export const formatPercentage = (val: any) => {
     }
 };
 
-export const formatViewCalcInstance = (selectedDeploymentModel: any, selectedHostDetails: any) => {
+export const formatViewCalcInstance = (
+    selectedDeploymentModel: any,
+    selectedHostDetails: any,
+    computeDetails: any,
+    licenseDetails: any
+) => {
     let instanceTypelist = [];
     if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
         instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
@@ -216,28 +81,40 @@ export const formatViewCalcInstance = (selectedDeploymentModel: any, selectedHos
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             return [
                 {
-                    instanceType: instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
-                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE, // ToDo
-                    ec2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
-                    sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
-                    sqlLicense: GENERAL.NOT_AVAILABLE // ToDo
+                    instanceType: computeDetails?.[0]?.instanceType || instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
+                    computeHourlyPrice: formatPrice(computeDetails?.[0]?.computeHourlyPrice),
+                    computeMonthlyPrice: formatPrice(computeDetails?.[0]?.computeMonthlyPrice),
+                    sqlEdition:
+                        licenseDetails?.[0]?.sqlServerEdition ||
+                        selectedHostDetails?.databaseServer?.serverEdition ||
+                        GENERAL.NOT_AVAILABLE,
+                    sqlLicense: licenseDetails?.[0]?.licenseIncluded ? 'Yes' : 'No',
+                    hoursInAMonth: formatNumbers(computeDetails?.[0]?.hoursInMonth)
                 }
             ];
         } else {
             return [
                 {
-                    instanceType: instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
-                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE, // ToDo
-                    ec2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
-                    sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
-                    sqlLicense: GENERAL.NOT_AVAILABLE // ToDo
+                    instanceType: computeDetails?.[0]?.instanceType || instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
+                    computeHourlyPrice: formatPrice(computeDetails?.[0]?.computeHourlyPrice),
+                    computeMonthlyPrice: formatPrice(computeDetails?.[0]?.computeMonthlyPrice),
+                    sqlEdition:
+                        licenseDetails?.[0]?.sqlServerEdition ||
+                        selectedHostDetails?.databaseServer?.serverEdition ||
+                        GENERAL.NOT_AVAILABLE,
+                    sqlLicense: licenseDetails?.[0]?.licenseIncluded ? 'Yes' : 'No',
+                    hoursInAMonth: formatNumbers(computeDetails?.[0]?.hoursInMonth)
                 },
                 {
-                    instanceType: instanceTypelist?.[1] || GENERAL.NOT_AVAILABLE,
-                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE, // ToDo
-                    ec2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
-                    sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
-                    sqlLicense: GENERAL.NOT_AVAILABLE // ToDo
+                    instanceType: computeDetails?.[1]?.instanceType || instanceTypelist?.[1] || GENERAL.NOT_AVAILABLE,
+                    computeHourlyPrice: formatPrice(computeDetails?.[1]?.computeHourlyPrice),
+                    computeMonthlyPrice: formatPrice(computeDetails?.[1]?.computeMonthlyPrice),
+                    sqlEdition:
+                        licenseDetails?.[1]?.sqlServerEdition ||
+                        selectedHostDetails?.databaseServer?.serverEdition ||
+                        GENERAL.NOT_AVAILABLE,
+                    sqlLicense: licenseDetails?.[1]?.licenseIncluded ? 'Yes' : 'No',
+                    hoursInAMonth: formatNumbers(computeDetails?.[1]?.hoursInMonth)
                 }
             ];
         }
@@ -249,24 +126,48 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
     const totalEbsCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += viewCalculationsResponse?.ebsInstanceCalculation?.[0]?.ec2MachineCost || 0;
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.computeMonthlyPrice || 0;
         } else {
-            cost += 2 * (viewCalculationsResponse?.ebsInstanceCalculation?.[0]?.ec2MachineCost || 0);
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.computeMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[1]?.computeMonthlyPrice || 0;
         }
         cost += viewCalculationsResponse?.ebsCalculation?.ebsSnapshotCost || 0;
-        cost += viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost || 0;
+        cost += viewCalculationsResponse.ebsCalculation.ebsThroughputCost || 0;
         cost += viewCalculationsResponse?.ebsCalculation?.ebsIopsCost || 0;
         cost += viewCalculationsResponse?.ebsCalculation?.ebsStorageCost || 0;
         cost += viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost || 0;
         return formatFractionalNumber(cost, 2);
     })();
 
+    const totalEbsEc2MachineCost = (() => {
+        let cost = 0;
+        if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.computeMonthlyPrice || 0;
+        } else {
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.computeMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[1]?.computeMonthlyPrice || 0;
+        }
+        return formatFractionalNumber(cost, 2);
+    })();
+
+    const totalFsxEc2MachineCost = (() => {
+        let cost = 0;
+        if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.computeMonthlyPrice || 0;
+        } else {
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.computeMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[1]?.computeMonthlyPrice || 0;
+        }
+        return formatFractionalNumber(cost, 2);
+    })();
+
     const totalFsxCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += viewCalculationsResponse?.fsxInstanceCalculation?.[0]?.ec2MachineCost || 0;
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.computeMonthlyPrice || 0;
         } else {
-            cost += 2 * (viewCalculationsResponse?.fsxInstanceCalculation?.[0]?.ec2MachineCost || 0);
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.computeMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[1]?.computeMonthlyPrice || 0;
         }
         cost += viewCalculationsResponse?.fsxOntapCalculation?.totalThroughputAndIopsMonthly || 0;
         cost += viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyStorageCharge || 0;
@@ -282,6 +183,18 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
     })();
 
     const result = {
+        fsxInstanceCalculation: formatViewCalcInstance(
+            selectedDeploymentModel,
+            {},
+            viewCalculationsResponse?.recommendedComputeCalculation,
+            viewCalculationsResponse?.recommendedLicenseCalculation
+        ),
+        ebsInstanceCalculation: formatViewCalcInstance(
+            selectedDeploymentModel,
+            {},
+            viewCalculationsResponse?.existingComputeCalculation,
+            viewCalculationsResponse?.existingLicenseCalculation
+        ),
         fsxOntapCalculation: {
             numberOfVolumes: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.numberOfVolumes),
             desiredStorageCapacity: formatCalcSize(
@@ -485,8 +398,8 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             throughput: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.throughput),
             totalCloneMonthlyCost: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost)
         },
-        totalFsxEc2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
-        totalEBSEc2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
+        totalFsxEc2MachineCost: totalFsxEc2MachineCost,
+        totalEBSEc2MachineCost: totalEbsEc2MachineCost,
         fsxTotalCost: totalFsxCost,
         ebsTotalCost: totalEbsCost,
         fsxSnapshotTotalCost: totalFsxSnapshotCost

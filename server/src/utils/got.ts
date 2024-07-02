@@ -1,7 +1,7 @@
 import got, { Hooks, HTTPError, RequestError, TimeoutError } from 'got';
 import ms from 'ms';
 import config from 'config';
-import getLogger, { getActiveTraceId } from './logger';
+import getLogger, { getTraceData } from './logger';
 import { HEADERS, WLMDB } from './consts';
 
 const logger = getLogger('got');
@@ -71,7 +71,7 @@ const hooks: Hooks = {
     beforeRequest: [
         options => {
             options.headers[HEADERS.REFERER] = WLMDB;
-            options.headers[HEADERS.ACTIVE_TRACE_ID] = getActiveTraceId() || 'unknown';
+            options.headers[HEADERS.ACTIVE_TRACE_ID] = getTraceData()?.traceId || 'unknown';
         }
     ]
 };

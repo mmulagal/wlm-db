@@ -1,10 +1,8 @@
-import React, { useMemo } from 'react';
-import { Chart, ChartOptions } from 'chart.js';
+import { Chart } from 'chart.js';
 import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import styles from './NewInventoryChart.module.scss';
 import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
-import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 
 Chart.register(...registerables);

@@ -404,11 +404,17 @@ Resources:
                                     - '}'
                                 - ' { "IsEnabled" : false}'
                     commands:
-                        a-enableSSM:
+                        a-installssmscript:
+                            command: echo try{Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"}catch{Write-Host $_.exception} > C:/install-ssm.ps1
+                            waitAfterCompletion: '0'
+                        b-installssm:
+                            command: powershell.exe -Command C:/install-ssm.ps1
+                            waitAfterCompletion: '30'
+                        c-enableSSM:
                             command: powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType
                                 Automatic"
                             waitAfterCompletion: '30'
-                        b-restartSSM:
+                        d-restartSSM:
                             command: powershell.exe -Command "Restart-Service AmazonSSMAgent -Force"
                             waitAfterCompletion: '30'
                 FetchResources:

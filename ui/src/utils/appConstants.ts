@@ -518,6 +518,7 @@ export const GENERAL = {
     TOPOLOGY: 'Topology',
     STATUS: 'Status',
     HOST_NAME: 'Host name',
+    INSTANCE_NAME: 'Instance name',
     NO_OF_DBS: 'Number of databases',
     TOTAL_USED_CAPACITY: 'Total used capacity',
     SQL_VERSION: 'SQL version',
@@ -580,6 +581,7 @@ export const GENERAL = {
     INSTANCES_DISTRIBUTION: 'Instances distribution',
     DETECTED_HOSTS: 'Detected hosts',
     UNIDENTIFIABLE_HOSTS: 'Unidentifiable hosts',
+    HOSTS_PENDING_DETECTION: 'Hosts pending detection',
     UNIDENTIFIABLE_HOST: 'Unidentifiable host',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     MANAGED_BY_WLF: 'Managed by Workload Factory',
@@ -627,13 +629,34 @@ export const GENERAL = {
     ],
     CREATE_USER_DB_TITLE: 'Create user database',
     DB_CREATE_HOST: 'Host:',
+    DB_CREATE_INSTANCE: 'Instance:',
     CREATE: 'Create',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
-        delete: ['Deletion of ', ' sandbox is in progress. Track progress in '],
-        rebaseline: ['Re-baselining of ', ' sandbox is in progress. Track progress in '],
-        refresh: ['Refreshing of ', ' sandbox is in progress. Track progress in '],
-        split: ['Splitting of ', ' sandbox is in progress. Track progress in ']
+        IN_PROGRESS: {
+            delete: ['Deletion of ', ' sandbox is in progress. Track progress in '],
+            rebaseline: ['Re-baselining of ', ' sandbox is in progress. Track progress in '],
+            refresh: ['Refreshing of ', ' sandbox is in progress. Track progress in '],
+            split: ['Splitting of ', ' sandbox is in progress. Track progress in '],
+            integrityCheck: ['Integrity check of ', ' sandbox is in progress. Track progress in ']
+        },
+        SUCCESS: {
+            delete: ['Sandbox database ', ' deleted successfully.'],
+            rebaseline: [
+                'Sandbox of database ',
+                ' re-baselined successfully. Sandbox returned to its original version.'
+            ],
+            refresh: ['Sandbox of database ', ' refreshed successfully.'],
+            split: ['Sandbox database ', ' split successfully.'],
+            integrityCheck: ['Integrity check of ', ' completed successfully']
+        },
+        FAILED: {
+            delete: ['Sandbox database ', ' failed to delete.'],
+            rebaseline: ['Re-baseline of sandbox of database ', ' failed.'],
+            refresh: ['Sandbox of database ', ' refresh failed.'],
+            split: ['Sandbox database ', ' failed to split.'],
+            integrityCheck: ['Integrity check of ', ' failed']
+        }
     },
     DATABASE_INFORMATION: 'Database information',
     FILE_SETTINGS: 'File settings',
@@ -673,7 +696,8 @@ export const GENERAL = {
     CF_NOTICE: 'Notice: access to the YAML configuration file expires after 7 days.',
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
     SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
-    SEE_SSM_LINK: 'see troubleshooting ssm agent',
+    SSM_NO_CONNECTION: ['Workload Factory can’t connect to this host.', 'See troubleshooting SSM agent'],
+    SEE_SSM_LINK: 'see troubleshooting SSM agent',
     OFFLINE_COMPONENT_TEXT_1: 'Unable to display host data',
     OFFLINE_COMPONENT_TEXT_2: 'Workload Factory cannot connect to this host.',
     SAME_NEW_DRIVE_ERROR: 'Data and log file drive letters should be different for new drives.',
@@ -684,8 +708,9 @@ export const GENERAL = {
     MULTI_AZ: 'Multi AZ',
     // Const for unidentifiable data
     DETECT_HOST: 'Detect host',
+    DETECT_INSTANCE: 'Detect Instance',
     MANAGE_HOST: 'Manage host',
-    DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 out of 2'],
+    DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 / 2'],
     FAILED_TO_DETECT_HOST: 'Failed to detect host',
     DETECT_FAILED_WITH_NO_STORAGE: 'Unable to move to unmanaged hosts tab as storage could not be identified',
     DONE: 'Done',
@@ -694,6 +719,8 @@ export const GENERAL = {
     SSM_ONLINE: 'Online',
     SSM_CONNECTION_LOST: 'Connection lost',
     DETECT_HOST_DESC: 'Detect and manage Microsoft SQL Server deployed on EC2 instance ',
+    DETECT_INSTANCE_DESC: 'Detect and manage instance ',
+    DETECT_ONLY_INSTANCE: 'Detect instance',
     DETECT_MSSQL_HEADING: 'Microsoft SQL Server',
     DETECT_MSSQL_USERNAME: 'Microsoft SQL Server user name',
     DETECT_MSSQL_PASSWORD: 'Microsoft SQL Server password',
@@ -701,7 +728,9 @@ export const GENERAL = {
     DETECT_FSX_USERNAME: 'ONTAP user name',
     DETECT_FSX_PASSWORD: 'ONTAP password',
     DETECTED_HOST_INFO: 'Detected host information',
+    DETECTED_INSTANCE_INFO: 'Detected instance information',
     DETECT_HOSTNAME: 'Host name',
+    DETECT_INSTANCE_NAME: 'Instance name',
     DETECT_STORAGE_TYPE: 'Storage type',
     DETECT_NO_OF_DB: 'Number of databases',
     DETECT_SQL_VERSION: 'SQL version',
@@ -714,11 +743,17 @@ export const GENERAL = {
         ' Unmanaged hosts ',
         ' tab.'
     ],
+    EBS_INSTANCE_DETECT_SUCCESS_MSG: ['Instance ', ' detected successfully.'],
     FSX_DETECT_SUCCESS_MSG: [
         'Detected host management',
         'Would you like to manage the detected host via workload factory?'
     ],
+    FSX_INSTANCE_DETECT_SUCCESS_MSG: [
+        'Detected instance management',
+        'Would you like to manage the detected instance via workload factory?'
+    ],
     FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.'],
+    FSX_INSTANCE_AFTER_DETECT_OPTIONS: ['Yes, Manage instance via Workload Factory.', 'No.'],
     HOST_MOVED_SUCCESS: [
         'Host ',
         ' successfully detected and moved to the ',
@@ -726,6 +761,11 @@ export const GENERAL = {
         ' Managed hosts ',
         'tab.'
     ],
+    INSTANCE_MANAGE_REQUEST: ['Your request to manage the SQL Server instance ', ' is in progress.'],
+    MULTI_INSTANCE_MANAGE_REQUEST: ['Your request to manage ', ' SQL Server instances is in progress.'],
+
+    INSTANCE_SUCCESS_DETECTED: ['Instance ', ' successfully detected.'],
+    INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED: ['Instance ', ' successfully detected but failed to become managed. '],
     HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
     HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. ', 'For more details view ', ' Job Monitoring.'],
     HOST_MOVED_INFO: [
@@ -737,6 +777,30 @@ export const GENERAL = {
     PREPARE_HOST_INFO_TAB2: [
         'Host ',
         ' is unable to become a managed host because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
+    PREPARE_DETECTED_INSTANCE_INFO: [
+        'Instance ',
+        ' state is changed to unmanaged but is unable to become a managed instance because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
+    PREPARE_DETECTED_INSTANCES_INFO: [
+        'Instances ',
+        'state has been changed to unmanaged but are unable to become managed instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
+    PREPARE_INSTANCE_INFO: [
+        'Instance ',
+        ' is unable to become a managed instance because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
+    PREPARE_INSTANCES_INFO: [
+        'Instances ',
+        'are unable to become managed instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
         'Job monitoring',
         ' to see when the modules have been installed.'
     ],
@@ -771,6 +835,7 @@ export const GENERAL = {
     VPC_MESSAGE:
         'Ensure your VPC has connectivity to other AWS services (SQS, FSx, EC2, CloudWatch, CloudFormation, SSM) via VPC endpoints and S3 gateway endpoint. If not, endpoints will be created automatically during deployment.',
     SQL_SERVER_NOT_RUNNING: 'SQL service is not running',
+    SSM_CONNECTION_DOWN: 'SSM is not connected',
     STORAGE_NOT_PRESENT: 'Storage could not be identified',
     //Sandbox constants
     SANDBOXES: 'Sandboxes',
@@ -781,8 +846,10 @@ export const GENERAL = {
     DONT_SHOW_AGAIN: "Don't show again",
     SANDBOX_DB_NAME: 'Database name',
     SANDBOX_DB_HOST_NAME: 'Database host name',
+    SANDBOX_DB_INSTANCE_NAME: 'Database instance name',
     SANDBOX_SOURCE_DB_NAME: 'Source database name',
     SANDBOX_SOURCE_DB_HOST_NAME: 'Source database host name',
+    SANDBOX_SOURCE_DB_INSTANCE_NAME: 'Source database instance name',
     SANDBOX_LAST_UPDATED: 'Last updated',
     DATABASE_SOURCE: 'Database source',
     Database_TARGET: 'Database target',
@@ -814,6 +881,8 @@ export const GENERAL = {
     TARGET_DATABASES: 'Target database',
     TARGET_DATABASE_NOTICE:
         'Notice: The target host must be in the same VPC and have the same FSx for ONTAP file system as the source host.',
+    TARGET_DATABASE_NOTICE_V2:
+        'Notice: The target instance must be in the same VPC and have the same FSx for ONTAP file system as the source instance.',
     SOURCE_HOST: 'Source database host',
     SOURCE_INSTANCE: 'Source database instance',
     SOURCE_DATABASE: 'Source database',
@@ -837,8 +906,8 @@ export const GENERAL = {
     ES_TABLE_TITLE: 'Microsoft SQL server host',
     ES_SERVER_NAME: 'Server name',
     ES_TYPE: 'Type',
-    ES_MSSQL_SERVER: ' SQL server on FSx for ONTAP',
-    ES_MSSQL_EBS: 'SQL server on EBS',
+    ES_MSSQL_SERVER: 'MsSQL server on FSx for ONTAP',
+    ES_MSSQL_EBS: 'MsSQL server on EBS',
     ES_COST_BREAKDOWN: 'Cost breakdown - Monthly charge',
     ES_SAVINGS_SELECTION_TEXT: 'Provide clone and snapshot values to calculate the cost savings.',
     NUMBER_OF_CLONED_COPIES: 'Number of cloned copies',
@@ -895,6 +964,7 @@ export const GENERAL = {
     DELETING: 'Deleting',
     REBASELINE: 'Re-baseline',
     SPLIT: 'Splitting',
+    INTEGRITY_CHECK: 'Integrity check',
     REBASELINE_DIALOG_TITLE: ['Are you sure you want to re-baseline ', ' sandbox for database '],
     REBASELINE_DIALOG_FIRST_BULLET:
         'This action will revert the sandbox to its original version at the time of creation.',
@@ -912,10 +982,49 @@ export const GENERAL = {
     REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
     REFRESH_CURRENT_RADIO: 'Refresh to current time',
     REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot',
+    HOST_DOWN: 'Host is down.',
+    SSM_DOWN: 'SSM is not connected.',
+    SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
+    INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
     EBS_TOOLTIP_MESSAGE:
-        'Management of SQL Server instances using EBS (Elastic Block Store) storage is currently not supported. Please select a supported storage option to proceed.'
+        'Management of SQL Server instances using EBS (Elastic Block Store) storage is currently not supported. Please select a supported storage option to proceed.',
+    FSXW_TOOLTIP_MESSAGE:
+        'Management of SQL Server instances using FSx for Windows storage is currently not supported. Please select a supported storage option to proceed.',
+    AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
+    ALL_MANAGED_TEXT:
+        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+    ALL_UNDETECT_TEXT:
+        'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+    MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
+    MANAGE_INSTANCE_FAILED_MSG: [
+        'The attempt to manage the SQL Server instance ',
+        ' was unsuccessful. Please try again or contact support if the problem persists.'
+    ],
+    DETECT_MANAGE_INSTANCE_FAILED_MSG: [
+        'The attempt to manage the SQL Server instance ',
+        ' was unsuccessful. The instance state has been changed to unmanaged. Please try again or contact support if the problem persists.'
+    ],
+    MULTIPLE_INSTANCE_MANAGE_FAILED: [
+        'The attempt to manage ',
+        ' SQL Server instances was unsuccessful. Please try again or contact support if the problem persists.'
+    ],
+    MULTIPLE_INSTANCE_DETECT_MANAGE_FAILED: [
+        'The attempt to manage ',
+        ' SQL Server instances was unsuccessful. The instaces state has been changed to unmanaged. Please try again or contact support if the problem persists.'
+    ],
+    MULTIPLE_INSTANCE_MANAGE_PARTIAL_SUCCESS: [' out of ', ' SQL Server instances have been successfully managed.'],
+    MULTIPLE_INSTANCE_DETECT_MANAGE_PARTIAL_SUCCESS: [
+        ' out of ',
+        ' SQL Server instances have been successfully managed. The rest of the instances have been moved to unmanaged'
+    ],
+    MUTLI_INSTANCE_MANAGE_SUCCESS: [' SQL Server instances have been successfully managed.'],
+    UNMANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) =>
+        `Database instance ${instanceName} unmanaged successfully.`,
+    UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unmanage.`,
+    NOT_OPTIMIZED:
+        "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use."
 };
 
 export const CODE_VIEWER = {
@@ -933,7 +1042,7 @@ export const CODE_VIEWER = {
     CODEBOX: 'Codebox',
     EXPAND: 'Expand',
     COLLAPSE: 'Collapse',
-    RECOMMENDED_TEMPLATES_HEADING: ['Recommended Templates - ', 'Microsoft SQL Server deployment'],
+    RECOMMENDED_TEMPLATES_HEADING: 'Recommended templates - Microsoft SQL server deployment',
     MY_TEMPLATES: 'My Templates',
     COPY: 'Copy',
     COPIED_TO_CLIPBOARD: 'Copied to clipboard',

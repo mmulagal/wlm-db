@@ -9,5 +9,10 @@
             position: relative !important;
             top: 0 !important;
         }
+
+        [class*='Table-module_horizontal-scroll'] {
+            visibility: hidden;
+            height: 0;
+        }
     }
 }

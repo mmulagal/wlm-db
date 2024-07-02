@@ -32,7 +32,10 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
                 name: item?.sandboxName,
                 databaseHostId: item?.databaseHostId,
                 hostName: item?.databaseHostName,
+                instanceId: item?.databaseInstanceId,
+                instanceName: `${item?.databaseHostName}\\${item?.databaseInstanceName}`,
                 source: item?.sourceDatabaseName,
+                sourceInstanceName: `${item?.sourceDatabaseHostName}\\${item?.sourceDatabaseInstanceName}`,
                 sourceHost: item?.sourceDatabaseHostName,
                 actualUpdated: item?.updatedAt || '',
                 updatedAt: formatDateWithTime(item?.updatedAt || ''),
@@ -40,7 +43,8 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
                 tag: item?.tag,
                 status: 'active',
                 baseSnapshot: item?.baseSnapshot,
-                createdAt: item?.createdAt
+                createdAt: item?.createdAt,
+                ageForSorting: -1 * parseInt(item?.createdAt)
             };
         });
     return retData;

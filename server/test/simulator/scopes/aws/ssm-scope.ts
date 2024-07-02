@@ -42,7 +42,8 @@ import {
     SERVER_DETAILS,
     PERFORMANCE_METRICS_WITH_LATENCY,
     INSTANCE_GUID,
-    ENTERPRISE_CHECK_QUERY
+    ENTERPRISE_CHECK_QUERY,
+    DATABASES_COUNT_V2
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
     GET_SANDBOX_DETAILS,
@@ -54,7 +55,11 @@ import {
     mountPointQuery,
     getStorageSavingsFromOntap,
     detachDbAndRemoveAccessPath,
-    deleteExtendedPropertiesScript
+    deleteExtendedPropertiesScript,
+    checkDatabaseIntegrityScript,
+    getSnapshotsToClone,
+    readExtendedPropertiesOfSandbox,
+    getConnectionInfo
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -62,40 +67,47 @@ const ssmMock = mockClient(SSMClient);
 
 const cpuParams = {
     commands: [
-        `sqlcmd -S "." -Q \"SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\n                                DECLARE @lastNmin TINYINT;\n                                SET @lastNmin = 1;\n                                SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \n                                SELECT TOP(@lastNmin)\n                                        SQLProcessUtilization AS [percentUsed], \n                                        SQLProcessUtilization AS [used],\n                                        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n                                        100-SQLProcessUtilization AS [remaining]\n                                FROM (SELECT record.value('(./Record/@id)[1]','int')AS record_id, \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle], \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization], \n                                [timestamp]      \n                                FROM (SELECT[timestamp], convert(xml, record) AS [record]             \n                                FROM sys.dm_os_ring_buffers             \n                                WHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y \n                                ORDER BY record_id DESC FOR JSON PATH\" -y 0`
+        `sqlcmd -S "$env:computername" -Q \"SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\n                                DECLARE @lastNmin TINYINT;\n                                SET @lastNmin = 1;\n                                SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \n                                SELECT TOP(@lastNmin)\n                                        SQLProcessUtilization AS [percentUsed], \n                                        SQLProcessUtilization AS [used],\n                                        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n                                        100-SQLProcessUtilization AS [remaining]\n                                FROM (SELECT record.value('(./Record/@id)[1]','int')AS record_id, \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle], \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization], \n                                [timestamp]      \n                                FROM (SELECT[timestamp], convert(xml, record) AS [record]             \n                                FROM sys.dm_os_ring_buffers             \n                                WHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y \n                                ORDER BY record_id DESC FOR JSON PATH\" -y 0`
     ]
 };
 const memeoryParams = {
     commands: [
-        'sqlcmd -S "." -Q "SET NOCOUNT ON; SELECT\n                                    (processmem.physical_memory_in_use_kb * 1024) AS used,\n                                    (sysmem.total_physical_memory_kb * 1024) AS total,\n                                    ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,\n                                    ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed\n                                    FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem FOR JSON PATH" -y 0'
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT\n                                    (processmem.physical_memory_in_use_kb * 1024) AS used,\n                                    (sysmem.total_physical_memory_kb * 1024) AS total,\n                                    ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,\n                                    ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed\n                                    FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem FOR JSON PATH" -y 0'
     ]
 };
 const dbCountParams = {
     commands: [
-        'sqlcmd -S "." -Q "SET NOCOUNT ON; SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id FOR JSON PATH" -y 0'
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id FOR JSON PATH" -y 0'
     ]
 };
+
+const dbCountParamasV2 = {
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT COUNT(*) AS totalCount FROM sys.databases FOR JSON PATH" -y 0'
+    ]
+};
+
 const dbSummaryParams1 = {
     commands: [
-        'sqlcmd -S "." -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 0 rows fetch next 75 rows only FOR JSON PATH" -y 0'
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 0 rows fetch next 75 rows only FOR JSON PATH" -y 0'
     ]
 };
 
 const dbSummaryParams2 = {
     commands: [
-        'sqlcmd -S "." -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 75 rows fetch next 75 rows only FOR JSON PATH" -y 0'
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 75 rows fetch next 75 rows only FOR JSON PATH" -y 0'
     ]
 };
 
 const dbSummaryParams3 = {
     commands: [
-        'sqlcmd -S "." -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 150 rows fetch next 75 rows only FOR JSON PATH" -y 0'
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 150 rows fetch next 75 rows only FOR JSON PATH" -y 0'
     ]
 };
 
 const dbSummaryParams4 = {
     commands: [
-        'sqlcmd -S "." -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 225 rows fetch next 75 rows only FOR JSON PATH" -y 0'
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 225 rows fetch next 75 rows only FOR JSON PATH" -y 0'
     ]
 };
 
@@ -145,13 +157,13 @@ const tablesListParams = {
 };
 const diskSizeParams = {
     commands: [
-        'sqlcmd -S "." -Q "SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH" -y 0'
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH" -y 0'
     ]
 };
 
 const diskDataParams = {
     commands: [
-        'sqlcmd -S "." -Q "SET NOCOUNT ON; WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.physical_name,3) AS Volume, ROW_NUMBER() OVER (PARTITION BY LEFT(mf1.physical_name,3) ORDER BY mf1.database_id) AS RowNum\n                                FROM sys.master_files mf1)\n                                ,roundtwo AS (SELECT DISTINCT pr.database_id, pr.FILE_ID\n                                FROM presel pr\n                                WHERE pr.RowNum = 1)\n                                SELECT ovs.total_bytes AS total, ovs.available_bytes AS remaining\n                                FROM roundtwo mf\n                                CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs FOR JSON PATH" -y 0'
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.physical_name,3) AS Volume, ROW_NUMBER() OVER (PARTITION BY LEFT(mf1.physical_name,3) ORDER BY mf1.database_id) AS RowNum\n                                FROM sys.master_files mf1)\n                                ,roundtwo AS (SELECT DISTINCT pr.database_id, pr.FILE_ID\n                                FROM presel pr\n                                WHERE pr.RowNum = 1)\n                                SELECT ovs.total_bytes AS total, ovs.available_bytes AS remaining\n                                FROM roundtwo mf\n                                CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs FOR JSON PATH" -y 0'
     ]
 };
 const serGUIDParams = {
@@ -173,7 +185,7 @@ const serverIOLatencyParams = {
 
 const nativeSqlBackupParams = {
     commands: [
-        'sqlcmd -S "." -Q "SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\' FOR JSON PATH\n" -y 0'
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\' FOR JSON PATH\n" -y 0'
     ]
 };
 
@@ -212,7 +224,7 @@ const getStorageParams = {
 // };
 
 const getPerformanceWithLatencyMetrics = {
-    commands: [`sqlcmd -S "." -Q "${PERFORMANCE_METRICS_WITH_LATENCY}" -y 0`]
+    commands: [`sqlcmd -S "$env:computername" -Q "${PERFORMANCE_METRICS_WITH_LATENCY}" -y 0`]
 };
 
 const getServerInstallDate = {
@@ -238,7 +250,7 @@ const getHostAndSqlServerInfo = {
 // };
 
 const getDefaultDriveLetters = {
-    commands: [GET_DEFAULT_DRIVES('.')]
+    commands: [GET_DEFAULT_DRIVES('$env:computername')]
 };
 
 const getActiveNodeDriveDetailsStandalone = {
@@ -285,7 +297,7 @@ const checkDBExists = {
 };
 
 const serverDetails = {
-    commands: [`sqlcmd -S "." -Q "${SERVER_DETAILS}" -y 0`]
+    commands: [`sqlcmd -S "$env:computername" -Q "${SERVER_DETAILS}" -y 0`]
 };
 
 const clusterNetwokIpInfo = {
@@ -293,11 +305,11 @@ const clusterNetwokIpInfo = {
 };
 
 const resourceUtilization = {
-    commands: [RESOURCE_UTILIZATION('.')]
+    commands: [RESOURCE_UTILIZATION('$env:computername')]
 };
 
 const getCollationDetails = {
-    commands: [GET_DEFAULT_COLLATION('.')]
+    commands: [GET_DEFAULT_COLLATION('$env:computername')]
 };
 
 const getOntapSandboxVolumeSavingsParams = {
@@ -305,7 +317,7 @@ const getOntapSandboxVolumeSavingsParams = {
 };
 
 const getSandboxDetails = {
-    commands: [GET_SANDBOX_DETAILS(['"."'])]
+    commands: [GET_SANDBOX_DETAILS(['$env:computername'])]
 };
 
 const instanceDetails = {
@@ -323,21 +335,22 @@ const cloneVolumeCommand = {
             'wlmdb_sqlsvm_1714090636810',
             JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
             JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
-            'test-res-id',
-            'netapp_wf_test_account_test_cred'
+            ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
+            'target-svm',
+            'testdb'
         )
     ]
 };
 
 const invokeVirtualMountCommand = {
     commands: [
-        `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve`
+        `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve -InstanceName MSSQLSERVER -IsDefaultInstance true`
     ]
 };
 
 const createCloneDbCommand = {
     commands: [
-        createClonedDb('testdb', '.', [
+        createClonedDb('testdb', '$env:computername', [
             'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
             'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
         ])
@@ -346,11 +359,10 @@ const createCloneDbCommand = {
 
 const addExtendedPropertiesCommand = {
     commands: [
-        addExtendedProperties('testdb', '.', {
+        addExtendedProperties('testdb', '$env:computername', {
             tag: 'demo',
             cloned_by: 'netapp_wf',
-            source: 'resource|instance|testdb',
-            baseSnapshot: 'parentSnapshot'
+            source: 'resource|instance|testdb'
         })
     ]
 };
@@ -370,9 +382,9 @@ const cleanUpOntapResourcesCommand = {
     ]
 };
 
-const mountPointQueryCommand = { commands: [mountPointQuery('.', 'test-database')] };
+const mountPointQueryCommand = { commands: [mountPointQuery('$env:computername', 'test-database')] };
 
-const getInstanceGuidCommand = { commands: [`sqlcmd -S "." -Q "${INSTANCE_GUID}" -y 0`] };
+const getInstanceGuidCommand = { commands: [`sqlcmd -S "$env:computername" -Q "${INSTANCE_GUID}" -y 0`] };
 
 const detachDbAndRemoveAccessPathCommand = {
     commands: [
@@ -380,16 +392,15 @@ const detachDbAndRemoveAccessPathCommand = {
             'test-db',
             '["123456789", "987654321"]',
             '["S:\\test-db-Data", "L:\\test-db-Log"]',
-            '.'
+            '$env:computername'
         )
     ]
 };
 
 const deleteExtendedPropertiesCommand = {
     commands: [
-        deleteExtendedPropertiesScript('test-db', '.', [
+        deleteExtendedPropertiesScript('test-db', '$env:computername', [
             'cloned_by',
-            'baseSnapshot',
             'source',
             'createdAt',
             'updatedAt',
@@ -419,8 +430,33 @@ const getActiveDirectory = {
 
 const enterpriseFeatureUsageCheck = {
     // prettier-ignore
-    commands: [`sqlcmd -S "." -Q "${ENTERPRISE_CHECK_QUERY}" -y 0`]
+    commands: [`sqlcmd -S "$env:computername" -Q "${ENTERPRISE_CHECK_QUERY}" -y 0`]
 };
+
+const checkDatabaseIntegirty = {
+    commands: [checkDatabaseIntegrityScript('test-db', '.')]
+};
+
+const getSnapshotsToCloneCommand = {
+    commands: [
+        getSnapshotsToClone(
+            'test-fsx',
+            'us-east-1',
+            JSON.stringify(['5c1075d2-03a0-11ef-a514-55070fbfcab1', '5ace31ea-03a0-11ef-a514-55070fbfcab1']),
+            '5c1075d2-03a0-11ef-a514-55070fbfcab1',
+            'testdb1_clone'
+        )
+    ]
+};
+
+const readExtendedPropertiesCommand = {
+    commands: [readExtendedPropertiesOfSandbox('testdb1_clone')]
+};
+
+const getConnectionInforCommand = {
+    commands: [getConnectionInfo('MSSQLSERVER')]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -541,7 +577,17 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getActiveDirectory })
     .resolves(listSendCommandCommandResponse.getActiveDirectoryCommand)
     .on(SendCommandCommand, { Parameters: enterpriseFeatureUsageCheck })
-    .resolves(listSendCommandCommandResponse.enterpriseFeatureUsageCheckCommand);
+    .resolves(listSendCommandCommandResponse.enterpriseFeatureUsageCheckCommand)
+    .on(SendCommandCommand, { Parameters: dbCountParamasV2 })
+    .resolves(listSendCommandCommandResponse.dbCountParamasV2Command)
+    .on(SendCommandCommand, { Parameters: checkDatabaseIntegirty })
+    .resolves(listSendCommandCommandResponse.checkDatabaseIntegrity)
+    .on(SendCommandCommand, { Parameters: getSnapshotsToCloneCommand })
+    .resolves(listSendCommandCommandResponse.getSnapshotsToCloneCommand)
+    .on(SendCommandCommand, { Parameters: readExtendedPropertiesCommand })
+    .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand)
+    .on(SendCommandCommand, { Parameters: getConnectionInforCommand })
+    .resolves(listSendCommandCommandResponse.getConnectionInfoCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -661,7 +707,21 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f171a4a7-3693-41bb-8c31-getActiveDirectory' })
     .resolves(getCommandInvocationResponse.getActiveDirectoryResp)
     .on(GetCommandInvocationCommand, { CommandId: 'k273a5y9-2143-82qe-6w13-enterpriseFeatureUsageCheckCommand' })
-    .resolves(getCommandInvocationResponse.enterpriseCheckResp);
+    .resolves(getCommandInvocationResponse.enterpriseCheckResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbCountParamasV2Command' })
+    .resolves(getCommandInvocationResponse.getDbCount)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkDatabaseIntegrity' })
+    .resolves(getCommandInvocationResponse.checkDatabaseIntegrityResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotsToCloneCommand' })
+    .resolves(getCommandInvocationResponse.getSnapshotsToCloneResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-readExtendedPropertiesCommand'
+    })
+    .resolves(getCommandInvocationResponse.readExtendedPropertiesResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getConnectionInfoCommand'
+    })
+    .resolves(getCommandInvocationResponse.getConnectionInfoResp);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

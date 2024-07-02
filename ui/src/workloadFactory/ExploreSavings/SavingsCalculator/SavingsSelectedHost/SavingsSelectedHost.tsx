@@ -9,7 +9,11 @@ const SavingsSelectedHost = () => {
     const { selectedHostDetails, selectedPartnerHostDetails, getPartnerHostDetailsLoading } = useAppSelector(
         state => state.exploreSavings
     );
+    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
+
     const [totalVolume, setTotalVolume] = useState(0);
+    const [hostname, setHostname] = useState('');
+    const [noOfDatabase, setNoOfDatabase] = useState('');
 
     useEffect(() => {
         let volumeCount = 0;
@@ -20,6 +24,17 @@ const SavingsSelectedHost = () => {
             volumeCount += selectedPartnerHostDetails?.ebsResourceInfo?.length;
         }
         setTotalVolume(volumeCount);
+        if (isInventoryV2) {
+            let databaseCount: any = 0;
+            selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
+                databaseCount += perRow?.databaseCount || 0;
+            });
+            setHostname(selectedHostDetails?.name);
+            setNoOfDatabase(databaseCount);
+        } else {
+            setHostname(selectedHostDetails?.databaseServer?.activeNode);
+            setNoOfDatabase(selectedHostDetails?.databaseCount);
+        }
     }, [selectedHostDetails, selectedPartnerHostDetails]);
 
     return (
@@ -33,9 +48,9 @@ const SavingsSelectedHost = () => {
                         <DsTypography
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
-                            title={selectedHostDetails?.databaseServer?.activeNode}
+                            title={hostname}
                         >
-                            {selectedHostDetails?.databaseServer?.activeNode || GENERAL.NOT_AVAILABLE}
+                            {hostname || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     )}
                     {selectedHostDetails?.loading && (
@@ -60,7 +75,7 @@ const SavingsSelectedHost = () => {
                             style={{ display: 'flex', justifyContent: 'center' }}
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
-                            {selectedHostDetails?.databaseCount || GENERAL.NOT_AVAILABLE}
+                            {noOfDatabase || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     )}
                     {selectedHostDetails?.loading && (

@@ -14,7 +14,7 @@ import { setSaveConfigName } from '../../../../store/workloadFactory/exploreSavi
 import { useDispatch } from 'react-redux';
 import { useSaveConfigDataMutation } from '../../../../utils/apiService';
 import { LoadRecommendedConfig } from '../../../../components/CreateMsSql/Configuration/LoadConfiguration';
-import { setIsLoadConfig, setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
+import { setIsLoadConfig, setIsLoading, setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
 
 const TableLayout = ({ data }: any) => {
     return (
@@ -54,14 +54,27 @@ const MSSQLAccordion = ({ printState }: any) => {
     }, [storageSavingsResponse]);
 
     useEffect(() => {
+        let instanceType = '';
+        if (storageSavingsResponse?.compute?.recommended?.instanceType) {
+            instanceType = storageSavingsResponse?.compute?.recommended?.instanceType.split(',')[0];
+        }
+        let serverEdition = '';
+        if (storageSavingsResponse?.license?.recommended?.sqlServerEdition) {
+            serverEdition = storageSavingsResponse?.license?.recommended?.sqlServerEdition.split(',')[0];
+        }
+        let windowsServer = '';
+        if (storageSavingsResponse?.compute?.recommended?.windowsOsVersion) {
+            windowsServer = storageSavingsResponse?.compute?.recommended?.windowsOsVersion.split(',')[0];
+        }
         let mssqlInstanceData = {
             serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
-            serverEdition: selectedHostDetails?.recommendedInstance?.serverEdition,
+            serverEdition: serverEdition,
             serverVersion: selectedHostDetails?.recommendedInstance?.serverVersion,
-            instanceType: selectedHostDetails?.recommendedInstance?.instanceType
+            instanceType: instanceType,
+            windowsServer: windowsServer
         };
         setMsSqlInstance(mssqlInstanceData);
-    }, [selectedHostDetails]);
+    }, [selectedHostDetails, storageSavingsResponse]);
 
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(
@@ -84,11 +97,12 @@ const MSSQLAccordion = ({ printState }: any) => {
         dispatch(setIsLoading(true));
         dispatch(setIsLoadConfig(true));
         navigate(WLF_TO_FORM_NAVIGATE);
+        const data = setRecommendedConfig(msSqlInstance, fsxData);
+        dispatch(setIsRecommendedInstance(data?.instanceType));
+        LoadRecommendedConfig(dispatch, data, false);
         setTimeout(() => {
-            const data = setRecommendedConfig(msSqlInstance, fsxData);
-            LoadRecommendedConfig(dispatch, data, false);
             dispatch(setIsLoadConfig(false));
-        }, 1);
+        }, 5);
     };
 
     return (
@@ -107,25 +121,29 @@ const MSSQLAccordion = ({ printState }: any) => {
                             children={GENERAL.ES_SAVE_ERROR}
                             trigger="hover"
                             container={
-                                <DsButton type="text" isDisabled={true}>
-                                    {GENERAL.ES_SAVE_CONFIG}
-                                </DsButton>
+                                <div id="es-save-config">
+                                    <DsButton type="text" isDisabled={true}>
+                                        {GENERAL.ES_SAVE_CONFIG}
+                                    </DsButton>
+                                </div>
                             }
                         />
                     ) : (
                         !printState && (
-                            <DsButton
-                                type="text"
-                                isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
-                                onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
-                            >
-                                {GENERAL.ES_SAVE_CONFIG}
-                            </DsButton>
+                            <div id="es-save-config">
+                                <DsButton
+                                    type="text"
+                                    isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
+                                    onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
+                                >
+                                    {GENERAL.ES_SAVE_CONFIG}
+                                </DsButton>
+                            </div>
                         )
                     ),
 
                     !printState && (
-                        <div style={{ height: '32px' }} className={styles.buttonContainer}>
+                        <div style={{ height: '32px' }} id="es-create" className={styles.buttonContainer}>
                             <DsButton
                                 type="button"
                                 isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}
