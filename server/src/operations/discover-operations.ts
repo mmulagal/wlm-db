@@ -697,7 +697,7 @@ async function validateAndStoreDiscoveredParameters(
     instanceId: string,
     credentials: DiscoverCredentialsType[]
 ) {
-    logger.info('Validate and stored SSM parameters', { accountId, credentialsId, region, instanceId });
+    logger.info('Validate and store SSM parameters', { accountId, credentialsId, region, instanceId });
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return {
