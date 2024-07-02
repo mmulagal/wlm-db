@@ -127,25 +127,28 @@
             //padding-bottom: 40px;
         }
 
-        .rightSideView {
-            padding: 40px 40px;
+        .rightSideMainContainer {
+            width: 1170px;
+            .rightSideView {
+                padding: 40px 40px;
 
-            .rightSideTopBar {
-                // width: 1090px;
-                display: flex;
-                justify-content: space-between;
-                padding: 3px 0 16px 0;
+                .rightSideTopBar {
+                    // width: 1090px;
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 3px 0 16px 0;
 
-                .rightSideHeading {
-                    color: var(--white);
-                }
+                    .rightSideHeading {
+                        color: var(--white);
+                    }
 
-                .rightSideBlueHeading {
-                    color: var(--blue-40);
-                }
+                    .rightSideBlueHeading {
+                        color: var(--blue-40);
+                    }
 
-                .rightSideHeadingDisabled {
-                    color: var(--grey-25);
+                    .rightSideHeadingDisabled {
+                        color: var(--grey-25);
+                    }
                 }
             }
         }
@@ -453,6 +456,28 @@
 .open {
     right: 0;
     width: 100%;
+}
+
+@media screen and (max-width: 1500px) {
+    .sidebar {
+        width: 476px !important;
+    }
+
+    .open {
+        right: 0;
+        width: 100% !important;
+    }
+
+    .openView {
+        .leftSideView {
+            min-width: 476px !important;
+            width: 476px !important;
+        }
+
+        .rightSideMainContainer {
+            width: 852px !important;
+        }
+    }
 }
 
 // @media screen and (min-width: 1576px) and (max-width: 1720px) {

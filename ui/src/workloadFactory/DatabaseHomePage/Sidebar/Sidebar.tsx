@@ -676,11 +676,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     <div className={styles.accordionStructure}>
                         <div className={styles.recTemplateHeading}>
                             <Typography variant="Regular_16" className={styles.templateHeading}>
-                                {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[0]}
-                            </Typography>
-                            &nbsp;
-                            <Typography variant="Regular_16" className={styles.templateHeading}>
-                                {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[1]}
+                                {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING}
                             </Typography>
                         </div>
                         {recommendedData.map((item: any, i: number) => (
@@ -772,11 +768,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             <div className={styles.accordionStructure}>
                                 <div className={styles.recTemplateHeading}>
                                     <Typography variant="Regular_16" className={styles.templateHeading}>
-                                        {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[0]}
-                                    </Typography>
-                                    &nbsp;
-                                    <Typography variant="Regular_16" className={styles.templateHeading}>
-                                        {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[1]}
+                                        {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING}
                                     </Typography>
                                 </div>
                                 {recommendedData.map((item: any, i: number) => (
@@ -859,7 +851,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         )}
                     </div>
                     {/* Right side panel in expanded code box */}
-                    <div style={{ width: '1170px' }}>
+                    <div className={styles.rightSideMainContainer}>
                         <div className={styles.rightSideView}>
                             {/* Code for top bar here */}
                             <div className={styles.rightSideTopBar}>
