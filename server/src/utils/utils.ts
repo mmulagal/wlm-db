@@ -140,6 +140,53 @@ function generateDeploymentParams(
     return params;
 }
 
+function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMode: string) {
+    logger.info('FSx Storage Capacity Breakdown', { fsxStorageCapacity, sqlDeploymentMode });
+
+    fsxStorageCapacity = Math.max(fsxStorageCapacity, convertGiBToBytes(FSX_SSD_MIN_SIZE));
+    fsxStorageCapacity = Math.min(fsxStorageCapacity, convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB));
+
+    logger.info('FSx Storage Capacity', { fsxStorageCapacity });
+
+    let fsxBufferVolumeSize = Math.ceil(0.2 * fsxStorageCapacity);
+    if (fsxStorageCapacity + fsxBufferVolumeSize >= convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB)) {
+        fsxBufferVolumeSize = Math.ceil(convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB) - fsxStorageCapacity);
+    }
+    /*
+
+    FSxStorageCapacity = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize + FsxBufferVolumeSize
+
+    fsxDataVolumeSize = FSxDataLunSize + 10% of FSxDataLunSize = 1.1 fsxLunSize
+    FSxLogVolumeSize = 25% of fsxDataVolumeSize
+    FSxTempDbVolumeSize = 10% of fsxDataVolumeSize
+    FSxQuorumVolumeSize = 12GB || O GB(for Standalone)
+
+    fsxDataVolumeSize = 1.1 fsxLunSize
+
+    fsxStorageCapacity = 1.1 fsxLunSize + 0.25 * 1.1 fsxLunSize + 0.1 * 1.1 fsxLunSize + 12GB || 0 GB(for Standalone) = (1.1 + 0.275 + 0.11) fsxLunSize + 12 || 0 GB + fsxBufferVolumeSize
+    fsxStorageCapacity = 1.485 fsxLunSize + 12 || 0 GB + fsxBufferVolumeSize
+    fsxLunSize = (fsxStorageCapacity - 12 || 0 GB - fsxBufferVolumeSize) / 1.485
+    */
+
+    const fsxQuorumVolumeSize = sqlDeploymentMode !== STANDALONE ? convertGiBToBytes(12) : 0;
+
+    const fsxDataLunSize = (fsxStorageCapacity - fsxQuorumVolumeSize - fsxBufferVolumeSize) / 1.485;
+
+    const fsxDataVolumeSize = Math.ceil(1.1 * fsxDataLunSize);
+    const fsxLogVolumeSize = Math.ceil(0.25 * fsxDataVolumeSize);
+    const fsxTempDbVolumeSize = Math.ceil(0.1 * fsxDataVolumeSize);
+
+    return {
+        fsxDataLunSize,
+        fsxDataVolumeSize,
+        fsxLogVolumeSize,
+        fsxTempDbVolumeSize,
+        fsxQuorumVolumeSize,
+        fsxBufferVolumeSize,
+        fsxStorageCapacity
+    };
+}
+
 function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode: string) {
     logger.info('Calculate FSX Netapp Storage capacity from the database size', { fsxDataLunSize, sqlDeploymentMode });
 
@@ -558,6 +605,7 @@ export {
     getFsxArn,
     getEc2Arn,
     generateHash,
+    fsxStorageCapacityBreakdown,
     calculateFsxnStorageCapacity,
     sizeInGigaBytes,
     waitForResolution,

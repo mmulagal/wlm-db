@@ -14,7 +14,7 @@ import {
     invokeMarketingApi
 } from './cloud-manager/marketing-operations';
 import getLogger from '../utils/logger';
-import { getMonthlyPriceFromHourlyPrice } from '../utils/utils';
+import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice } from '../utils/utils';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import getSqlInstanceLicenseRecommendations from './recommendation-operations';
@@ -278,6 +278,9 @@ async function aoagStorageSavingsCalculations(
                 }
             }
         ] = allNodesComputeLicenseDetails;
+
+        const fsxCalculation = handleMarketingApiFsxCalculationObject(fsxCalculationData);
+
         return {
             compute: {
                 existing: {
@@ -322,7 +325,11 @@ async function aoagStorageSavingsCalculations(
                     existingLicenseMonthlyPrice!,
                 recommended: fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
             },
-            fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
+            fsxCalculation,
+            fsxBreakdown: fsxStorageCapacityBreakdown(
+                fsxCalculation.totalStorageCapacity,
+                SqlServerDeploymentModel.SQL_AOAG_SHORT
+            )
         };
     }
     throw createError(
@@ -575,6 +582,8 @@ async function performStorageSavingsCalculations(
 
     const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
     const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
+    const fsxCalculation = handleMarketingApiFsxCalculationObject(fsxCalculationData);
+
     return {
         compute,
         license,
@@ -584,7 +593,8 @@ async function performStorageSavingsCalculations(
             existing: ebs.total + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
         },
-        fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
+        fsxCalculation,
+        fsxBreakdown: fsxStorageCapacityBreakdown(fsxCalculation.totalStorageCapacity, sqlServerDeploymentType!)
     };
 }
 

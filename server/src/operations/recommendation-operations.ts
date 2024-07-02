@@ -167,7 +167,8 @@ sqlServerEdition = Edition =	Installed product edition of the instance of SQL Se
         }
     }
 
-    return sqlServerInstances[0];
+    // if no enterprise,standard or web edition found, return any sql server instance with windows authentication
+    return sqlServerInstances.find(sqlServerInstance => sqlServerInstance.windowsAuthentication === true);
 }
 
 async function handleInstanceRecommendation(
@@ -524,6 +525,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                 recommendedLicense
             };
         }
+        throw createError('Unable to determine the SQL Server instance configuration.');
     }
     throw createError('No SQL Server instances found for the provided EC2 instance.');
 }
