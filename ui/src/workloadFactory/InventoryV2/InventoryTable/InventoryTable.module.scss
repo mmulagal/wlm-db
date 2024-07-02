@@ -68,6 +68,12 @@
         gap: 8px;
         align-items: center;
 
+        .ssmOffline {
+            margin-left: 24px;
+            position: relative;
+            top: 2px;
+        }
+
         .ssmOffline:hover {
             span {
                 svg {
