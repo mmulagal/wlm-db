@@ -147,8 +147,15 @@ function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMo
     fsxStorageCapacity = Math.min(fsxStorageCapacity, convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB));
 
     logger.info('FSx Storage Capacity', { fsxStorageCapacity });
+    /*
+        fsxCapacity = fsxDataVolumeSize + fsxLogVolumeSize + fsxTempDbVolumeSize + fsxQuorumVolumeSize
+        fsxBuffer = 20% of fsxCapacity
+        fsxStorageCapacity = fsxCapacity + fsxBuffer = fsxCapacity + 20% of fsxCapacity = 1.2 * fsxCapacity
+        fsxCapacity = fsxStorageCapacity / 1.2
+        fsxBuffer = (0.2) * fsxStorageCapacity/1.2
+    */
 
-    let fsxBufferVolumeSize = Math.ceil(0.2 * fsxStorageCapacity);
+    let fsxBufferVolumeSize = Math.ceil((0.2 * fsxStorageCapacity) / 1.2);
     if (fsxStorageCapacity + fsxBufferVolumeSize >= convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB)) {
         fsxBufferVolumeSize = Math.ceil(convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB) - fsxStorageCapacity);
     }
@@ -163,14 +170,14 @@ function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMo
 
     fsxDataVolumeSize = 1.1 fsxLunSize
 
-    fsxStorageCapacity = (1.1 * fsxLunSize) + 0.25 * (1.1 * fsxLunSize) + 0.1 * (1.1 * fsxLunSize) + 12GB || 0 GB(for Standalone) = (1.1 + 0.275 + 0.11) fsxLunSize + 12 || 0 GB + fsxBufferVolumeSize
-    fsxStorageCapacity = 1.485 fsxLunSize + 12 || 0 GB + fsxBufferVolumeSize
-    fsxLunSize = (fsxStorageCapacity - 12 || 0 GB - fsxBufferVolumeSize) / 1.485
+    fsxStorageCapacity = (1.1 * fsxLunSize) + 0.25 * (1.1 * fsxLunSize) + 0.1 * (1.1 * fsxLunSize) + 12GB || 0 GB(for Standalone) + fsxBufferVolumeSize = (1.1 + 0.275 + 0.11) fsxLunSize + 12 || 0 GB + fsxBufferVolumeSize
+    fsxStorageCapacity = 1.485 fsxLunSize + fsxQuorumVolumeSize + fsxBufferVolumeSize
+    fsxLunSize = (fsxStorageCapacity - fsxQuorumVolumeSize - fsxBufferVolumeSize) / 1.485
     */
 
     const fsxQuorumVolumeSize = sqlDeploymentMode === STANDALONE ? 0 : 12 * 1000 * 1000 * 1000; // in calculateFsxnStorageCapacity FSxQuorumVolumeSize = 12000(MB); // 12GB
 
-    const fsxDataLunSize = (fsxStorageCapacity - fsxQuorumVolumeSize - fsxBufferVolumeSize) / 1.485;
+    const fsxDataLunSize = Math.ceil(fsxStorageCapacity - fsxQuorumVolumeSize) / 1.485;
 
     const fsxDataVolumeSize = Math.ceil(1.1 * fsxDataLunSize);
     const fsxLogVolumeSize = Math.ceil(0.25 * fsxDataVolumeSize);
