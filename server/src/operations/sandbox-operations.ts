@@ -1935,6 +1935,7 @@ async function performLifecycleUpdate(
     let clonedVolumes;
     let mountPaths;
     let sandboxUpdated = false;
+    let sandboxDetached = false;
     try {
         await validateLifeCycleParams(accountId, credentialsId, region, parentJobId, resourceDetails, action);
 
@@ -1983,6 +1984,8 @@ async function performLifecycleUpdate(
             resourceDetails,
             mappings
         )) as Sandbox;
+
+        sandboxDetached = true;
 
         mountPaths = (await invokeVirtualMount(
             accountId,
@@ -2056,7 +2059,7 @@ async function performLifecycleUpdate(
                 []
             );
 
-            if (mappings) {
+            if (sandboxDetached && mappings) {
                 await reAttachSandboxAndAccessPath(
                     accountId,
                     credentialsId,
