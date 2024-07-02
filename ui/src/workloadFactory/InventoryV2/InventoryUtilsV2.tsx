@@ -938,6 +938,8 @@ export const updateInventoryDatawithInstancesRes = (
             isManagedHost: instanceRow?.isManagedHost,
             loading: instanceRow?.loading,
             hasInstanceData: true,
+            estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
+            totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
             serverInstallationMode: !inventoryRow?.serverInstallationMode
                 ? getInstallationMode(instanceRow?.data)
                 : inventoryRow?.serverInstallationMode,
