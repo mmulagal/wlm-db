@@ -1041,7 +1041,7 @@ export const CODE_VIEWER = {
     CODEBOX: 'Codebox',
     EXPAND: 'Expand',
     COLLAPSE: 'Collapse',
-    RECOMMENDED_TEMPLATES_HEADING: ['Recommended Templates - ', 'Microsoft SQL Server deployment'],
+    RECOMMENDED_TEMPLATES_HEADING: 'Recommended templates - Microsoft SQL server deployment',
     MY_TEMPLATES: 'My Templates',
     COPY: 'Copy',
     COPIED_TO_CLIPBOARD: 'Copied to clipboard',
