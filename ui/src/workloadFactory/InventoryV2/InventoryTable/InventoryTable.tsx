@@ -299,9 +299,13 @@ const InventoryTable = () => {
                 (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
             );
             if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
-                dispatch(
-                    setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]])
-                );
+                let instanceList = [];
+                instanceList.push(rowData?.ec2InstanceId);
+                const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
+                if (partnerData && partnerData?.length > 0) {
+                    instanceList.push(partnerData?.[0]?.id);
+                }
+                dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
             }
             // This has to be called even if any row is becoming unmanaged row or managed row
         }
