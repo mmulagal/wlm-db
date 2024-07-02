@@ -696,6 +696,7 @@ export const GENERAL = {
     CF_NOTICE: 'Notice: access to the YAML configuration file expires after 7 days.',
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
     SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
+    SSM_NO_CONNECTION: ['Workload Factory can’t connect to this host.', 'See troubleshooting SSM agent'],
     SEE_SSM_LINK: 'see troubleshooting SSM agent',
     OFFLINE_COMPONENT_TEXT_1: 'Unable to display host data',
     OFFLINE_COMPONENT_TEXT_2: 'Workload Factory cannot connect to this host.',

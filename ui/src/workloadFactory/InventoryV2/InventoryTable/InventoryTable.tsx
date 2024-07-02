@@ -1,6 +1,7 @@
 import {
     Button,
     DsFlashingDotsLoader,
+    DsTypography,
     Popover,
     Table,
     TableTopBar,
@@ -36,7 +37,8 @@ import {
     renderAllocatedCapacity,
     renderCellData,
     renderEstimatedCost,
-    renderInstanceListText
+    renderInstanceListText,
+    renderVpcText
 } from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
@@ -109,14 +111,26 @@ const InventoryTable = () => {
                     return;
                 }
                 let instanceList: any = [];
+                let instanceNameList: any = [];
+                let vpcIdAndNameText = '';
                 const allocatedCapacity = inventoryTableData[key]?.allocatedCapacity || '';
                 inventoryTableData[key]?.ec2Details?.map((row: any) => {
+                    if (row?.name) {
+                        instanceNameList.push(row?.name);
+                    }
                     if (row?.name && row?.id) {
-                        instanceList.push(row?.name + ' | ' + row?.id);
+                        instanceList.push(row?.name + ' | ID: ' + row?.id);
                     } else if (row?.id) {
-                        instanceList.push(row?.id);
+                        instanceList.push(GENERAL.NOT_AVAILABLE + ' | ID: ' + row?.id);
                     }
                 });
+                if (inventoryTableData[key]?.vpcId && inventoryTableData[key]?.vpcName) {
+                    vpcIdAndNameText = inventoryTableData[key]?.vpcName + ' | ID: ' + inventoryTableData[key]?.vpcId;
+                } else if (inventoryTableData[key]?.vpcId) {
+                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + inventoryTableData[key]?.vpcId;
+                } else {
+                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + GENERAL.NOT_AVAILABLE;
+                }
                 const rowData = {
                     ...inventoryTableData[key],
                     sqlServerInstancesText:
@@ -128,6 +142,8 @@ const InventoryTable = () => {
                               ' managed)'
                             : '',
                     instanceListText: instanceList.join(','),
+                    instanceNameListText: instanceNameList.join(', '),
+                    vpcIdAndNameText: vpcIdAndNameText,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
                 };
                 result.push(rowData);
@@ -512,16 +528,16 @@ const InventoryTable = () => {
             Header: GENERAL.DB_HOST_VPC,
             accessor: 'vpcName',
             isSortable: true,
-            width: '140px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            width: '150px',
+            renderCell: (cellData: any, rowData: any) => {
+                return renderVpcText(cellData, rowData, styles);
             }
         },
         {
             id: '6',
             Header: 'SSM connectivity',
             accessor: 'ssmState',
-            width: '212px',
+            width: '202px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -543,7 +559,7 @@ const InventoryTable = () => {
                                         children={
                                             <div>
                                                 <Typography variant="Regular_14">
-                                                    {GENERAL.SSM_NO_CONNECTION_MSG}
+                                                    {GENERAL.SSM_NO_CONNECTION[0]}
                                                 </Typography>
                                                 <Button
                                                     className={styles.ssmLink}
@@ -552,7 +568,7 @@ const InventoryTable = () => {
                                                         window.open(SSM_TROUBLESHOOTING_LINK, '_blank', 'noopener')
                                                     }
                                                 >
-                                                    {GENERAL.SSM_NO_CONNECTION_LINK}
+                                                    {GENERAL.SSM_NO_CONNECTION[1]}
                                                 </Button>
                                             </div>
                                         }

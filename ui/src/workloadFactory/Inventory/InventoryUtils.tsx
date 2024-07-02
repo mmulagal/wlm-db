@@ -303,8 +303,8 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
                         container={<TooltipIcon />}
                     />
                 </div>
-                <Typography variant="Regular_14" className={`${styles.colText}`}>
-                    {cellData}
+                <Typography variant="Regular_13" className={`${styles.colText}`}>
+                    {rowData?.instanceNameListText || GENERAL.NOT_AVAILABLE}
                 </Typography>
             </div>
 
@@ -342,6 +342,46 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
             )} */}
             {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
             {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const renderVpcText = (cellData: any, rowData: any, styles: any) => {
+    return (
+        <>
+            <div className={styles.ec2Container}>
+                <div className={styles.ssmOffline}>
+                    <Popover
+                        popoverClass={''}
+                        children={
+                            <>
+                                {rowData?.vpcIdAndNameText && (
+                                    <div className={styles.tooltipContainer}>
+                                        <DsTypography variant="Regular_14">{rowData?.vpcIdAndNameText}</DsTypography>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={'Copied'}
+                                            container={
+                                                <CopyToClipboard text={rowData?.vpcIdAndNameText}>
+                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                </CopyToClipboard>
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </>
+                        }
+                        trigger="hover"
+                        delayHide={200}
+                        interactive={true}
+                        isAppendedToBody={false}
+                        container={<TooltipIcon />}
+                    />
+                </div>
+                <Typography variant="Regular_13" className={`${styles.colText}`}>
+                    {cellData || GENERAL.NOT_AVAILABLE}
+                </Typography>
+            </div>
         </>
     );
 };
