@@ -81,7 +81,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { getDatabaseInstanceName, getResourceNameFromTags, isDemo } from '../utils/utils';
+import { getDatabaseInstanceName, getResourceNameFromTags, isDemo, sizeInBytes } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -743,8 +743,14 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 fsxw: pricingResponse?.fsxwStorage?.fsxwStorageCost,
                 ebs: pricingResponse.ebsStorage?.ebsStorageCost,
                 ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
-                fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById,
-                fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById
+                fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById.map(id => ({
+                    ...id,
+                    size: sizeInBytes(id.size!.total, 'GIB')
+                })),
+                fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById.map(id => ({
+                    ...id,
+                    size: sizeInBytes(id.size!, 'GIB')
+                }))
             },
             connectivity: pricingResponse?.vpc || 0,
             others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
@@ -1904,6 +1910,26 @@ async function getDatabaseHostSummaryV2(
                 databaseHostDetails.fsxnResourceInfo = usageEstimationData?.storage?.fsxnBreakDownById;
                 databaseHostDetails.fsxwResourceInfo = usageEstimationData?.storage?.fsxwBreakDownById;
                 databaseHostDetails.estimatedUsageCost = usageEstimationData;
+
+                // Aggregate FSxN storage
+                let totalFsxnSize = 0;
+                databaseHostDetails.fsxnResourceInfo?.forEach(resource => {
+                    totalFsxnSize += resource.size!;
+                });
+
+                // Aggregate FSxW storage
+                let totalFsxwSize = 0;
+                databaseHostDetails.fsxwResourceInfo?.forEach(resource => {
+                    totalFsxwSize += resource.size!;
+                });
+
+                // Aggregate EBS storage
+                let totalEbsSize = 0;
+                databaseHostDetails.ebsResourceInfo?.forEach(resource => {
+                    totalEbsSize += resource.size!;
+                });
+
+                databaseHostDetails.storageAllocation = { fsxn: totalFsxnSize, fsxw: totalFsxwSize, ebs: totalEbsSize };
             }
 
             if (shouldQueryNodeTopology && nodeTopology && nodeTopology.ec2Details.length > 0) {

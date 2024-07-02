@@ -323,6 +323,25 @@ function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
     }
 }
 
+function sizeInBytes(size: number, currentUnit: string = 'MB') {
+    logger.info('Converting size to GiB', { size });
+
+    if (Number.isNaN(size)) {
+        return 0;
+    }
+
+    switch (currentUnit.toLocaleUpperCase()) {
+        case 'MB':
+        case 'MIB':
+            return size * 1024 * 1024;
+        case 'GB':
+        case 'GIB':
+            return size * 1024 * 1024 * 1024;
+        default:
+            return size;
+    }
+}
+
 /**
  *
  * @param fn - function that returns a boolean when the response is correct
@@ -578,5 +597,6 @@ export {
     convertToBytes,
     getMonthlyPriceFromHourlyPrice,
     getDatabaseInstanceName,
-    isDemo
+    isDemo,
+    sizeInBytes
 };

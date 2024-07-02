@@ -505,22 +505,25 @@ async function calculatePrice(
                     compute?.sqlDeploymentMode
                 ));
                 totalFsxnCost = totalFsxnCost + fsxnStorageCost + fsxnOperationalCost;
+                const sizeData = fsxnDiskSizes
+                    ? {
+                          data: sizeInGigaBytes(fsxnDiskSizes?.FSxDataVolumeSize),
+                          log: sizeInGigaBytes(fsxnDiskSizes?.FSxLogVolumeSize),
+                          tempdb: sizeInGigaBytes(fsxnDiskSizes?.FSxTempDbVolumeSize),
+                          buffer: sizeInGigaBytes(fsxnDiskSizes?.FSxBufferVolumeSize),
+                          total: fsxnDiskSizes?.FSxStorageCapacity,
+                          ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
+                              quorum: sizeInGigaBytes(fsxnDiskSizes?.FSxQuorumVolumeSize)
+                          })
+                      }
+                    : {
+                          total: fsxResource.storageCapacity || 0
+                      };
                 fsxnCostBreakdownById.push({
                     id: fsxResource.id!,
                     capacityCost: fsxnStorageCost,
                     operationalCost: fsxnOperationalCost,
-                    ...(fsxnDiskSizes && {
-                        size: {
-                            data: sizeInGigaBytes(fsxnDiskSizes?.FSxDataVolumeSize),
-                            log: sizeInGigaBytes(fsxnDiskSizes?.FSxLogVolumeSize),
-                            tempdb: sizeInGigaBytes(fsxnDiskSizes?.FSxTempDbVolumeSize),
-                            buffer: sizeInGigaBytes(fsxnDiskSizes?.FSxBufferVolumeSize),
-                            total: fsxnDiskSizes?.FSxStorageCapacity,
-                            ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
-                                quorum: sizeInGigaBytes(fsxnDiskSizes?.FSxQuorumVolumeSize)
-                            })
-                        }
-                    })
+                    size: sizeData
                 });
             })
         );
@@ -573,7 +576,7 @@ async function calculatePrice(
                     id: fsxResource.id!,
                     capacityCost: fsxwStorageCost,
                     operationalCost: fsxwOperationalCost,
-                    size: sizeInGigaBytes(fsxResource.storageCapacity) || 0
+                    size: fsxResource.storageCapacity || 0
                 });
             })
         );
