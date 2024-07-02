@@ -317,7 +317,7 @@ const getOntapSandboxVolumeSavingsParams = {
 };
 
 const getSandboxDetails = {
-    commands: [GET_SANDBOX_DETAILS(['"."'])]
+    commands: [GET_SANDBOX_DETAILS(['$env:computername'])]
 };
 
 const instanceDetails = {
@@ -401,7 +401,6 @@ const deleteExtendedPropertiesCommand = {
     commands: [
         deleteExtendedPropertiesScript('test-db', '$env:computername', [
             'cloned_by',
-            'baseSnapshot',
             'source',
             'createdAt',
             'updatedAt',

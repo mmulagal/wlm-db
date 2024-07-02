@@ -12,6 +12,7 @@ import { getAsyncLocalStorageResource } from '../async-local-storage';
 import { listJobs } from '../../lib/database/job';
 import { inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
+import { instanceDemoData } from './instancesResponse';
 
 const logger = getLogger();
 const demoDefaultRegion = 'us-east-1';
@@ -30,7 +31,6 @@ function createDemoResources(
     const stackId = randomize('A0', 10);
     const sqlDeploymentMode = 'FCI';
     const fsxFilSystemId = `fs-${randomize('a0', 10)}`;
-    // const serverName = demoServerName || `sqldatabase${randomize('a', 4)}`;
 
     createDeploymentMockDataInDB(
         accountId!,
@@ -41,7 +41,7 @@ function createDemoResources(
         sqlDeploymentMode,
         fsxFilSystemId,
         awsAccountId,
-        serverName,
+        serverName || `sqldatabase${randomize('a', 4)}`,
         true,
         storageProtocol,
         resourceId
@@ -140,24 +140,24 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
                 resourceId: prodOneResourceId,
                 name: 'SQLServer-Prod-01',
                 protocol: STORAGE_PROTOCOLS.ISCSI,
-                sqlInstances: ['SQLServer-Prod-01AMAZON', 'SQLServer-Prod-01ANTMAN']
+                sqlInstances: ['SQLServer-Prod-01PROD-MarketingCampaigns', 'SQLServer-Prod-01PROD-SupplierManagement']
             },
             {
                 resourceId: devOneResourceId,
                 name: 'SQLServer-Dev-01',
                 protocol: STORAGE_PROTOCOLS.ISCSI,
                 sqlInstances: [
-                    'SQLServer-Dev-01BETA',
-                    'SQLServer-Dev-01DELTA',
-                    'SQLServer-Dev-01GAMMA',
-                    'SQLServer-Prod-01ANTMAN'
+                    'SQLServer-Dev-01DEV-FinancialAccounts',
+                    'SQLServer-Dev-01DEV-EmployeeDirectory',
+                    'SQLServer-Dev-01DEV-InventoryControl',
+                    'SQLServer-Prod-01PROD-SupplierManagement'
                 ]
             },
             {
                 resourceId: devFourResourceId,
                 name: 'SQLServer-Dev-04',
                 protocol: STORAGE_PROTOCOLS.SMB,
-                sqlInstances: ['SQLServer-Dev-04BOSTON', 'SQLServer-Dev-04EPSILON']
+                sqlInstances: ['SQLServer-Dev-04DEV-SalesAnalytics', 'SQLServer-Dev-04DEV-ProjectManagement']
             }
         ];
 
@@ -211,15 +211,8 @@ async function returnInventorydata(instances?: string[]) {
         const instanceDetails = inventoryData.items.find(item => item.ec2InstanceId === instances[0])!;
         // for random EC2 instance ID need to send generic value will be updated in phase 2
         if (!instanceDetails) {
-            return {
-                count: 1,
-                items: []
-            };
+            return instanceDemoData(fsxId, instances[0]);
         }
-        return {
-            count: 1,
-            items: [instanceDetails]
-        };
     }
     return {
         count: inventoryData.count,

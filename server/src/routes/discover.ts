@@ -62,9 +62,16 @@ export default function discoverRoutes(fastify: FastifyInstance) {
     server.post(`${DISCOVER_MSSQL_API_PATH_V2}/mssql`, { schema: ManageMsSqlSchemaV2 }, async request => {
         const {
             params: { accountId, credentialsId, region },
-            body: { ec2InstanceId, databaseInstanceNames }
+            body: { ec2InstanceId, databaseInstanceNames, databaseHostId }
         } = request;
-        const apiInfo = await manageSqlServerV2(accountId, credentialsId, region, ec2InstanceId, databaseInstanceNames);
+        const apiInfo = await manageSqlServerV2(
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            databaseInstanceNames,
+            databaseHostId
+        );
         return apiInfo;
     });
 
@@ -93,10 +100,10 @@ export default function discoverRoutes(fastify: FastifyInstance) {
     server.get(`${DISCOVER_MSSQL_API_PATH_V2}/mssql/instances`, { schema: MsSqlInstancesSchemaV2 }, async request => {
         const {
             params: { accountId, credentialsId, region },
-            query: { instances }
+            query: { instances, fields }
         } = request;
 
-        return fetchUnmanagedHostsInformationV2(accountId, credentialsId, region, instances.split(','));
+        return fetchUnmanagedHostsInformationV2(accountId, credentialsId, region, instances.split(','), fields);
     });
 
     server.post(

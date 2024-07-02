@@ -849,8 +849,8 @@ async function getActiveSqlNode(
         return { isSSMConnected: false, ssmConnectionStatus: connectionStatus.Status };
     } catch (error) {
         logger.error(
-            `Error while checking SSM connection or SQL server status for resource ID ${resourceId}`,
-            { credentialsId, region, node1InstanceId, node2InstanceId },
+            `Error while checking SSM connection or SQL server status for resource ID ${resourceId} credentialsId ${credentialsId}`,
+            { region, node1InstanceId, node2InstanceId },
             error
         );
     }
@@ -1057,7 +1057,7 @@ async function getActiveSqlNodeAndInstanceDetails(
             const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId]);
-                instanceDetails.forEach((obj: { instanceName: string }) => {
+                instanceDetails?.forEach((obj: { instanceName: string }) => {
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
                 });
                 if (instanceDetails) {
@@ -1074,14 +1074,16 @@ async function getActiveSqlNodeAndInstanceDetails(
                     logger.debug(`No active sql instances found in node ${nodeId} `);
                 }
             } else {
-                logger.error(`SSM status of node ${nodeId} is not running :${connectionStatus.Status}`);
+                logger.error(
+                    `SSM status of node ${nodeId} is not running :${connectionStatus.Status}  for resourceid: ${resourceId}`
+                );
             }
         }
-        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${nodeIds}`;
+        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${nodeIds} for resourceid: ${resourceId}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     } catch (err) {
-        const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId} , ${credentialsId}, ${region}, ${nodeIds} , ${err}`;
+        const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId} credentialsId: ${credentialsId}, region: ${region}, nodeIds:${nodeIds} , ${err}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }

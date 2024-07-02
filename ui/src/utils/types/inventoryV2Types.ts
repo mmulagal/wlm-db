@@ -14,6 +14,7 @@ export interface InventorySliceData {
     fsxCredentialStatusObj: any;
     fsxCredentialStatusLoading: boolean;
     mssqlInstancesData: any;
+    perfMssqlInstancesData: any;
     inProgressInstances: any;
     manageHostSelectedRows: any;
     valuesNotFilled: boolean;
@@ -24,6 +25,9 @@ export interface InventorySliceData {
     detectOntapPassword: string;
     detectedInstanceId: string;
     inventoryExpandedRowHostData: any;
+    resetManagedData: boolean;
+    removeSecNodeDiscoveredList: Array<string>;
+    unManagedPerfInstanceIdsList: Array<string>;
 }
 
 export interface InventoryTableData {
@@ -61,6 +65,8 @@ export interface InventoryTableInstanceDatInterface {
     isManaged?: boolean;
     fileSystemDeploymentMode?: string;
     fileSystemType?: string;
+    statusColText?: string;
+    storageSavingsText?: string;
     protection?: {
         isAwsBackupEnabled?: { fsxn?: boolean; fsxw?: boolean; ebs?: boolean };
         isFsxOntapSnapshotsEnabled?: boolean;
@@ -89,6 +95,16 @@ export interface InventoryTableInstanceDatInterface {
         };
     };
     allocatedCapacity?: number;
+    databaseServer?: {
+        activeConnections?: string;
+        activeNode?: string;
+        collation?: string;
+        creationDate?: string;
+        nodeNames?: Array<string>;
+        operatingSystem?: string;
+        serverEdition?: string;
+        serverVersion?: string;
+    };
 }
 
 export interface StorageInterface {
@@ -219,6 +235,7 @@ export interface ManagedHostsRowInterface {
     ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
     loading?: boolean;
     databaseInstanceDetails?: Array<{
+        databaseInstanceId?: string;
         instanceName?: string;
         instanceState?: string;
         isManaged?: boolean;

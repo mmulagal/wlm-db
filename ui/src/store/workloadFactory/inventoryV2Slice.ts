@@ -18,6 +18,7 @@ const initialInventoryV2State: InventorySliceData = {
     fsxCredentialStatusObj: null,
     fsxCredentialStatusLoading: false,
     mssqlInstancesData: null,
+    perfMssqlInstancesData: null,
     inProgressInstances: new Set(),
     manageHostSelectedRows: [],
     valuesNotFilled: false, // Detect host dialog fields check
@@ -27,7 +28,10 @@ const initialInventoryV2State: InventorySliceData = {
     detectOntapUsername: '',
     detectOntapPassword: '',
     detectedInstanceId: '',
-    inventoryExpandedRowHostData: null
+    inventoryExpandedRowHostData: null,
+    resetManagedData: false,
+    removeSecNodeDiscoveredList: [],
+    unManagedPerfInstanceIdsList: []
 };
 
 const inventoryV2Slice = createSlice({
@@ -73,6 +77,9 @@ const inventoryV2Slice = createSlice({
         setMssqlInstancesData: (state, action: PayloadAction<any>) => {
             state.mssqlInstancesData = action.payload;
         },
+        setPerfMssqlInstancesData: (state, action: PayloadAction<any>) => {
+            state.perfMssqlInstancesData = action.payload;
+        },
         setInProgressInstances: (state, action: PayloadAction<any>) => {
             state.inProgressInstances = action.payload;
         },
@@ -96,13 +103,21 @@ const inventoryV2Slice = createSlice({
         },
         setDetectedInstanceId: (state, action: PayloadAction<any>) => {
             state.detectedInstanceId = action.payload;
+        },
+        setResetManagedData: (state, action: PayloadAction<any>) => {
+            state.resetManagedData = action.payload;
+        },
+        setRemoveSecNodeDiscoveredList: (state, action: PayloadAction<any>) => {
+            state.removeSecNodeDiscoveredList = action.payload;
+        },
+        setUnManagedPerfInstanceIdsList: (state, action: PayloadAction<any>) => {
+            state.unManagedPerfInstanceIdsList = action.payload;
         }
     }
 });
 
 export const {
     setValuesForForm,
-
     setInventoryExpandedRowHostData,
     setInventoryTableData,
     setInventoryChartData,
@@ -115,6 +130,7 @@ export const {
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
     setMssqlInstancesData,
+    setPerfMssqlInstancesData,
     setInProgressInstances,
     setManageHostSelectedRows,
     setRadioValueDetect,
@@ -122,7 +138,10 @@ export const {
     setDetectManagePassword,
     setDetectONTAPUserName,
     setDetectONTAPPassword,
-    setDetectedInstanceId
+    setDetectedInstanceId,
+    setResetManagedData,
+    setRemoveSecNodeDiscoveredList,
+    setUnManagedPerfInstanceIdsList
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

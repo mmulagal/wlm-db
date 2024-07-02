@@ -17,6 +17,7 @@ const SandboxApis = () => {
         state => state.sandbox
     );
     const { isRefreshed } = useAppSelector(state => state.inventory);
+    const { refreshBlocked } = useAppSelector(state => state?.auth);
 
     const { selectedDatabaseHostId, selectedSandboxName, selectedDatabaseInstanceId } = connectionInfo;
 
@@ -41,7 +42,7 @@ const SandboxApis = () => {
             region: regionId,
             nextToken: sandboxCursor
         },
-        { skip: !credId || !regionId || (allSandboxList.length && !sandboxCursor) }
+        { skip: !credId || !regionId || (allSandboxList.length && !sandboxCursor) || refreshBlocked }
     );
 
     const {
@@ -53,7 +54,7 @@ const SandboxApis = () => {
             credentialId: credId,
             region: regionId
         },
-        { skip: !credId || !regionId }
+        { skip: !credId || !regionId || refreshBlocked }
     );
 
     const {

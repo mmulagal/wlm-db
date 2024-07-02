@@ -1,14 +1,13 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
-import {
-    setFsxCredentialStatus
-} from '../../store/workloadFactory/inventoryV2Slice';
+import { setFsxCredentialStatus } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
     FSX_DEPLOYMENT_MODE,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
+    PROTECTION_TEXT_STATUS,
     SQL_DEPLOYMENT_MODE
 } from '../../utils/consts';
 import {
@@ -50,7 +49,12 @@ export const getInventoryDataCount = (data: { [key: string]: InventoryTableData 
     let undetectedHostCount = 0;
     let managedInst = 0;
     let totalInstance = 0;
+    const state = store.getState();
+    const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
     Object.keys(data).map((key: string) => {
+        if (removeSecNodeDiscoveredList.includes(key)) {
+            return;
+        }
         if (
             data[key]?.action === INVENTORY_ACTIONS.MANAGE ||
             (data[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && data[key]?.isDetected)
@@ -215,16 +219,22 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
     }
 
     if (fsxType) {
+        if (fsxType === 'fsxw') {
+            let a = 1;
+        }
         let fsxTypeValue = val?.storage?.[fsxType] || {};
         storagePercent = fsxTypeValue ? (Number(fsxTypeValue?.spaceSavings) / Number(fsxTypeValue?.used)) * 100 : 0;
-        storageSavingsText =
-            (val?.storage?.[fsxType]?.spaceSavings &&
-                val?.storage?.[fsxType]?.used &&
+        if (val?.storage?.[fsxType]?.spaceSavings && val?.storage?.[fsxType]?.used) {
+            storageSavingsText =
                 formatFractionalNumber(storagePercent, 2) +
-                    '% (' +
-                    formatSizeOnePrecision(Number(fsxTypeValue?.spaceSavings)) +
-                    ')') ||
-            '';
+                '% (' +
+                formatSizeOnePrecision(Number(fsxTypeValue?.spaceSavings)) +
+                ')';
+        } else if (val?.storage?.[fsxType]?.spaceSavings === 0) {
+            storageSavingsText = '0%';
+        } else {
+            storageSavingsText = '';
+        }
     }
     return storageSavingsText;
 };
@@ -238,7 +248,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             );
             return {
                 ...perRow,
-                databaseInstanceId: '',
+                databaseInstanceId: perRow?.databaseInstanceId,
                 databaseInstanceName: perRow?.instanceName,
                 status: perRow?.instanceState,
                 statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED
@@ -260,7 +270,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             if (perRow) {
                 return {
                     ...perRow,
-                    databaseInstanceId: perRow?.databaseInstanceId,
+                    databaseInstanceId: perRow?.databaseInstanceId || instRow?.databaseInstanceId,
                     databaseInstanceName: instRow?.databaseInstanceName,
                     status: perRow?.status,
                     databaseCount: perRow?.databaseCount,
@@ -304,7 +314,8 @@ export const getPrimaryClusterNode = (
     newDiscoveredHostData: Array<DiscoverHostInterface>,
     removeRows: Array<string>,
     managedHostsList: string[],
-    clusterDiscoveredHost: any
+    clusterDiscoveredHost: any,
+    isDemoMode: boolean | undefined
 ) => {
     let testedNodes: string[] = [];
 
@@ -329,7 +340,7 @@ export const getPrimaryClusterNode = (
                 }
             })?.[0];
 
-            if (partnerNode) {
+            if (partnerNode && !isDemoMode) {
                 let isManagedNode1;
                 let isManagedNode2;
                 if (host?.ec2InstanceId) {
@@ -927,6 +938,8 @@ export const updateInventoryDatawithInstancesRes = (
             isManagedHost: instanceRow?.isManagedHost,
             loading: instanceRow?.loading,
             hasInstanceData: true,
+            estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
+            totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
             serverInstallationMode: !inventoryRow?.serverInstallationMode
                 ? getInstallationMode(instanceRow?.data)
                 : inventoryRow?.serverInstallationMode,
@@ -1200,13 +1213,14 @@ export const updateSqlServerInstancesForBothNodes = (
                     (perRow?.storage?.fsxw?.size || 0) +
                     (perRow?.storage?.ebs?.size || 0);
             }
-
+            const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow, partnerData?.id);
             return {
                 ...instRow,
-                fileSystemType: instRow?.fileSystemType || perRow?.databaseInstanceTopology?.fileSystemType,
-                protection: perRow?.protection,
-                performance: perRow?.performance,
-                storage: perRow?.storage,
+                loading: perfData?.loading,
+                fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
+                protection: perfData?.protection || instRow?.protection || perRow?.protection,
+                performance: perfData?.performance || instRow?.performance || perRow?.performance,
+                storage: instRow?.storage || perRow?.storage,
                 storageSavingsText: getStorageSavingsText(perRow || {}),
                 allocatedCapacity: allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
@@ -1227,33 +1241,110 @@ export const updateSqlServerInstancesForUnmanaged = (
     }
     if (instanceData?.databaseInstancesSummary && instanceData?.databaseInstancesSummary?.length > 0) {
         instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
-            const perRow = instanceData?.databaseInstancesSummary?.find(
-                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
-            );
-            const allocatedCapacity =
-                (perRow?.storage?.fsxn?.size || 0) +
-                (perRow?.storage?.fsxw?.size || 0) +
-                (perRow?.storage?.ebs?.size || 0);
-            return {
-                ...instRow,
-                fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType,
-                protection: perRow?.protection,
-                performance: perRow?.performance,
-                storage: perRow?.storage,
-                storageSavingsText: getStorageSavingsText(perRow || {}),
-                allocatedCapacity: allocatedCapacity,
-                allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
-                databaseServer: perRow?.databaseServer
-            };
+            if (instRow?.statusColText !== INVENTORY_STATUS.MANAGED) {
+                const perRow = instanceData?.databaseInstancesSummary?.find(
+                    (per: DatabaseInstancesSummaryInterface) =>
+                        per?.databaseInstanceName === instRow?.databaseInstanceName
+                );
+                const allocatedCapacity = instRow?.allocatedCapacity
+                    ? instRow?.allocatedCapacity
+                    : (perRow?.storage?.fsxn?.size || 0) +
+                      (perRow?.storage?.fsxw?.size || 0) +
+                      (perRow?.storage?.ebs?.size || 0);
+                const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
+                return {
+                    ...instRow,
+                    fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
+                    loading: perfData?.loading,
+                    protection: instRow?.protection || perfData?.protection,
+                    performance: instRow?.performance || perfData?.performance,
+                    storage: instRow?.storage || perRow?.storage,
+                    storageSavingsText: getStorageSavingsText(perRow || {}),
+                    allocatedCapacity: allocatedCapacity,
+                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
+                    databaseServer: instRow?.databaseServer || perRow?.databaseServer
+                };
+            } else {
+                const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
+                return {
+                    ...instRow,
+                    loading: false,
+                    protection: instRow?.protection || perfData?.protection,
+                    performance: instRow?.performance || perfData?.performance
+                };
+            }
         });
     }
     return instanceRows;
 };
 
+export const getPerfUnmanagedData = (instanceId: string, instRow: any, partnerId?: string) => {
+    const updatedState = store.getState();
+    const perfMssqlInstancesData = updatedState.inventoryV2.perfMssqlInstancesData;
+    if (perfMssqlInstancesData?.[instanceId] && partnerId && perfMssqlInstancesData?.[partnerId]) {
+        let perfData1 = perfMssqlInstancesData?.[instanceId];
+        let perfData2 = perfMssqlInstancesData?.[partnerId];
+        const perRow1 = perfData1?.data?.databaseInstancesSummary?.find(
+            (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+        );
+        const perRow2 = perfData2?.data?.databaseInstancesSummary?.find(
+            (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+        );
+        if (perRow1 || perRow2) {
+            return {
+                loading: false,
+                protection: perRow1?.protection || perRow2?.protection,
+                performance: perRow1?.performance || perRow2?.performance
+            };
+        } else if (perfData1?.loading || perfData2?.loading) {
+            return {
+                loading: true,
+                protection: null,
+                performance: null
+            };
+        } else {
+            return {
+                loading: false,
+                protection: null,
+                performance: null
+            };
+        }
+    } else if (perfMssqlInstancesData?.[instanceId]) {
+        let perfData = perfMssqlInstancesData?.[instanceId];
+        if (perfData?.loading) {
+            return {
+                loading: true,
+                protection: null,
+                performance: null
+            };
+        } else if (perfData?.data?.databaseInstancesSummary && perfData?.data?.databaseInstancesSummary?.length > 0) {
+            const perRow = perfData?.data?.databaseInstancesSummary?.find(
+                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+            );
+            return {
+                loading: false,
+                protection: perRow?.protection,
+                performance: perRow?.performance
+            };
+        } else {
+            return {
+                loading: false,
+                protection: null,
+                performance: null
+            };
+        }
+    }
+};
+
 export const getExploreSavingsRows = (inventoryTableData: { [key: string]: InventoryTableData }) => {
     let nonFsxnStorageList: Array<InventoryTableData> = [];
+    const state = store.getState();
+    const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
     Object.keys(inventoryTableData).map((key: string) => {
         let item = inventoryTableData[key];
+        if (removeSecNodeDiscoveredList.includes(key)) {
+            return;
+        }
         if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && !item?.actionDisable) {
             nonFsxnStorageList.push(item);
         }
@@ -1261,7 +1352,13 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
     return nonFsxnStorageList;
 };
 
-export const updateInstanceStatus = (action: InstanceActions, hostData: any, instanceData: any, responseData?: any) => {
+export const updateInstanceStatus = (
+    action: InstanceActions,
+    hostData: any,
+    instanceData: any,
+    responseData?: any,
+    resourceId?: any
+) => {
     let updatedState = store.getState();
     let { inventoryTableData }: any = updatedState?.inventoryV2;
     const targettedHostId = inventoryTableData[hostData.resourceId] ? hostData.resourceId : hostData.ec2InstanceId;
@@ -1274,7 +1371,7 @@ export const updateInstanceStatus = (action: InstanceActions, hostData: any, ins
                 ? false
                 : inventoryTableData[targettedHostId].actionDisable,
             sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
-                if (instanceItem?.databaseInstanceId === instanceData?.databaseInstanceId) {
+                if (instanceItem?.databaseInstanceName === instanceData?.databaseInstanceName) {
                     return { ...instanceItem, statusColText: INVENTORY_STATUS.UNMANAGED };
                 }
                 return instanceItem;
@@ -1289,6 +1386,7 @@ export const updateInstanceStatus = (action: InstanceActions, hostData: any, ins
             actionDisable:
                 inventoryTableData[targettedHostId].totalInstance ===
                     inventoryTableData[targettedHostId].managedInstance + responseData?.length || 0,
+            resourceId,
             sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
                 const instanceInRes = responseData.find(
                     (item: any) => item?.databaseInstanceName === instanceItem?.databaseInstanceName
@@ -1356,7 +1454,7 @@ export const detectFieldsValidation = (entryData: any) => {
 
 export const getDiscoveredHostDeploymentV2 = (host: any) => {
     // This will get deployment type in case of unmanaged hosts
-    const sqlServerDeploymentType = host.sqlServerDeploymentType || '';
+    const sqlServerDeploymentType = host?.sqlServerDeploymentType || '';
     let type = '';
 
     if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
@@ -1510,4 +1608,92 @@ export const getPartnerInstanceId = (instanceRow: InstancesHostsRowInterface, in
         }
     }
     return partnerInstanceId;
+};
+
+export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
+    let awsProtection = val?.protection?.isAwsBackupEnabled;
+    let protectionText: any = '';
+    if (fsxType) {
+        if (awsProtection?.[fsxType] && awsProtection?.[fsxType] !== GENERAL.NOT_AVAILABLE) {
+            protectionText = true;
+        } else if (awsProtection?.[fsxType] === GENERAL.NOT_AVAILABLE) {
+            protectionText = GENERAL.NOT_AVAILABLE;
+        } else if (!awsProtection?.[fsxType]) {
+            protectionText = false;
+        } else {
+            protectionText = GENERAL.NOT_AVAILABLE;
+        }
+    } else {
+        if (
+            (awsProtection?.fsxn && awsProtection?.fsxn !== GENERAL.NOT_AVAILABLE) ||
+            (awsProtection?.fsxw && awsProtection?.fsxw !== GENERAL.NOT_AVAILABLE) ||
+            (awsProtection?.ebs && awsProtection?.ebs !== GENERAL.NOT_AVAILABLE)
+        ) {
+            protectionText = true;
+        } else if (
+            awsProtection?.fsxn === GENERAL.NOT_AVAILABLE ||
+            awsProtection?.fsxw === GENERAL.NOT_AVAILABLE ||
+            awsProtection?.ebs === GENERAL.NOT_AVAILABLE
+        ) {
+            protectionText = GENERAL.NOT_AVAILABLE;
+        } else if (awsProtection) {
+            protectionText = false;
+        } else {
+            protectionText = GENERAL.NOT_AVAILABLE;
+        }
+    }
+
+    return protectionText;
+};
+
+export const getProtectionText = (data: any) => {
+    let protectionText = '';
+    let fsxType = '';
+    let fileSystemType = data?.fileSystemType || '';
+    if (fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
+        fsxType = 'fsxn';
+    } else if (fileSystemType.includes(GENERAL.FSX_FOR_WINDOWS)) {
+        fsxType = 'fsxw';
+    } else if (fileSystemType.includes(GENERAL.EBS)) {
+        fsxType = 'ebs';
+    }
+
+    let awsBackupEnabled = isAwsBackupEnabledText(data, fsxType);
+    let fsxOntapEnabled = data?.protection?.isFsxOntapSnapshotsEnabled;
+    let sqlNativeEnabled = data?.protection?.isSqlNativeEnabled;
+
+    if (fsxType === 'ebs' || fsxType === 'fsxw') {
+        if (
+            (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
+            (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
+        ) {
+            protectionText = PROTECTION_TEXT_STATUS.YES;
+        } else if (awsBackupEnabled === GENERAL.NOT_AVAILABLE || sqlNativeEnabled === GENERAL.NOT_AVAILABLE) {
+            protectionText = '';
+        } else if (data?.protection) {
+            protectionText = PROTECTION_TEXT_STATUS.NO;
+        } else {
+            protectionText = '';
+        }
+    } else {
+        if (
+            (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
+            (fsxOntapEnabled && fsxOntapEnabled !== GENERAL.NOT_AVAILABLE) ||
+            (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
+        ) {
+            protectionText = PROTECTION_TEXT_STATUS.YES;
+        } else if (
+            awsBackupEnabled === GENERAL.NOT_AVAILABLE ||
+            fsxOntapEnabled === GENERAL.NOT_AVAILABLE ||
+            sqlNativeEnabled === GENERAL.NOT_AVAILABLE
+        ) {
+            protectionText = '';
+        } else if (data?.protection) {
+            protectionText = PROTECTION_TEXT_STATUS.NO;
+        } else {
+            protectionText = '';
+        }
+    }
+
+    return protectionText;
 };

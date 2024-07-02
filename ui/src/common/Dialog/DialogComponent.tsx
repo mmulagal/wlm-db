@@ -5,7 +5,7 @@ import {
     DialogHeader,
     DialogLayout,
     DsTypography,
-    TooltipInfo,
+    Popover,
     useDialog
 } from '@netapp/design-system';
 import { ReactNode } from 'react';
@@ -13,6 +13,7 @@ import { useAppSelector } from '../../store/storeHooks';
 import { FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
 import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
+import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
 import { GENERAL } from '../../utils/appConstants';
 
 type DialogProps = {
@@ -47,6 +48,7 @@ const DialogComponent = ({
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
     const detectHostError = useAppSelector(state => state.msSqlAction.isDetectHostError);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
+    const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
 
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() => {
@@ -77,6 +79,9 @@ const DialogComponent = ({
         closeDialog(null);
     };
 
+    const refreshSandboxDisabled =
+        dialogFrom === FROM_DIALOG.SANDBOX_REFRESH && isRollbackSelected && !selectedRollbackSnapshot;
+
     const disabledCheck = () => {
         if (primaryButtonDisabled) {
             return true;
@@ -101,7 +106,17 @@ const DialogComponent = ({
                         <DsTypography variant="Regular_13" className={styles.errorMsgText}>
                             {detectHostError}
                         </DsTypography>
-                        <TooltipInfo>{detectHostError}</TooltipInfo>
+                        <div className={styles.dialogFooterDialog}>
+                            <Popover
+                                popoverClass={''}
+                                children={detectHostError}
+                                trigger="hover"
+                                delayHide={200}
+                                interactive={true}
+                                isAppendedToBody={true}
+                                container={<TooltipIcon />}
+                            />
+                        </div>
                     </div>
                 )}
 
@@ -109,7 +124,7 @@ const DialogComponent = ({
                     variant={'primary'}
                     className={'continue-button'}
                     isThin={true}
-                    isDisabled={disabledCheck()}
+                    isDisabled={disabledCheck() || refreshSandboxDisabled}
                     isLoading={primaryButtonLoad}
                     onClick={primaryButtonClick}
                 >

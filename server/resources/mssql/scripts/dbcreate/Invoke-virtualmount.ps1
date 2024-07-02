@@ -153,11 +153,11 @@ try {
         $clusterlogdisk = Get-ClusterResource -Name $loglabel -ErrorAction SilentlyContinue
 
         if ([string]::IsNullOrEmpty($clusterdatadisk)) {
-            $availabledatadisk = Get-ClusterAvailableDisk | Where-Object { $_.Number -eq $datadisknumber }
+            $availabledatadisk = Get-Disk | Where-Object { $_.Number -eq $datadisknumber }
             $clusterdatadisk = ($availabledatadisk | Add-ClusterDisk -ErrorAction stop)
             }
         if ([string]::IsNullOrEmpty($clusterlogdisk)) {
-            $availablelogdisk = Get-ClusterAvailableDisk | Where-Object { $_.Number -eq $logdisknumber }
+            $availablelogdisk = Get-Disk | Where-Object { $_.Number -eq $logdisknumber }
             $clusterlogdisk = ($availablelogdisk | Add-ClusterDisk -ErrorAction stop)
         }
 

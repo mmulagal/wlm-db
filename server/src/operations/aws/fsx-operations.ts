@@ -21,7 +21,6 @@ import {
     FSX_STORAGE_TYPE,
     AWS_RESOURCE_NAME_TAG,
     FSX_BATCH_CONCURRENCY_VALUE,
-    SSM_COMMAND_CACHE_TYPE,
     AWS_FSX_TYPE,
     HttpErrorCodes
 } from '../../utils/consts';
@@ -40,8 +39,6 @@ interface FsxStorage {
 }
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
-
-const TWENTYFOUR_HOURS = '24h';
 
 async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
     const enetInterfaceIds = fileSys.NetworkInterfaceIds;
@@ -439,27 +436,28 @@ async function getMappedOntapVolumes(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    activeNodeInstanceId?: string
+    isSystemDatabase: boolean,
+    activeNodeInstanceId?: string,
+    instanceName?: string
 ) {
     logger.info('Get ontap volumes mapped to data drive of all databases in a server', {
         credentialsId,
         region,
         fileSystemId,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        isSystemDatabase,
+        instanceName
     });
-
-    const cacheKey = `${activeNodeInstanceId}-mapped-volumes`;
-    if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
-        const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
-        return response;
-    }
 
     try {
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             fileSystemId = 'test-fsx';
             region = 'us-east-1';
         }
-        const command = getMappedOntapVolumesScript(fileSystemId, region);
+        // retrieve the mapped volumes for system databases alone when isSystemDatabase is true otherwise includes user dbs also
+        const psIsSystemDatabase = isSystemDatabase ? '$true' : '$false';
+
+        const command = getMappedOntapVolumesScript(fileSystemId, region, instanceName, psIsSystemDatabase);
 
         const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId!);
 
@@ -472,9 +470,6 @@ async function getMappedOntapVolumes(
         const { volumeDBMap, volumes } = parsedResponse;
         if (volumes && !isEmpty(volumes?.records)) {
             const volumeUuids = volumes.records.map(({ uuid }: { uuid: string }) => uuid);
-
-            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, { volumeUuids, volumeDBMap }, TWENTYFOUR_HOURS);
-
             return { volumeUuids, volumeDBMap };
         }
         return { volumeUuids: [], volumeDBMap: {} };

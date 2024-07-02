@@ -305,7 +305,7 @@ const DatabasesResponse = Type.Object({
     status: Type.String({ minLength: 1 }),
     type: Type.String({ minLength: 1 }),
     size: Type.Number(),
-    protection: ProtectionPerStorageTypeResponse,
+    protection: Type.Optional(ProtectionPerStorageTypeResponse),
     collation: Type.String({ minLength: 1 })
 });
 type DatabasesResponseType = Static<typeof DatabasesResponse>;
@@ -483,6 +483,7 @@ const SandboxLifeCycleBody = Type.Object({
 });
 
 const DatabaseHostInstanceDetailsResponse = Type.Object({
+    databaseInstanceId: Type.Optional(Type.String({ description: 'Id of SQL server instance.' })),
     instanceName: Type.String({ description: 'Name of SQL server instance.' }),
     isManaged: Type.Optional(
         Type.Boolean({ description: 'Boolean to indicate if SQL server instance is managed by WFDB.', default: false })
@@ -582,6 +583,12 @@ type DatabaseHostSummaryForMultiInstanceListResponseType = Static<
     typeof DatabaseHostSummaryForMultiInstanceListResponse
 >;
 
+// Query parameter to fetch database, protection
+const DatabaseQueryString = Type.Object({
+    fields: Type.Optional(Type.String()),
+    nextToken: Type.Optional(Type.String())
+});
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -662,5 +669,6 @@ export {
     DatabaseHostInstanceSummaryResponseType,
     DatabaseInstanceTopologyType,
     DatabaseHostInstanceSummaryParams,
-    DatabaseHostOptionalInstanceSummaryParams
+    DatabaseHostOptionalInstanceSummaryParams,
+    DatabaseQueryString
 };

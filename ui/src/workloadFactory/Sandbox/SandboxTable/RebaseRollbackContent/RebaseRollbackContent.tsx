@@ -1,12 +1,13 @@
 import { DsRadioButton, SelectField } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './RebaseRollbackContent.module.scss';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { formatDateWithTime, generateOptionType } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import {
+    resetRefreshDialog,
     updateIsRollbackSelected,
     updateRollbackSnapshotList,
     updateRollbackSnapshotsLoading,
@@ -15,43 +16,45 @@ import {
 import { useLazyGetRollbackSnapshotsQuery } from '../../../../utils/apiService';
 
 const RebaseRollbackContent = ({ rowData }: any) => {
-    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const { isRollbackSelected, rollbackSnapshotList, selectedRollbackSnapshot, rollbackSnapshotsLoading } =
         useAppSelector(state => state?.sandbox);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const [snapshotsFetched, setSnapshotsFetched] = useState(false);
 
     const dispatch = useDispatch();
 
     const [getRollbackSnapshotApi] = useLazyGetRollbackSnapshotsQuery();
 
     useEffect(() => {
-        dispatch(updateRollbackSnapshotsLoading(true));
-        getRollbackSnapshotApi({
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
-            databaseHostId: rowData?.databaseHostId,
-            instanceId: rowData?.instanceId,
-            sandboxName: rowData?.name
-        }).then((res: any) => {
-            if (res?.data?.snapshots) {
-                dispatch(updateRollbackSnapshotList(res?.data?.snapshots));
-            } else {
-                dispatch(updateRollbackSnapshotList([]));
-            }
-            dispatch(updateRollbackSnapshotsLoading(false));
-        });
+        return () => {
+            dispatch(resetRefreshDialog());
+        };
     }, []);
+
+    useEffect(() => {
+        if (isRollbackSelected && !snapshotsFetched) {
+            dispatch(updateRollbackSnapshotsLoading(true));
+            getRollbackSnapshotApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                region: headerSelectedRegion?.label2,
+                databaseHostId: rowData?.databaseHostId,
+                instanceId: rowData?.instanceId,
+                sandboxName: rowData?.name
+            }).then((res: any) => {
+                if (res?.data?.snapshots) {
+                    dispatch(updateRollbackSnapshotList(res?.data?.snapshots));
+                } else {
+                    dispatch(updateRollbackSnapshotList([]));
+                }
+                dispatch(updateRollbackSnapshotsLoading(false));
+                setSnapshotsFetched(true);
+            });
+        }
+    }, [isRollbackSelected]);
 
     //Function to generate the options for Select Field
     const generateRollbackOptions = useMemo<optionType[]>((): optionType[] => {
-        const frequency = isDemoMode
-            ? [
-                  'DB 1 | May 1, 2024, 12:15:11',
-                  'DB 1 | May 2, 2024, 12:15:11',
-                  'DB 1 | May 3, 2024, 12:15:11',
-                  'DB 1 | May 4, 2024, 12:15:11'
-              ]
-            : rollbackSnapshotList;
+        const frequency = rollbackSnapshotList;
         const options: optionType[] = [];
         frequency?.map((val: any, idx: number) => {
             const label = `${val?.name} | ${formatDateWithTime(val?.created)}`;

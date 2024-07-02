@@ -157,6 +157,8 @@ async function createDeploymentMockDataInDB(
         }
     });
 
+    const instanceId = randomUUID();
+
     resourceId = resourceId || randomUUID();
     const fsxId = `fs-${randomize('A0', 17)}`;
 
@@ -176,7 +178,8 @@ async function createDeploymentMockDataInDB(
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
                     source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
-                    tag: 'Development'
+                    tag: 'Development',
+                    databaseInstanceId: instanceId
                 }
             ],
             userDatabase: [
@@ -220,8 +223,7 @@ async function createDeploymentMockDataInDB(
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
-                tag: 'Development',
-                baseSnapshot: `netapp_wf_${Date.now()}`
+                tag: 'Development'
             }
         ],
         userDatabase: [
@@ -244,7 +246,7 @@ async function createDeploymentMockDataInDB(
         resourceId,
         credentialsId,
         region,
-        databaseInstanceId: randomUUID(),
+        databaseInstanceId: instanceId,
         databaseInstanceName: DEFAULT_INSTANCE_NAME,
         fsxnIds: fsxId,
         isDefault: true,
@@ -409,6 +411,26 @@ async function updateSandboxDBIntoResourceData(
     return metaData;
 }
 
+async function updateSandboxDBIntoInstanceData(
+    accountId: string,
+    instanceID: string,
+    sandboxDetails: Sandbox,
+    instanceMetaData: databaseInstanceMetadata
+) {
+    logger.info('updating sandbox db into database instance  meta data', accountId, instanceID, sandboxDetails);
+
+    // this is used to retreive the newly created user databases in database list for demo using meta data
+    if (instanceMetaData.sandboxes) {
+        instanceMetaData.sandboxes = instanceMetaData.sandboxes.filter(
+            sandbox => sandbox.databaseName !== sandboxDetails.databaseName
+        );
+    }
+    instanceMetaData.sandboxes = [...(instanceMetaData.sandboxes || []), sandboxDetails];
+
+    await updateInstanceMetadata(accountId, instanceID, instanceMetaData);
+    return instanceMetaData;
+}
+
 async function createSandboxJobMockData(
     accountId: string,
     region: string,
@@ -456,5 +478,6 @@ export {
     updateSandboxDBIntoResourceData,
     createSandboxJobMockData,
     getVolumeIdsFromStorage,
-    updateUserDBIntoInstanceTable
+    updateUserDBIntoInstanceTable,
+    updateSandboxDBIntoInstanceData
 };

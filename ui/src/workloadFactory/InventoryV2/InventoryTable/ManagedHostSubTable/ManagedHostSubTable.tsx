@@ -11,20 +11,12 @@ import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import {
-    createDetectHostPayload,
-    formatSizeTwoPrecision,
-    isAwsBackupEnabled
-} from '../../../../utils/utilityFunctions';
+import { createDetectHostPayload, formatSizeTwoPrecision, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
-import {
-    useManageMssqlInstanceMutation,
-    useRegisterResourceCredentialsMutation,
-    useUnmanageMssqlInstanceMutation
-} from '../../../../utils/apiService';
+import { useRegisterResourceCredentialsMutation, useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import {
     setDetectManagePassword,
     setDetectManageUserName,
@@ -34,6 +26,7 @@ import {
     setInProgressInstances,
     setInventoryTableData,
     setRadioValueDetect,
+    setUnManagedPerfInstanceIdsList,
     setValuesForForm
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import store from '../../../../store/store';
@@ -53,7 +46,12 @@ import {
     setInstanceName
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../../store/authSlice';
-import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatus } from '../../InventoryUtilsV2';
+import {
+    detectFieldsValidation,
+    getProtectionText,
+    saveFsxInCredRegisteredObj,
+    updateInstanceStatus
+} from '../../InventoryUtilsV2';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import UndetectedHostDialogContentV2 from '../UndetectedHostDialogContent/UndetectedHostDialogContentV2';
 import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecondDialogV2';
@@ -75,6 +73,7 @@ const ManagedHostSubTable = ({
     const hostname = hostData?.name;
     const resourceId = hostData?.resourceId;
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
@@ -91,19 +90,11 @@ const ManagedHostSubTable = ({
     useEffect(() => {
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
             const newTable = inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
-                let protectionText = '';
-                if (
-                    isAwsBackupEnabled(perRow) ||
-                    perRow?.protection?.isFsxOntapSnapshotsEnabled ||
-                    perRow?.protection?.isSqlNativeEnabled
-                ) {
-                    protectionText = 'Yes';
-                } else if (perRow?.protection) {
-                    protectionText = 'No';
-                }
+                let protectionText = getProtectionText(perRow);
                 return {
                     ...perRow,
                     loading: inventoryTableData?.[rowId]?.loading,
+                    subLoading: perRow?.loading,
                     protectionText: protectionText,
                     allocatedCapacityText: perRow?.allocatedCapacity
                         ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
@@ -117,7 +108,7 @@ const ManagedHostSubTable = ({
         } else {
             setData([]);
         }
-    }, [rowId, inventoryTableData]);
+    }, [rowId, inventoryTableData, inProgressInstances]);
 
     const handleDialog = (rowData: any) => {
         setDialog(
@@ -138,14 +129,19 @@ const ManagedHostSubTable = ({
                 secondaryButton={'Close'}
                 callback={() => {
                     const updatedState = store.getState();
-                    const { inProgressInstances } = updatedState.inventoryV2;
+                    const { inProgressInstances, inventoryTableData }: any = updatedState.inventoryV2;
+                    const targettedHost =
+                        inventoryTableData[hostData.resourceId] || inventoryTableData[hostData.ec2InstanceId];
+                    const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
+                        (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
+                    );
                     const inProgressId = `${hostData?.ec2InstanceId}_${rowData?.databaseInstanceName}`;
                     dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
                     unmanageApi({
                         credentialsId: headerSelectedCred?.data?.credentialsId,
                         regionId: headerSelectedRegion?.label2,
-                        resourceId,
-                        dbInstanceId: rowData?.databaseInstanceId
+                        resourceId: targettedHost?.resourceId,
+                        dbInstanceId: targettedDbInstance?.databaseInstanceId
                     }).then((res: any) => {
                         const updatedState = store.getState();
                         const { inProgressInstances } = updatedState?.inventoryV2;
@@ -183,11 +179,17 @@ const ManagedHostSubTable = ({
     };
 
     const resourceAction = (rowData: any) => {
+        const updatedState = store.getState();
+        const { inventoryTableData }: any = updatedState.inventoryV2;
+        const targettedHost = inventoryTableData[hostData.resourceId] || inventoryTableData[hostData.ec2InstanceId];
+        const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
+            (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
+        );
         dispatch(resetWorkloadFactoryResourceData());
         dispatch(setSelectedHostname(hostname));
-        dispatch(setSelectedResourceId(resourceId));
-        dispatch(setSelectedDatabaseInstance(rowData?.databaseInstanceId));
-        dispatch(setSelectedDatabaseInstanceName(rowData?.databaseInstanceName));
+        dispatch(setSelectedResourceId(targettedHost?.resourceId));
+        dispatch(setSelectedDatabaseInstance(targettedDbInstance?.databaseInstanceId));
+        dispatch(setSelectedDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
     };
 
     const resetDialogValues = () => {
@@ -228,6 +230,7 @@ const ManagedHostSubTable = ({
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         }
         // if fsx register is false and only db cred is added than call instance API
+        dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[hostData?.ec2InstanceId]]));
         if (!isFsxRegister) {
             dispatch(setDetectedInstanceId(hostData?.ec2InstanceId));
         }
@@ -332,6 +335,8 @@ const ManagedHostSubTable = ({
                 const menu = [];
                 let disableOption = false;
                 let disableMessage = '';
+                const disableCreateDb = isSmbProtocol(rowData?.storage?.fsxn?.protocol);
+                const disableCreateDbMsg = disableCreateDb ? GENERAL.SMB_PROTOCOL_DISABLED : '';
                 if (hostData?.status === INVENTORY_STATUS.OFFLINE) {
                     disableMessage = GENERAL.HOST_DOWN;
                     disableOption = true;
@@ -375,8 +380,8 @@ const ManagedHostSubTable = ({
                         {
                             id: 'createUserDb',
                             displayName: 'Create user database',
-                            disabled: disableOption,
-                            infoText: disableMessage
+                            disabled: disableOption || disableCreateDb,
+                            infoText: disableMessage || disableCreateDbMsg
                         },
                         {
                             id: 'unManage',
@@ -433,9 +438,18 @@ const ManagedHostSubTable = ({
                     }
                     if (
                         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
+                        rowData.fileSystemType === GENERAL.EBS
                     ) {
                         disableMsg = GENERAL.EBS_TOOLTIP_MESSAGE;
+                        width = '320px';
+                        height = '90px';
+                        return true;
+                    }
+                    if (
+                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                        rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS
+                    ) {
+                        disableMsg = GENERAL.FSXW_TOOLTIP_MESSAGE;
                         width = '320px';
                         height = '90px';
                         return true;
@@ -600,11 +614,12 @@ const ManagedHostSubTable = ({
             width: '135px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
+                const loading = rowData?.loading || rowData?.subLoading;
                 return (
                     <>
                         {cellData && <div>{cellData}</div>}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                        {!cellData && loading && <DsFlashingDotsLoader />}
+                        {!cellData && !loading && GENERAL.NOT_AVAILABLE}
                     </>
                 );
             }
@@ -616,11 +631,12 @@ const ManagedHostSubTable = ({
             width: '160px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
+                const loading = rowData?.loading || rowData?.subLoading;
                 return (
                     <>
                         {cellData && <div>{cellData}</div>}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                        {!cellData && loading && <DsFlashingDotsLoader />}
+                        {!cellData && !loading && GENERAL.NOT_AVAILABLE}
                     </>
                 );
             }

@@ -73,12 +73,12 @@ export const comparisonData = (calculatedResponse: any) => {
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.compute?.recommended?.computeMonthlyPrice, 2)
                   ).toLocaleString()}`
-                : GENERAL.NOT_AVAILABLE,
+                : '$0',
             ebs: calculatedResponse?.compute?.existing?.computeMonthlyPrice
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)
                   ).toLocaleString()}`
-                : GENERAL.NOT_AVAILABLE
+                : '$0'
         },
         {
             type: 'SQL license',
@@ -88,12 +88,12 @@ export const comparisonData = (calculatedResponse: any) => {
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.license?.recommended?.licenseMonthlyPrice, 2)
                   ).toLocaleString()}`
-                : GENERAL.NOT_AVAILABLE,
+                : '$0',
             ebs: calculatedResponse?.license?.existing?.licenseMonthlyPrice
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)
                   ).toLocaleString()}`
-                : GENERAL.NOT_AVAILABLE
+                : '$0'
         },
         {
             type: 'Total summary',

@@ -1,0 +1,383 @@
+function instanceDemoData(fsxId: string, ec2InstanceId: string) {
+    return {
+        count: 1,
+        items: [
+            {
+                ec2InstanceId,
+                ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
+                ssmState: 'connected',
+                ec2InstanceName: '',
+                vpc: {},
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'PROD-MarketingCampaigns',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6c',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'PROD-SupplierManagement',
+                        serveGuid: 'f4b7c5d3-e1f6-4g2a-9b6d',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'PROD-ProductCatalog',
+                        serveGuid: 'f4b7c5d3-e1f6-4g2a-9b6e',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6h',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'PreProd-BusinessIntelligence',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6j',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'DEV-FinancialAccounts',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6k',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'DEV-InventoryControl',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6l',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'DEV-OrderManagement',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6m',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'DEV-EmployeeDirectory',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'DEV-ComplianceManagement',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'Prod-HelpDesk',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'Dev-VendorManagement',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'UAT-QualityControl',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+}
+
+export { instanceDemoData };

@@ -22,7 +22,8 @@ import {
     VERSION,
     WORKSPACE_ID,
     JWKS_FULL_NAME,
-    WLMDB
+    WLMDB,
+    SSM_COMMAND_CACHE_TYPE
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import {
@@ -62,6 +63,7 @@ import {
     failLongRunningResourcePrepareJobs
 } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
+import { resetCache } from './utils/cache';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -227,7 +229,8 @@ const app = fastify({
                         headers: {
                             authorization,
                             [HEADERS.WORKSPACE_ID_HEADER]: workspaceId,
-                            [HEADERS.X_NETAPP_REFERER]: xNetappReferer
+                            [HEADERS.X_NETAPP_REFERER]: xNetappReferer,
+                            [HEADERS.X_NETAPP_CACHE_CONTROL]: xNetappCacheControl
                         },
                         params: { accountId },
                         id: requestId
@@ -237,6 +240,7 @@ const app = fastify({
                     setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                     setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
                     setAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER, xNetappReferer);
+                    setAsyncLocalStorageResource(HEADERS.X_NETAPP_CACHE_CONTROL, xNetappCacheControl);
 
                     if (!url.includes(API_PATH_HEALTH) && !url.includes('/wlmdb/documentation')) {
                         const traceData = getTraceData();
@@ -254,7 +258,10 @@ const app = fastify({
                             referer: request.headers.referer
                         });
                     }
-
+                    // Added for testing purpose when we want to clear the ssm cache
+                    if (xNetappCacheControl === 'true') {
+                        resetCache(SSM_COMMAND_CACHE_TYPE);
+                    }
                     // Don't update audit record until BXP integration decision is made.
                     // const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
                     // if (!requestUrl) {

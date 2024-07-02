@@ -107,7 +107,8 @@ export const FROM_DIALOG = {
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',
     HEADER_CROSS: 'header_cross',
-    DETECT_HOST: 'detect_host'
+    DETECT_HOST: 'detect_host',
+    SANDBOX_REFRESH: 'sandbox_refresh'
 };
 
 export const API_NAME = {
@@ -506,4 +507,29 @@ export const INVENTORY_STATUS = {
 export const INVENTORY_ACTIONS = {
     MANAGE: 'Manage',
     EXPLORE_SAVINGS: 'Explore savings'
+};
+
+export const INSTANCE_API_FIELDS = {
+    UNMANAGED_DEFAULT: [
+        'databaseInstanceTopology',
+        'usageEstimation',
+        'storage',
+        'databaseServer',
+        'serverDetails',
+        'nodeTopology'
+    ],
+    SUB_TABLE_FIELDS: ['protection', 'performance'],
+    MIXED_STATUS_FIELDS: [
+        'databaseInstanceTopology',
+        'storage',
+        'databaseServer',
+        'serverDetails',
+        'nodeTopology',
+        'usageEstimation'
+    ]
+};
+
+export const PROTECTION_TEXT_STATUS = {
+    YES: 'Yes',
+    NO: 'No'
 };

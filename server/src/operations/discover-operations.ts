@@ -48,7 +48,8 @@ import {
     PSMODULES_RELATIVE_PATH,
     DatabaseTypes,
     OFFLINE,
-    SQL_SERVICE_STATE
+    SQL_SERVICE_STATE,
+    NOT_AVAILABLE
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -92,6 +93,7 @@ import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 interface SsmTargetsInfo {
     ec2InstanceId: string;
@@ -132,7 +134,7 @@ async function getHostAndSqlServerInfo(
     nextToken?: string,
     instances: string[] = []
 ): Promise<DiscoverMsSqlResponseBodyType> {
-    logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken, instances });
+    logger.info('Get host and SQL Server info:', { accountId, credentialsId, region, nextToken, instances });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return returnInventorydata(instances);
     }
@@ -214,7 +216,9 @@ async function getHostAndSqlServerInfo(
         );
         api1EndTime = performance.now();
         logger.info(
-            `API1Performance: Time taken by makeSsmCall() for multiple targets: ${api1EndTime - api1StartTime}ms`
+            `API1Performance: Time taken by makeSsmCall() for multiple targets: ${
+                api1EndTime - api1StartTime
+            }ms. SSM command ID: ${commandId}`
         );
 
         /*
@@ -293,11 +297,11 @@ async function getHostAndSqlServerInfo(
 
         const subnetListMap = new Map(subnetList?.map(subnet => [subnet.SubnetId, subnet.AvailabilityZone]));
 
-        // PS execution would take some time, so we wait for a second before triggering polling.
+        // PowerShell execution would take some time, so we wait for a second before triggering polling.
         //
         // NOTE:
         //  Getting FSx filesystems and SVMs will take some time, which could serve the
-        // purpose of sleep() below.  Since  PowerShell script takes some time to complete,
+        // purpose of sleep() below.  Since PowerShell script takes some time to complete,
         // sleeping for a second would help us get the results in first SSM poll itself.
         // If run time performance is needed, this is one possible candidate for purge.
         await sleep(1000);
@@ -362,6 +366,15 @@ async function getHostAndSqlInfoFromPsOutput(
     fsIdWithDeploymentType: Map<string, DeployType>,
     subnetListMap: Map<string | undefined, string | undefined>
 ): Promise<SqlServerInstanceInfoType[]> {
+    logger.info('Get host and SQL server details from PowerShell output', {
+        credentialsId,
+        region,
+        ssmTarget,
+        commandId,
+        endPointIpWithFsxInfo,
+        fsIdWithDeploymentType,
+        subnetListMap
+    });
     const commandInvocationParam = {
         CommandId: commandId,
         InstanceId: ssmTarget.ec2InstanceId
@@ -375,6 +388,8 @@ async function getHostAndSqlInfoFromPsOutput(
         pollCommandStatus(credentialsId, region, commandInvocationParam),
         getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
     ]);
+
+    logger.info(`SQL Parameter details for ${ssmTarget.ec2InstanceId}: ${ec2SqlParametersInfo}`);
 
     if (ssmResponse?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
@@ -414,6 +429,7 @@ async function getHostAndSqlInfoFromPsOutput(
             }
 
             let responseInJson = JSON.parse(powerShellScriptOutput);
+            logger.info(`SSM response for ${ssmTarget.ec2InstanceId}: ${responseInJson}`);
 
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
@@ -534,7 +550,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes = [sqlServerNodes];
                     }
 
-                    const sqlServerAuthentication = ec2SqlParametersInfo.some(
+                    const sqlServerAuthentication = ec2SqlParametersInfo?.some(
                         (elem: { sqlinstancename: string }) => elem.sqlinstancename === sqlServerInstance
                     );
 
@@ -549,7 +565,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerProductYear,
                         ...(sqlServerEngineEdition && { sqlServerEngineEdition: Number(sqlServerEngineEdition) }),
                         ...(sqlServerEdition && { sqlServerEdition }),
-                        serverGuid,
+                        ...(serverGuid && { serverGuid }),
                         isDefaultInstance,
                         ...(failureInfo && { failureInfo }),
                         windowsAuthentication,
@@ -601,7 +617,7 @@ async function makeSsmCall(
     let commandId;
     try {
         commandId = await sendSSMCommand(credentialsId, region, params, accountId);
-        logger.info('SSM command ID:', commandId);
+        logger.info(`SSM command ID is ${commandId} for commands ${commands}`);
     } catch (error) {
         logger.error(`Failed to start EC2 instance information retrieval using sendSSMCommand. Reason: ${error}`);
         throw createError(
@@ -681,7 +697,7 @@ async function validateAndStoreDiscoveredParameters(
     instanceId: string,
     credentials: DiscoverCredentialsType[]
 ) {
-    logger.info('Validate and Put SSM parameters', { accountId, credentialsId, region, instanceId });
+    logger.info('Validate and store SSM parameters', { accountId, credentialsId, region, instanceId });
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return {
@@ -739,7 +755,7 @@ async function fetchUnmanagedHostsInformation(
     region: string,
     instances: string[] = []
 ) {
-    logger.info('Fetching hosts information:', { accountId, credentialsId, region, instances });
+    logger.info('Fetching unmanaged hosts information:', { accountId, credentialsId, region, instances });
 
     // Modified implementation to fetch SQL Server instance details for EC2 instances with underlying storage details. The code now accepts instances ID array instead of object with ec2InstanceId and storageType. If there are multiple sql instances in an ec2 instance, the code will return multiple resource details for the same ec2 instance. Every item in resourceDetailsList is an ec2 instance - sql instance pair with storage type.
 
@@ -850,9 +866,10 @@ async function fetchUnmanagedHostsInformationV2(
     accountId: string,
     credentialsId: string,
     region: string,
-    instances: string[] = []
+    instances: string[] = [],
+    fields?: string
 ) {
-    logger.info('Fetching hosts information:', { accountId, credentialsId, region, instances });
+    logger.info('Fetching unmanaged hosts information:', { accountId, credentialsId, region, instances, fields });
 
     // Modified implementation to fetch SQL Server instance details for EC2 instances with underlying storage details. The code now accepts instances ID array instead of object with ec2InstanceId and storageType. If there are multiple sql instances in an ec2 instance, the code will return multiple resource details for the same ec2 instance. Every item in resourceDetailsList is an ec2 instance - sql instance pair with storage type.
 
@@ -928,7 +945,13 @@ async function fetchUnmanagedHostsInformationV2(
                         fsxwId: fsxwId || '',
                         ebsVolumeIds,
                         database_deployment_type: sqlServerInstance.sqlServerDeploymentType,
-                        storage_type: fsxnId ? STORAGE_TYPE.FSXN : fsxwId ? STORAGE_TYPE.FSXW : STORAGE_TYPE.EBS
+                        storage_type: fsxnId
+                            ? STORAGE_TYPE.FSXN
+                            : fsxwId
+                            ? STORAGE_TYPE.FSXW
+                            : ebsVolumeIds
+                            ? STORAGE_TYPE.EBS
+                            : NOT_AVAILABLE
                     });
                 });
                 resourceDetailsList.push(resourceDetails);
@@ -951,7 +974,8 @@ async function fetchUnmanagedHostsInformationV2(
                 resourceDetail.resource_id,
                 credentialsId,
                 region,
-                'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
+                fields ||
+                    'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
                 resourceDetail,
                 false // unmanaged host,
             )
@@ -1066,9 +1090,9 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     }
 
     /* Resource ID is obtained either by one instanceID (in case of standalone
-       deployment) or by combining instanceIDs of both node1 and node (in case
+       deployment) or by combining instanceIDs of both node1 and node2 (in case
        of FCI deployment).  FCI resourceID can be a hash of inst1ID+inst2ID or
-       inst2ID+inst1.  Since a resource would have been regisered with either
+       inst2ID+inst1ID.  Since a resource would have been regisered with either
        of the instance IDs,  we check need to verify the hash for both
        combinations.
     */
@@ -1145,7 +1169,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
 }
 
 async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlResponseBodyType, ec2InstanceId: string) {
-    logger.debug('Is EC2 instance manageable', discoverInfo);
+    logger.debug('Validate EC2 instance manageability', discoverInfo);
 
     try {
         const { count, items } = discoverInfo;
@@ -1206,7 +1230,7 @@ async function validateCredentials(
     fsxCredentials: DiscoverCredentialsType | undefined,
     sqlCredentials: DiscoverCredentialsType[]
 ) {
-    logger.info('validateCredentials', { instanceId, fsxCredentials, sqlCredentials });
+    logger.info('Validate credentials', { instanceId, fsxCredentials, sqlCredentials });
 
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
     if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
@@ -1256,6 +1280,7 @@ async function validateCredentials(
 
         const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
         parsedResponse = attempt(JSON.parse, cleanResponse);
+        logger.info('Parsed response for credential validation: ', parsedResponse);
 
         parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
 
@@ -1328,7 +1353,7 @@ async function verifyAndCreateCredentials(
     fsxCredentials: DiscoverCredentialsType | undefined,
     sqlCredentials: DiscoverCredentialsType[]
 ) {
-    logger.info('verifyAndCreateCredentials', { instanceId, fsxCredentials, sqlCredentials });
+    logger.info('Verify and create credentials', { instanceId, fsxCredentials, sqlCredentials });
 
     if (fsxCredentials) {
         const SSMParameter = await getParameter(
@@ -1370,7 +1395,7 @@ async function verifyAndCreateCredentials(
 }
 
 async function deleteSSMParameter(credentialsId: string, region: string, ssmParameterNames: string[]) {
-    logger.info('deleteSSMParameter', { ssmParameterNames });
+    logger.info('Delete SSM parameter', { credentialsId, region, ssmParameterNames });
 
     const newlyAddedSSMParameters: string[] = (await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS)) || [];
     const ssmParamRegex = /\/netapp\/wlmdb\/(.*)/;
@@ -1393,7 +1418,7 @@ async function verifyAndAddFSxOntapCredentials(
     region: string,
     fsxNId: string
 ) {
-    logger.info('verifyAndAddFSxOntapCredentials', { accountId, credentialsId, region, fsxStorageId: fsxNId });
+    logger.info('Verify and add FSx ONTAP credentials', { accountId, credentialsId, region, fsxStorageId: fsxNId });
 
     if (!isEmpty(fsxNId)) {
         // Check if the FSx credentials are already present in SSM parameter store
@@ -1430,7 +1455,12 @@ async function verifyAndAddFSxOntapCredentials(
 }
 
 async function prepareForManage(accountId: string, credentialsId: string, region: string, ec2InstanceId: string) {
-    logger.info('Prepare for manage:', { accountId, credentialsId, region });
+    logger.info('Prepare given EC2 for manage by Workload Factory:', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId
+    });
 
     const ssmState = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
     if (ssmState.Status === ConnectionStatus.NOT_CONNECTED) {
@@ -1651,14 +1681,16 @@ async function manageSqlServerV2(
     credentialsId: string,
     region: string,
     ec2InstanceId: string,
-    databaseInstanceNameList: string[]
+    databaseInstanceNameList: string[],
+    databaseHostId?: string
 ) {
     logger.info('Manage SQL Server instances (v2):', {
         accountId,
         credentialsId,
         region,
         ec2InstanceId,
-        databaseInstanceList: databaseInstanceNameList
+        databaseInstanceList: databaseInstanceNameList,
+        databaseHostId
     });
 
     try {
@@ -1736,31 +1768,41 @@ async function manageSqlServerV2(
             );
             const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
             if (!isEmpty(temp)) {
-                node2InstanceId = temp.ec2InstanceId;
+                if (
+                    !isDemoFlow &&
+                    sqlServerInstances?.[0]?.sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+                ) {
+                    node2InstanceId = temp.ec2InstanceId;
+                }
             }
         }
+        let resourceId;
+        let isResourceTobeCreated: boolean;
+        if (isDemoFlow && databaseHostId) {
+            resourceId = databaseHostId;
+            isResourceTobeCreated = false;
+        } else {
+            // A resource ID is a hash generated using available EC2 instance IDs.
+            const [resourceId1, resourceId2] = [
+                getMsSqlResourceId(node1InstanceId, node2InstanceId),
+                getMsSqlResourceId(node2InstanceId || '', node1InstanceId)
+            ];
 
-        // A resource ID is a hash generated using available EC2 instance IDs.
-        const [resourceId1, resourceId2] = [
-            getMsSqlResourceId(node1InstanceId, node2InstanceId),
-            getMsSqlResourceId(node2InstanceId || '', node1InstanceId)
-        ];
+            const [
+                {
+                    items: [resourceDetails1]
+                },
+                {
+                    items: [resourceDetails2]
+                }
+            ] = await Promise.all([
+                getResources(accountId, resourceId1, credentialsId, region),
+                getResources(accountId, resourceId2, credentialsId, region)
+            ]);
 
-        const [
-            {
-                items: [resourceDetails1]
-            },
-            {
-                items: [resourceDetails2]
-            }
-        ] = await Promise.all([
-            getResources(accountId, resourceId1, credentialsId, region),
-            getResources(accountId, resourceId2, credentialsId, region)
-        ]);
-
-        let isResourceTobeCreated: boolean = isEmpty(resourceDetails1) && isEmpty(resourceDetails2);
-        const resourceId = !isEmpty(resourceDetails1) ? resourceId1 : resourceId2;
-
+            isResourceTobeCreated = isEmpty(resourceDetails1) && isEmpty(resourceDetails2);
+            resourceId = !isEmpty(resourceDetails1) ? resourceId1 : resourceId2;
+        }
         const alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
             credentialsId,
             resourceId

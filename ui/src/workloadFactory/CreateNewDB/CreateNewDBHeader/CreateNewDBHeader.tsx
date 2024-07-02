@@ -4,15 +4,19 @@ import styles from './CreateNewDBHeader.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
+import { useDispatch } from 'react-redux';
+import { updateRefreshBlocked } from '../../../store/authSlice';
 const CreateNewUserHeader = () => {
     const navigate = useNavigate();
     const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
+    const dispatch = useDispatch();
 
     return (
         <div className={styles.createNewUserHeader}>
             <Header
                 closeButtonProps={{
                     onClick: () => {
+                        dispatch(updateRefreshBlocked(true));
                         navigate('../databases');
                     }
                 }}

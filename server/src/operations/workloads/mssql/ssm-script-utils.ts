@@ -1,5 +1,7 @@
 import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
 
+/* eslint-disable no-useless-escape */
+
 const GET_ACTIVE_NODE_DRIVE_INFO = (
     deploymentType: string
 ) => ` $disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
@@ -176,12 +178,11 @@ const validateSQLInstanceConnectivity = (
     ec2instanceId: string,
     sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => ` 
-        
-        $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'
+        $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
 
-        $destinationPath = $env:PSModulePath.split(';')[0]
-        $CommonmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.Common"
-        $ssmmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.SimpleSystemsManagement"
+        $destinationPath = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules"
+        $CommonmodulePath = $destinationPath + "\\AWS.Tools.Common"
+        $ssmmodulePath = $destinationPath + "\\AWS.Tools.SimpleSystemsManagement"
         Import-Module -Name $CommonmodulePath, $ssmmodulePath
     if ($responseObject -eq $null) {
         $responseObject = @{}
@@ -195,7 +196,7 @@ const validateSQLInstanceConnectivity = (
         $sqlcmdInstalled = (Get-Command -Type Application sqlcmd 2> $null) -ne $null
 
         if (-not $sqlcmdInstalled) {
-            $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed, ensure the "Path" environment variable contains the path of the command and retry the operation')
+            $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed,,  ensure the "Path" environment variable contains the path of the command and retry the operation')
             $responseObject.add('sqlInstanceConnectivity', $False)
         } else {
             $sqlcmd = @"
@@ -218,7 +219,7 @@ const validateSQLInstanceConnectivity = (
             $password = $sqlCredentials.password
             
             $serverInstanceName = "$env:COMPUTERNAME"
-            If($sqlinstancename -ne '${DEFAULT_MSSQL_INSTANCE_NAME}') {
+            If($sqlinstancename -ne $serverInstanceName) {
                 $serverInstanceName = "$env:COMPUTERNAME\\$sqlinstancename"
                 
             }
@@ -253,9 +254,9 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
         $responseObject = @{}
     }
 
-    $destinationPath = $env:PSModulePath.split(';')[0]
-    $CommonmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.Common"
-    $ssmmodulePath = $destinationPath + "\\aws_ssm\\AWS.Tools.SimpleSystemsManagement"
+    $destinationPath = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules"
+    $CommonmodulePath = $destinationPath + "\\AWS.Tools.Common"
+    $ssmmodulePath = $destinationPath + "\\AWS.Tools.SimpleSystemsManagement"
     Import-Module -Name $CommonmodulePath, $ssmmodulePath
 
     try {
@@ -313,7 +314,8 @@ const installPowerShellModule = (module: string) => `
 const getMappedOntapVolumesScript = (
     fsxid: string,
     fsxregion: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    isSystemDatabase: string = '$false'
 ) => `
     $WarningPreference = 'SilentlyContinue';
     if ($responseObject -eq $null) {
@@ -326,7 +328,7 @@ const getMappedOntapVolumesScript = (
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
 
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True -ErrorAction Stop).Value | Out-String | ConvertFrom-Json  
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
         $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
@@ -340,14 +342,44 @@ const getMappedOntapVolumesScript = (
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
         Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
 
-        $sqlquery = @"
-            SET NOCOUNT ON;
-            SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
-            CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
-            WHERE vs.volume_mount_point != 'C:\\'
-            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
-            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
-            FOR JSON PATH;
+        if (${isSystemDatabase}) {
+            $sqlquery = @"
+                SET NOCOUNT ON;
+                SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
+                INNER JOIN sys.databases d ON mf.database_id = d.database_id
+                CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                WHERE vs.volume_mount_point != 'C:\\'
+                AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
+                AND d.name IN ('master', 'model', 'msdb', 'tempdb')
+                FOR JSON PATH;
+"@
+            $sqlqueryfordatabaseandvolumelist = @"
+                SET NOCOUNT ON;
+                SELECT DISTINCT 
+                    DB_NAME(mf.database_id) AS DatabaseName,
+                    vs.logical_volume_name as VolumeName,
+                    vs.volume_id as VolumeId
+                FROM 
+                    sys.master_files AS mf
+                INNER JOIN 
+                    sys.databases d ON mf.database_id = d.database_id
+                CROSS APPLY 
+                    sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                WHERE 
+                    vs.volume_mount_point != 'C:\\'
+                    AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
+                    AND d.name IN ('master', 'model', 'msdb', 'tempdb')
+                FOR JSON PATH;
+"@
+        } else {
+            $sqlquery = @"
+                SET NOCOUNT ON;
+                SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
+                CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                WHERE vs.volume_mount_point != 'C:\\'
+                AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
+                AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
+                FOR JSON PATH;
 "@
         # Get the windows volumes of the databases with the mdf file volume name
         $sqlqueryfordatabaseandvolumelist = @"
@@ -365,6 +397,8 @@ const getMappedOntapVolumesScript = (
                 AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
             FOR JSON PATH;
 "@
+        }
+
 
         $sqlresponse =  sqlcmd -S "${instanceName}" -Q $sqlquery -y 0;
 
@@ -382,21 +416,20 @@ const getMappedOntapVolumesScript = (
             $volumeIds = @()
         
             foreach ($record in $sqlJsonResponse) {    
-                # Add the ids to the array only if they're not already there
-                if ($volumeIds -notcontains $record.volumeId) {
-                    $volumeIds += $record.volumeId
+                if ($null -ne $record.volumeId) {
+                    # remove the empty spaces and new lines from the volume id
+                    $cleanVolumeId = $record.volumeId.Replace(" ", "").Replace("\`r","").Replace("\`n","")
+                    # Add the ids to the array only if they're not already there
+                    if ($volumeIds -notcontains $cleanVolumeId) {
+                        $volumeIds += $cleanVolumeId
+                    }
                 }
             }
-        
             # Output the array
             $volumeIds
         }
 
-        Function Get-SerialNumberOfWinVolumes {
-            param(
-                [Parameter(Mandatory = $true)]
-                [string[]]$winvolumes
-            )
+        Function Get-SerialNumberOfWinVolumes($winvolumes) {
         
             try {
                 $Lunserialnumbers = @()
@@ -739,8 +772,7 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
         $responseObject = @{}
     }
 
-    # Get the first PSModulePath that contains "WindowsPowerShell" from this path C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules
-    $destinationPath = $env:PSModulePath.split(';')[0]
+    $destinationPath = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\"
 
     # Check if any module is not installed
     function Check-ModuleInstalled {
@@ -769,7 +801,8 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
 
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\aws_ssm.zip"
-            $Null = Expand-Archive -Path "$Env:Temp\\aws_ssm.zip" -DestinationPath $destinationPath -Force
+            $Null = Expand-Archive -Path "$Env:Temp\\aws_ssm.zip" -DestinationPath $Env:Temp -Force
+            $Null = Copy-Item -Path "$Env:Temp\\aws_ssm\\*" -Destination $destinationPath -Recurse
 
             # Ensure the modules are available for use
             $allInstalled = Check-ModuleInstalled -moduleNames $moduleNames
