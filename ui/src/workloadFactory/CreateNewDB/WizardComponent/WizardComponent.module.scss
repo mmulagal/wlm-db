@@ -55,5 +55,12 @@
         left: 50%;
         z-index: 4;
     }
+}
 
+@media screen and (max-width: 1500px) {
+    .wizardComponent {
+        .leftSide {
+            width: calc(100vw - 476px) !important;
+        }
+    }
 }

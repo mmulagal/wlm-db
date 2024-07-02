@@ -542,10 +542,42 @@ const ManagedHostSubTable = ({
             id: '1',
             isSortable: true,
             width: '212px',
-            isSticky: true
+            isSticky: true,
+            renderCell: (cellData: any, rowData: any) => {
+                const name = rowData?.databaseInstanceName;
+                return (
+                    <div>
+                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                        <div className={styles.firstColText}>
+                            {(rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                            )}
+                            {(rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                            )}
+                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
+                            )}
+                            <DsTypography variant="Regular_13">
+                                {rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+                                    ? INVENTORY_STATUS.ONLINE
+                                    : rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                      rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                                    ? INVENTORY_STATUS.OFFLINE
+                                    : rowData?.status}
+                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                                {!rowData?.status && !rowData?.loading && 'Unknown'}
+                            </DsTypography>
+                        </div>
+                    </div>
+                );
+            }
         },
         {
-            Header: 'Status',
+            Header: 'Managed status',
             accessor: 'statusColText',
             id: '2',
             isSortable: false,
@@ -679,6 +711,7 @@ const ManagedHostSubTable = ({
 
                     tableProps={tableProps}
                     variant="innerTable"
+                    isDoubleRow={true}
                 />
             </span>
 

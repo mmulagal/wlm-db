@@ -60,3 +60,11 @@
         width: 33vw;
     }
 }
+
+@media screen and (max-width: 1500px) {
+    .mainContainer {
+        .leftSide {
+            width: calc(100vw - 476px) !important;
+        }
+    }
+}
