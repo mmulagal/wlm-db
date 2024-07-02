@@ -497,26 +497,25 @@ const getMappedOntapVolumesScript = (
 
             if ($QueryFilter -ne '') {
                 $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
-            }
+            
+                $Response = Invoke-ONTAPGetRequest @Params
 
-            $Response = Invoke-ONTAPGetRequest @Params
+                $LunRecords = $Response.records
 
-            $LunRecords = $Response.records
+                Write-Debug "Lun Records Mapping: $($LunRecords | ConvertTo-Json)"
 
-            Write-Debug "Lun Records Mapping: $($LunRecords | ConvertTo-Json)"
-
-            [string[]]$LunNames = @()
-            $VolumeLunMapping = @{}
-            foreach ($record in $LunRecords) {
-                $LunNames += $record.name
-                foreach ($volumeId in $VolumeSerialMapping.Keys) {
-                    if ($VolumeSerialMapping[$volumeId] -eq $record.serial_number) {
-                        $lunName = $record.name -replace '^\\/vol\\/(.*?)\\/.*$', '$1'
-                        $VolumeLunMapping[$volumeId] = $lunName
+                [string[]]$LunNames = @()
+                $VolumeLunMapping = @{}
+                foreach ($record in $LunRecords) {
+                    $LunNames += $record.name
+                    foreach ($volumeId in $VolumeSerialMapping.Keys) {
+                        if ($VolumeSerialMapping[$volumeId] -eq $record.serial_number) {
+                            $lunName = $record.name -replace '^\\/vol\\/(.*?)\\/.*$', '$1'
+                            $VolumeLunMapping[$volumeId] = $lunName
+                        }
                     }
                 }
             }
-
             Write-Debug "Lun volume Mapping: $($VolumeLunMapping | ConvertTo-Json)"
             Write-Debug "Lun names: $LunNames"
             return @{
@@ -541,23 +540,23 @@ const getMappedOntapVolumesScript = (
             }
 
             if ($QueryFilter -ne '') {
-                $Params += @{"ApiQueryFilter" = "name=$QueryFilter"}
-            }
+                $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=snapshot_count"}
+            
 
-            $Response = Invoke-ONTAPGetRequest @Params
+                $Response = Invoke-ONTAPGetRequest @Params
 
-            $VolumeNameMapping = @{}
-            foreach ($record in $Response.records) {
-                foreach ($volumeId in $VolumeLunMapping.Keys) {
-                    if ($VolumeLunMapping[$volumeId] -eq $record.name) {
-                        $VolumeNameMapping[$volumeId] = @{
-                            "uuid" = $record.uuid
-                            "name" = $record.name
+                $VolumeNameMapping = @{}
+                foreach ($record in $Response.records) {
+                    foreach ($volumeId in $VolumeLunMapping.Keys) {
+                        if ($VolumeLunMapping[$volumeId] -eq $record.name) {
+                            $VolumeNameMapping[$volumeId] = @{
+                                "uuid" = $record.uuid
+                                "name" = $record.name
+                            }
                         }
                     }
                 }
             }
-
             Write-Debug "final Mapping: $($VolumeLunMapping | ConvertTo-Json)"
 
             return @{
@@ -586,19 +585,19 @@ const getMappedOntapVolumesScript = (
                     }
                 }
             $QueryFilter = $QueryFilter.TrimEnd('|')
+            $volumeIds = @()
             if ($QueryFilter -ne '') {
                 $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=volume"}
-            }
             
-            $cifsShares = Invoke-ONTAPGetRequest @Params
-            $cifsRecords = $cifsShares.records
+            
+                $cifsShares = Invoke-ONTAPGetRequest @Params
+                $cifsRecords = $cifsShares.records
 
-            $volumeIds = @()
-            foreach ($record in $cifsRecords) {
-                $object = New-Object PSObject -Property @{ "uuid" = $record.volume.uuid }
-                $volumeIds += $object
+                foreach ($record in $cifsRecords) {
+                    $object = New-Object PSObject -Property @{ "uuid" = $record.volume.uuid }
+                    $volumeIds += $object
                 }
-            
+            }
             if ($volumeIds.count -eq 1) {
                 return @(,$volumeIds)
             }
@@ -610,16 +609,29 @@ const getMappedOntapVolumesScript = (
             try {
                 $sqlJsonResponse = $sqlqueryresponse | convertFrom-Json
                 $newArray = @()
+                
                 foreach ($dbMapping in $sqlJsonResponse) {
-                    $volumeId = $dbMapping.VolumeId
+                    # Create a new object to store the cleaned keys and values
+                    $cleanDbMapping = New-Object PSObject
         
+                    foreach ($property in $dbMapping.PSObject.Properties) {
+                        # Remove new lines from the key
+                        $cleanKey = $property.Name.Replace("\`r", "").Replace("\`n", "")
+                        # Remove new lines from the value
+                        $cleanValue = $property.Value -replace "\`r", "" -replace "\`n", ""
+                        $cleanDbMapping | Add-Member -NotePropertyName $cleanKey -NotePropertyValue $cleanValue
+                    }
+        
+                    $volumeId = $cleanDbMapping.VolumeId
+                    $volumeId = $volumeId.Replace(" ", "")
+
                     if ($null -ne $volumeId -and $null -ne $volumeNameMapping -and $volumeNameMapping.ContainsKey($volumeId)) {
                         $value = $volumeNameMapping[$volumeId]
                         $newObject = @{
-                            "databaseName" = $dbMapping.DatabaseName
+                            "databaseName" = $cleanDbMapping.DatabaseName
                             "ontapVolumeuuid" = $value["uuid"]
                         }
-
+        
                         $newArray += $newObject
                     }
                 }
@@ -628,10 +640,29 @@ const getMappedOntapVolumesScript = (
                 Write-Debug "Volume Ids: $($sqlqueryresponse | convertFrom-Json)"
                 Write-Error $_.Exception.Message
             }
-        }    
+        }
+
+        Function Process-Records($inputObject) {
+            $output = @()
+        
+            if ($null -ne $inputObject.records) {
+                foreach ($record in $inputObject.records) {
+                    $newRecord = New-Object PSObject
+                    $record.PSObject.Properties | Where-Object { $_.Name -ne '_links' } | ForEach-Object {
+                        $newRecord | Add-Member -NotePropertyName $_.Name -NotePropertyValue $_.Value
+                    }
+                    $output += $newRecord
+                }
+            }
+
+            return @{ "records" = $output }
+        }
+
         Write-Debug "query List: $sqlqueryresponse"
 
         $volumeIds = Get-VolumeIdsList $sqlqueryresponse
+
+        Write-Debug "volume List: $volumeIds"
 
         $result = Get-SerialNumberOfWinVolumes $volumeIds
         $SerialNumbers = $result.Lunserialnumbers
@@ -668,7 +699,6 @@ const getMappedOntapVolumesScript = (
         Write-Debug "CIFS Volumes:  $($cifsVolumes | ConvertTo-Json)"
 
         if($cifsVolumes){
-
             if ($null -ne $volumes.records) {
                 $volumes["records"]+=$cifsVolumes
             }
@@ -677,18 +707,21 @@ const getMappedOntapVolumesScript = (
                 
             }
         } 
+
+        $processedRecords = Process-Records $volumes
         
+        Write-Debug "Processed volumes:  $($processedRecords | ConvertTo-Json)"
         $volumeDBMap = updateVolumeMappings $sqlqueryresponse $volumeNameMapping
         
-        Write-Debug "final volue details: $($volumeDBMap | ConvertTo-Json)"
+        Write-Debug "final volume details: $($volumeDBMap | ConvertTo-Json)"
 
         $responseObject = @{}
-        $responseObject.add('volumes', $volumes)
+        $responseObject.add('volumes', $processedRecords)
         $responseObject.add('volumeDBMap', $volumeDBMap)
         return $responseObject | ConvertTo-Json -Depth 100
     } catch {
         Write-Error $_.Exception.Message
-    }
+    } 
 `;
 
 const restGetUtilForOntap = (
