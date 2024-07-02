@@ -6,8 +6,10 @@ import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected
 import styles from './DatabaseListTable.module.scss';
 import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
 import { useAppSelector } from '../../../store/storeHooks';
-import { formatSize, isAwsBackupEnabled } from '../../../utils/utilityFunctions';
+import { formatSize } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
+import { getProtectionText, isAwsBackupEnabledText } from '../../InventoryV2/InventoryUtilsV2';
+import { PROTECTION_TEXT_STATUS } from '../../../utils/consts';
 
 const DatabaseListTable = () => {
     const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
@@ -15,17 +17,18 @@ const DatabaseListTable = () => {
 
     const formatData = (tableData: WorkloadFactoryDatabaseItem[]) => {
         return tableData?.map(perRow => {
-            let isProtected = GENERAL.NOT_PROTECTED;
-            if (
-                isAwsBackupEnabled(perRow) ||
-                perRow?.protection?.isFsxOntapSnapshotsEnabled ||
-                perRow?.protection?.isSqlNativeEnabled
-            ) {
-                isProtected = GENERAL.PROTECTED;
+            let protectionText = getProtectionText(perRow);
+            let protectionVal = '';
+            if (protectionText === PROTECTION_TEXT_STATUS.YES) {
+                protectionVal = GENERAL.PROTECTED;
+            } else if (protectionText === PROTECTION_TEXT_STATUS.NO) {
+                protectionVal = GENERAL.NOT_PROTECTED;
+            } else {
+                protectionVal = GENERAL.NOT_AVAILABLE;
             }
             return {
                 ...perRow,
-                isProtected: isProtected
+                isProtected: protectionVal
             };
         });
     };
@@ -98,30 +101,30 @@ const DatabaseListTable = () => {
             width: '15%',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
-                let protectedChk = false;
-                if (
-                    isAwsBackupEnabled(rowData) ||
-                    protectionData?.isFsxOntapSnapshotsEnabled ||
-                    protectionData?.isSqlNativeEnabled
-                ) {
-                    protectedChk = true;
-                }
                 let protectedByList = [];
-                if (protectionData?.isFsxOntapSnapshotsEnabled) {
+                let awsBackup = isAwsBackupEnabledText(rowData, '');
+                if (
+                    protectionData?.isFsxOntapSnapshotsEnabled &&
+                    protectionData?.isFsxOntapSnapshotsEnabled !== GENERAL.NOT_AVAILABLE
+                ) {
                     protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
                 }
-                if (isAwsBackupEnabled(rowData)) {
+                if (awsBackup && awsBackup !== GENERAL.NOT_AVAILABLE) {
                     protectedByList.push(GENERAL.AWS_BACKUP);
                 }
-                if (protectionData?.isSqlNativeEnabled) {
+                if (
+                    protectionData?.isSqlNativeEnabled &&
+                    protectionData?.isSqlNativeEnabled !== GENERAL.NOT_AVAILABLE
+                ) {
                     protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
                 }
+
                 return (
                     <>
                         {protectionData && (
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
-                                    {protectedChk && (
+                                    {cellData === GENERAL.PROTECTED && (
                                         <ProtectedIcon
                                             style={{
                                                 //@ts-ignore
@@ -129,7 +132,7 @@ const DatabaseListTable = () => {
                                             }}
                                         />
                                     )}
-                                    {!protectedChk && (
+                                    {cellData === GENERAL.NOT_PROTECTED && (
                                         <NotProtectedIcon
                                             style={{
                                                 //@ts-ignore
@@ -137,11 +140,9 @@ const DatabaseListTable = () => {
                                             }}
                                         />
                                     )}
-                                    <Typography variant="Regular_14">
-                                        {protectedChk ? GENERAL.PROTECTED : GENERAL.NOT_PROTECTED}
-                                    </Typography>
+                                    <Typography variant="Regular_14">{cellData}</Typography>
                                 </div>
-                                {protectedChk && (
+                                {protectedByList?.length > 0 && (
                                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>
                                         {protectionTooltipText(protectedByList)}
                                     </TooltipInfo>

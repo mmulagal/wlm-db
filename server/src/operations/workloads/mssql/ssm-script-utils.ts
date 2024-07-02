@@ -180,7 +180,7 @@ const validateSQLInstanceConnectivity = (
 ) => ` 
         $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
 
-        $destinationPath = $env:PSModulePath.split(';')[0]
+        $destinationPath = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules"
         $CommonmodulePath = $destinationPath + "\\AWS.Tools.Common"
         $ssmmodulePath = $destinationPath + "\\AWS.Tools.SimpleSystemsManagement"
         Import-Module -Name $CommonmodulePath, $ssmmodulePath
@@ -254,7 +254,7 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
         $responseObject = @{}
     }
 
-    $destinationPath = $env:PSModulePath.split(';')[0]
+    $destinationPath = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules"
     $CommonmodulePath = $destinationPath + "\\AWS.Tools.Common"
     $ssmmodulePath = $destinationPath + "\\AWS.Tools.SimpleSystemsManagement"
     Import-Module -Name $CommonmodulePath, $ssmmodulePath
@@ -805,8 +805,7 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
         $responseObject = @{}
     }
 
-    # Get the first PSModulePath that contains "WindowsPowerShell" from this path C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules
-    $destinationPath = $env:PSModulePath.split(';')[0]
+    $destinationPath = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\"
 
     # Check if any module is not installed
     function Check-ModuleInstalled {

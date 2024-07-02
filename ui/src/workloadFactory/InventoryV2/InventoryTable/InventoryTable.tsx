@@ -1,29 +1,37 @@
-import { DsFlashingDotsLoader, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
-import { useNavigate } from 'react-router-dom';
+import {
+    Button,
+    DsFlashingDotsLoader,
+    Popover,
+    Table,
+    TableTopBar,
+    Typography,
+    useDialog,
+    useTable
+} from '@netapp/design-system';
+
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
+import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import styles from './InventoryTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import MenuPopover from '../../../common/MenuPopover/MenuPopover';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST, INVENTORY_STATUS, INVENTORY_ACTIONS, API_ERRORS } from '../../../utils/consts';
+import {
+    STATUS_CONST,
+    INVENTORY_STATUS,
+    INVENTORY_ACTIONS,
+    API_ERRORS,
+    SSM_TROUBLESHOOTING_LINK
+} from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
-import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 
 import { isSmbProtocol, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
-import { updateResourceId } from '../../../store/authSlice';
-import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
-import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
+
 import {
-    addInitialDBCreateData,
-    initialCreateNewUserState,
-    setDBHostName
-} from '../../../store/workloadFactory/createNewDBSlice';
-import {
-    errorNotification,
     installModuleNotification,
     renderAllocatedCapacity,
     renderCellData,
@@ -47,13 +55,13 @@ import store from '../../../store/store';
 import {
     setInProgressInstances,
     setInventoryExpandedRowHostData,
-    setInventoryTableData
+    setInventoryTableData,
+    setUnManagedPerfInstanceIdsList
 } from '../../../store/workloadFactory/inventoryV2Slice';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
@@ -70,6 +78,8 @@ const InventoryTable = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
+    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+
     const [loading, setLoading] = useState(false);
 
     const [manageInstanceApi] = useManageMssqlInstanceMutation();
@@ -271,6 +281,22 @@ const InventoryTable = () => {
         );
     };
 
+    const addInstanceIdToGetPerf = (rowData: any) => {
+        // First check if this is already opened or closed. If this data is already available or not.
+        if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
+            // If this has unmanaged rows or not ?
+            let unmanagedRows = rowData?.sqlServerInstances?.filter(
+                (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
+            );
+            if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
+                dispatch(
+                    setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]])
+                );
+            }
+            // This has to be called even if any row is becoming unmanaged row or managed row
+        }
+    };
+
     const lastColJSX = (
         rowData: any,
         checkForAllManaged: boolean,
@@ -393,6 +419,7 @@ const InventoryTable = () => {
                                 onClick={(e: any) => {
                                     e.stopPropagation();
                                     expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    addInstanceIdToGetPerf(rowData);
                                 }}
                             />
                         </div>
@@ -427,12 +454,6 @@ const InventoryTable = () => {
                                 {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
                                 {!rowData?.status && !rowData?.loading && 'Unknown'}
                             </Typography>
-                            {/* <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">
-                                {rowData?.topology?.serverType}
-                                {!rowData?.topology?.serverType && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.topology?.serverType && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-                            </Typography> */}
                         </div>
                     </div>
                 );
@@ -505,8 +526,37 @@ const InventoryTable = () => {
                             <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                         )}
                         {rowData?.ssmState === INVENTORY_STATUS.OFFLINE && (
-                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                            <>
+                                <div className={styles.ssmOffline}>
+                                    <Popover
+                                        popoverClass={''}
+                                        children={
+                                            <div>
+                                                <Typography variant="Regular_14">
+                                                    {GENERAL.SSM_NO_CONNECTION_MSG}
+                                                </Typography>
+                                                <Button
+                                                    className={styles.ssmLink}
+                                                    variant="link"
+                                                    onClick={() =>
+                                                        window.open(SSM_TROUBLESHOOTING_LINK, '_blank', 'noopener')
+                                                    }
+                                                >
+                                                    {GENERAL.SSM_NO_CONNECTION_LINK}
+                                                </Button>
+                                            </div>
+                                        }
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={<TooltipIcon />}
+                                    />
+                                </div>
+
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                            </>
                         )}
+
                         <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
                     </div>
                 );
@@ -525,12 +575,12 @@ const InventoryTable = () => {
         {
             id: '8',
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-            accessor: 'allocatedCapacityText',
+            accessor: 'allocatedCapacity',
             isSortable: true,
             width: '216px',
             accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
-                return renderAllocatedCapacity(cellData, rowData);
+                return renderAllocatedCapacity(rowData?.allocatedCapacityText, rowData);
             }
         },
         lastColDetails()

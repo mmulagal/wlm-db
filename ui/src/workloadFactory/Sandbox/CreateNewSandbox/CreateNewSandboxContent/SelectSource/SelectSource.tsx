@@ -185,6 +185,7 @@ const SelectSource = () => {
                                     isClearable={false}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSourceDbHost(selectedOptions));
+                                        dispatch(setSourceDbInstance(null));
                                         dispatch(setSourceDatabase(null));
                                     }}
                                     value={selectedDatabaseHost}
@@ -201,6 +202,7 @@ const SelectSource = () => {
                                     value={selectedDatabaseInstance}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSourceDbInstance(selectedOptions));
+                                        dispatch(setSourceDatabase(null));
                                     }}
                                     isLoading={databaseHostsLoading}
                                     isSearchable={true}
