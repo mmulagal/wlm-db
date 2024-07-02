@@ -238,7 +238,7 @@ const app = fastify({
                     setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
                     setAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER, xNetappReferer);
 
-                    if (!url.includes(API_PATH_HEALTH) && !url.includes('/wlmdb/documentation/yaml')) {
+                    if (!url.includes(API_PATH_HEALTH) && !url.includes('/wlmdb/documentation')) {
                         const traceData = getTraceData();
                         accessLogger.info({
                             requestId,
@@ -270,7 +270,7 @@ const app = fastify({
     .setErrorHandler((error, request, reply) => errorHandler(error, request, reply))
     .addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
         const { url, params, method, id: requestId, body } = request;
-        if (!url.includes(API_PATH_HEALTH) && !url.includes('/wlmdb/documentation/yaml')) {
+        if (!url.includes(API_PATH_HEALTH) && !url.includes('/wlmdb/documentation')) {
             const traceData = getTraceData();
             let replyBody = payload;
             try {
