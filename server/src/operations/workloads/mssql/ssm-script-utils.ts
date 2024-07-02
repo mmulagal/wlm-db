@@ -495,6 +495,8 @@ const getMappedOntapVolumesScript = (
                 "ApiEndPoint" = "/storage/luns"
             }
 
+            [string[]]$LunNames = @()
+            $VolumeLunMapping = @{}
             if ($QueryFilter -ne '') {
                 $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
             
@@ -504,8 +506,6 @@ const getMappedOntapVolumesScript = (
 
                 Write-Debug "Lun Records Mapping: $($LunRecords | ConvertTo-Json)"
 
-                [string[]]$LunNames = @()
-                $VolumeLunMapping = @{}
                 foreach ($record in $LunRecords) {
                     $LunNames += $record.name
                     foreach ($volumeId in $VolumeSerialMapping.Keys) {
