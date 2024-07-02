@@ -40,6 +40,7 @@ import {
 import { setIsRefreshed } from '../../store/workloadFactory/inventorySlice';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../store/store';
+import { INSTANCE_API_FIELDS } from '../../utils/consts';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
@@ -531,32 +532,22 @@ const InventoryApisV2 = () => {
     useEffect(() => {
         // if fsx register is false and only db cred is added than call instance API
         if (detectedInstanceId) {
-            callInstanceApi([detectedInstanceId], false, [
-                'databaseInstanceTopology',
-                'usageEstimation',
-                'storage',
-                'databaseServer'
-            ]);
-            callUnmanagedPerfInstanceApi([detectedInstanceId], false, ['protection', 'performance']);
+            callInstanceApi([detectedInstanceId], false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
+            callUnmanagedPerfInstanceApi([detectedInstanceId], false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
         }
     }, [detectedInstanceId]);
 
     useEffect(() => {
         // if partner instance ID
         if (partnerInstanceList) {
-            callInstanceApi(partnerInstanceList, false, [
-                'databaseInstanceTopology',
-                'usageEstimation',
-                'storage',
-                'databaseServer'
-            ]);
+            callInstanceApi(partnerInstanceList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
         }
     }, [partnerInstanceList]);
 
     useEffect(() => {
         // if partner instance ID
         if (unManagedPerfInstanceIdsList) {
-            callUnmanagedPerfInstanceApi(unManagedPerfInstanceIdsList, false, ['protection', 'performance']);
+            callUnmanagedPerfInstanceApi(unManagedPerfInstanceIdsList, false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
         }
     }, [unManagedPerfInstanceIdsList]);
 
@@ -711,12 +702,7 @@ const InventoryApisV2 = () => {
                 runningInstanceListRef.current
             );
             if (unmanagedHostList && unmanagedHostList?.length > 0) {
-                callInstanceApi(unmanagedHostList, false, [
-                    'databaseInstanceTopology',
-                    'usageEstimation',
-                    'storage',
-                    'databaseServer'
-                ]);
+                callInstanceApi(unmanagedHostList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
             }
 
             // To Avoid overriding
@@ -740,7 +726,7 @@ const InventoryApisV2 = () => {
                 runningInstanceListRef.current
             );
             if (unmanagedInstanceList && unmanagedInstanceList?.length > 0) {
-                callInstanceApi(unmanagedInstanceList, true, ['databaseInstanceTopology', 'storage', 'databaseServer']);
+                callInstanceApi(unmanagedInstanceList, true, INSTANCE_API_FIELDS.MIXED_STATUS_FIELDS);
             }
 
             // To Avoid overriding
