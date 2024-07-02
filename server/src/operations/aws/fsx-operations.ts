@@ -437,7 +437,8 @@ async function getMappedOntapVolumes(
     region: string,
     fileSystemId: string,
     isSystemDatabase: boolean,
-    activeNodeInstanceId?: string
+    activeNodeInstanceId?: string,
+    instanceName?: string
 ) {
     logger.info('Get ontap volumes mapped to data drive of all databases in a server', {
         credentialsId,
@@ -455,7 +456,7 @@ async function getMappedOntapVolumes(
         // retrieve the mapped volumes for system databases alone when isSystemDatabase is true otherwise includes user dbs also
         const psIsSystemDatabase = isSystemDatabase ? '$true' : '$false';
 
-        const command = getMappedOntapVolumesScript(fileSystemId, region, undefined, psIsSystemDatabase);
+        const command = getMappedOntapVolumesScript(fileSystemId, region, instanceName, psIsSystemDatabase);
 
         const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId!);
 

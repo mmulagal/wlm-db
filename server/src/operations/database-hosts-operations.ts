@@ -2021,7 +2021,8 @@ async function getProtectionDetails(
     region: string,
     fileSystemId: string,
     isSystemDatabase: boolean = false,
-    activeNodeInstanceId?: string
+    activeNodeInstanceId?: string,
+    instanceName?: string
 ): Promise<{ awsBackup: BackupType; ontapBackup: BackupType }> {
     logger.info('Getting Proteciton details', { credentialsId, region, fileSystemId, activeNodeInstanceId });
 
@@ -2031,7 +2032,8 @@ async function getProtectionDetails(
         region,
         fileSystemId,
         isSystemDatabase,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        instanceName
     )) as MappedOnTapVolumeResponse) || { volumeUuids: [], volumeDBMap: {} };
 
     const [awsBackup = {}, ontapBackup = {}] = await Promise.all([
@@ -2131,7 +2133,16 @@ async function getDatabaseDetails(
                         ? [getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName)]
                         : [Promise.resolve()]), // Fetch native sql protection status
                     ...(activeNodeInstanceId && getProtection
-                        ? [getProtectionDetails(credentialsId, region, fileSystemId, false, activeNodeInstanceId)]
+                        ? [
+                              getProtectionDetails(
+                                  credentialsId,
+                                  region,
+                                  fileSystemId,
+                                  false,
+                                  activeNodeInstanceId,
+                                  instanceName
+                              )
+                          ]
                         : [Promise.resolve()]) // Fetch protection status
                 ].map(p =>
                     p.catch(error => {
