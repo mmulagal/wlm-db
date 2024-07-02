@@ -521,3 +521,8 @@ export const INSTANCE_API_FIELDS = {
     SUB_TABLE_FIELDS: ['protection', 'performance'],
     MIXED_STATUS_FIELDS: ['databaseInstanceTopology', 'storage', 'databaseServer', 'serverDetails', 'nodeTopology']
 };
+
+export const PROTECTION_TEXT_STATUS = {
+    YES: 'Yes',
+    NO: 'No'
+};
