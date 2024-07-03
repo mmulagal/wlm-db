@@ -432,7 +432,7 @@ const ManagedHostSubTable = ({
                         rowData?.detectOption === DETECT_HOST_VAR.HIDE
                     ) {
                         disableMsg = rowData?.detectOptionDisableMsg;
-                        width = '240px';
+                        width = '250px';
                         height = '33px';
                         return true;
                     }
