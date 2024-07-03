@@ -155,33 +155,6 @@ const InventoryTable = () => {
         }
     }, [inventoryTableData]);
 
-    // const menuItems = (row: any) => {
-    //     let isSmb = isSmbProtocol(row?.storage?.fsxn?.protocol);
-    //     return [
-    //         {
-    //             id: 'viewOverview',
-    //             displayName: 'View instance',
-    //             disabled: row?.status === STATUS_CONST.UP ? false : true
-    //         },
-    //         {
-    //             id: 'viewDatabaseList',
-    //             displayName: 'View databases',
-    //             disabled: row?.status === STATUS_CONST.UP ? false : true
-    //         },
-    //         {
-    //             id: 'createNewUserDatabase',
-    //             displayName: GENERAL.CREATE_USER_DB_TITLE,
-    //             disabled: row?.status === STATUS_CONST.UP && !isSmb ? false : true,
-    //             infoText: isSmb ? GENERAL.SMB_PROTOCOL_DISABLED : ''
-    //         },
-    //         {
-    //             id: 'unmanage',
-    //             displayName: 'Unmanage',
-    //             disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
-    //         }
-    //     ];
-    // };
-
     const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState.inventoryV2;
