@@ -22,8 +22,8 @@ import {
     STATUS_CONST,
     INVENTORY_STATUS,
     INVENTORY_ACTIONS,
-    API_ERRORS,
-    SSM_TROUBLESHOOTING_LINK
+    SSM_TROUBLESHOOTING_LINK,
+    PREPARE_API_ENDPOINT
 } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
@@ -227,12 +227,16 @@ const InventoryTable = () => {
                 );
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             } else if (res?.error) {
-                if (res?.error?.status === 424) {
+                if (res?.error?.status === 422 || res?.error?.status === 500) {
                     // handle prepare API
                     const errorList = res?.error?.data?.message?.split('\n');
-                    const isOnlyPowerShellError =
-                        errorList?.length === 1 && errorList[0].includes(API_ERRORS.POWERSHELL_7);
-                    if (!isOnlyPowerShellError) {
+                    let prepareApiRequired = false;
+                    errorList.map((errorItem: any) => {
+                        if (errorItem.includes(PREPARE_API_ENDPOINT)) {
+                            prepareApiRequired = true;
+                        }
+                    });
+                    if (prepareApiRequired) {
                         prepareHostApi({
                             credentialId: headerSelectedCred?.data?.credentialsId,
                             regionId: headerSelectedRegion?.label2,

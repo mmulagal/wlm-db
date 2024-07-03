@@ -135,12 +135,6 @@
         }
     }
 
-    .ssmLink {
-        span {
-            text-transform: none !important;
-        }
-    }
-
     .colText {
         // display: flex;
         gap: 16px;
@@ -250,5 +244,11 @@
     font-weight: 400;
     .bold {
         font-weight: 540;
+    }
+}
+
+.ssmLink {
+    span {
+        text-transform: none !important;
     }
 }

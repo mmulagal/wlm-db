@@ -1,10 +1,4 @@
 {
-    "$metadata": {
-        "httpStatusCode": 200,
-        "requestId": "02b25053-9181-4682-a824-4542be35bf1e",
-        "attempts": 1,
-        "totalRetryDelay": 0
-    },
     "StorageVirtualMachines": [
         {
             "CreationTime": "2023-09-20T06:43:53.667Z",

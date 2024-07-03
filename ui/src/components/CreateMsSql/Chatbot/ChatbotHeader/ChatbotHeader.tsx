@@ -1,4 +1,4 @@
-import { Typography } from '@netapp/design-system';
+import { DsTooltipInfo, DsTypography, Popover, Typography } from '@netapp/design-system';
 import styles from './ChatbotHeader.module.scss';
 import { CHATBOT } from '../../../../utils/appConstants';
 import { ReactComponent as AddIcon } from '../../../../assets/ic_add.svg';
@@ -42,10 +42,11 @@ const ChatbotHeader = ({ mapParamsToPayload }: ChatbotHeaderPropTypes) => {
                     {CHATBOT.WELCOME_PAGE.START_NEW_CHAT}
                 </Typography>
             </div>
-            <div className={styles['preview-tag']}>
-                <Typography variant="Semibold_13" color="#6B31AB">
-                    {CHATBOT.HEADER.PREVIEW}
-                </Typography>
+            <div className={styles['disclaimer']}>
+                <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                    {CHATBOT.HEADER.DISCLAIMER}
+                </DsTooltipInfo>
+                <DsTypography variant="Semibold_14">{CHATBOT.HEADER.ABOUT_CHAT}</DsTypography>
             </div>
         </div>
     );

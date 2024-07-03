@@ -2,7 +2,7 @@ import {
     FSxClient,
     paginateDescribeVolumes,
     paginateDescribeFileSystems,
-    DescribeStorageVirtualMachinesCommand,
+    paginateDescribeStorageVirtualMachines,
     DescribeBackupsCommandOutput,
     DescribeBackupsCommand,
     DescribeFileSystemsCommand,
@@ -83,17 +83,24 @@ async function describeFSxVolumes(credentialsId: string, region: string, fsxFsId
 }
 
 async function describeFSxStorageVirtualMachines(credentialsId: string, region: string, fsxFsId?: string) {
-    logger.info('Describe FSx volumes:', { credentialsId, region, fsxFsId });
+    logger.info('Describe FSx storage virtual machines:', { credentialsId, region, fsxFsId });
 
     let input: DescribeStorageVirtualMachinesCommandInput = {};
     if (typeof fsxFsId !== 'undefined') {
         input = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
     }
     const client = await getFSxClient(credentialsId, region);
-    const response = await client.send(new DescribeStorageVirtualMachinesCommand(input));
-    logger.debug('Decribe FSx storage virtual machines  response:', response);
+    const paginator = paginateDescribeStorageVirtualMachines({ client }, input);
+    const svms = [];
+    for await (const page of paginator) {
+        if (page.StorageVirtualMachines?.length) {
+            svms.push(...page.StorageVirtualMachines);
+        }
+    }
 
-    return response;
+    logger.info('Decribe FSx storage virtual machines  response:', svms);
+
+    return { StorageVirtualMachines: svms };
 }
 
 async function describeFSxBackups(
