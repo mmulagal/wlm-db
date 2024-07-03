@@ -773,7 +773,7 @@ const cleanUpOntapResources = (
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $DBName = '${dbName}'
     $executableInstance = "${executableInstance}"
-    $instanceName = ${instanceName}
+    $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
@@ -996,8 +996,8 @@ const detachDbAndRemoveAccessPath = (
     $dbname = '${dbName}'
     $serialNumbers = '${serialNumbers}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
-    $executableInstance = '${executableInstance}'
-    $instanceName = "${instanceName}"
+    $executableInstance = "${executableInstance}"
+    $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\detachdb_remove_accesspath_$dbname.log.txt" -Append | Out-Null
