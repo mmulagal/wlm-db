@@ -1304,6 +1304,7 @@ async function startCleanup(
                 JSON.stringify(filePaths),
                 destDetails.database,
                 destDetails.instanceName,
+                destDetails.databaseInstanceName,
                 `SandBox:${destDetails.database}:`
             )
         ];
@@ -2180,6 +2181,7 @@ async function detachSandboxAndAccessPath(
                 JSON.stringify([mappings.data.lunSerialNumber, mappings.log.lunSerialNumber]),
                 JSON.stringify([mappings.data.fileName, mappings.log.fileName]),
                 resourceDetails.instanceName,
+                resourceDetails.databaseInstanceName,
                 `SandBox:${resourceDetails.database}:`
             )
         ];
@@ -2190,7 +2192,8 @@ async function detachSandboxAndAccessPath(
                     'test-db',
                     '["123456789", "987654321"]',
                     '["S:\\test-db-Data", "L:\\test-db-Log"]',
-                    DEFAULT_MSSQL_INSTANCE_NAME
+                    DEFAULT_MSSQL_INSTANCE_NAME,
+                    DEFAULT_INSTANCE_NAME
                 )
             ];
         }
@@ -2261,6 +2264,7 @@ async function reAttachSandboxAndAccessPath(
                 { serial: mappings.data.lunSerialNumber, path: mappings.data.fileName },
                 { serial: mappings.log.lunSerialNumber, path: mappings.log.fileName },
                 resourceDetails.instanceName,
+                resourceDetails.databaseInstanceName,
                 `SandBox:${resourceDetails.database}:`
             )
         ];

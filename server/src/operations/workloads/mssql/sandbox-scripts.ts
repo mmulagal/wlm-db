@@ -1,6 +1,6 @@
 // instances input instances = ['"computername\\instanceName"', '"DEFAULT_MSSQL_INSTANCE_NAME"']; "DEFAULT_MSSQL_INSTANCE_NAME" represents the default instance
 
-import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
+import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
 
 // ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
 const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
@@ -763,7 +763,8 @@ const cleanUpOntapResources = (
     volumeIds: string,
     filePaths: string,
     dbName: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = ''
 ) => `
     $fsxid = '${fsxid}'
@@ -771,7 +772,8 @@ const cleanUpOntapResources = (
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $DBName = '${dbName}'
-    $instanceName = "${instanceName}"
+    $executableInstance = "${executableInstance}"
+    $instanceName = ${instanceName}
     $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
@@ -785,7 +787,7 @@ const cleanUpOntapResources = (
         if ($filePaths.count -ne 0) {
             $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
 
-            $sqlres = sqlcmd -S $instanceName -Q $query -y 0
+            $sqlres = sqlcmd -S $executableInstance -Q $query -y 0
 
             if (-not [string]::IsNullOrEmpty($sqlres)) {
                 Write-Information "$logPrefix Database $dbname is in use"
@@ -794,9 +796,7 @@ const cleanUpOntapResources = (
             }
 
             $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-            $resourceType = ${
-                instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? '"SQL Server"' : `'SQL Server (${instanceName})'`
-            }
+            $resourceType = ${instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'}
             $windowsVolumeIds = $filePaths | ForEach-Object {
                 Get-VolumeIdFromPath -absolutePath $_
             }
@@ -862,7 +862,7 @@ const cleanUpOntapResources = (
 
             try {
                 $deleteQuery = "SET NOCOUNT ON; DROP DATABASE IF EXISTS $DBName;"
-                $sqlresponse =  sqlcmd -S $instanceName -Q $deleteQuery -y 0;
+                $sqlresponse =  sqlcmd -S $executableInstance -Q $deleteQuery -y 0;
                 if (-not [string]::IsNullOrEmpty($sqlresponse)) {
                     throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
                 }
@@ -989,12 +989,14 @@ const detachDbAndRemoveAccessPath = (
     dbName: string,
     serialNumbers: string,
     filePaths: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = ''
 ) => `
     $dbname = '${dbName}'
     $serialNumbers = '${serialNumbers}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
+    $executableInstance = '${executableInstance}'
     $instanceName = "${instanceName}"
     $logPrefix = '${logPrefix}'
 
@@ -1021,7 +1023,7 @@ const detachDbAndRemoveAccessPath = (
             SELECT name, value
             FROM fn_listextendedproperty(default, default, default, default, default, default, default) FOR JSON PATH;
 "@
-        $sqlresponse = Sqlcmd -S $instanceName -Q $query -y 0 -m 1
+        $sqlresponse = Sqlcmd -S $executableInstance -Q $query -y 0 -m 1
         $sqlresponse = $sqlresponse | ConvertFrom-JSON
 
         $sqlresponse | ForEach-Object {
@@ -1031,9 +1033,7 @@ const detachDbAndRemoveAccessPath = (
         ${getVolumeIdFromPath}
 
         $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-        $resourceType = ${
-            instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? '"SQL Server"' : `"SQL Server (${instanceName})"`
-        }
+        $resourceType = ${instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'}
         $windowsVolumeIds = $filePaths | ForEach-Object {
             Get-VolumeIdFromPath -absolutePath $_
         }
@@ -1041,7 +1041,7 @@ const detachDbAndRemoveAccessPath = (
 
         try {
             $detach = "EXEC sp_detach_db '$dbname', 'true'"
-            $sqlresponse =  sqlcmd -S $instanceName -Q $detach -y 0;
+            $sqlresponse =  sqlcmd -S $executableInstance -Q $detach -y 0;
 
             Write-Information "$logPrefix Detach response: $sqlresponse"
 
@@ -1121,7 +1121,7 @@ const addAccessPathAndAttachDb = (
     datafile: { serial: string; path: string },
     logfile: { serial: string; path: string },
     executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    instanceName: string = 'MSSQLSERVER',
+    instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = ''
 ) => `
     $dbname = '${dbName}'
@@ -1222,7 +1222,7 @@ const addAccessPathAndAttachDb = (
                 write-information "$logPrefix ClusterDataDisk: $clusterdatadisk ClusterLogDisk: $clusterlogdisk"
 
                 try {
-                    $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($InstanceName)")
+                    $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($instanceName)")
                     $SQLGroup = $SQLRoleGroup[0]
 
                     if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
@@ -1230,7 +1230,9 @@ const addAccessPathAndAttachDb = (
                         $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
 
                         #Add dependency on new disks in SQL Server Resource
-                        $ClusterResourceName = If ($InstanceName -eq 'MSSQLSERVER') { "SQL Server" } Else { "SQL Server ($InstanceName)" }
+                        $ClusterResourceName = ${
+                            instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'
+                        }
                         $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterdatadisk.Name))
                         $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterlogdisk.Name))
 
