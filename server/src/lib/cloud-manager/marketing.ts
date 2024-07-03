@@ -618,7 +618,7 @@ async function getStorageSavings(
     logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region, params });
 
     const response = await gotInstanceForInternalRequest
-        .post(`accounts/${accountId}/marketing/v2/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {
+        .post(`accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
                 [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),

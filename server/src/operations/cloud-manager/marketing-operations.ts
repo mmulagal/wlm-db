@@ -460,5 +460,6 @@ export {
     invokeMarketingApi,
     handleMarketingApiFsxCalculationObject,
     formatStorageSavingsCalculationMetrics,
-    getMarketingApiRequestBody
+    getMarketingApiRequestBody,
+    getMarketingApiManualModeRequestBody
 };
