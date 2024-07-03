@@ -303,10 +303,6 @@ const HOST_AND_SQL_INFO_PS1 = [
         $responseObject['failureInfo'] += "Errors seen while reading Windows Registry: $RegistryErrors.\`n"
       }
 
-      If ($MappedDrivesWithPath.Count -le 0) {
-        $responseObject['failureInfo'] += "Failed to get network drives from Windows Registry.\`n"
-      }
-  
       $editionDBCountMachineInfoGuid = @($null, $null, $null, $null, $null)
       $responseObject['windowsAuthentication'] = $False
       $sqlServerInstanceStorageInfo = $null
