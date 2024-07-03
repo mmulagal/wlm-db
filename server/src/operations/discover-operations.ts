@@ -1359,10 +1359,14 @@ async function validateCredentials(
     } catch (error: any) {
         // delete the ssm parameters if its already created
         const paramesToDelete: string[] = [];
-        const instancesToBeDeleted = [sqlCredentials[0].resourceId];
+        const instancesToBeDeleted: string[] = [];
 
         if (fsxCredentials) {
             paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+        }
+
+        if (sqlCredentials) {
+            instancesToBeDeleted.push(sqlCredentials[0].resourceId);
         }
 
         await rewriteOrDeleteSSMParameter(
