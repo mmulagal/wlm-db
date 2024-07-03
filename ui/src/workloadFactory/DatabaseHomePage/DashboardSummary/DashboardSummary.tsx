@@ -2,6 +2,7 @@ import useResize from '../../../common/hooks/useResize';
 import { ReactComponent as Host } from '../../../assets/host.svg';
 import { ReactComponent as Instance } from '../../../assets/instance.svg';
 import { ReactComponent as Database } from '../../../assets/icon database.svg';
+import { ReactComponent as Line } from '../../../assets/Line 265.svg';
 import styles from './DashboardSummary.module.scss';
 import { DsTypography } from '@netapp/design-system';
 
@@ -96,8 +97,18 @@ const DashboardSummary = () => {
                             <Instance />
                         </div>
                         <div className={styles.textContainer}>
-                            <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
-                                100/120
+                            <DsTypography
+                                variant="Regular_24"
+                                className={styles.combinedValue}
+                                style={{ lineHeight: '36px' }}
+                            >
+                                <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                    100
+                                </DsTypography>
+                                <Line />
+                                <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                    120
+                                </DsTypography>
                             </DsTypography>
                             <DsTypography variant="Regular_14">Managed instances</DsTypography>
                         </div>
@@ -110,8 +121,18 @@ const DashboardSummary = () => {
                             <Database />
                         </div>
                         <div className={styles.textContainer}>
-                            <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
-                                100/120
+                            <DsTypography
+                                variant="Regular_24"
+                                className={styles.combinedValue}
+                                style={{ lineHeight: '36px' }}
+                            >
+                                <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                    100
+                                </DsTypography>
+                                <Line />
+                                <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                    120
+                                </DsTypography>
                             </DsTypography>
                             <DsTypography variant="Regular_14">Managed databases</DsTypography>
                         </div>
