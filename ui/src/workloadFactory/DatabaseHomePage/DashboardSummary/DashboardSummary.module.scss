@@ -49,6 +49,14 @@
                 }
             }
 
+            .textContainer {
+                .combinedValue {
+                    display: flex;
+                    gap: 4px;
+                    align-items: center;
+                }
+            }
+
             .marginAdjust {
                 margin-left: 48px;
             }
