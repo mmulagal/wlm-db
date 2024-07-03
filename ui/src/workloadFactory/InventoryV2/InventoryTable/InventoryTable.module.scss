@@ -27,6 +27,10 @@
         }
     }
 
+    [class*='Table-module_scroll'] {
+        width: 1848px !important;
+    }
+
     .topBarStyle {
         z-index: 4 !important;
     }
