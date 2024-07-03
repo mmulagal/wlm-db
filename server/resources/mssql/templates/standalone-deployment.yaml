@@ -476,16 +476,13 @@ Resources:
                         i-move-ontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
-                        j-move-mappedontapvolumesscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        k-move-dbcreatescripts:
+                        j-move-dbcreatescripts:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\* -Destination C:\SSM\ -Recurse
                             waitAfterCompletion: 0
-                        l-hide-ssm:
+                        k-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0 
-                        m-unpack-dependentpackages:
+                        l-unpack-dependentpackages:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
                 InitialSetup:
