@@ -975,8 +975,8 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
             }
         }
         // Capacity
-        if (fsxData?.totalStorageCapacity) {
-            let size = fsxData?.totalStorageCapacity ? fsxData?.totalStorageCapacity / GIB_IN_BYTE : 0;
+        if (fsxData?.fsxBreakdown?.fsxDataLunSize) {
+            let size = fsxData?.fsxBreakdown?.fsxDataLunSize / GIB_IN_BYTE || 0;
             if (size < 1024) {
                 size = 1024;
             }
