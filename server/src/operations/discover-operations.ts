@@ -405,7 +405,7 @@ async function getHostAndSqlInfoFromPsOutput(
         }
     }
     if (ssmResponse.Status === CommandInvocationStatus.TIMED_OUT) {
-        logger.error(`SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`);
+        logger.error(`SSM command ${commandId} execution timed out on node ${ssmTarget.ec2InstanceId}`);
     }
 
     api1EndTime = performance.now();
@@ -551,7 +551,8 @@ async function getHostAndSqlInfoFromPsOutput(
                     }
 
                     const sqlServerAuthentication = ec2SqlParametersInfo?.some(
-                        (elem: { sqlinstancename: string }) => elem.sqlinstancename === sqlServerInstance
+                        (elem: { sqlinstancename: string }) =>
+                            elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase()
                     );
 
                     ssmTargetSqlServerInstancesInfo.push({
