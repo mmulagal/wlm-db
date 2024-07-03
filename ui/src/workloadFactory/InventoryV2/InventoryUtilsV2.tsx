@@ -527,7 +527,7 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         ec2InstanceName: discoveredRow?.ec2InstanceName,
         resourceId: discoveredRow?.key,
         name: getDiscoverHostname(discoveredRow),
-        status: INVENTORY_STATUS.ONLINE, // discover APIs will be Online only
+        status: ssmState, // discover status will depends on ssmState only
         ssmState: ssmState,
         totalInstance: totalInstanceCount,
         managedInstance: 0,
