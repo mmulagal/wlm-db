@@ -438,20 +438,11 @@ const ManagedHostSubTable = ({
                     }
                     if (
                         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        rowData.fileSystemType === GENERAL.EBS
+                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
                     ) {
-                        disableMsg = GENERAL.EBS_TOOLTIP_MESSAGE;
-                        width = '320px';
-                        height = '90px';
-                        return true;
-                    }
-                    if (
-                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS
-                    ) {
-                        disableMsg = GENERAL.FSXW_TOOLTIP_MESSAGE;
-                        width = '320px';
-                        height = '90px';
+                        disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
+                        width = '340px';
+                        height = '50px';
                         return true;
                     }
                     if (
@@ -520,10 +511,7 @@ const ManagedHostSubTable = ({
                                     }
                                 }}
                                 CustomMenu={undefined}
-                                disabledText={
-                                    undefined
-                                    // GENERAL.EBS_TOOLTIP_MESSAGE
-                                }
+                                disabledText={undefined}
                             />
                         )}
                     </div>

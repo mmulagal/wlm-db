@@ -1,7 +1,6 @@
 import {
     Button,
     DsFlashingDotsLoader,
-    DsTypography,
     Popover,
     Table,
     TableTopBar,
@@ -16,10 +15,9 @@ import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import styles from './InventoryTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
-    STATUS_CONST,
     INVENTORY_STATUS,
     INVENTORY_ACTIONS,
     SSM_TROUBLESHOOTING_LINK,
@@ -28,7 +26,7 @@ import {
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 
-import { isSmbProtocol, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
+import { expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
 
 import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 
@@ -67,7 +65,6 @@ const InventoryTable = () => {
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
@@ -154,33 +151,6 @@ const InventoryTable = () => {
             setTableData([]);
         }
     }, [inventoryTableData]);
-
-    const menuItems = (row: any) => {
-        let isSmb = isSmbProtocol(row?.storage?.fsxn?.protocol);
-        return [
-            {
-                id: 'viewOverview',
-                displayName: 'View instance',
-                disabled: row?.status === STATUS_CONST.UP ? false : true
-            },
-            {
-                id: 'viewDatabaseList',
-                displayName: 'View databases',
-                disabled: row?.status === STATUS_CONST.UP ? false : true
-            },
-            {
-                id: 'createNewUserDatabase',
-                displayName: GENERAL.CREATE_USER_DB_TITLE,
-                disabled: row?.status === STATUS_CONST.UP && !isSmb ? false : true,
-                infoText: isSmb ? GENERAL.SMB_PROTOCOL_DISABLED : ''
-            },
-            {
-                id: 'unmanage',
-                displayName: 'Unmanage',
-                disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
-            }
-        ];
-    };
 
     const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
         const updatedState = store.getState();
@@ -325,7 +295,8 @@ const InventoryTable = () => {
         rowData: any,
         checkForAllManaged: boolean,
         checkForAllUnDetectInstance: boolean,
-        checkForAllFileSystemNA: boolean
+        checkForAllFileSystemNA: boolean,
+        checkForAllUnManagedInstance: boolean
     ) => {
         //Condition if installation mode is AOAG than disable manage
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
@@ -355,6 +326,41 @@ const InventoryTable = () => {
         if (rowData?.action && checkForAllUnDetectInstance && checkForAllFileSystemNA) {
             return (
                 <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all Explore Savings undetected rows
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
+            return (
+                <TooltipComponent
+                    title={GENERAL.ALL_ES_UNDETECTED_ROWS}
+                    placement="bottom"
+                    width="320px"
+                    height="100px"
+                >
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all Explore Savings FSXW rows
+        if (
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+            checkForAllUnManagedInstance &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS
+        ) {
+            return (
+                <TooltipComponent title={GENERAL.ES_FSXW_NOT_SUPPORTED} placement="bottom" width="320px" height="50px">
                     <div className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
@@ -417,11 +423,20 @@ const InventoryTable = () => {
                 const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
                 );
+                const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
+                    (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
+                );
                 const checkForAllFileSystemNA = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.fileSystemType === 'N/A'
                 );
 
-                return lastColJSX(rowData, checkForAllManaged, checkForAllUnDetectInstance, checkForAllFileSystemNA);
+                return lastColJSX(
+                    rowData,
+                    checkForAllManaged,
+                    checkForAllUnDetectInstance,
+                    checkForAllFileSystemNA,
+                    checkForAllUnManagedInstance
+                );
             }
         };
     };
