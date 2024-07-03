@@ -834,7 +834,8 @@ export const GENERAL = {
     MIN_FSX_CAPACITY_MESSAGE: 'The minimum total SSD capacity of an FSx for ONTAP file system is 1,024 GiB.',
     VPC_MESSAGE:
         'Ensure your VPC has connectivity to other AWS services (SQS, FSx, EC2, CloudWatch, CloudFormation, SSM) via VPC endpoints and S3 gateway endpoint. If not, endpoints will be created automatically during deployment.',
-    SQL_SERVER_NOT_RUNNING: 'SQL service is not running',
+    SQL_SERVER_NOT_RUNNING: 'SQL server instance is not running.',
+    SQL_SERVER_MANAGED: 'SQL server instance is currently managed.',
     SSM_CONNECTION_DOWN: 'SSM is not connected',
     STORAGE_NOT_PRESENT: 'Storage could not be identified',
     //Sandbox constants
