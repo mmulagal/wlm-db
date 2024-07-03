@@ -31,9 +31,21 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                 obj.statusColText === INVENTORY_STATUS.UNDETECTED ||
                 obj.fileSystemType !== GENERAL.FSX_FOR_ONTAP
             ) {
+                let disabledText = '';
+                if (obj.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                    disabledText = GENERAL.MANAGE_DISABLE_FOR_UNDETECTED;
+                }
                 return {
                     ...obj,
-                    cellProps: { isDisabled: true },
+                    cellProps: {
+                        isDisabled: true,
+                        selectionProps: {
+                            title: disabledText,
+                            titleProps: {
+                                placement: 'bottom'
+                            }
+                        }
+                    },
                     statusColText: isInstanceInProgress ? INVENTORY_STATUS.IN_PROGRESS : obj.statusColText,
                     storageType: dialogData?.storageType
                 };
