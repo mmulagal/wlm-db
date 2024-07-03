@@ -76,7 +76,7 @@ describe('Marketing API operations ', () => {
         }
     });
 
-    it('Perform Storage Savings Calculations', async () => {
+    it('Perform Storage Savings Calculations Metrics', async () => {
         const { items } = inventoryDemoData('fsx', 'ebsTest');
 
         const instanceWithEbs = items.find(instance =>
