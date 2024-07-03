@@ -375,8 +375,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
                         storage: [
                             {
-                                type: 'EBS',
-                                id: ebsVolId
+                                type: 'FSXN',
+                                id: fsxId
                             }
                         ],
                         deploymentTypes: [
@@ -608,7 +608,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-Training-02',
+                        sqlServerName: 'SQLserver-PLM',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUZ'],
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
                         sqlServerDeploymentType: 'AOAG',
@@ -651,7 +651,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-CRMDB',
+                        sqlServerName: 'SQLserver-Finance-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
