@@ -1223,6 +1223,39 @@ async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlRespo
     }
 }
 
+async function rewriteOrDeleteSSMParameter(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    paramesToDelete: string[],
+    instancesToBeDeleted: string[],
+    fsxCredentials: DiscoverCredentialsType,
+    sqlCredentials: DiscoverCredentialsType[]
+) {
+    logger.info('Calling rewriteOrDeleteSSMParameter', {
+        credentialsId,
+        region,
+        instanceId,
+        paramesToDelete,
+        instancesToBeDeleted,
+        fsxCredentials,
+        sqlCredentials
+    });
+    if (sqlCredentials.length === instancesToBeDeleted.length) {
+        // Delete the parameter store all credentials are invalid
+        paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+        await deleteSSMParameter(credentialsId, region, paramesToDelete);
+    } else {
+        // Rewrite parameter store after removing invalid credentials
+        const latestSqlCredentials = sqlCredentials.filter(e => !instancesToBeDeleted.includes(e.resourceId));
+        const creds = prepareParametersToStore(instanceId, [
+            ...(fsxCredentials ? [fsxCredentials] : []),
+            ...latestSqlCredentials
+        ]);
+        await ssmPutParameters(credentialsId, region, creds);
+    }
+}
+
 async function validateCredentials(
     credentialsId: string,
     region: string,
@@ -1312,33 +1345,36 @@ async function validateCredentials(
         }
 
         if (instancesToBeDeleted.length > 0) {
-            if (newSqlCredentials.length === instancesToBeDeleted.length) {
-                // Delete the parameter store all credentials are invalid
-                paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
-                await deleteSSMParameter(credentialsId, region, paramesToDelete);
-            } else {
-                // Rewrite parameter store after removing invalid credentials
-                const latestSqlCredentials = newSqlCredentials.filter(
-                    e => !instancesToBeDeleted.includes(e.resourceId)
-                );
-                const creds = prepareParametersToStore(instanceId, [
-                    ...(fsxCredentials ? [fsxCredentials] : []),
-                    ...latestSqlCredentials
-                ]);
-                await ssmPutParameters(credentialsId, region, creds);
-            }
+            await rewriteOrDeleteSSMParameter(
+                credentialsId,
+                region,
+                instanceId,
+                paramesToDelete,
+                instancesToBeDeleted,
+                fsxCredentials!,
+                newSqlCredentials
+            );
         }
         return response;
     } catch (error: any) {
         // delete the ssm parameters if its already created
         const paramesToDelete: string[] = [];
+        const instancesToBeDeleted = [sqlCredentials[0].resourceId];
+
         if (fsxCredentials) {
             paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
         }
-        if (sqlCredentials.length) {
-            paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
-        }
-        await deleteSSMParameter(credentialsId, region, paramesToDelete);
+
+        await rewriteOrDeleteSSMParameter(
+            credentialsId,
+            region,
+            instanceId,
+            paramesToDelete,
+            instancesToBeDeleted,
+            fsxCredentials!,
+            newSqlCredentials
+        );
+
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Unable to validate the credentials . Reason: ${error?.message}.`
