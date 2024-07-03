@@ -725,19 +725,6 @@ export const getDiscoveredActions = (row: Array<StatusObjInterface>, installatio
         action = INVENTORY_ACTIONS.EXPLORE_SAVINGS;
         actionDisable = isEbs ? (undetected?.length > 0 && unmanaged?.length === 0 ? true : false) : true;
     } else {
-        // if (installationMode && installationMode === GENERAL.AOAG) {
-        //     // For AOAG currently we cant manage host
-        //     actionDisable = true;
-        // } else {
-        //     actionDisable = false;
-        // }
-
-        // if ((undetected?.length > 0 && unmanaged?.length > 0) || (undetected?.length === 0 && unmanaged?.length > 0)) {
-        //     action = INVENTORY_ACTIONS.MANAGE;
-        // } else {
-        //     action = '';
-        // }
-
         action = INVENTORY_ACTIONS.MANAGE;
         if ((undetected?.length > 0 && unmanaged?.length > 0) || (undetected?.length === 0 && unmanaged?.length > 0)) {
             if (installationMode && installationMode === GENERAL.AOAG) {
@@ -843,22 +830,24 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
         '': 0
     };
 
-    const isManagedWeights: any = {
-        true: 5,
-        false: 0,
-        '': 0
-    };
-
     const result = data.slice().sort((a, b) => {
+        let aManageWeight = 0;
+        if (a?.totalInstance !== 0 && a?.totalInstance === a?.managedInstance) {
+            aManageWeight = 5;
+        }
+        let bManageWeight = 0;
+        if (b?.totalInstance !== 0 && b?.totalInstance === b?.managedInstance) {
+            bManageWeight = 5;
+        }
         const weightA =
             statusWeights[a.status || ''] +
             actionWeights[a?.storageType || ''] +
-            // isManagedWeights[a?.isManagedHost?.toString() || '']
+            aManageWeight +
             isDetectedWeights[a?.isDetected?.toString() || ''];
         const weightB =
             statusWeights[b.status || ''] +
             actionWeights[b?.storageType || ''] +
-            // isManagedWeights[b?.isManagedHost?.toString() || '']
+            bManageWeight +
             isDetectedWeights[b?.isDetected?.toString() || ''];
 
         return weightB - weightA;
