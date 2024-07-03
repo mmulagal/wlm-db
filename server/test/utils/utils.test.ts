@@ -10,7 +10,10 @@ import {
     isNetworkConfigurationViolated,
     splitDomainUsername,
     getCollationForMSSQLVersion,
-    camelizeKeys
+    camelizeKeys,
+    fsxStorageCapacityBreakdown,
+    convertGiBToBytes,
+    calculateFsxnStorageCapacity
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -96,5 +99,20 @@ describe(' Secrets Manager string', () => {
         const input = 'NetApp Bangalore';
         const output = camelizeKeys(input);
         expect(output).toBe(input);
+    });
+
+    it('FSx storage capacity breakdown', () => {
+        const response = fsxStorageCapacityBreakdown(convertGiBToBytes(3664), 'fci');
+        expect(response.fsxStorageCapacity).toEqual(convertGiBToBytes(3664));
+    });
+
+    it('calculateFsxnStorageCapacity storage capacity breakdown', () => {
+        const response = calculateFsxnStorageCapacity(2048, 'fci');
+        expect(response).toBeDefined();
+    });
+
+    it('FSx storage capacity breakdown Standalone', () => {
+        const response = fsxStorageCapacityBreakdown(convertGiBToBytes(3664), 'standalone');
+        expect(response.fsxQuorumVolumeSize).toEqual(0);
     });
 });

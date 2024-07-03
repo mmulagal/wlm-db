@@ -30,16 +30,21 @@ const ExploreSavingsTableV2 = () => {
             let result: any = [];
             unManagedHostFormatedList?.map((perRow: any) => {
                 let instanceList: any = [];
+                let instanceNameList: any = [];
                 perRow?.ec2Details?.map((row: any) => {
+                    if (row?.name) {
+                        instanceNameList.push(row?.name);
+                    }
                     if (row?.name && row?.id) {
-                        instanceList.push(row?.name + ' | ' + row?.id);
+                        instanceList.push(row?.name + ' | ID: ' + row?.id);
                     } else if (row?.id) {
-                        instanceList.push(row?.id);
+                        instanceList.push(GENERAL.NOT_AVAILABLE + ' | ID: ' + row?.id);
                     }
                 });
                 const rowData = {
                     ...perRow,
-                    instanceListText: instanceList.join(',')
+                    instanceListText: instanceList.join(','),
+                    instanceNameListText: instanceNameList.join(', ')
                 };
                 result.push(rowData);
             });
@@ -135,6 +140,7 @@ const ExploreSavingsTableV2 = () => {
             id: '3',
             width: '200px',
             isSortable: true,
+            accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
                 return renderInstanceListText(cellData, rowData, styles);
             }

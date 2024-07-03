@@ -250,7 +250,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'Prod-HelpDesk',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5d',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5p',
                         isDefaultInstance: false,
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -320,7 +320,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'Dev-VendorManagement',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5e',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5z',
                         isDefaultInstance: false,
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -371,12 +371,12 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLServer-QA-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
-                        sqlServerDeploymentType: 'AOAG',
+                        sqlServerDeploymentType: 'FCI',
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
                         storage: [
                             {
-                                type: 'EBS',
-                                id: ebsVolId
+                                type: 'FSXN',
+                                id: fsxId
                             }
                         ],
                         deploymentTypes: [
@@ -489,7 +489,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5i',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5o',
                         isDefaultInstance: false,
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -608,7 +608,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-Training-02',
+                        sqlServerName: 'SQLserver-PLM',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUZ'],
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
                         sqlServerDeploymentType: 'AOAG',
@@ -651,7 +651,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-CRMDB',
+                        sqlServerName: 'SQLserver-Finance-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [

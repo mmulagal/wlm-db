@@ -94,9 +94,6 @@ const DatabaseName = () => {
     };
 
     function isValidDBName() {
-        if (isDemoMode) {
-            return '';
-        }
         if (!dbCreateNameAdded && (!newUserDBName || newUserDBName.length === 0)) {
             return GENERAL.ACTION_REQUIRED;
         }

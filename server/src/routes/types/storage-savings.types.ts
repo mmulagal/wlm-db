@@ -74,6 +74,15 @@ const StorageSavingsResponse = Type.Object({
         useCase: Type.String(),
         regionName: Type.String(),
         monthlySnapshotCapacity: Type.Number()
+    }),
+    fsxBreakdown: Type.Object({
+        fsxDataLunSize: Type.Number(),
+        fsxDataVolumeSize: Type.Number(),
+        fsxLogVolumeSize: Type.Number(),
+        fsxTempDbVolumeSize: Type.Number(),
+        fsxQuorumVolumeSize: Type.Number(),
+        fsxBufferVolumeSize: Type.Number(),
+        fsxStorageCapacity: Type.Number()
     })
 });
 

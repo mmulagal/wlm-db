@@ -255,11 +255,11 @@ const app = fastify({
                             params: request.params,
                             reqBody: request.body,
                             principal: request.headers.principal,
-                            referer: request.headers.referrer
+                            referer: request.headers.referer
                         });
                     }
                     // Added for testing purpose when we want to clear the ssm cache
-                    if (xNetappCacheControl === 'true') {
+                    if (xNetappCacheControl === 'no-cache') {
                         resetCache(SSM_COMMAND_CACHE_TYPE);
                     }
                     // Don't update audit record until BXP integration decision is made.
@@ -297,7 +297,7 @@ const app = fastify({
                 replyBody,
                 reqBody: body,
                 principal: request.headers.principal,
-                referer: request.headers.referrer
+                referer: request.headers.referer
             });
         }
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);

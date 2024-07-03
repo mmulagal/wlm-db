@@ -15,19 +15,18 @@ import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import styles from './InventoryTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
-    STATUS_CONST,
     INVENTORY_STATUS,
     INVENTORY_ACTIONS,
-    API_ERRORS,
-    SSM_TROUBLESHOOTING_LINK
+    SSM_TROUBLESHOOTING_LINK,
+    PREPARE_API_ENDPOINT
 } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 
-import { isSmbProtocol, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
+import { expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
 
 import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 
@@ -36,7 +35,8 @@ import {
     renderAllocatedCapacity,
     renderCellData,
     renderEstimatedCost,
-    renderInstanceListText
+    renderInstanceListText,
+    renderVpcText
 } from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
@@ -65,7 +65,6 @@ const InventoryTable = () => {
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
@@ -109,14 +108,26 @@ const InventoryTable = () => {
                     return;
                 }
                 let instanceList: any = [];
+                let instanceNameList: any = [];
+                let vpcIdAndNameText = '';
                 const allocatedCapacity = inventoryTableData[key]?.allocatedCapacity || '';
                 inventoryTableData[key]?.ec2Details?.map((row: any) => {
+                    if (row?.name) {
+                        instanceNameList.push(row?.name);
+                    }
                     if (row?.name && row?.id) {
-                        instanceList.push(row?.name + ' | ' + row?.id);
+                        instanceList.push(row?.name + ' | ID: ' + row?.id);
                     } else if (row?.id) {
-                        instanceList.push(row?.id);
+                        instanceList.push(GENERAL.NOT_AVAILABLE + ' | ID: ' + row?.id);
                     }
                 });
+                if (inventoryTableData[key]?.vpcId && inventoryTableData[key]?.vpcName) {
+                    vpcIdAndNameText = inventoryTableData[key]?.vpcName + ' | ID: ' + inventoryTableData[key]?.vpcId;
+                } else if (inventoryTableData[key]?.vpcId) {
+                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + inventoryTableData[key]?.vpcId;
+                } else {
+                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + GENERAL.NOT_AVAILABLE;
+                }
                 const rowData = {
                     ...inventoryTableData[key],
                     sqlServerInstancesText:
@@ -128,6 +139,8 @@ const InventoryTable = () => {
                               ' managed)'
                             : '',
                     instanceListText: instanceList.join(','),
+                    instanceNameListText: instanceNameList.join(', '),
+                    vpcIdAndNameText: vpcIdAndNameText,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
                 };
                 result.push(rowData);
@@ -138,33 +151,6 @@ const InventoryTable = () => {
             setTableData([]);
         }
     }, [inventoryTableData]);
-
-    const menuItems = (row: any) => {
-        let isSmb = isSmbProtocol(row?.storage?.fsxn?.protocol);
-        return [
-            {
-                id: 'viewOverview',
-                displayName: 'View instance',
-                disabled: row?.status === STATUS_CONST.UP ? false : true
-            },
-            {
-                id: 'viewDatabaseList',
-                displayName: 'View databases',
-                disabled: row?.status === STATUS_CONST.UP ? false : true
-            },
-            {
-                id: 'createNewUserDatabase',
-                displayName: GENERAL.CREATE_USER_DB_TITLE,
-                disabled: row?.status === STATUS_CONST.UP && !isSmb ? false : true,
-                infoText: isSmb ? GENERAL.SMB_PROTOCOL_DISABLED : ''
-            },
-            {
-                id: 'unmanage',
-                displayName: 'Unmanage',
-                disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
-            }
-        ];
-    };
 
     const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
         const updatedState = store.getState();
@@ -211,12 +197,16 @@ const InventoryTable = () => {
                 );
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             } else if (res?.error) {
-                if (res?.error?.status === 424) {
+                if (res?.error?.status === 422 || res?.error?.status === 500) {
                     // handle prepare API
                     const errorList = res?.error?.data?.message?.split('\n');
-                    const isOnlyPowerShellError =
-                        errorList?.length === 1 && errorList[0].includes(API_ERRORS.POWERSHELL_7);
-                    if (!isOnlyPowerShellError) {
+                    let prepareApiRequired = false;
+                    errorList.map((errorItem: any) => {
+                        if (errorItem.includes(PREPARE_API_ENDPOINT)) {
+                            prepareApiRequired = true;
+                        }
+                    });
+                    if (prepareApiRequired) {
                         prepareHostApi({
                             credentialId: headerSelectedCred?.data?.credentialsId,
                             regionId: headerSelectedRegion?.label2,
@@ -289,9 +279,13 @@ const InventoryTable = () => {
                 (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
             );
             if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
-                dispatch(
-                    setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]])
-                );
+                let instanceList = [];
+                instanceList.push(rowData?.ec2InstanceId);
+                const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
+                if (partnerData && partnerData?.length > 0) {
+                    instanceList.push(partnerData?.[0]?.id);
+                }
+                dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
             }
             // This has to be called even if any row is becoming unmanaged row or managed row
         }
@@ -301,7 +295,8 @@ const InventoryTable = () => {
         rowData: any,
         checkForAllManaged: boolean,
         checkForAllUnDetectInstance: boolean,
-        checkForAllFileSystemNA: boolean
+        checkForAllFileSystemNA: boolean,
+        checkForAllUnManagedInstance: boolean
     ) => {
         //Condition if installation mode is AOAG than disable manage
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
@@ -331,6 +326,41 @@ const InventoryTable = () => {
         if (rowData?.action && checkForAllUnDetectInstance && checkForAllFileSystemNA) {
             return (
                 <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all Explore Savings undetected rows
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
+            return (
+                <TooltipComponent
+                    title={GENERAL.ALL_ES_UNDETECTED_ROWS}
+                    placement="bottom"
+                    width="320px"
+                    height="100px"
+                >
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all Explore Savings FSXW rows
+        if (
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+            checkForAllUnManagedInstance &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS
+        ) {
+            return (
+                <TooltipComponent title={GENERAL.ES_FSXW_NOT_SUPPORTED} placement="bottom" width="320px" height="50px">
                     <div className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
@@ -393,11 +423,20 @@ const InventoryTable = () => {
                 const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
                 );
+                const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
+                    (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
+                );
                 const checkForAllFileSystemNA = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.fileSystemType === 'N/A'
                 );
 
-                return lastColJSX(rowData, checkForAllManaged, checkForAllUnDetectInstance, checkForAllFileSystemNA);
+                return lastColJSX(
+                    rowData,
+                    checkForAllManaged,
+                    checkForAllUnDetectInstance,
+                    checkForAllFileSystemNA,
+                    checkForAllUnManagedInstance
+                );
             }
         };
     };
@@ -508,32 +547,38 @@ const InventoryTable = () => {
             Header: GENERAL.DB_HOST_VPC,
             accessor: 'vpcName',
             isSortable: true,
-            width: '140px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            width: '150px',
+            renderCell: (cellData: any, rowData: any) => {
+                return renderVpcText(cellData, rowData, styles);
             }
         },
         {
             id: '6',
             Header: 'SSM connectivity',
             accessor: 'ssmState',
-            width: '212px',
+            width: '202px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.firstColText}>
                         {rowData?.ssmState === INVENTORY_STATUS.ONLINE && (
-                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                            <>
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                                <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
+                            </>
                         )}
                         {rowData?.ssmState === INVENTORY_STATUS.OFFLINE && (
                             <>
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                                <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
+
                                 <div className={styles.ssmOffline}>
                                     <Popover
                                         popoverClass={''}
                                         children={
                                             <div>
                                                 <Typography variant="Regular_14">
-                                                    {GENERAL.SSM_NO_CONNECTION_MSG}
+                                                    {GENERAL.SSM_NO_CONNECTION[0]}
                                                 </Typography>
                                                 <Button
                                                     className={styles.ssmLink}
@@ -542,22 +587,19 @@ const InventoryTable = () => {
                                                         window.open(SSM_TROUBLESHOOTING_LINK, '_blank', 'noopener')
                                                     }
                                                 >
-                                                    {GENERAL.SSM_NO_CONNECTION_LINK}
+                                                    {GENERAL.SSM_NO_CONNECTION[1]}
                                                 </Button>
                                             </div>
                                         }
                                         trigger="hover"
                                         delayHide={200}
                                         interactive={true}
+                                        isAppendedToBody={true}
                                         container={<TooltipIcon />}
                                     />
                                 </div>
-
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                             </>
                         )}
-
-                        <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
                     </div>
                 );
             }

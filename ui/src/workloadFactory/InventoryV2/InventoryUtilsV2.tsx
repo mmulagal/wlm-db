@@ -527,7 +527,7 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         ec2InstanceName: discoveredRow?.ec2InstanceName,
         resourceId: discoveredRow?.key,
         name: getDiscoverHostname(discoveredRow),
-        status: INVENTORY_STATUS.ONLINE, // discover APIs will be Online only
+        status: ssmState, // discover status will depends on ssmState only
         ssmState: ssmState,
         totalInstance: totalInstanceCount,
         managedInstance: 0,
@@ -938,6 +938,8 @@ export const updateInventoryDatawithInstancesRes = (
             isManagedHost: instanceRow?.isManagedHost,
             loading: instanceRow?.loading,
             hasInstanceData: true,
+            estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
+            totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
             serverInstallationMode: !inventoryRow?.serverInstallationMode
                 ? getInstallationMode(instanceRow?.data)
                 : inventoryRow?.serverInstallationMode,
@@ -1211,7 +1213,7 @@ export const updateSqlServerInstancesForBothNodes = (
                     (perRow?.storage?.fsxw?.size || 0) +
                     (perRow?.storage?.ebs?.size || 0);
             }
-            const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
+            const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow, partnerData?.id);
             return {
                 ...instRow,
                 loading: perfData?.loading,
@@ -1276,10 +1278,38 @@ export const updateSqlServerInstancesForUnmanaged = (
     return instanceRows;
 };
 
-export const getPerfUnmanagedData = (instanceId: string, instRow: any) => {
+export const getPerfUnmanagedData = (instanceId: string, instRow: any, partnerId?: string) => {
     const updatedState = store.getState();
     const perfMssqlInstancesData = updatedState.inventoryV2.perfMssqlInstancesData;
-    if (perfMssqlInstancesData?.[instanceId]) {
+    if (perfMssqlInstancesData?.[instanceId] && partnerId && perfMssqlInstancesData?.[partnerId]) {
+        let perfData1 = perfMssqlInstancesData?.[instanceId];
+        let perfData2 = perfMssqlInstancesData?.[partnerId];
+        const perRow1 = perfData1?.data?.databaseInstancesSummary?.find(
+            (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+        );
+        const perRow2 = perfData2?.data?.databaseInstancesSummary?.find(
+            (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+        );
+        if (perRow1 || perRow2) {
+            return {
+                loading: false,
+                protection: perRow1?.protection || perRow2?.protection,
+                performance: perRow1?.performance || perRow2?.performance
+            };
+        } else if (perfData1?.loading || perfData2?.loading) {
+            return {
+                loading: true,
+                protection: null,
+                performance: null
+            };
+        } else {
+            return {
+                loading: false,
+                protection: null,
+                performance: null
+            };
+        }
+    } else if (perfMssqlInstancesData?.[instanceId]) {
         let perfData = perfMssqlInstancesData?.[instanceId];
         if (perfData?.loading) {
             return {
