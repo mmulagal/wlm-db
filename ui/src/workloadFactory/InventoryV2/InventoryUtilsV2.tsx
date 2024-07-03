@@ -725,17 +725,16 @@ export const getDiscoveredActions = (row: Array<StatusObjInterface>, installatio
         action = INVENTORY_ACTIONS.EXPLORE_SAVINGS;
         actionDisable = isEbs ? (undetected?.length > 0 && unmanaged?.length === 0 ? true : false) : true;
     } else {
-        if (installationMode && installationMode === GENERAL.AOAG) {
-            // For AOAG currently we cant manage host
-            actionDisable = true;
-        } else {
-            actionDisable = false;
-        }
-
+        action = INVENTORY_ACTIONS.MANAGE;
         if ((undetected?.length > 0 && unmanaged?.length > 0) || (undetected?.length === 0 && unmanaged?.length > 0)) {
-            action = INVENTORY_ACTIONS.MANAGE;
+            if (installationMode && installationMode === GENERAL.AOAG) {
+                // For AOAG currently we cant manage host
+                actionDisable = true;
+            } else {
+                actionDisable = false;
+            }
         } else {
-            action = '';
+            actionDisable = true;
         }
     }
     let storageType = '';
@@ -812,33 +811,44 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
     }
 
     const statusWeights: any = {
-        [INVENTORY_STATUS.ONLINE]: 300,
-        [INVENTORY_STATUS.OFFLINE]: 200,
-        [INVENTORY_STATUS.UNKNOWN]: 100,
+        [INVENTORY_STATUS.ONLINE]: 3000,
+        [INVENTORY_STATUS.OFFLINE]: 2000,
+        [INVENTORY_STATUS.UNKNOWN]: 1000,
         '': 0
     };
 
     const actionWeights: any = {
-        [INVENTORY_ACTIONS.MANAGE]: 30,
-        [INVENTORY_ACTIONS.EXPLORE_SAVINGS]: 20,
+        [GENERAL.FSX_FOR_ONTAP]: 30,
+        [GENERAL.EBS]: 20,
+        [GENERAL.FSX_FOR_WINDOWS]: 10,
         '': 0
     };
 
-    const actionDisableWeights: any = {
-        true: 3,
-        false: 2,
-        '': 1
+    const isDetectedWeights: any = {
+        true: 300,
+        false: 10,
+        '': 0
     };
 
     const result = data.slice().sort((a, b) => {
+        let aManageWeight = 0;
+        if (a?.totalInstance !== 0 && a?.totalInstance === a?.managedInstance) {
+            aManageWeight = 5;
+        }
+        let bManageWeight = 0;
+        if (b?.totalInstance !== 0 && b?.totalInstance === b?.managedInstance) {
+            bManageWeight = 5;
+        }
         const weightA =
             statusWeights[a.status || ''] +
-            actionWeights[a.action || ''] +
-            actionDisableWeights[a?.actionDisable?.toString() || ''];
+            actionWeights[a?.storageType || ''] +
+            aManageWeight +
+            isDetectedWeights[a?.isDetected?.toString() || ''];
         const weightB =
             statusWeights[b.status || ''] +
-            actionWeights[b.action || ''] +
-            actionDisableWeights[b?.actionDisable?.toString() || ''];
+            actionWeights[b?.storageType || ''] +
+            bManageWeight +
+            isDetectedWeights[b?.isDetected?.toString() || ''];
 
         return weightB - weightA;
     });
