@@ -138,6 +138,10 @@ describe('executeSsmDocument', () => {
                 {
                     regionCode: 'ap-northeast-3',
                     regionName: 'Asia Pacific (Osaka)'
+                },
+                {
+                    regionCode: 'ca-west-1',
+                    regionName: 'Canada (Calgary)'
                 }
             ]
         };

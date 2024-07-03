@@ -1,7 +1,7 @@
 import randomize from 'randomatic';
 import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
-import { DatabaseTypes, RESOURCE_SOURCE, STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
+import { AWS_REGIONS, DatabaseTypes, RESOURCE_SOURCE, STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
 import getLogger from '../logger';
 import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from '../../operations/demo-operations';
@@ -15,7 +15,6 @@ import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations
 import { instanceDemoData } from './instancesResponse';
 
 const logger = getLogger();
-const demoDefaultRegion = 'us-east-1';
 
 function createDemoResources(
     accountId: string,
@@ -51,13 +50,7 @@ function createDemoResources(
 async function createConfigurations(accountId: string, awsAccountId: string, credentialsId: string) {
     logger.info('Creating demo default configurations');
     let configName = 'Staging deployment in us-east';
-    const stagingData = saveFciConfigurationData(
-        demoDefaultRegion,
-        awsAccountId,
-        credentialsId,
-        'stagingDB',
-        configName
-    );
+    const stagingData = saveFciConfigurationData('us-east-1', awsAccountId, credentialsId, 'stagingDB', configName);
     saveConfig(accountId, 'SYSTEM', configName, stagingData);
 
     configName = 'Pre-prod deployment in us-west';
@@ -65,12 +58,12 @@ async function createConfigurations(accountId: string, awsAccountId: string, cre
     saveConfig(accountId, 'SYSTEM', configName, preprodData);
 
     configName = 'MSSQL 2 nodes FCI deployment in us-east';
-    const fciData = saveFciConfigurationData(demoDefaultRegion, awsAccountId, credentialsId, 'fciDB', configName);
+    const fciData = saveFciConfigurationData('us-east-1', awsAccountId, credentialsId, 'fciDB', configName);
     saveConfig(accountId, 'SYSTEM', configName, fciData);
 
     configName = 'MSSQL Single Instance DR system deployment';
     const standaloneData = saveStandaloneConfigurationData(
-        demoDefaultRegion,
+        'us-east-1',
         awsAccountId,
         credentialsId,
         'standaloneDB',
@@ -79,35 +72,13 @@ async function createConfigurations(accountId: string, awsAccountId: string, cre
     saveConfig(accountId, 'SYSTEM', configName, standaloneData);
 }
 
-async function creadteDemoDBData(accountId: string, credentialsList: any) {
-    logger.info('Checking for default demo resources');
-    const matchingCredentials = credentialsList?.find(
-        (item: { name: string }) => item.name === 'DemoDefaultCredential'
-    );
-    let credentialsId: string;
-    const awsAccountId = randomize('0', 12);
-    if (matchingCredentials) {
-        logger.info('DemoDefaultCredential credential exists', matchingCredentials.credentialsId);
-        credentialsId = matchingCredentials.credentialsId;
-    } else {
-        logger.info('Creating DemoDefaultCredential credentials');
-        const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
-        const arn = `arn:aws:iam::${awsAccountId}:role/demo_role`;
-        const externalId = randomUUID();
-        const credentialsName = 'DemoDefaultCredential';
-        // create a new  credentials and get the credentials ID
-        const credentialsDetails: any = await createAwsCredential(
-            accountId,
-            token,
-            arn,
-            externalId,
-            credentialsName,
-            'STANDARD',
-            true
-        );
-        credentialsId = credentialsDetails?.id || credentialsList?.[0]?.credentialsId;
-    }
-    const existingFsxCore = await getFSXFileSystemListForDemo(credentialsId, demoDefaultRegion, randomize('a0', 10));
+async function createDemoResourcesPerRegion(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    awsAccountId: string
+) {
+    const existingFsxCore = await getFSXFileSystemListForDemo(credentialsId, region, randomize('a0', 10));
     const fileSystemExists = existingFsxCore.some(obj => obj.name === 'fsx-wlmdb-DEFAULT');
     if (!fileSystemExists) {
         const fsxConfiguration = {
@@ -122,12 +93,10 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
             encryptionKey: randomize('a0', 10),
             snapshotPolicy: 'daily_weekretention'
         };
-        createFileSystemForDemo(credentialsId, demoDefaultRegion, fsxConfiguration, true);
+        createFileSystemForDemo(credentialsId, region, fsxConfiguration, true);
     }
 
-    const configs = await listConfig(accountId);
-
-    const jobs = await listJobs(accountId, credentialsId, demoDefaultRegion);
+    const jobs = await listJobs(accountId, credentialsId, region);
     if (isEmpty(jobs)) {
         // create 3 new resources and configurations
         logger.info('Creating demo resources');
@@ -162,15 +131,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
         ];
 
         instances.forEach(async ({ resourceId, name, protocol, sqlInstances }) => {
-            await createDemoResources(
-                accountId,
-                demoDefaultRegion,
-                credentialsId,
-                awsAccountId,
-                name,
-                protocol,
-                resourceId
-            );
+            await createDemoResources(accountId, region, credentialsId, awsAccountId, name, protocol, resourceId);
 
             sqlInstances.forEach(instanceName => {
                 createDatabaseInstances(
@@ -178,7 +139,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
                     resourceId,
                     instanceName,
                     credentialsId,
-                    demoDefaultRegion,
+                    region,
                     `fs-${randomize('A0', 17)}`,
                     protocol,
                     {}
@@ -186,10 +147,47 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
             });
         });
     }
+}
+
+async function creadteDemoDBData(accountId: string, credentialsList: any) {
+    logger.info('Checking for default demo resources');
+
+    const matchingCredentials = credentialsList?.find(
+        (item: { name: string }) => item.name === 'DemoDefaultCredential'
+    );
+    let credentialsId: string;
+    const awsAccountId = randomize('0', 12);
+    if (matchingCredentials) {
+        logger.info('DemoDefaultCredential credential exists', matchingCredentials.credentialsId);
+        credentialsId = matchingCredentials.credentialsId;
+    } else {
+        logger.info('Creating DemoDefaultCredential credentials');
+        const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
+        const arn = `arn:aws:iam::${awsAccountId}:role/demo_role`;
+        const externalId = randomUUID();
+        const credentialsName = 'DemoDefaultCredential';
+        // create a new  credentials and get the credentials ID
+        const credentialsDetails: any = await createAwsCredential(
+            accountId,
+            token,
+            arn,
+            externalId,
+            credentialsName,
+            'STANDARD',
+            true
+        );
+        credentialsId = credentialsDetails?.id || credentialsList?.[0]?.credentialsId;
+    }
+    const configs = await listConfig(accountId);
 
     if (isEmpty(configs)) {
         logger.info('Creating demo and templates');
         createConfigurations(accountId, awsAccountId, credentialsId);
+    }
+
+    const regionCodes = Array.from(AWS_REGIONS.keys());
+    for (const regionCode of regionCodes) {
+        createDemoResourcesPerRegion(accountId, credentialsId, regionCode, awsAccountId);
     }
 }
 
@@ -251,4 +249,4 @@ async function createDatabaseInstances(
     await upsertDatabaseInstance(accountId, instanceRecord);
 }
 
-export { creadteDemoDBData, returnInventorydata };
+export { creadteDemoDBData, returnInventorydata, createConfigurations };
