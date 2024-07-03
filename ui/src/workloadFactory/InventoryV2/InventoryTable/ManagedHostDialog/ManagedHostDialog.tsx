@@ -35,6 +35,15 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                 if (obj.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     disabledText = GENERAL.MANAGE_DISABLE_FOR_UNDETECTED;
                 }
+                if (
+                    obj.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                    obj?.status?.toLowerCase() === INVENTORY_STATUS.DOWN
+                ) {
+                    disabledText = GENERAL.SQL_SERVER_NOT_RUNNING;
+                }
+                if (obj.statusColText === INVENTORY_STATUS.MANAGED) {
+                    disabledText = GENERAL.SQL_SERVER_MANAGED;
+                }
                 return {
                     ...obj,
                     cellProps: {
@@ -114,7 +123,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return <DsTypography variant="Regular_14">{cellData}</DsTypography>;
+                return <DsTypography variant="Regular_14">{cellData || GENERAL.NOT_AVAILABLE}</DsTypography>;
             }
         },
         {
