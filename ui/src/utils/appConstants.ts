@@ -988,15 +988,17 @@ export const GENERAL = {
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
-    EBS_TOOLTIP_MESSAGE:
-        'Management of SQL Server instances using EBS (Elastic Block Store) storage is currently not supported. Please select a supported storage option to proceed.',
-    FSXW_TOOLTIP_MESSAGE:
-        'Management of SQL Server instances using FSx for Windows storage is currently not supported. Please select a supported storage option to proceed.',
+    FSXN_MANAGE_SUPPORTED: 'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be managed.',
+    MANAGE_DISABLE_FOR_UNDETECTED:
+        'This instance is currently undetected. To manege the instance, expand the database host name, and then select "detect" from the menu.',
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
         'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
     ALL_UNDETECT_TEXT:
         'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+    ALL_ES_UNDETECTED_ROWS:
+        'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
+    ES_FSXW_NOT_SUPPORTED: 'Explore savings for FSx for Windows is not supported.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
         'The attempt to manage the SQL Server instance ',
