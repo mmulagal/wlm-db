@@ -367,7 +367,9 @@ const HOST_AND_SQL_INFO_PS1 = [
             if (Get-Command Get-SSMParameter) {
               $sqlCredential = $null
               try {
-                $sqlCredential = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$(Get-EC2InstanceMetadata -Category InstanceId)).Value | ConvertFrom-Json).sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
+                [string]$apiToken = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri http://169.254.169.254/latest/api/token
+                $ec2InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $apiToken} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+                $sqlCredential = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json).sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
               } catch {
                 $responseObject['failureInfo'] += $_
               }
