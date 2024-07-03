@@ -69,6 +69,15 @@ export interface StorageSavingsInterface {
         existing?: RecommendedLicense;
         recommended?: RecommendedLicense;
     };
+    fsxBreakdown?: {
+        fsxDataLunSize?: number | string;
+        fsxDataVolumeSize?: number | string;
+        fsxLogVolumeSize?: number | string;
+        fsxTempDbVolumeSize?: number | string;
+        fsxQuorumVolumeSize?: number | string;
+        fsxBufferVolumeSize?: number | string;
+        fsxStorageCapacity?: number | string;
+    };
 }
 
 export interface RecommendedIntanceInterface {

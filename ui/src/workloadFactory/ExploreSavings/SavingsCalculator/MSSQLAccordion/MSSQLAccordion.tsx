@@ -49,7 +49,11 @@ const MSSQLAccordion = ({ printState }: any) => {
 
     useEffect(() => {
         const selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
-        setFsxData({ ...storageSavingsResponse?.fsxCalculation, regionName: selectedRegion });
+        setFsxData({
+            ...storageSavingsResponse?.fsxCalculation,
+            regionName: selectedRegion,
+            fsxBreakdown: storageSavingsResponse?.fsxBreakdown
+        });
         // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
     }, [storageSavingsResponse]);
 
