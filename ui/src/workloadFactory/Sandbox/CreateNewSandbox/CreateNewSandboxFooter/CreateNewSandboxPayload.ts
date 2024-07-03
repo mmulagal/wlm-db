@@ -4,7 +4,7 @@ import {
     setIsSourceSelected,
     setIsTargetSelected
 } from '../../../../store/workloadFactory/createSandboxSlice';
-import { generateCreateSandboxPayload } from '../../SandboxUtility';
+import { generateCreateSandboxPayload, isValidSandboxName } from '../../SandboxUtility';
 
 export const handleCreateNewSandbox = (state: any, dispatch: any) => {
     let payload;
@@ -29,7 +29,7 @@ export const handleCreateNewSandbox = (state: any, dispatch: any) => {
         return false;
     }
 
-    if (targetDatabase && targetInstance && targetDatabaseHost) {
+    if (targetDatabase && targetInstance && targetDatabaseHost && isValidSandboxName(targetDatabase)) {
         dispatch(setIsTargetSelected(true));
     } else {
         dispatch(setIsTargetSelected(false));
