@@ -1,7 +1,6 @@
 import {
     Button,
     DsFlashingDotsLoader,
-    DsTypography,
     Popover,
     Table,
     TableTopBar,
@@ -16,10 +15,9 @@ import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import styles from './InventoryTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
-    STATUS_CONST,
     INVENTORY_STATUS,
     INVENTORY_ACTIONS,
     SSM_TROUBLESHOOTING_LINK,
@@ -28,7 +26,7 @@ import {
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 
-import { isSmbProtocol, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
+import { expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
 
 import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 
@@ -67,7 +65,6 @@ const InventoryTable = () => {
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
