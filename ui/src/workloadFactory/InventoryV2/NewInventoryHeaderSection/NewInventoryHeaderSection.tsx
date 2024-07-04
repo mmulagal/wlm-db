@@ -145,7 +145,7 @@ const NewInventoryHeaderSection = () => {
                                         {GENERAL.DETECTED_HOSTS}
                                     </Typography>
                                 </div>
-                                <Typography className={styles.valueText} variant="Regular_14">
+                                <Typography className={styles.valueText} variant="Semibold_14">
                                     {String(inventoryChartData?.detectedHost || 0)} hosts
                                 </Typography>
                             </div>
@@ -157,7 +157,7 @@ const NewInventoryHeaderSection = () => {
                                         {GENERAL.HOSTS_PENDING_DETECTION}
                                     </Typography>
                                 </div>
-                                <Typography className={styles.valueText} variant="Regular_14">
+                                <Typography className={styles.valueText} variant="Semibold_14">
                                     {String(inventoryChartData?.undetectedHost || 0)} hosts
                                 </Typography>
                             </div>
