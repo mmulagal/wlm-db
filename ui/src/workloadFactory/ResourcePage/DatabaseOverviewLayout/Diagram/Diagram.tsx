@@ -10,6 +10,22 @@ import { GENERAL } from '../../../../utils/appConstants';
 const Diagram = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+
+    const setDiagramForFCI = () => {
+        if (isDarkTheme) {
+            return <FCIDarkMode />;
+        } else {
+            return <FCILightMode />;
+        }
+    };
+
+    const setDiagramForStandAlone = () => {
+        if (isDarkTheme) {
+            return <StandaloneDarkMode />;
+        } else {
+            return <StandaloneLightMode />;
+        }
+    };
     return (
         <div
             className={
@@ -32,17 +48,9 @@ const Diagram = () => {
 
             {!resourceLoading && (
                 <div className={styles.centerContainer}>
-                    {resourceDetails?.topology?.serverInstallationMode?.toLowerCase() === 'fci' && isDarkTheme ? (
-                        <FCIDarkMode />
-                    ) : (
-                        <FCILightMode />
-                    )}
+                    {resourceDetails?.topology?.serverInstallationMode?.toLowerCase() === 'fci' && setDiagramForFCI()}
                     {resourceDetails?.topology?.serverInstallationMode?.toLowerCase() === 'standalone' &&
-                    isDarkTheme ? (
-                        <StandaloneDarkMode />
-                    ) : (
-                        <StandaloneLightMode />
-                    )}
+                        setDiagramForStandAlone()}
                 </div>
             )}
         </div>
