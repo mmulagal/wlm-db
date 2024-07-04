@@ -907,6 +907,14 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
                     }
                 };
             }
+        } else {
+            result = {
+                ...result,
+                operatingSystem: {
+                    label: GENERAL.WIN_SERVER_2019,
+                    value: GENERAL.WIN_SERVER_2019_VERSION
+                }
+            };
         }
         // database version
         if (msSqlInstance?.serverVersion) {
