@@ -198,6 +198,7 @@ const InventoryTable = () => {
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             } else if (res?.error) {
                 if (res?.error?.status === 422 || res?.error?.status === 500) {
+                    const updatedState = store.getState();
                     // handle prepare API
                     const errorList = res?.error?.data?.message?.split('\n');
                     let prepareApiRequired = false;
@@ -208,8 +209,8 @@ const InventoryTable = () => {
                     });
                     if (prepareApiRequired) {
                         prepareHostApi({
-                            credentialId: headerSelectedCred?.data?.credentialsId,
-                            regionId: headerSelectedRegion?.label2,
+                            credentialId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
+                            regionId: updatedState?.headers?.headerSelectedRegion?.label2,
                             instanceId: rowData?.ec2InstanceId
                         }).then((prepareRes: any) => {
                             if (prepareRes && !prepareRes?.error) {
@@ -295,7 +296,6 @@ const InventoryTable = () => {
         rowData: any,
         checkForAllManaged: boolean,
         checkForAllUnDetectInstance: boolean,
-        checkForAllFileSystemNA: boolean,
         checkForAllUnManagedInstance: boolean
     ) => {
         //Condition if installation mode is AOAG than disable manage
@@ -323,7 +323,7 @@ const InventoryTable = () => {
             );
         }
         //Check for all un-detect instances and storage type is N/A
-        if (rowData?.action && checkForAllUnDetectInstance && checkForAllFileSystemNA) {
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
             return (
                 <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
                     <div className={styles.detectManageDisable}>
@@ -426,15 +426,11 @@ const InventoryTable = () => {
                 const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
                 );
-                const checkForAllFileSystemNA = rowData?.sqlServerInstances?.every(
-                    (item: any) => item?.fileSystemType === 'N/A'
-                );
 
                 return lastColJSX(
                     rowData,
                     checkForAllManaged,
                     checkForAllUnDetectInstance,
-                    checkForAllFileSystemNA,
                     checkForAllUnManagedInstance
                 );
             }

@@ -432,7 +432,7 @@ const ManagedHostSubTable = ({
                         rowData?.detectOption === DETECT_HOST_VAR.HIDE
                     ) {
                         disableMsg = rowData?.detectOptionDisableMsg;
-                        width = '240px';
+                        width = '250px';
                         height = '33px';
                         return true;
                     }
@@ -565,11 +565,11 @@ const ManagedHostSubTable = ({
             }
         },
         {
-            Header: 'Managed status',
+            Header: 'Management status',
             accessor: 'statusColText',
             id: '2',
             isSortable: false,
-            width: '170px',
+            width: '190px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.UNMANAGED) {
