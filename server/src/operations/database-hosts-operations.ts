@@ -1,7 +1,7 @@
 import { STORAGE_TYPE } from '@prisma/client';
 import randomize from 'randomatic';
 import numeral from 'numeral';
-import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
+import { DescribeInstancesCommandOutput, DescribeVolumesResult, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listDatabaseInstances, listResources } from '../lib/database/db';
@@ -82,6 +82,7 @@ import {
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
 import { getDatabaseInstanceName, getResourceNameFromTags, isDemo } from '../utils/utils';
+import { getEBSVolumesForDemo } from './demo-operations';
 
 const logger = getLogger();
 
@@ -433,7 +434,9 @@ async function getStorageData(
             };
         }
         if (ebsVolumeIds?.length && region && credentialsId) {
-            const storageData = await getEbsResourceInfo(credentialsId, region, ebsVolumeIds);
+            const storageData = await getEbsResourceInfo(credentialsId, region, ebsVolumeIds, [
+                databaseInstanceDetails
+            ]);
             totalSize = storageData.reduce((acc, { size }) => acc + size, 0);
             response.ebs = { size: numeral(`${totalSize}GiB`).value() || 0 };
         }
@@ -687,7 +690,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxnIds!)])]
                 : [Promise.resolve()]),
             ...(ebsVolumeIds && !isEmpty(ebsVolumeIds)
-                ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds)]
+                ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds, resourceDetail?.databaseInstanceDetails)]
                 : [Promise.resolve()]),
             ...(fsxwIds && !isEmpty(fsxwIds)
                 ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxwIds!)])]
@@ -835,12 +838,29 @@ async function getFsxResourceInfo(
 async function getEbsResourceInfo(
     credentialsId: string,
     region: string,
-    ebsVolumeIds: string[]
+    ebsVolumeIds: string[],
+    databaseInstanceDetails?: any
 ): Promise<EstimationEbsType> {
-    logger.info('Getting EBS resource info:', { credentialsId, region, ebsVolumeIds });
+    logger.info('Getting EBS resource info:', { credentialsId, region, ebsVolumeIds, databaseInstanceDetails });
 
-    const volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
-    if (!volumes.Volumes || volumes.Volumes.length === 0) {
+    let volumes;
+    if (isDemo()) {
+        const sqlServerDeploymentType = databaseInstanceDetails?.length
+            ? databaseInstanceDetails[0].database_deployment_type
+            : '';
+        if (
+            sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ||
+            sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+        ) {
+            volumes = (await getEBSVolumesForDemo(sqlServerDeploymentType, ebsVolumeIds)) as DescribeVolumesResult;
+        } else {
+            volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
+        }
+    } else {
+        volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
+    }
+
+    if (!volumes?.Volumes || volumes.Volumes.length === 0) {
         throw new Error(`Volumes ${ebsVolumeIds} not found`);
     }
 
@@ -2131,7 +2151,7 @@ async function getDatabaseDetails(
     });
 
     try {
-        const [{ databases } = { databases: {} }, backedupDatabases, { awsBackup = {}, ontapBackup = {} } = {}] =
+        const [{ databases } = { databases: [] }, backedupDatabases, { awsBackup = {}, ontapBackup = {} } = {}] =
             await Promise.all(
                 [
                     getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
