@@ -1039,7 +1039,7 @@ export const {
     useGetSandboxSavingsQuery,
     useLazyGetSandboxSavingsQuery,
     useCreateSandboxMutation,
-    useGetConnectionInfoQuery,
+    useLazyGetConnectionInfoQuery,
     useLazyGetSplitEstimateInfoQuery,
     useGetDatabaseMountPointsQuery,
     useDeleteSandboxMutation,
