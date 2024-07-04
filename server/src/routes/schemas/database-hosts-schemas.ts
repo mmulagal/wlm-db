@@ -42,7 +42,7 @@ const databaseHostsRequest = {
 const DatabaseHostsSummarySchema = {
     ...databaseHostsRequest,
     summary: 'Get database hosts details (deprecated)',
-    description: 'Get database hosts summary details (deprecated',
+    description: 'Get database hosts summary details (deprecated)',
     querystring: DatabaseHostQueryString,
     response: {
         200: DatabaseHostSummaryPerStorageTypeListResponse
