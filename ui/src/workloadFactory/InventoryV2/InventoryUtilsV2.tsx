@@ -1234,7 +1234,10 @@ export const updateSqlServerInstancesForBothNodes = (
                 storageSavingsText: getStorageSavingsText(perRow || {}),
                 allocatedCapacity: allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
-                databaseServer: perRow?.databaseServer
+                databaseServer: perRow?.databaseServer,
+                fileSystemDeploymentMode:
+                    instRow?.fileSystemDeploymentMode ||
+                    getFileSystemDeploymentMode(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
             };
         });
     }
@@ -1272,7 +1275,10 @@ export const updateSqlServerInstancesForUnmanaged = (
                     storageSavingsText: getStorageSavingsText(perRow || {}),
                     allocatedCapacity: allocatedCapacity,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
-                    databaseServer: instRow?.databaseServer || perRow?.databaseServer
+                    databaseServer: instRow?.databaseServer || perRow?.databaseServer,
+                    fileSystemDeploymentMode:
+                        instRow?.fileSystemDeploymentMode ||
+                        getFileSystemDeploymentMode(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
                 };
             } else {
                 const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
