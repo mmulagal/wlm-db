@@ -41,8 +41,8 @@ const databaseHostsRequest = {
 // Get Database hosts summary details
 const DatabaseHostsSummarySchema = {
     ...databaseHostsRequest,
-    summary: 'Get database hosts details',
-    description: 'Get database hosts summary details',
+    summary: 'Get database hosts details (deprecated)',
+    description: 'Get database hosts summary details (deprecated',
     querystring: DatabaseHostQueryString,
     response: {
         200: DatabaseHostSummaryPerStorageTypeListResponse
@@ -52,7 +52,7 @@ const DatabaseHostsSummarySchema = {
 // Get Database host summary details
 const DatabaseHostDetailsSchema = {
     ...databaseHostsRequest,
-    summary: 'Fetch database server details ',
+    summary: 'Fetch database server details (deprecated)',
     description:
         'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
     params: DatabaseHostSummaryParams,
@@ -65,7 +65,7 @@ const DatabaseHostDetailsSchema = {
 // Get databases in a database server
 const DatabasesListSchema = {
     ...databaseHostsRequest,
-    summary: 'Fetch details about databases in a server ',
+    summary: 'Fetch details about databases in a server (deprecated)',
     description:
         'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
     params: DatabaseHostSummaryParams,
@@ -124,7 +124,8 @@ const CloneDatabaseHostSchema = {
 
 const GetCollationDetailsSchema = {
     ...databaseHostsRequest,
-    summary: 'Get database host collation details',
+    summary: 'Get database host collation details (deprecated)',
+    hide: process.env.NODE_ENV === 'production',
     description: 'Fetch collation details about the database host',
     params: DatabaseHostSummaryParams,
     response: {
@@ -134,7 +135,7 @@ const GetCollationDetailsSchema = {
 
 const GetCollationDetailsSchemaV2 = {
     ...databaseHostsRequest,
-    summary: 'Get database host collation details',
+    summary: 'Get database host collation details V2',
     description: 'Fetch collation details about the database host',
     params: DatabaseHostOptionalInstanceSummaryParams,
     response: {
@@ -248,8 +249,8 @@ const SandboxLifeCycleSchema = {
 
 const DatabaseHostsSummarySchemaV2 = {
     ...databaseHostsRequest,
-    summary: 'Get database hosts details v2',
-    description: 'Get database hosts summary details v2',
+    summary: 'Get database hosts details',
+    description: 'Get database hosts summary details',
     querystring: DatabaseHostQueryString,
     response: {
         200: DatabaseHostSummaryForMultiInstanceListResponse
@@ -258,9 +259,9 @@ const DatabaseHostsSummarySchemaV2 = {
 
 const DatabaseHostDetailsSchemaV2 = {
     ...databaseHostsRequest,
-    summary: 'Fetch database server details V2',
+    summary: 'Fetch database server details',
     description:
-        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server v2. ',
+        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
     params: DatabaseHostSummaryParams,
     querystring: DatabaseHostQueryString,
     response: {
@@ -300,9 +301,9 @@ const CheckSandboxIntegritySchema = {
 
 const DatabasesListSchemaV2 = {
     tags: [RouteTags.DEPLOYMENT],
-    summary: 'Fetch details about databases in a server V2',
+    summary: 'Fetch details about databases in a server',
     description:
-        'Fetch details about databases in a server - name, protection status, availability status, size and type of database V2',
+        'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
     params: DatabaseHostInstanceSummaryParams,
     querystring: DatabaseQueryString,
     response: {
