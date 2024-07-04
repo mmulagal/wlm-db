@@ -198,6 +198,7 @@ const InventoryTable = () => {
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             } else if (res?.error) {
                 if (res?.error?.status === 422 || res?.error?.status === 500) {
+                    const updatedState = store.getState();
                     // handle prepare API
                     const errorList = res?.error?.data?.message?.split('\n');
                     let prepareApiRequired = false;
@@ -208,8 +209,8 @@ const InventoryTable = () => {
                     });
                     if (prepareApiRequired) {
                         prepareHostApi({
-                            credentialId: headerSelectedCred?.data?.credentialsId,
-                            regionId: headerSelectedRegion?.label2,
+                            credentialId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
+                            regionId: updatedState?.headers?.headerSelectedRegion?.label2,
                             instanceId: rowData?.ec2InstanceId
                         }).then((prepareRes: any) => {
                             if (prepareRes && !prepareRes?.error) {
