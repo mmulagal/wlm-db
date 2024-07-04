@@ -433,7 +433,7 @@ export const GENERAL = {
     CLONE_DB: 'Clone',
     PROTECT_DB: 'Protect',
     // database host headers
-    DATABASE_HOST_NAME: 'Database server name',
+    DATABASE_HOST_NAME: 'Database host name',
     DB_HOST_PROTECTION: 'Protection',
     DB_OVERVIEW_INFO: 'Information',
     DB_HOST_PERFORMANCE: 'Performance',
