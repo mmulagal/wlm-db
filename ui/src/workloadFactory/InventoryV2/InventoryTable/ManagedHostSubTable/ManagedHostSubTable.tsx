@@ -565,11 +565,11 @@ const ManagedHostSubTable = ({
             }
         },
         {
-            Header: 'Managed status',
+            Header: 'Management status',
             accessor: 'statusColText',
             id: '2',
             isSortable: false,
-            width: '170px',
+            width: '190px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.UNMANAGED) {
