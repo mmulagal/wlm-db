@@ -845,7 +845,7 @@ async function getEbsResourceInfo(
 
     let volumes;
     if (isDemo()) {
-        const sqlServerDeploymentType = databaseInstanceDetails
+        const sqlServerDeploymentType = databaseInstanceDetails?.length
             ? databaseInstanceDetails[0].database_deployment_type
             : '';
         if (
