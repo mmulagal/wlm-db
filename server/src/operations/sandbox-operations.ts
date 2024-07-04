@@ -2261,8 +2261,8 @@ async function reAttachSandboxAndAccessPath(
         const command = [
             addAccessPathAndAttachDb(
                 resourceDetails.database,
-                { serial: mappings.data.lunSerialNumber, path: mappings.data.fileName },
-                { serial: mappings.log.lunSerialNumber, path: mappings.log.fileName },
+                JSON.stringify({ serial: mappings.data.lunSerialNumber, path: mappings.data.fileName }),
+                JSON.stringify({ serial: mappings.log.lunSerialNumber, path: mappings.log.fileName }),
                 resourceDetails.instanceName,
                 resourceDetails.databaseInstanceName,
                 `SandBox:${resourceDetails.database}:`

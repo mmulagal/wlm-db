@@ -1118,15 +1118,15 @@ const detachDbAndRemoveAccessPath = (
 
 const addAccessPathAndAttachDb = (
     dbName: string,
-    datafile: { serial: string; path: string },
-    logfile: { serial: string; path: string },
+    datafile: string,
+    logfile: string,
     executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = ''
 ) => `
     $dbname = '${dbName}'
-    $datafile = '${JSON.stringify(datafile)}' | ConvertFrom-Json
-    $logfile = '${JSON.stringify(logfile)}' | ConvertFrom-Json
+    $datafile = '${datafile}' | ConvertFrom-Json
+    $logfile = '${logfile}' | ConvertFrom-Json
     $executableinstance = "${executableInstance}"
     $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
@@ -1321,8 +1321,8 @@ const addAccessPathAndAttachDb = (
         }
 
         $attachQuery = @"
-            CREATE DATABASE $dbname ON  
-            ${[datafile.path, logfile.path].map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
+            CREATE DATABASE $dbname
+            ON (FILENAME = '$($datafile.path)'),(FILENAME = '$($logfile.path)')
             FOR ATTACH;
 "@
         $attachresponse =  sqlcmd -S $executableinstance -Q $attachQuery -y 0;
