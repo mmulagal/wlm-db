@@ -170,7 +170,12 @@ try {
                 $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
 
                 #Add dependency on new disks in SQL Server Resource
-                $ClusterResourceName = If ($IsDefaultInstance) { "SQL Server" } Else { "SQL Server ($InstanceName)" }
+                if ($IsDefaultInstance -eq $True){
+                    $ClusterResourceName = "SQL Server"
+                }
+                else {
+                    $ClusterResourceName = "SQL Server ($InstanceName)"
+                }
                 $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterdatadisk.Name))
                 $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterlogdisk.Name))
 
