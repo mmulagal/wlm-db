@@ -399,13 +399,15 @@ async function deployDatabase(
     let fsxSvmId;
     let databaseDeploymentType;
     let fsxSvmDetails;
+    let instanceName;
 
     if (databaseInstanceId) {
         instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
         ({
             fsxn_ids: fileSystemId,
             fsx_svm_id: fsxSvmDetails,
-            database_deployment_type: databaseDeploymentType
+            database_deployment_type: databaseDeploymentType,
+            database_instance_name: instanceName
         } = instanceDetail as unknown as DatabaseInstance);
 
         isClustered = databaseDeploymentType === 'FCI' ? 'true' : 'false';
@@ -438,14 +440,16 @@ async function deployDatabase(
         }
     }
 
+    const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
+
     // create the parent job for database deployment
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
-        name: `Creating user database ${databaseName} on the SQL Server host ${sqlServerName}`,
+        resourceName: serverNameWithHostName,
+        name: `Creating user database ${databaseName} on the SQL Server host ${serverNameWithHostName}`,
         startTime: Date.now(),
-        description: `Creating user database ${databaseName} on the SQL Server host ${sqlServerName}`
+        description: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`
     });
 
     invokeSSMForDatabaseDeployment(
@@ -462,6 +466,7 @@ async function deployDatabase(
         fsxSvmId,
         jobId,
         resourceId,
+        serverNameWithHostName,
         node2InstanceId,
         metadata as Metadata,
         instanceDetail as unknown as DatabaseInstance
@@ -483,6 +488,7 @@ async function invokeSSMForDatabaseDeployment(
     fsxSvmId: string | undefined,
     parentJobId: string,
     resourceId: string,
+    serverNameWithHostName: string,
     node2InstanceId?: string,
     metaData?: Metadata,
     instanceDetail?: DatabaseInstance
@@ -500,6 +506,7 @@ async function invokeSSMForDatabaseDeployment(
         fsxSvmId,
         fileSystemId,
         resourceId,
+        serverNameWithHostName,
         isClustered,
         parentJobId
     );
@@ -598,6 +605,7 @@ async function invokeSSMForDatabaseDeployment(
             activeNodeInstanceId as string,
             collation,
             sqlInstanceName,
+            serverNameWithHostName,
             databaseInstanceId
         );
 
@@ -627,7 +635,8 @@ async function invokeSSMForDatabaseDeployment(
                 dataDrivePath,
                 logDrivePath,
                 collation,
-                sqlInstanceName
+                sqlInstanceName,
+                serverNameWithHostName
             );
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
@@ -695,6 +704,7 @@ async function invokeSSMForDatabaseDeployment(
                 logVolumeSize,
                 isLogVirtualMount ? isLogDriveExists.toString() : (!isLogDriveExists).toString(),
                 isDataVirtualMount ? isDataDriveExists.toString() : (!isDataDriveExists).toString(),
+                serverNameWithHostName,
                 standbyIqn
             );
 
@@ -723,7 +733,8 @@ async function invokeSSMForDatabaseDeployment(
                 LogSerial,
                 isVirtualMountSelected,
                 instanceNameForScript,
-                isDefaultInstance
+                isDefaultInstance,
+                serverNameWithHostName
             );
 
             await createDatabase(
@@ -739,6 +750,7 @@ async function invokeSSMForDatabaseDeployment(
                 logDrivePath,
                 collation,
                 sqlInstanceName,
+                serverNameWithHostName,
                 iGroup,
                 fsxDataVolumeName,
                 fsxLogVolumeName
@@ -796,7 +808,8 @@ async function invokeSSMForDatabaseDeployment(
                 sqlServerName,
                 parentJobId,
                 databaseName,
-                isClustered
+                isClustered,
+                serverNameWithHostName
             );
         }
 
@@ -828,6 +841,7 @@ async function createDatabase(
     logDrivePath: string,
     collation: string,
     sqlInstanceName: string,
+    serverNameWithHostName: string,
     iGroup?: string,
     fsxDataVolumeName?: string,
     fsxLogVolumeName?: string
@@ -847,7 +861,8 @@ async function createDatabase(
         iGroup,
         fsxDataVolumeName,
         fsxLogVolumeName,
-        sqlInstanceName
+        sqlInstanceName,
+        serverNameWithHostName
     });
 
     let createDatabaseCommand;
@@ -865,7 +880,7 @@ async function createDatabase(
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
+        resourceName: serverNameWithHostName,
         name: 'Creating Database',
         parentJobId,
         description: `Creating database ${databaseName} with provided data and log file paths.`,
@@ -932,6 +947,7 @@ async function configureLuns(
     logVolumeSize: number,
     isLogDriveExists: string,
     isDataDriveExists: string,
+    serverNameWithHostName: string,
     standbyIqn?: string
 ) {
     logger.info('Configure Luns', {
@@ -947,7 +963,8 @@ async function configureLuns(
         logVolumeSize,
         isLogDriveExists,
         isDataDriveExists,
-        standbyIqn
+        standbyIqn,
+        serverNameWithHostName
     });
 
     let configureLuncommands;
@@ -968,7 +985,7 @@ async function configureLuns(
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
+        resourceName: serverNameWithHostName,
         name: 'Configuring storage',
         parentJobId,
         description: 'Configuring storage on FSx for NetApp ONTAP with recommended best practices.',
@@ -1043,7 +1060,8 @@ async function newDBInitialization(
     logSerial: string,
     isVirtualMountSelected: string,
     instanceName: string,
-    isDefaultInstance: string
+    isDefaultInstance: string,
+    serverNameWithHostName: string
 ) {
     logger.info('Initialising new database', {
         accountId,
@@ -1065,7 +1083,8 @@ async function newDBInitialization(
         logSerial,
         isVirtualMountSelected,
         instanceName,
-        isDefaultInstance
+        isDefaultInstance,
+        serverNameWithHostName
     });
     let dbInitializecommands;
     if (isDemo()) {
@@ -1086,7 +1105,7 @@ async function newDBInitialization(
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
+        resourceName: serverNameWithHostName,
         name: 'New iSCSI Disk Initialization',
         parentJobId,
         description,
@@ -1157,7 +1176,8 @@ async function cleanUpDatabaseDeployment(
     sqlServerName: string | null,
     parentJobId: string,
     databaseName: string,
-    isClustered: string
+    isClustered: string,
+    serverNameWithHostName: string
 ) {
     logger.info('Cleaning up the database deployment', {
         accountId,
@@ -1173,16 +1193,17 @@ async function cleanUpDatabaseDeployment(
         sqlServerName,
         parentJobId,
         databaseName,
-        isClustered
+        isClustered,
+        serverNameWithHostName
     });
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
+        resourceName: serverNameWithHostName,
         name: 'Cleaning up',
         parentJobId,
-        description: `Database creation failed. Cleaning up resources in FSx for NetApp ONTAP and in host ${resourceId}`,
+        description: `Database creation failed. Cleaning up resources in FSx for NetApp ONTAP and in instance ${serverNameWithHostName}`,
         startTime: Date.now()
     });
 
@@ -1244,6 +1265,7 @@ async function validateParams(
     activeNodeInstanceId: string,
     collation: string,
     instanceName: string,
+    serverNameWithHostName: string,
     databaseInstanceId?: string
 ) {
     logger.info('validating parameters for database user creation', {
@@ -1258,7 +1280,8 @@ async function validateParams(
         sqlServerName,
         parentJobId,
         collation,
-        instanceName
+        instanceName,
+        serverNameWithHostName
     });
 
     const {
@@ -1282,7 +1305,7 @@ async function validateParams(
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
+        resourceName: serverNameWithHostName,
         name: 'Database Validation',
         parentJobId,
         description: `Validating parameters for database ${databaseName}.`,

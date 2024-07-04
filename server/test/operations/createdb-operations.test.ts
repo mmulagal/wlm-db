@@ -56,7 +56,8 @@ const reqData = {
     dataDrive: 'J',
     logDrive: 'K',
     dataSerial: 'lWB2/$WRmB4k',
-    logSerial: 'lWB2/$WRmB4l'
+    logSerial: 'lWB2/$WRmB4l',
+    serverNameWithHostName: `test-resourceName\\test-instance`,
 };
 
 beforeAll(async () => {
@@ -121,7 +122,8 @@ describe('Create database operations', () => {
             reqData.dataDrivePath,
             reqData.logDrivePath,
             'SQL_Latin1_General_CP1_CI_AS',
-            DEFAULT_MSSQL_INSTANCE_NAME
+            DEFAULT_MSSQL_INSTANCE_NAME,
+            reqData.serverNameWithHostName
         );
 
         expect(resp.Status).toBe('Complete');
@@ -140,7 +142,8 @@ describe('Create database operations', () => {
             1074,
             1074,
             'false',
-            'false'
+            'false',
+            reqData.serverNameWithHostName
         );
 
         expect(resp.Status).toBe('Complete');
@@ -167,7 +170,8 @@ describe('Create database operations', () => {
             reqData.logSerial,
             'false',
             'MSSQLSERVER',
-            'true'
+            'true',
+            reqData.serverNameWithHostName
         );
 
         expect(resp.Status).toBe('Complete');
@@ -188,7 +192,8 @@ describe('Create database operations', () => {
             reqData.sqlServerName,
             reqData.parentJobId,
             reqData.databaseName,
-            reqData.isClustered
+            reqData.isClustered,
+            reqData.serverNameWithHostName
         );
 
         expect(resp.Status).toBe('Complete');
