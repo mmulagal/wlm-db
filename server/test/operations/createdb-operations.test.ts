@@ -57,7 +57,7 @@ const reqData = {
     logDrive: 'K',
     dataSerial: 'lWB2/$WRmB4k',
     logSerial: 'lWB2/$WRmB4l',
-    serverNameWithHostName: `test-resourceName\\test-instance`,
+    serverNameWithHostName: `test-resourceName\\test-instance`
 };
 
 beforeAll(async () => {
@@ -193,7 +193,9 @@ describe('Create database operations', () => {
             reqData.parentJobId,
             reqData.databaseName,
             reqData.isClustered,
-            reqData.serverNameWithHostName
+            reqData.serverNameWithHostName,
+            'MSSQLSERVER',
+            'true'
         );
 
         expect(resp.Status).toBe('Complete');

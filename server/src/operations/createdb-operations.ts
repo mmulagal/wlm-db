@@ -809,7 +809,9 @@ async function invokeSSMForDatabaseDeployment(
                 parentJobId,
                 databaseName,
                 isClustered,
-                serverNameWithHostName
+                serverNameWithHostName,
+                instanceNameForScript,
+                isDefaultInstance
             );
         }
 
@@ -1177,7 +1179,9 @@ async function cleanUpDatabaseDeployment(
     parentJobId: string,
     databaseName: string,
     isClustered: string,
-    serverNameWithHostName: string
+    serverNameWithHostName: string,
+    instanceNameForScript: string,
+    isDefaultInstance: string
 ) {
     logger.info('Cleaning up the database deployment', {
         accountId,
@@ -1194,7 +1198,9 @@ async function cleanUpDatabaseDeployment(
         parentJobId,
         databaseName,
         isClustered,
-        serverNameWithHostName
+        serverNameWithHostName,
+        instanceNameForScript,
+        isDefaultInstance
     });
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
@@ -1217,7 +1223,7 @@ async function cleanUpDatabaseDeployment(
             ];
         } else {
             cleaupCommand = [
-                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered}}`
+                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered} -InstanceName ${instanceNameForScript} -IsDefaultInstance ${isDefaultInstance}}`
             ];
         }
 
