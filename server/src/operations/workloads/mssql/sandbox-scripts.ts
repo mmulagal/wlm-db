@@ -803,7 +803,7 @@ const cleanUpOntapResources = (
 
             Write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
             if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
-                $sqlgroup = Get-ClusterResource | Where-Object ResourceType -eq $resourceType
+                $sqlgroup = Get-ClusterResource | Where-Object Name -eq $resourceType
                 $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
                 $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
 
@@ -1077,7 +1077,7 @@ const detachDbAndRemoveAccessPath = (
         }
 
         if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
-            $sqlgroup = Get-ClusterResource | Where-Object ResourceType -eq $resourceType
+            $sqlgroup = Get-ClusterResource | Where-Object Name -eq $resourceType
             $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
             $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
 
