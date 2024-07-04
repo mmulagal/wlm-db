@@ -73,5 +73,5 @@ try {
 
 }
 catch {
-    $_ | Write-AWSLaunchWizardException
+    Write-Output "Error while configuring max dop: $_."
 }

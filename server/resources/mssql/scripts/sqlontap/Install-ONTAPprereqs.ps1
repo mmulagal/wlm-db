@@ -85,9 +85,9 @@ while ($installPSModulesTries -le 2) {
             Install-Module -Name AWS.Tools.FSX -Force -AllowClobber
             Install-Module -Name AWS.Tools.EC2 -Force -AllowClobber
             Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber
-            Install-Module -Name AWS.Tools.SimpleSystemsManagement -AllowClobber
+            Install-Module -Name AWS.Tools.SimpleSystemsManagement -Force -AllowClobber
             Install-Module -Name SqlServer -Force -AllowClobber
-            Install-Module -Name netapp.ontap
+            Install-Module -Name netapp.ontap -Force -AllowClobber
 
             $modulesInstalled = $True
             break
