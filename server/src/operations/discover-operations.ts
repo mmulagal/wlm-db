@@ -818,7 +818,13 @@ async function fetchUnmanagedHostsInformation(
                     cloud_provider_account_id: null,
                     region,
                     credentials_id: credentialsId,
-                    storage_type: fsxnId ? STORAGE_TYPE.FSXN : fsxwId ? STORAGE_TYPE.FSXW : STORAGE_TYPE.EBS,
+                    storage_type: fsxnId
+                        ? STORAGE_TYPE.FSXN
+                        : fsxwId
+                        ? STORAGE_TYPE.FSXW
+                        : ebsVolumeIds.length > 0
+                        ? STORAGE_TYPE.EBS
+                        : NOT_AVAILABLE,
                     metadata: {
                         creationDate: Date.now(),
                         node1InstanceId: ec2Instance.ec2InstanceId
@@ -950,7 +956,7 @@ async function fetchUnmanagedHostsInformationV2(
                             ? STORAGE_TYPE.FSXN
                             : fsxwId
                             ? STORAGE_TYPE.FSXW
-                            : ebsVolumeIds
+                            : ebsVolumeIds.length > 0
                             ? STORAGE_TYPE.EBS
                             : NOT_AVAILABLE
                     });
