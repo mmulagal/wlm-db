@@ -65,7 +65,11 @@ const NewInventoryChart = ({ color1, color2, data1, data2, centerText }: ChartTy
                     {totalHosts}
                 </Typography>
                 <Typography variant="Regular_14">{centerText}</Typography>
-                {discoverHostLoading && <DsFlashingDotsLoader />}
+                {discoverHostLoading && (
+                    <div style={{ marginTop: '6px' }}>
+                        <DsFlashingDotsLoader />
+                    </div>
+                )}
             </div>
             {!totalHosts && <div className={styles.emptyCircle}></div>}
             {totalHosts ? <canvas ref={ref} id="chart-area" width={196} height={196}></canvas> : null}
