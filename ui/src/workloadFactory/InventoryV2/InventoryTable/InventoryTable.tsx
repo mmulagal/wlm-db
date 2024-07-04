@@ -26,7 +26,7 @@ import {
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 
-import { expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
+import { collapseAllRows, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
 
 import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 
@@ -78,6 +78,7 @@ const InventoryTable = () => {
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+    const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
 
     const [loading, setLoading] = useState(false);
 
@@ -654,6 +655,13 @@ const InventoryTable = () => {
             setTableHorizontalScroll(false);
         }
     }, [tableProps.columnsState]);
+
+    useEffect(() => {
+        if (isRefreshed) {
+            collapseAllRows(tableProps?.updateRowState, tableProps?.rowsState);
+            tableProps?.pagination?.gotoPage(0);
+        }
+    }, [isRefreshed]);
 
     useEffect(() => {
         if (resetPage) {
