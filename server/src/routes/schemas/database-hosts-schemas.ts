@@ -54,7 +54,7 @@ const DatabaseHostDetailsSchema = {
     ...databaseHostsRequest,
     summary: 'Fetch database server details (deprecated)',
     description:
-        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
+        'Fetch database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
     params: DatabaseHostSummaryParams,
     querystring: DatabaseHostQueryString,
     response: {
@@ -262,7 +262,7 @@ const DatabaseHostDetailsSchemaV2 = {
     ...databaseHostsRequest,
     summary: 'Fetch database server details',
     description:
-        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
+        'Fetch database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
     params: DatabaseHostSummaryParams,
     querystring: DatabaseHostQueryString,
     response: {
@@ -274,7 +274,7 @@ const DatabaseHostInstanceDetailsSchema = {
     ...databaseHostsRequest,
     summary: 'Fetch database server instance details',
     description:
-        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server. ',
+        'Fetch database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server. ',
     params: DatabaseHostInstanceSummaryParams,
     querystring: DatabaseHostQueryString,
     response: {
