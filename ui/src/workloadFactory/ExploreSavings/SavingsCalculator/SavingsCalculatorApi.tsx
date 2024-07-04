@@ -22,6 +22,7 @@ import { setMssqlInstancesData as setMssqlInstancesDataV1 } from '../../../store
 import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
 import { GENERAL } from '../../../utils/appConstants';
+import { INSTANCE_API_FIELDS } from '../../../utils/consts';
 
 const SavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
@@ -182,6 +183,7 @@ const SavingsCalculatorApi = () => {
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
                     instances: selectedInstanceId,
+                    fields: INSTANCE_API_FIELDS.UNMANAGED_DEFAULT.join(','),
                     nextToken: ''
                 });
             } else {
@@ -261,6 +263,7 @@ const SavingsCalculatorApi = () => {
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
                     instances: selectedPartnerInstanceId,
+                    fields: INSTANCE_API_FIELDS.UNMANAGED_DEFAULT.join(','),
                     nextToken: ''
                 });
             } else {
