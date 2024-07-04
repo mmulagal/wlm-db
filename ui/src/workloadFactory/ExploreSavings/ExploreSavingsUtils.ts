@@ -21,11 +21,15 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {
+    let serverInstallationMode = data?.serverInstallationMode;
+    if (data?.serverInstallationMode === GENERAL.AOAG) {
+        serverInstallationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+    }
     dispatch(
         setSelectedHostDetails({
             ...data,
             recommendedInstance: {
-                serverInstallationMode: data?.serverInstallationMode,
+                serverInstallationMode: serverInstallationMode,
                 serverVersion:
                     data?.databaseServer?.serverVersion || data?.sqlServerInstances?.[0]?.databaseServer?.serverVersion
             }
