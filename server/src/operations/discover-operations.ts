@@ -1366,7 +1366,7 @@ async function validateCredentials(
             paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
         }
 
-        if (sqlCredentials) {
+        if (sqlCredentials.length) {
             instancesToBeDeleted.push(sqlCredentials[0].resourceId);
         }
 
