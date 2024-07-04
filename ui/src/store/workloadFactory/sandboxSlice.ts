@@ -20,13 +20,7 @@ export const initialSandboxState: SandboxEntities = {
         sandboxSavingsLoading: false,
         sandboxSavingsError: ''
     },
-    connectionInfo: {
-        selectedDatabaseHostId: null,
-        selectedDatabaseInstanceId: null,
-        selectedSandboxName: null,
-        connectionString: null,
-        isLoading: false
-    },
+    connectionInfoLoading: false,
     splitEstimateLoading: false,
     rollbackSnapshotsLoading: false,
     rollbackSnapshotList: [],
@@ -53,8 +47,8 @@ const sandboxSlice = createSlice({
         setShowBanner: (state, action: PayloadAction<any>) => {
             state.showBanner = action.payload;
         },
-        updateConnectionInfo: (state, action: PayloadAction<any>) => {
-            state.connectionInfo = action.payload;
+        updateConnectionInfoLoading: (state, action: PayloadAction<any>) => {
+            state.connectionInfoLoading = action.payload;
         },
         updateSplitEstimateLoading: (state, action: PayloadAction<any>) => {
             state.splitEstimateLoading = action.payload;
@@ -86,7 +80,7 @@ export const {
     setAllSandboxList,
     setSandboxSavingsState,
     setShowBanner,
-    updateConnectionInfo,
+    updateConnectionInfoLoading,
     updateSplitEstimateLoading,
     updateRollbackSnapshotsLoading,
     updateRollbackSnapshotList,
