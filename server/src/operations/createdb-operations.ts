@@ -449,7 +449,7 @@ async function deployDatabase(
         resourceName: serverNameWithHostName,
         name: `Creating user database ${databaseName} on the SQL Server host ${serverNameWithHostName}`,
         startTime: Date.now(),
-        description: `Creating user database ${databaseName} on the SQL Server host ${serverNameWithHostName}`
+        description: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`
     });
 
     invokeSSMForDatabaseDeployment(
@@ -1203,7 +1203,7 @@ async function cleanUpDatabaseDeployment(
         resourceName: serverNameWithHostName,
         name: 'Cleaning up',
         parentJobId,
-        description: `Database creation failed. Cleaning up resources in FSx for NetApp ONTAP and in host ${resourceId}`,
+        description: `Database creation failed. Cleaning up resources in FSx for NetApp ONTAP and in instance ${serverNameWithHostName}`,
         startTime: Date.now()
     });
 
