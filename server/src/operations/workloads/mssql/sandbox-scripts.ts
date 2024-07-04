@@ -1154,7 +1154,7 @@ const addAccessPathAndAttachDb = (
         $datalabel = $dbname + '-Data'
         $loglabel = $dbname + '-Log'
 
-        $disklist = Get-disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -ceq $datafile.serial -and $_.SerialNumber -ceq $logfile.serial }
+        $disklist = Get-disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -ceq $datafile.serial -or $_.SerialNumber -ceq $logfile.serial }
 
         $disklist | ForEach-Object {
             $disk = $_
