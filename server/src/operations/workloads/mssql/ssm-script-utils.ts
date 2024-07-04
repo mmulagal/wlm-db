@@ -180,10 +180,17 @@ const validateSQLInstanceConnectivity = (
 ) => ` 
         $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
 
-        $destinationPath = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules"
-        $CommonmodulePath = $destinationPath + "\\AWS.Tools.Common"
-        $ssmmodulePath = $destinationPath + "\\AWS.Tools.SimpleSystemsManagement"
+        $CommonmodulePath = (Get-Module -Name 'AWS.Tools.Common' -ListAvailable).Path
+        if($CommonmodulePath -is [System.Array]) {
+            $CommonmodulePath = $CommonmodulePath[0]
+        }
+        $ssmmodulePath = (Get-Module -Name 'AWS.Tools.SimpleSystemsManagement' -ListAvailable).Path
+        if($ssmmodulePath -is [System.Array]) {
+            $ssmmodulePath = $ssmmodulePath[0]
+        }
+        
         Import-Module -Name $CommonmodulePath, $ssmmodulePath
+
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
@@ -254,9 +261,15 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
         $responseObject = @{}
     }
 
-    $destinationPath = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules"
-    $CommonmodulePath = $destinationPath + "\\AWS.Tools.Common"
-    $ssmmodulePath = $destinationPath + "\\AWS.Tools.SimpleSystemsManagement"
+    $CommonmodulePath =  (Get-Module -Name 'AWS.Tools.Common' -ListAvailable).Path
+    if($CommonmodulePath -is [System.Array]) {
+        $CommonmodulePath = $CommonmodulePath[0]
+    }
+    $ssmmodulePath =  (Get-Module -Name 'AWS.Tools.SimpleSystemsManagement' -ListAvailable).Path
+    if($ssmmodulePath -is [System.Array]) {
+        $ssmmodulePath = $ssmmodulePath[0]
+    }
+
     Import-Module -Name $CommonmodulePath, $ssmmodulePath
 
     try {
