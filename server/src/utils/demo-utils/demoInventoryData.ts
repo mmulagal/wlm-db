@@ -658,6 +658,10 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                             {
                                 type: 'EBS',
                                 id: ebsVolId
+                            },
+                            {
+                                type: 'EBS',
+                                id: 'vol-0a1b2c3d4e5f6g7h'
                             }
                         ],
                         deploymentTypes: [
