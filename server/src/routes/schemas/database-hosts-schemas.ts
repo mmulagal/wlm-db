@@ -90,8 +90,9 @@ const DatabasesCreateSchema = {
 const GetDriveInfoSchema = {
     ...databaseHostsRequest,
     querystring: GetDriveQueryString,
-    summary: 'Get database host drive information',
-    description: 'Fetch drive info about the database host',
+    hide: process.env.NODE_ENV === 'production',
+    summary: 'Get database host drive information (deprecated)',
+    description: 'Fetch drive info about the database host (deprecated)',
     params: DatabaseHostSummaryParams,
     response: {
         200: DriveInfoResponseBody
@@ -135,7 +136,7 @@ const GetCollationDetailsSchema = {
 
 const GetCollationDetailsSchemaV2 = {
     ...databaseHostsRequest,
-    summary: 'Get database host collation details V2',
+    summary: 'Get database host collation details',
     description: 'Fetch collation details about the database host',
     params: DatabaseHostOptionalInstanceSummaryParams,
     response: {

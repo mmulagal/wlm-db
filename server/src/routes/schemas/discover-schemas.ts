@@ -59,7 +59,8 @@ const PrepareForManageSchema = {
 const ManageMsSqlSchema = {
     ...DiscoveryBaseRequest,
     params: DiscoverInstanceParams,
-    summary: 'Manage EC2 instances hosting Microsoft SQL Server.',
+    hide: process.env.NODE_ENV === 'production',
+    summary: 'Manage EC2 instances hosting Microsoft SQL Server. (deprecated)',
     description: `Manage AWS EC2 instances hosting Microsoft SQL Server.
     EC2 instances meeting the following constraints are managed:
     <ul>
