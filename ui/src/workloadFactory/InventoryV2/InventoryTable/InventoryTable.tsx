@@ -553,7 +553,7 @@ const InventoryTable = () => {
             id: '6',
             Header: 'SSM connectivity',
             accessor: 'ssmState',
-            width: '202px',
+            width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -611,17 +611,18 @@ const InventoryTable = () => {
                 return renderEstimatedCost(cellData, rowData, styles);
             }
         },
-        {
-            id: '8',
-            Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-            accessor: 'allocatedCapacity',
-            isSortable: true,
-            width: '216px',
-            accessorForTextFilter: 'allocatedCapacityText',
-            renderCell: (cellData: string | number, rowData: any) => {
-                return renderAllocatedCapacity(rowData?.allocatedCapacityText, rowData);
-            }
-        },
+        // ToDo - disabled only for GA release
+        // {
+        //     id: '8',
+        //     Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
+        //     accessor: 'allocatedCapacity',
+        //     isSortable: true,
+        //     width: '216px',
+        //     accessorForTextFilter: 'allocatedCapacityText',
+        //     renderCell: (cellData: string | number, rowData: any) => {
+        //         return renderAllocatedCapacity(rowData?.allocatedCapacityText, rowData);
+        //     }
+        // },
         lastColDetails()
     ];
 
