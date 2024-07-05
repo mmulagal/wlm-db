@@ -177,7 +177,8 @@ function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMo
 
     const fsxQuorumVolumeSize = sqlDeploymentMode === STANDALONE ? 0 : 12 * 1000 * 1000 * 1000; // in calculateFsxnStorageCapacity FSxQuorumVolumeSize = 12000(MB); // 12GB
 
-    const fsxDataLunSize = Math.ceil(fsxStorageCapacity - fsxQuorumVolumeSize) / 1.485;
+    const fsxStorageCapacityWithoutBuffer = fsxStorageCapacity - fsxBufferVolumeSize;
+    const fsxDataLunSize = Math.ceil((fsxStorageCapacityWithoutBuffer - fsxQuorumVolumeSize) / 1.485);
 
     const fsxDataVolumeSize = Math.ceil(1.1 * fsxDataLunSize);
     const fsxLogVolumeSize = Math.ceil(0.25 * fsxDataVolumeSize);
