@@ -783,57 +783,63 @@ const cleanUpOntapResources = (
 
     try {
         ${getVolumeIdFromPath}
+        try {
+            if ($filePaths.count -ne 0) {
+                $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
 
-        if ($filePaths.count -ne 0) {
-            $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
+                $sqlres = sqlcmd -S $executableInstance -Q $query -y 0
 
-            $sqlres = sqlcmd -S $executableInstance -Q $query -y 0
+                if (-not [string]::IsNullOrEmpty($sqlres)) {
+                    Write-Information "$logPrefix Database $dbname is in use"
+                    $responseObject['error'] = "SQLServerError: Database $dbname is in use"
+                    return $responseObject | ConvertTo-Json -Depth 5
+                }
 
-            if (-not [string]::IsNullOrEmpty($sqlres)) {
-                Write-Information "$logPrefix Database $dbname is in use"
-                $responseObject['error'] = "SQLServerError: Database $dbname is in use"
-                return $responseObject | ConvertTo-Json -Depth 5
-            }
+                $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
+                $resourceType = ${
+                    instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'
+                }
+                $windowsVolumeIds = $filePaths | ForEach-Object {
+                    Get-VolumeIdFromPath -absolutePath $_
+                }
 
-            $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-            $resourceType = ${instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'}
-            $windowsVolumeIds = $filePaths | ForEach-Object {
-                Get-VolumeIdFromPath -absolutePath $_
-            }
+                Write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
+                if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
+                    $sqlgroup = Get-ClusterResource | Where-Object Name -eq $resourceType
+                    $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+                    $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
 
-            Write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
-            if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
-                $sqlgroup = Get-ClusterResource | Where-Object Name -eq $resourceType
-                $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
-                $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
-
-                $clusterdisksToRemove = @()
-                foreach ($resource in $resourcegroup) {
-                    $disks = $resource.GetRelated("MSCluster_Disk")
-                    foreach ($disk in $disks) {
-                        $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
-                        $clusterdisk = ($resource.name).replace('\\r\\n','')
-                        $diskdrive = $diskpart.path
-                        $disklabel = $diskpart.volumelabel
-                        $diskvolume = $diskpart.VolumeGuid
-                        write-debug "Cluster Disk $diskvolume"
-                        if ($windowsVolumeIds -contains $diskpart.VolumeGuid) {
-                            $clusterdisksToRemove += $clusterdisk
+                    $clusterdisksToRemove = @()
+                    foreach ($resource in $resourcegroup) {
+                        $disks = $resource.GetRelated("MSCluster_Disk")
+                        foreach ($disk in $disks) {
+                            $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
+                            $clusterdisk = ($resource.name).replace('\\r\\n','')
+                            $diskdrive = $diskpart.path
+                            $disklabel = $diskpart.volumelabel
+                            $diskvolume = $diskpart.VolumeGuid
+                            write-debug "Cluster Disk $diskvolume"
+                            if ($windowsVolumeIds -contains $diskpart.VolumeGuid) {
+                                $clusterdisksToRemove += $clusterdisk
+                            }
+                        }
+                    }
+                    write-Information "$logPrefix Cluster Disks to remove $clusterdisksToRemove"
+                    if ($clusterdisksToRemove.count -ne 0) {
+                        $clusterdisksToRemove | ForEach-Object {
+                            $diskToRemove = $_
+                            $diskToRemove = $diskToRemove.ToString()
+                            write-Information "$logPrefix Removing disk $diskToRemove"
+                            $null = (Remove-ClusterResourceDependency -Resource $resourceType -Provider $diskToRemove)
+                            $null = (Remove-ClusterSharedVolume -Name $diskToRemove -ErrorAction SilentlyContinue)
+                            $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
                         }
                     }
                 }
-                write-Information "$logPrefix Cluster Disks to remove $clusterdisksToRemove"
-                if ($clusterdisksToRemove.count -ne 0) {
-                    $clusterdisksToRemove | ForEach-Object {
-                        $diskToRemove = $_
-                        $diskToRemove = $diskToRemove.ToString()
-                        write-Information "$logPrefix Removing disk $diskToRemove"
-                        $null = (Remove-ClusterResourceDependency -Resource $resourceType -Provider $diskToRemove)
-                        $null = (Remove-ClusterSharedVolume -Name $diskToRemove -ErrorAction SilentlyContinue)
-                        $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
-                    }
-                }
             }
+        } catch {
+            Write-Information "$logPrefix $($_.Exception.Message)"
+            throw $_.Exception.Message
         }
 
         ${ontapRestRequest()}
