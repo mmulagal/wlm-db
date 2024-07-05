@@ -1011,7 +1011,7 @@ async function invokeVirtualMount(
         const logFileName = `${mountPoints.logDrive}:\\${logMappingfile}`;
 
         try {
-            const isDefaultSqlServerInstance: boolean = destDetails.instanceName === DEFAULT_INSTANCE_NAME;
+            const isDefaultSqlServerInstance: boolean = destDetails.databaseInstanceName === DEFAULT_INSTANCE_NAME;
 
             let command = [
                 `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -InstanceName '${destDetails.databaseInstanceName}' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
