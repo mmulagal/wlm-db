@@ -516,8 +516,8 @@ async function createSandbox(
     }
 
     const job = await registerJob(accountId, credentialsId, region, {
-        name: `Create sandbox ${dest.database} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
-        description: `Create sandbox ${dest.database} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
+        name: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
+        description: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
         resourceName: dest.database,
         initiator: 'SYSTEM',
         startTime: Date.now(),
