@@ -53,6 +53,9 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
             .status(500)
             .send({ message: 'We are unable to establish connection with database. Please contact support' });
     } else if (error instanceof PrismaClientKnownRequestError) {
+        // Adding a console to print the error since logger sometimes doesnt print complete error
+        // eslint-disable-next-line no-console
+        console.log('Error of type PrismaClientKnownRequestError occurred. ', error, error instanceof Error);
         logger.error('Error of type PrismaClientKnownRequestError occurred', error);
         reply.status(500).send({
             message: `An error occurred in DB query engine.${
