@@ -128,7 +128,7 @@ const InstanceInformation = () => {
                     <>
                         {rowData?.findings === 'NOT_OPTIMIZED' && (
                             <div className={styles.findings}>
-                                {rowData.details !== 'Instance type' && (
+                                {rowData.details === 'SQL Edition' && (
                                     <TooltipInfo>{GENERAL.NOT_OPTIMIZED}</TooltipInfo>
                                 )}
                                 <DsTypography variant="Regular_14">Not optimized</DsTypography>
