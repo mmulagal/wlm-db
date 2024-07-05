@@ -920,7 +920,7 @@ export const GENERAL = {
     ES_SAVINGS_PERCENTAGE: 'Percentage savings',
     ES_HEADING: 'Explore savings of selected host',
     ES_HEADER:
-        'Explore cost savings with Databases automatically. Select a Microsoft SQL server host and than click "Explore Savings". We will calculate your potential savings by moving to Microsoft SQL server using FSx for ONTAP file systems.',
+        'Explore cost savings with Databases automatically. Select a Microsoft SQL server host and then click "Explore Savings". We will calculate your potential savings by moving to Microsoft SQL server using FSx for ONTAP file systems.',
     ES_SAVINGS: 'Explore savings',
     INSTANCE_INFORMATION: 'Instance information:',
     ES_SAVE_CONFIG: 'Save configuration',
@@ -947,7 +947,7 @@ export const GENERAL = {
     VIEW_CALC_TEXT:
         'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
-    VIEW_CAL_SECONDARY_TEXT: 'All aws prices mentioned in the calculations are aws on-demand pricing.',
+    VIEW_CAL_SECONDARY_TEXT: 'All AWS prices mentioned in the calculations are AWS on-demand pricing.',
     COST_CALCULATION: 'Cost calculation',
     DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.',
     TOOLTIP_MESSAGE_SNAPSHOT_FREQ:

@@ -18,7 +18,7 @@ export const createUserDbPayload = (newUserDb: any) => {
         dataFileConfig: {
             fileName: newUserDb?.newUserDBFileName ? newUserDb.newUserDBFileName + '.mdf' : '',
             volumeSize:
-                newUserDb?.newUserDataSizeUnit === 'TiB'
+                newUserDb?.newUserDataSizeUnit?.label === 'TiB'
                     ? newUserDb?.newUserDataSize * 1024
                     : newUserDb?.newUserDataSize,
             drive: newUserDb?.driveLetter?.value || '',
@@ -28,7 +28,7 @@ export const createUserDbPayload = (newUserDb: any) => {
         logFileConfig: {
             fileName: newUserDb?.newUserLogFileName ? newUserDb.newUserLogFileName + '.ldf' : '',
             volumeSize:
-                newUserDb?.newUserLogFileSizeUnit === 'TiB'
+                newUserDb?.newUserLogFileSizeUnit?.label === 'TiB'
                     ? newUserDb?.newUserLogFileSize * 1024
                     : newUserDb?.newUserLogFileSize,
             drive: newUserDb?.driveLetterLogFile?.value || '',
