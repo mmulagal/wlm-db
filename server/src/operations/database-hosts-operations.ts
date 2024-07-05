@@ -1928,6 +1928,7 @@ async function getDatabaseHostSummaryV2(
 
             if (shouldQueryNodeTopology && nodeTopology && nodeTopology.ec2Details.length > 0) {
                 if (isDemo()) {
+                    // updating the instance type only for explore savings demo
                     if (resourceDetail?.resource_name === 'app-server-15') {
                         const modifiedEc2Details = nodeTopology.ec2Details?.map((ec2: any) => ({
                             ...ec2,
