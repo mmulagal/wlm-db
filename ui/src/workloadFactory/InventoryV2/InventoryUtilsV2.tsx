@@ -151,7 +151,10 @@ export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) =
     if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
         for (let i = 0; i < row?.databaseInstancesSummary?.length; i++) {
             const val = row?.databaseInstancesSummary[i];
-            if (val?.databaseInstanceTopology?.serverInstallationMode) {
+            if (val?.sqlServerDeploymentType) {
+                installationMode = val?.sqlServerDeploymentType;
+                break;
+            } else if (val?.databaseInstanceTopology?.serverInstallationMode) {
                 installationMode = val?.databaseInstanceTopology?.serverInstallationMode;
                 break;
             }
