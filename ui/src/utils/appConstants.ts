@@ -982,7 +982,7 @@ export const GENERAL = {
         'This action will update the selected sandbox so that it is equivalent to the source database at the current moment or at a previous point in time.',
     REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
     REFRESH_CURRENT_RADIO: 'Refresh to current time',
-    REFRESH_SNAPSHOT_RADIO: 'Refresh to previous point in time',
+    REFRESH_SNAPSHOT_RADIO: 'Refresh to point in time',
     HOST_DOWN: 'Host is down.',
     SSM_DOWN: 'SSM is not connected.',
     SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
