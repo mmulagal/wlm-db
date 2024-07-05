@@ -894,7 +894,7 @@ async function fetchUnmanagedHostsInformationV2(
 
     await Promise.all(
         ec2HostDetails?.map(async ec2Instance => {
-            const [{ nodeIps, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [];
+            const [{ nodeIps, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [{}];
             let clusterNodeDetails: NodeDetails[] = [];
             if (
                 (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
