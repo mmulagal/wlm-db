@@ -985,8 +985,8 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
         // Capacity
         if (fsxData?.fsxBreakdown?.fsxDataLunSize) {
             let size = fsxData?.fsxBreakdown?.fsxDataLunSize / GIB_IN_BYTE || 0;
-            if (size < 1024) {
-                size = 1024;
+            if (size < 120) {
+                size = 120;
             }
             const unitOption = generateOptionType('GiB', 'GiB', '', false, '');
             result = {
