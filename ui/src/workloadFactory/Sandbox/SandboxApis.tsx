@@ -21,11 +21,13 @@ const SandboxApis = () => {
     const [sandboxCursor, setSandboxCursor] = useState(null);
 
     useEffect(() => {
-        setCredId(headerSelectedCred?.data?.credentialsId);
-        setRegionId(headerSelectedRegion?.label2);
-        dispatch(setAggregatedSandboxList([]));
-        dispatch(setAllSandboxList([]));
-    }, [headerSelectedCred, headerSelectedRegion, isRefreshed]);
+        if (!refreshBlocked) {
+            setCredId(headerSelectedCred?.data?.credentialsId);
+            setRegionId(headerSelectedRegion?.label2);
+            dispatch(setAggregatedSandboxList([]));
+            dispatch(setAllSandboxList([]));
+        }
+    }, [headerSelectedCred, headerSelectedRegion, isRefreshed, refreshBlocked]);
 
     const {
         data: sandboxList,
