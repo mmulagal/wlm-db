@@ -261,6 +261,12 @@ const getDbMappedOntapVolumes = (
             $responseObject = [ordered]@{}
             $winvolumes = $sqlresponse | foreach { $_ | ConvertFrom-Json }
             foreach ($winvolume in $winvolumes) {
+
+                # check in winvolume volume id is null or empty string
+
+                if ([string]::IsNullOrEmpty($winvolume.volumeid)) {
+                    throw "Could not get volume id for database $dbname, please make sure the database is using iscsi protocol"
+                }
                 $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype
 
                 if ($vol.bustype -ne 'iscsi') {
