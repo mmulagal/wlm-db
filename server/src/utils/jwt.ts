@@ -66,7 +66,7 @@ async function getTenancyUserPermissions(
 
 async function authorizeJwt(authToken: string, decodedToken: JwtPayload | string, accountId: string) {
     logger.debug('Authorize JWT:', { authToken, decodedToken, accountId });
-    let tokenSub = decodedToken?.sub as string;
+    const tokenSub = decodedToken?.sub as string;
 
     if (tokenSub && !isEmpty(tokenSub) && !tokenSub?.endsWith('@clients')) {
         // service token ends with @clients, we cant get user permissions using service token so skipping auth for service token requests

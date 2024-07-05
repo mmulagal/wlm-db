@@ -282,7 +282,10 @@ const app = fastify({
             let replyBody = payload;
             try {
                 replyBody = JSON.parse(payload as unknown as string);
-            } catch (e) {}
+            } catch (e) {
+                //  285:25  error    Empty block statement                               no-empty
+                logger.error('Error parsing reply body', e);
+            }
 
             accessLogger.info({
                 requestId,

@@ -37,7 +37,7 @@ describe('Marketing lib', () => {
         expect(response.fsx_calculation).toBeDefined();
     });
     it('Getting storage savings manual', async () => {
-        let volumes = [
+        const volumes = [
             { volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 2, volumeIops: 40000, throughput: 128 }
         ];
         const requestBody = getMarketingApiManualModeRequestBody(

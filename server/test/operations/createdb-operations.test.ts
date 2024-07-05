@@ -57,7 +57,7 @@ const reqData = {
     logDrive: 'K',
     dataSerial: 'lWB2/$WRmB4k',
     logSerial: 'lWB2/$WRmB4l',
-    serverNameWithHostName: `test-resourceName\\test-instance`
+    serverNameWithHostName: 'test-resourceName\\test-instance'
 };
 
 beforeAll(async () => {
