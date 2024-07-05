@@ -1927,6 +1927,23 @@ async function getDatabaseHostSummaryV2(
             }
 
             if (shouldQueryNodeTopology && nodeTopology && nodeTopology.ec2Details.length > 0) {
+                if (isDemo()) {
+                    if (resourceDetail?.resource_name === 'app-server-15') {
+                        const modifiedEc2Details = nodeTopology.ec2Details?.map((ec2: any) => ({
+                            ...ec2,
+                            instanceType: 'm5.xlarge'
+                        }));
+                        nodeTopology.ec2Details = modifiedEc2Details;
+                    } else if (resourceDetail?.resource_name === 'app-server-14' && instanceResults?.length) {
+                        instanceResults = instanceResults.map((item: any) => ({
+                            ...item,
+                            databaseServer: {
+                                ...item.databaseServer,
+                                serverEdition: 'SQL Server Enterprise Edition'
+                            }
+                        }));
+                    }
+                }
                 databaseHostDetails.nodeTopology = nodeTopology;
             }
 
@@ -1936,6 +1953,12 @@ async function getDatabaseHostSummaryV2(
 
             // ClusterNodeDetails is used in TCO
             if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0) {
+                if (isDemo()) {
+                    resourceDetail.clusterNodeDetails = resourceDetail?.clusterNodeDetails?.map(node => ({
+                        ...node,
+                        ec2InstanceType: 'm5.xlarge'
+                    }));
+                }
                 databaseHostDetails.clusterNodeDetails = resourceDetail?.clusterNodeDetails;
             }
         }
