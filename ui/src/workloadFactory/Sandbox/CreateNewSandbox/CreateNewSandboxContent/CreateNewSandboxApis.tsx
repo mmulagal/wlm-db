@@ -6,7 +6,7 @@ import {
     useGetDatabaseListQuery,
     useGetDatabaseListV2Query,
     useGetDatabaseMountPointsQuery,
-    useGetDriveInfoQuery
+    useGetDriveInfoV2Query
 } from '../../../../utils/apiService';
 import {
     setAggregatedDbHost,
@@ -30,6 +30,7 @@ const CreateSandboxApis = () => {
     const [selectedInstanceName, setSelectedInstanceName] = useState<any>(null);
     const [selectedInstanceId, setSelectedInstanceId] = useState<any>(null);
     const [selectedTargetDbHostId, setSelectedTargetDbHostId] = useState<any>(null);
+    const [selectedTargetInstanceId, setSelectedTargetInstanceId] = useState<any>(null);
     const [databaseHostCursor, setDatabaseHostCursor] = useState(null);
     const [fetchedDatabases, setFetchedDatabases] = useState(false);
 
@@ -48,6 +49,7 @@ const CreateSandboxApis = () => {
 
     useEffect(() => {
         setSelectedTargetDbHostId(target?.selectedDatabaseHost?.value);
+        setSelectedTargetInstanceId(target?.selectedDatabaseInstance?.value);
     }, [target]);
 
     const {
@@ -103,14 +105,15 @@ const CreateSandboxApis = () => {
         { skip: !credId || !regionId || !selectedDbHostId || !selectedInstanceId || !isInventoryV2 }
     );
 
-    const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoQuery(
+    const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoV2Query(
         {
             credentialId: credId,
             region: regionId,
             id: selectedTargetDbHostId,
+            instanceId: selectedTargetInstanceId,
             forSandbox: true
         },
-        { skip: !credId || !regionId || !selectedTargetDbHostId }
+        { skip: !credId || !regionId || !selectedTargetDbHostId || !selectedTargetInstanceId }
     );
 
     const { data: dbMountPointsData, isFetching: dbMountPointsLoading } = useGetDatabaseMountPointsQuery(

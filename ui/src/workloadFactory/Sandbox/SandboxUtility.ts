@@ -112,7 +112,8 @@ export const getDefaultDriveLetters = (
     let defaultDataDriveLetter: any, defaultLogDriveLetter: any;
     if (
         selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT &&
-        source?.selectedDatabaseHost?.value === target?.selectedDatabaseHost?.value
+        source?.selectedDatabaseHost?.value === target?.selectedDatabaseHost?.value &&
+        source?.selectedDatabaseInstance?.value === target?.selectedDatabaseInstance?.value
     ) {
         defaultDataDriveLetter = dataPathDrive;
         defaultLogDriveLetter = logPathDrive;
