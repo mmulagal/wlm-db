@@ -124,26 +124,31 @@ export const getDefaultDriveLetters = (
             (drive: any) => drive.driveLetter === logPathDrive
         );
         if (
-            (!recommendedDataDrive?.hasOwnProperty('isDriveClustered') || recommendedDataDrive?.isDriveClustered) &&
+            (!recommendedDataDrive?.hasOwnProperty('isClusteredWithSelectedInstance') ||
+                recommendedDataDrive?.isClusteredWithSelectedInstance) &&
             recommendedDataDrive?.isNetappDrive
         ) {
             defaultDataDriveLetter = dataPathDrive;
         } else {
             const validDrive = driveInfoData?.existingDriveInfo?.find(
                 (drive: any) =>
-                    (!drive?.hasOwnProperty('isDriveClustered') || drive?.isDriveClustered) && drive?.isNetappDrive
+                    (!drive?.hasOwnProperty('isClusteredWithSelectedInstance') ||
+                        drive?.isClusteredWithSelectedInstance) &&
+                    drive?.isNetappDrive
             );
             defaultDataDriveLetter = validDrive?.driveLetter;
         }
         if (
-            (!recommendedLogDrive?.hasOwnProperty('isDriveClustered') || recommendedLogDrive?.isDriveClustered) &&
+            (!recommendedLogDrive?.hasOwnProperty('isClusteredWithSelectedInstance') ||
+                recommendedLogDrive?.isClusteredWithSelectedInstance) &&
             recommendedLogDrive?.isNetappDrive
         ) {
             defaultLogDriveLetter = logPathDrive;
         } else {
             const validDrive = driveInfoData?.existingDriveInfo?.find(
                 (drive: any) =>
-                    (!drive?.hasOwnProperty('isDriveClustered') || drive?.isDriveClustered) &&
+                    (!drive?.hasOwnProperty('isClusteredWithSelectedInstance') ||
+                        drive?.isClusteredWithSelectedInstance) &&
                     drive?.isNetappDrive &&
                     drive.driveLetter !== defaultDataDriveLetter
             );
