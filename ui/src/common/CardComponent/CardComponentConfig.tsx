@@ -21,7 +21,7 @@ const CardComponentConfig = ({
     tickIcon
 }: CC) => {
     return (
-        <div className={styles.cardComponent}>
+        <div className={styles.cardComponent} style={{ width: '50%' }}>
             <div
                 id={idToAdd}
                 className={
@@ -30,7 +30,8 @@ const CardComponentConfig = ({
                 onClick={handleClick}
             >
                 <div className={styles.level}>
-                    {icon}
+                    <div style={{ color: 'red' }}>{icon}</div>
+
                     <div className={styles['easy-create-content']}>
                         <div className={styles['easy-create-heading']}>{heading}</div>
                         <Typography variant="Regular_13" className={styles['easy-create-content-text']}>

@@ -192,7 +192,7 @@ const PreviewDefault = () => {
             id: '1',
             isSortable: false,
 
-            width: '231px',
+            width: '23.2%',
             renderCell: (cellData: any, rowData: any) => {
                 return cellData === 'Resource rollback' ? (
                     <div className={styles.resourceContainer}>
@@ -208,13 +208,13 @@ const PreviewDefault = () => {
             Header: GENERAL.DEFAULT,
             accessor: 'defaultValue',
             id: '2',
-            width: '495px'
+            width: '49.70%'
         },
         {
             Header: GENERAL.EDITABLE_AFTER,
             accessor: 'editable',
             id: '3',
-            width: '257px'
+            width: '25.85%'
         }
     ];
 
