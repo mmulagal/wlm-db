@@ -76,7 +76,7 @@ const JobDistribution = () => {
 
                 {windowSize.width >= 1500 && (
                     <div className={styles.flexRightSection}>
-                        <div className={styles.valueContainer} style={{ width: '143px' }}>
+                        <div className={styles.valueContainer} style={{ width: '31.42%' }}>
                             <Typography variant="Regular_24" className={styles.setLineHeight}>
                                 {jobsSummaryData?.completed}
                             </Typography>
@@ -89,7 +89,7 @@ const JobDistribution = () => {
                             </div>
                         </div>
                         <div className={styles.jobDistributionSeparator} />
-                        <div className={styles.valueContainer} style={{ width: '124px' }}>
+                        <div className={styles.valueContainer} style={{ width: '27.25%' }}>
                             <Typography variant="Regular_24" className={styles.setLineHeight}>
                                 {jobsSummaryData?.inProgress}
                             </Typography>

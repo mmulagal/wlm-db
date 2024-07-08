@@ -60,6 +60,8 @@
             display: flex;
 
             align-items: center;
+            max-width: 64%;
+            width: 60.59%;
             .valueContainer {
                 display: flex;
                 flex-direction: column;
@@ -85,5 +87,5 @@
 }
 
 .maxWidthClass {
-    width: 790px;
+    // max-width: 790px;
 }

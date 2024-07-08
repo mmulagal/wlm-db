@@ -1,6 +1,10 @@
 .jobMonitoringTable {
+    width: 100%;
+    display: flex;
+    justify-content: center;
     .table {
-        width: 1612px;
+        width: 100%;
+        max-width: 1612px;
         margin-bottom: 40px;
 
         .jobMenuPopover {
