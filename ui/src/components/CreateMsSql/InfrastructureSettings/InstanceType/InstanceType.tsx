@@ -63,7 +63,10 @@ const InstanceType = () => {
             dispatch(setInstanceType(isRecommendedInstance));
             dispatch(setIsRecommendedInstance(null));
         } else if (!isLoadConfig && !isRecommendedInstance && !movingFromChatbot) {
-            dispatch(setInstanceType(generateInstances[0]));
+            const newInstanceList = generateInstances?.filter(perRow => perRow?.label === selectedInstanceType?.label);
+            if (!selectedInstanceType || !newInstanceList?.length) {
+                dispatch(setInstanceType(generateInstances?.[0]));
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateInstances]);
