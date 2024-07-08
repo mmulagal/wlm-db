@@ -673,7 +673,7 @@ const ManagedHostSubTable = ({
         }
     ];
 
-    if (windowSize.width > 1500) {
+    if (windowSize.width > 1841) {
         managedHostSubTableColDefs.push(lastColDetails());
     } else {
         managedHostSubTableColDefs.unshift(lastColDetails());
