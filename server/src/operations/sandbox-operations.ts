@@ -625,7 +625,7 @@ async function validateSelectedDrives(
         driveLetter: string;
         availableSize: number;
         isNetappDrive: boolean;
-        isDriveClustered?: boolean;
+        isClusteredWithSelectedInstance?: boolean;
     }>,
     selectedDrive: string,
     metadata: Metadata
@@ -653,7 +653,7 @@ async function validateSelectedDrives(
     if (!matchedExistingDrive.isNetappDrive) {
         throw createError(412, `Selected drive ${selectedDrive} is not a NetApp drive`);
     }
-    if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
+    if (isClustered === 'true' && !matchedExistingDrive.isClusteredWithSelectedInstance) {
         throw createError(
             412,
             `Selected  drive ${selectedDrive} is non clustered drive or drive not part of SQL server`

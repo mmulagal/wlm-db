@@ -91,7 +91,8 @@ async function getDriveInfoFromNodes(
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string,
     executionTimeout?: string,
-    forSandbox: boolean = false
+    forSandbox: boolean = false,
+    instanceName = DEFAULT_INSTANCE_NAME
 ) {
     logger.info('Getting existing drives info on node', {
         credentialsId,
@@ -153,7 +154,7 @@ async function getDriveInfoFromNodes(
                         availableSize: item.FileSystem,
                         isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
                         ...(sqlDeploymentType === 'FCI' && {
-                            isDriveClustered: item.Owner?.includes('SQL Server') ?? false
+                            isClusteredWithSelectedInstance: item.Owner === `SQL Server (${instanceName})` ?? false
                         })
                     };
                 }
@@ -167,7 +168,7 @@ async function getDriveInfoFromNodes(
                       driveLetter: item?.charAt(0),
                       availableSize: 0,
                       isNetappDrive: false,
-                      ...(sqlDeploymentType === 'FCI' && { isDriveClustered: false })
+                      ...(sqlDeploymentType === 'FCI' && { isClusteredWithSelectedInstance: false })
                   }))
             : [])
     ];
@@ -255,7 +256,8 @@ async function getDriveInfoFromSSM(
                 activeNodeInstanceId as string,
                 standbyNodeInstanceId!,
                 executionTimeout,
-                forSandbox
+                forSandbox,
+                instanceDetail?.database_instance_name
             ),
             forSandbox
                 ? Promise.resolve()
@@ -1424,7 +1426,7 @@ async function checkDriveExists(
         driveLetter: string;
         availableSize: number;
         isNetappDrive: boolean;
-        isDriveClustered?: boolean;
+        isClusteredWithSelectedInstance?: boolean;
     }>,
     availableDriveLetters: Array<string>,
     selectedDrive: string,
@@ -1493,7 +1495,7 @@ async function checkDriveExists(
         if (!matchedExistingDrive.isNetappDrive) {
             throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a NetApp drive`);
         }
-        if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
+        if (isClustered === 'true' && !matchedExistingDrive.isClusteredWithSelectedInstance) {
             throw createError(
                 412,
                 `Selected ${driveType} drive ${selectedDrive} is non clustered drive or drive not part of SQL server`

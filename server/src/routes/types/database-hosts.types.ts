@@ -348,7 +348,7 @@ const DriveInfoResponseBody = Type.Object({
             driveLetter: Type.String(),
             availableSize: Type.Number(),
             isNetappDrive: Type.Boolean(),
-            isDriveClustered: Type.Optional(Type.Boolean())
+            isClusteredWithSelectedInstance: Type.Optional(Type.Boolean())
         })
     ),
     defaultDataDrive: Type.Optional(Type.String()),
