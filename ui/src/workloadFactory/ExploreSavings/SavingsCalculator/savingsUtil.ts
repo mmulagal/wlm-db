@@ -919,7 +919,7 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
         // database version
         if (msSqlInstance?.serverVersion) {
             const dbVersionOption = DB_VERSIONS?.filter(perRow => msSqlInstance?.serverVersion.includes(perRow?.value));
-            if (dbVersionOption) {
+            if (dbVersionOption?.length) {
                 const option = generateOptionType(dbVersionOption[0].value, dbVersionOption[0].label, '', false, '');
                 result = { ...result, dbVersion: option };
             }
@@ -956,7 +956,7 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
                 type = SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE;
             }
             const dbDeploymentModel = DB_DEPLOYMENT_MODEL?.filter(perRow => type === perRow?.value);
-            if (dbDeploymentModel) {
+            if (dbDeploymentModel?.length) {
                 result = { ...result, dbDeploymentModel: dbDeploymentModel[0] };
             }
         }
@@ -977,7 +977,7 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
         // Throughput
         if (fsxData?.throughputCapacity) {
             const throughput = THROUGHPUT_LIST?.filter(perRow => perRow?.value === fsxData?.throughputCapacity);
-            if (throughput) {
+            if (throughput?.length) {
                 const option = generateOptionType(throughput[0]?.label, throughput[0]?.label, '', false, '');
                 result = { ...result, throughput: option };
             }
