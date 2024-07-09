@@ -206,6 +206,7 @@
                     "ec2:DescribeVpcEndpoints",
                     "ec2:DescribeInstanceTypeOfferings",
                     "ec2:DescribeSnapshots",
+                    "ec2:DescribeVolumes",
                     "kms:ListAliases",
                     "kms:ListKeys",
                     "kms:DescribeKey",
