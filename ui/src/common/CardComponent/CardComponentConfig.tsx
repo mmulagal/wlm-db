@@ -30,7 +30,7 @@ const CardComponentConfig = ({
                 onClick={handleClick}
             >
                 <div className={styles.level}>
-                    <div style={{ color: 'red' }}>{icon}</div>
+                    <div>{icon}</div>
 
                     <div className={styles['easy-create-content']}>
                         <div className={styles['easy-create-heading']}>{heading}</div>
