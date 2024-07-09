@@ -11,7 +11,7 @@ import {
     DatabasesCreateResponse,
     CreateDatabaseParams,
     DriveInfoResponseBody,
-    CloneDatabaseHostBody,
+    CreateSandboxBody,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,
     SandboxInfoResponseBody,
@@ -113,12 +113,12 @@ const GetDriveInfoSchemaV2 = {
     }
 };
 
-const CloneDatabaseHostSchema = {
+const CreateSandboxSchema = {
     ...resourceRequest,
     tags: [RouteTags.SANDBOX],
-    summary: 'Clone database',
-    description: 'Clone database in same or alternate host',
-    body: CloneDatabaseHostBody,
+    summary: 'Create sandbox',
+    description: 'Create sandbox in same or alternate host',
+    body: CreateSandboxBody,
     response: {
         200: {
             jobId: Type.String()
@@ -332,7 +332,7 @@ export {
     DatabasesListSchema,
     GetDriveInfoSchema,
     DatabasesCreateSchema,
-    CloneDatabaseHostSchema,
+    CreateSandboxSchema,
     GetCollationDetailsSchema,
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,
