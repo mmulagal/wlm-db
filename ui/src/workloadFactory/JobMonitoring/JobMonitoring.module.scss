@@ -1,6 +1,6 @@
 .jobMonitoring {
     height: calc(100vh - 128px);
-    width: 100vw;
+    width: 100%;
     background-color: var(--main-background);
     overflow-y: auto;
     display: flex;
@@ -19,7 +19,8 @@
 
     .headingContainer {
         display: flex;
-        width: 1612px;
+        width: 83.95%;
+        max-width: 1612px;
         justify-content: space-between;
         margin-top: 24px;
 
@@ -37,11 +38,13 @@
     .chartContainer {
         display: flex;
         gap: 27px;
-        // width: 1612px;
+        width: 84%;
+        max-width: 1612px;
     }
 
     .overtimeJobs {
-        width: 790px;
+        width: 49.8%;
+        max-width: 790px;
         height: 312px;
         background-color: var(--content-background);
         box-shadow: 2px 2px 6px var(--grey-15);
@@ -69,8 +72,9 @@
 
     .tableSection {
         margin-top: 40px;
-
+        width: 84%;
         display: flex;
+        justify-content: center;
         // width: 1063px;
     }
 }
@@ -79,6 +83,9 @@
     .jobMonitoring {
         .headingContainer {
             width: 1124px;
+        }
+        .chartContainer {
+            width: 1127px;
         }
         .overtimeJobs {
             width: 550px;

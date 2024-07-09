@@ -59,6 +59,7 @@ const ExploreSavingsTableV2 = () => {
             id: '8',
             Header: '',
             accessor: '',
+            isSticky: true,
             width: '181px',
             renderCell: (cellData: any, rowData: any) => {
                 return (

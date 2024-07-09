@@ -68,7 +68,7 @@ const StorageCapacityTable = () => {
             accessor: 'type',
             id: '1',
             isSortable: false,
-            width: '280px',
+            width: '34%',
             renderCell: (cellData: any, rowData: any) => {
                 if (rowData?.size <= 1024 && cellData === GENERAL.TOTAL_VOLUME && isFsxnNew(fsxNType)) {
                     return (
@@ -88,7 +88,7 @@ const StorageCapacityTable = () => {
             Header: 'Size',
             accessor: 'size',
             id: '2',
-            width: '200px',
+            width: '24.5%',
             renderCell: (cellData: any) => {
                 if (selectedUnit?.label === 'TiB') {
                     return cellData
@@ -103,7 +103,7 @@ const StorageCapacityTable = () => {
             Header: 'Calculation',
             accessor: 'calculation',
             id: '3',
-            width: '400px'
+            width: '49%'
         }
     ];
 
@@ -113,7 +113,7 @@ const StorageCapacityTable = () => {
         rows: sizeData,
         pageSize: 10,
         selectionType: 'none',
-        isHorizontalScroll: true,
+        isHorizontalScroll: false,
         isLazyLoading: getEstimatedCostLoading
     });
 

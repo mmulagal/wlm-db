@@ -58,21 +58,22 @@
             align-items: center;
 
             .firstBlock {
-                width: 155px;
+                max-width: 155px;
             }
 
             .secondBlock {
-                width: 200px;
+                max-width: 200px;
             }
 
             .thirdBlock {
-                width: 182px;
+                max-width: 182px;
             }
 
             .separator {
                 width: 1px;
                 height: 56px;
                 background-color: var(--border);
+                margin-left: 16px;
             }
             [class*='SquareComponent_valueText'] {
                 font-size: 32px !important;
