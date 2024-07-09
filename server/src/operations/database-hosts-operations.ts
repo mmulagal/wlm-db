@@ -159,6 +159,8 @@ interface BackupType {
     [key: string]: boolean;
 }
 
+const isDemoFlow = isDemo();
+
 async function getTopology(
     accountId: string,
     region: string,
@@ -559,11 +561,11 @@ async function getProtectionStatus(
         return {
             isSqlNativeEnabled: Boolean(nativeSqlProtection),
             isAwsBackupEnabled: {
-                fsxn: checkAllTrue(awsBackup),
+                fsxn: isDemoFlow ? true : checkAllTrue(awsBackup),
                 fsxw: Boolean(fsxwBackup),
                 ebs: Boolean(ebsBackup)
             },
-            isFsxOntapSnapshotsEnabled: checkAllTrue(ontapBackup),
+            isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup),
             protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
         };
     } catch (error) {
@@ -2218,9 +2220,9 @@ async function getDatabaseDetails(
                 ...(getProtection && {
                     protection: {
                         isAwsBackupEnabled: {
-                            fsxn: checkKey(awsBackup, database.databaseName)
+                            fsxn: isDemoFlow ? true : checkKey(awsBackup, database.databaseName)
                         },
-                        isFsxOntapSnapshotsEnabled: checkKey(ontapBackup, database.databaseName),
+                        isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkKey(ontapBackup, database.databaseName),
                         isSqlNativeEnabled: Boolean(
                             backedupDatabases &&
                                 backedupDatabases?.find(

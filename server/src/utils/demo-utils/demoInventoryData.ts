@@ -163,7 +163,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             // no windows auth
             {
                 ec2InstanceId: 'i-p9o5n2m4l8k6j7h',
-                ec2InstanceType: 'm5.large',
+                ec2InstanceType: 'm5.2xlarge',
                 ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-6',
@@ -586,7 +586,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             },
             {
                 ec2InstanceId: 'i-4s6d8f2g1h0j3k5',
-                ec2InstanceType: 'm5.large',
+                ec2InstanceType: 'm5.2xlarge',
                 ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-14',
@@ -666,8 +666,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         ],
                         deploymentTypes: [
                             {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-3']
                             }
                         ]
                     }
@@ -720,7 +720,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ec2InstanceType: 'm5.large',
                 ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
-                ec2InstanceName: 'app-server-16',
+                ec2InstanceName: 'app-server-17',
                 vpc: {
                     id: 'vpc-84b3afe6',
                     name: 'wlmdb-vpc',

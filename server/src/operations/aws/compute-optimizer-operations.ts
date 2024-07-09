@@ -65,6 +65,7 @@ async function identifyCheaperRecommendationOption(
         accountId,
         region,
         credentialsId,
+        currentInstanceType,
         instanceRecommendationOptions
     });
 

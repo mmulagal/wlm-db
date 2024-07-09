@@ -347,7 +347,7 @@ async function aoagStorageSavingsMetrics(
     nodeDetails: DiscoverResponseInfoType,
     currentNodeComputeLicenseDetails: ComputeLicenseCostType
 ) {
-    logger.info('Performing AOAG storage savings calculations', {
+    logger.info('Performing AOAG storage savings metrics calculation ', {
         accountId,
         credentialsId,
         region,
