@@ -158,8 +158,9 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
         const reservations = [];
         const { items } = inventoryDemoData('fsx', 'ebsTest'); // private-ip-address filter is only added to get partner node details of instances using ebs; revisit when the filter is used for other purposes
         let instancesWithEbs = items.filter(instance =>
-            instance.sqlServerInstances?.find(({ nodeIps, storage }) =>
-                storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS') && nodeIps?.length >= 1
+            instance.sqlServerInstances?.find(
+                ({ nodeIps, storage }) =>
+                    storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS') && nodeIps?.length >= 1
             )
         );
 

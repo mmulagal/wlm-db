@@ -214,6 +214,18 @@ async function aoagStorageSavingsCalculations(
             0
         );
         const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice);
+        const [
+            {
+                compute: {
+                    existing: { finding: existingComputeFinding }
+                }
+            },
+            {
+                license: {
+                    existing: { finding: existingLicenseFinding }
+                }
+            }
+        ] = allNodesComputeLicenseDetails;
 
         // recommended compute and license details
         const recommendedInstanceType = `${allNodesComputeLicenseDetails
@@ -280,12 +292,12 @@ async function aoagStorageSavingsCalculations(
         ] = allNodesComputeLicenseDetails;
 
         const fsxCalculation = handleMarketingApiFsxCalculationObject(fsxCalculationData);
-
         return {
             compute: {
                 existing: {
                     instanceType: existingInstanceType,
-                    computeMonthlyPrice: existingComputeMonthlyPrice
+                    computeMonthlyPrice: existingComputeMonthlyPrice,
+                    finding: existingComputeFinding
                 },
                 recommended: {
                     instanceType: recommendedInstanceType,
@@ -295,6 +307,7 @@ async function aoagStorageSavingsCalculations(
             },
             license: {
                 existing: {
+                    finding: existingLicenseFinding,
                     sqlServerEdition: existingSqlServerLicenseEdition,
                     licenseMonthlyPrice: existingLicenseMonthlyPrice
                 },
