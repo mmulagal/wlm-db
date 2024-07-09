@@ -1049,7 +1049,7 @@ const detachDbAndRemoveAccessPath = (
         $windowsVolumeIds = $filePaths | ForEach-Object {
             Get-VolumeIdFromPath -absolutePath $_
         }
-        write-Information "Windows Volume Ids: $windowsVolumeIds"
+        write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
 
         try {
             $detach = "EXEC sp_detach_db '$dbname', 'true'"
@@ -1059,8 +1059,7 @@ const detachDbAndRemoveAccessPath = (
 
             if ($sqlresponse -ne $null) {
                 Write-Information "$logPrefix Failed to detach the database $sqlresponse"
-                $responseObject['error'] = $sqlresponse
-                return $responseObject | ConvertTo-Json -Depth 5
+                throw "SQLServerError: Could not detach the database $dbname"
             }
         } catch {
             Write-Information "$logPrefix $($_.Exception.Message)"
@@ -1123,6 +1122,7 @@ const detachDbAndRemoveAccessPath = (
     } catch {
         Write-Information "$logPrefix $($_.Exception.Message)"
         $responseObject['error'] = $_.Exception.Message
+        return $responseObject | ConvertTo-Json -Depth 5
     }
 
     return $responseObject | ConvertTo-Json -Depth 5
@@ -1159,6 +1159,7 @@ const addAccessPathAndAttachDb = (
         $dataMountPoint = Get-VirtualMountPoint -path $datafile.path
         $logMountPoint = Get-VirtualMountPoint -path $logfile.path
         Write-Information "$logPrefix Mount Points: $dataMountPoint $logMountPoint"
+        Write-Information "$logPrefix Serial Number: $($datafile.serial) $($logfile.serial)"
 
         if ($dbname.Length -gt 25) {
             $dbname = $dbname.Substring(0, 25)
@@ -1167,6 +1168,7 @@ const addAccessPathAndAttachDb = (
         $loglabel = $dbname + '-Log'
 
         $disklist = Get-disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -ceq $datafile.serial -or $_.SerialNumber -ceq $logfile.serial }
+        write-Information "$logPrefix Disk List: $disklist"
 
         $disklist | ForEach-Object {
             $disk = $_
@@ -1301,7 +1303,9 @@ const addAccessPathAndAttachDb = (
             Get-ChildItem -Path $dataMountPoint -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
             Get-ChildItem -Path $logMountPoint -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
         } catch {
-            Write-Information "$LogPrefix Failed to remove stale junction paths"
+            $errorMsg = "Failed to remove stale junction paths"
+            Write-Information "$LogPrefix $errorMsg"
+            throw $errorMsg
         }
 
         try {
@@ -1320,34 +1324,32 @@ const addAccessPathAndAttachDb = (
                 throw 
             }
         } catch {
-            $responseObject['error'] = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
-        }
-
-        $selectquery = "SET NOCOUNT ON; SELECT name FROM sys.databases where name = '$dbname' FOR JSON PATH;"
-        $sqlresponse =  sqlcmd -S $executableinstance -Q $selectquery -y 0;
-
-        if ($sqlresponse -ne $null) {
-            Write-Information "$logPrefix Database $dbname already exists"
-            $responseObject['info'] = 'Database $dbname already exists'
-            return $responseObject | ConvertTo-Json -Depth 5
+            $errorMsg = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
+            Write-Information "$LogPrefix $errorMsg"
+            throw $errorMsg
         }
 
         $attachQuery = @"
-            CREATE DATABASE $dbname
-            ON (FILENAME = '$($datafile.path)'),(FILENAME = '$($logfile.path)')
-            FOR ATTACH;
+            IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '$dbname')
+            BEGIN
+                CREATE DATABASE $dbname
+                ON (FILENAME = '$($datafile.path)'),(FILENAME = '$($logfile.path)')
+                FOR ATTACH
+            END;
 "@
         $attachresponse =  sqlcmd -S $executableinstance -Q $attachQuery -y 0;
         if ($attachresponse -ne $null) {
-            Write-Information "$logPrefix Failed to attach the database $attachresponse"
-            $responseObject['error'] = $attachresponse
-            return $responseObject | ConvertTo-Json -Depth 5
+            $errorMessage = "SQLServerError: Could not create and attach the database $dbname. $attachresponse"
+            Write-Information "$logPrefix $errorMessag"
+            throw $errorMessage
         }
     } catch {
         Write-Information "$logPrefix $($_.Exception.Message)"
         $responseObject['error'] = $_.Exception.Message
         return $responseObject | ConvertTo-Json -Depth 5
     }
+
+    return $responseObject | ConvertTo-Json -Depth 5
 `;
 
 const splitFlexCloneVolumes = (
