@@ -414,7 +414,7 @@ async function getHostAndSqlInfoFromPsOutput(
             );
         }
     }
-    if (ssmResponse?.Status === CommandInvocationStatus.TIMED_OUT) {
+    if (ssmResponse.Status === CommandInvocationStatus.TIMED_OUT) {
         logger.error(`SSM command ${commandId} execution timed out on node ${ssmTarget.ec2InstanceId}`);
     }
 
