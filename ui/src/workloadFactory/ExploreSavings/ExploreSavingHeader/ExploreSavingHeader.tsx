@@ -3,8 +3,12 @@ import { ReactComponent as ExploreSaving } from '../../../assets/explore-saving.
 import styles from './ExploreSavingHeader.module.scss';
 import ExploreSavingsTable from '../ExploreSavingsTable/ExploreSavingsTable';
 import { GENERAL } from '../../../utils/appConstants';
+import { useAppSelector } from '../../../store/storeHooks';
+import ExploreSavingsTableV2 from '../ExploreSavingsTableV2/ExploreSavingsTableV2';
 
 const ExploreSavingHeader = () => {
+    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
+
     return (
         <div className={styles.exploreSavingsHeader}>
             <div className={styles.topPart}>
@@ -23,8 +27,8 @@ const ExploreSavingHeader = () => {
                     </DsTypography>
                 </div>
             </div>
-
-            <ExploreSavingsTable />
+            {!isInventoryV2 && <ExploreSavingsTable />}
+            {isInventoryV2 && <ExploreSavingsTableV2 />}
         </div>
     );
 };

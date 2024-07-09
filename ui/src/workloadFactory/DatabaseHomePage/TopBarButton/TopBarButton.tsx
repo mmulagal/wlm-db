@@ -10,6 +10,7 @@ import { useAppDispatch } from '../../../store/storeHooks';
 import { databaseHomeApi } from '../../../utils/apiService';
 import { addInitialData, initialDBHomepageState } from '../../../store/workloadFactory/databaseHomeSlice';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice';
 
 const TopBarButton = () => {
     const dispatch = useAppDispatch();
@@ -30,6 +31,7 @@ const TopBarButton = () => {
                 <Button
                     variant="primary"
                     onClick={() => {
+                        dispatch(setDatabaseHostEntryPoint('database'));
                         navigate(WLF_TO_FORM_NAVIGATE);
                     }}
                     id={'deploy-button'}

@@ -19,3 +19,15 @@
         border: 1px solid var(--field-border-disabled);
     }
 }
+
+@media screen and (max-width: 1500px) {
+    .inventoryChart {
+        width: 160px;
+        height: 160px;
+
+        .emptyCircle {
+            width: 160px;
+            height: 160px;
+        }
+    }
+}

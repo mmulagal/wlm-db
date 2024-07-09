@@ -131,13 +131,15 @@ async function formatTemplateParameters(
               fsxConfiguration.databaseSize,
               true,
               sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput
+              fsxConfiguration.fsxVolThroughput,
+              fsxConfiguration.fsxIOPS
           )
         : generateDeploymentParams(
               fsxConfiguration.databaseSize,
               false,
               sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput
+              fsxConfiguration.fsxVolThroughput,
+              fsxConfiguration.fsxIOPS
           );
 
     const { roleName = '', providerAccountId = '' } = credentialsId
@@ -687,13 +689,15 @@ async function createCloudFormationTemplateForUserDeployment(
               fsxConfiguration.databaseSize,
               true,
               sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput
+              fsxConfiguration.fsxVolThroughput,
+              fsxConfiguration.fsxIOPS
           )
         : generateDeploymentParams(
               fsxConfiguration.databaseSize,
               false,
               sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput
+              fsxConfiguration.fsxVolThroughput,
+              fsxConfiguration.fsxIOPS
           );
 
     const { roleName, providerAccountId } = await getRoleDetails(credentialsId);

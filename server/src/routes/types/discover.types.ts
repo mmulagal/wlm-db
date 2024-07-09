@@ -44,6 +44,7 @@ const SqlServerInstanceInfo = Type.Object({
             description: 'Name of SQL Server. For a clustered instance, this is the name of the virtual server.'
         })
     ),
+    serverGuid: Type.Optional(Type.String({ description: 'SQL Server service broker ID' })),
     isDefaultInstance: Type.Boolean({ description: 'Is this default SQL Server instance' }),
     failureInfo: Type.Optional(Type.String({ description: 'Instance specific failure details, if any.' })),
     sqlServerNodes: Type.Optional(
@@ -69,9 +70,12 @@ const SqlServerInstanceInfo = Type.Object({
     windowsAuthentication: Type.Boolean({
         description: 'Is Windows authentication possible for SQL Server?'
     }),
+    windowsOsVersion: Type.String({
+        description: 'Windows operating system version installed on the database host instance.'
+    }),
     sqlServerAuthentication: Type.Optional(
         Type.Boolean({
-            description: 'Is SQL Server authentication possible for SQL Server instnace?',
+            description: 'Is SQL Server authentication possible for SQL Server instance?',
             default: false
         })
     ),
@@ -125,13 +129,33 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
-const MultiInstanceManagementResponseBody = Type.Object({
+const MultiInstanceUnmanageResponseBody = Type.Object({
     resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
     items: Type.Array(
         Type.Object({
             databaseInstanceId: Type.String({ description: 'SQL Server database instance ID.' }),
             status: Type.String({ description: 'Status of database instance unmanage operation.' }),
             errorMessage: Type.Optional(Type.String({ description: 'Error details, if any, of a failed unmanage.' }))
+        })
+    )
+});
+
+const MultiInstanceManageMsSqlRequestBody = Type.Object({
+    ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
+    databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' })),
+    databaseHostId: Type.Optional(Type.String({ description: 'Database host ID' }))
+});
+
+const MultiInstanceManageResponseBody = Type.Object({
+    resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
+    items: Type.Array(
+        Type.Object({
+            databaseInstanceName: Type.String({ description: 'SQL Server database instance name.' }),
+            databaseInstanceGuid: Type.Optional(Type.String({ description: 'SQL Server database instance GUID.' })),
+            status: Type.String({ description: 'Status of database instance unmanage operation.' }),
+            errorMessage: Type.Optional(
+                Type.String({ description: 'Error details, if any, of a failed database instance management.' })
+            )
         })
     )
 });
@@ -191,7 +215,8 @@ const DatabaseInstanceQueryString = Type.Object({
 const MsSqlInstancesRequestQuery = Type.Object({
     instances: Type.String({
         description: 'Comma separated Ec2 instance ID associated with the MS SQL Server instance.'
-    })
+    }),
+    fields: Type.Optional(Type.String())
 });
 
 export {
@@ -208,6 +233,8 @@ export {
     DiscoverCredentialsResponse,
     PrepareResourceResponseBody,
     UnmanageInstanceParams,
-    MultiInstanceManagementResponseBody,
-    DatabaseInstanceQueryString
+    MultiInstanceUnmanageResponseBody,
+    MultiInstanceManageResponseBody,
+    DatabaseInstanceQueryString,
+    MultiInstanceManageMsSqlRequestBody
 };

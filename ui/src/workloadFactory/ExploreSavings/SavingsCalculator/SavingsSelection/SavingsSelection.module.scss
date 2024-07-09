@@ -63,3 +63,17 @@
         }
     }
 }
+
+@media screen and (max-width: 1500px) {
+    .savingsSelection {
+        .notice {
+            .setSVG {
+                position: relative;
+                top: 10px;
+            }
+            .contentWidth {
+                width: 248px;
+            }
+        }
+    }
+}

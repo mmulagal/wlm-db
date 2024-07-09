@@ -25,9 +25,9 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                     <Typography
                         variant="Regular_14"
                         className={commonStyles.valueCSS}
-                        title={resourceDetails?.topology?.ec2Details[0].instanceType || ''}
+                        title={resourceDetails?.topology?.ec2Details?.[0].instanceType || ''}
                     >
-                        {resourceDetails?.topology?.ec2Details[0].instanceType}
+                        {resourceDetails?.topology?.ec2Details?.[0].instanceType}
                     </Typography>
                 </div>
 

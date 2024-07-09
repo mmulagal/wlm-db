@@ -1,10 +1,17 @@
-import { SqlServerDeploymentModel, HOURS_IN_MONTH } from '../../utils/consts';
+import { SqlServerDeploymentModel, HOURS_IN_MONTH, STORAGE_SERVICE_DEFAULT_REGION } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import getStorageSavings from '../../lib/cloud-manager/marketing';
+import {
+    CalculateEbsComparisonResponse,
+    ManualModeMarketingRequestBody,
+    getManualModeStorageSavings,
+    getStorageSavings
+} from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes } from '../../utils/utils';
 
 const logger = getLogger();
+
+/* eslint-disable camelcase */
 
 function getMonthlyCloneCountFromFrequency(cloneRefreshFrequency: string) {
     const cloneRefreshFrequencyLowerCase = cloneRefreshFrequency.toLowerCase();
@@ -38,6 +45,49 @@ function getMarketingApiRequestBody(
     };
 }
 
+function getMarketingApiManualModeRequestBody(
+    region: string,
+    params: StorageSavingsRequestBodyType,
+    sqlServerDeploymentType: string,
+    items: { volumeType: string; volumeNumber: number; storageAmount: number; volumeIops: number; throughput: number }[]
+) {
+    const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
+
+    return {
+        useCase: 'Low-latency',
+        region,
+        deploymentType: sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ? 'Multi' : 'Single',
+        snapshots: {
+            snapshotFreq: snapshotFrequency,
+            snapshotMonthlyChangeRatePcg: monthlyChangeRatePercentage
+        },
+        clones: {
+            cloneFreq: cloneRefreshFrequency.toLocaleLowerCase(),
+            cloneMonthlyChangeRatePcg: monthlyChangeRatePercentage,
+            cloneEnvs: clonedCopiesCount > 0 ? clonedCopiesCount : 0
+        },
+        instances: [
+            {
+                instanceName: undefined,
+                isPrimary: true,
+                volumes: items.map(volume => {
+                    const { volumeType, volumeNumber, storageAmount, volumeIops, throughput } = volume;
+                    return {
+                        volumeType,
+                        volumeNumber,
+                        storageAmount: {
+                            size: storageAmount,
+                            unit: 'GiB'
+                        },
+                        volumeIops,
+                        throughput
+                    };
+                })
+            }
+        ]
+    };
+}
+
 function handleMarketingApiFsxCalculationObject(fsxCalculationData: any) {
     logger.debug('Handling marketing FSx calculation object', fsxCalculationData);
     const fsxCalculationObject = camelizeKeys(fsxCalculationData);
@@ -68,6 +118,44 @@ async function invokeMarketingApi(
     ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType
 ) {
+    // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        // Setting to default region as us-east-1 to make the call to storage service, where we have the instance and volume details for demo
+        region = STORAGE_SERVICE_DEFAULT_REGION;
+        let volumes = [
+            { volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 2, volumeIops: 40000, throughput: 128 }
+        ];
+        if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+            volumes = [
+                { volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 10, volumeIops: 40000, throughput: 128 }
+            ];
+        }
+        const requestBody = getMarketingApiManualModeRequestBody(
+            region,
+            params,
+            sqlServerDeploymentType,
+            volumes
+        ) as ManualModeMarketingRequestBody;
+        const {
+            ebsTotal,
+            instanceEbs,
+            fsx,
+            fsx_calculation,
+            fsx_cost_calculation_no_snapshot,
+            fsx_clone_cost_calculation,
+            fsx_snapshot_cost_calculation
+        } = await getManualModeStorageSavings(accountId, requestBody);
+
+        return {
+            ebs: ebsTotal,
+            ebs_cost_calculation: instanceEbs[0].io2?.ebs_cost_calculation,
+            fsx,
+            fsx_calculation,
+            fsx_clone_cost_calculation,
+            fsx_cost_calculation_no_snapshot,
+            fsx_snapshot_cost_calculation
+        };
+    }
     const response = await getStorageSavings(
         accountId,
         credentialsId,
@@ -215,7 +303,14 @@ async function formatStorageSavingsCalculationMetrics(
             SSDMonthlyCost,
             totalCloneMonthlyCost
         }
-    } = await invokeMarketingApi(accountId, credentialsId, region, sqlServerDeploymentType, ebsVolumeIds, params);
+    } = (await invokeMarketingApi(
+        accountId,
+        credentialsId,
+        region,
+        sqlServerDeploymentType,
+        ebsVolumeIds,
+        params
+    )) as CalculateEbsComparisonResponse;
     return {
         fsxOntapCalculation: {
             numberOfVolumes,
@@ -365,5 +460,6 @@ export {
     invokeMarketingApi,
     handleMarketingApiFsxCalculationObject,
     formatStorageSavingsCalculationMetrics,
-    getMarketingApiRequestBody
+    getMarketingApiRequestBody,
+    getMarketingApiManualModeRequestBody
 };

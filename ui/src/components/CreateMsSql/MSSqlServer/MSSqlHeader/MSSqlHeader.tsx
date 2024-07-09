@@ -22,15 +22,19 @@ import SaveConfig from '../../SaveConfig/SaveConfig';
 import styles from './MSSqlHeader.module.scss';
 import { setIsLoadConfig } from '../../../../store/mssql/msSqlActionSlice';
 import { navigateToCanvas } from '../../../../utils/appConfig';
+import { useNavigate } from 'react-router-dom';
 const _ = require('lodash');
 
 const MSSqlHeader = () => {
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
 
+    const navigate = useNavigate();
+
     const [isConfig, setIsConfig] = useState(false);
 
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
+    const { databaseHostEntryPoint } = useAppSelector(state => state.msSqlAction);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const [saveConfigData] = useSaveConfigDataMutation();
@@ -94,7 +98,13 @@ const MSSqlHeader = () => {
                 closeCallback={() => {
                     dispatch(setSaveConfigName(''));
                     if (dialogFrom === FROM_DIALOG.HEADER_CROSS) {
-                        navigateToCanvas('/');
+                        if (databaseHostEntryPoint === 'inventory') {
+                            navigate('databases/inventory');
+                        } else if (databaseHostEntryPoint === 'database') {
+                            navigate('/databases');
+                        } else {
+                            navigateToCanvas('/');
+                        }
                     }
                 }}
                 dialogFrom={dialogFrom}
@@ -102,13 +112,24 @@ const MSSqlHeader = () => {
         );
     };
 
+    //Function to call when hit cross without dialog
+    const handleNavigateWithoutDialog = () => {
+        if (databaseHostEntryPoint === 'inventory') {
+            navigate('databases/inventory');
+        } else if (databaseHostEntryPoint === 'database') {
+            navigate('/databases');
+        } else {
+            navigateToCanvas('/');
+        }
+    };
+
     return (
         <Header
             closeButtonProps={{
                 onClick: () => {
-                    configData.length < MAX_SAVED_CONFIG
+                    configData && configData.length < MAX_SAVED_CONFIG
                         ? handleSaveConfig(FROM_DIALOG.HEADER_CROSS)
-                        : navigateToCanvas('/');
+                        : handleNavigateWithoutDialog();
                 }
             }}
             title={SELECT_CONFIG.WIZARD_HEADING}

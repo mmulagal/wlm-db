@@ -1,10 +1,8 @@
-import React, { useMemo } from 'react';
-import { Chart, ChartOptions } from 'chart.js';
+import { Chart } from 'chart.js';
 import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import styles from './NewInventoryChart.module.scss';
 import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
-import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 
 Chart.register(...registerables);
@@ -67,7 +65,11 @@ const NewInventoryChart = ({ color1, color2, data1, data2, centerText }: ChartTy
                     {totalHosts}
                 </Typography>
                 <Typography variant="Regular_14">{centerText}</Typography>
-                {discoverHostLoading && <DsFlashingDotsLoader />}
+                {discoverHostLoading && (
+                    <div style={{ marginTop: '6px' }}>
+                        <DsFlashingDotsLoader />
+                    </div>
+                )}
             </div>
             {!totalHosts && <div className={styles.emptyCircle}></div>}
             {totalHosts ? <canvas ref={ref} id="chart-area" width={196} height={196}></canvas> : null}

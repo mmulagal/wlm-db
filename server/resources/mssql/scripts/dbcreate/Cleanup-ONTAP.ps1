@@ -21,7 +21,13 @@ param(
     [string]$DBName,
 
     [Parameter(Mandatory = $true)]
-    [string]$IsClustered       
+    [string]$IsClustered ,   
+    
+    [Parameter(Mandatory = $true)]
+    [string]$InstanceName,
+
+    [Parameter(Mandatory = $true)]
+    [string]$IsDefaultInstance
 
 )
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append)
@@ -61,17 +67,24 @@ else {
 
 if ($IsClustered -ne "false") {
     #Check if disks are in dependency list before cleaning up
-    $dependencylist = (Get-ClusterResourceDependency -Resource "SQL Server").DependencyExpression
+    if ($IsDefaultInstance -eq "true"){
+        $ClusterResourceName = "SQL Server"
+    }
+    else {
+        $ClusterResourceName = "SQL Server ($InstanceName)"
+    }
+
+    $dependencylist = (Get-ClusterResourceDependency -Resource $ClusterResourceName).DependencyExpression
     $logpattern = '\(\[' + $loglabel + '\]\)'
     $datapattern = '\(\[' + $datalabel + '\]\)'
     $logfound = $dependencylist -match $logpattern
     $datafound = $dependencylist -match $datapattern
     if ($datafound) {
-        $silencedependency = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $datalabel)
+        $silencedependency = (Remove-ClusterResourceDependency -Resource $ClusterResourceName -Provider $datalabel)
         Remove-ClusterResource -Name $datalabel -Force
     } 
     if ($logfound) {
-        $silencedependency = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $loglabel)
+        $silencedependency = (Remove-ClusterResourceDependency -Resource $ClusterResourceName -Provider $loglabel)
         Remove-ClusterResource -Name $loglabel -Force
     }     
 }

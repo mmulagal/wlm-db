@@ -2,29 +2,32 @@ import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     setAggregatedSandboxList,
+    setAllSandboxList,
     setSandboxListState,
-    setSandboxSavingsState,
-    updateConnectionInfo
+    setSandboxSavingsState
 } from '../../store/workloadFactory/sandboxSlice';
-import { useGetConnectionInfoQuery, useGetSandboxListQuery, useGetSandboxSavingsQuery } from '../../utils/apiService';
+import { useGetSandboxListQuery, useGetSandboxSavingsQuery } from '../../utils/apiService';
 
 const SandboxApis = () => {
     const dispatch = useAppDispatch();
 
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
-    const { getSandboxList, aggregatedSandboxList, connectionInfo } = useAppSelector(state => state.sandbox);
-
-    const { selectedDatabaseHostId, selectedSandboxName } = connectionInfo;
+    const { getSandboxList, aggregatedSandboxList, allSandboxList } = useAppSelector(state => state.sandbox);
+    const { isRefreshed } = useAppSelector(state => state.inventory);
+    const { refreshBlocked } = useAppSelector(state => state?.auth);
 
     const [credId, setCredId] = useState(null);
     const [regionId, setRegionId] = useState(null);
     const [sandboxCursor, setSandboxCursor] = useState(null);
 
     useEffect(() => {
-        setCredId(headerSelectedCred?.data?.credentialsId);
-        setRegionId(headerSelectedRegion?.label2);
-        dispatch(setAggregatedSandboxList([]));
-    }, [headerSelectedCred, headerSelectedRegion]);
+        if (!refreshBlocked) {
+            setCredId(headerSelectedCred?.data?.credentialsId);
+            setRegionId(headerSelectedRegion?.label2);
+            dispatch(setAggregatedSandboxList([]));
+            dispatch(setAllSandboxList([]));
+        }
+    }, [headerSelectedCred, headerSelectedRegion, isRefreshed, refreshBlocked]);
 
     const {
         data: sandboxList,
@@ -36,7 +39,7 @@ const SandboxApis = () => {
             region: regionId,
             nextToken: sandboxCursor
         },
-        { skip: !credId || !regionId }
+        { skip: !credId || !regionId || (allSandboxList.length && !sandboxCursor) || refreshBlocked }
     );
 
     const {
@@ -48,23 +51,7 @@ const SandboxApis = () => {
             credentialId: credId,
             region: regionId
         },
-        { skip: !credId || !regionId }
-    );
-
-    const {
-        data: connectionInfoData,
-        isFetching: fetchingConnectionInfo,
-        isError: connectionInfoError
-    } = useGetConnectionInfoQuery(
-        {
-            credentialsId: credId,
-            regionId: regionId,
-            databaseHostId: selectedDatabaseHostId,
-            sandboxName: selectedSandboxName
-        },
-        {
-            skip: !credId || !regionId || !selectedDatabaseHostId || !selectedSandboxName
-        }
+        { skip: !credId || !regionId || refreshBlocked }
     );
 
     useEffect(() => {
@@ -75,6 +62,7 @@ const SandboxApis = () => {
                     ...(sandboxList?.items?.filter((item: any) => !item?.error) || [])
                 ])
             );
+            dispatch(setAllSandboxList([...(allSandboxList || []), ...(sandboxList?.items || [])]));
             setSandboxCursor(sandboxList?.nextToken || null);
         }
         dispatch(
@@ -95,28 +83,6 @@ const SandboxApis = () => {
             })
         );
     }, [sandboxSavings, sandboxSavingsLoading, sandboxSavingsError]);
-
-    useEffect(() => {
-        if (!fetchingConnectionInfo) {
-            dispatch(
-                updateConnectionInfo({
-                    selectedDatabaseHostId,
-                    selectedSandboxName,
-                    connectionString: connectionInfoData,
-                    isLoading: false
-                })
-            );
-        } else {
-            dispatch(
-                updateConnectionInfo({
-                    selectedDatabaseHostId,
-                    selectedSandboxName,
-                    connectionString: '',
-                    isLoading: true
-                })
-            );
-        }
-    }, [connectionInfoData, fetchingConnectionInfo, connectionInfoError]);
 
     return <></>;
 };

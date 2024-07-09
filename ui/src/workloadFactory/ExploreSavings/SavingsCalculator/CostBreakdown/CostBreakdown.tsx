@@ -1,4 +1,4 @@
-import { DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import { DsTypography, DsFlashingDotsLoader, TooltipInfo } from '@netapp/design-system';
 import styles from './CostBreakdown.module.scss';
 import { Card, CardContent, CardTableContent } from '../../../../ui-components/Cards/Card';
 import { Text } from '../../../../ui-components/Typography';
@@ -14,6 +14,10 @@ const CostBreakdown = () => {
     const [calculatedResponse, setCalculatedResponse] = useState({});
     const [loading, setLoading] = useState(false);
 
+    const checkForTooltip =
+        storageSavingsResponse?.license?.existing?.sqlServerEdition?.includes('Enterprise') &&
+        storageSavingsResponse?.license?.recommended?.sqlServerEdition?.includes('Standard');
+
     useEffect(() => {
         setCalculatedResponse(storageSavingsResponse);
         setLoading(storageSavingsLoading);
@@ -22,7 +26,11 @@ const CostBreakdown = () => {
     const ComparisonTableLayout = ({ data, calculatedResponse }: any) => {
         return (
             <div
-                className={styles['comparison-table-column']}
+                className={
+                    data?.type === 'Total summary'
+                        ? `${styles['comparison-table-column']} ${styles.totalSummary}`
+                        : styles['comparison-table-column']
+                }
                 style={
                     data?.type === 'Total summary'
                         ? { backgroundColor: 'var(--table-header-background)', fontWeight: 500 }
@@ -35,7 +43,14 @@ const CostBreakdown = () => {
                             color={!calculatedResponse && 'text-disabled'}
                             level={data?.type === 'Total summary' ? '14' : '13'}
                         >
-                            {data?.type}
+                            {data?.isTooltip ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {checkForTooltip && <TooltipInfo>{data?.isTooltip}</TooltipInfo>}
+                                    <div>{data?.type}</div>
+                                </div>
+                            ) : (
+                                data?.type
+                            )}
                         </Text>
                     </GridItem>
                     <GridItem lg="4">

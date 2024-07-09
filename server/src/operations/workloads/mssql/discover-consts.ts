@@ -254,22 +254,34 @@ const HOST_AND_SQL_INFO_PS1 = [
    return $SMBConnections
   }
 
-  Function GetSQLInstanceDriveDetails($serverInstance) {
+  Function GetSQLInstanceDriveDetails($serverInstance, $sqlUsername, $sqlPassword) {
+    $sqlInstancePaths = $null
 
-    $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT physical_name FROM sys.master_files " -h -1 -b -C -W -S $serverInstance
-    if($sqlInstancePaths -eq $null) { 
-      $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance
+    try {
+      $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT physical_name FROM sys.master_files " -h -1 -b -C -W -S $serverInstance 2> $null
+      if($sqlInstancePaths -eq $null) { 
+        $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance 2> $null
+      }
+    } catch {
+      if (-Not [string]::IsNullOrEmpty($sqlUsername) -And -Not [string]::IsNullOrEmpty($sqlPassword)) {
+        try {
+          $sqlInstancePaths = sqlcmd -U $sqlUsername -P $sqlPassword -Q " SET NOCOUNT ON; SELECT physical_name FROM sys.master_files " -h -1 -b -C -W -S $serverInstance 2> $null
+          if($sqlInstancePaths -eq $null) { 
+            $sqlInstancePaths = sqlcmd -U $sqlUsername -P $sqlPassword -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance 2> $null
+          }
+        } catch {
+          # NOOP
+        }
+      }
     }
-
     $sqlInstanceDriveLetterOrPathList = @()
     ForEach ($path in $sqlInstancePaths) {
       $path = $path.TrimStart('\\')
       $driveOrPath = ($path -split '\\\\')[0]
       $sqlInstanceDriveLetterOrPathList += $driveOrPath
-      }
+    }
     return ($sqlInstanceDriveLetterOrPathList | Select -Unique)
-
-      }
+  }
   
   try {
     $responseObject = @{}
@@ -291,11 +303,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         $responseObject['failureInfo'] += "Errors seen while reading Windows Registry: $RegistryErrors.\`n"
       }
 
-      If ($MappedDrivesWithPath.Count -le 0) {
-        $responseObject['failureInfo'] += "Failed to get network drives from Windows Registry.\`n"
-      }
-  
-      $editionDBCountMachineInfo = @($null, $null, $null)
+      $editionDBCountMachineInfoGuid = @($null, $null, $null, $null, $null)
       $responseObject['windowsAuthentication'] = $False
       $sqlServerInstanceStorageInfo = $null
   
@@ -314,7 +322,8 @@ const HOST_AND_SQL_INFO_PS1 = [
   
       $responseObject['sqlServerInstance'] = $instanceName
       $responseObject['sqlServerState'] = $sqlService.State
-
+      $responseObject['windowsOsVersion'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
+      
       $clusterServiceStatus = (Get-Service -Name ClusSvc -ErrorAction SilentlyContinue).Status
       if ($clusterServiceStatus -eq "Running") {
         $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
@@ -340,41 +349,68 @@ const HOST_AND_SQL_INFO_PS1 = [
       if ($sqlService.State -eq "Running") {
         Get-Command -Type Application sqlcmd > $null 2> $null
         If ($? -eq $True) {
+          $editionDBCountMachineInfoGuid = $null
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" }
-          $editionDBCountMachineInfo = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName')" 2> $null
-          $responseObject['windowsAuthentication'] = $?
-  
-          $responseObject['sqlServerEdition'] = $editionDBCountMachineInfo[0]
-          $responseObject['sqlServerEngineEdition'] = $editionDBCountMachineInfo[1]
-          $responseObject['databaseCount'] = $editionDBCountMachineInfo[2]
-          $responseObject['sqlServerName'] = $editionDBCountMachineInfo[3]
-  
-          $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails($serverInstance)
-          
-          if ($? -eq $False) {
-            $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
-          }
-  
-          $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
-            
-            if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
-            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetterOrPath] }}
-            elseif ($SMBConnections -contains $sqlInstanceDriveLetterOrPath) {
-            New-Object -TypeName PSObject -Property @{ SmbSharePath = $sqlInstanceDriveLetterOrPath }     
-            }
-            elseif($MappedDrivesWithPath.Keys -contains $sqlInstanceDriveLetterOrPath) { 
 
-                  New-Object -TypeName PSObject -Property @{ SmbSharePath = $MappedDrivesWithPath[$sqlInstanceDriveLetterOrPath] }  
-                  
+          try {
+            $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
+            $responseObject['windowsAuthentication'] = $?
+    
+  
+            $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance
+            if ($? -eq $False) {
+              $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
             }
+          } catch {
+            $responseObject['windowsAuthentication'] = $False
+
+            if (Get-Command Get-SSMParameter) {
+              $sqlCredential = $null
+              try {
+                [string]$apiToken = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri http://169.254.169.254/latest/api/token
+                $ec2InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $apiToken} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+                $sqlCredential = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json).sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
+              } catch {
+                $responseObject['failureInfo'] += $_
+              }
+
+              if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
+                try {
+                  $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
+                  $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
+                  if ($? -eq $False) {
+                    $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
+                  }
+                } catch {
+                  $responseObject['failureInfo'] += $_
+                }
+              }
             }
+          }
           
+          if ($editionDBCountMachineInfoGuid) {
+            $responseObject['sqlServerEdition'] = $editionDBCountMachineInfoGuid[0]
+            $responseObject['sqlServerEngineEdition'] = $editionDBCountMachineInfoGuid[1]
+            $responseObject['databaseCount'] = $editionDBCountMachineInfoGuid[2]
+            $responseObject['sqlServerName'] = $editionDBCountMachineInfoGuid[3]
+            $responseObject['serverGuid'] = $editionDBCountMachineInfoGuid[4]
+
+            $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
+              if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
+                New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetterOrPath] }
+              } elseif ($SMBConnections -contains $sqlInstanceDriveLetterOrPath) {
+                New-Object -TypeName PSObject -Property @{ SmbSharePath = $sqlInstanceDriveLetterOrPath }     
+              } elseif ($MappedDrivesWithPath.Keys -contains $sqlInstanceDriveLetterOrPath) { 
+                New-Object -TypeName PSObject -Property @{ SmbSharePath = $MappedDrivesWithPath[$sqlInstanceDriveLetterOrPath] }  
+              }
+            }
+            $responseObject['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
+          }
         } else {
           $responseObject['failureInfo'] += "\${instanceName}: SQLCMD.EXE not available\`n"
         }
       }
-
-      $responseObject['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
+      
       $instanceSectionEndTime = Get-Date
       $responseObject['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
       Echo $responseObject

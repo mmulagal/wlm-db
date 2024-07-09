@@ -1,6 +1,14 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
+import {
+    getDatabaseHostsSummary,
+    getDatabaseHostsSummaryV2,
+    getDatabaseHostSummary,
+    getDatabases,
+    getDatabaseHostSummaryV2,
+    getDatabaseHostInstanceSummary,
+    getDatabasesV2
+} from '../operations/database-hosts-operations';
 import { deployDatabase, getCollationDetails, getDriveInfo } from '../operations/createdb-operations';
 import {
     DatabaseHostDetailsSchema,
@@ -19,7 +27,15 @@ import {
     DeleteSandboxSchema,
     GetSandboxSplitEstimateSchema,
     SandboxLifeCycleSchema,
-    SandboxSplitSchema
+    SandboxSplitSchema,
+    DatabaseHostsSummarySchemaV2,
+    CheckSandboxIntegritySchema,
+    DatabaseHostDetailsSchemaV2,
+    DatabaseHostInstanceDetailsSchema,
+    DatabasesListSchemaV2,
+    GetSandboxSnapshotsSchema,
+    GetDriveInfoSchemaV2,
+    GetCollationDetailsSchemaV2
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -32,10 +48,13 @@ import {
     deleteSandbox,
     getSandboxSplitEstimate,
     updateSandboxLifeCycle,
-    splitSandbox
+    splitSandbox,
+    checkDatabaseIntegrity,
+    getSandboxSnapshots
 } from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
+const API_PREFIX_PATH_V2 = '/v2/credentials/:credentialsId/regions/:region';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -57,6 +76,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             );
             return reply.send(response);
         })
+        // TODO: Accept instance id, database name as query params for more granularity
         .get(
             `${API_PREFIX_PATH}/database-hosts/sandboxes/savings`,
             { schema: GetSandboxSavingsSchema },
@@ -85,9 +105,10 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             { schema: DatabasesListSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, databaseHostId }
+                    params: { accountId, databaseHostId },
+                    query: { fields }
                 } = request;
-                const response = await getDatabases(accountId, databaseHostId);
+                const response = await getDatabases(accountId, databaseHostId, fields);
                 return reply.send(response);
             }
         )
@@ -97,7 +118,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region },
-                    body: { databaseName, dataFileConfig, logFileConfig, collation }
+                    body: { databaseName, dataFileConfig, logFileConfig, collation, databaseInstanceId }
                 } = request;
                 const response = await deployDatabase(
                     accountId,
@@ -107,7 +128,8 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseName,
                     dataFileConfig,
                     logFileConfig,
-                    collation
+                    collation,
+                    databaseInstanceId
                 );
                 return reply.send(response);
             }
@@ -136,6 +158,24 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/collation`,
+            { schema: GetCollationDetailsSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
+                } = request;
+                const response = await getCollationDetails(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    databaseInstanceId
+                );
+                return reply.send(response);
+            }
+        )
+        // TODO: Accept instance id as query params for more granularity
+        .get(
             `${API_PREFIX_PATH}/database-hosts/sandboxes`,
             { schema: GetSandboxesInfoSchema },
             async (request, reply) => {
@@ -153,15 +193,15 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId },
-                    query: { databaseName, instanceName }
+                    query: { databaseName, databaseInstanceId }
                 } = request;
                 const response = await getDatabaseMountPointInfo(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
-                    databaseName,
-                    instanceName
+                    databaseInstanceId,
+                    databaseName
                 );
                 return reply.send(response);
             }
@@ -205,56 +245,65 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         })
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/connection-string`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/connection-string`,
             { schema: GetSandboxConnectionStringSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
                 } = request;
                 const response = await getSandboxConnectionString(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
+                    databaseInstanceId,
                     sandboxName
                 );
                 return reply.send(response);
             }
         )
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/split-estimate`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/split-estimate`,
             { schema: GetSandboxSplitEstimateSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
                 } = request;
                 const response = await getSandboxSplitEstimate(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
+                    databaseInstanceId,
                     sandboxName
                 );
                 return reply.send({ volumes: response });
             }
         )
         .delete(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName`,
             { schema: DeleteSandboxSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
                 } = request;
-                const response = await deleteSandbox(accountId, credentialsId, region, databaseHostId, sandboxName);
+                const response = await deleteSandbox(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    sandboxName
+                );
                 return reply.send(response);
             }
         )
         .patch(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName`,
             { schema: SandboxLifeCycleSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName },
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName },
                     body: { snapshot, action }
                 } = request;
                 const response = await updateSandboxLifeCycle(
@@ -262,6 +311,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     region,
                     databaseHostId,
+                    databaseInstanceId,
                     sandboxName,
                     action,
                     snapshot
@@ -270,13 +320,155 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/split`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/split`,
             { schema: SandboxSplitSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
                 } = request;
-                const response = await splitSandbox(accountId, credentialsId, region, databaseHostId, sandboxName);
+                const response = await splitSandbox(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    sandboxName
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts`,
+            { schema: DatabaseHostsSummarySchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    query: { fields, nextToken, vpcId, fsxId, pageSize }
+                } = request;
+                const response = await getDatabaseHostsSummaryV2(
+                    accountId,
+                    region,
+                    credentialsId,
+                    fields,
+                    nextToken,
+                    vpcId,
+                    fsxId,
+                    pageSize
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId`,
+            { schema: DatabaseHostDetailsSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId },
+                    query: { fields }
+                } = request;
+                const response = await getDatabaseHostSummaryV2(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instance/:databaseInstanceId`,
+            { schema: DatabaseHostInstanceDetailsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    query: { fields }
+                } = request;
+                const response = await getDatabaseHostInstanceSummary(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instance/:databaseInstanceId/databases`,
+            { schema: DatabasesListSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    query: { fields }
+                } = request;
+                const response = await getDatabasesV2(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/check-integrity`,
+            { schema: CheckSandboxIntegritySchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceId }
+                } = request;
+                const response = await checkDatabaseIntegrity(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    sandboxName
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/snapshots`,
+            { schema: GetSandboxSnapshotsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceId },
+                    query: { historical }
+                } = request;
+                const response = await getSandboxSnapshots(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    sandboxName,
+                    historical
+                );
+                return reply.send({ snapshots: response });
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drive-information`,
+            { schema: GetDriveInfoSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    query: { forSandbox }
+                } = request;
+                const response = await getDriveInfo(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    forSandbox,
+                    undefined,
+                    databaseInstanceId
+                );
                 return reply.send(response);
             }
         );

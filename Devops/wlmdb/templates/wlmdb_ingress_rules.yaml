@@ -28,7 +28,7 @@ spec:
   - host: {{ .Values.global.bluexpDomain }}
     http:
       paths:
-      - path: /accounts/(.*)/wlmdb/v1(.*)
+      - path: /accounts/(.*)/wlmdb/v(.*)
         pathType: ImplementationSpecific
         backend:
           service:

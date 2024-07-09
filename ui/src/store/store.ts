@@ -13,7 +13,9 @@ import {
     workloadFactoryResourceApi,
     inventoryApi,
     sandboxApi,
-    exploreSavingsApi
+    exploreSavingsApi,
+    inventoryApiV2,
+    workloadFactoryResourceApiV2
 } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
@@ -50,6 +52,7 @@ const rootReducer = combineReducers({
     [chatbotSlice.name]: chatbotSlice.reducer,
     [workloadFactoryResourceSlice.name]: workloadFactoryResourceSlice.reducer,
     [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer,
+    [workloadFactoryResourceApiV2.reducerPath]: workloadFactoryResourceApiV2.reducer,
     [jobMonitoringApi.reducerPath]: jobMonitoringApi.reducer,
     [jobMonitoringSlice.name]: jobMonitoringSlice.reducer,
     [inventoryV2Slice.name]: inventoryV2Slice.reducer,
@@ -60,6 +63,7 @@ const rootReducer = combineReducers({
     [policiesApi.reducerPath]: policiesApi.reducer,
     [createUserDbApi.reducerPath]: createUserDbApi.reducer,
     [inventoryApi.reducerPath]: inventoryApi.reducer,
+    [inventoryApiV2.reducerPath]: inventoryApiV2.reducer,
     [sandboxSlice.reducerPath]: sandboxSlice.reducer,
     [sandboxApi.reducerPath]: sandboxApi.reducer,
     [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,
@@ -124,11 +128,13 @@ const store = configureStore({
             .concat(databaseHomeApi.middleware)
             .concat(chatbotApi.middleware)
             .concat(workloadFactoryResourceApi.middleware)
+            .concat(workloadFactoryResourceApiV2.middleware)
             .concat(jobMonitoringApi.middleware)
             .concat(headersApi.middleware)
             .concat(policiesApi.middleware)
             .concat(createUserDbApi.middleware)
             .concat(inventoryApi.middleware)
+            .concat(inventoryApiV2.middleware)
             .concat(sandboxApi.middleware)
             .concat(exploreSavingsApi.middleware)
             .concat(rtkQueryErrorLogger)

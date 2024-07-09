@@ -7,7 +7,11 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 
 const DatabaseHostTile = () => {
-    const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+    const { resourceLoading, resourceDetails, selectedHostname, selectedDatabaseInstanceName } = useAppSelector(
+        state => state.workloadFactoryResource
+    );
+    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
+
     return (
         <div className={styles.dbHostTile}>
             <div className={styles.dbHostSection}>
@@ -16,10 +20,16 @@ const DatabaseHostTile = () => {
                     {resourceLoading ? (
                         <FlashingDotsLoader className={styles.loaderHeight} />
                     ) : (
-                        <Typography variant="Semibold_14">{resourceDetails.name}</Typography>
+                        <Typography variant="Semibold_14">
+                            {isInventoryV2
+                                ? selectedHostname + ' \\ ' + selectedDatabaseInstanceName
+                                : resourceDetails?.name}
+                        </Typography>
                     )}
 
-                    <Typography variant="Regular_14">{GENERAL.HOST_NAME}</Typography>
+                    <Typography variant="Regular_14">
+                        {isInventoryV2 ? GENERAL.INSTANCE_NAME : GENERAL.HOST_NAME}
+                    </Typography>
                 </div>
             </div>
 
@@ -71,7 +81,9 @@ const DatabaseHostTile = () => {
                     {resourceLoading ? (
                         <FlashingDotsLoader className={styles.loaderHeight} />
                     ) : (
-                        <Typography variant="Semibold_14">{resourceDetails?.topology?.serverInstallationMode}</Typography>
+                        <Typography variant="Semibold_14">
+                            {resourceDetails?.topology?.serverInstallationMode}
+                        </Typography>
                     )}
                 </div>
 

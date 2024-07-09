@@ -29,12 +29,11 @@ import {
     setUnmanagedFormatedData
 } from '../../store/workloadFactory/inventorySlice';
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../store/workloadFactory/headersSlice';
-import { DETECT_HOST_VAR, SQL_DEPLOYMENT_MODE } from '../../utils/consts';
+import { DETECT_HOST_VAR } from '../../utils/consts';
 import store from '../../store/store';
 import { renderFileSystemType } from './InventoryUtils';
 import { GENERAL } from '../../utils/appConstants';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
-import { updateDemoEbsRows } from '../ExploreSavings/ExploreSavingsUtils';
 
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
@@ -73,6 +72,11 @@ const InventoryApis = () => {
 
     const credIdRef = useRef();
     const regionIdRef = useRef();
+    const mssqlInstancesDataRef: any = useRef();
+
+    useEffect(() => {
+        mssqlInstancesDataRef.current = mssqlInstancesData;
+    }, [mssqlInstancesData]);
 
     useEffect(() => {
         credIdRef.current = credId;
@@ -626,12 +630,12 @@ const InventoryApis = () => {
                 instances: instanceList.join(','),
                 nextToken: nextToken
             });
-            const state = store.getState();
-            const mssqlInstancesData = state.inventory.mssqlInstancesData;
+            // const state = store.getState();
+            // const mssqlInstancesData = state.inventory.mssqlInstancesData;
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    if (mssqlInstancesData[host?.id]) {
+                    if (mssqlInstancesDataRef.current[host?.id]) {
                         mssqlInstancesDataRes[host?.id] = {
                             loading: false,
                             data: host,
@@ -639,7 +643,7 @@ const InventoryApis = () => {
                         };
                     }
                 });
-                dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataRes }));
+                dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataRes }));
                 if (result?.data?.nextToken) {
                     getMssqlData(instanceList, result?.data?.nextToken);
                 }
@@ -652,7 +656,7 @@ const InventoryApis = () => {
                         error: result?.error?.data?.message
                     };
                 });
-                dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataErr }));
+                dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataErr }));
             }
         } catch (error) {
             let mssqlInstancesDataErr: any = {};
@@ -663,7 +667,7 @@ const InventoryApis = () => {
                     error: error
                 };
             });
-            dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataErr }));
+            dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataErr }));
         }
     };
 
@@ -764,7 +768,7 @@ const InventoryApis = () => {
     // This is to format unmanaged host data that is used in Inventory unmanaged tab and explore savings page.
     useEffect(() => {
         // Format data again on unIdentifiableHosts or fsxCredentialStatusObj change
-        const unmanagedFormatedData = formatUnamanagedHostList(unManagedHostList, mssqlInstancesData);
+        const unmanagedFormatedData = formatUnamanagedHostList(unManagedHostList, mssqlInstancesDataRef.current);
         dispatch(setUnmanagedFormatedData(unmanagedFormatedData));
 
         let nonFsxnStorageList: any = [];
@@ -775,12 +779,7 @@ const InventoryApis = () => {
             }
         });
         // This is to store EBS unmanaged rows in explore savings. Once FSXW is supported than will add that also.
-        if (isDemoMode) {
-            // In demo case tweeking response for Explore Savings table to show based on standalone and AOAG
-            dispatch(setUnmanagedExploreSavingsHost(updateDemoEbsRows(nonFsxnStorageList)));
-        } else {
-            dispatch(setUnmanagedExploreSavingsHost(nonFsxnStorageList));
-        }
+        dispatch(setUnmanagedExploreSavingsHost(nonFsxnStorageList));
     }, [unManagedHostList, mssqlInstancesData]);
 
     return <></>;

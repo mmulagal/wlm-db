@@ -10,18 +10,26 @@ import {
     GET_STANDBY_NODE_DRIVE_LIST
 } from './workloads/mssql/ssm-script-utils';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
-import { convertGiBToBytes, sqlResponseParsing, getCollationForMSSQLVersion } from '../utils/utils';
+import {
+    convertGiBToBytes,
+    sqlResponseParsing,
+    getCollationForMSSQLVersion,
+    getDatabaseInstanceName,
+    isDemo
+} from '../utils/utils';
 import {
     ACCOUNT_ID,
     COMPLETE,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
+    DEFAULT_INSTANCE_NAME,
     DatabaseTypes,
     HttpErrorCodes,
     RESOURCESTYPE,
+    SQL_SERVICE_STATE,
     SSM_COMMAND_CACHE_TYPE
 } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
-import { getResources } from './database/database-operations';
+import { getInstanceInfo, getResources } from './database/database-operations';
 import { getFsxStorageCapacity } from './aws/fsx-operations';
 import {
     DatabaseCreateResponseType,
@@ -29,10 +37,10 @@ import {
     FileConfigType
 } from '../routes/types/database-hosts.types';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
-import { Metadata } from '../utils/common-types';
+import { DatabaseInstance, Metadata, databaseInstanceMetadata } from '../utils/common-types';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
-import { updateUserDBIntoResourceData } from './demo-operations';
+import { updateUserDBIntoInstanceTable, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 import { updateResourceMetaData } from '../lib/database/db';
@@ -83,7 +91,8 @@ async function getDriveInfoFromNodes(
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string,
     executionTimeout?: string,
-    forSandbox: boolean = false
+    forSandbox: boolean = false,
+    instanceName = DEFAULT_INSTANCE_NAME
 ) {
     logger.info('Getting existing drives info on node', {
         credentialsId,
@@ -145,7 +154,7 @@ async function getDriveInfoFromNodes(
                         availableSize: item.FileSystem,
                         isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
                         ...(sqlDeploymentType === 'FCI' && {
-                            isDriveClustered: item.Owner?.includes('SQL Server') ?? false
+                            isClusteredWithSelectedInstance: item.Owner === `SQL Server (${instanceName})` ?? false
                         })
                     };
                 }
@@ -159,7 +168,7 @@ async function getDriveInfoFromNodes(
                       driveLetter: item?.charAt(0),
                       availableSize: 0,
                       isNetappDrive: false,
-                      ...(sqlDeploymentType === 'FCI' && { isDriveClustered: false })
+                      ...(sqlDeploymentType === 'FCI' && { isClusteredWithSelectedInstance: false })
                   }))
             : [])
     ];
@@ -185,7 +194,8 @@ async function getDriveInfoFromSSM(
     node1InstanceId: string,
     node2InstanceId?: string,
     executionTimeout?: string,
-    forSandbox: boolean = false
+    forSandbox: boolean = false,
+    instanceDetail?: DatabaseInstance
 ) {
     logger.info('Getting drive information from SSM', {
         accountId,
@@ -194,20 +204,35 @@ async function getDriveInfoFromSSM(
         sqlDeploymentType,
         node1InstanceId,
         node2InstanceId,
-        forSandbox
+        forSandbox,
+        instanceDetail
     });
+
     // Check SSM Connection status
-    const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName } = await getActiveSqlNode(
-        credentialsId,
-        region!,
-        node1InstanceId,
-        node2InstanceId
-    );
+    let { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName, instancesDetails } =
+        await getActiveSqlNode(credentialsId, region!, node1InstanceId, node2InstanceId);
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
         const errorMessage = `Unable to access drive details for host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(errorMessage);
+    }
+
+    if (instanceDetail && instancesDetails) {
+        const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
+
+        const isInstanceRunning = instancesDetails.some(
+            instance =>
+                instance.instanceName === instanceDetail.database_instance_name &&
+                instance.instanceState === SQL_SERVICE_STATE.RUNNING
+        );
+
+        if (!isInstanceRunning) {
+            const errorMessage = `Unable to access drive details for host ${databaseHostId} in account ${accountId} instance ${instanceDetail.database_instance_name} is not running.`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+        instanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
     }
 
     if (sqlDeploymentType === 'FCI' && !forSandbox && standbyNodeInstanceId) {
@@ -231,7 +256,8 @@ async function getDriveInfoFromSSM(
                 activeNodeInstanceId as string,
                 standbyNodeInstanceId!,
                 executionTimeout,
-                forSandbox
+                forSandbox,
+                instanceDetail?.database_instance_name
             ),
             forSandbox
                 ? Promise.resolve()
@@ -257,7 +283,8 @@ async function getDriveInfo(
     credentialsId: string,
     region: string,
     forSandbox: boolean = false,
-    executionTimeout?: string
+    executionTimeout?: string,
+    databaseInstanceId?: string
 ): Promise<DriveInfoResponseBodyType> {
     logger.info(
         'Fetching drive details and storage capacity of the database host',
@@ -265,7 +292,8 @@ async function getDriveInfo(
         databaseHostId,
         credentialsId,
         region,
-        forSandbox
+        forSandbox,
+        databaseInstanceId
     );
 
     const {
@@ -278,8 +306,14 @@ async function getDriveInfo(
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
 
-    const { co_relation_id: fileSystemId, metadata } = resourceDetail;
+    let { co_relation_id: fileSystemId, metadata } = resourceDetail;
     const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
+
+    let instanceDetail;
+    if (databaseInstanceId) {
+        instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+        ({ fsxn_ids: fileSystemId } = instanceDetail as unknown as DatabaseInstance);
+    }
 
     let fsxStorageCapacity;
     let driveResponse;
@@ -295,7 +329,8 @@ async function getDriveInfo(
                 node1InstanceId,
                 node2InstanceId,
                 executionTimeout,
-                forSandbox
+                forSandbox,
+                instanceDetail as unknown as DatabaseInstance
             )
         ]);
     } catch (error) {
@@ -331,7 +366,8 @@ async function deployDatabase(
     databaseName: string,
     dataFileConfig: FileConfigType,
     logFileConfig: FileConfigType,
-    collation: string
+    collation: string,
+    databaseInstanceId?: string
 ): Promise<DatabaseCreateResponseType> {
     logger.info('Deploy new database', {
         accountId,
@@ -341,24 +377,46 @@ async function deployDatabase(
         databaseName,
         dataFileConfig,
         logFileConfig,
-        collation
+        collation,
+        databaseInstanceId
     });
 
     const {
         items: [resourceDetail]
     } = await getResources(accountId, databaseHostId);
 
-    const {
+    let {
         resource_id: resourceId,
         co_relation_id: fileSystemId,
         metadata,
         resource_name: sqlServerName
     } = resourceDetail;
-    const { node1InstanceId, node2InstanceId, fsxSvmId, sqlDeploymentType } = metadata as unknown as Metadata;
-    const isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
+    const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
 
     if (!credentialsId || !region || !node1InstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource  information');
+    }
+    let instanceDetail;
+    let isClustered;
+    let fsxSvmId;
+    let databaseDeploymentType;
+    let fsxSvmDetails;
+    let instanceName;
+
+    if (databaseInstanceId) {
+        instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+        ({
+            fsxn_ids: fileSystemId,
+            fsx_svm_id: fsxSvmDetails,
+            database_deployment_type: databaseDeploymentType,
+            database_instance_name: instanceName
+        } = instanceDetail as unknown as DatabaseInstance);
+
+        isClustered = databaseDeploymentType === 'FCI' ? 'true' : 'false';
+        fsxSvmId = (fsxSvmDetails as unknown as Record<string, string>)[fileSystemId as string];
+    } else {
+        isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
+        ({ fsxSvmId } = metadata as unknown as Metadata);
     }
 
     // check whether any jobs on the same resource running
@@ -384,14 +442,16 @@ async function deployDatabase(
         }
     }
 
+    const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
+
     // create the parent job for database deployment
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
-        name: `Creating user database ${databaseName} on the SQL Server host ${sqlServerName}`,
+        resourceName: serverNameWithHostName,
+        name: `Creating user database ${databaseName} on the SQL Server host ${serverNameWithHostName}`,
         startTime: Date.now(),
-        description: `Creating user database ${databaseName} on the SQL Server host ${sqlServerName}`
+        description: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`
     });
 
     invokeSSMForDatabaseDeployment(
@@ -408,8 +468,10 @@ async function deployDatabase(
         fsxSvmId,
         jobId,
         resourceId,
+        serverNameWithHostName,
         node2InstanceId,
-        metadata as Metadata
+        metadata as Metadata,
+        instanceDetail as unknown as DatabaseInstance
     );
     return { jobId };
 }
@@ -428,8 +490,10 @@ async function invokeSSMForDatabaseDeployment(
     fsxSvmId: string | undefined,
     parentJobId: string,
     resourceId: string,
+    serverNameWithHostName: string,
     node2InstanceId?: string,
-    metaData?: Metadata
+    metaData?: Metadata,
+    instanceDetail?: DatabaseInstance
 ) {
     logger.info(
         'invoke SSM for database deployment',
@@ -444,6 +508,7 @@ async function invokeSSMForDatabaseDeployment(
         fsxSvmId,
         fileSystemId,
         resourceId,
+        serverNameWithHostName,
         isClustered,
         parentJobId
     );
@@ -478,17 +543,44 @@ async function invokeSSMForDatabaseDeployment(
 
     let sqlVirtualMachineName;
     let activeNodeId;
-
+    let instanceNameForScript = DEFAULT_INSTANCE_NAME;
+    let isDefaultInstance = 'true';
+    let isSSMConnected;
+    let activeNodeInstanceId;
+    let standbyNodeInstanceId;
+    let sqlInstanceName;
+    let instancesDetails;
+    let databaseInstanceId;
     try {
-        const {
+        ({
             isSSMConnected,
             activeNodeInstanceId,
             standbyNodeInstanceId,
-            instanceName: sqlInstanceName
-        } = await getActiveSqlNode(credentialsId, region!, node1InstanceId, node2InstanceId);
+            instanceName: sqlInstanceName,
+            instancesDetails
+        } = await getActiveSqlNode(credentialsId, region!, node1InstanceId, node2InstanceId));
         if (!isSSMConnected || activeNodeInstanceId === undefined || sqlInstanceName === undefined) {
             const errorMessage = `Error while creating database for ${accountId} ${resourceId} due to SSM connection issues.`;
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+        }
+        if (instanceDetail && instancesDetails) {
+            const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
+            isDefaultInstance = isDefault ? 'true' : 'false';
+            instanceNameForScript = selectedInstanceName;
+
+            const isInstanceRunning = instancesDetails.some(
+                instance =>
+                    instance.instanceName === instanceDetail.database_instance_name &&
+                    instance.instanceState === SQL_SERVICE_STATE.RUNNING
+            );
+
+            if (!isInstanceRunning && selectedInstanceName) {
+                const errorMessage = `Unable to access drive details in account ${accountId} for instance ${sqlInstanceName} is not running.`;
+                logger.error(errorMessage);
+                throw createError(errorMessage);
+            }
+            sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
+            databaseInstanceId = instanceDetail.database_instance_id;
         }
 
         if (isClustered === 'true' && standbyNodeInstanceId) {
@@ -514,7 +606,9 @@ async function invokeSSMForDatabaseDeployment(
             parentJobId,
             activeNodeInstanceId as string,
             collation,
-            sqlInstanceName
+            sqlInstanceName,
+            serverNameWithHostName,
+            databaseInstanceId
         );
 
         const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
@@ -543,7 +637,8 @@ async function invokeSSMForDatabaseDeployment(
                 dataDrivePath,
                 logDrivePath,
                 collation,
-                sqlInstanceName
+                sqlInstanceName,
+                serverNameWithHostName
             );
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
@@ -551,9 +646,19 @@ async function invokeSSMForDatabaseDeployment(
                 error: undefined
             });
 
-            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            if (isDemo()) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
+                if (instanceDetail) {
+                    const { metadata: instanceMetadata, database_instance_id: instanceId } = instanceDetail!;
+
+                    updateUserDBIntoInstanceTable(
+                        accountId,
+                        instanceId,
+                        databaseName,
+                        instanceMetadata as databaseInstanceMetadata
+                    );
+                }
             }
 
             // clearning all the ssm command cache so that we will get the fresh data once the database is created
@@ -601,6 +706,7 @@ async function invokeSSMForDatabaseDeployment(
                 logVolumeSize,
                 isLogVirtualMount ? isLogDriveExists.toString() : (!isLogDriveExists).toString(),
                 isDataVirtualMount ? isDataDriveExists.toString() : (!isDataDriveExists).toString(),
+                serverNameWithHostName,
                 standbyIqn
             );
 
@@ -609,6 +715,7 @@ async function invokeSSMForDatabaseDeployment(
                 isVirtualMountSelected = 'true';
             }
 
+            const customSSMTimeoutValue = getCustomSSMTimeout(dataFileConfig.volumeSize, logFileConfig.volumeSize);
             await newDBInitialization(
                 accountId,
                 credentialsId,
@@ -627,7 +734,11 @@ async function invokeSSMForDatabaseDeployment(
                 fsxLogVolumeName,
                 dataSerial,
                 LogSerial,
-                isVirtualMountSelected
+                isVirtualMountSelected,
+                instanceNameForScript,
+                isDefaultInstance,
+                serverNameWithHostName,
+                customSSMTimeoutValue
             );
 
             await createDatabase(
@@ -643,6 +754,7 @@ async function invokeSSMForDatabaseDeployment(
                 logDrivePath,
                 collation,
                 sqlInstanceName,
+                serverNameWithHostName,
                 iGroup,
                 fsxDataVolumeName,
                 fsxLogVolumeName
@@ -656,9 +768,20 @@ async function invokeSSMForDatabaseDeployment(
 
             await updateCreateDbMetrics(accountId, resourceId, metaData as Metadata);
 
-            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            if (isDemo()) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
+
+                if (instanceDetail) {
+                    const { metadata: instanceMetadata, database_instance_id: instanceId } = instanceDetail!;
+
+                    updateUserDBIntoInstanceTable(
+                        accountId,
+                        instanceId,
+                        databaseName,
+                        instanceMetadata as databaseInstanceMetadata
+                    );
+                }
             }
 
             // clearning all the ssm command cache so that we will get the fresh data once the database is created
@@ -689,7 +812,10 @@ async function invokeSSMForDatabaseDeployment(
                 sqlServerName,
                 parentJobId,
                 databaseName,
-                isClustered
+                isClustered,
+                serverNameWithHostName,
+                instanceNameForScript,
+                isDefaultInstance
             );
         }
 
@@ -721,6 +847,7 @@ async function createDatabase(
     logDrivePath: string,
     collation: string,
     sqlInstanceName: string,
+    serverNameWithHostName: string,
     iGroup?: string,
     fsxDataVolumeName?: string,
     fsxLogVolumeName?: string
@@ -740,11 +867,12 @@ async function createDatabase(
         iGroup,
         fsxDataVolumeName,
         fsxLogVolumeName,
-        sqlInstanceName
+        sqlInstanceName,
+        serverNameWithHostName
     });
 
     let createDatabaseCommand;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         createDatabaseCommand = [
             `${CREATEDBSCRIPT} -SQLServer Draculla  -DBName tempdb9  -DataPath J:\\MSSQL\\data\\tempdb9_data.mdf  -LogPath K:\\MSSQL\\data\\tempdb9_log.ldf`
         ];
@@ -758,7 +886,7 @@ async function createDatabase(
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
+        resourceName: serverNameWithHostName,
         name: 'Creating Database',
         parentJobId,
         description: `Creating database ${databaseName} with provided data and log file paths.`,
@@ -825,6 +953,7 @@ async function configureLuns(
     logVolumeSize: number,
     isLogDriveExists: string,
     isDataDriveExists: string,
+    serverNameWithHostName: string,
     standbyIqn?: string
 ) {
     logger.info('Configure Luns', {
@@ -840,11 +969,12 @@ async function configureLuns(
         logVolumeSize,
         isLogDriveExists,
         isDataDriveExists,
-        standbyIqn
+        standbyIqn,
+        serverNameWithHostName
     });
 
     let configureLuncommands;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         configureLuncommands = [
             `${CONFIGURELUNSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataLunSize 1074  -FSxLogLunSize 1074 -LogNew false -DataNew false`
         ];
@@ -861,7 +991,7 @@ async function configureLuns(
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
+        resourceName: serverNameWithHostName,
         name: 'Configuring storage',
         parentJobId,
         description: 'Configuring storage on FSx for NetApp ONTAP with recommended best practices.',
@@ -934,7 +1064,11 @@ async function newDBInitialization(
     fsxLogVolumeName: string,
     dataSerial: string,
     logSerial: string,
-    isVirtualMountSelected: string
+    isVirtualMountSelected: string,
+    instanceName: string,
+    isDefaultInstance: string,
+    serverNameWithHostName: string,
+    customSSMTimeoutValue?: string
 ) {
     logger.info('Initialising new database', {
         accountId,
@@ -954,17 +1088,20 @@ async function newDBInitialization(
         fsxLogVolumeName,
         dataSerial,
         logSerial,
-        isVirtualMountSelected
+        isVirtualMountSelected,
+        instanceName,
+        isDefaultInstance,
+        serverNameWithHostName,
+        customSSMTimeoutValue
     });
-
     let dbInitializecommands;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         dbInitializecommands = [
             `${INITIALIZEDBSCRIPT} -DBName tempdb9  -IsClustered false  -DataDrive J  -LogDrive K -LogNew true -DataNew true`
         ];
     } else {
         dbInitializecommands = [
-            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -DataSerial '${dataSerial}' -LogSerial '${logSerial}' -Virtualmount '${isVirtualMountSelected}'`
+            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -DataSerial '${dataSerial}' -LogSerial '${logSerial}' -Virtualmount '${isVirtualMountSelected}' -InstanceName '${instanceName}' -isDefaultInstance '${isDefaultInstance}'`
         ];
     }
 
@@ -976,7 +1113,7 @@ async function newDBInitialization(
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
+        resourceName: serverNameWithHostName,
         name: 'New iSCSI Disk Initialization',
         parentJobId,
         description,
@@ -993,7 +1130,7 @@ async function newDBInitialization(
             activeNodeInstanceId,
             accountId,
             false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+            customSSMTimeoutValue || CUSTOM_SSM_EXECUTION_TIMEOUT
         );
         logger.debug('New DB initialize is successfully done', newDBInitializeresponse);
 
@@ -1047,7 +1184,10 @@ async function cleanUpDatabaseDeployment(
     sqlServerName: string | null,
     parentJobId: string,
     databaseName: string,
-    isClustered: string
+    isClustered: string,
+    serverNameWithHostName: string,
+    instanceNameForScript: string,
+    isDefaultInstance: string
 ) {
     logger.info('Cleaning up the database deployment', {
         accountId,
@@ -1063,16 +1203,19 @@ async function cleanUpDatabaseDeployment(
         sqlServerName,
         parentJobId,
         databaseName,
-        isClustered
+        isClustered,
+        serverNameWithHostName,
+        instanceNameForScript,
+        isDefaultInstance
     });
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
+        resourceName: serverNameWithHostName,
         name: 'Cleaning up',
         parentJobId,
-        description: `Database creation failed. Cleaning up resources in FSx for NetApp ONTAP and in host ${resourceId}`,
+        description: `Database creation failed. Cleaning up resources in FSx for NetApp ONTAP and in instance ${serverNameWithHostName}`,
         startTime: Date.now()
     });
 
@@ -1080,13 +1223,13 @@ async function cleanUpDatabaseDeployment(
     let errMsg;
     try {
         let cleaupCommand;
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (isDemo()) {
             cleaupCommand = [
                 `${CLEANUPSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataVolumeName wlmdb_sqldata_1708948249  -FSxLogVolumeName wlmdb_sqllog_1708948249 -IGROUP wlmdb_sqligroup_1708791218786`
             ];
         } else {
             cleaupCommand = [
-                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered}}`
+                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered} -InstanceName ${instanceNameForScript} -IsDefaultInstance ${isDefaultInstance}}`
             ];
         }
 
@@ -1133,7 +1276,9 @@ async function validateParams(
     parentJobId: string,
     activeNodeInstanceId: string,
     collation: string,
-    instanceName: string
+    instanceName: string,
+    serverNameWithHostName: string,
+    databaseInstanceId?: string
 ) {
     logger.info('validating parameters for database user creation', {
         accountId,
@@ -1147,7 +1292,8 @@ async function validateParams(
         sqlServerName,
         parentJobId,
         collation,
-        instanceName
+        instanceName,
+        serverNameWithHostName
     });
 
     const {
@@ -1171,7 +1317,7 @@ async function validateParams(
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
+        resourceName: serverNameWithHostName,
         name: 'Database Validation',
         parentJobId,
         description: `Validating parameters for database ${databaseName}.`,
@@ -1195,7 +1341,8 @@ async function validateParams(
             databaseHostId,
             databaseName,
             activeNodeInstanceId,
-            instanceName
+            instanceName,
+            databaseInstanceId
         );
 
         if (databaseExists) {
@@ -1206,7 +1353,15 @@ async function validateParams(
             throw createError(412, 'Collation should not be empty');
         }
 
-        const { collationList } = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
+        const { collationList } = await getCollationDetails(
+            accountId,
+            databaseHostId,
+            credentialsId,
+            region,
+            undefined,
+            activeNodeInstanceId,
+            instanceName
+        );
 
         const collationExists = collationList?.some(item => item?.name?.toLowerCase() === collation.toLowerCase());
 
@@ -1224,7 +1379,8 @@ async function validateParams(
             credentialsId,
             region,
             false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+            CUSTOM_SSM_EXECUTION_TIMEOUT,
+            databaseInstanceId
         );
 
         // check whether the drive selection detail is right
@@ -1274,7 +1430,7 @@ async function checkDriveExists(
         driveLetter: string;
         availableSize: number;
         isNetappDrive: boolean;
-        isDriveClustered?: boolean;
+        isClusteredWithSelectedInstance?: boolean;
     }>,
     availableDriveLetters: Array<string>,
     selectedDrive: string,
@@ -1343,7 +1499,7 @@ async function checkDriveExists(
         if (!matchedExistingDrive.isNetappDrive) {
             throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a NetApp drive`);
         }
-        if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
+        if (isClustered === 'true' && !matchedExistingDrive.isClusteredWithSelectedInstance) {
             throw createError(
                 412,
                 `Selected ${driveType} drive ${selectedDrive} is non clustered drive or drive not part of SQL server`
@@ -1361,15 +1517,38 @@ async function checkDriveExists(
     return true;
 }
 
-async function getCollationDetails(accountId: string, databaseHostId: string, credentialsId: string, region: string) {
+async function getCollationForInstance(credentialsId: string, region: string, activeNode: string, sqlInstance: string) {
+    const { defaultCollation, mssqlVersion } = await getDefaultCollationAndVersion(
+        credentialsId,
+        region,
+        activeNode,
+        sqlInstance
+    );
+
+    return getCollationForMSSQLVersion(mssqlVersion, defaultCollation);
+}
+
+async function getCollationDetails(
+    accountId: string,
+    databaseHostId: string,
+    credentialsId: string,
+    region: string,
+    databaseInstanceId?: string,
+    activeNode?: string,
+    sqlInstance?: string
+) {
     logger.info('Getting collation details from the database host', {
         accountId,
         databaseHostId,
         credentialsId,
-        region
+        region,
+        databaseInstanceId
     });
 
     try {
+        if (activeNode && sqlInstance) {
+            return getCollationForInstance(credentialsId, region, activeNode as string, sqlInstance);
+        }
         const {
             items: [resourceDetail]
         } = await getResources(accountId, databaseHostId, credentialsId, region, RESOURCESTYPE.MSSQL);
@@ -1380,16 +1559,17 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
             throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
         }
 
+        let instanceDetail: any;
+        if (databaseInstanceId) {
+            instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+        }
+
         const { metadata } = resourceDetail;
         const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
 
         // Check SSM Connection status
-        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName } = await getActiveSqlNode(
-            credentialsId,
-            region,
-            node1InstanceId,
-            node2InstanceId
-        );
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName, instancesDetails } =
+            await getActiveSqlNode(credentialsId, region, node1InstanceId, node2InstanceId);
 
         if (!isSSMConnected && activeNodeInstanceId === undefined) {
             const errorMessage = `Unable to get collation details for host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
@@ -1406,14 +1586,24 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
             }
         }
 
-        const { defaultCollation, mssqlVersion } = await getDefaultCollationAndVersion(
-            credentialsId,
-            region,
-            activeNodeInstanceId as string,
-            instanceName
-        );
+        let sqlInstanceName = instanceName;
+        if (instanceDetail && instancesDetails) {
+            const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
-        return getCollationForMSSQLVersion(mssqlVersion, defaultCollation);
+            const isInstanceRunning = instancesDetails.some(
+                instance =>
+                    instance.instanceName === instanceDetail.database_instance_name &&
+                    instance.instanceState === SQL_SERVICE_STATE.RUNNING
+            );
+
+            if (!isInstanceRunning && selectedInstanceName) {
+                const errorMessage = `Unable to access drive details in account ${accountId} for instance ${sqlInstanceName} is not running.`;
+                logger.error(errorMessage);
+                throw createError(errorMessage);
+            }
+            sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
+        }
+        return getCollationForInstance(credentialsId, region, activeNodeInstanceId as string, sqlInstanceName);
     } catch (error: any) {
         const errorMessage = `Unable to get collation information. ${error?.message}.`;
         logger.error(errorMessage);
@@ -1447,6 +1637,25 @@ async function getDefaultCollationAndVersion(
 
     logger.debug('MSSQL default collation response', { defaultCollation, mssqlVersion });
     return { defaultCollation, mssqlVersion };
+}
+
+/**
+ * Minimum timeout value for SSM execution is 3 minutes
+ * It gets increased by 3 minutes for every 100 GB of volume size
+ * Maximum timeout value is 1 hour
+ */
+function getCustomSSMTimeout(dataVolumeSize: number, logVolumeSize: number) {
+    logger.debug('Calculating custom SSM timeout based on volume size', {
+        dataVolumeSize,
+        logVolumeSize
+    });
+
+    const ONE_HOUR = 60 * 60;
+    const maxVolumeSize = Math.max(dataVolumeSize, logVolumeSize);
+    const derivedTimeout =
+        maxVolumeSize > 100 ? Math.ceil(Number(maxVolumeSize) / 100) * 3 * 60 : Number(CUSTOM_SSM_EXECUTION_TIMEOUT);
+    const maxCustomTimeout = Math.min(derivedTimeout, ONE_HOUR);
+    return maxCustomTimeout ? String(maxCustomTimeout) : CUSTOM_SSM_EXECUTION_TIMEOUT;
 }
 
 export {

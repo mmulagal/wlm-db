@@ -1,3 +1,5 @@
+import { JsonValue } from '@prisma/client/runtime/library';
+
 interface Metadata {
     node1InstanceId: string;
     node2InstanceId?: string;
@@ -14,6 +16,11 @@ interface Metadata {
     sandboxCreated?: boolean;
     updatedManually?: boolean;
     storageProtocol?: string;
+}
+interface databaseInstanceMetadata {
+    // this is used to retreive the newly created user databases in database list for demo
+    userDatabase?: Array<UserDatabase>;
+    sandboxes?: Array<Sandbox>;
 }
 
 interface CreateDbMetrics {
@@ -41,7 +48,8 @@ interface Sandbox {
     updatedAt: number;
     source: string;
     tag: string;
-    baseSnapshot: string;
+    baseSnapshot?: string;
+    databaseInstanceId?: string;
 }
 
 interface NodeDetails {
@@ -61,12 +69,13 @@ interface ResourceDetails {
     cloud_provider_name: string | null;
     region: string | null;
     credentials_id: string;
-    storage_type: string;
+    storage_type?: string;
     metadata: unknown;
     ebsVolumeIds?: string[]; // internal field used to store the ebs volume id for the unmanaged MSSQL resource
     fsxwId?: string; // internal field used to store the windows fsx ID for the unmanaged MSSQL resource,
     sqlServerDeploymentType?: string;
     clusterNodeDetails?: NodeDetails[];
+    databaseInstanceDetails?: DatabaseInstance[];
 }
 
 interface DeploymentDetails {
@@ -157,6 +166,32 @@ interface MissingPermissionInterface {
     explicitlyDenied: MissingPermission[];
 }
 
+interface DatabaseInstance {
+    database_instance_name: string;
+    instanceState?: string;
+    database_instance_id: string;
+    database_type: string;
+    is_default: boolean;
+    metadata: databaseInstanceMetadata | JsonValue;
+    created_time?: string | Date;
+    database_deployment_type?: string;
+    fsxn_ids: string;
+    credentials_id: string;
+    fsx_svm_id?: JSON | JsonValue;
+    fsxwId?: string;
+    ebsVolumeIds?: string[];
+    storage_protocol?: string | null;
+    region: string;
+    databaseType?: string;
+    storage_type?: string;
+}
+
+interface InstanceDetails {
+    instanceName: string;
+    instanceState: string;
+    isDefault?: boolean;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -171,5 +206,8 @@ export {
     UserDatabase,
     MissingPermission,
     MissingPermissionInterface,
-    Sandbox
+    databaseInstanceMetadata,
+    Sandbox,
+    DatabaseInstance,
+    InstanceDetails
 };

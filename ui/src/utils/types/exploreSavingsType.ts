@@ -57,17 +57,58 @@ export interface StorageSavingsInterface {
         regionName?: string;
         monthlySnapshotCapacity?: number | string;
     };
+    totalSummary?: {
+        existing?: number | string;
+        recommended?: number | string;
+    };
+    compute?: {
+        existing?: RecommendedCompute;
+        recommended?: RecommendedCompute;
+    };
+    license?: {
+        existing?: RecommendedLicense;
+        recommended?: RecommendedLicense;
+    };
+    fsxBreakdown?: {
+        fsxDataLunSize?: number | string;
+        fsxDataVolumeSize?: number | string;
+        fsxLogVolumeSize?: number | string;
+        fsxTempDbVolumeSize?: number | string;
+        fsxQuorumVolumeSize?: number | string;
+        fsxBufferVolumeSize?: number | string;
+        fsxStorageCapacity?: number | string;
+    };
 }
 
 export interface RecommendedIntanceInterface {
     instanceType?: string;
-    instanceHourlyPrice?: number | string;
-    ec2MachineCost?: number | string;
+    computeHourlyPrice?: number | string;
+    computeMonthlyPrice?: number | string;
     sqlEdition?: string;
     sqlLicense?: boolean | null;
 }
 
+export interface RecommendedCompute {
+    instanceType?: string;
+    computeHourlyPrice?: number | string;
+    computeMonthlyPrice?: number | string;
+    instanceMonthlyPrice?: number | string;
+    hoursInMonth?: number | string;
+    windowsOsVersion?: string;
+}
+
+export interface RecommendedLicense {
+    hoursInMonth: number;
+    sqlServerEdition?: string;
+    licenseHourlyPrice?: number;
+    licenseIncluded?: boolean;
+}
+
 export interface ViewCalculationsInterface {
+    recommendedComputeCalculation?: Array<RecommendedCompute>;
+    recommendedLicenseCalculation?: Array<RecommendedLicense>;
+    existingComputeCalculation: Array<RecommendedCompute>;
+    existingLicenseCalculation?: Array<RecommendedLicense>;
     ebsInstanceCalculation?: Array<RecommendedIntanceInterface>;
     fsxInstanceCalculation?: Array<RecommendedIntanceInterface>;
     fsxOntapCalculation?: {

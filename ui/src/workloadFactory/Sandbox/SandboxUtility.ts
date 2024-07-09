@@ -32,7 +32,10 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
                 name: item?.sandboxName,
                 databaseHostId: item?.databaseHostId,
                 hostName: item?.databaseHostName,
+                instanceId: item?.databaseInstanceId,
+                instanceName: `${item?.databaseHostName}\\${item?.databaseInstanceName}`,
                 source: item?.sourceDatabaseName,
+                sourceInstanceName: `${item?.sourceDatabaseHostName}\\${item?.sourceDatabaseInstanceName}`,
                 sourceHost: item?.sourceDatabaseHostName,
                 actualUpdated: item?.updatedAt || '',
                 updatedAt: formatDateWithTime(item?.updatedAt || ''),
@@ -40,7 +43,8 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
                 tag: item?.tag,
                 status: 'active',
                 baseSnapshot: item?.baseSnapshot,
-                createdAt: item?.createdAt
+                createdAt: item?.createdAt,
+                ageForSorting: -1 * parseInt(item?.createdAt)
             };
         });
     return retData;
@@ -108,7 +112,8 @@ export const getDefaultDriveLetters = (
     let defaultDataDriveLetter: any, defaultLogDriveLetter: any;
     if (
         selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT &&
-        source?.selectedDatabaseHost?.value === target?.selectedDatabaseHost?.value
+        source?.selectedDatabaseHost?.value === target?.selectedDatabaseHost?.value &&
+        source?.selectedDatabaseInstance?.value === target?.selectedDatabaseInstance?.value
     ) {
         defaultDataDriveLetter = dataPathDrive;
         defaultLogDriveLetter = logPathDrive;
@@ -120,26 +125,31 @@ export const getDefaultDriveLetters = (
             (drive: any) => drive.driveLetter === logPathDrive
         );
         if (
-            (!recommendedDataDrive?.hasOwnProperty('isDriveClustered') || recommendedDataDrive?.isDriveClustered) &&
+            (!recommendedDataDrive?.hasOwnProperty('isClusteredWithSelectedInstance') ||
+                recommendedDataDrive?.isClusteredWithSelectedInstance) &&
             recommendedDataDrive?.isNetappDrive
         ) {
             defaultDataDriveLetter = dataPathDrive;
         } else {
             const validDrive = driveInfoData?.existingDriveInfo?.find(
                 (drive: any) =>
-                    (!drive?.hasOwnProperty('isDriveClustered') || drive?.isDriveClustered) && drive?.isNetappDrive
+                    (!drive?.hasOwnProperty('isClusteredWithSelectedInstance') ||
+                        drive?.isClusteredWithSelectedInstance) &&
+                    drive?.isNetappDrive
             );
             defaultDataDriveLetter = validDrive?.driveLetter;
         }
         if (
-            (!recommendedLogDrive?.hasOwnProperty('isDriveClustered') || recommendedLogDrive?.isDriveClustered) &&
+            (!recommendedLogDrive?.hasOwnProperty('isClusteredWithSelectedInstance') ||
+                recommendedLogDrive?.isClusteredWithSelectedInstance) &&
             recommendedLogDrive?.isNetappDrive
         ) {
             defaultLogDriveLetter = logPathDrive;
         } else {
             const validDrive = driveInfoData?.existingDriveInfo?.find(
                 (drive: any) =>
-                    (!drive?.hasOwnProperty('isDriveClustered') || drive?.isDriveClustered) &&
+                    (!drive?.hasOwnProperty('isClusteredWithSelectedInstance') ||
+                        drive?.isClusteredWithSelectedInstance) &&
                     drive?.isNetappDrive &&
                     drive.driveLetter !== defaultDataDriveLetter
             );

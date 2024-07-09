@@ -26,22 +26,31 @@ const SelectTarget = () => {
     const { target, source, aggregatedDbHostList, showError, dataFilePath, logFilePath } = useAppSelector(
         state => state.createSandbox
     );
-    const { isDemoMode } = useAppSelector(state => state.auth);
+    const { isDemoMode, isInventoryV2 } = useAppSelector(state => state.auth);
     const { selectedDatabaseHost, selectedDatabase, selectedDatabaseInstance } = target;
-    const { selectedDatabaseHost: selectedSourceDbHost } = source;
+    const { selectedDatabaseHost: selectedSourceDbHost, selectedDatabaseInstance: selectedSourceDbInstance } = source;
 
     //Function to generate the options for Select Field
     const generateTargetName = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         const filteredHosts = selectedSourceDbHost
-            ? aggregatedDbHostList.filter(
-                  item =>
-                      item?.topology?.fileSystemId &&
-                      item?.topology?.fileSystemId === selectedSourceDbHost?.data?.topology?.fileSystemId &&
-                      item?.topology?.vpcId &&
-                      item?.topology?.vpcId === selectedSourceDbHost?.data?.topology?.vpcId &&
-                      item?.status === STATUS_CONST.UP
-              )
+            ? aggregatedDbHostList.filter((item: any) => {
+                  if (isInventoryV2) {
+                      return (
+                          item?.nodeTopology?.vpcId &&
+                          item?.nodeTopology?.vpcId === selectedSourceDbHost?.data?.nodeTopology?.vpcId &&
+                          item?.databaseHostStatus?.toLowerCase() === STATUS_CONST.ONLINE.toLowerCase()
+                      );
+                  } else {
+                      return (
+                          item?.topology?.fileSystemId &&
+                          item?.topology?.fileSystemId === selectedSourceDbHost?.data?.topology?.fileSystemId &&
+                          item?.topology?.vpcId &&
+                          item?.topology?.vpcId === selectedSourceDbHost?.data?.topology?.vpcId &&
+                          item?.status === STATUS_CONST.UP
+                      );
+                  }
+              })
             : [];
         filteredHosts?.map((obj, idx: number) => {
             const option = generateOptionType(obj?.id, obj?.name, '', false, '', obj);
@@ -53,21 +62,42 @@ const SelectTarget = () => {
     }, [aggregatedDbHostList, selectedSourceDbHost]);
 
     const generateTargetInstance = useMemo<optionType[]>((): optionType[] => {
-        const hostName = [{ label: 'MSSQLSERVER', value: 'MSSQLSERVER' }];
+        let instanceList = [];
+
+        if (isInventoryV2) {
+            const selectedHostData: any = aggregatedDbHostList.find(
+                (hostItem: any) => hostItem?.id === selectedDatabaseHost?.value
+            );
+            instanceList = selectedHostData?.databaseInstancesSummary
+                ? selectedHostData.databaseInstancesSummary.map((instanceItem: any) => {
+                      return {
+                          value: instanceItem?.databaseInstanceId,
+                          label: instanceItem?.databaseInstanceName,
+                          status: instanceItem?.status,
+                          fileSystemId: instanceItem?.databaseInstanceTopology?.fileSystemId
+                      };
+                  })
+                : [];
+        } else {
+            instanceList = [{ label: 'MSSQLSERVER', value: 'MSSQLSERVER' }];
+        }
         const options: optionType[] = [];
-        hostName?.map((obj, idx: number) => {
+        instanceList?.map((obj: any, idx: number) => {
             const option = generateOptionType(obj?.value, obj?.label, '', false, '');
-            options.push(option);
+            if (
+                !isInventoryV2 ||
+                (obj?.status?.toLowerCase() === STATUS_CONST.UP.toLowerCase() &&
+                    obj?.fileSystemId === selectedSourceDbInstance?.data?.fileSystemId)
+            ) {
+                options.push(option);
+            }
         });
 
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [selectedDatabaseHost, selectedSourceDbInstance]);
 
     const isValidDBName = () => {
-        if (isDemoMode) {
-            return '';
-        }
         if (showError && !selectedDatabase) {
             return GENERAL.ACTION_REQUIRED;
         }
@@ -79,12 +109,16 @@ const SelectTarget = () => {
     useEffect(() => {
         if (generateTargetName?.length) {
             dispatch(setTargetDbHost(generateTargetName[0]));
+        } else {
+            dispatch(setTargetDbHost(null));
         }
     }, [generateTargetName]);
 
     useEffect(() => {
         if (generateTargetInstance?.length) {
             dispatch(setTargetDbInstance(generateTargetInstance[0]));
+        } else {
+            dispatch(setTargetDbInstance(null));
         }
     }, [generateTargetInstance]);
 
@@ -169,6 +203,7 @@ const SelectTarget = () => {
                                     defaultValue={selectedDatabaseHost ? selectedDatabaseHost : generateTargetName[0]}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setTargetDbHost(selectedOptions));
+                                        dispatch(setTargetDbInstance(null));
                                     }}
                                     value={selectedDatabaseHost}
                                     isSearchable={true}
@@ -180,18 +215,14 @@ const SelectTarget = () => {
                                 <SelectField
                                     label={GENERAL.TARGET_INSTANCE}
                                     isClearable={false}
-                                    defaultValue={
-                                        selectedDatabaseInstance
-                                            ? selectedDatabaseInstance
-                                            : [generateTargetInstance[0]]
-                                    }
+                                    value={selectedDatabaseInstance}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setTargetDbInstance(selectedOptions));
                                     }}
                                     isSearchable={true}
                                     options={generateTargetInstance}
                                     className={styles.selectField}
-                                    isDisabled={true}
+                                    isDisabled={!isInventoryV2}
                                 />
 
                                 {windowSize.width <= 1500 && (

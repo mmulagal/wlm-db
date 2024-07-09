@@ -244,7 +244,7 @@ export const formatDate = (date: string | number) => {
 };
 
 export const formatDateWithTime = (date: string | number) => {
-    const dateStr = date.toString();
+    const dateStr = (date && date.toString()) || '';
     return moment(new Date(parseInt(dateStr))).format('LL HH:mm');
 };
 
@@ -613,9 +613,11 @@ export const getAggrStorageSavings = (
 ) => {
     let totalConsume = 0;
     let storageSavings = 0;
+    let storageList: (string | undefined)[] = [];
 
     data?.map((val: any) => {
         let storageType = val?.topology?.fileSystemType || '';
+        let fsxVal = val?.topology?.fileSystemId || '';
         let fsxType = '';
         if (storageType.includes(GENERAL.FSX_FOR_ONTAP)) {
             fsxType = 'fsxn';
@@ -625,17 +627,22 @@ export const getAggrStorageSavings = (
             fsxType = 'ebs';
         }
         if (fsxType) {
-            if (val?.storage?.[fsxType]?.used) {
-                totalConsume += val.storage[fsxType].used;
-            }
-            if (val?.storage?.[fsxType]?.spaceSavings) {
-                storageSavings += val.storage[fsxType].spaceSavings;
+            if (!fsxVal || !storageList.includes(fsxVal)) {
+                if (val?.storage?.[fsxType]?.used) {
+                    totalConsume += val.storage[fsxType].used;
+                }
+                if (val?.storage?.[fsxType]?.spaceSavings) {
+                    storageSavings += val.storage[fsxType].spaceSavings;
+                }
+                if (fsxVal) {
+                    storageList.push(fsxVal);
+                }
             }
         }
     });
 
     if (sandboxSavings) {
-        totalConsume += sandboxSavings?.consumedStorage || 0;
+        totalConsume += (sandboxSavings?.consumedStorage || 0) + (sandboxSavings?.savedStorage || 0);
         storageSavings += sandboxSavings?.savedStorage || 0;
     }
     const storageConsume = totalConsume - storageSavings;
@@ -1393,10 +1400,22 @@ export const removeOldApisError = (data: any) => {
 // This function will create post payload for register credential API (registerResourceCredentials)
 export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string) => {
     const state = store.getState();
-    const detectManageUserName = state?.inventory?.detectManageUserName;
-    const detectManagePassword = state?.inventory?.detectManagePassword;
-    const detectOntapUsername = state?.inventory?.detectOntapUsername;
-    const detectOntapPassword = state?.inventory?.detectOntapPassword;
+    const isInventoryV2 = state?.auth?.isInventoryV2;
+    let detectManageUserName = '';
+    let detectManagePassword = '';
+    let detectOntapUsername = '';
+    let detectOntapPassword = '';
+    if (isInventoryV2) {
+        detectManageUserName = state?.inventoryV2?.detectManageUserName;
+        detectManagePassword = state?.inventoryV2?.detectManagePassword;
+        detectOntapUsername = state?.inventoryV2?.detectOntapUsername;
+        detectOntapPassword = state?.inventoryV2?.detectOntapPassword;
+    } else {
+        detectManageUserName = state?.inventory?.detectManageUserName;
+        detectManagePassword = state?.inventory?.detectManagePassword;
+        detectOntapUsername = state?.inventory?.detectOntapUsername;
+        detectOntapPassword = state?.inventory?.detectOntapPassword;
+    }
     let credList = [];
     if (detectManageUserName && detectManagePassword) {
         credList.push({
@@ -1552,4 +1571,8 @@ export const isSmbProtocol = (protocolList: Array<string> | undefined) => {
     } else {
         return false;
     }
+};
+
+export const isClusteredWithSelectedInstance = (val: any) => {
+    return 'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
 };

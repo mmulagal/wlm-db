@@ -1,8 +1,9 @@
-import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL, STORAGE_TYPE } from '@prisma/client';
+import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL, STORAGE_TYPE, SOURCE, DATABASE_DEPLOYMENT_TYPE } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
+import { databaseInstanceMetadata } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -54,13 +55,23 @@ interface Config {
     data?: object;
 }
 
-interface DatabaseInstance {
+interface DatabaseInstanceRecord {
     credentialsId: string;
     resourceId: string;
-    sqlInstanceId: string;
-    sqlInstanceName: string;
+    region: string;
+    databaseInstanceId: string;
+    databaseInstanceName: string;
     fsxnIds: string;
     isDefault: boolean;
+    source: string;
+    sqlDeploymentType: string;
+    fsxSvmId: object;
+    storageProtocol?: string;
+    numberofUserDbsCreated?: number;
+    sandboxCreated?: boolean;
+    metaData?: databaseInstanceMetadata;
+    databaseType: string;
+    storageType?: string;
 }
 
 async function listDeployments(
@@ -534,10 +545,42 @@ async function updateResourceMetaData(accountId: string, resourceId: string, met
     });
 }
 
-async function upsertDatabaseInstance(accountId: string, record: DatabaseInstance) {
+async function updateInstanceMetadata(accountId: string, instanceId: string, metaData: any) {
+    logger.info('Updating instance metadata', { accountId, instanceId });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.database_instances.updateMany({
+        where: {
+            account_id: accountId,
+            database_instance_id: instanceId
+        },
+        data: {
+            ...(!isEmpty(metaData) && { metadata: metaData })
+        }
+    });
+}
+
+async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanceRecord) {
     logger.info('Upserting a database instance record', { accountId, record });
 
-    const { resourceId, credentialsId, sqlInstanceId, sqlInstanceName, isDefault, fsxnIds: fsxnId } = record;
+    const {
+        resourceId,
+        credentialsId,
+        region,
+        databaseInstanceId,
+        databaseInstanceName,
+        fsxnIds,
+        isDefault,
+        source,
+        sqlDeploymentType,
+        fsxSvmId,
+        numberofUserDbsCreated,
+        sandboxCreated,
+        storageProtocol,
+        metaData,
+        databaseType
+    } = record;
 
     accountId = checkAccount(accountId);
 
@@ -545,32 +588,66 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
         create: {
             account_id: accountId,
             credentials_id: credentialsId,
+            region,
             resource_id: resourceId,
-            sql_instance_id: sqlInstanceId,
-            sql_instance_name: sqlInstanceName,
-            fsxn_ids: fsxnId,
-            is_default: isDefault
+            database_instance_id: databaseInstanceId,
+            database_instance_name: databaseInstanceName,
+            fsxn_ids: fsxnIds,
+            is_default: isDefault,
+            source: source as SOURCE, // Fix: Update the type of 'source' to 'SOURCE'
+            database_type: databaseType,
+            database_deployment_type: sqlDeploymentType as DATABASE_DEPLOYMENT_TYPE,
+            fsx_svm_id: fsxSvmId,
+            ...(storageProtocol && { storage_protocol: storageProtocol }),
+            ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
+            ...(sandboxCreated && { sandbox_created: sandboxCreated }),
+            ...(metaData && { metadata: metaData as { string: string } })
         },
         update: {
-            ...(sqlInstanceName && { sql_instance_name: sqlInstanceName }),
-            ...(fsxnId && { fsxn_ids: fsxnId }),
-            ...(isDefault && { is_default: isDefault })
+            ...(databaseInstanceName && { database_instance_name: databaseInstanceName }),
+            ...(fsxnIds && { fsxn_ids: fsxnIds }),
+            ...(fsxSvmId && { fsx_svm_id: fsxSvmId }),
+            ...(isDefault && { is_default: isDefault }),
+            ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
+            ...(sandboxCreated && { sandbox_created: sandboxCreated })
         },
         where: {
             uk_wlmdb_database_instances: {
                 account_id: accountId,
                 credentials_id: credentialsId,
                 resource_id: resourceId,
-                sql_instance_id: sqlInstanceId
+                database_instance_id: databaseInstanceId
             }
         }
     });
 }
 
-async function listDatabaseInstances(accountId: string, credentialsId: string, record: any) {
+async function updateDatabaseInstanceMetadata(
+    accountId: string,
+    credentialsId: string,
+    databaseInstanceId: string,
+    metaData: any
+) {
+    logger.info('Updating resource metadata', { accountId, databaseInstanceId, credentialsId });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.database_instances.updateMany({
+        where: {
+            account_id: accountId,
+            database_instance_id: databaseInstanceId,
+            credentials_id: credentialsId
+        },
+        data: {
+            ...(!isEmpty(metaData) && { metadata: metaData })
+        }
+    });
+}
+
+async function listDatabaseInstances(accountId: string, record: any) {
     logger.info('List database instances for given account/credentialsId', accountId);
 
-    const { resourceId, instanceId, instanceName, isDefault } = record;
+    const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId } = record;
 
     accountId = checkAccount(accountId);
 
@@ -579,8 +656,8 @@ async function listDatabaseInstances(accountId: string, credentialsId: string, r
             account_id: accountId,
             credentials_id: credentialsId,
             ...(resourceId && { resource_id: resourceId }),
-            ...(instanceId && { sql_instance_id: instanceId }),
-            ...(instanceName && { sql_instance_name: instanceName }),
+            ...(sqlInstanceId && { database_instance_id: sqlInstanceId }),
+            ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
             ...(isDefault && { is_default: isDefault })
         },
         orderBy: {
@@ -603,7 +680,7 @@ async function deleteDatabaseInstance(
             account_id: accountId,
             credentials_id: credentialsId,
             resource_id: resourceId,
-            sql_instance_id: {
+            database_instance_id: {
                 in: databaseInstanceIds
             }
         }
@@ -634,6 +711,8 @@ export {
     updateResourceMetaData,
     upsertDatabaseInstance,
     listDatabaseInstances,
+    updateDatabaseInstanceMetadata,
     deleteDatabaseInstance,
-    DatabaseInstance
+    DatabaseInstanceRecord,
+    updateInstanceMetadata
 };

@@ -16,6 +16,8 @@ export const initialCreateNewUserState: any = {
     driveLetter: '',
     driveLetterLogFile: '',
     dbHostName: '',
+    instanceId: '',
+    instanceName: '',
     isExistingDataDrive: false,
     isExistingLogDrive: false,
     isDataSizeValid: true,
@@ -77,6 +79,12 @@ const createNewUserSlice = createSlice({
         setDBHostName: (state, action: PayloadAction<any>) => {
             state.dbHostName = action.payload;
         },
+        setInstanceId: (state, action: PayloadAction<any>) => {
+            state.instanceId = action.payload;
+        },
+        setInstanceName: (state, action: PayloadAction<any>) => {
+            state.instanceName = action.payload;
+        },
         setIsExistingDataDrive: (state, action: PayloadAction<any>) => {
             state.isExistingDataDrive = action.payload;
         },
@@ -117,6 +125,8 @@ export const {
     setDriveLetter,
     setDriveLetterForLogFile,
     setDBHostName,
+    setInstanceId,
+    setInstanceName,
     setIsExistingDataDrive,
     setIsExistingLogDrive,
     setIsDataSizeValid,

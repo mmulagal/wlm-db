@@ -1,172 +1,413 @@
-import { DsFlashingDotsLoader, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
-import { useNavigate } from 'react-router-dom';
+import {
+    Button,
+    DsFlashingDotsLoader,
+    Popover,
+    Table,
+    TableTopBar,
+    Typography,
+    useDialog,
+    useTable
+} from '@netapp/design-system';
+
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
+import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import styles from './InventoryTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { useEffect, useRef, useState } from 'react';
+
+import { useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST } from '../../../utils/consts';
+import {
+    INVENTORY_STATUS,
+    INVENTORY_ACTIONS,
+    SSM_TROUBLESHOOTING_LINK,
+    PREPARE_API_ENDPOINT
+} from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
-import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 
-import { isSmbProtocol, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
-import { updateResourceId } from '../../../store/authSlice';
-import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import { collapseAllRows, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
 
-import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
+
 import {
-    addInitialDBCreateData,
-    initialCreateNewUserState,
-    setDBHostName
-} from '../../../store/workloadFactory/createNewDBSlice';
-import { renderAllocatedCapacity, renderEstimatedCost } from '../../Inventory/InventoryUtils';
+    installModuleNotification,
+    renderAllocatedCapacity,
+    renderCellData,
+    renderEstimatedCost,
+    renderInstanceListText,
+    renderVpcText
+} from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
-import { useRunOnce } from '../../../common/hooks/useRunOnce';
+
+import {
+    handleManageNotification,
+    handleManageTriggerNotification,
+    sortInventoryTableData,
+    updateInstanceStatus
+} from '../InventoryUtilsV2';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
+import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../utils/apiService';
+import store from '../../../store/store';
+import {
+    setInProgressInstances,
+    setInventoryExpandedRowHostData,
+    setInventoryTableData,
+    setUnManagedPerfInstanceIdsList
+} from '../../../store/workloadFactory/inventoryV2Slice';
+import { NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
-    const [menuOpenedRow, setOpenedRow] = useState(null);
-    const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
-    const [isManageButtonDisable, setIsManageButtonDisable] = useState(false);
-    const [scrollPos, setScrollPos] = useState(0);
 
-    //For scroll sync
-    useRunOnce(() => {
-        const handleOuterScroll = () => {
-            setScrollPos(currentTable[0].scrollLeft);
-        };
+    const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
+    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+    const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
 
-        const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
+    const [loading, setLoading] = useState(false);
 
-        if (currentTable[0]) {
-            //@ts-ignore
-            currentTable[0].addEventListener('scroll', handleOuterScroll);
-        }
+    const [manageInstanceApi] = useManageMssqlInstanceMutation();
+    const [prepareHostApi] = usePrepareHostMutation();
 
-        return () => {
-            if (currentTable[0]) {
-                //@ts-ignore
-                currentTable[0].removeEventListener('scroll', handleOuterScroll);
-            }
-        };
-    });
-
-    const mockData = [
-        {
-            id: '1',
-            serverInstance: 'SQL Server instance 1',
-            status: 'Unmanaged',
-            storageType: 'FSx for ONTAP'
-        },
-        { id: '2', serverInstance: 'SQL Server instance 2', status: 'inProgress', storageType: 'FSx for ONTAP' },
-        { id: '3', serverInstance: 'SQL Server instance 3', status: 'Unmanaged', storageType: 'FSx for ONTAP' },
-        { id: '4', serverInstance: 'SQL Server instance 4', status: 'Unmanaged', storageType: 'FSx for ONTAP' },
-        { id: '5', serverInstance: 'SQL Server instance 5', status: 'managed', storageType: 'FSx for ONTAP' }
-    ];
-
-    //Use effect to check weather to disable manage button in dialog
     useEffect(() => {
-        const checkButtonStatus = mockData.some((item: any) => item.status === 'Unmanaged');
-
-        setIsManageButtonDisable(!checkButtonStatus);
-    }, []);
+        setLoading(
+            databaseHostsLoading ||
+                isDiscoverInProgress ||
+                fullHostDataLoading ||
+                isManagedHostListLoading ||
+                fsxCredentialStatusLoading
+        );
+    }, [
+        databaseHostsLoading,
+        isDiscoverInProgress,
+        fullHostDataLoading,
+        isManagedHostListLoading,
+        fsxCredentialStatusLoading
+    ]);
 
     useEffect(() => {
         if (inventoryTableData) {
             let result: any = [];
             Object.keys(inventoryTableData).map((key: string) => {
+                if (removeSecNodeDiscoveredList.includes(key)) {
+                    return;
+                }
                 let instanceList: any = [];
+                let instanceNameList: any = [];
+                let vpcIdAndNameText = '';
                 const allocatedCapacity = inventoryTableData[key]?.allocatedCapacity || '';
                 inventoryTableData[key]?.ec2Details?.map((row: any) => {
-                    instanceList.push(row?.name + ' | ' + row?.id);
+                    if (row?.name) {
+                        instanceNameList.push(row?.name);
+                    }
+                    if (row?.name && row?.id) {
+                        instanceList.push(row?.name + ' | ID: ' + row?.id);
+                    } else if (row?.id) {
+                        instanceList.push(GENERAL.NOT_AVAILABLE + ' | ID: ' + row?.id);
+                    }
                 });
+                if (inventoryTableData[key]?.vpcId && inventoryTableData[key]?.vpcName) {
+                    vpcIdAndNameText = inventoryTableData[key]?.vpcName + ' | ID: ' + inventoryTableData[key]?.vpcId;
+                } else if (inventoryTableData[key]?.vpcId) {
+                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + inventoryTableData[key]?.vpcId;
+                } else {
+                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + GENERAL.NOT_AVAILABLE;
+                }
                 const rowData = {
                     ...inventoryTableData[key],
                     sqlServerInstancesText:
-                        '(' +
-                        inventoryTableData[key]?.managedInstance +
-                        ' out of ' +
-                        inventoryTableData[key]?.totalInstance +
-                        ' managed)',
+                        inventoryTableData[key]?.totalInstance !== 0
+                            ? '(' +
+                              inventoryTableData[key]?.managedInstance +
+                              ' out of ' +
+                              inventoryTableData[key]?.totalInstance +
+                              ' managed)'
+                            : '',
                     instanceListText: instanceList.join(','),
+                    instanceNameListText: instanceNameList.join(', '),
+                    vpcIdAndNameText: vpcIdAndNameText,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
                 };
                 result.push(rowData);
             });
-            setTableData(result);
+            // sort it based on action and whether it is disable or enable
+            setTableData(sortInventoryTableData(result));
         } else {
             setTableData([]);
         }
     }, [inventoryTableData]);
 
-    const menuItems = (row: any) => {
-        let isSmb = isSmbProtocol(row?.storage?.fsxn?.protocol);
-        return [
-            {
-                id: 'viewOverview',
-                displayName: 'View instance',
-                disabled: row?.status === STATUS_CONST.UP ? false : true
-            },
-            {
-                id: 'viewDatabaseList',
-                displayName: 'View databases',
-                disabled: row?.status === STATUS_CONST.UP ? false : true
-            },
-            {
-                id: 'createNewUserDatabase',
-                displayName: GENERAL.CREATE_USER_DB_TITLE,
-                disabled: row?.status === STATUS_CONST.UP && !isSmb ? false : true,
-                infoText: isSmb ? GENERAL.SMB_PROTOCOL_DISABLED : ''
-            },
-            {
-                id: 'unmanage',
-                displayName: 'Unmanage',
-                disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
+    const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
+        const updatedState = store.getState();
+        const { inProgressInstances } = updatedState.inventoryV2;
+        const inProgressIds = instances.map((instance: any) => `${rowData?.ec2InstanceId}_${instance}`);
+        dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
+        handleManageTriggerNotification(instances, dispatch, styles);
+        let payload: any = {
+            ec2InstanceId: rowData?.ec2InstanceId,
+            databaseInstanceNames: instances
+        };
+        if (rowData?.resourceId) {
+            payload.databaseHostId = rowData.resourceId;
+        }
+        manageInstanceApi({
+            credentialsId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
+            regionId: updatedState?.headers?.headerSelectedRegion?.label2,
+            payload
+        }).then((res: any) => {
+            const updatedState = store.getState();
+            const { inProgressInstances } = updatedState?.inventoryV2;
+            let updatedInProgressInstances = new Set([...inProgressInstances]);
+            inProgressIds.map((inProgressId: any) => {
+                updatedInProgressInstances.delete(inProgressId);
+            });
+            dispatch(setInProgressInstances(updatedInProgressInstances));
+            if (res?.data?.items) {
+                let successFullInstances: any = [];
+                let failedInstances: any = [];
+                res?.data?.items.map((item: any) => {
+                    if (item.status === NOTIFICATION_TYPES.SUCCESS) {
+                        successFullInstances.push(item);
+                    } else {
+                        failedInstances.push(item);
+                    }
+                });
+                handleManageNotification(instances, successFullInstances, '', isDetected, dispatch, styles);
+                const updatedInventoryTableData = updateInstanceStatus(
+                    'manage',
+                    rowData,
+                    instances,
+                    successFullInstances,
+                    res?.data?.resourceId
+                );
+                dispatch(setInventoryTableData(updatedInventoryTableData));
+            } else if (res?.error) {
+                if (res?.error?.status === 422 || res?.error?.status === 500) {
+                    const updatedState = store.getState();
+                    // handle prepare API
+                    const errorList = res?.error?.data?.message?.split('\n');
+                    let prepareApiRequired = false;
+                    errorList.map((errorItem: any) => {
+                        if (errorItem.includes(PREPARE_API_ENDPOINT)) {
+                            prepareApiRequired = true;
+                        }
+                    });
+                    if (prepareApiRequired) {
+                        prepareHostApi({
+                            credentialId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
+                            regionId: updatedState?.headers?.headerSelectedRegion?.label2,
+                            instanceId: rowData?.ec2InstanceId
+                        }).then((prepareRes: any) => {
+                            if (prepareRes && !prepareRes?.error) {
+                                const msgObj =
+                                    instances.length === 1
+                                        ? isDetected
+                                            ? GENERAL.PREPARE_DETECTED_INSTANCE_INFO
+                                            : GENERAL.PREPARE_INSTANCE_INFO
+                                        : isDetected
+                                        ? GENERAL.PREPARE_DETECTED_INSTANCES_INFO
+                                        : GENERAL.PREPARE_INSTANCES_INFO;
+                                installModuleNotification(
+                                    styles,
+                                    instances.length === 1 ? instances[0] : '',
+                                    dispatch,
+                                    msgObj
+                                );
+                            } else {
+                                handleManageNotification(instances, [], '', isDetected, dispatch, styles);
+                            }
+                        });
+                    } else {
+                        handleManageNotification(instances, [], errorList[0], isDetected, dispatch, styles);
+                    }
+                } else {
+                    handleManageNotification(instances, [], '', isDetected, dispatch, styles);
+                }
             }
-        ];
+        });
     };
 
-    const ExpandedRow = ({ rowData }: any) => {
-        if (rowData.hasOwnProperty('status')) {
-            return <ManagedHostSubTable rowId={rowData?.id} scrollPosition={scrollPos} />;
+    const ExpandedRow = useCallback(({ rowData }: any) => {
+        if (rowData?.ssmState === INVENTORY_STATUS.ONLINE || rowData?.totalInstance !== 0) {
+            dispatch(setInventoryExpandedRowHostData(rowData));
+            return <ManagedHostSubTable handleManageInstances={handleManageInstances} />;
         }
         return <OfflineComponent />;
-    };
+    }, []);
 
-    const handleDialog = () => {
+    const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Manage data base host <data base name> instances'}
-                content={<ManagedHostDialog dialogData={mockData} />}
-                primaryButton={'Manage'}
+                header={`Manage database host ${rowData?.name} instances`}
+                content={<ManagedHostDialog dialogData={rowData} />}
+                primaryButton={INVENTORY_ACTIONS.MANAGE}
                 secondaryButton={'Close'}
                 callback={() => {
-                    console.log('action');
+                    const updatedState = store.getState();
+                    const manageHostSelectedRows = updatedState?.inventoryV2?.manageHostSelectedRows;
+                    const selectedInstanceNames = manageHostSelectedRows.map((row: any) => row?.databaseInstanceName);
+                    handleManageInstances(rowData, selectedInstanceNames);
                 }}
                 closeCallback={() => {
                     closeDialog();
                 }}
                 customClass={styles.setWidth}
-                primaryButtonDisabled={isManageButtonDisable}
+                primaryButtonDisabled={false}
             />
         );
+    };
+
+    const addInstanceIdToGetPerf = (rowData: any) => {
+        // First check if this is already opened or closed. If this data is already available or not.
+        if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
+            // If this has unmanaged rows or not ?
+            let unmanagedRows = rowData?.sqlServerInstances?.filter(
+                (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
+            );
+            if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
+                let instanceList = [];
+                instanceList.push(rowData?.ec2InstanceId);
+                const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
+                if (partnerData && partnerData?.length > 0) {
+                    instanceList.push(partnerData?.[0]?.id);
+                }
+                dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
+            }
+            // This has to be called even if any row is becoming unmanaged row or managed row
+        }
+    };
+
+    const lastColJSX = (
+        rowData: any,
+        checkForAllManaged: boolean,
+        checkForAllUnDetectInstance: boolean,
+        checkForAllUnManagedInstance: boolean
+    ) => {
+        //Condition if installation mode is AOAG than disable manage
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
+            return (
+                <TooltipComponent title={GENERAL.AOAG_MANAGE_DISABLE} placement="bottom" width="320px" height="50px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+        //Condition for if all managed then showing disable managed button with tooltip
+        if (rowData?.action && checkForAllManaged) {
+            return (
+                <TooltipComponent title={GENERAL.ALL_MANAGED_TEXT} placement="bottom" width="320px" height="90px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+        //Check for all un-detect instances and storage type is N/A
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
+            return (
+                <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all Explore Savings undetected rows
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
+            return (
+                <TooltipComponent
+                    title={GENERAL.ALL_ES_UNDETECTED_ROWS}
+                    placement="bottom"
+                    width="320px"
+                    height="100px"
+                >
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all Explore Savings FSXW rows
+        if (
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+            checkForAllUnManagedInstance &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS
+        ) {
+            return (
+                <TooltipComponent title={GENERAL.ES_FSXW_NOT_SUPPORTED} placement="bottom" width="320px" height="50px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+        //Normal use case to show dialog or move to explore savings
+        if (
+            rowData?.action &&
+            !checkForAllManaged &&
+            !rowData?.actionDisable &&
+            rowData.ssmState !== INVENTORY_STATUS.OFFLINE
+        ) {
+            return (
+                <div
+                    className={styles.detectManage}
+                    onClick={() => {
+                        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
+                            onClickESHost(dispatch, rowData);
+                        } else {
+                            handleDialog(rowData);
+                        }
+                    }}
+                >
+                    <Typography variant="Regular_14" className={styles.textStyle}>
+                        {rowData?.action}
+                    </Typography>
+                </div>
+            );
+        }
+        if (
+            rowData?.action &&
+            !checkForAllManaged &&
+            rowData?.actionDisable &&
+            rowData.ssmState !== INVENTORY_STATUS.OFFLINE
+        ) {
+            return (
+                <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
+                    <Typography variant="Regular_14" className={styles.textStyle}>
+                        {rowData?.action}
+                    </Typography>
+                </div>
+            );
+        }
     };
 
     const lastColDetails = () => {
@@ -177,32 +418,21 @@ const InventoryTable = () => {
             width: '184px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        {!rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
-                            <div
-                                className={styles.detectManage}
-                                onClick={() => {
-                                    if (rowData?.action === 'Explore savings') {
-                                        onClickESHost(dispatch, rowData, isDemoMode);
-                                    } else {
-                                        handleDialog();
-                                    }
-                                }}
-                            >
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {rowData?.action}
-                                </Typography>
-                            </div>
-                        )}
-                        {rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
-                            <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {rowData?.action}
-                                </Typography>
-                            </div>
-                        )}
-                    </>
+                const checkForAllManaged = rowData?.sqlServerInstances?.every(
+                    (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
+                );
+                const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
+                    (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
+                );
+                const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
+                    (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
+                );
+
+                return lastColJSX(
+                    rowData,
+                    checkForAllManaged,
+                    checkForAllUnDetectInstance,
+                    checkForAllUnManagedInstance
                 );
             }
         };
@@ -225,6 +455,7 @@ const InventoryTable = () => {
                                 onClick={(e: any) => {
                                     e.stopPropagation();
                                     expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    addInstanceIdToGetPerf(rowData);
                                 }}
                             />
                         </div>
@@ -245,31 +476,20 @@ const InventoryTable = () => {
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
                         <div className={styles.firstColText}>
-                            {rowData?.status === STATUS_CONST.UP && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
+                            {rowData?.status === INVENTORY_STATUS.ONLINE && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.DOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
+                            {rowData?.status === INVENTORY_STATUS.OFFLINE && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.INITIALIZING && (
-                                <div
-                                    className={`${styles.statusIcon} ${styles['circle']} ${styles['initializing']}`}
-                                ></div>
-                            )}
-                            {rowData?.status === STATUS_CONST.FAILED && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
+                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
                             )}
                             <Typography variant="Regular_13">
                                 {rowData?.status}
                                 {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
                                 {!rowData?.status && !rowData?.loading && 'Unknown'}
                             </Typography>
-                            {/* <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">
-                                {rowData?.topology?.serverType}
-                                {!rowData?.topology?.serverType && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.topology?.serverType && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-                            </Typography> */}
                         </div>
                     </div>
                 );
@@ -282,16 +502,18 @@ const InventoryTable = () => {
             width: '216px',
             isSortable: true,
             accessorForTextFilter: 'sqlServerInstancesText',
-            renderCell: (cellData: string, rowData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
-                        {cellData && (
+                        {cellData && rowData?.sqlServerInstancesText && cellData !== 0 ? (
                             <>
                                 <Typography variant="Semibold_14">{cellData + ' instances'}</Typography>
                                 <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
                             </>
+                        ) : (
+                            ''
                         )}
-                        {!cellData && GENERAL.NOT_AVAILABLE}
+                        {!cellData || !rowData?.sqlServerInstancesText ? GENERAL.NOT_AVAILABLE : ''}
                     </div>
                 );
             }
@@ -303,7 +525,7 @@ const InventoryTable = () => {
             width: '216px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -314,27 +536,7 @@ const InventoryTable = () => {
             width: '212px',
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
-                let instanceList: any = cellData ? cellData.split(',') : null;
-                return (
-                    <>
-                        {instanceList && (
-                            <div>
-                                {instanceList?.[0] && (
-                                    <Typography variant="Regular_13" className={styles.colText}>
-                                        {instanceList[0]}
-                                    </Typography>
-                                )}
-                                {instanceList?.[1] && (
-                                    <Typography variant="Regular_13" className={styles.colText}>
-                                        {instanceList[1]}
-                                    </Typography>
-                                )}
-                            </div>
-                        )}
-                        {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-                    </>
-                );
+                return renderInstanceListText(cellData, rowData, styles);
             }
         },
         {
@@ -342,29 +544,59 @@ const InventoryTable = () => {
             Header: GENERAL.DB_HOST_VPC,
             accessor: 'vpcName',
             isSortable: true,
-            width: '140px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            width: '150px',
+            renderCell: (cellData: any, rowData: any) => {
+                return renderVpcText(cellData, rowData, styles);
             }
         },
         {
             id: '6',
             Header: 'SSM connectivity',
             accessor: 'ssmState',
-            width: '212px',
+            width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.firstColText}>
-                        {rowData?.ssmState === 'connected' && (
-                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
+                        {rowData?.ssmState === INVENTORY_STATUS.ONLINE && (
+                            <>
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                                <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
+                            </>
                         )}
-                        {rowData?.ssmState !== 'connected' && (
-                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
+                        {rowData?.ssmState === INVENTORY_STATUS.OFFLINE && (
+                            <>
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                                <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
+
+                                <div className={styles.ssmOffline}>
+                                    <Popover
+                                        popoverClass={''}
+                                        children={
+                                            <div>
+                                                <Typography variant="Regular_14">
+                                                    {GENERAL.SSM_NO_CONNECTION[0]}
+                                                </Typography>
+                                                <Button
+                                                    className={styles.ssmLink}
+                                                    variant="link"
+                                                    onClick={() =>
+                                                        window.open(SSM_TROUBLESHOOTING_LINK, '_blank', 'noopener')
+                                                    }
+                                                >
+                                                    {GENERAL.SSM_NO_CONNECTION[1]}
+                                                </Button>
+                                            </div>
+                                        }
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        isAppendedToBody={true}
+                                        container={<TooltipIcon />}
+                                    />
+                                </div>
+                            </>
                         )}
-                        <Typography variant="Regular_13">
-                            {rowData?.ssmState === 'connected' ? 'Online' : 'Offline'}
-                        </Typography>
                     </div>
                 );
             }
@@ -379,17 +611,18 @@ const InventoryTable = () => {
                 return renderEstimatedCost(cellData, rowData, styles);
             }
         },
-        {
-            id: '8',
-            Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-            accessor: 'allocatedCapacityText',
-            isSortable: true,
-            width: '216px',
-            accessorForTextFilter: 'allocatedCapacityText',
-            renderCell: (cellData: string | number, rowData: any) => {
-                return renderAllocatedCapacity(cellData, rowData);
-            }
-        },
+        // ToDo - disabled only for GA release
+        // {
+        //     id: '8',
+        //     Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
+        //     accessor: 'allocatedCapacity',
+        //     isSortable: true,
+        //     width: '216px',
+        //     accessorForTextFilter: 'allocatedCapacityText',
+        //     renderCell: (cellData: string | number, rowData: any) => {
+        //         return renderAllocatedCapacity(rowData?.allocatedCapacityText, rowData);
+        //     }
+        // },
         lastColDetails()
     ];
 
@@ -401,61 +634,7 @@ const InventoryTable = () => {
         selectionType: 'none',
         isHorizontalScroll: true,
         isManagedColumns: false,
-        manageColumnsProps: {
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems(rowData)}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-
-                                    if (menuId === 'viewOverview') {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                        dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
-                                        dispatch(updateResourceId(rowData.id));
-                                        dispatch(setDBHostName(rowData?.name));
-                                        dispatch(resetWorkloadFactoryResourceData());
-                                    }
-
-                                    if (menuId === 'viewDatabaseList') {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                        dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
-                                        dispatch(updateResourceId(rowData.id));
-                                        dispatch(setDBHostName(rowData?.name));
-                                        dispatch(resetWorkloadFactoryResourceData());
-                                    }
-
-                                    if (menuId === 'createNewUserDatabase') {
-                                        dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                        dispatch(updateResourceId(rowData.id));
-                                        dispatch(setDBHostName(rowData?.name));
-                                        navigate('../create-new-user');
-                                    }
-
-                                    if (menuId === 'remove') {
-                                        // ToDo
-                                    }
-                                }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
-                    </div>
-                );
-            }
-        },
-        isLazyLoading: false
+        isLazyLoading: loading
     });
 
     useEffect(() => {
@@ -477,6 +656,13 @@ const InventoryTable = () => {
             setTableHorizontalScroll(false);
         }
     }, [tableProps.columnsState]);
+
+    useEffect(() => {
+        if (isRefreshed) {
+            collapseAllRows(tableProps?.updateRowState, tableProps?.rowsState);
+            tableProps?.pagination?.gotoPage(0);
+        }
+    }, [isRefreshed]);
 
     useEffect(() => {
         if (resetPage) {

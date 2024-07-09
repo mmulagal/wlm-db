@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetMssqlInstanceDataMutation,
+    useGetMssqlInstanceDataV2Mutation,
     useGetStorageSavingsMutation,
     useGetViewCalculationsMutation
 } from '../../../utils/apiService';
@@ -16,13 +17,12 @@ import {
     setViewCalculationsLoading,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
-import storageSavingsJson from '../storageSavings.json';
-import viewCalculationJson from '../viewCalculations.json';
 import store from '../../../store/store';
-import { setMssqlInstancesData } from '../../../store/workloadFactory/inventorySlice';
+import { setMssqlInstancesData as setMssqlInstancesDataV1 } from '../../../store/workloadFactory/inventorySlice';
+import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
-import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
+import { INSTANCE_API_FIELDS } from '../../../utils/consts';
 
 const SavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
@@ -39,10 +39,12 @@ const SavingsCalculatorApi = () => {
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
     const [getViewCalculationsApi] = useGetViewCalculationsMutation();
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataMutation();
+    const [getMssqlInstanceDataApiV2] = useGetMssqlInstanceDataV2Mutation();
 
     useEffect(() => {
         const selectedRow = unManagedHostFormatedList.filter((item: any) => item?.id === selectedInstanceId);
@@ -60,12 +62,12 @@ const SavingsCalculatorApi = () => {
                     partnerInstanceRow[0].ec2InstanceId !== selectedPartnerInstanceId
                 ) {
                     dispatch(setSelectedPartnerInstanceId(partnerInstanceRow[0].ec2InstanceId));
-                    if (!isDemoMode) {
+                    if (!isDemoMode && !isInventoryV2) {
                         dispatch(setGetPartnerHostDetailsLoading(true));
                     }
                 }
             }
-            setESInstanceData(selectedRow[0], isDemoMode, selectedDeploymentModel, dispatch);
+            setESInstanceData(selectedRow[0], dispatch);
             // dispatch(setSelectedHostDetails(selectedRow[0]));
         } else {
             dispatch(setSelectedHostDetails({}));
@@ -125,28 +127,17 @@ const SavingsCalculatorApi = () => {
     };
 
     const triggerRefreshApi = () => {
-        if (!isDemoMode) {
-            if (
-                selectedSnapshotFrequency &&
-                numberOfClonedCopies &&
-                selectedCloneRefresh &&
-                monthlyChangeRate &&
-                selectedInstanceId
-            ) {
-                dispatch(setStorageSavingsLoading(true));
-                dispatch(setViewCalculationsLoading(true));
-                getStorageSavingsData();
-                getViewCalculationsData();
-            }
-        } else {
-            // Demo mode code will be removed once actual demo API starts returning data
-            if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-                dispatch(setStorageSavingsResponse(storageSavingsJson['standalone']));
-                dispatch(setViewCalculationsResponse(viewCalculationJson['standalone']));
-            } else {
-                dispatch(setStorageSavingsResponse(storageSavingsJson['aoag']));
-                dispatch(setViewCalculationsResponse(viewCalculationJson['aoag']));
-            }
+        if (
+            selectedSnapshotFrequency &&
+            numberOfClonedCopies &&
+            selectedCloneRefresh &&
+            monthlyChangeRate &&
+            selectedInstanceId
+        ) {
+            dispatch(setStorageSavingsLoading(true));
+            dispatch(setViewCalculationsLoading(true));
+            getStorageSavingsData();
+            getViewCalculationsData();
         }
     };
 
@@ -157,8 +148,11 @@ const SavingsCalculatorApi = () => {
     useEffect(() => {
         if (savingsCalculatorRefresh) {
             if (!isDemoMode && selectedPartnerInstanceId) {
+                dispatch(setSelectedPartnerHostDetails(null));
+                dispatch(setGetPartnerHostDetailsLoading(true));
                 getMssqlDataForPartnerNode();
             }
+            dispatch(setSelectedHostDetails(null));
             getMssqlData();
             triggerRefreshApi();
         }
@@ -168,51 +162,94 @@ const SavingsCalculatorApi = () => {
     // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance.
     const getMssqlData = async () => {
         const state = store.getState();
-        const mssqlInstancesData = state.inventory.mssqlInstancesData;
+        const mssqlInstancesDataV1 = state.inventory.mssqlInstancesData;
+        const mssqlInstancesDataV2 = state.inventoryV2.mssqlInstancesData;
         let mssqlInstancesDataLoad: any = {};
         mssqlInstancesDataLoad[selectedInstanceId] = {
             loading: true,
             data: null,
             error: null
         };
-        dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataLoad }));
+        if (isInventoryV2) {
+            dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataLoad }));
+        } else {
+            dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataLoad }));
+        }
+
         try {
-            const result: any = await getMssqlInstanceDataApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
-                instances: selectedInstanceId,
-                nextToken: ''
-            });
+            let result: any;
+            if (isInventoryV2) {
+                result = await getMssqlInstanceDataApiV2({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instances: selectedInstanceId,
+                    fields: INSTANCE_API_FIELDS.UNMANAGED_DEFAULT.join(','),
+                    nextToken: ''
+                });
+            } else {
+                result = await getMssqlInstanceDataApi({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instances: selectedInstanceId,
+                    nextToken: ''
+                });
+            }
 
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    if (mssqlInstancesData[host?.id]) {
-                        mssqlInstancesDataRes[host?.id] = {
-                            loading: false,
-                            data: host,
-                            error: host?.errors
-                        };
+                    if (isInventoryV2) {
+                        if (mssqlInstancesDataV2[host?.id]) {
+                            mssqlInstancesDataRes[host?.id] = {
+                                loading: false,
+                                data: host,
+                                error: host?.errors,
+                                isManagedHost: false
+                            };
+                        }
+                    } else {
+                        if (mssqlInstancesDataV1[host?.id]) {
+                            mssqlInstancesDataRes[host?.id] = {
+                                loading: false,
+                                data: host,
+                                error: host?.errors,
+                                isManagedHost: false
+                            };
+                        }
                     }
                 });
-                dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataRes }));
+                if (isInventoryV2) {
+                    dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataRes }));
+                } else {
+                    dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataRes }));
+                }
             } else {
                 let mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[selectedInstanceId] = {
                     loading: false,
                     data: null,
-                    error: result?.error?.data?.message
+                    error: result?.error?.data?.message,
+                    isManagedHost: false
                 };
-                dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataErr }));
+                if (isInventoryV2) {
+                    dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
+                } else {
+                    dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataErr }));
+                }
             }
         } catch (error) {
             let mssqlInstancesDataErr: any = {};
             mssqlInstancesDataErr[selectedInstanceId] = {
                 loading: false,
                 data: null,
-                error: error
+                error: error,
+                isManagedHost: false
             };
-            dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataErr }));
+            if (isInventoryV2) {
+                dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
+            } else {
+                dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataErr }));
+            }
         }
     };
 
@@ -220,12 +257,23 @@ const SavingsCalculatorApi = () => {
     const getMssqlDataForPartnerNode = async () => {
         dispatch(setGetPartnerHostDetailsLoading(true));
         try {
-            const result: any = await getMssqlInstanceDataApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
-                instances: selectedPartnerInstanceId,
-                nextToken: ''
-            });
+            let result: any;
+            if (isInventoryV2) {
+                result = await getMssqlInstanceDataApiV2({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instances: selectedPartnerInstanceId,
+                    fields: INSTANCE_API_FIELDS.UNMANAGED_DEFAULT.join(','),
+                    nextToken: ''
+                });
+            } else {
+                result = await getMssqlInstanceDataApi({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instances: selectedPartnerInstanceId,
+                    nextToken: ''
+                });
+            }
 
             if (result && !result?.error) {
                 dispatch(setSelectedPartnerHostDetails(result?.data?.items?.[0]));
@@ -242,7 +290,12 @@ const SavingsCalculatorApi = () => {
 
     useEffect(() => {
         if (!isDemoMode) {
-            if (selectedPartnerInstanceId && headerSelectedCred?.data?.credentialsId && headerSelectedRegion?.label2) {
+            if (
+                selectedPartnerInstanceId &&
+                !isInventoryV2 &&
+                headerSelectedCred?.data?.credentialsId &&
+                headerSelectedRegion?.label2
+            ) {
                 getMssqlDataForPartnerNode();
             }
         }

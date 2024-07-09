@@ -8,7 +8,7 @@ import JobsSummaryTimeline from '../data/jobsSummaryTimeline.json';
 import Templates from '../data/template.json';
 import JobMonitoringDownloads from '../data/jobMonitoringDownload.json';
 import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
-import DiscoverEC2 from '../data/discoverEc2.json';
+import DiscoverEC2 from '../data/discoverEc2V2.json';
 import CredentialsStatus from '../data/credentialsStatus.json';
 import MssqlInstances from '../data/mssqlInstances.json';
 import ManagedInstanceList from '../data/managedInstanceList.json';

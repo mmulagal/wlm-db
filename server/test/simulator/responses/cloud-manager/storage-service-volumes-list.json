@@ -1,0 +1,55 @@
+{
+    "volumeInstances": [
+        {
+            "volumeId": "vol-demo1",
+            "volumeType": "gp2",
+            "volumeSize": {
+                "size": 12,
+                "unit": "GiB"
+            },
+            "status": "ok",
+            "tags": [],
+            "iops": 100,
+            "snapshotId": "snapshot-vol-demo1"
+        },
+        {
+            "volumeId": "vol-demo2",
+            "volumeType": "gp3",
+            "volumeSize": {
+                "size": 30,
+                "unit": "GiB"
+            },
+            "status": "impaired",
+            "tags": [
+                {
+                    "Key": "Name",
+                    "Value": "demo"
+                }
+            ],
+            "iops": 3000,
+            "throughput": 125,
+            "snapshotId": "snapshot-vol-demo2"
+        },
+        {
+            "volumeId": "vol-demo3",
+            "volumeType": "io2",
+            "volumeSize": {
+                "size": 46,
+                "unit": "GiB"
+            },
+            "status": "insufficient-data",
+            "tags": [
+                {
+                    "Key": "Name",
+                    "Value": "demo"
+                },
+                {
+                    "Key": "type",
+                    "Value": "io2"
+                }
+            ],
+            "iops": 6000
+        }
+    ],
+    "total": 3
+}

@@ -8,15 +8,17 @@ import {
     setDbCreatePressed
 } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import store from '../../../store/store';
 import { GENERAL } from '../../../utils/appConstants';
 
 export const createUserDbPayload = (newUserDb: any) => {
-    let payload = {
+    const { isInventoryV2 } = store.getState()?.auth;
+    let payload: any = {
         databaseName: newUserDb?.newUserDBName,
         dataFileConfig: {
             fileName: newUserDb?.newUserDBFileName ? newUserDb.newUserDBFileName + '.mdf' : '',
             volumeSize:
-                newUserDb?.newUserDataSizeUnit === 'TiB'
+                newUserDb?.newUserDataSizeUnit?.label === 'TiB'
                     ? newUserDb?.newUserDataSize * 1024
                     : newUserDb?.newUserDataSize,
             drive: newUserDb?.driveLetter?.value || '',
@@ -26,7 +28,7 @@ export const createUserDbPayload = (newUserDb: any) => {
         logFileConfig: {
             fileName: newUserDb?.newUserLogFileName ? newUserDb.newUserLogFileName + '.ldf' : '',
             volumeSize:
-                newUserDb?.newUserLogFileSizeUnit === 'TiB'
+                newUserDb?.newUserLogFileSizeUnit?.label === 'TiB'
                     ? newUserDb?.newUserLogFileSize * 1024
                     : newUserDb?.newUserLogFileSize,
             drive: newUserDb?.driveLetterLogFile?.value || '',
@@ -35,6 +37,9 @@ export const createUserDbPayload = (newUserDb: any) => {
         },
         collation: newUserDb?.selectedCollation?.label || ''
     };
+    if (isInventoryV2) {
+        payload.databaseInstanceId = newUserDb?.instanceId;
+    }
     return payload;
 };
 

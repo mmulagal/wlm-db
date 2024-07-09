@@ -1,0 +1,197 @@
+.exploreSavingTable {
+    width: 1607px;
+
+    margin-top: 24px;
+    margin-bottom: 40px;
+
+    .firstColText {
+        display: flex;
+        gap: 8px;
+    }
+
+    .tooltipContainer {
+        display: flex;
+        gap: 8px;
+        padding: 12px 0 16px 0;
+
+        span:hover {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+    }
+
+    .ec2Separator {
+        border-bottom: 1px solid var(--border);
+    }
+
+    .colText {
+        gap: 16px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 150px;
+    }
+
+    .azColText {
+        display: flex;
+        gap: 16px;
+    }
+
+    [class*='Table-module_header-row'] {
+        [class*='Table-module_header-cell'] {
+            &:nth-child(4) {
+                [class*='Table-module_right-border'] {
+                    pointer-events: none;
+                }
+            }
+        }
+    }
+
+    .statusIcon {
+        width: 10px;
+        height: 10px;
+        align-self: center;
+        &.circle {
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        &.up {
+            background-color: var(--green-60);
+        }
+        &.down {
+            background-color: var(--orange-60);
+        }
+        &.initializing {
+            background-color: var(--cyan-30);
+        }
+        &.failed {
+            background-color: var(--red-30);
+        }
+        &.online {
+            background-color: var(--green-60);
+        }
+        &.offline {
+            background-color: var(--red-30);
+        }
+        &.unknown {
+            background-color: var(--grey-25);
+        }
+    }
+
+    .detectManage {
+        width: 134px;
+        height: 32px;
+        border-radius: 32px;
+        border: 1px solid var(--text-button-primary);
+
+        cursor: pointer;
+
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+            color: var(--text-button-primary);
+        }
+    }
+
+    .detectManageDemo {
+        width: 134px;
+        height: 32px;
+        border-radius: 32px;
+        border: 1px solid var(--text-disabled);
+
+        cursor: not-allowed;
+
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+            color: var(--text-disabled);
+        }
+    }
+
+    .detectManage:hover {
+        border: 1px solid var(--text-button-primary-hover);
+
+        .textStyle {
+            color: var(--text-button-primary-hover);
+        }
+    }
+
+    .cost {
+        display: flex;
+        gap: 16px;
+
+        .tooltipClass {
+            [class*='TooltipInfo-module_tooltip-base'] {
+                max-width: 462px !important;
+                padding: 16px 24px;
+                box-shadow: 2px 2px 6px 0px var(--border);
+            }
+        }
+    }
+
+    .ssmOffline:hover {
+        span:first-child {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+    }
+
+    .ec2Container {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+
+    .copy {
+        width: 100px;
+        display: flex;
+        justify-content: flex-end;
+        height: 20px;
+        .copy-popover {
+            width: 140px;
+            font-size: 13px;
+            line-height: 20px;
+            text-align: center;
+            padding: 2px 2px;
+        }
+
+        svg {
+            cursor: pointer;
+            &:hover {
+                fill: var(--icon-primary);
+            }
+        }
+    }
+
+    .ssmOffline:hover {
+        span:first-child {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+    }
+
+    .ssmLink {
+        span {
+            text-transform: none !important;
+        }
+    }
+
+}

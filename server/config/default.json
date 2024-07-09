@@ -18,7 +18,7 @@
         "internal": {
             "lookup-timeout": "1s",
             "connect-timeout": "1s",
-            "response-timeout": "10s",
+            "response-timeout": "20s",
             "retry-count": 2
         },
         "external": {

@@ -1,4 +1,5 @@
 import randomize from 'randomatic';
+import { Volume } from '@aws-sdk/client-ec2';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import {
@@ -7,11 +8,20 @@ import {
     DATABASE_TYPE,
     MSSQL_DATABASE_TYPES,
     ONLINE,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    RESOURCE_SOURCE,
+    DatabaseTypes
 } from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
-import { checkAccount, createDeployment, createResource, updateResourceMetaData } from '../lib/database/db';
-import { Metadata, Sandbox } from '../utils/common-types';
+import {
+    checkAccount,
+    createDeployment,
+    createResource,
+    updateInstanceMetadata,
+    updateResourceMetaData,
+    upsertDatabaseInstance
+} from '../lib/database/db';
+import { Metadata, Sandbox, databaseInstanceMetadata } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
@@ -28,6 +38,7 @@ import {
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
+import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
 
 const logger = getLogger();
 
@@ -108,7 +119,8 @@ async function createDeploymentMockDataInDB(
     awsAccountId: string,
     serverName: string,
     createSandbox: boolean = false,
-    storageProtocol?: string
+    storageProtocol?: string,
+    resourceId?: string
 ) {
     logger.info('create deployment, resource and job table mock data in database', {
         accountId,
@@ -145,6 +157,12 @@ async function createDeploymentMockDataInDB(
             fileSystemType: STORAGE_TYPE.FSXN
         }
     });
+
+    const instanceId = randomUUID();
+
+    resourceId = resourceId || randomUUID();
+    const fsxId = `fs-${randomize('A0', 17)}`;
+
     const metadata: Metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
         node1InstanceId: `i-${randomize('A0', 17)}`,
@@ -162,7 +180,7 @@ async function createDeploymentMockDataInDB(
                     updatedAt: Date.now(),
                     source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
                     tag: 'Development',
-                    baseSnapshot: `netapp_wf_${Date.now()}`
+                    databaseInstanceId: instanceId
                 }
             ],
             userDatabase: [
@@ -187,17 +205,64 @@ async function createDeploymentMockDataInDB(
         metadata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
     }
     await createResource(accountId, {
-        resourceId: randomUUID(),
+        resourceId,
         credentialsId,
         storageType: STORAGE_TYPE.FSXN,
         resourceName,
         cloudProviderAccountId: cloudProviderId,
         cloudProviderName: CloudProviders.AWS,
         resourceType: RESOURCESTYPE.MSSQL,
-        coRelationId: `fs-${randomize('A0', 17)}`,
+        coRelationId: fsxId,
         region,
         metadata
     });
+
+    const databaseMetadata = {
+        sandboxes: [
+            {
+                databaseName: 'RetailBanking_sandbox',
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                tag: 'Development'
+            }
+        ],
+        userDatabase: [
+            {
+                name: 'RetailBanking_sandbox',
+                size: 16777216,
+                type: 'User Database',
+                status: 'ONLINE',
+                protection: {
+                    isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
+                    isFsxOntapSnapshotsEnabled: false,
+                    isSqlNativeEnabled: false
+                },
+                collation: SQL_DEFAULT_COLLATION
+            }
+        ]
+    };
+
+    const instanceRecord = {
+        resourceId,
+        credentialsId,
+        region,
+        databaseInstanceId: instanceId,
+        databaseInstanceName: DEFAULT_INSTANCE_NAME,
+        fsxnIds: fsxId,
+        isDefault: true,
+        source: RESOURCE_SOURCE.DEPLOY,
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
+        numberofUserDbsCreated: 1,
+        sandboxCreated: true,
+        storageProtocol,
+        metaData: databaseMetadata,
+        databaseType: DatabaseTypes.MS_SQL_SERVER,
+        storageType: STORAGE_TYPE.FSXN
+    };
+
+    await upsertDatabaseInstance(accountId, instanceRecord);
 
     const data = await createJobMockData(
         accountId,
@@ -246,14 +311,14 @@ async function createFileSystemForDemo(
         },
         primarySubnetId: 'subnet-a1', // default subnet for fsx
         ...(mode === 'MULTI_AZ' && { secondarySubnetId: 'subnet-a2' }),
-        throughputCapacity: 3072,
+        throughputCapacity: 128,
         fsxAdminPassword: `${randomize('Aa0', 8)}`, // Since fsx api does not allow the special characters which we allow from our deployment wizard, so randomizing the password all the time
         deploymentType: mode,
         securityGroupIds: [],
         tags: [],
         svmAdminPassword: `${randomize('Aa0', 8)}`,
         generateSecurityGroup: true,
-        haPairs: 2,
+        haPairs: 1,
         automaticBackupRetentionDays: 30,
         routeTableIds: ['rtb-11111111']
     };
@@ -295,6 +360,40 @@ async function updateUserDBIntoResourceData(
     }
 }
 
+async function updateUserDBIntoInstanceTable(
+    accountId: string,
+    instanceId: string,
+    databaseName: string,
+    metaData: databaseInstanceMetadata
+) {
+    logger.info('updating user db into resource meta data', accountId, instanceId, databaseName);
+
+    const existingDatabases = metaData.userDatabase || [];
+    const hasExistingDatabase = existingDatabases.some(db => db.name === databaseName);
+
+    if (!hasExistingDatabase) {
+        const databaseDetails = {
+            name: databaseName,
+            size: 16777216,
+            type: MSSQL_DATABASE_TYPES.USER,
+            status: ONLINE,
+            protection: {
+                isAwsBackupEnabled: {
+                    fsxn: false,
+                    fsxw: false,
+                    ebs: false
+                },
+                isFsxOntapSnapshotsEnabled: false,
+                isSqlNativeEnabled: false
+            },
+            collation: SQL_DEFAULT_COLLATION
+        };
+        metaData.userDatabase = [...existingDatabases, databaseDetails];
+
+        await updateInstanceMetadata(accountId, instanceId, metaData);
+    }
+}
+
 async function updateSandboxDBIntoResourceData(
     accountId: string,
     resourceId: string,
@@ -313,6 +412,26 @@ async function updateSandboxDBIntoResourceData(
     return metaData;
 }
 
+async function updateSandboxDBIntoInstanceData(
+    accountId: string,
+    instanceID: string,
+    sandboxDetails: Sandbox,
+    instanceMetaData: databaseInstanceMetadata
+) {
+    logger.info('updating sandbox db into database instance  meta data', accountId, instanceID, sandboxDetails);
+
+    // this is used to retreive the newly created user databases in database list for demo using meta data
+    if (instanceMetaData.sandboxes) {
+        instanceMetaData.sandboxes = instanceMetaData.sandboxes.filter(
+            sandbox => sandbox.databaseName !== sandboxDetails.databaseName
+        );
+    }
+    instanceMetaData.sandboxes = [...(instanceMetaData.sandboxes || []), sandboxDetails];
+
+    await updateInstanceMetadata(accountId, instanceID, instanceMetaData);
+    return instanceMetaData;
+}
+
 async function createSandboxJobMockData(
     accountId: string,
     region: string,
@@ -329,10 +448,83 @@ async function createSandboxJobMockData(
     return sandboxJobData(accountId, region, srcHost, targetHost, srcDb, destDb, parentJobId, credentialsId);
 }
 
+async function getVolumeIdsFromStorage(accountId: string, credentialsId: string, region: string) {
+    logger.info('Getting Volume ids from the storage service', { accountId, credentialsId, region });
+
+    let demoInstanceId = '';
+    const volumeIds: string[] = [];
+
+    const {
+        ec2Instances: [firstInstance]
+    } = (await getInstanceListFromStorage(accountId, credentialsId, region)) || {};
+    demoInstanceId = firstInstance?.instanceId;
+    if (demoInstanceId) {
+        const { volumeInstances } =
+            (await getVolumesListFromStorage(accountId, credentialsId, region, demoInstanceId)) || {};
+        if (volumeInstances && volumeInstances.length > 0) {
+            for (const volumeInstance of volumeInstances) {
+                volumeIds.push(volumeInstance.volumeId);
+            }
+        }
+        logger.debug(volumeIds);
+    }
+
+    return volumeIds;
+}
+
+async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string[]) {
+    let VolumeType = 'gp2';
+    let volumeSize = 8;
+    let iops = 100;
+    // let volumes = [{ volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 2, volumeIops: 40000, throughput: 128 }];
+    if (sqlDeploymentType === 'AOAG') {
+        VolumeType = 'io2';
+        volumeSize = 5120;
+        iops = 40000;
+    } else if (sqlDeploymentType === 'Standalone') {
+        VolumeType = 'io2';
+        volumeSize = 2048;
+        iops = 40000;
+    }
+    const volumes = volumeIds.map(
+        volumeId =>
+            ({
+                VolumeId: volumeId,
+                AvailabilityZone: 'us-east-1a',
+                Attachments: [
+                    {
+                        AttachTime: '2013-12-18T22:35:00.000Z',
+                        InstanceId: 'i-1234567890abcdef0',
+                        VolumeId: 'vol-049df61146c4d7901',
+                        State: 'attached',
+                        DeleteOnTermination: true,
+                        Device: '/dev/sda1'
+                    }
+                ],
+                Encrypted: true,
+                KmsKeyId: 'arn:aws:kms:us-east-2a:123456789012:key/8c5b2c63-b9bc-45a3-a87a-5513eEXAMPLE',
+                VolumeType,
+                State: 'in-use',
+                Iops: iops,
+                SnapshotId: 'snap-1234567890abcdef0',
+                CreateTime: '2019-12-18T22:35:00.084Z',
+                Size: volumeSize,
+                Throughput: 128
+            } as unknown as Volume)
+    );
+    return {
+        Volumes: volumes
+    };
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
     updateUserDBIntoResourceData,
     updateSandboxDBIntoResourceData,
-    createSandboxJobMockData
+    createSandboxJobMockData,
+    getVolumeIdsFromStorage,
+    updateUserDBIntoInstanceTable,
+    updateSandboxDBIntoInstanceData,
+    getEBSVolumesForDemo
 };

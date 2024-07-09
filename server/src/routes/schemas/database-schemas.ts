@@ -49,6 +49,7 @@ const PostSqlServerSchema = {
 const GetDatabasesSchema = {
     ...baseRequest,
     summary: 'List databases',
+    hide: process.env.NODE_ENV === 'production',
     description: 'List Databases for the given resource',
     response: {
         200: DatabasesResponseBody
@@ -60,6 +61,7 @@ const DeleteDatabaseSchema = {
     tags: [RouteTags.DATABASE],
     params: DatabaseParams,
     summary: 'Remove MSSQL resource',
+    hide: process.env.NODE_ENV === 'production',
     description: 'Remove the given MSSQL Server resource',
     response: {
         200: DatabaseDeleteResponseBody
@@ -69,6 +71,7 @@ const DeleteDatabaseSchema = {
 const GetServerSummarySchema = {
     ...baseRequest,
     summary: 'Get MSSQL summary',
+    hide: process.env.NODE_ENV === 'production',
     description: 'Get MSSQL summary of the given resource',
     response: {
         200: ServerSummaryResponse
@@ -99,6 +102,7 @@ const DatabaseMemoryUtilisationResponseSchema = {
 const DatabaseResourcesUtilisationResponseSchema = {
     ...AllResourceUtilizationBaseRequest,
     summary: 'Get MSSQL resources utilisation',
+    hide: process.env.NODE_ENV === 'production',
     description: 'Database utilization of CPU , Storage and Memory resources'
 };
 
@@ -106,6 +110,7 @@ const GetTablesSchema = {
     ...baseRequest,
     params: Tablesparams,
     summary: 'List tables',
+    hide: process.env.NODE_ENV === 'production',
     description: 'List of tables in the given database',
     response: {
         200: TablesResponseBody

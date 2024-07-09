@@ -85,8 +85,62 @@
         }
     }
 
+    .costZeroCaseSmallRes {
+        display: flex;
+        gap: 8px;
+        margin-left: 9px;
+        position: relative;
+        height: 20px;
+        top: 16px;
+        svg {
+            width: 21px;
+            height: 21px;
+            position: relative;
+            top: 3px;
+            path {
+                fill: #518bec;
+            }
+        }
+
+        .smallResolutionMessage {
+            max-width: 180px;
+            overflow: hidden;
+
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+    }
+
     .bottomValue {
         display: flex;
         gap: 8px;
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .costSavings {
+        width: 456px;
+
+        .leftSide {
+            .textContent {
+                width: 165px;
+            }
+
+            .changeWidth {
+                width: 95px;
+            }
+        }
+
+        .separator {
+            margin-left: 8px;
+        }
+
+        .rightSide {
+            margin-left: 20px;
+
+            .bottomValue {
+                gap: 5px;
+            }
+        }
     }
 }

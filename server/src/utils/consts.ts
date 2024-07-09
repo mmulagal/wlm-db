@@ -58,7 +58,8 @@ enum HEADERS {
     SIMULATOR = 'x-simulator',
     REFERER = 'referer',
     ACTIVE_TRACE_ID = 'active-trace-id',
-    X_NETAPP_REFERER = 'x-netapp-referer'
+    X_NETAPP_REFERER = 'x-netapp-referer',
+    X_NETAPP_CACHE_CONTROL = 'x-netapp-cache-control'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -523,7 +524,7 @@ const AWS_REGIONS = new Map<string, string>([
     ['us-gov-west-1', 'AWS GovCloud (US-West)'],
     ['us-west-1', 'US West (N. California)'],
     ['us-west-2', 'US West (Oregon)'],
-    ['ca-west1', 'Canada (Calgary)']
+    ['ca-west-1', 'Canada (Calgary)']
 ]);
 
 const WLMDB = 'wlmdb';
@@ -904,6 +905,7 @@ const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
 const BATCH_API_CONCURRENCY_LIMIT = 10;
 const API_PAGE_SIZE = 100;
+const V2_API_PAGE_SIZE = 25;
 const SANDBOX_API_SIZE = 25;
 const INVALID_PARAMETER_VALUE = 'InvalidParameterValue';
 
@@ -957,7 +959,10 @@ enum DatabaseHostsQueryFields {
     USAGE_ESTIMATION = 'usageEstimation',
     RESOURCE_UTILIZATION = 'resourceUtilization',
     DB_COUNT = 'dbCount',
-    SERVER_DETAILS = 'serverDetails'
+    SERVER_DETAILS = 'serverDetails',
+    NODE_TOPOLOGY = 'nodeTopology',
+    INSTANCE_DETAILS = 'instanceDetails',
+    DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology'
 }
 
 enum ServerState {
@@ -1004,11 +1009,13 @@ const SQL_STD = 'SQL std';
 const SQL_ENT = 'SQL ent';
 const SQL_WEB = 'SQL web';
 const CUSTOM = 'custom';
+const NA = 'NA';
 
 const SQL_SOFTWARE_TYPES = new Map<string, string>([
     [SQL_STD, SQL_STD],
     [SQL_ENT, SQL_ENT],
-    [SQL_WEB, SQL_WEB]
+    [SQL_WEB, SQL_WEB],
+    [CUSTOM, NA]
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
@@ -1121,6 +1128,8 @@ const VALIDATION_NODE_INSTANCETYPE = {
 };
 
 const ONLINE = 'ONLINE';
+const OFFLINE = 'OFFLINE';
+const UNKNOWN = 'UNKNOWN';
 
 const BLOCKED_BY_SCP = 'blocked by scp';
 
@@ -1137,6 +1146,7 @@ const FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL = '1h';
 const DBCREATE_RELATIVE_PATH = `${WLMDB}/scripts/dbcreate.zip`;
 const PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/aws_ssm.zip`;
 const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
+const DEFAULT_MSSQL_INSTANCE_NAME = '$env:computername';
 
 const PERMISSION_DENIAL_POSSIBLE_REASONS = {
     MISSING: 'permission statement is missing',
@@ -1157,11 +1167,33 @@ const CUSTOM_AMI_VALIDATION_INSTANCE_TYPE = 'm5.xlarge';
 
 const HOURS_IN_MONTH = 730;
 
+const VERSION_2_0 = '2.0';
+
 const SANDBOX_EXTENDED_PROPERTY_FLAG_NAME = 'cloned_by';
 
 const SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE = 'netapp_wf';
 
 const ACCOUNTID = 'accountId';
+
+const SANDBOX_LIFECYCLE_REFRESH = 'REFRESH';
+const SANDBOX_LIFECYCLE_REBASELINE = 'RE-BASELINE';
+
+enum SandboxLifecycleAction {
+    REFRESH = 'Refresh',
+    REBASELINE = 'Re-baseline'
+}
+
+const STORAGE_SERVICE_DEFAULT_REGION = 'us-east-1';
+const FINDING = {
+    OPTIMIZED: 'OPTIMIZED',
+    NOT_OPTIMIZED: 'NOT_OPTIMIZED',
+    INSUFFICIENT_DATA: 'INSUFFICIENT_DATA'
+};
+
+const SQL_SERVICE_STATE = {
+    RUNNING: 'Running',
+    STOPPED: 'Stopped'
+};
 
 export {
     WLMDB,
@@ -1406,6 +1438,8 @@ export {
     VALIDATION_NODE_INSTANCETYPE,
     VALIDATION_INSTANCE_TYPE,
     ONLINE,
+    OFFLINE,
+    UNKNOWN,
     BLOCKED_BY_SCP,
     SIMULATE_IAM_POLICY,
     TEMPLATE_S3GATEWAY_ROUTETABLES,
@@ -1431,7 +1465,16 @@ export {
     EBS_VOLUME_SIZE,
     EBS_DEFAULT_VOLUME_SIZE,
     HOURS_IN_MONTH,
+    VERSION_2_0,
     SANDBOX_EXTENDED_PROPERTY_FLAG_NAME,
     SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
-    ACCOUNTID
+    ACCOUNTID,
+    DEFAULT_MSSQL_INSTANCE_NAME,
+    V2_API_PAGE_SIZE,
+    SandboxLifecycleAction,
+    SANDBOX_LIFECYCLE_REFRESH,
+    SANDBOX_LIFECYCLE_REBASELINE,
+    STORAGE_SERVICE_DEFAULT_REGION,
+    FINDING,
+    SQL_SERVICE_STATE
 };

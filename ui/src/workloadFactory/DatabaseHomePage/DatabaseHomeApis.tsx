@@ -19,11 +19,19 @@ import {
     mergeDatabaseHostsData,
     resetDBHomePageState
 } from '../../utils/utilityFunctions';
+import {
+    getManageAggrCost,
+    getManagedAggrProtection,
+    getManagedAggrStorageSavings,
+    getManagedHostCount
+} from './DatabaseHomeUtils';
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
 
-    const { databaseHostsData } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const databaseHostsDataV1 = useAppSelector(state => state.inventory.getDatabaseHosts.databaseHostsData);
+    const databaseHostsDataV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsData);
+    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const { sandboxSavings } = useAppSelector(state => state.sandbox.getSandboxSavings);
     const refetchJobSummaryApi = useAppSelector(state => state.msSqlAction.refetchJobSummaryApi);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
@@ -87,9 +95,12 @@ const DatabaseHomeApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [jobsSummaryData, jobsSummaryLoading, jobsSummaryError]);
 
-    // To merge database host and database jobs data
+    // To have database hosts data in dashboard - V1
     useEffect(() => {
-        const mergedData = mergeDatabaseHostsData(databaseHostsData);
+        if (isInventoryV2) {
+            return;
+        }
+        const mergedData = mergeDatabaseHostsData(databaseHostsDataV1);
         dispatch(addDatabaseHostsList(mergedData));
 
         const hostStatusCount = getHostStatusCount(mergedData);
@@ -105,7 +116,28 @@ const DatabaseHomeApis = () => {
         dispatch(addAggregatedCosts(aggrCost));
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHostsData, sandboxSavings]);
+    }, [databaseHostsDataV1, sandboxSavings]);
+
+    // To have database hosts data in dashboard - V2
+    useEffect(() => {
+        if (!isInventoryV2 || !databaseHostsDataV2) {
+            return;
+        }
+
+        const hostStatusCount = getManagedHostCount(databaseHostsDataV2);
+        dispatch(addAggregateHostsCountData(hostStatusCount));
+
+        const aggrProtection = getManagedAggrProtection(databaseHostsDataV2);
+        dispatch(addAggregatedProtectionDbCount(aggrProtection));
+
+        const aggrStorage = getManagedAggrStorageSavings(databaseHostsDataV2, sandboxSavings);
+        dispatch(addAggregatedStorageSavings(aggrStorage));
+
+        const aggrCost = getManageAggrCost(databaseHostsDataV2);
+        dispatch(addAggregatedCosts(aggrCost));
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [databaseHostsDataV2, sandboxSavings]);
 
     return <></>;
 };

@@ -7,13 +7,16 @@
     flex-direction: row;
     padding: 16px 40px 16px 40px;
 
-    .preview-tag {
+    .disclaimer {
         margin-left: auto;
-        width: 75px;
-        height: 24px;
-        padding: 2px 12px 2px 12px;
-        border-radius: 24px;
-        background-color: var(--tag-2-bg);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+
+        .tooltip-icon {
+            margin-top: -4px;
+        }
     }
 
     .start-new-chat {
