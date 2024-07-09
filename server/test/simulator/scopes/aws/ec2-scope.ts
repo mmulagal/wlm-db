@@ -157,17 +157,20 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
     if (instanceFilters && instancesQueryPrivateIps) {
         const reservations = [];
         const { items } = inventoryDemoData('fsx', 'ebsTest'); // private-ip-address filter is only added to get partner node details of instances using ebs; revisit when the filter is used for other purposes
-        const instancesWithEbs = items.filter(instance =>
-            instance.sqlServerInstances?.find(({ storage }) =>
-                storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS')
+        let instancesWithEbs = items.filter(instance =>
+            instance.sqlServerInstances?.find(({ nodeIps, storage }) =>
+                storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS') && nodeIps?.length >= 1
             )
         );
+
         instancesQueryPrivateIps.forEach((privateIp: string) => {
             const instances = [];
             const dummyInstanceDetails = cloneDeep(describeInstanceResponse.Reservations[0].Instances[0]);
             const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
             dummyInstanceDetails.PrivateIpAddress = privateIp;
-            dummyInstanceDetails.InstanceId = sample(instancesWithEbs).ec2InstanceId;
+            const dummyInstanceId = sample(instancesWithEbs).ec2InstanceId;
+            instancesWithEbs = instancesWithEbs.filter(instance => instance.ec2InstanceId !== dummyInstanceId);
+            dummyInstanceDetails.InstanceId = dummyInstanceId;
             instances?.push(dummyInstanceDetails);
             dummyResevation.Instances = instances;
             reservations?.push(dummyResevation);
