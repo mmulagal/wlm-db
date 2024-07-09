@@ -203,7 +203,7 @@ async function formatTemplateParameters(
 
     // Get the volume size of an ami.. Set to minimum value of 100 if its lesser than that
     let amiSize = EBS_DEFAULT_VOLUME_SIZE; // to accomodate guest user when credentials or region could be empty
-    if (credentialsId && region) {
+    if (credentialsId && region && sqlConfiguration.sqlAmiId) {
         const {
             Images: [
                 {

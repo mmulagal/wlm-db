@@ -1,12 +1,31 @@
 import { FlashingDotsLoader, Typography } from '@netapp/design-system';
-import { ReactComponent as Diagram2 } from '../../../../assets/Diagram2.svg';
-import { ReactComponent as Diagram4 } from '../../../../assets/Diagram4.svg';
+import { ReactComponent as FCIDarkMode } from '../../../../assets/FCI_Darkmode.svg';
+import { ReactComponent as FCILightMode } from '../../../../assets/FCI_lightMode.svg';
+import { ReactComponent as StandaloneDarkMode } from '../../../../assets/Standalone_darkmode.svg';
+import { ReactComponent as StandaloneLightMode } from '../../../../assets/Standalone_lightMode.svg';
 import styles from './Diagram.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 
 const Diagram = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+
+    const setDiagramForFCI = () => {
+        if (isDarkTheme) {
+            return <FCIDarkMode />;
+        } else {
+            return <FCILightMode />;
+        }
+    };
+
+    const setDiagramForStandAlone = () => {
+        if (isDarkTheme) {
+            return <StandaloneDarkMode />;
+        } else {
+            return <StandaloneLightMode />;
+        }
+    };
     return (
         <div
             className={
@@ -29,8 +48,9 @@ const Diagram = () => {
 
             {!resourceLoading && (
                 <div className={styles.centerContainer}>
-                    {resourceDetails?.topology?.serverInstallationMode?.toLowerCase() === 'fci' && <Diagram2 />}
-                    {resourceDetails?.topology?.serverInstallationMode?.toLowerCase() === 'standalone' && <Diagram4 />}
+                    {resourceDetails?.topology?.serverInstallationMode?.toLowerCase() === 'fci' && setDiagramForFCI()}
+                    {resourceDetails?.topology?.serverInstallationMode?.toLowerCase() === 'standalone' &&
+                        setDiagramForStandAlone()}
                 </div>
             )}
         </div>

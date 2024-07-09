@@ -35,13 +35,17 @@ const initialState: any = {
     dbCreateLogSizeValid: true,
     // Detect Host check - Inventory
     isDetectHostLoading: false, // If Detect host is loading on registerResourceCredentials API call
-    isDetectHostError: '' // registerResourceCredentials API throws error
+    isDetectHostError: '', // registerResourceCredentials API throws error
+    databaseHostEntryPoint: ''
 };
 
 const msSqlActionSlice = createSlice({
     name: 'msSqlAction',
     initialState,
     reducers: {
+        setDatabaseHostEntryPoint(state, action: PayloadAction<any>) {
+            state.databaseHostEntryPoint = action.payload;
+        },
         setCreatePressed(state, action: PayloadAction<any>) {
             state.isCreatePressed = action.payload;
         },
@@ -144,6 +148,7 @@ const msSqlActionSlice = createSlice({
 
 export const {
     setCreateHit,
+    setDatabaseHostEntryPoint,
     setCreatePressed,
     setVPCSelectedValue,
     setAZSelectedValue,

@@ -1,4 +1,4 @@
-import { Button, DsFlashingDotsLoader, Popover, TooltipInfo, Typography } from '@netapp/design-system';
+import { Button, DsFlashingDotsLoader, DsTypography, Popover, TooltipInfo, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../utils/appConstants';
 import { formatFractionalNumber, getDiscoveredHostDeployment, isAwsBackupEnabled } from '../../utils/utilityFunctions';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
@@ -6,6 +6,10 @@ import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE, WLF_TABS } f
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
+import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
+import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
+//@ts-ignore
+import CopyToClipboard from 'react-copy-to-clipboard';
 
 export const renderProtectionColumn = (cellData: any, rowData: any, styles: any) => {
     const isLoading = rowData?.loading;
@@ -63,7 +67,7 @@ export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) =>
     const totalCost = +rowData?.totalCost;
     return (
         <>
-            {costData && (
+            {costData && !rowData?.loading && (
                 <div className={styles.cost}>
                     <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
                         {EstimatedCostPopover({ ...costData, totalCost: totalCost })}
@@ -71,7 +75,7 @@ export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) =>
                     <Typography variant="Regular_14">{`$ ${formatFractionalNumber(totalCost, 2)}`}</Typography>
                 </div>
             )}
-            {!costData && rowData?.loading && <DsFlashingDotsLoader />}
+            {rowData?.loading && <DsFlashingDotsLoader />}
             {!costData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
         </>
     );
@@ -253,7 +257,58 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
     let instanceList: any = cellData ? cellData.split(',') : null;
     return (
         <>
-            {instanceList && (
+            <div className={styles.ec2Container}>
+                <div className={styles.ssmOffline}>
+                    <Popover
+                        popoverClass={''}
+                        children={
+                            <>
+                                {instanceList && instanceList[0] && (
+                                    <div className={styles.tooltipContainer}>
+                                        <DsTypography variant="Regular_14">{instanceList[0]}</DsTypography>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={'Copied'}
+                                            container={
+                                                <CopyToClipboard text={instanceList[0]}>
+                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                </CopyToClipboard>
+                                            }
+                                        />
+                                    </div>
+                                )}
+                                {instanceList && instanceList[1] && (
+                                    <>
+                                        <div className={styles.ec2Separator} />
+                                        <div className={styles.tooltipContainer}>
+                                            <DsTypography variant="Regular_14">{instanceList[1]}</DsTypography>
+                                            <Popover
+                                                popoverClass={styles['copy-popover']}
+                                                children={'Copied'}
+                                                container={
+                                                    <CopyToClipboard text={instanceList[1]}>
+                                                        <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                    </CopyToClipboard>
+                                                }
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        }
+                        trigger="hover"
+                        delayHide={200}
+                        interactive={true}
+                        isAppendedToBody={false}
+                        container={<TooltipIcon />}
+                    />
+                </div>
+                <Typography variant="Regular_13" className={`${styles.colText}`}>
+                    {rowData?.instanceNameListText || GENERAL.NOT_AVAILABLE}
+                </Typography>
+            </div>
+
+            {/* {instanceList && (
                 <div>
                     {instanceList?.[0] && (
                         <Popover
@@ -284,9 +339,49 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
                         />
                     )}
                 </div>
-            )}
+            )} */}
             {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
             {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const renderVpcText = (cellData: any, rowData: any, styles: any) => {
+    return (
+        <>
+            <div className={styles.ec2Container}>
+                <div className={styles.ssmOffline}>
+                    <Popover
+                        popoverClass={''}
+                        children={
+                            <>
+                                {rowData?.vpcIdAndNameText && (
+                                    <div className={styles.tooltipContainer}>
+                                        <DsTypography variant="Regular_14">{rowData?.vpcIdAndNameText}</DsTypography>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={'Copied'}
+                                            container={
+                                                <CopyToClipboard text={rowData?.vpcIdAndNameText}>
+                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                </CopyToClipboard>
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </>
+                        }
+                        trigger="hover"
+                        delayHide={200}
+                        interactive={true}
+                        isAppendedToBody={false}
+                        container={<TooltipIcon />}
+                    />
+                </div>
+                <Typography variant="Regular_13" className={`${styles.colText}`}>
+                    {cellData || GENERAL.NOT_AVAILABLE}
+                </Typography>
+            </div>
         </>
     );
 };

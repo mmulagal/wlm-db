@@ -432,26 +432,17 @@ const ManagedHostSubTable = ({
                         rowData?.detectOption === DETECT_HOST_VAR.HIDE
                     ) {
                         disableMsg = rowData?.detectOptionDisableMsg;
-                        width = '240px';
+                        width = '250px';
                         height = '33px';
                         return true;
                     }
                     if (
                         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        rowData.fileSystemType === GENERAL.EBS
+                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
                     ) {
-                        disableMsg = GENERAL.EBS_TOOLTIP_MESSAGE;
-                        width = '320px';
-                        height = '90px';
-                        return true;
-                    }
-                    if (
-                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS
-                    ) {
-                        disableMsg = GENERAL.FSXW_TOOLTIP_MESSAGE;
-                        width = '320px';
-                        height = '90px';
+                        disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
+                        width = '340px';
+                        height = '50px';
                         return true;
                     }
                     if (
@@ -520,10 +511,7 @@ const ManagedHostSubTable = ({
                                     }
                                 }}
                                 CustomMenu={undefined}
-                                disabledText={
-                                    undefined
-                                    // GENERAL.EBS_TOOLTIP_MESSAGE
-                                }
+                                disabledText={undefined}
                             />
                         )}
                     </div>
@@ -542,14 +530,46 @@ const ManagedHostSubTable = ({
             id: '1',
             isSortable: true,
             width: '212px',
-            isSticky: true
+            isSticky: true,
+            renderCell: (cellData: any, rowData: any) => {
+                const name = rowData?.databaseInstanceName;
+                return (
+                    <div>
+                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                        <div className={styles.firstColText}>
+                            {(rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                            )}
+                            {(rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                            )}
+                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
+                            )}
+                            <DsTypography variant="Regular_13">
+                                {rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+                                    ? INVENTORY_STATUS.ONLINE
+                                    : rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                      rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                                    ? INVENTORY_STATUS.OFFLINE
+                                    : rowData?.status}
+                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                                {!rowData?.status && !rowData?.loading && 'Unknown'}
+                            </DsTypography>
+                        </div>
+                    </div>
+                );
+            }
         },
         {
-            Header: 'Status',
+            Header: 'Management status',
             accessor: 'statusColText',
             id: '2',
             isSortable: false,
-            width: '170px',
+            width: '190px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.UNMANAGED) {
@@ -679,6 +699,7 @@ const ManagedHostSubTable = ({
 
                     tableProps={tableProps}
                     variant="innerTable"
+                    isDoubleRow={true}
                 />
             </span>
 

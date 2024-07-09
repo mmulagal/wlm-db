@@ -140,6 +140,61 @@ function generateDeploymentParams(
     return params;
 }
 
+function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMode: string) {
+    logger.info('FSx Storage Capacity Breakdown', { fsxStorageCapacity, sqlDeploymentMode });
+
+    fsxStorageCapacity = Math.max(fsxStorageCapacity, convertGiBToBytes(FSX_SSD_MIN_SIZE));
+    fsxStorageCapacity = Math.min(fsxStorageCapacity, convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB));
+
+    logger.info('FSx Storage Capacity', { fsxStorageCapacity });
+    /*
+        fsxCapacity = fsxDataVolumeSize + fsxLogVolumeSize + fsxTempDbVolumeSize + fsxQuorumVolumeSize
+        fsxBuffer = 20% of fsxCapacity
+        fsxStorageCapacity = fsxCapacity + fsxBuffer = fsxCapacity + 20% of fsxCapacity = 1.2 * fsxCapacity
+        fsxCapacity = fsxStorageCapacity / 1.2
+        fsxBuffer = (0.2) * fsxStorageCapacity/1.2
+    */
+
+    let fsxBufferVolumeSize = Math.ceil((0.2 * fsxStorageCapacity) / 1.2);
+    if (fsxStorageCapacity + fsxBufferVolumeSize >= convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB)) {
+        fsxBufferVolumeSize = Math.ceil(convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB) - fsxStorageCapacity);
+    }
+    /*
+
+    FSxStorageCapacity = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize + FsxBufferVolumeSize
+
+    fsxDataVolumeSize = FSxDataLunSize + 10% of FSxDataLunSize = 1.1 fsxLunSize
+    FSxLogVolumeSize = 25% of fsxDataVolumeSize = 0.25 * 1.1 fsxLunSize
+    FSxTempDbVolumeSize = 10% of fsxDataVolumeSize = 0.1 * 1.1 fsxLunSize
+    FSxQuorumVolumeSize = 12GB || O GB(for Standalone)
+
+    fsxDataVolumeSize = 1.1 fsxLunSize
+
+    fsxStorageCapacity = (1.1 * fsxLunSize) + 0.25 * (1.1 * fsxLunSize) + 0.1 * (1.1 * fsxLunSize) + 12GB || 0 GB(for Standalone) + fsxBufferVolumeSize = (1.1 + 0.275 + 0.11) fsxLunSize + 12 || 0 GB + fsxBufferVolumeSize
+    fsxStorageCapacity = 1.485 fsxLunSize + fsxQuorumVolumeSize + fsxBufferVolumeSize
+    fsxLunSize = (fsxStorageCapacity - fsxQuorumVolumeSize - fsxBufferVolumeSize) / 1.485
+    */
+
+    const fsxQuorumVolumeSize = sqlDeploymentMode === STANDALONE ? 0 : 12 * 1000 * 1000 * 1000; // in calculateFsxnStorageCapacity FSxQuorumVolumeSize = 12000(MB); // 12GB
+
+    const fsxStorageCapacityWithoutBuffer = fsxStorageCapacity - fsxBufferVolumeSize;
+    const fsxDataLunSize = Math.ceil((fsxStorageCapacityWithoutBuffer - fsxQuorumVolumeSize) / 1.485);
+
+    const fsxDataVolumeSize = Math.ceil(1.1 * fsxDataLunSize);
+    const fsxLogVolumeSize = Math.ceil(0.25 * fsxDataVolumeSize);
+    const fsxTempDbVolumeSize = Math.ceil(0.1 * fsxDataVolumeSize);
+
+    return {
+        fsxDataLunSize,
+        fsxDataVolumeSize,
+        fsxLogVolumeSize,
+        fsxTempDbVolumeSize,
+        fsxQuorumVolumeSize,
+        fsxBufferVolumeSize,
+        fsxStorageCapacity
+    };
+}
+
 function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode: string) {
     logger.info('Calculate FSX Netapp Storage capacity from the database size', { fsxDataLunSize, sqlDeploymentMode });
 
@@ -318,25 +373,6 @@ function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
         case 'MB':
         case 'MIB':
             return size / 1024;
-        default:
-            return size;
-    }
-}
-
-function sizeInBytes(size: number, currentUnit: string = 'MB') {
-    logger.info('Converting size to GiB', { size });
-
-    if (Number.isNaN(size)) {
-        return 0;
-    }
-
-    switch (currentUnit.toLocaleUpperCase()) {
-        case 'MB':
-        case 'MIB':
-            return size * 1024 * 1024;
-        case 'GB':
-        case 'GIB':
-            return size * 1024 * 1024 * 1024;
         default:
             return size;
     }
@@ -577,6 +613,7 @@ export {
     getFsxArn,
     getEc2Arn,
     generateHash,
+    fsxStorageCapacityBreakdown,
     calculateFsxnStorageCapacity,
     sizeInGigaBytes,
     waitForResolution,
@@ -597,6 +634,5 @@ export {
     convertToBytes,
     getMonthlyPriceFromHourlyPrice,
     getDatabaseInstanceName,
-    isDemo,
-    sizeInBytes
+    isDemo
 };

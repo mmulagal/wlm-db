@@ -1,7 +1,7 @@
 import { STORAGE_TYPE } from '@prisma/client';
 import randomize from 'randomatic';
 import numeral from 'numeral';
-import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
+import { DescribeInstancesCommandOutput, DescribeVolumesResult, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listDatabaseInstances, listResources } from '../lib/database/db';
@@ -81,7 +81,8 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { getDatabaseInstanceName, getResourceNameFromTags, isDemo, sizeInBytes } from '../utils/utils';
+import { convertToBytes, getDatabaseInstanceName, getResourceNameFromTags, isDemo } from '../utils/utils';
+import { getEBSVolumesForDemo } from './demo-operations';
 
 const logger = getLogger();
 
@@ -157,6 +158,8 @@ type EstimationEbsType = {
 interface BackupType {
     [key: string]: boolean;
 }
+
+const isDemoFlow = isDemo();
 
 async function getTopology(
     accountId: string,
@@ -433,7 +436,9 @@ async function getStorageData(
             };
         }
         if (ebsVolumeIds?.length && region && credentialsId) {
-            const storageData = await getEbsResourceInfo(credentialsId, region, ebsVolumeIds);
+            const storageData = await getEbsResourceInfo(credentialsId, region, ebsVolumeIds, [
+                databaseInstanceDetails
+            ]);
             totalSize = storageData.reduce((acc, { size }) => acc + size, 0);
             response.ebs = { size: numeral(`${totalSize}GiB`).value() || 0 };
         }
@@ -556,11 +561,11 @@ async function getProtectionStatus(
         return {
             isSqlNativeEnabled: Boolean(nativeSqlProtection),
             isAwsBackupEnabled: {
-                fsxn: checkAllTrue(awsBackup),
+                fsxn: isDemoFlow ? true : checkAllTrue(awsBackup),
                 fsxw: Boolean(fsxwBackup),
                 ebs: Boolean(ebsBackup)
             },
-            isFsxOntapSnapshotsEnabled: checkAllTrue(ontapBackup),
+            isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup),
             protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
         };
     } catch (error) {
@@ -687,7 +692,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxnIds!)])]
                 : [Promise.resolve()]),
             ...(ebsVolumeIds && !isEmpty(ebsVolumeIds)
-                ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds)]
+                ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds, resourceDetail?.databaseInstanceDetails)]
                 : [Promise.resolve()]),
             ...(fsxwIds && !isEmpty(fsxwIds)
                 ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxwIds!)])]
@@ -745,11 +750,11 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
                 fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById.map(id => ({
                     ...id,
-                    size: sizeInBytes(id.size!.total, 'GIB')
+                    size: convertToBytes(id.size!.total, 'GiB')
                 })),
                 fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById.map(id => ({
                     ...id,
-                    size: sizeInBytes(id.size!, 'GIB')
+                    size: convertToBytes(id.size!, 'GiB')
                 }))
             },
             connectivity: pricingResponse?.vpc || 0,
@@ -841,12 +846,29 @@ async function getFsxResourceInfo(
 async function getEbsResourceInfo(
     credentialsId: string,
     region: string,
-    ebsVolumeIds: string[]
+    ebsVolumeIds: string[],
+    databaseInstanceDetails?: any
 ): Promise<EstimationEbsType> {
-    logger.info('Getting EBS resource info:', { credentialsId, region, ebsVolumeIds });
+    logger.info('Getting EBS resource info:', { credentialsId, region, ebsVolumeIds, databaseInstanceDetails });
 
-    const volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
-    if (!volumes.Volumes || volumes.Volumes.length === 0) {
+    let volumes;
+    if (isDemo()) {
+        const sqlServerDeploymentType = databaseInstanceDetails?.length
+            ? databaseInstanceDetails[0].database_deployment_type
+            : '';
+        if (
+            sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ||
+            sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+        ) {
+            volumes = (await getEBSVolumesForDemo(sqlServerDeploymentType, ebsVolumeIds)) as DescribeVolumesResult;
+        } else {
+            volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
+        }
+    } else {
+        volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
+    }
+
+    if (!volumes?.Volumes || volumes.Volumes.length === 0) {
         throw new Error(`Volumes ${ebsVolumeIds} not found`);
     }
 
@@ -1933,6 +1955,24 @@ async function getDatabaseHostSummaryV2(
             }
 
             if (shouldQueryNodeTopology && nodeTopology && nodeTopology.ec2Details.length > 0) {
+                if (isDemo()) {
+                    // updating the instance type only for explore savings demo
+                    if (resourceDetail?.resource_name === 'app-server-15') {
+                        const modifiedEc2Details = nodeTopology.ec2Details?.map((ec2: any) => ({
+                            ...ec2,
+                            instanceType: 'm5.xlarge'
+                        }));
+                        nodeTopology.ec2Details = modifiedEc2Details;
+                    } else if (resourceDetail?.resource_name === 'app-server-14' && instanceResults?.length) {
+                        instanceResults = instanceResults.map((item: any) => ({
+                            ...item,
+                            databaseServer: {
+                                ...item.databaseServer,
+                                serverEdition: 'SQL Server Enterprise Edition'
+                            }
+                        }));
+                    }
+                }
                 databaseHostDetails.nodeTopology = nodeTopology;
             }
 
@@ -1942,6 +1982,12 @@ async function getDatabaseHostSummaryV2(
 
             // ClusterNodeDetails is used in TCO
             if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0) {
+                if (isDemo()) {
+                    resourceDetail.clusterNodeDetails = resourceDetail?.clusterNodeDetails?.map(node => ({
+                        ...node,
+                        ec2InstanceType: 'm5.xlarge'
+                    }));
+                }
                 databaseHostDetails.clusterNodeDetails = resourceDetail?.clusterNodeDetails;
             }
         }
@@ -2157,7 +2203,7 @@ async function getDatabaseDetails(
     });
 
     try {
-        const [{ databases } = { databases: {} }, backedupDatabases, { awsBackup = {}, ontapBackup = {} } = {}] =
+        const [{ databases } = { databases: [] }, backedupDatabases, { awsBackup = {}, ontapBackup = {} } = {}] =
             await Promise.all(
                 [
                     getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
@@ -2200,9 +2246,9 @@ async function getDatabaseDetails(
                 ...(getProtection && {
                     protection: {
                         isAwsBackupEnabled: {
-                            fsxn: checkKey(awsBackup, database.databaseName)
+                            fsxn: isDemoFlow ? true : checkKey(awsBackup, database.databaseName)
                         },
-                        isFsxOntapSnapshotsEnabled: checkKey(ontapBackup, database.databaseName),
+                        isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkKey(ontapBackup, database.databaseName),
                         isSqlNativeEnabled: Boolean(
                             backedupDatabases &&
                                 backedupDatabases?.find(

@@ -501,7 +501,11 @@ export const INVENTORY_STATUS = {
     HOST_ONLINE: 'online',
     NOT_AVAILABLE: 'N/A',
     UP: 'up',
-    DOWN: 'down'
+    DOWN: 'down',
+    RUNNING: 'Running',
+    STOPPED: 'Stopped',
+    CASE_SENSITIVE_UP: 'Up',
+    CASE_SENSITIVE_DOWN: 'Down'
 };
 
 export const INVENTORY_ACTIONS = {
@@ -519,10 +523,19 @@ export const INSTANCE_API_FIELDS = {
         'nodeTopology'
     ],
     SUB_TABLE_FIELDS: ['protection', 'performance'],
-    MIXED_STATUS_FIELDS: ['databaseInstanceTopology', 'storage', 'databaseServer', 'serverDetails', 'nodeTopology']
+    MIXED_STATUS_FIELDS: [
+        'databaseInstanceTopology',
+        'storage',
+        'databaseServer',
+        'serverDetails',
+        'nodeTopology',
+        'usageEstimation'
+    ]
 };
 
 export const PROTECTION_TEXT_STATUS = {
     YES: 'Yes',
     NO: 'No'
 };
+
+export const PREPARE_API_ENDPOINT = '/mssql/prepare';

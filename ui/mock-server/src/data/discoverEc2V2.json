@@ -375,7 +375,7 @@
                         "172.31.48.44",
                         "172.31.10.206"
                     ],
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [

@@ -14,7 +14,7 @@ import {
     invokeMarketingApi
 } from './cloud-manager/marketing-operations';
 import getLogger from '../utils/logger';
-import { getMonthlyPriceFromHourlyPrice } from '../utils/utils';
+import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice } from '../utils/utils';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import getSqlInstanceLicenseRecommendations from './recommendation-operations';
@@ -214,6 +214,18 @@ async function aoagStorageSavingsCalculations(
             0
         );
         const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice);
+        const [
+            {
+                compute: {
+                    existing: { finding: existingComputeFinding }
+                }
+            },
+            {
+                license: {
+                    existing: { finding: existingLicenseFinding }
+                }
+            }
+        ] = allNodesComputeLicenseDetails;
 
         // recommended compute and license details
         const recommendedInstanceType = `${allNodesComputeLicenseDetails
@@ -278,11 +290,14 @@ async function aoagStorageSavingsCalculations(
                 }
             }
         ] = allNodesComputeLicenseDetails;
+
+        const fsxCalculation = handleMarketingApiFsxCalculationObject(fsxCalculationData);
         return {
             compute: {
                 existing: {
                     instanceType: existingInstanceType,
-                    computeMonthlyPrice: existingComputeMonthlyPrice
+                    computeMonthlyPrice: existingComputeMonthlyPrice,
+                    finding: existingComputeFinding
                 },
                 recommended: {
                     instanceType: recommendedInstanceType,
@@ -292,6 +307,7 @@ async function aoagStorageSavingsCalculations(
             },
             license: {
                 existing: {
+                    finding: existingLicenseFinding,
                     sqlServerEdition: existingSqlServerLicenseEdition,
                     licenseMonthlyPrice: existingLicenseMonthlyPrice
                 },
@@ -322,7 +338,11 @@ async function aoagStorageSavingsCalculations(
                     existingLicenseMonthlyPrice!,
                 recommended: fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
             },
-            fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
+            fsxCalculation,
+            fsxBreakdown: fsxStorageCapacityBreakdown(
+                fsxCalculation.totalStorageCapacity,
+                SqlServerDeploymentModel.SQL_AOAG_SHORT
+            )
         };
     }
     throw createError(
@@ -340,7 +360,7 @@ async function aoagStorageSavingsMetrics(
     nodeDetails: DiscoverResponseInfoType,
     currentNodeComputeLicenseDetails: ComputeLicenseCostType
 ) {
-    logger.info('Performing AOAG storage savings calculations', {
+    logger.info('Performing AOAG storage savings metrics calculation ', {
         accountId,
         credentialsId,
         region,
@@ -575,6 +595,8 @@ async function performStorageSavingsCalculations(
 
     const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
     const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
+    const fsxCalculation = handleMarketingApiFsxCalculationObject(fsxCalculationData);
+
     return {
         compute,
         license,
@@ -584,7 +606,8 @@ async function performStorageSavingsCalculations(
             existing: ebs.total + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
         },
-        fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
+        fsxCalculation,
+        fsxBreakdown: fsxStorageCapacityBreakdown(fsxCalculation.totalStorageCapacity, sqlServerDeploymentType!)
     };
 }
 

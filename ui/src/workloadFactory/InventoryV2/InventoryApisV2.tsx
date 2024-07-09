@@ -129,7 +129,7 @@ const InventoryApisV2 = () => {
         if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
             try {
                 const result: any = await getFsxCredentialStatusListApi({
-                    credentialId: credId,
+                    credentialsId: credId,
                     regionId: regionId,
                     fsxIds: fsxIdsList.join(',')
                 });
@@ -367,6 +367,22 @@ const InventoryApisV2 = () => {
                     ) {
                         setPartnerInstanceList([...partnerInstanceList, ...[partnerInstanceId]]);
                     }
+
+                    const state = store.getState();
+                    const unManagedPerfInstanceIdsListData = state.inventoryV2.unManagedPerfInstanceIdsList;
+                    if (
+                        partnerInstanceId &&
+                        unManagedPerfInstanceIdsListData.includes(host?.id) &&
+                        !unManagedPerfInstanceIdsListData.includes(partnerInstanceId)
+                    ) {
+                        dispatch(
+                            setUnManagedPerfInstanceIdsList([
+                                ...unManagedPerfInstanceIdsListData,
+                                ...[partnerInstanceId]
+                            ])
+                        );
+                    }
+
                     if (mssqlInstancesDataRef.current[host?.id]) {
                         mssqlInstancesDataRes[host?.id] = {
                             isManagedHost: mssqlInstancesDataRef.current[host?.id]?.isManagedHost,
@@ -585,6 +601,7 @@ const InventoryApisV2 = () => {
         dispatch(setRemoveSecNodeDiscoveredList([]));
         // Perf and protection call for unmanaged rows
         dispatch(setUnManagedPerfInstanceIdsList([]));
+        setRunningPerfInstanceList([]);
         dispatch(setPerfMssqlInstancesData({}));
     };
 

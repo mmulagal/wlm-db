@@ -134,9 +134,9 @@ async function getHostAndSqlServerInfo(
     nextToken?: string,
     instances: string[] = []
 ): Promise<DiscoverMsSqlResponseBodyType> {
-    logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken, instances });
+    logger.info('Get host and SQL Server info:', { accountId, credentialsId, region, nextToken, instances });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return returnInventorydata(instances);
+        return returnInventorydata(instances) as unknown as DiscoverMsSqlResponseBodyType;
     }
     let api1StartTime;
     let api1EndTime;
@@ -216,7 +216,9 @@ async function getHostAndSqlServerInfo(
         );
         api1EndTime = performance.now();
         logger.info(
-            `API1Performance: Time taken by makeSsmCall() for multiple targets: ${api1EndTime - api1StartTime}ms`
+            `API1Performance: Time taken by makeSsmCall() for multiple targets: ${
+                api1EndTime - api1StartTime
+            }ms. SSM command ID: ${commandId}`
         );
 
         /*
@@ -295,11 +297,11 @@ async function getHostAndSqlServerInfo(
 
         const subnetListMap = new Map(subnetList?.map(subnet => [subnet.SubnetId, subnet.AvailabilityZone]));
 
-        // PS execution would take some time, so we wait for a second before triggering polling.
+        // PowerShell execution would take some time, so we wait for a second before triggering polling.
         //
         // NOTE:
         //  Getting FSx filesystems and SVMs will take some time, which could serve the
-        // purpose of sleep() below.  Since  PowerShell script takes some time to complete,
+        // purpose of sleep() below.  Since PowerShell script takes some time to complete,
         // sleeping for a second would help us get the results in first SSM poll itself.
         // If run time performance is needed, this is one possible candidate for purge.
         await sleep(1000);
@@ -364,6 +366,15 @@ async function getHostAndSqlInfoFromPsOutput(
     fsIdWithDeploymentType: Map<string, DeployType>,
     subnetListMap: Map<string | undefined, string | undefined>
 ): Promise<SqlServerInstanceInfoType[]> {
+    logger.info('Get host and SQL server details from PowerShell output', {
+        credentialsId,
+        region,
+        ssmTarget,
+        commandId,
+        endPointIpWithFsxInfo,
+        fsIdWithDeploymentType,
+        subnetListMap
+    });
     const commandInvocationParam = {
         CommandId: commandId,
         InstanceId: ssmTarget.ec2InstanceId
@@ -377,6 +388,8 @@ async function getHostAndSqlInfoFromPsOutput(
         pollCommandStatus(credentialsId, region, commandInvocationParam),
         getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
     ]);
+
+    logger.info(`SQL Parameter details for ${ssmTarget.ec2InstanceId}: ${ec2SqlParametersInfo}`);
 
     if (ssmResponse?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
@@ -392,7 +405,7 @@ async function getHostAndSqlInfoFromPsOutput(
         }
     }
     if (ssmResponse.Status === CommandInvocationStatus.TIMED_OUT) {
-        logger.error(`SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`);
+        logger.error(`SSM command ${commandId} execution timed out on node ${ssmTarget.ec2InstanceId}`);
     }
 
     api1EndTime = performance.now();
@@ -416,6 +429,7 @@ async function getHostAndSqlInfoFromPsOutput(
             }
 
             let responseInJson = JSON.parse(powerShellScriptOutput);
+            logger.info(`SSM response for ${ssmTarget.ec2InstanceId}: ${responseInJson}`);
 
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
@@ -537,7 +551,8 @@ async function getHostAndSqlInfoFromPsOutput(
                     }
 
                     const sqlServerAuthentication = ec2SqlParametersInfo?.some(
-                        (elem: { sqlinstancename: string }) => elem.sqlinstancename === sqlServerInstance
+                        (elem: { sqlinstancename: string }) =>
+                            elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase()
                     );
 
                     ssmTargetSqlServerInstancesInfo.push({
@@ -603,7 +618,7 @@ async function makeSsmCall(
     let commandId;
     try {
         commandId = await sendSSMCommand(credentialsId, region, params, accountId);
-        logger.info('SSM command ID:', commandId);
+        logger.info(`SSM command ID is ${commandId} for commands ${commands}`);
     } catch (error) {
         logger.error(`Failed to start EC2 instance information retrieval using sendSSMCommand. Reason: ${error}`);
         throw createError(
@@ -683,7 +698,7 @@ async function validateAndStoreDiscoveredParameters(
     instanceId: string,
     credentials: DiscoverCredentialsType[]
 ) {
-    logger.info('Validate and Put SSM parameters', { accountId, credentialsId, region, instanceId });
+    logger.info('Validate and store SSM parameters', { accountId, credentialsId, region, instanceId });
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return {
@@ -741,7 +756,7 @@ async function fetchUnmanagedHostsInformation(
     region: string,
     instances: string[] = []
 ) {
-    logger.info('Fetching hosts information:', { accountId, credentialsId, region, instances });
+    logger.info('Fetching unmanaged hosts information:', { accountId, credentialsId, region, instances });
 
     // Modified implementation to fetch SQL Server instance details for EC2 instances with underlying storage details. The code now accepts instances ID array instead of object with ec2InstanceId and storageType. If there are multiple sql instances in an ec2 instance, the code will return multiple resource details for the same ec2 instance. Every item in resourceDetailsList is an ec2 instance - sql instance pair with storage type.
 
@@ -803,7 +818,13 @@ async function fetchUnmanagedHostsInformation(
                     cloud_provider_account_id: null,
                     region,
                     credentials_id: credentialsId,
-                    storage_type: fsxnId ? STORAGE_TYPE.FSXN : fsxwId ? STORAGE_TYPE.FSXW : STORAGE_TYPE.EBS,
+                    storage_type: fsxnId
+                        ? STORAGE_TYPE.FSXN
+                        : fsxwId
+                        ? STORAGE_TYPE.FSXW
+                        : ebsVolumeIds.length > 0
+                        ? STORAGE_TYPE.EBS
+                        : NOT_AVAILABLE,
                     metadata: {
                         creationDate: Date.now(),
                         node1InstanceId: ec2Instance.ec2InstanceId
@@ -855,7 +876,7 @@ async function fetchUnmanagedHostsInformationV2(
     instances: string[] = [],
     fields?: string
 ) {
-    logger.info('Fetching hosts information:', { accountId, credentialsId, region, instances });
+    logger.info('Fetching unmanaged hosts information:', { accountId, credentialsId, region, instances, fields });
 
     // Modified implementation to fetch SQL Server instance details for EC2 instances with underlying storage details. The code now accepts instances ID array instead of object with ec2InstanceId and storageType. If there are multiple sql instances in an ec2 instance, the code will return multiple resource details for the same ec2 instance. Every item in resourceDetailsList is an ec2 instance - sql instance pair with storage type.
 
@@ -873,7 +894,7 @@ async function fetchUnmanagedHostsInformationV2(
 
     await Promise.all(
         ec2HostDetails?.map(async ec2Instance => {
-            const [{ nodeIps, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [];
+            const [{ nodeIps, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [{}];
             let clusterNodeDetails: NodeDetails[] = [];
             if (
                 (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
@@ -935,7 +956,7 @@ async function fetchUnmanagedHostsInformationV2(
                             ? STORAGE_TYPE.FSXN
                             : fsxwId
                             ? STORAGE_TYPE.FSXW
-                            : ebsVolumeIds
+                            : ebsVolumeIds.length > 0
                             ? STORAGE_TYPE.EBS
                             : NOT_AVAILABLE
                     });
@@ -1076,9 +1097,9 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     }
 
     /* Resource ID is obtained either by one instanceID (in case of standalone
-       deployment) or by combining instanceIDs of both node1 and node (in case
+       deployment) or by combining instanceIDs of both node1 and node2 (in case
        of FCI deployment).  FCI resourceID can be a hash of inst1ID+inst2ID or
-       inst2ID+inst1.  Since a resource would have been regisered with either
+       inst2ID+inst1ID.  Since a resource would have been regisered with either
        of the instance IDs,  we check need to verify the hash for both
        combinations.
     */
@@ -1155,7 +1176,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
 }
 
 async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlResponseBodyType, ec2InstanceId: string) {
-    logger.debug('Is EC2 instance manageable', discoverInfo);
+    logger.debug('Validate EC2 instance manageability', discoverInfo);
 
     try {
         const { count, items } = discoverInfo;
@@ -1209,6 +1230,39 @@ async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlRespo
     }
 }
 
+async function rewriteOrDeleteSSMParameter(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    paramesToDelete: string[],
+    instancesToBeDeleted: string[],
+    fsxCredentials: DiscoverCredentialsType,
+    sqlCredentials: DiscoverCredentialsType[]
+) {
+    logger.info('Calling rewriteOrDeleteSSMParameter', {
+        credentialsId,
+        region,
+        instanceId,
+        paramesToDelete,
+        instancesToBeDeleted,
+        fsxCredentials,
+        sqlCredentials
+    });
+    if (sqlCredentials.length === instancesToBeDeleted.length) {
+        // Delete the parameter store all credentials are invalid
+        paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+        await deleteSSMParameter(credentialsId, region, paramesToDelete);
+    } else {
+        // Rewrite parameter store after removing invalid credentials
+        const latestSqlCredentials = sqlCredentials.filter(e => !instancesToBeDeleted.includes(e.resourceId));
+        const creds = prepareParametersToStore(instanceId, [
+            ...(fsxCredentials ? [fsxCredentials] : []),
+            ...latestSqlCredentials
+        ]);
+        await ssmPutParameters(credentialsId, region, creds);
+    }
+}
+
 async function validateCredentials(
     credentialsId: string,
     region: string,
@@ -1216,7 +1270,7 @@ async function validateCredentials(
     fsxCredentials: DiscoverCredentialsType | undefined,
     sqlCredentials: DiscoverCredentialsType[]
 ) {
-    logger.info('validateCredentials', { instanceId, fsxCredentials, sqlCredentials });
+    logger.info('Validate credentials', { instanceId, fsxCredentials, sqlCredentials });
 
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
     if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
@@ -1266,6 +1320,7 @@ async function validateCredentials(
 
         const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
         parsedResponse = attempt(JSON.parse, cleanResponse);
+        logger.info('Parsed response for credential validation: ', parsedResponse);
 
         parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
 
@@ -1297,33 +1352,40 @@ async function validateCredentials(
         }
 
         if (instancesToBeDeleted.length > 0) {
-            if (newSqlCredentials.length === instancesToBeDeleted.length) {
-                // Delete the parameter store all credentials are invalid
-                paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
-                await deleteSSMParameter(credentialsId, region, paramesToDelete);
-            } else {
-                // Rewrite parameter store after removing invalid credentials
-                const latestSqlCredentials = newSqlCredentials.filter(
-                    e => !instancesToBeDeleted.includes(e.resourceId)
-                );
-                const creds = prepareParametersToStore(instanceId, [
-                    ...(fsxCredentials ? [fsxCredentials] : []),
-                    ...latestSqlCredentials
-                ]);
-                await ssmPutParameters(credentialsId, region, creds);
-            }
+            await rewriteOrDeleteSSMParameter(
+                credentialsId,
+                region,
+                instanceId,
+                paramesToDelete,
+                instancesToBeDeleted,
+                fsxCredentials!,
+                newSqlCredentials
+            );
         }
         return response;
     } catch (error: any) {
         // delete the ssm parameters if its already created
         const paramesToDelete: string[] = [];
+        const instancesToBeDeleted: string[] = [];
+
         if (fsxCredentials) {
             paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
         }
+
         if (sqlCredentials.length) {
-            paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+            instancesToBeDeleted.push(sqlCredentials[0].resourceId);
         }
-        await deleteSSMParameter(credentialsId, region, paramesToDelete);
+
+        await rewriteOrDeleteSSMParameter(
+            credentialsId,
+            region,
+            instanceId,
+            paramesToDelete,
+            instancesToBeDeleted,
+            fsxCredentials!,
+            newSqlCredentials
+        );
+
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Unable to validate the credentials . Reason: ${error?.message}.`
@@ -1338,7 +1400,7 @@ async function verifyAndCreateCredentials(
     fsxCredentials: DiscoverCredentialsType | undefined,
     sqlCredentials: DiscoverCredentialsType[]
 ) {
-    logger.info('verifyAndCreateCredentials', { instanceId, fsxCredentials, sqlCredentials });
+    logger.info('Verify and create credentials', { instanceId, fsxCredentials, sqlCredentials });
 
     if (fsxCredentials) {
         const SSMParameter = await getParameter(
@@ -1380,7 +1442,7 @@ async function verifyAndCreateCredentials(
 }
 
 async function deleteSSMParameter(credentialsId: string, region: string, ssmParameterNames: string[]) {
-    logger.info('deleteSSMParameter', { ssmParameterNames });
+    logger.info('Delete SSM parameter', { credentialsId, region, ssmParameterNames });
 
     const newlyAddedSSMParameters: string[] = (await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS)) || [];
     const ssmParamRegex = /\/netapp\/wlmdb\/(.*)/;
@@ -1403,7 +1465,7 @@ async function verifyAndAddFSxOntapCredentials(
     region: string,
     fsxNId: string
 ) {
-    logger.info('verifyAndAddFSxOntapCredentials', { accountId, credentialsId, region, fsxStorageId: fsxNId });
+    logger.info('Verify and add FSx ONTAP credentials', { accountId, credentialsId, region, fsxStorageId: fsxNId });
 
     if (!isEmpty(fsxNId)) {
         // Check if the FSx credentials are already present in SSM parameter store
@@ -1440,7 +1502,12 @@ async function verifyAndAddFSxOntapCredentials(
 }
 
 async function prepareForManage(accountId: string, credentialsId: string, region: string, ec2InstanceId: string) {
-    logger.info('Prepare for manage:', { accountId, credentialsId, region });
+    logger.info('Prepare given EC2 for manage by Workload Factory:', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId
+    });
 
     const ssmState = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
     if (ssmState.Status === ConnectionStatus.NOT_CONNECTED) {
@@ -1755,7 +1822,42 @@ async function manageSqlServerV2(
                     node2InstanceId = temp.ec2InstanceId;
                 }
             }
+
+            const node2ssmStatus = await getSSMConnectionStatus(credentialsId, region, node2InstanceId!);
+            if (node2ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+                throw createError(
+                    HttpErrorCodes.VALIDATION_ERROR,
+                    `No SSM connectivity on partner node ${node2InstanceId}.`
+                );
+            }
+
+            const node2missingResourceDetails = await callSsmExecution(
+                credentialsId,
+                region,
+                GET_MISSING_RESOURCE_DETAILS,
+                node2InstanceId!,
+                accountId
+            );
+
+            const node2missingResourceJson = JSON.parse(node2missingResourceDetails!);
+
+            if (node2missingResourceJson[IS_PS7_AVAILABLE] === false) {
+                precheckErrorList.push(
+                    'PowerShell 7 is required for managing the resource on partner node. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4.'
+                );
+            }
+            if (node2missingResourceJson[UNAVAILABLE_PS_MODULES]) {
+                precheckErrorList.push(
+                    `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource on partner node. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
+                );
+            }
+            if (node2missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
+                precheckErrorList.push(
+                    'Files required for database operations are not available on partner node. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".'
+                );
+            }
         }
+
         let resourceId;
         let isResourceTobeCreated: boolean;
         if (isDemoFlow && databaseHostId) {
@@ -1885,12 +1987,22 @@ async function manageSqlServerV2(
                         node2InstanceId
                     );
 
+                    let dbInstanceName;
+                    if (isDemoFlow) {
+                        dbInstanceName =
+                            sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
+                                ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
+                                : sqlInstanceInfo.sqlServerInstance;
+                    } else {
+                        dbInstanceName = sqlInstanceInfo.sqlServerInstance;
+                    }
+
                     await upsertDatabaseInstance(accountId, {
                         credentialsId,
                         resourceId,
                         region,
                         databaseInstanceId: serverGuid!,
-                        databaseInstanceName: sqlInstanceInfo.sqlServerInstance,
+                        databaseInstanceName: dbInstanceName,
                         fsxnIds: storageInfo!.id,
                         isDefault: sqlInstanceInfo.isDefaultInstance,
                         source: RESOURCE_SOURCE.DISCOVER,

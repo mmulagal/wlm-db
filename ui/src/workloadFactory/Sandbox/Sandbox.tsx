@@ -9,8 +9,7 @@ import { useAppSelector } from '../../store/storeHooks';
 import { Spinner } from '@netapp/design-system';
 
 const Sandbox = () => {
-    const { showBanner, connectionInfo, splitEstimateLoading } = useAppSelector(state => state?.sandbox);
-    const { isLoading: connectionInfoLoading } = connectionInfo;
+    const { showBanner, connectionInfoLoading, splitEstimateLoading } = useAppSelector(state => state?.sandbox);
 
     return (
         <div className={styles.sandbox}>

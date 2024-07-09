@@ -101,13 +101,7 @@ export interface SandboxEntities {
         sandboxSavingsLoading: boolean;
         sandboxSavingsError: string;
     };
-    connectionInfo: {
-        selectedDatabaseHostId?: string | null;
-        selectedDatabaseInstanceId?: string | null;
-        selectedSandboxName?: string | null;
-        connectionString?: string | null;
-        isLoading: boolean;
-    };
+    connectionInfoLoading: boolean;
     splitEstimateLoading: boolean;
     rollbackSnapshotsLoading: boolean;
     rollbackSnapshotList: any;

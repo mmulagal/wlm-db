@@ -303,10 +303,6 @@ const HOST_AND_SQL_INFO_PS1 = [
         $responseObject['failureInfo'] += "Errors seen while reading Windows Registry: $RegistryErrors.\`n"
       }
 
-      If ($MappedDrivesWithPath.Count -le 0) {
-        $responseObject['failureInfo'] += "Failed to get network drives from Windows Registry.\`n"
-      }
-  
       $editionDBCountMachineInfoGuid = @($null, $null, $null, $null, $null)
       $responseObject['windowsAuthentication'] = $False
       $sqlServerInstanceStorageInfo = $null
@@ -368,10 +364,18 @@ const HOST_AND_SQL_INFO_PS1 = [
           } catch {
             $responseObject['windowsAuthentication'] = $False
 
-            if (Get-Command Get-SSMParameter) {
+            
+            $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+            $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
+            $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
+            $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
+
+            if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
               $sqlCredential = $null
               try {
-                $sqlCredential = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$(Get-EC2InstanceMetadata -Category InstanceId)).Value | ConvertFrom-Json).sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
+                [string]$apiToken = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri http://169.254.169.254/latest/api/token
+                $ec2InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $apiToken} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+                $sqlCredential = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json).sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
               } catch {
                 $responseObject['failureInfo'] += $_
               }

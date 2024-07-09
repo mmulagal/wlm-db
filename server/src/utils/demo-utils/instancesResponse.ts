@@ -22,7 +22,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerName: 'SQLServer-Prod-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
@@ -43,14 +43,14 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'PROD-SupplierManagement',
-                        serveGuid: 'f4b7c5d3-e1f6-4g2a-9b6d',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6d',
                         isDefaultInstance: false,
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerName: 'SQLServer-Prod-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
@@ -71,14 +71,14 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'PROD-ProductCatalog',
-                        serveGuid: 'f4b7c5d3-e1f6-4g2a-9b6e',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6e',
                         isDefaultInstance: false,
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerName: 'SQLServer-Prod-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
@@ -134,7 +134,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerName: 'SQLServer-PreProd-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
@@ -162,9 +162,9 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
+                        sqlServerName: 'SQLServer-Dev-01',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerDeploymentType: 'FCI',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -185,26 +185,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         sqlServerInstance: 'DEV-InventoryControl',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6l',
                         isDefaultInstance: false,
-                        sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
-                        storage: [
-                            {
-                                type: 'FSXN',
-                                id: fsxId
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
+                        sqlServerState: 'Stopped'
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -218,9 +199,9 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
+                        sqlServerName: 'SQLServer-Dev-01',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerDeploymentType: 'FCI',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -233,6 +214,15 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'DEV-CustomerDatabase',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6m',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Stopped'
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -241,26 +231,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         sqlServerInstance: 'DEV-EmployeeDirectory',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
                         isDefaultInstance: false,
-                        sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
-                        storage: [
-                            {
-                                type: 'FSXN',
-                                id: fsxId
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
+                        sqlServerState: 'Stopped'
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -269,26 +240,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         sqlServerInstance: 'DEV-ComplianceManagement',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
                         isDefaultInstance: false,
-                        sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
-                        storage: [
-                            {
-                                type: 'FSXN',
-                                id: fsxId
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
+                        sqlServerState: 'Stopped'
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -302,7 +254,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerName: 'SQLServer-Prod-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
@@ -330,7 +282,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerName: 'SQLServer-Dev-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
@@ -358,9 +310,9 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-QA-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
+                        sqlServerName: 'SQLServer-UAT-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerDeploymentType: 'FCI',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -373,6 +325,43 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'DEV-SalesAnalytics',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLServer-Dev-04',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerDeploymentType: 'FCI',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'DEV-ProjectManagement',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Stopped'
                     }
                 ]
             }

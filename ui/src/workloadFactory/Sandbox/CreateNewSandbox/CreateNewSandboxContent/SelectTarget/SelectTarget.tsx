@@ -98,9 +98,6 @@ const SelectTarget = () => {
     }, [selectedDatabaseHost, selectedSourceDbInstance]);
 
     const isValidDBName = () => {
-        if (isDemoMode) {
-            return '';
-        }
         if (showError && !selectedDatabase) {
             return GENERAL.ACTION_REQUIRED;
         }
@@ -112,12 +109,16 @@ const SelectTarget = () => {
     useEffect(() => {
         if (generateTargetName?.length) {
             dispatch(setTargetDbHost(generateTargetName[0]));
+        } else {
+            dispatch(setTargetDbHost(null));
         }
     }, [generateTargetName]);
 
     useEffect(() => {
         if (generateTargetInstance?.length) {
             dispatch(setTargetDbInstance(generateTargetInstance[0]));
+        } else {
+            dispatch(setTargetDbInstance(null));
         }
     }, [generateTargetInstance]);
 
@@ -202,6 +203,7 @@ const SelectTarget = () => {
                                     defaultValue={selectedDatabaseHost ? selectedDatabaseHost : generateTargetName[0]}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setTargetDbHost(selectedOptions));
+                                        dispatch(setTargetDbInstance(null));
                                     }}
                                     value={selectedDatabaseHost}
                                     isSearchable={true}

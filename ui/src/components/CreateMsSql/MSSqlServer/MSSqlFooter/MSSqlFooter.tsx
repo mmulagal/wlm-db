@@ -29,6 +29,7 @@ const MSSqlFooter = () => {
 
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
+    const { databaseHostEntryPoint } = useAppSelector(state => state.msSqlAction);
     const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
 
     const [deploySqlTemplate] = useDeploySqlTemplateMutation();
@@ -130,9 +131,19 @@ const MSSqlFooter = () => {
         }, 3000);
     };
 
+    const handleCancel = () => {
+        if (databaseHostEntryPoint === 'inventory') {
+            navigate('databases/inventory');
+        } else if (databaseHostEntryPoint === 'database') {
+            navigate('/databases');
+        } else {
+            navigateToCanvas('/');
+        }
+    };
+
     return (
         <>
-            <Button variant="secondary" isThin onClick={() => navigateToCanvas('/')}>
+            <Button variant="secondary" isThin onClick={handleCancel}>
                 {SELECT_CONFIG.CANCEL}
             </Button>
             <Button isThin onClick={handleCreate} id="wizard-deploy-btn">

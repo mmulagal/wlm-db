@@ -74,6 +74,15 @@ const StorageSavingsResponse = Type.Object({
         useCase: Type.String(),
         regionName: Type.String(),
         monthlySnapshotCapacity: Type.Number()
+    }),
+    fsxBreakdown: Type.Object({
+        fsxDataLunSize: Type.Number(),
+        fsxDataVolumeSize: Type.Number(),
+        fsxLogVolumeSize: Type.Number(),
+        fsxTempDbVolumeSize: Type.Number(),
+        fsxQuorumVolumeSize: Type.Number(),
+        fsxBufferVolumeSize: Type.Number(),
+        fsxStorageCapacity: Type.Number()
     })
 });
 
@@ -228,7 +237,8 @@ const ComputeDetails = Type.Object({
     computeMonthlyPrice: Type.Optional(Type.Number()),
     instanceMonthlyPrice: Type.Optional(Type.Number()),
     hoursInMonth: Type.Number(),
-    message: Type.Optional(Type.String())
+    message: Type.Optional(Type.String()),
+    finding: Type.Optional(Type.String())
 });
 
 const LicenseDetails = Type.Object({
@@ -237,7 +247,8 @@ const LicenseDetails = Type.Object({
     licenseIncluded: Type.Optional(Type.Boolean()),
     licenseMonthlyPrice: Type.Optional(Type.Number()),
     hoursInMonth: Type.Number(),
-    message: Type.Optional(Type.String())
+    message: Type.Optional(Type.String()),
+    finding: Type.Optional(Type.String())
 });
 
 const Compute = Type.Object({

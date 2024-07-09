@@ -4,33 +4,30 @@ import {
     setAggregatedSandboxList,
     setAllSandboxList,
     setSandboxListState,
-    setSandboxSavingsState,
-    updateConnectionInfo
+    setSandboxSavingsState
 } from '../../store/workloadFactory/sandboxSlice';
-import { useGetConnectionInfoQuery, useGetSandboxListQuery, useGetSandboxSavingsQuery } from '../../utils/apiService';
+import { useGetSandboxListQuery, useGetSandboxSavingsQuery } from '../../utils/apiService';
 
 const SandboxApis = () => {
     const dispatch = useAppDispatch();
 
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
-    const { getSandboxList, aggregatedSandboxList, connectionInfo, allSandboxList } = useAppSelector(
-        state => state.sandbox
-    );
+    const { getSandboxList, aggregatedSandboxList, allSandboxList } = useAppSelector(state => state.sandbox);
     const { isRefreshed } = useAppSelector(state => state.inventory);
     const { refreshBlocked } = useAppSelector(state => state?.auth);
-
-    const { selectedDatabaseHostId, selectedSandboxName, selectedDatabaseInstanceId } = connectionInfo;
 
     const [credId, setCredId] = useState(null);
     const [regionId, setRegionId] = useState(null);
     const [sandboxCursor, setSandboxCursor] = useState(null);
 
     useEffect(() => {
-        setCredId(headerSelectedCred?.data?.credentialsId);
-        setRegionId(headerSelectedRegion?.label2);
-        dispatch(setAggregatedSandboxList([]));
-        dispatch(setAllSandboxList([]));
-    }, [headerSelectedCred, headerSelectedRegion, isRefreshed]);
+        if (!refreshBlocked) {
+            setCredId(headerSelectedCred?.data?.credentialsId);
+            setRegionId(headerSelectedRegion?.label2);
+            dispatch(setAggregatedSandboxList([]));
+            dispatch(setAllSandboxList([]));
+        }
+    }, [headerSelectedCred, headerSelectedRegion, isRefreshed, refreshBlocked]);
 
     const {
         data: sandboxList,
@@ -55,23 +52,6 @@ const SandboxApis = () => {
             region: regionId
         },
         { skip: !credId || !regionId || refreshBlocked }
-    );
-
-    const {
-        data: connectionInfoData,
-        isFetching: fetchingConnectionInfo,
-        isError: connectionInfoError
-    } = useGetConnectionInfoQuery(
-        {
-            credentialsId: credId,
-            regionId: regionId,
-            databaseHostId: selectedDatabaseHostId,
-            instanceId: selectedDatabaseInstanceId,
-            sandboxName: selectedSandboxName
-        },
-        {
-            skip: !credId || !regionId || !selectedDatabaseHostId || !selectedSandboxName || !selectedDatabaseInstanceId
-        }
     );
 
     useEffect(() => {
@@ -103,30 +83,6 @@ const SandboxApis = () => {
             })
         );
     }, [sandboxSavings, sandboxSavingsLoading, sandboxSavingsError]);
-
-    useEffect(() => {
-        if (!fetchingConnectionInfo) {
-            dispatch(
-                updateConnectionInfo({
-                    selectedDatabaseHostId,
-                    selectedDatabaseInstanceId,
-                    selectedSandboxName,
-                    connectionString: connectionInfoData,
-                    isLoading: false
-                })
-            );
-        } else {
-            dispatch(
-                updateConnectionInfo({
-                    selectedDatabaseHostId,
-                    selectedDatabaseInstanceId,
-                    selectedSandboxName,
-                    connectionString: '',
-                    isLoading: true
-                })
-            );
-        }
-    }, [connectionInfoData, fetchingConnectionInfo, connectionInfoError]);
 
     return <></>;
 };
