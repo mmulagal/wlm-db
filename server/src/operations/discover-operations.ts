@@ -384,10 +384,20 @@ async function getHostAndSqlInfoFromPsOutput(
     let api1EndTime;
 
     api1StartTime = performance.now();
-    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all([
-        pollCommandStatus(credentialsId, region, commandInvocationParam),
-        getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
-    ]);
+
+    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all(
+        [
+            pollCommandStatus(credentialsId, region, commandInvocationParam),
+            getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
+        ].map((p, index) =>
+            p.catch(error => {
+                if (index === 0) {
+                    logger.error('Error fetching command status');
+                    throw createError(`Error fetching command status:${error}`);
+                }
+            })
+        )
+    );
 
     logger.info(`SQL Parameter details for ${ssmTarget.ec2InstanceId}: ${ec2SqlParametersInfo}`);
 
@@ -404,7 +414,7 @@ async function getHostAndSqlInfoFromPsOutput(
             );
         }
     }
-    if (ssmResponse.Status === CommandInvocationStatus.TIMED_OUT) {
+    if (ssmResponse?.Status === CommandInvocationStatus.TIMED_OUT) {
         logger.error(`SSM command ${commandId} execution timed out on node ${ssmTarget.ec2InstanceId}`);
     }
 

@@ -74,8 +74,7 @@ async function pollCommandStatus(
             await sleep(ms(config.get<string>('ssm.poll-interval')));
             return pollCommandStatus(credentialsId, region, pollParams);
         }
-        logger.error('Error fetching command status:', error);
-        throw new Error(`Error fetching command status:${error}`);
+        throw new Error(error);
     }
 }
 
@@ -96,11 +95,14 @@ async function executeSSMDocument(
 
     // Sleep for 1 second to avoid immediate polling
     await sleep(1000);
-    const response = await pollCommandStatus(credentialsId, region, pollParams);
-
-    logger.debug('SSM command Response:', response);
-
-    return response;
+    try {
+        const response = await pollCommandStatus(credentialsId, region, pollParams);
+        logger.debug('SSM command Response:', response);
+        return response;
+    } catch (error) {
+        logger.error('Error fetching command status');
+        throw createError(`Error fetching command status:${error}`);
+    }
 }
 
 async function callSsmExecution(
