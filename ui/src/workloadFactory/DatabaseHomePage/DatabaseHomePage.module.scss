@@ -6,7 +6,7 @@
     .leftSide {
         overflow-y: auto;
         height: 100%;
-        width: 67.3vw;
+        width: 67vw;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -26,7 +26,7 @@
 
     .secondLevelContainer {
         display: flex;
-        width: 1063px;
+        width: 82.4%;
     }
 
     .buttonsContainer {
@@ -39,7 +39,7 @@
         margin-top: 24px;
 
         .sandBoxContainer {
-            width: 520px;
+            width: 49%;
             height: 624px;
             background-color: var(--content-background);
             box-shadow: 2px 2px 6px var(--grey-15);
@@ -49,7 +49,7 @@
     .jobContainer {
         margin-top: 24px;
         margin-bottom: 80px;
-        width: 1064px;
+        width: 82.4%;
         height: 336px;
         background-color: var(--content-background);
         box-shadow: 2px 2px 6px var(--grey-15);
@@ -58,7 +58,7 @@
     .ProtectionContainer {
         box-shadow: 2px 2px 6px var(--grey-15);
         height: 624px;
-        width: 520px;
+        width: 49%;
         background-color: var(--content-background);
     }
 
@@ -70,14 +70,14 @@
 
         .barContainer {
             display: flex;
-
+            width: 100%;
             gap: 24px;
 
             .commonContainer {
                 background-color: var(--content-background);
                 box-shadow: 2px 2px 6px var(--grey-15);
                 height: 244px;
-                width: 520px;
+                width: 49%;
             }
         }
     }
@@ -88,9 +88,17 @@
     }
 }
 
-@media screen and (min-width: 1576px) and (max-width: 1720px) {
-    .leftSide {
-        width: 61vw !important;
+@media screen and (min-width: 1500px) {
+    .databaseHome {
+        .buttonsContainer {
+            width: 82.4%;
+        }
+        .fourthLevelContainer {
+            width: 82.4%;
+        }
+        .thirdLevelContainer {
+            width: 82.4%;
+        }
     }
 }
 
