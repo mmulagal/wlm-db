@@ -7,7 +7,7 @@ import useResize from '../../../common/hooks/useResize';
 
 const JobDistribution = () => {
     const jobsSummaryData = useAppSelector(state => state.jobMonitoring.jmJobsSummary);
-    const jobsSummaryLoading = true;
+    const jobsSummaryLoading = useAppSelector(state => state.jobMonitoring.jmJobsSummaryLoading);
     const windowSize = useResize();
     return (
         <div

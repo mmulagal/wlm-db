@@ -15,7 +15,10 @@ const SourceInformation = () => {
     return (
         <div className={styles.sourceInformation}>
             <div className={styles.wrapperContainer}>
-                <Source />
+                <div>
+                    <Source />
+                </div>
+
                 <div className={styles.insideContainer}>
                     {!isNA && (
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
