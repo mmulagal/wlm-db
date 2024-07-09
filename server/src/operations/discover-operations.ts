@@ -290,6 +290,10 @@ async function getHostAndSqlServerInfo(
                     fsxId: fsx.FileSystemId!,
                     type: FileSystemType.WINDOWS
                 });
+                endPointIpWithFsxInfo.set(`${fsx.DNSName!}`, {
+                    fsxId: fsx.FileSystemId!,
+                    type: FileSystemType.WINDOWS
+                });
             });
 
         api1EndTime = performance.now();
