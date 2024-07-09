@@ -8,7 +8,7 @@ import {
     DatabaseHostsSummarySchema,
     DatabasesCreateSchema,
     GetDriveInfoSchema,
-    CloneDatabaseHostSchema,
+    CreateSandboxSchema,
     GetCollationDetailsSchema,
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,
@@ -188,7 +188,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .post(`${API_PREFIX_PATH}/sandboxes`, { schema: CloneDatabaseHostSchema }, async (request, reply) => {
+        .post(`${API_PREFIX_PATH}/sandboxes`, { schema: CreateSandboxSchema }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region },
                 body: { source, destination, tag, mountPoints }

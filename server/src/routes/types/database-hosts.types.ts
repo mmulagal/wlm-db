@@ -312,7 +312,7 @@ const DatabaseHostSummaryParamsWithRegion = Type.Object({
 });
 type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
 
-const CloneDatabaseHostBody = Type.Object({
+const CreateSandboxBody = Type.Object({
     source: Type.Object({
         host: Type.String(), // ec2 instance
         instance: Type.String(), // sql server instance - ideally only one would be there
@@ -324,12 +324,12 @@ const CloneDatabaseHostBody = Type.Object({
         database: Type.String() // database
     }),
     mountPoints: Type.Object({
-        dataDrive: Type.String({ maxLength: 1 }),
-        logDrive: Type.String({ maxLength: 1 })
+        dataDrive: Type.String({ maxLength: 1, pattern: '^[A-Z]$' }),
+        logDrive: Type.String({ maxLength: 1, pattern: '^[A-Z]$' })
     }),
     tag: Type.String({ enum: ['Development', 'QA', 'Integration', 'Training', 'Analytics', 'Other'] })
 });
-type CloneDatabaseHostBodyType = Static<typeof CloneDatabaseHostBody>;
+type CreateSandboxBodyType = Static<typeof CreateSandboxBody>;
 const CollationInfoResponseBody = Type.Object({
     collationList: Type.Array(
         Type.Object({
@@ -449,8 +449,8 @@ export {
     DatabaseHostsParamsWithRegion,
     DatabaseHostSummaryParamsWithRegion,
     DatabaseHostSummaryParamsWithRegionType,
-    CloneDatabaseHostBody,
-    CloneDatabaseHostBodyType,
+    CreateSandboxBody,
+    CreateSandboxBodyType,
     CollationInfoResponseBodyType,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,
