@@ -384,12 +384,12 @@ const CreateSandboxBody = Type.Object({
         database: Type.String() // database
     }),
     mountPoints: Type.Object({
-        dataDrive: Type.String({ maxLength: 1, pattern: '^[A-Z]$' }),
-        logDrive: Type.String({ maxLength: 1, pattern: '^[A-Z]$' })
+        dataDrive: Type.String({ maxLength: 1, pattern: '^[D-Z]$' }),
+        logDrive: Type.String({ maxLength: 1, pattern: '^[D-Z]$' })
     }),
     tag: Type.String({ enum: ['Development', 'QA', 'Integration', 'Training', 'Analytics', 'Other'] })
 });
-type CreateSandboxBodyType = Static<typeof CreateSandboxBody>;
+
 const CollationInfoResponseBody = Type.Object({
     collationList: Type.Array(
         Type.Object({
@@ -642,7 +642,6 @@ export {
     DatabaseHostSummaryParamsWithRegion,
     DatabaseHostSummaryParamsWithRegionType,
     CreateSandboxBody,
-    CreateSandboxBodyType,
     CollationInfoResponseBodyType,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,
