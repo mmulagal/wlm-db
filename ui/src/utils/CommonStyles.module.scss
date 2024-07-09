@@ -52,7 +52,7 @@
     color: var(--text-primary);
     line-height: none !important;
     overflow: hidden;
-    white-space: nowrap;
+    white-space: unset;
     text-overflow: ellipsis;
     max-width: 650px;
 }
@@ -109,6 +109,10 @@
     .circleSVG {
         width: 48px;
         height: 48px;
+    }
+
+    .setHeaderStyleSandbox {
+        white-space: nowrap;
     }
 }
 

@@ -39,7 +39,7 @@ const SourceInformation = () => {
 
                     <DsTypography
                         variant="Regular_14"
-                        style={{ width: '119px' }}
+                        style={{ maxWidth: '119px' }}
                         className={isNA ? CommonStyles.notAvailable : ''}
                     >
                         {GENERAL.SANDBOX_SOURCE_DATABASES}

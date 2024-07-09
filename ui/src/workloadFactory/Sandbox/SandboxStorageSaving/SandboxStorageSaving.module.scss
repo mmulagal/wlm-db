@@ -1,11 +1,14 @@
 .sandboxStorageSaving {
+    width: 66.12%;
+    max-width: 1064px;
     box-shadow: 2px 2px 6px var(--grey-15);
 
     background-color: var(--content-background);
 
     .largeContainer {
         height: 116px;
-        width: 1064px;
+        // width: 1064px;
+        max-width: 1064px;
         display: flex;
 
         .secondSegment {
@@ -13,6 +16,8 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
+            width: 68.32%;
+
             .secondRow {
                 display: flex;
                 gap: 32px;
@@ -46,7 +51,7 @@
     }
 
     .progressBar {
-        width: 655px;
+        width: 100%;
         height: 16px;
         background-color: var(--content-background);
         display: flex;
@@ -105,5 +110,11 @@
     .loadingContainer {
         height: 35px;
         display: flex;
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .sandboxStorageSaving {
+        width: 651px;
     }
 }

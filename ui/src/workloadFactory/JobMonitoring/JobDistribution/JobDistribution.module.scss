@@ -18,6 +18,11 @@
         gap: 24px;
     }
 
+    .headStatus {
+        display: flex;
+        gap: 24px;
+    }
+
     .mainSection {
         padding: 32px 0 32px 40px;
         display: flex;
@@ -88,4 +93,14 @@
 
 .maxWidthClass {
     // max-width: 790px;
+}
+
+@media screen and (max-width: 1840px) {
+    .jobDistribution {
+        .status {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+    }
 }

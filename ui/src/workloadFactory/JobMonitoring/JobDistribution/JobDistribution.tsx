@@ -7,7 +7,7 @@ import useResize from '../../../common/hooks/useResize';
 
 const JobDistribution = () => {
     const jobsSummaryData = useAppSelector(state => state.jobMonitoring.jmJobsSummary);
-    const jobsSummaryLoading = useAppSelector(state => state.jobMonitoring.jmJobsSummaryLoading);
+    const jobsSummaryLoading = true;
     const windowSize = useResize();
     return (
         <div
@@ -18,7 +18,7 @@ const JobDistribution = () => {
             }
         >
             <div className={styles.headSection}>
-                <Typography variant="Regular_16" className={styles.status}>
+                <Typography variant="Regular_16" className={styles.headStatus}>
                     {GENERAL.JOB_DISTRIBUTION}
                     {jobsSummaryLoading && <FlashingDotsLoader />}
                 </Typography>
