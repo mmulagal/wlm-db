@@ -706,7 +706,8 @@ async function validateCloneParams(
             credentialsId,
             region,
             true,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+            CUSTOM_SSM_EXECUTION_TIMEOUT,
+            destDetails.instance
         );
 
         const [destDatabaseExists, srcDatabaseExists] = await Promise.all([
