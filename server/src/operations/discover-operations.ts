@@ -1822,7 +1822,42 @@ async function manageSqlServerV2(
                     node2InstanceId = temp.ec2InstanceId;
                 }
             }
+
+            const node2ssmStatus = await getSSMConnectionStatus(credentialsId, region, node2InstanceId!);
+            if (node2ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+                throw createError(
+                    HttpErrorCodes.VALIDATION_ERROR,
+                    `No SSM connectivity on partner node ${node2InstanceId}.`
+                );
+            }
+
+            const node2missingResourceDetails = await callSsmExecution(
+                credentialsId,
+                region,
+                GET_MISSING_RESOURCE_DETAILS,
+                node2InstanceId!,
+                accountId
+            );
+
+            const node2missingResourceJson = JSON.parse(node2missingResourceDetails!);
+
+            if (node2missingResourceJson[IS_PS7_AVAILABLE] === false) {
+                precheckErrorList.push(
+                    'PowerShell 7 is required for managing the resource on partner node. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4.'
+                );
+            }
+            if (node2missingResourceJson[UNAVAILABLE_PS_MODULES]) {
+                precheckErrorList.push(
+                    `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource on partner node. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
+                );
+            }
+            if (node2missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
+                precheckErrorList.push(
+                    'Files required for database operations are not available on partner node. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".'
+                );
+            }
         }
+
         let resourceId;
         let isResourceTobeCreated: boolean;
         if (isDemoFlow && databaseHostId) {
