@@ -50,15 +50,8 @@ const StorageSavingsLicense = Type.Object({
     ),
     message: Type.Optional(Type.String())
 });
-const StorageSavingsResponse = Type.Object({
-    compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
-    license: Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense }),
-    ebs: StorageMetrics,
-    fsx: StorageMetrics,
-    totalSummary: Type.Object({
-        existing: Type.Number(),
-        recommended: Type.Number()
-    }),
+
+const fsxCalculationData = Type.Object({
     fsxCalculation: Type.Object({
         deploymentType: Type.String(),
         numberOfVolumes: Type.Number(),
@@ -86,6 +79,19 @@ const StorageSavingsResponse = Type.Object({
     })
 });
 
+const StorageSavingsResponse = Type.Object({
+    compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
+    license: Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense }),
+    ebs: StorageMetrics,
+    fsx: StorageMetrics,
+    totalSummary: Type.Object({
+        existing: Type.Number(),
+        recommended: Type.Number()
+    }),
+    single: fsxCalculationData,
+    multi: fsxCalculationData
+});
+
 const PriceUnitObject = Type.Object({
     price: Type.Number(),
     unit: Type.String()
@@ -105,6 +111,43 @@ const LicenseCalculationObject = Type.Object({
     licenseIncluded: Type.Optional(Type.Boolean()),
     hoursInMonth: Type.Number()
 });
+const ebsCostCalculation = Type.Object({
+    numberOfVolumes: Type.Number(),
+    instanceAvgDuration: Type.Number(),
+    hoursInAMonth: Type.Number(),
+    ebsCapacityPrice: PriceUnitObject,
+    storageAmountPerVol: Type.Number(),
+    totalInstanceHours: Type.Number(),
+    ebsInstanceMonth: Type.Number(),
+    ebsStorageCost: Type.Number(),
+    billableIops: Type.Number(),
+    totalBillableIops: Type.Number(),
+    ebsIopsCost: Type.Number(),
+    billableMbps: Type.Number(),
+    billableThroughputMbps: Type.Number(),
+    billableThroughputGbps: Type.Number(),
+    ebsThroughputCost: Type.Number(),
+    ebsTotalCostMonthly: Type.Number()
+});
+const ebsCloneCalculation = Type.Object({
+    clonedCopiesCount: Type.Number(),
+    capacity: Type.Number(),
+    iops: Type.Number(),
+    throughput: Type.Number(),
+    totalCloneMonthlyCost: Type.Number()
+});
+const ebsSnapshotCalculation = Type.Object({
+    ebsInstanceMonth: Type.Number(),
+    totalSnapshots: Type.Number(),
+    initialSnapshotCost: Type.Number(),
+    monthlyCostPerSnapshot: Type.Number(),
+    discountForPartialStorageMonth: Type.Number(),
+    incrementalSnapshotCost: Type.Number(),
+    totalSnapshotCost: Type.Number(),
+    totalEbsSnapshotCost: Type.Number(),
+    ebsSnapshotCost: Type.Number()
+});
+
 const StorageSavingsCalculationsMetricsResponse = Type.Object({
     recommendedComputeCalculation: Type.Array(ComputeCalculationObject),
     recommendedLicenseCalculation: Type.Array(LicenseCalculationObject),
@@ -171,24 +214,38 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         totalMonthlyCostForCapacity: Type.Number(),
         totalSnapshotMonthlyCost: Type.Number()
     }),
-    ebsCalculation: Type.Object({
-        numberOfVolumes: Type.Number(),
-        instanceAvgDuration: Type.Number(),
-        hoursInAMonth: Type.Number(),
-        ebsCapacityPrice: PriceUnitObject,
-        storageAmountPerVol: Type.Number(),
-        totalInstanceHours: Type.Number(),
-        ebsInstanceMonth: Type.Number(),
-        ebsStorageCost: Type.Number(),
-        billableIops: Type.Number(),
-        totalBillableIops: Type.Number(),
-        ebsIopsCost: Type.Number(),
-        billableMbps: Type.Number(),
-        billableThroughputMbps: Type.Number(),
-        billableThroughputGbps: Type.Number(),
-        ebsThroughputCost: Type.Number(),
-        ebsTotalCostMonthly: Type.Number()
-    }),
+    // ebsCalculation: Type.Array(Type.Mapped(Type.Union([Type.Optional(Type.Literal('gp2')),Type.Literal('gp3'),Type.Optional(Type.Literal('io1')),Type.Optional(Type.Literal('io2'))]), () =>
+    //     ebsCostCalculation
+    // )),
+    // ebsCloneCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsCloneCalculation)),
+    // ebsSnapshotCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsSnapshotCalculation)),
+    ebsCalculation: Type.Array(
+        Type.Object({
+            gp2: Type.Optional(ebsCostCalculation),
+            gp3: Type.Optional(ebsCostCalculation),
+            io1: Type.Optional(ebsCostCalculation),
+            io2: Type.Optional(ebsCostCalculation),
+            st1: Type.Optional(ebsCostCalculation)
+        })
+    ),
+    ebsCloneCalculation: Type.Array(
+        Type.Object({
+            gp2: Type.Optional(ebsCloneCalculation),
+            gp3: Type.Optional(ebsCloneCalculation),
+            io1: Type.Optional(ebsCloneCalculation),
+            io2: Type.Optional(ebsCloneCalculation),
+            st1: Type.Optional(ebsCloneCalculation)
+        })
+    ),
+    ebsSnapshotCalculation: Type.Array(
+        Type.Object({
+            gp2: Type.Optional(ebsSnapshotCalculation),
+            gp3: Type.Optional(ebsSnapshotCalculation),
+            io1: Type.Optional(ebsSnapshotCalculation),
+            io2: Type.Optional(ebsSnapshotCalculation),
+            st1: Type.Optional(ebsSnapshotCalculation)
+        })
+    ),
     fsxCloneCalculation: Type.Object({
         clonedCopiesCount: Type.Number(),
         numberOfClonesInAMonth: Type.Number(),
@@ -205,24 +262,6 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         ssdStoragePerMonth: Type.Number(),
         ssdMonthlyCost: Type.Number(),
         totalCloneMonthlyCost: Type.Number()
-    }),
-    ebsCloneCalculation: Type.Object({
-        clonedCopiesCount: Type.Number(),
-        capacity: Type.Number(),
-        iops: Type.Number(),
-        throughput: Type.Number(),
-        totalCloneMonthlyCost: Type.Number()
-    }),
-    ebsSnapshotCalculation: Type.Object({
-        ebsInstanceMonth: Type.Number(),
-        totalSnapshots: Type.Number(),
-        initialSnapshotCost: Type.Number(),
-        monthlyCostPerSnapshot: Type.Number(),
-        discountForPartialStorageMonth: Type.Number(),
-        incrementalSnapshotCost: Type.Number(),
-        totalSnapshotCost: Type.Number(),
-        totalEbsSnapshotCost: Type.Number(),
-        ebsSnapshotCost: Type.Number()
     })
 });
 

@@ -34,7 +34,7 @@ describe('Marketing lib', () => {
         );
         expect(response.ebs).toBeDefined();
         expect(response.fsx).toBeDefined();
-        expect(response.fsx_calculation).toBeDefined();
+        expect(response.single.fsx_calculation).toBeDefined();
     });
     it('Getting storage savings manual', async () => {
         const volumes = [

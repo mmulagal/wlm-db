@@ -150,16 +150,15 @@ async function invokeMarketingApi(
 
         return {
             ebs: ebsTotal,
-            ebs_cost_calculation: instanceEbs[0].io2?.ebs_cost_calculation,
+            ebsClassification: instanceEbs[0],
+            fsx,
             single: {
-                fsx,
                 fsx_calculation,
                 fsx_clone_cost_calculation,
                 fsx_cost_calculation_no_snapshot,
                 fsx_snapshot_cost_calculation
             },
             multi: {
-                fsx,
                 fsx_calculation,
                 fsx_clone_cost_calculation,
                 fsx_cost_calculation_no_snapshot,
@@ -173,6 +172,7 @@ async function invokeMarketingApi(
         region,
         getMarketingApiRequestBody(ebsVolumeIds, params, sqlServerDeploymentType)
     );
+
     return {
         ebsClassification: { gp2, gp3, io1, io2, st1 },
         ebs,
@@ -183,12 +183,11 @@ async function invokeMarketingApi(
 }
 
 function formatEbsCalculationObject(
-    ebsStorageType: string,
     ebsSummary: StorageSummary,
     ebsCostCalculationObject: EbsCostCalculation,
     clonedCopiesCount: number
 ) {
-    const { capacity, iops, throughput, snapshots, total, clones } = ebsSummary;
+    const { capacity, iops, throughput } = ebsSummary;
 
     const {
         instanceAvgDuration,
@@ -255,19 +254,9 @@ function formatEbsCalculationObject(
     };
 
     return {
-        [ebsStorageType]: {
-            ebs: {
-                capacity,
-                iops,
-                throughput,
-                snapshots,
-                total,
-                clones
-            },
-            ebsCostCalculation,
-            ebsCloneCalculation,
-            ebsSnapshotCalculation
-        }
+        ebsCostCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation
     };
 }
 
@@ -508,45 +497,31 @@ async function formatStorageSavingsCalculationMetrics(
         sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
             ? derivePropertiesBasedOnDeploymentType(multi, params)
             : derivePropertiesBasedOnDeploymentType(single, params);
-
     const totalMonthlyClonedCopiesCount =
         params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
-
-    const ebsCalculationBreakdown = [];
-    if (gp2) {
-        ebsCalculationBreakdown.push(
-            formatEbsCalculationObject('gp2', gp2.ebs, gp2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-        );
-    }
-    if (gp3) {
-        ebsCalculationBreakdown.push(
-            formatEbsCalculationObject('gp3', gp3.ebs, gp3.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-        );
-    }
-    if (io1) {
-        ebsCalculationBreakdown.push(
-            formatEbsCalculationObject('io1', io1.ebs, io1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-        );
-    }
-
-    if (io2) {
-        ebsCalculationBreakdown.push(
-            formatEbsCalculationObject('io2', io2.ebs, io2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-        );
-    }
-
-    if (st1) {
-        ebsCalculationBreakdown.push(
-            formatEbsCalculationObject('st1', st1.ebs, st1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-        );
-    }
 
     return {
         fsxOntapCalculation,
         fsxOntapSnapshotCalculation,
         fsxCloneCalculation,
         ebs,
-        ebsCalculationBreakdown
+        ebsCalculationBreakdown: {
+            ...(gp2 && {
+                gp2: formatEbsCalculationObject(gp2.ebs, gp2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+            }),
+            ...(gp3 && {
+                gp3: formatEbsCalculationObject(gp3.ebs, gp3.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+            }),
+            ...(io1 && {
+                io1: formatEbsCalculationObject(io1.ebs, io1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+            }),
+            ...(io2 && {
+                io2: formatEbsCalculationObject(io2.ebs, io2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+            }),
+            ...(st1 && {
+                st1: formatEbsCalculationObject(st1.ebs, st1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+            })
+        }
     };
 }
 

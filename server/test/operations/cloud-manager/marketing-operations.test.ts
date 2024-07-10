@@ -36,7 +36,7 @@ describe('Marketing API operations', () => {
 
         expect(resp.ebs).toBeDefined();
         expect(resp.fsx).toBeDefined();
-        expect(resp.fsxCalculation).toBeDefined();
+        expect(resp.single.fsx_calculation).toBeDefined();
     });
 
     it('should format metrics correctly', async () => {
@@ -61,19 +61,14 @@ describe('Marketing API operations', () => {
     });
 
     it('should handle fsx calculation object', async () => {
-        const { fsxCalculation: fsxCalcObject } = await invokeMarketingApi(
-            ACCOUNT_ID,
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            'AOAG',
-            ebsVolumeIds,
-            {
-                snapshotFrequency: 'daily',
-                clonedCopiesCount: 1,
-                cloneRefreshFrequency: 'daily',
-                monthlyChangeRatePercentage: 30
-            }
-        );
+        const {
+            single: { fsx_calculation: fsxCalcObject }
+        } = await invokeMarketingApi(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'AOAG', ebsVolumeIds, {
+            snapshotFrequency: 'daily',
+            clonedCopiesCount: 1,
+            cloneRefreshFrequency: 'daily',
+            monthlyChangeRatePercentage: 30
+        });
 
         const result = handleMarketingApiFsxCalculationObject(fsxCalcObject);
         expect(result).toBeDefined();
