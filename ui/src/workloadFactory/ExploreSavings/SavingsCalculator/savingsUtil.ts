@@ -223,10 +223,6 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
-                          label: 'Microsoft SQL EC2 Instances calculation',
-                          mainHeading: true
-                      },
-                      {
                           label: 'Machine 1 specification'
                       },
                       {
@@ -250,7 +246,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       {
                           label: 'Instance hourly price',
                           value: `${viewCalculation.fsxInstanceCalculation?.[0]?.computeHourlyPrice}`,
-                          text: ''
+                          text: 'Instance hourly price with SQL license included'
                       },
                       {
                           label: 'EC2 machine1 cost',
@@ -281,19 +277,20 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       {
                           label: 'Instance hourly price',
                           value: `${viewCalculation.fsxInstanceCalculation?.[1]?.computeHourlyPrice}`,
-                          text: ''
+                          text: 'Instance hourly price with SQL license included'
                       },
                       {
                           label: 'EC2 machine2 cost',
                           value: `${viewCalculation.fsxInstanceCalculation?.[1]?.computeMonthlyPrice}`,
                           text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[1]?.hoursInAMonth}`
+                      },
+                      {
+                          label: 'EC2 machines total cost',
+                          value: `${viewCalculation.totalFsxEc2MachineCost}`,
+                          text: ''
                       }
                   ]
                 : [
-                      {
-                          label: 'Microsoft SQL EC2 Instances calculation',
-                          mainHeading: true
-                      },
                       {
                           label: 'Machine 1 specification'
                       },
@@ -318,19 +315,20 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       {
                           label: 'Instance hourly price',
                           value: `${viewCalculation.fsxInstanceCalculation?.[0]?.computeHourlyPrice}`,
-                          text: ''
+                          text: 'Instance hourly price with SQL license included'
                       },
                       {
                           label: 'EC2 machine1 cost',
                           value: `${viewCalculation.fsxInstanceCalculation?.[0]?.computeMonthlyPrice}`,
                           text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[0]?.hoursInAMonth}`
+                      },
+                      {
+                          label: 'EC2 machine total cost',
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.computeMonthlyPrice}`,
+                          text: ''
                       }
                   ],
         FSxNCalculation: [
-            {
-                label: 'FSx for ONTAP calculation',
-                mainHeading: true
-            },
             {
                 label: 'Unit conversions'
             },
@@ -383,7 +381,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: ''
             },
             {
-                label: 'Ratio after savings from compression & deduplication factor',
+                label: 'Ratio after savings from compression & deduplication tier',
                 value: `${viewCalculation.fsxOntapCalculation.ratioAfterSavings}%`,
                 text: `100% - Savings from compression and deduplication (${viewCalculation.fsxOntapCalculation.savingsFromCompressionAndDeduplication}%)`
             },
@@ -403,14 +401,14 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: `Capacity pool storage capacity (${viewCalculation.fsxOntapCalculation.capacityPoolStorage}) x FSx for ONTAP capacity price ($${viewCalculation.fsxOntapCalculation.fsxnCapacityPrice})`
             },
             {
-                label: 'Total monthly cost for FSx for NetApp ONTAP file server - Capacity pool storage capacity',
+                label: 'Total monthly cost for FSx for NetApp ONTAP file system - Capacity pool storage capacity',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyCostForCapacity}`,
                 text: ` `
             },
             {
-                label: 'Total storage charge (monthly)',
+                label: 'Total monthly storage cost',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge}`,
-                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($${viewCalculation.fsxOntapCalculation.totalMonthlyCostForCapacity}) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.fsxOntapCalculation.totalMonthlyCostForFSxSsd})`
+                text: `Total monthly cost for FSx for NetApp ONTAP file system capacity pool storage capacity ($${viewCalculation.fsxOntapCalculation.totalMonthlyCostForCapacity}) + Total monthly cost for FSx for NetApp ONTAP file system SSD storage capacity ($${viewCalculation.fsxOntapCalculation.totalMonthlyCostForFSxSsd})`
             },
             {
                 label: 'Minimum number of file systems required for storage capacity',
@@ -428,12 +426,12 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: `Provisioned SSD (${viewCalculation.fsxOntapCalculation.provisionedSsdIops} IOPS) ÷ Maximum SSD (${viewCalculation.fsxOntapCalculation.maxSsdIops} IOPS)`
             },
             {
-                label: 'Required number of FSx file systems - fractional',
+                label: 'Required number of FSx for ONTAP file systems - fractional',
                 value: `${viewCalculation.fsxOntapCalculation.requiredNumOfFsxFractional}`,
                 text: ``
             },
             {
-                label: 'Required number of FSx file systems',
+                label: 'Required number of FSx for ONTAP file systems',
                 value: `${viewCalculation.fsxOntapCalculation.requiredNumOfFsx}`,
                 text: ``
             },
@@ -473,23 +471,24 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: `Billed additional SSD (${viewCalculation.fsxOntapCalculation.additionalSsdIops} IOPS) x FSx for ONTAP IOPS price ($${viewCalculation.fsxOntapCalculation.fsxnIopsPrice})`
             },
             {
-                label: 'Total throughput and IOPS (monthly)',
+                label: 'Total monthly throughput and IOPS',
                 value: `$${viewCalculation.fsxOntapCalculation.totalThroughputAndIopsMonthly}`,
                 text: `Additional billed cost for SSD IOPS ($${viewCalculation.fsxOntapCalculation.additionalBilledCostForSsdIops}) + Total monthly cost for FSx for NetApp ONTAP file server throughput capacity ($${viewCalculation.fsxOntapCalculation.totalMonthlyFsxnThroughputCapacityCost})`
+            },
+            {
+                label: `${viewCalculation.type} availability zone total monthly cost`,
+                value: `$${viewCalculation.totalAzCost}`,
+                text: `Total monthly throughput and IOPS ($${viewCalculation.fsxOntapCalculation.totalThroughputAndIopsMonthly}) + Total monthly storage charge ($${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge})`
             }
         ],
         SnapshotCalculation: [
-            {
-                label: 'Snapshot',
-                mainHeading: true
-            },
             {
                 label: 'Unit conversions'
             },
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity}`,
-                text: ''
+                text: 'Monthly change rate x FSXn storage capacity = '
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -563,10 +562,6 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
         ],
         cloneCalculation: [
             {
-                label: 'Clone calculation',
-                mainHeading: true
-            },
-            {
                 label: 'Unit conversions'
             },
             {
@@ -618,15 +613,47 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: `SSD storage GiB per month  x FSx for ONTAP SSD price = ${viewCalculation.fsxCloneCalculation.ssdStoragePerMonth} x $${viewCalculation.fsxCloneCalculation.fsxnSsdPrice}`
             },
             {
-                label: 'Total clone monthly cost',
+                label: 'Total clones monthly cost',
                 value: `$${viewCalculation.fsxCloneCalculation.totalCloneMonthlyCost}`,
                 secondaryHeading: true,
                 text: ``
+            }
+        ],
+        totalMonthlyCost: [
+            {
+                label: 'Total monthly EC2 machine cost',
+                value: `$${viewCalculation.totalFsxEc2MachineCost}`,
+                text: ``
+            },
+            {
+                label: 'Total monthly storage cost',
+                value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge}`,
+                text: `Total all FSXn storage costs`
+            },
+            {
+                label: 'Total monthly iops cost',
+                value: `$${viewCalculation.fsxOntapCalculation.additionalBilledCostForSsdIops}`,
+                text: `Total all FSXn iops costs`
+            },
+            {
+                label: 'Total monthly throughput cost',
+                value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyFsxnThroughputCapacityCost}`,
+                text: `Total all FSXn througput costs`
+            },
+            {
+                label: 'Total monthly snapshots cost',
+                value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalSnapshotMonthlyCost}`,
+                text: ''
+            },
+            {
+                label: 'Total monthly clones cost',
+                value: `$${viewCalculation.fsxCloneCalculation.totalCloneMonthlyCost}`,
+                text: ''
             },
             {
                 label: 'Total monthly cost',
                 value: `$${viewCalculation.fsxTotalCost}`,
-                text: `Total EC2 cost (${viewCalculation.totalFsxEc2MachineCost}) + Total throughput and IOPS cost ($${viewCalculation.fsxOntapCalculation.totalThroughputAndIopsMonthly})  + Total Storage cost ($${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge}) + Total Clone cost ($${viewCalculation.fsxCloneCalculation.totalCloneMonthlyCost})`
+                text: `Total EC2 cost ($${viewCalculation.totalFsxEc2MachineCost}) + Total Storage cost ($${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge}) + Total throughput and IOPS cost ($${viewCalculation.fsxOntapCalculation.totalThroughputAndIopsMonthly}) + Total snapshots cost ($${viewCalculation.fsxOntapSnapshotCalculation.totalSnapshotMonthlyCost}) + Total Clone cost ($${viewCalculation.fsxCloneCalculation.totalCloneMonthlyCost})`
             }
         ]
     };
@@ -637,10 +664,6 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
         Ec2InstanceCalculation:
             selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
-                      {
-                          label: 'Microsoft SQL EC2 instances calculation',
-                          mainHeading: true
-                      },
                       {
                           label: 'Machine 1 specification'
                       },
@@ -665,7 +688,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       {
                           label: 'Instance hourly price',
                           value: `${viewCalculation.ebsInstanceCalculation?.[0]?.computeHourlyPrice}`,
-                          text: ''
+                          text: 'Instance hourly pricing with SQL license included'
                       },
                       {
                           label: 'EC2 machine1 cost',
@@ -696,19 +719,20 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       {
                           label: 'Instance hourly price',
                           value: `${viewCalculation.ebsInstanceCalculation?.[1]?.computeHourlyPrice}`,
-                          text: ''
+                          text: 'Instance hourly pricing with SQL license included'
                       },
                       {
                           label: 'EC2 machine2 cost',
                           value: `${viewCalculation.ebsInstanceCalculation?.[1]?.computeMonthlyPrice}`,
                           text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                      },
+                      {
+                          label: 'Total EC2 machines cost',
+                          value: `${viewCalculation.totalEBSEc2MachineCost}`,
+                          text: ''
                       }
                   ]
                 : [
-                      {
-                          label: 'Microsoft SQL EC2 instances calculation',
-                          mainHeading: true
-                      },
                       {
                           label: 'Machine 1 specification'
                       },
@@ -736,16 +760,12 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                           text: ''
                       },
                       {
-                          label: 'EC2 machine1 cost',
+                          label: 'EC2 machine total cost',
                           value: `${viewCalculation.ebsInstanceCalculation?.[0]?.computeMonthlyPrice}`,
                           text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[0]?.hoursInAMonth}`
                       }
                   ],
         EBSCalculation: [
-            {
-                label: 'EBS calculation',
-                mainHeading: true
-            },
             {
                 label: 'Unit conversions'
             },
@@ -754,7 +774,6 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                 value: `${viewCalculation.ebsCalculation.storageAmountPerVol}`,
                 text: `Storage amount per volume (${viewCalculation.ebsCalculation.storageAmountPerVol})`
             },
-
             {
                 label: 'Pricing calculations'
             },
@@ -811,69 +830,270 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
         ],
         SnapshotCalculation: [
             {
-                label: 'Snapshot',
-                mainHeading: true
+                label: 'Storage amount of EBS dbs volumes',
+                value: `XXX`,
+                text: `Storage amount of src primary dbs not including replica data in GiB = XXX GiB`
             },
             {
-                label: 'Total snapshots',
-                value: `${viewCalculation.ebsSnapshotCalculation.totalSnapshots}`,
-                text: ''
-            },
-            {
-                label: 'Initial snapshot cost',
+                label: 'Initial snapshots cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}`,
-                text: ''
+                text: `Storage amount of EBS primary dbs volumes x EBS snapshots price`
             },
             {
-                label: 'Monthly cost of each snapshot',
+                label: 'Monthly change rate',
                 value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}`,
-                text: ''
+                text: `Input data`
+            },
+            {
+                label: 'Monthly cost of snapshots',
+                value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}`,
+                text: `Monthly change rate x storage amount of EBS primary dbs x EBS snapshot price = XXX`
             },
             {
                 label: 'Discount for partial storage month',
                 value: `$${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth}`,
-                text: `Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
+                text: `Monthly cost of snapshots ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
             },
             {
                 label: 'Incremental snapshot cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost}`,
-                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth})) x Total snapshots (${viewCalculation.ebsSnapshotCalculation.totalSnapshots})`
+                text: `Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth}))`
             },
             {
-                label: 'Total snapshot cost',
+                label: 'Total snapshots cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}`,
                 text: `Initial snapshot cost ($${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost})`
-            },
-            {
-                label: 'Total EBS snapshot cost',
-                value: `$${viewCalculation.ebsSnapshotCalculation.totalEbsSnapshotCost}`,
-                text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}) x Instance months (${viewCalculation.ebsSnapshotCalculation.ebsInstanceMonth})`
-            },
-            {
-                label: 'EBS snapshot cost',
-                value: `$${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost}`,
-                text: ''
             }
         ],
         cloneCalculation: [
             {
-                label: 'Clone calculation',
-                mainHeading: true
-            },
-            {
                 label: 'Number of Cloned copies',
                 value: `${viewCalculation.ebsCloneCalculation.clonedCopiesCount}`,
-                text: ` `
+                text: ``
             },
             {
-                label: 'Clone cost',
-                value: `$${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost}`,
-                text: `Number of Cloned copies x (EBS storage cost + EBS iops cost + EBS throughput cost)= ${viewCalculation.ebsCloneCalculation.clonedCopiesCount} x ($${viewCalculation.ebsCloneCalculation.capacity} + $${viewCalculation.ebsCloneCalculation.iops} + $${viewCalculation.ebsCloneCalculation.throughput})`
+                label: 'EBS storage cost for clone',
+                value: `$XXX`,
+                text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
             },
             {
-                label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',
+                label: 'EBS iops cost for clone',
+                value: `$XXX`,
+                text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
+            },
+            {
+                label: 'EBS throughput cost for clone',
+                value: `$XXX`,
+                text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
+            },
+            {
+                label: 'Clones total monthly cost',
+                value: `$XXX`,
+                text: `Number of Cloned copies x (primary EBS storage cost + primary EBS iops cost + primary EBS throughput cost)= XXX`
+            }
+        ],
+        totalMonthlyCost: [
+            {
+                label: 'Total monthly EC2 machine cost',
+                value: `$XXX`,
+                text: ``
+            },
+            {
+                label: 'Total monthly storage cost',
+                value: `$XXX`,
+                text: `Total storage cost across all volume disc types`
+            },
+            {
+                label: 'Total monthly iops cost',
+                value: `$XXX`,
+                text: `Total iops cost across all volume disc types`
+            },
+            {
+                label: 'Total monthly throughput cost',
+                value: `$XXX`,
+                text: `Total throughput cost across all volume disc types`
+            },
+            {
+                label: 'Total monthly snapshots cost',
+                value: `$XXX`,
+                text: ''
+            },
+            {
+                label: 'Total monthly clones cost',
+                value: `$XXX`,
+                text: ''
+            },
+            {
+                label: 'Total monthly cost',
                 value: `$${viewCalculation.ebsTotalCost}`,
-                text: `Total EC2 cost (${viewCalculation.totalEBSEc2MachineCost}) + EBS snapshot cost ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost}) + EBS throughput cost ($${viewCalculation.ebsCalculation.ebsThroughputCost}) + EBS IOPS cost ($${viewCalculation.ebsCalculation.ebsIopsCost}) + EBS storage cost ($${viewCalculation.ebsCalculation.ebsStorageCost}) + EBS clone cost ($${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost})`
+                text: `Total EC2 cost ($XXX) + Total Storage cost ($XXX) + Total throughput and IOPS cost ($XXX) + Total snapshots cost ($XXX) + Total Clone cost ($XXX)`
+            }
+        ],
+        gp3VolumeType: [
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Total storage amount',
+                value: `XXX GiB`,
+                text: `Storage amount of disc type in GiB`
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'EBS storage cost',
+                value: `$XXX`,
+                text: `Total storage amount x EBS capacity price`
+            },
+            {
+                label: 'Billable IOPS',
+                value: `XXX IOPS`,
+                text: ``
+            },
+            {
+                label: 'Total billable IOPS',
+                value: `XXX IOPS`,
+                text: ``
+            },
+            {
+                label: 'EBS IOPS cost',
+                value: `$XXX`,
+                text: ``
+            },
+            {
+                label: 'Billable MiB/s',
+                value: `XXX MiB/s`,
+                text: ``
+            },
+            {
+                label: 'Billable throughout (MiB/s)',
+                value: `XXX MiB/s`,
+                text: ``
+            },
+            {
+                label: 'Billable throughout (GiB/s)',
+                value: `XXX GiB/s`,
+                text: `Billable throughput (MiB/s)/1024`
+            },
+            {
+                label: 'EBS throughput cost',
+                value: `$XXX`,
+                text: ``
+            }
+        ],
+        io2VolumeType: [
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Total storage amount',
+                value: `XXX GiB`,
+                text: `Storage amount of disc type in GiB`
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'EBS storage cost',
+                value: `$XXX`,
+                text: `Total storage amount x EBS capacity price`
+            },
+            {
+                label: 'Billable IOPS',
+                value: `XXX IOPS`,
+                text: ``
+            },
+            {
+                label: 'EBS IOPS cost',
+                value: `$XXX`,
+                text: ``
+            }
+        ],
+        io1VolumeType: [
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Total storage amount',
+                value: `XXX GiB`,
+                text: `Storage amount of disc type in GiB`
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'EBS storage cost',
+                value: `$XXX`,
+                text: `Total storage amount x EBS capacity price`
+            },
+            {
+                label: 'Billable IOPS',
+                value: `XXX IOPS`,
+                text: ``
+            },
+            {
+                label: 'EBS IOPS cost',
+                value: `$XXX`,
+                text: ``
+            }
+        ],
+        gp2VolumeType: [
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Total storage amount',
+                value: `XXX GiB`,
+                text: `Storage amount of disc type in GiB`
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'EBS storage cost',
+                value: `$XXX`,
+                text: `Total storage amount x EBS capacity price`
+            }
+        ],
+        st1VolumeType: [
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Total storage amount',
+                value: `XXX GiB`,
+                text: `Storage amount of disc type in GiB`
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'EBS storage cost',
+                value: `$XXX`,
+                text: `Total storage amount x EBS capacity price`
+            }
+        ],
+        ebsTotalCost: [
+            {
+                label: 'Total storage cost',
+                value: `$XXX`,
+                text: `GP3 storage cost + GP2 storage cost + io2 storage cost + io1 storage cost + st1 storage cost`
+            },
+            {
+                label: 'Total IOPS cost',
+                value: `$XXX`,
+                text: `GP3 IOPS cost + GP2 IOPS cost + io2 storage cost + io1 storage cost + st1 storage cost`
+            },
+            {
+                label: 'Total throughput cost',
+                value: `$XXX`,
+                text: `GP3 throughput cost + GP2 throughput cost + io2 storage cost + io1 storage cost + st1 storage cost`
+            },
+            {
+                label: 'EBS total cost',
+                value: `$XXX`,
+                text: `Total storage cost + Total IOPS cost + Total throughput cost`
             }
         ]
     };
