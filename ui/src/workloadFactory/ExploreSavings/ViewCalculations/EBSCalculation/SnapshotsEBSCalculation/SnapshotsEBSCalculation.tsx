@@ -32,15 +32,13 @@ const SnapshotsEBSCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="9"
-                title={<div>{'Snapshots'}</div>}
+                title={<div>{GENERAL.ES_SNAPSHOTS}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >
                 {viewCalculationsResponse && (
                     <AccordionCardContent>
-                        <DsTypography variant="Regular_14">
-                            Snapshots calcs are based on primary DB volumes only (not replicas).
-                        </DsTypography>
+                        <DsTypography variant="Regular_14">{GENERAL.ES_EBS_SNAPSHOTS_DESC}</DsTypography>
                         <DsTypography className={CommonStyles.accordionContentSet}>
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculationForEBS(

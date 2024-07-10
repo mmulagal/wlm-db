@@ -30,7 +30,7 @@ const InstancesEbsCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="7"
-                title={<div>{'Microsoft SQL EC2 Instances'}</div>}
+                title={<div>{GENERAL.ES_MSSQL_EC2_INSTANCES}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >

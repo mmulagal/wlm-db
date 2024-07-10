@@ -32,15 +32,13 @@ const ClonesEBSCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="10"
-                title={<div>{'Clones'}</div>}
+                title={<div>{GENERAL.ES_CLONES}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >
                 {viewCalculationsResponse && (
                     <AccordionCardContent>
-                        <DsTypography variant="Regular_14">
-                            Clone calcs are based on primary DB volumes only (not replicas).
-                        </DsTypography>
+                        <DsTypography variant="Regular_14">{GENERAL.ES_EBS_CLONES_DESC}</DsTypography>
                         <DsTypography className={CommonStyles.accordionContentSet}>
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculationForEBS(

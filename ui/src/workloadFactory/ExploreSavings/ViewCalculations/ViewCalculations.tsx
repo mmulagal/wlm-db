@@ -68,7 +68,7 @@ const ViewCalculations = () => {
                     <div className={styles.calcSection}>
                         <div>
                             <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
-                                {'Microsoft SQL EC2 on FSx for ONTAP calculation'}
+                                {GENERAL.MS_ONTAP_CALCULATION}
                             </DsTypography>
                             <InstancesOntapCalculation />
                             <FsxnSazCalculation />
@@ -80,7 +80,7 @@ const ViewCalculations = () => {
 
                         <div>
                             <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
-                                {'Microsoft SQL server on EBS calculation'}
+                                {GENERAL.MS_EBS_CALCULATION}
                             </DsTypography>
                             <InstancesEbsCalculation />
                             <ElasticBlockStorageCalculation />

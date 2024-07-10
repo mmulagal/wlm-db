@@ -32,14 +32,14 @@ const ElasticBlockStorageCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="8"
-                title={<div>{'Elastic Block Storage'}</div>}
+                title={<div>{GENERAL.ES_EBS}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >
                 {viewCalculationsResponse && (
                     <AccordionCardContent>
                         <DsTypography className={CommonStyles.accordionContentSet}>
-                            <DsTypography variant="Semibold_14">GP3 volume type</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.ES_GP3_VOLUME_TYPE}</DsTypography>
                             <div style={{ marginTop: '16px', marginBottom: '32px' }}>
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,
@@ -51,7 +51,7 @@ const ElasticBlockStorageCalculation = () => {
                                 )}
                             </div>
 
-                            <DsTypography variant="Semibold_14">io2 volume type</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.ES_IO2_VOLUME_TYPE}</DsTypography>
                             <div style={{ marginTop: '16px', marginBottom: '32px' }}>
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,
@@ -63,7 +63,7 @@ const ElasticBlockStorageCalculation = () => {
                                 )}
                             </div>
 
-                            <DsTypography variant="Semibold_14">io1 volume type</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.ES_IO1_VOLUME_TYPE}</DsTypography>
                             <div style={{ marginTop: '16px', marginBottom: '32px' }}>
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,
@@ -75,7 +75,7 @@ const ElasticBlockStorageCalculation = () => {
                                 )}
                             </div>
 
-                            <DsTypography variant="Semibold_14">GP2 volume type</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.ES_GP2_VOLUME_TYPE}</DsTypography>
                             <div style={{ marginTop: '16px', marginBottom: '32px' }}>
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,
@@ -87,7 +87,7 @@ const ElasticBlockStorageCalculation = () => {
                                 )}
                             </div>
 
-                            <DsTypography variant="Semibold_14">St1 volume type</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.ES_ST1_VOLUME_TYPE}</DsTypography>
                             <div style={{ marginTop: '16px', marginBottom: '32px' }}>
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,
@@ -99,7 +99,7 @@ const ElasticBlockStorageCalculation = () => {
                                 )}
                             </div>
 
-                            <DsTypography variant="Semibold_14">EBS total cost</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.ES_EBS_TOTAL_COST}</DsTypography>
                             <div style={{ marginTop: '16px', marginBottom: '32px' }}>
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,

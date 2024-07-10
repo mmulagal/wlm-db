@@ -35,7 +35,7 @@ const SnapshotsOntapCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="4"
-                title={<div>{'Snapshots'}</div>}
+                title={<div>{GENERAL.ES_SNAPSHOTS}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >

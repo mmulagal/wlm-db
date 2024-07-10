@@ -31,7 +31,7 @@ const FsxnSazCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="2"
-                title={<div>{'FSx for ONTAP - single availability zone'}</div>}
+                title={<div>{GENERAL.ES_FSXN_SINGLE}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >

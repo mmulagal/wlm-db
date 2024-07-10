@@ -53,7 +53,7 @@ const InstancesOntapCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="1"
-                title={<div>{'Microsoft SQL EC2 Instances'}</div>}
+                title={<div>{GENERAL.ES_MSSQL_EC2_INSTANCES}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >

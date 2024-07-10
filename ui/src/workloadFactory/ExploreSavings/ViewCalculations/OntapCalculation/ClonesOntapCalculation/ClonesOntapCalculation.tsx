@@ -35,7 +35,7 @@ const ClonesOntapCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="5"
-                title={<div>{'Clones'}</div>}
+                title={<div>{GENERAL.ES_CLONES}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >

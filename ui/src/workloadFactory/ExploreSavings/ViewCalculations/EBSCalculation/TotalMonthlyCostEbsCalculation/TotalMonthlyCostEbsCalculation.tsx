@@ -30,7 +30,7 @@ const TotalMonthlyCostEbsCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="11"
-                title={<div>{'Total Monthly cost'}</div>}
+                title={<div>{GENERAL.ES_TOTAL_MONTHLY_COST}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >
