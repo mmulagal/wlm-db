@@ -22,11 +22,17 @@ import { GENERAL } from '../../../utils/appConstants';
 import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import ManualTCOFields from './ManualTCOFields/ManualTCOFields';
+import ManualEC2 from './ManualEC2/ManualEC2';
+import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
+import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
     const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
+    const savingsCalculatorFrom = useAppSelector(state => state.exploreSavings.savingsCalculatorFrom);
+    const { selectedManualDeploymentModel } = useAppSelector(state => state.exploreSavings);
 
     const printDocument = () => {
         setPrintState(true);
@@ -76,11 +82,28 @@ const SavingsCalculator = () => {
                     <div className={styles.contentArea}>
                         {/* Left side code here */}
                         <div className={styles.firstContainer}>
-                            <SavingsHeader />
-                            <SavingsSelection printState={printState} />
-                            <SavingsSelectedHost />
-                            <InstanceInformation />
-                            <SelectedVolumeSummary />
+                            {savingsCalculatorFrom === 'Auto' && (
+                                <>
+                                    <SavingsHeader />
+                                    <SavingsSelection printState={printState} />
+                                    <SavingsSelectedHost />
+                                    <InstanceInformation />
+                                    <SelectedVolumeSummary />
+                                </>
+                            )}
+                            {savingsCalculatorFrom === 'Manual' && (
+                                <>
+                                    <SavingsHeader />
+                                    <div style={{ padding: '40px' }}>
+                                        <ManualTCOFields />
+                                        <ManualEC2 />
+                                        <ManualVolumeTypes />
+                                        {selectedManualDeploymentModel?.label === 'Always on availability group' && (
+                                            <ManualTCOAccordion />
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         {/* Right side code here */}

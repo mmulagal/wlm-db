@@ -1,8 +1,8 @@
 export interface ExploreSavingsSliceEntities {
     selectedSnapshotFrequency: any;
-    numberOfClonedCopies: number;
+    numberOfClonedCopies: number | any;
     selectedCloneRefresh: any;
-    monthlyChangeRate: number;
+    monthlyChangeRate: number | any;
     saveConfigName: string;
     loading: boolean;
     unmanagedExploreSavingsHost: Array<any>;
@@ -18,6 +18,18 @@ export interface ExploreSavingsSliceEntities {
     selectedDeploymentModel: string;
     viewCalculationsResponse: ViewCalculationsInterface | null;
     viewCalculationsLoading: boolean;
+    savingsCalculatorFrom: string | null;
+    selectedManualRegion: any;
+    selectedManualDeploymentModel: string | any;
+    monthlyBYOLCost: string;
+    manualMonthlyDescription: string;
+    selectedManualServerEdition: any;
+    selectedManualInstanceType: any;
+    selectedVolumeTab: string;
+    manualTCONumberOfVolumes: number | any;
+    manualTCOStorageAmount: number | any;
+    manualTCOProvisionedIOPS: number | any;
+    manualTCOThroughput: number | any;
 }
 
 export interface StorageSavingsInterface {

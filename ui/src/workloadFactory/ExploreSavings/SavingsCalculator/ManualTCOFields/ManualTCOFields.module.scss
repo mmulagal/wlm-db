@@ -1,0 +1,16 @@
+.manualTCOFields {
+    .firstContainer {
+        display: flex;
+        flex-direction: column;
+        margin-top: 40px;
+
+        .secondRow {
+            display: flex;
+            gap: 24px;
+
+            .deploymentModelWidth {
+                width: 276px;
+            }
+        }
+    }
+}
