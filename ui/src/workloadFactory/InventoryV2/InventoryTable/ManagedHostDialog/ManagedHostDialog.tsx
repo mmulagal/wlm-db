@@ -31,9 +31,30 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                 obj.statusColText === INVENTORY_STATUS.UNDETECTED ||
                 obj.fileSystemType !== GENERAL.FSX_FOR_ONTAP
             ) {
+                let disabledText = '';
+                if (obj.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                    disabledText = GENERAL.MANAGE_DISABLE_FOR_UNDETECTED;
+                }
+                if (
+                    obj.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                    obj?.status?.toLowerCase() === INVENTORY_STATUS.DOWN
+                ) {
+                    disabledText = GENERAL.SQL_SERVER_NOT_RUNNING;
+                }
+                if (obj.statusColText === INVENTORY_STATUS.MANAGED) {
+                    disabledText = GENERAL.SQL_SERVER_MANAGED;
+                }
                 return {
                     ...obj,
-                    cellProps: { isDisabled: true },
+                    cellProps: {
+                        isDisabled: true,
+                        selectionProps: {
+                            title: disabledText,
+                            titleProps: {
+                                placement: 'bottom'
+                            }
+                        }
+                    },
                     statusColText: isInstanceInProgress ? INVENTORY_STATUS.IN_PROGRESS : obj.statusColText,
                     storageType: dialogData?.storageType
                 };
@@ -102,7 +123,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return <DsTypography variant="Regular_14">{cellData}</DsTypography>;
+                return <DsTypography variant="Regular_14">{cellData || GENERAL.NOT_AVAILABLE}</DsTypography>;
             }
         },
         {

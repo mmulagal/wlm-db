@@ -1,7 +1,6 @@
 import {
     Button,
     DsFlashingDotsLoader,
-    DsTypography,
     Popover,
     Table,
     TableTopBar,
@@ -16,19 +15,18 @@ import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import styles from './InventoryTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
-    STATUS_CONST,
     INVENTORY_STATUS,
     INVENTORY_ACTIONS,
-    API_ERRORS,
-    SSM_TROUBLESHOOTING_LINK
+    SSM_TROUBLESHOOTING_LINK,
+    PREPARE_API_ENDPOINT
 } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 
-import { isSmbProtocol, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
+import { collapseAllRows, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
 
 import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 
@@ -67,7 +65,6 @@ const InventoryTable = () => {
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
@@ -81,6 +78,7 @@ const InventoryTable = () => {
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+    const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
 
     const [loading, setLoading] = useState(false);
 
@@ -155,33 +153,6 @@ const InventoryTable = () => {
         }
     }, [inventoryTableData]);
 
-    const menuItems = (row: any) => {
-        let isSmb = isSmbProtocol(row?.storage?.fsxn?.protocol);
-        return [
-            {
-                id: 'viewOverview',
-                displayName: 'View instance',
-                disabled: row?.status === STATUS_CONST.UP ? false : true
-            },
-            {
-                id: 'viewDatabaseList',
-                displayName: 'View databases',
-                disabled: row?.status === STATUS_CONST.UP ? false : true
-            },
-            {
-                id: 'createNewUserDatabase',
-                displayName: GENERAL.CREATE_USER_DB_TITLE,
-                disabled: row?.status === STATUS_CONST.UP && !isSmb ? false : true,
-                infoText: isSmb ? GENERAL.SMB_PROTOCOL_DISABLED : ''
-            },
-            {
-                id: 'unmanage',
-                displayName: 'Unmanage',
-                disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
-            }
-        ];
-    };
-
     const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState.inventoryV2;
@@ -227,15 +198,20 @@ const InventoryTable = () => {
                 );
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             } else if (res?.error) {
-                if (res?.error?.status === 424) {
+                if (res?.error?.status === 422 || res?.error?.status === 500) {
+                    const updatedState = store.getState();
                     // handle prepare API
                     const errorList = res?.error?.data?.message?.split('\n');
-                    const isOnlyPowerShellError =
-                        errorList?.length === 1 && errorList[0].includes(API_ERRORS.POWERSHELL_7);
-                    if (!isOnlyPowerShellError) {
+                    let prepareApiRequired = false;
+                    errorList.map((errorItem: any) => {
+                        if (errorItem.includes(PREPARE_API_ENDPOINT)) {
+                            prepareApiRequired = true;
+                        }
+                    });
+                    if (prepareApiRequired) {
                         prepareHostApi({
-                            credentialId: headerSelectedCred?.data?.credentialsId,
-                            regionId: headerSelectedRegion?.label2,
+                            credentialId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
+                            regionId: updatedState?.headers?.headerSelectedRegion?.label2,
                             instanceId: rowData?.ec2InstanceId
                         }).then((prepareRes: any) => {
                             if (prepareRes && !prepareRes?.error) {
@@ -321,7 +297,7 @@ const InventoryTable = () => {
         rowData: any,
         checkForAllManaged: boolean,
         checkForAllUnDetectInstance: boolean,
-        checkForAllFileSystemNA: boolean
+        checkForAllUnManagedInstance: boolean
     ) => {
         //Condition if installation mode is AOAG than disable manage
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
@@ -348,9 +324,44 @@ const InventoryTable = () => {
             );
         }
         //Check for all un-detect instances and storage type is N/A
-        if (rowData?.action && checkForAllUnDetectInstance && checkForAllFileSystemNA) {
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
             return (
                 <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all Explore Savings undetected rows
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
+            return (
+                <TooltipComponent
+                    title={GENERAL.ALL_ES_UNDETECTED_ROWS}
+                    placement="bottom"
+                    width="320px"
+                    height="100px"
+                >
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all Explore Savings FSXW rows
+        if (
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+            checkForAllUnManagedInstance &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS
+        ) {
+            return (
+                <TooltipComponent title={GENERAL.ES_FSXW_NOT_SUPPORTED} placement="bottom" width="320px" height="50px">
                     <div className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
@@ -413,11 +424,16 @@ const InventoryTable = () => {
                 const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
                 );
-                const checkForAllFileSystemNA = rowData?.sqlServerInstances?.every(
-                    (item: any) => item?.fileSystemType === 'N/A'
+                const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
+                    (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
                 );
 
-                return lastColJSX(rowData, checkForAllManaged, checkForAllUnDetectInstance, checkForAllFileSystemNA);
+                return lastColJSX(
+                    rowData,
+                    checkForAllManaged,
+                    checkForAllUnDetectInstance,
+                    checkForAllUnManagedInstance
+                );
             }
         };
     };
@@ -537,7 +553,7 @@ const InventoryTable = () => {
             id: '6',
             Header: 'SSM connectivity',
             accessor: 'ssmState',
-            width: '202px',
+            width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -595,17 +611,18 @@ const InventoryTable = () => {
                 return renderEstimatedCost(cellData, rowData, styles);
             }
         },
-        {
-            id: '8',
-            Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-            accessor: 'allocatedCapacity',
-            isSortable: true,
-            width: '216px',
-            accessorForTextFilter: 'allocatedCapacityText',
-            renderCell: (cellData: string | number, rowData: any) => {
-                return renderAllocatedCapacity(rowData?.allocatedCapacityText, rowData);
-            }
-        },
+        // ToDo - disabled only for GA release
+        // {
+        //     id: '8',
+        //     Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
+        //     accessor: 'allocatedCapacity',
+        //     isSortable: true,
+        //     width: '216px',
+        //     accessorForTextFilter: 'allocatedCapacityText',
+        //     renderCell: (cellData: string | number, rowData: any) => {
+        //         return renderAllocatedCapacity(rowData?.allocatedCapacityText, rowData);
+        //     }
+        // },
         lastColDetails()
     ];
 
@@ -639,6 +656,13 @@ const InventoryTable = () => {
             setTableHorizontalScroll(false);
         }
     }, [tableProps.columnsState]);
+
+    useEffect(() => {
+        if (isRefreshed) {
+            collapseAllRows(tableProps?.updateRowState, tableProps?.rowsState);
+            tableProps?.pagination?.gotoPage(0);
+        }
+    }, [isRefreshed]);
 
     useEffect(() => {
         if (resetPage) {

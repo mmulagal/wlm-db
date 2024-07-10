@@ -13,6 +13,41 @@
         gap: 64px;
     }
 
+    .secondPartSmallRes {
+        display: flex;
+        flex-direction: column;
+
+        .headSection {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .heading {
+            margin-bottom: 8px;
+        }
+
+        .firstBlockSection {
+            width: 280px;
+            height: 56px;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .bottomRow {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                .square {
+                    width: 12px;
+                    height: 12px;
+                }
+            }
+        }
+    }
+
     .secondPart {
         margin-top: 50px;
 
@@ -23,26 +58,38 @@
             align-items: center;
 
             .firstBlock {
-                width: 155px;
+                max-width: 155px;
             }
 
             .secondBlock {
-                width: 200px;
+                max-width: 200px;
             }
 
             .thirdBlock {
-                width: 182px;
+                max-width: 182px;
             }
 
             .separator {
                 width: 1px;
                 height: 56px;
                 background-color: var(--border);
+                margin-left: 16px;
             }
             [class*='SquareComponent_valueText'] {
                 font-size: 32px !important;
                 line-height: 30px !important;
             }
+        }
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .chartSection {
+        height: 240px;
+        width: 1128px;
+        padding: 40px;
+        .firstPart {
+            gap: 40px;
         }
     }
 }

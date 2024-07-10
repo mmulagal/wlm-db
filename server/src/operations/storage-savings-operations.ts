@@ -214,6 +214,18 @@ async function aoagStorageSavingsCalculations(
             0
         );
         const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice);
+        const [
+            {
+                compute: {
+                    existing: { finding: existingComputeFinding }
+                }
+            },
+            {
+                license: {
+                    existing: { finding: existingLicenseFinding }
+                }
+            }
+        ] = allNodesComputeLicenseDetails;
 
         // recommended compute and license details
         const recommendedInstanceType = `${allNodesComputeLicenseDetails
@@ -285,7 +297,8 @@ async function aoagStorageSavingsCalculations(
             compute: {
                 existing: {
                     instanceType: existingInstanceType,
-                    computeMonthlyPrice: existingComputeMonthlyPrice
+                    computeMonthlyPrice: existingComputeMonthlyPrice,
+                    finding: existingComputeFinding
                 },
                 recommended: {
                     instanceType: recommendedInstanceType,
@@ -295,6 +308,7 @@ async function aoagStorageSavingsCalculations(
             },
             license: {
                 existing: {
+                    finding: existingLicenseFinding,
                     sqlServerEdition: existingSqlServerLicenseEdition,
                     licenseMonthlyPrice: existingLicenseMonthlyPrice
                 },
@@ -305,7 +319,7 @@ async function aoagStorageSavingsCalculations(
                 }
             },
             ebs: {
-                iops: allEbsDetails.iops,
+                iops: allEbsDetails.ebs.iops,
                 throughput: allEbsDetails.throughput,
                 capacity: allEbsDetails.capacity,
                 clones: ebs.clones,
@@ -347,7 +361,7 @@ async function aoagStorageSavingsMetrics(
     nodeDetails: DiscoverResponseInfoType,
     currentNodeComputeLicenseDetails: ComputeLicenseCostType
 ) {
-    logger.info('Performing AOAG storage savings calculations', {
+    logger.info('Performing AOAG storage savings metrics calculation ', {
         accountId,
         credentialsId,
         region,

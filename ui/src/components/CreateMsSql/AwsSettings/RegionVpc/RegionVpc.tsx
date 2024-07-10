@@ -218,42 +218,44 @@ const RegionVpc = () => {
                             />
                         </div> */}
                         {selectVPC === GENERAL.SELECT_EXISTING_VPC && (
-                            <div className={styles.handleSelect}>
-                                <SelectField
-                                    isLoading={vpcLoading}
-                                    ref={vpcRef}
-                                    label={GENERAL.VPC}
-                                    error={!isVPCNotFilled && !selectedVPCData ? GENERAL.ACTION_REQUIRED : ''}
-                                    //@ts-ignore
-                                    isErrorPrefixHidden
-                                    customErrorWarningIcon={
-                                        <WarningIcon
-                                            style={{
-                                                width: '16px',
-                                                height: '16px',
-                                                //@ts-ignore
-                                                '--icon-primary-color': 'var(--error'
-                                            }}
-                                        />
-                                    }
-                                    isClearable={false}
-                                    value={selectedVPCData ? selectedVPCData : null}
-                                    onChange={(selectedOptions: any): void => {
-                                        dispatch(setSelectedVPC(selectedOptions));
-                                        dispatch(setIsWizardTouched(true));
-                                    }}
-                                    placeholder="Select a VPC"
-                                    isSearchable={generateVPCOptions.length > 5}
-                                    options={generateVPCOptions}
-                                    variant="two-lines"
-                                />
+                            <>
+                                <div className={styles.handleSelect}>
+                                    <SelectField
+                                        isLoading={vpcLoading}
+                                        ref={vpcRef}
+                                        label={GENERAL.VPC}
+                                        error={!isVPCNotFilled && !selectedVPCData ? GENERAL.ACTION_REQUIRED : ''}
+                                        //@ts-ignore
+                                        isErrorPrefixHidden
+                                        customErrorWarningIcon={
+                                            <WarningIcon
+                                                style={{
+                                                    width: '16px',
+                                                    height: '16px',
+                                                    //@ts-ignore
+                                                    '--icon-primary-color': 'var(--error'
+                                                }}
+                                            />
+                                        }
+                                        isClearable={false}
+                                        value={selectedVPCData ? selectedVPCData : null}
+                                        onChange={(selectedOptions: any): void => {
+                                            dispatch(setSelectedVPC(selectedOptions));
+                                            dispatch(setIsWizardTouched(true));
+                                        }}
+                                        placeholder="Select a VPC"
+                                        isSearchable={generateVPCOptions.length > 5}
+                                        options={generateVPCOptions}
+                                        variant="two-lines"
+                                    />
+                                </div>
                                 <div className={styles.noticeVpc}>
                                     <div>
                                         <InfoIcon />
                                     </div>
                                     <Typography variant="Regular_13">{GENERAL.VPC_MESSAGE}</Typography>
                                 </div>
-                            </div>
+                            </>
                         )}
                     </Typography>
                 </AccordionCardContent>

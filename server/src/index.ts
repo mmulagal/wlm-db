@@ -283,7 +283,8 @@ const app = fastify({
             try {
                 replyBody = JSON.parse(payload as unknown as string);
             } catch (e) {
-                logger.debug('Failed to parse reply body', e.message);
+                //  285:25  error    Empty block statement                               no-empty
+                logger.error('Error parsing reply body', e);
             }
 
             accessLogger.info({

@@ -1,4 +1,5 @@
 .storageSaving {
+    width: 100%;
     .headSection {
         display: flex;
         // width: 656px;
@@ -41,7 +42,7 @@
     }
     .largeContainer {
         height: 116px;
-        width: 1064px;
+        width: 100%;
         display: flex;
 
         .secondSegment {
@@ -49,6 +50,7 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
+            width: 68.32%;
             .secondRow {
                 display: flex;
                 gap: 32px;
@@ -86,7 +88,7 @@
     }
 
     .progressBar {
-        width: 655px;
+        width: 100%;
         height: 16px;
         background-color: var(--content-background);
         display: flex;

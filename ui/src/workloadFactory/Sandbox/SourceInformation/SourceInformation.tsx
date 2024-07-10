@@ -15,7 +15,10 @@ const SourceInformation = () => {
     return (
         <div className={styles.sourceInformation}>
             <div className={styles.wrapperContainer}>
-                <Source />
+                <div>
+                    <Source />
+                </div>
+
                 <div className={styles.insideContainer}>
                     {!isNA && (
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
@@ -39,7 +42,7 @@ const SourceInformation = () => {
 
                     <DsTypography
                         variant="Regular_14"
-                        style={{ width: '119px' }}
+                        style={{ maxWidth: '119px' }}
                         className={isNA ? CommonStyles.notAvailable : ''}
                     >
                         {GENERAL.SANDBOX_SOURCE_DATABASES}

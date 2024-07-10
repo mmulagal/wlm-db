@@ -907,11 +907,19 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
                     }
                 };
             }
+        } else {
+            result = {
+                ...result,
+                operatingSystem: {
+                    label: GENERAL.WIN_SERVER_2019,
+                    value: GENERAL.WIN_SERVER_2019_VERSION
+                }
+            };
         }
         // database version
         if (msSqlInstance?.serverVersion) {
             const dbVersionOption = DB_VERSIONS?.filter(perRow => msSqlInstance?.serverVersion.includes(perRow?.value));
-            if (dbVersionOption) {
+            if (dbVersionOption?.length) {
                 const option = generateOptionType(dbVersionOption[0].value, dbVersionOption[0].label, '', false, '');
                 result = { ...result, dbVersion: option };
             }
@@ -948,7 +956,7 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
                 type = SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE;
             }
             const dbDeploymentModel = DB_DEPLOYMENT_MODEL?.filter(perRow => type === perRow?.value);
-            if (dbDeploymentModel) {
+            if (dbDeploymentModel?.length) {
                 result = { ...result, dbDeploymentModel: dbDeploymentModel[0] };
             }
         }
@@ -969,16 +977,16 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
         // Throughput
         if (fsxData?.throughputCapacity) {
             const throughput = THROUGHPUT_LIST?.filter(perRow => perRow?.value === fsxData?.throughputCapacity);
-            if (throughput) {
+            if (throughput?.length) {
                 const option = generateOptionType(throughput[0]?.label, throughput[0]?.label, '', false, '');
                 result = { ...result, throughput: option };
             }
         }
         // Capacity
-        if (fsxData?.totalStorageCapacity) {
-            let size = fsxData?.totalStorageCapacity ? fsxData?.totalStorageCapacity / GIB_IN_BYTE : 0;
-            if (size < 1024) {
-                size = 1024;
+        if (fsxData?.fsxBreakdown?.fsxDataLunSize) {
+            let size = fsxData?.fsxBreakdown?.fsxDataLunSize / GIB_IN_BYTE || 0;
+            if (size < 120) {
+                size = 120;
             }
             const unitOption = generateOptionType('GiB', 'GiB', '', false, '');
             result = {

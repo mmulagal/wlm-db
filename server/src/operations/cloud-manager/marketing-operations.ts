@@ -1,11 +1,19 @@
 import { SqlServerDeploymentModel, HOURS_IN_MONTH, STORAGE_SERVICE_DEFAULT_REGION } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import { EbsSummary, EbsCostCalculation, getStorageSavings } from '../../lib/cloud-manager/marketing';
+import {
+    StorageSummary,
+    EbsCostCalculation,
+    ManualModeMarketingRequestBody,
+    getManualModeStorageSavings,
+    getStorageSavings,
+    FsxCostCalculations
+} from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes } from '../../utils/utils';
-import { getVolumeIdsFromStorage } from '../demo-operations';
 
 const logger = getLogger();
+
+/* eslint-disable camelcase */
 
 function getMonthlyCloneCountFromFrequency(cloneRefreshFrequency: string) {
     const cloneRefreshFrequencyLowerCase = cloneRefreshFrequency.toLowerCase();
@@ -36,6 +44,49 @@ function getMarketingApiRequestBody(
             ssdStorage: 100,
             savings: 0
         }
+    };
+}
+
+function getMarketingApiManualModeRequestBody(
+    region: string,
+    params: StorageSavingsRequestBodyType,
+    sqlServerDeploymentType: string,
+    items: { volumeType: string; volumeNumber: number; storageAmount: number; volumeIops: number; throughput: number }[]
+) {
+    const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
+
+    return {
+        useCase: 'Low-latency',
+        region,
+        deploymentType: sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ? 'Multi' : 'Single',
+        snapshots: {
+            snapshotFreq: snapshotFrequency,
+            snapshotMonthlyChangeRatePcg: monthlyChangeRatePercentage
+        },
+        clones: {
+            cloneFreq: cloneRefreshFrequency.toLocaleLowerCase(),
+            cloneMonthlyChangeRatePcg: monthlyChangeRatePercentage,
+            cloneEnvs: clonedCopiesCount > 0 ? clonedCopiesCount : 0
+        },
+        instances: [
+            {
+                instanceName: undefined,
+                isPrimary: true,
+                volumes: items.map(volume => {
+                    const { volumeType, volumeNumber, storageAmount, volumeIops, throughput } = volume;
+                    return {
+                        volumeType,
+                        volumeNumber,
+                        storageAmount: {
+                            size: storageAmount,
+                            unit: 'GiB'
+                        },
+                        volumeIops,
+                        throughput
+                    };
+                })
+            }
+        ]
     };
 }
 
@@ -73,43 +124,67 @@ async function invokeMarketingApi(
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         // Setting to default region as us-east-1 to make the call to storage service, where we have the instance and volume details for demo
         region = STORAGE_SERVICE_DEFAULT_REGION;
-        const response = (await getVolumeIdsFromStorage(accountId, credentialsId, region)) || [];
-        ebsVolumeIds = response.length ? [] : ebsVolumeIds;
-        // Randomly picking one volume id from the list of volume ids
-        const randomIndex = Math.floor(Math.random() * response.length);
-        ebsVolumeIds.push(response[randomIndex]);
-        logger.debug('Randomly selected volume id for demo:', ebsVolumeIds);
+        let volumes = [
+            { volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 2, volumeIops: 40000, throughput: 128 }
+        ];
+        if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+            volumes = [
+                { volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 10, volumeIops: 40000, throughput: 128 }
+            ];
+        }
+        const requestBody = getMarketingApiManualModeRequestBody(
+            region,
+            params,
+            sqlServerDeploymentType,
+            volumes
+        ) as ManualModeMarketingRequestBody;
+        const {
+            ebsTotal,
+            instanceEbs,
+            fsx,
+            fsx_calculation,
+            fsx_cost_calculation_no_snapshot,
+            fsx_clone_cost_calculation,
+            fsx_snapshot_cost_calculation
+        } = await getManualModeStorageSavings(accountId, requestBody);
+
+        return {
+            ebs: ebsTotal,
+            ebs_cost_calculation: instanceEbs[0].io2?.ebs_cost_calculation,
+            single: {
+                fsx,
+                fsx_calculation,
+                fsx_clone_cost_calculation,
+                fsx_cost_calculation_no_snapshot,
+                fsx_snapshot_cost_calculation
+            },
+            multi: {
+                fsx,
+                fsx_calculation,
+                fsx_clone_cost_calculation,
+                fsx_cost_calculation_no_snapshot,
+                fsx_snapshot_cost_calculation
+            }
+        };
     }
-    const {
-        gp2,
-        gp3,
-        io1,
-        io2,
-        st1,
-        fsx,
-        fsx_calculation: fsxCalculation,
-        fsx_cost_calculation_no_snapshot: fsxNoSnapshotCalculation,
-        fsx_snapshot_cost_calculation: fsxSnapshotCostCalculation,
-        fsx_clone_cost_calculation: fsxCloneCostCalculation
-    } = await getStorageSavings(
+    const { gp2, gp3, io1, io2, st1, fsx, ebs, single, multi } = await getStorageSavings(
         accountId,
         credentialsId,
         region,
         getMarketingApiRequestBody(ebsVolumeIds, params, sqlServerDeploymentType)
     );
     return {
-        ebs: { gp2, gp3, io1, io2, st1 },
+        ebsClassification: { gp2, gp3, io1, io2, st1 },
+        ebs,
         fsx,
-        fsxCalculation,
-        fsxNoSnapshotCalculation,
-        fsxSnapshotCostCalculation,
-        fsxCloneCostCalculation
+        single,
+        multi
     };
 }
 
 function formatEbsCalculationObject(
     ebsStorageType: string,
-    ebsSummary: EbsSummary,
+    ebsSummary: StorageSummary,
     ebsCostCalculationObject: EbsCostCalculation,
     clonedCopiesCount: number
 ) {
@@ -195,27 +270,13 @@ function formatEbsCalculationObject(
         }
     };
 }
-async function formatStorageSavingsCalculationMetrics(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    ebsVolumeIds: string[],
-    params: StorageSavingsRequestBodyType,
-    sqlServerDeploymentType: string
-) {
-    logger.debug('Formatting storage savings calculation metrics', {
-        accountId,
-        credentialsId,
-        region,
-        ebsVolumeIds,
-        params
-    });
-    const totalMonthlyClonedCopiesCount =
-        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
 
+function derivePropertiesBasedOnDeploymentType(
+    fsxCostCalculations: FsxCostCalculations,
+    params: StorageSavingsRequestBodyType
+) {
     const {
-        ebs: { gp2, gp3, io1, st1, io2 },
-        fsxNoSnapshotCalculation: {
+        fsx_cost_calculation_no_snapshot: {
             desiredStorageCapacityGB: { size: desiredStorageCapacitySize, unit: desiredStorageCapacityUnit },
             numberOfVolumes,
             FSXnCapacityPrice: { price: fsxnCapacityPriceWithoutSnapshot, unit: fsxnCapacityUnitWithoutSnapshot },
@@ -263,7 +324,7 @@ async function formatStorageSavingsCalculationMetrics(
             totalThroughputIOPSRequestsChargeMonthly: totalThroughputAndIopsMonthly,
             FSXnIOPSPrice
         },
-        fsxSnapshotCostCalculation: {
+        fsx_snapshot_cost_calculation: {
             FSXnSSDPrice: { price: fsxnSsdPrice, unit: fsxnSsdPriceUnit },
             FSXnCapacityPrice: { price: fsxnCapacityPrice, unit: fsxnCapacityPriceUnit },
             desiredSnapshotStorageCapacityGB: {
@@ -290,7 +351,7 @@ async function formatStorageSavingsCalculationMetrics(
             totalMonthlyCostForCapacity,
             totalSnapshotMonthlyCost
         },
-        fsxCloneCostCalculation: {
+        fsx_clone_cost_calculation: {
             desiredStorageCapacityGB: { size: cloneDesiredStorageCapacityGB, unit: cloneDesiredStorageCapacityGBUnit },
             percentageOfDataOnSSDStorage: percentageOfDataOnSSDStorageClone,
             savingsFromCompressionAndDeduplication: savingsFromCompressionAndDeduplicationClone,
@@ -308,36 +369,10 @@ async function formatStorageSavingsCalculationMetrics(
             SSDMonthlyCost,
             totalCloneMonthlyCost
         }
-    } = await invokeMarketingApi(accountId, credentialsId, region, sqlServerDeploymentType, ebsVolumeIds, params);
+    } = fsxCostCalculations;
 
-    const ebsCalculationBreakdown = [];
-    if (gp2) {
-        ebsCalculationBreakdown.push(
-            formatEbsCalculationObject('gp2', gp2.ebs, gp2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-        );
-    }
-    if (gp3) {
-        ebsCalculationBreakdown.push(
-            formatEbsCalculationObject('gp3', gp3.ebs, gp3.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-        );
-    }
-    if (io1) {
-        ebsCalculationBreakdown.push(
-            formatEbsCalculationObject('io1', io1.ebs, io1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-        );
-    }
-
-    if (io2) {
-        ebsCalculationBreakdown.push(
-            formatEbsCalculationObject('io2', io2.ebs, io2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-        );
-    }
-
-    if (st1) {
-        ebsCalculationBreakdown.push(
-            formatEbsCalculationObject('st1', st1.ebs, st1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-        );
-    }
+    const totalMonthlyClonedCopiesCount =
+        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
 
     return {
         fsxOntapCalculation: {
@@ -444,7 +479,73 @@ async function formatStorageSavingsCalculationMetrics(
             ssdStoragePerMonth: convertToBytes(cloneSSDStorageGBPerMonth, cloneSSDStorageGBPerMonthUnit) || 0,
             ssdMonthlyCost: SSDMonthlyCost,
             totalCloneMonthlyCost
-        },
+        }
+    };
+}
+async function formatStorageSavingsCalculationMetrics(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ebsVolumeIds: string[],
+    params: StorageSavingsRequestBodyType,
+    sqlServerDeploymentType: string
+) {
+    logger.debug('Formatting storage savings calculation metrics', {
+        accountId,
+        credentialsId,
+        region,
+        ebsVolumeIds,
+        params
+    });
+
+    const {
+        ebsClassification: { gp2, gp3, io1, st1, io2 } = {},
+        ebs,
+        single,
+        multi
+    } = await invokeMarketingApi(accountId, credentialsId, region, sqlServerDeploymentType, ebsVolumeIds, params);
+    const { fsxOntapCalculation, fsxOntapSnapshotCalculation, fsxCloneCalculation } =
+        sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
+            ? derivePropertiesBasedOnDeploymentType(multi, params)
+            : derivePropertiesBasedOnDeploymentType(single, params);
+
+    const totalMonthlyClonedCopiesCount =
+        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
+
+    const ebsCalculationBreakdown = [];
+    if (gp2) {
+        ebsCalculationBreakdown.push(
+            formatEbsCalculationObject('gp2', gp2.ebs, gp2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        );
+    }
+    if (gp3) {
+        ebsCalculationBreakdown.push(
+            formatEbsCalculationObject('gp3', gp3.ebs, gp3.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        );
+    }
+    if (io1) {
+        ebsCalculationBreakdown.push(
+            formatEbsCalculationObject('io1', io1.ebs, io1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        );
+    }
+
+    if (io2) {
+        ebsCalculationBreakdown.push(
+            formatEbsCalculationObject('io2', io2.ebs, io2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        );
+    }
+
+    if (st1) {
+        ebsCalculationBreakdown.push(
+            formatEbsCalculationObject('st1', st1.ebs, st1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        );
+    }
+
+    return {
+        fsxOntapCalculation,
+        fsxOntapSnapshotCalculation,
+        fsxCloneCalculation,
+        ebs,
         ebsCalculationBreakdown
     };
 }
@@ -453,5 +554,6 @@ export {
     invokeMarketingApi,
     handleMarketingApiFsxCalculationObject,
     formatStorageSavingsCalculationMetrics,
-    getMarketingApiRequestBody
+    getMarketingApiRequestBody,
+    getMarketingApiManualModeRequestBody
 };

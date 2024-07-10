@@ -1,9 +1,16 @@
 .inventoryHeader {
-    width: 1608px;
+    width: 83.75%;
+    max-width: 1607px;
     .buttonSection {
         margin-top: 24px;
 
         display: flex;
         justify-content: space-between;
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .inventoryHeader {
+        width: 1128px;
     }
 }

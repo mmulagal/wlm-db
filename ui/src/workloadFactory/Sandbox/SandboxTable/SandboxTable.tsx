@@ -17,7 +17,7 @@ import { useDispatch } from 'react-redux';
 import {
     setAggregatedSandboxList,
     setSandboxSavingsState,
-    updateConnectionInfo,
+    updateConnectionInfoLoading,
     updateSplitEstimateLoading
 } from '../../../store/workloadFactory/sandboxSlice';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
@@ -25,6 +25,7 @@ import {
     getBaseUrl,
     useCheckIntegrityMutation,
     useDeleteSandboxMutation,
+    useLazyGetConnectionInfoQuery,
     useLazyGetSandboxSavingsQuery,
     useLazyGetSplitEstimateInfoQuery,
     useLazyGetSubTaskListQuery,
@@ -50,7 +51,7 @@ import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 const SandboxTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { aggregatedSandboxList, connectionInfo, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
+    const { aggregatedSandboxList, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
         state => state.sandbox
     );
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
@@ -58,7 +59,6 @@ const SandboxTable = () => {
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const [deletedSandboxes, setDeletedSandboxes] = useState<any>([]);
-    const [connectionInfoClicked, setConnectionInfoClicked] = useState(false);
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
 
@@ -69,6 +69,7 @@ const SandboxTable = () => {
     const [updateSandboxApi] = useUpdateSandboxMutation();
     const [splitSandboxApi] = useSplitSandboxMutation();
     const [checkIntegrityApi] = useCheckIntegrityMutation();
+    const [getConnectionInfoApi] = useLazyGetConnectionInfoQuery();
 
     useEffect(() => {
         if (aggregatedSandboxList[0] && 'id' in aggregatedSandboxList[0]) {
@@ -78,26 +79,6 @@ const SandboxTable = () => {
             setData(newData);
         }
     }, [aggregatedSandboxList]);
-
-    useEffect(() => {
-        if (connectionInfoClicked && connectionInfo?.connectionString) {
-            const connectionString = connectionInfo.connectionString
-                ? Object.keys(connectionInfo.connectionString)
-                      .map((key: any) => `${key}=${connectionInfo.connectionString?.[key]}`)
-                      .join(';')
-                : '';
-            setDialog(
-                <DialogComponent
-                    header={' Show connection info'}
-                    content={<ViewDialog data={connectionString} />}
-                    primaryButton={GENERAL.CLOSE}
-                    callback={() => {}}
-                    customClass={styles.setWidth}
-                />
-            );
-            setConnectionInfoClicked(false);
-        }
-    }, [connectionInfoClicked, connectionInfo]);
 
     const menuItems = (row: any) => {
         return [
@@ -494,17 +475,36 @@ const SandboxTable = () => {
     };
 
     const handleShowConnectionInfo = (rowData: any) => {
+        const updatedState = store.getState();
+        const { headers } = updatedState;
         const { databaseHostId, name, instanceId } = rowData;
-        dispatch(
-            updateConnectionInfo({
-                selectedDatabaseHostId: databaseHostId,
-                selectedDatabaseInstanceId: instanceId,
-                selectedSandboxName: name,
-                connectionString: connectionInfo?.connectionString,
-                isLoading: false
-            })
-        );
-        setConnectionInfoClicked(true);
+        dispatch(updateConnectionInfoLoading(true));
+        getConnectionInfoApi({
+            credentialsId: headers?.headerSelectedCred?.data?.credentialsId,
+            regionId: headers?.headerSelectedRegion?.label2,
+            databaseHostId,
+            instanceId,
+            sandboxName: name
+        }).then(res => {
+            if (res?.data) {
+                const connectionInfo = res.data;
+                const connectionString = connectionInfo
+                    ? Object.keys(connectionInfo)
+                          .map((key: any) => `${key}=${connectionInfo?.[key]}`)
+                          .join(';')
+                    : '';
+                setDialog(
+                    <DialogComponent
+                        header={' Show connection info'}
+                        content={<ViewDialog data={connectionString} />}
+                        primaryButton={GENERAL.CLOSE}
+                        callback={() => {}}
+                        customClass={styles.setWidth}
+                    />
+                );
+                dispatch(updateConnectionInfoLoading(false));
+            }
+        });
     };
 
     const handleIntegrityCheck = (rowData: any) => {

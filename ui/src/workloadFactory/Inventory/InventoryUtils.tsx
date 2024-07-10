@@ -67,7 +67,7 @@ export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) =>
     const totalCost = +rowData?.totalCost;
     return (
         <>
-            {costData && (
+            {costData && !rowData?.loading && (
                 <div className={styles.cost}>
                     <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
                         {EstimatedCostPopover({ ...costData, totalCost: totalCost })}
@@ -75,7 +75,7 @@ export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) =>
                     <Typography variant="Regular_14">{`$ ${formatFractionalNumber(totalCost, 2)}`}</Typography>
                 </div>
             )}
-            {!costData && rowData?.loading && <DsFlashingDotsLoader />}
+            {rowData?.loading && <DsFlashingDotsLoader />}
             {!costData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
         </>
     );

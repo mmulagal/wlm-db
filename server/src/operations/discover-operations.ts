@@ -405,7 +405,7 @@ async function getHostAndSqlInfoFromPsOutput(
         }
     }
     if (ssmResponse.Status === CommandInvocationStatus.TIMED_OUT) {
-        logger.error(`SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`);
+        logger.error(`SSM command ${commandId} execution timed out on node ${ssmTarget.ec2InstanceId}`);
     }
 
     api1EndTime = performance.now();
@@ -551,7 +551,8 @@ async function getHostAndSqlInfoFromPsOutput(
                     }
 
                     const sqlServerAuthentication = ec2SqlParametersInfo?.some(
-                        (elem: { sqlinstancename: string }) => elem.sqlinstancename === sqlServerInstance
+                        (elem: { sqlinstancename: string }) =>
+                            elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase()
                     );
 
                     ssmTargetSqlServerInstancesInfo.push({
@@ -817,7 +818,13 @@ async function fetchUnmanagedHostsInformation(
                     cloud_provider_account_id: null,
                     region,
                     credentials_id: credentialsId,
-                    storage_type: fsxnId ? STORAGE_TYPE.FSXN : fsxwId ? STORAGE_TYPE.FSXW : STORAGE_TYPE.EBS,
+                    storage_type: fsxnId
+                        ? STORAGE_TYPE.FSXN
+                        : fsxwId
+                        ? STORAGE_TYPE.FSXW
+                        : ebsVolumeIds.length > 0
+                        ? STORAGE_TYPE.EBS
+                        : NOT_AVAILABLE,
                     metadata: {
                         creationDate: Date.now(),
                         node1InstanceId: ec2Instance.ec2InstanceId
@@ -887,7 +894,7 @@ async function fetchUnmanagedHostsInformationV2(
 
     await Promise.all(
         ec2HostDetails?.map(async ec2Instance => {
-            const [{ nodeIps, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [];
+            const [{ nodeIps, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [{}];
             let clusterNodeDetails: NodeDetails[] = [];
             if (
                 (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
@@ -949,7 +956,7 @@ async function fetchUnmanagedHostsInformationV2(
                             ? STORAGE_TYPE.FSXN
                             : fsxwId
                             ? STORAGE_TYPE.FSXW
-                            : ebsVolumeIds
+                            : ebsVolumeIds.length > 0
                             ? STORAGE_TYPE.EBS
                             : NOT_AVAILABLE
                     });
@@ -1223,6 +1230,39 @@ async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlRespo
     }
 }
 
+async function rewriteOrDeleteSSMParameter(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    paramesToDelete: string[],
+    instancesToBeDeleted: string[],
+    fsxCredentials: DiscoverCredentialsType,
+    sqlCredentials: DiscoverCredentialsType[]
+) {
+    logger.info('Calling rewriteOrDeleteSSMParameter', {
+        credentialsId,
+        region,
+        instanceId,
+        paramesToDelete,
+        instancesToBeDeleted,
+        fsxCredentials,
+        sqlCredentials
+    });
+    if (sqlCredentials.length === instancesToBeDeleted.length) {
+        // Delete the parameter store all credentials are invalid
+        paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+        await deleteSSMParameter(credentialsId, region, paramesToDelete);
+    } else {
+        // Rewrite parameter store after removing invalid credentials
+        const latestSqlCredentials = sqlCredentials.filter(e => !instancesToBeDeleted.includes(e.resourceId));
+        const creds = prepareParametersToStore(instanceId, [
+            ...(fsxCredentials ? [fsxCredentials] : []),
+            ...latestSqlCredentials
+        ]);
+        await ssmPutParameters(credentialsId, region, creds);
+    }
+}
+
 async function validateCredentials(
     credentialsId: string,
     region: string,
@@ -1312,33 +1352,40 @@ async function validateCredentials(
         }
 
         if (instancesToBeDeleted.length > 0) {
-            if (newSqlCredentials.length === instancesToBeDeleted.length) {
-                // Delete the parameter store all credentials are invalid
-                paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
-                await deleteSSMParameter(credentialsId, region, paramesToDelete);
-            } else {
-                // Rewrite parameter store after removing invalid credentials
-                const latestSqlCredentials = newSqlCredentials.filter(
-                    e => !instancesToBeDeleted.includes(e.resourceId)
-                );
-                const creds = prepareParametersToStore(instanceId, [
-                    ...(fsxCredentials ? [fsxCredentials] : []),
-                    ...latestSqlCredentials
-                ]);
-                await ssmPutParameters(credentialsId, region, creds);
-            }
+            await rewriteOrDeleteSSMParameter(
+                credentialsId,
+                region,
+                instanceId,
+                paramesToDelete,
+                instancesToBeDeleted,
+                fsxCredentials!,
+                newSqlCredentials
+            );
         }
         return response;
     } catch (error: any) {
         // delete the ssm parameters if its already created
         const paramesToDelete: string[] = [];
+        const instancesToBeDeleted: string[] = [];
+
         if (fsxCredentials) {
             paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
         }
+
         if (sqlCredentials.length) {
-            paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+            instancesToBeDeleted.push(sqlCredentials[0].resourceId);
         }
-        await deleteSSMParameter(credentialsId, region, paramesToDelete);
+
+        await rewriteOrDeleteSSMParameter(
+            credentialsId,
+            region,
+            instanceId,
+            paramesToDelete,
+            instancesToBeDeleted,
+            fsxCredentials!,
+            newSqlCredentials
+        );
+
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Unable to validate the credentials . Reason: ${error?.message}.`
@@ -1775,7 +1822,42 @@ async function manageSqlServerV2(
                     node2InstanceId = temp.ec2InstanceId;
                 }
             }
+
+            const node2ssmStatus = await getSSMConnectionStatus(credentialsId, region, node2InstanceId!);
+            if (node2ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+                throw createError(
+                    HttpErrorCodes.VALIDATION_ERROR,
+                    `No SSM connectivity on partner node ${node2InstanceId}.`
+                );
+            }
+
+            const node2missingResourceDetails = await callSsmExecution(
+                credentialsId,
+                region,
+                GET_MISSING_RESOURCE_DETAILS,
+                node2InstanceId!,
+                accountId
+            );
+
+            const node2missingResourceJson = JSON.parse(node2missingResourceDetails!);
+
+            if (node2missingResourceJson[IS_PS7_AVAILABLE] === false) {
+                precheckErrorList.push(
+                    'PowerShell 7 is required for managing the resource on partner node. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4.'
+                );
+            }
+            if (node2missingResourceJson[UNAVAILABLE_PS_MODULES]) {
+                precheckErrorList.push(
+                    `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource on partner node. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
+                );
+            }
+            if (node2missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
+                precheckErrorList.push(
+                    'Files required for database operations are not available on partner node. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".'
+                );
+            }
         }
+
         let resourceId;
         let isResourceTobeCreated: boolean;
         if (isDemoFlow && databaseHostId) {

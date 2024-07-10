@@ -11,7 +11,7 @@
     }
 
     .easy-create {
-        width: 520px;
+        // width: 520px;
         height: 136px;
         padding: 24px 0 24px 24px;
         background-color: var(--content-background);
@@ -38,7 +38,7 @@
                 font-size: 13px;
                 font-style: normal;
                 font-weight: 400;
-                width: 319px;
+                width: 75.71%;
                 height: 60px;
                 text-align: left;
                 color: var(--text-primary);
@@ -55,7 +55,7 @@
 @media screen and (max-width: 1350px) {
     .cardComponent {
         .easy-create {
-            width: 504px;
+            // width: 504px;
 
             .tag {
                 position: relative;

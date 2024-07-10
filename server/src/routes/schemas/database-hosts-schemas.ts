@@ -11,7 +11,7 @@ import {
     DatabasesCreateResponse,
     CreateDatabaseParams,
     DriveInfoResponseBody,
-    CloneDatabaseHostBody,
+    CreateSandboxBody,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,
     SandboxInfoResponseBody,
@@ -32,17 +32,18 @@ import {
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
-// Base Request for Deployment with credential and region Routes
-const databaseHostsRequest = {
-    tags: [RouteTags.DEPLOYMENT],
+// Base Request for resource with credential and region Routes
+const resourceRequest = {
+    tags: [RouteTags.RESOURCE],
     params: CredentialsIdParams
 };
 
 // Get Database hosts summary details
 const DatabaseHostsSummarySchema = {
-    ...databaseHostsRequest,
-    summary: 'Get database hosts details',
-    description: 'Get database hosts summary details',
+    ...resourceRequest,
+    summary: 'Get database hosts details (deprecated)',
+    description: 'Get database hosts summary details (deprecated)',
+    hide: process.env.NODE_ENV === 'production',
     querystring: DatabaseHostQueryString,
     response: {
         200: DatabaseHostSummaryPerStorageTypeListResponse
@@ -51,11 +52,12 @@ const DatabaseHostsSummarySchema = {
 
 // Get Database host summary details
 const DatabaseHostDetailsSchema = {
-    ...databaseHostsRequest,
-    summary: 'Fetch database server details ',
+    ...resourceRequest,
+    summary: 'Fetch database server details (deprecated)',
     description:
-        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
+        'Fetch database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
     params: DatabaseHostSummaryParams,
+    hide: process.env.NODE_ENV === 'production',
     querystring: DatabaseHostQueryString,
     response: {
         200: DatabaseHostSummaryPerStorageTypeResponse
@@ -64,11 +66,12 @@ const DatabaseHostDetailsSchema = {
 
 // Get databases in a database server
 const DatabasesListSchema = {
-    ...databaseHostsRequest,
-    summary: 'Fetch details about databases in a server ',
+    ...resourceRequest,
+    summary: 'Fetch details about databases in a server (deprecated)',
     description:
         'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
     params: DatabaseHostSummaryParams,
+    hide: process.env.NODE_ENV === 'production',
     querystring: DatabaseQueryString,
     response: {
         200: DatabasesListResponse
@@ -77,7 +80,7 @@ const DatabasesListSchema = {
 
 // Create database in a database server
 const DatabasesCreateSchema = {
-    tags: [RouteTags.DEPLOYMENT],
+    tags: [RouteTags.RESOURCE],
     params: CreateDatabaseParams,
     summary: 'Create a new user databases in a server ',
     description: 'Create a new user database in a server',
@@ -88,10 +91,11 @@ const DatabasesCreateSchema = {
 };
 
 const GetDriveInfoSchema = {
-    ...databaseHostsRequest,
+    ...resourceRequest,
     querystring: GetDriveQueryString,
-    summary: 'Get database host drive information',
-    description: 'Fetch drive info about the database host',
+    hide: process.env.NODE_ENV === 'production',
+    summary: 'Get database host drive information (deprecated)',
+    description: 'Fetch drive info about the database host (deprecated)',
     params: DatabaseHostSummaryParams,
     response: {
         200: DriveInfoResponseBody
@@ -99,7 +103,7 @@ const GetDriveInfoSchema = {
 };
 
 const GetDriveInfoSchemaV2 = {
-    ...databaseHostsRequest,
+    ...resourceRequest,
     querystring: GetDriveQueryString,
     summary: 'Get database host drive information',
     description: 'Fetch drive info about the database host',
@@ -109,12 +113,12 @@ const GetDriveInfoSchemaV2 = {
     }
 };
 
-const CloneDatabaseHostSchema = {
-    ...databaseHostsRequest,
+const CreateSandboxSchema = {
+    ...resourceRequest,
     tags: [RouteTags.SANDBOX],
-    summary: 'Clone database',
-    description: 'Clone database in same or alternate host',
-    body: CloneDatabaseHostBody,
+    summary: 'Create sandbox',
+    description: 'Create sandbox in same or alternate host',
+    body: CreateSandboxBody,
     response: {
         200: {
             jobId: Type.String()
@@ -123,9 +127,10 @@ const CloneDatabaseHostSchema = {
 };
 
 const GetCollationDetailsSchema = {
-    ...databaseHostsRequest,
-    summary: 'Get database host collation details',
-    description: 'Fetch collation details about the database host',
+    ...resourceRequest,
+    summary: 'Get database host collation details (deprecated)',
+    hide: process.env.NODE_ENV === 'production',
+    description: 'Fetch collation details about the database host (deprecated)',
     params: DatabaseHostSummaryParams,
     response: {
         200: CollationInfoResponseBody
@@ -133,7 +138,7 @@ const GetCollationDetailsSchema = {
 };
 
 const GetCollationDetailsSchemaV2 = {
-    ...databaseHostsRequest,
+    ...resourceRequest,
     summary: 'Get database host collation details',
     description: 'Fetch collation details about the database host',
     params: DatabaseHostOptionalInstanceSummaryParams,
@@ -143,7 +148,7 @@ const GetCollationDetailsSchemaV2 = {
 };
 
 const GetSandboxSavingsSchema = {
-    ...databaseHostsRequest,
+    ...resourceRequest,
     tags: [RouteTags.SANDBOX],
     summary: 'Get sandbox savings',
     description: 'Get savings across all the database hosts for sandboxes created',
@@ -153,7 +158,7 @@ const GetSandboxSavingsSchema = {
 };
 
 const GetSandboxesInfoSchema = {
-    ...databaseHostsRequest,
+    ...resourceRequest,
     tags: [RouteTags.SANDBOX],
     summary: 'Get Sandboxes Information',
     description: 'Get Sandboxes Information of all databases',
@@ -175,7 +180,6 @@ const GetSandboxesMountPointSchema = {
 };
 
 const PatchResourceForSandboxSchema = {
-    ...databaseHostsRequest,
     tags: [RouteTags.SANDBOX],
     hide: process.env.NODE_ENV === 'production',
     summary: 'Patch for sandboxcreation resource metadata ',
@@ -187,7 +191,7 @@ const PatchResourceForSandboxSchema = {
 };
 
 const RevertPatchResourceForSandboxSchema = {
-    ...databaseHostsRequest,
+    params: CredentialsIdParams,
     tags: [RouteTags.SANDBOX],
     hide: process.env.NODE_ENV === 'production',
     summary: 'Revert  for sandboxcreation resource metadata ',
@@ -247,9 +251,9 @@ const SandboxLifeCycleSchema = {
 };
 
 const DatabaseHostsSummarySchemaV2 = {
-    ...databaseHostsRequest,
-    summary: 'Get database hosts details v2',
-    description: 'Get database hosts summary details v2',
+    ...resourceRequest,
+    summary: 'Get database hosts details',
+    description: 'Get database hosts summary details',
     querystring: DatabaseHostQueryString,
     response: {
         200: DatabaseHostSummaryForMultiInstanceListResponse
@@ -257,10 +261,10 @@ const DatabaseHostsSummarySchemaV2 = {
 };
 
 const DatabaseHostDetailsSchemaV2 = {
-    ...databaseHostsRequest,
-    summary: 'Fetch database server details V2',
+    ...resourceRequest,
+    summary: 'Fetch database server details',
     description:
-        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server v2. ',
+        'Fetch database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
     params: DatabaseHostSummaryParams,
     querystring: DatabaseHostQueryString,
     response: {
@@ -269,10 +273,10 @@ const DatabaseHostDetailsSchemaV2 = {
 };
 
 const DatabaseHostInstanceDetailsSchema = {
-    ...databaseHostsRequest,
+    ...resourceRequest,
     summary: 'Fetch database server instance details',
     description:
-        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server. ',
+        'Fetch database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server. ',
     params: DatabaseHostInstanceSummaryParams,
     querystring: DatabaseHostQueryString,
     response: {
@@ -299,10 +303,10 @@ const CheckSandboxIntegritySchema = {
 };
 
 const DatabasesListSchemaV2 = {
-    tags: [RouteTags.DEPLOYMENT],
-    summary: 'Fetch details about databases in a server V2',
+    tags: [RouteTags.RESOURCE],
+    summary: 'Fetch details about databases in a server',
     description:
-        'Fetch details about databases in a server - name, protection status, availability status, size and type of database V2',
+        'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
     params: DatabaseHostInstanceSummaryParams,
     querystring: DatabaseQueryString,
     response: {
@@ -328,7 +332,7 @@ export {
     DatabasesListSchema,
     GetDriveInfoSchema,
     DatabasesCreateSchema,
-    CloneDatabaseHostSchema,
+    CreateSandboxSchema,
     GetCollationDetailsSchema,
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,

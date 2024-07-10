@@ -163,7 +163,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             // no windows auth
             {
                 ec2InstanceId: 'i-p9o5n2m4l8k6j7h',
-                ec2InstanceType: 'm5.large',
+                ec2InstanceType: 'm5.2xlarge',
                 ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-6',
@@ -174,8 +174,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2017,
                         sqlServerInstance: 'MSSQLSERVER',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5c',
@@ -375,8 +375,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
                         storage: [
                             {
-                                type: 'EBS',
-                                id: ebsVolId
+                                type: 'FSXN',
+                                id: fsxId
                             }
                         ],
                         deploymentTypes: [
@@ -586,7 +586,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             },
             {
                 ec2InstanceId: 'i-4s6d8f2g1h0j3k5',
-                ec2InstanceType: 'm5.large',
+                ec2InstanceType: 'm5.2xlarge',
                 ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-14',
@@ -608,7 +608,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-Training-02',
+                        sqlServerName: 'SQLserver-PLM',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUZ'],
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
                         sqlServerDeploymentType: 'AOAG',
@@ -651,19 +651,23 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-CRMDB',
+                        sqlServerName: 'SQLserver-Finance-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'EBS',
                                 id: ebsVolId
+                            },
+                            {
+                                type: 'EBS',
+                                id: 'vol-0a1b2c3d4e5f6g7h'
                             }
                         ],
                         deploymentTypes: [
                             {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-3']
                             }
                         ]
                     }
@@ -716,7 +720,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ec2InstanceType: 'm5.large',
                 ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
-                ec2InstanceName: 'app-server-16',
+                ec2InstanceName: 'app-server-17',
                 vpc: {
                     id: 'vpc-84b3afe6',
                     name: 'wlmdb-vpc',

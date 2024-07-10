@@ -275,6 +275,15 @@
             "Type": "String",
             "Value": "ap-northeast-3",
             "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:ap-southeast-1::parameter/aws/service/global-infrastructure/services/fsx-ontap/regions/ca-west-1",
+            "DataType": "text",
+            "LastModifiedDate": "2023-09-12T19:08:38.705Z",
+            "Name": "/aws/service/global-infrastructure/services/fsx-ontap/regions/ca-west-1",
+            "Type": "String",
+            "Value": "ca-west-1",
+            "Version": 2
         }
     ]
 }

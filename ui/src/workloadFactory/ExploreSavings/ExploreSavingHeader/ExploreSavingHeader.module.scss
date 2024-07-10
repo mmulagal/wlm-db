@@ -3,7 +3,8 @@
     margin-top: 40px;
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0px var(--border);
-    width: 1605px;
+    width: 83.75%;
+    max-width: 1607px;
     height: 224px;
 
     .topPart {
@@ -22,7 +23,7 @@
             }
 
             .subText {
-                width: 877px;
+                max-width: 877px;
             }
         }
     }

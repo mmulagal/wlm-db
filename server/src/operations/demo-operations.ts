@@ -1,4 +1,5 @@
 import randomize from 'randomatic';
+import { Volume } from '@aws-sdk/client-ec2';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import {
@@ -310,14 +311,14 @@ async function createFileSystemForDemo(
         },
         primarySubnetId: 'subnet-a1', // default subnet for fsx
         ...(mode === 'MULTI_AZ' && { secondarySubnetId: 'subnet-a2' }),
-        throughputCapacity: 3072,
+        throughputCapacity: 128,
         fsxAdminPassword: `${randomize('Aa0', 8)}`, // Since fsx api does not allow the special characters which we allow from our deployment wizard, so randomizing the password all the time
         deploymentType: mode,
         securityGroupIds: [],
         tags: [],
         svmAdminPassword: `${randomize('Aa0', 8)}`,
         generateSecurityGroup: true,
-        haPairs: 2,
+        haPairs: 1,
         automaticBackupRetentionDays: 30,
         routeTableIds: ['rtb-11111111']
     };
@@ -471,6 +472,51 @@ async function getVolumeIdsFromStorage(accountId: string, credentialsId: string,
     return volumeIds;
 }
 
+async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string[]) {
+    let VolumeType = 'gp2';
+    let volumeSize = 8;
+    let iops = 100;
+    // let volumes = [{ volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 2, volumeIops: 40000, throughput: 128 }];
+    if (sqlDeploymentType === 'AOAG') {
+        VolumeType = 'io2';
+        volumeSize = 5120;
+        iops = 40000;
+    } else if (sqlDeploymentType === 'Standalone') {
+        VolumeType = 'io2';
+        volumeSize = 2048;
+        iops = 40000;
+    }
+    const volumes = volumeIds.map(
+        volumeId =>
+            ({
+                VolumeId: volumeId,
+                AvailabilityZone: 'us-east-1a',
+                Attachments: [
+                    {
+                        AttachTime: '2013-12-18T22:35:00.000Z',
+                        InstanceId: 'i-1234567890abcdef0',
+                        VolumeId: 'vol-049df61146c4d7901',
+                        State: 'attached',
+                        DeleteOnTermination: true,
+                        Device: '/dev/sda1'
+                    }
+                ],
+                Encrypted: true,
+                KmsKeyId: 'arn:aws:kms:us-east-2a:123456789012:key/8c5b2c63-b9bc-45a3-a87a-5513eEXAMPLE',
+                VolumeType,
+                State: 'in-use',
+                Iops: iops,
+                SnapshotId: 'snap-1234567890abcdef0',
+                CreateTime: '2019-12-18T22:35:00.084Z',
+                Size: volumeSize,
+                Throughput: 128
+            } as unknown as Volume)
+    );
+    return {
+        Volumes: volumes
+    };
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -479,5 +525,6 @@ export {
     createSandboxJobMockData,
     getVolumeIdsFromStorage,
     updateUserDBIntoInstanceTable,
-    updateSandboxDBIntoInstanceData
+    updateSandboxDBIntoInstanceData,
+    getEBSVolumesForDemo
 };

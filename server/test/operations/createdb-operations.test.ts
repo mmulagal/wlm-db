@@ -15,7 +15,7 @@ import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
 import { ACCOUNT_ID, DEFAULT_MSSQL_INSTANCE_NAME } from '../../src/utils/consts';
-import { createResource, deleteResource } from '../../src/lib/database/db';
+import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import createDbResponse from '../simulator/responses/workload/createdb-response.json';
 
 const createDBRequest = {
@@ -56,7 +56,8 @@ const reqData = {
     dataDrive: 'J',
     logDrive: 'K',
     dataSerial: 'lWB2/$WRmB4k',
-    logSerial: 'lWB2/$WRmB4l'
+    logSerial: 'lWB2/$WRmB4l',
+    serverNameWithHostName: 'test-resourceName\\test-instance'
 };
 
 beforeAll(async () => {
@@ -76,6 +77,20 @@ beforeAll(async () => {
             sqlDeploymentType: 'FCI'
         }
     });
+
+    await upsertDatabaseInstance(ACCOUNT_ID, {
+        credentialsId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+        region: 'ap-southeast-1',
+        resourceId: '36E53042-04E8-40C9-AE69-26E56CB0D216',
+        databaseInstanceId: 'D5A2D0E6-0AF2-4228-97E7-B627ACEE10E8',
+        databaseInstanceName: 'MSSQLSERVER',
+        isDefault: true,
+        source: 'deployment',
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
+        fsxnIds: 'fs-0f53fbecdd3d85fb2',
+        databaseType: '' // Add the missing property 'databaseType'
+    });
 });
 
 afterAll(async () => {
@@ -92,6 +107,19 @@ describe('Create database operations', () => {
             'ap-southeast-1'
         );
         expect(resp).toEqual(createDbResponse.getDriveInfoResponseData);
+    });
+
+    it('Get drive info for a database instance', async () => {
+        const resp = await getDriveInfo(
+            ACCOUNT_ID,
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            true,
+            undefined,
+            'D5A2D0E6-0AF2-4228-97E7-B627ACEE10E8'
+        );
+        expect(resp).toEqual(createDbResponse.getInstanceLevelDriveInfo);
     });
 
     it('Create user databases in a server', async () => {
@@ -121,7 +149,8 @@ describe('Create database operations', () => {
             reqData.dataDrivePath,
             reqData.logDrivePath,
             'SQL_Latin1_General_CP1_CI_AS',
-            DEFAULT_MSSQL_INSTANCE_NAME
+            DEFAULT_MSSQL_INSTANCE_NAME,
+            reqData.serverNameWithHostName
         );
 
         expect(resp.Status).toBe('Complete');
@@ -140,7 +169,8 @@ describe('Create database operations', () => {
             1074,
             1074,
             'false',
-            'false'
+            'false',
+            reqData.serverNameWithHostName
         );
 
         expect(resp.Status).toBe('Complete');
@@ -167,7 +197,8 @@ describe('Create database operations', () => {
             reqData.logSerial,
             'false',
             'MSSQLSERVER',
-            'true'
+            'true',
+            reqData.serverNameWithHostName
         );
 
         expect(resp.Status).toBe('Complete');
@@ -188,7 +219,10 @@ describe('Create database operations', () => {
             reqData.sqlServerName,
             reqData.parentJobId,
             reqData.databaseName,
-            reqData.isClustered
+            reqData.isClustered,
+            reqData.serverNameWithHostName,
+            'MSSQLSERVER',
+            'true'
         );
 
         expect(resp.Status).toBe('Complete');

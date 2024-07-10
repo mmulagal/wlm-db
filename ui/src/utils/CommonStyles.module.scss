@@ -9,7 +9,7 @@
 }
 
 .accordion-group {
-    width: 1063px;
+    // width: 1063px;
     margin-top: 32px;
 }
 
@@ -52,7 +52,7 @@
     color: var(--text-primary);
     line-height: none !important;
     overflow: hidden;
-    white-space: nowrap;
+    white-space: unset;
     text-overflow: ellipsis;
     max-width: 650px;
 }
@@ -70,7 +70,7 @@
     padding: 16px 0 16px 40px;
 }
 .heading {
-    width: 160px;
+    min-width: 160px;
 }
 .valueCSS {
     max-width: 210px;
@@ -101,7 +101,7 @@
 
 @media screen and (max-width: 1350px) {
     .accordion-group {
-        width: 1032px;
+        // width: 1032px;
     }
 }
 
@@ -110,11 +110,15 @@
         width: 48px;
         height: 48px;
     }
+
+    .setHeaderStyleSandbox {
+        white-space: nowrap;
+    }
 }
 
 @media screen and (min-width: 1351px) and (max-width: 1520px) {
     .accordion-group {
-        width: 1128px;
+        // width: 1128px;
     }
 }
 

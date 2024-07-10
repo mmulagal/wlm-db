@@ -432,26 +432,17 @@ const ManagedHostSubTable = ({
                         rowData?.detectOption === DETECT_HOST_VAR.HIDE
                     ) {
                         disableMsg = rowData?.detectOptionDisableMsg;
-                        width = '240px';
+                        width = '250px';
                         height = '33px';
                         return true;
                     }
                     if (
                         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        rowData.fileSystemType === GENERAL.EBS
+                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
                     ) {
-                        disableMsg = GENERAL.EBS_TOOLTIP_MESSAGE;
-                        width = '320px';
-                        height = '90px';
-                        return true;
-                    }
-                    if (
-                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS
-                    ) {
-                        disableMsg = GENERAL.FSXW_TOOLTIP_MESSAGE;
-                        width = '320px';
-                        height = '90px';
+                        disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
+                        width = '340px';
+                        height = '50px';
                         return true;
                     }
                     if (
@@ -520,10 +511,7 @@ const ManagedHostSubTable = ({
                                     }
                                 }}
                                 CustomMenu={undefined}
-                                disabledText={
-                                    undefined
-                                    // GENERAL.EBS_TOOLTIP_MESSAGE
-                                }
+                                disabledText={undefined}
                             />
                         )}
                     </div>
@@ -577,11 +565,11 @@ const ManagedHostSubTable = ({
             }
         },
         {
-            Header: 'Managed status',
+            Header: 'Management status',
             accessor: 'statusColText',
             id: '2',
             isSortable: false,
-            width: '170px',
+            width: '190px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.UNMANAGED) {
@@ -685,7 +673,7 @@ const ManagedHostSubTable = ({
         }
     ];
 
-    if (windowSize.width > 1500) {
+    if (windowSize.width > 1841) {
         managedHostSubTableColDefs.push(lastColDetails());
     } else {
         managedHostSubTableColDefs.unshift(lastColDetails());

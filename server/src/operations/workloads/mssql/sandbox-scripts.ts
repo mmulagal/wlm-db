@@ -1,6 +1,6 @@
 // instances input instances = ['"computername\\instanceName"', '"DEFAULT_MSSQL_INSTANCE_NAME"']; "DEFAULT_MSSQL_INSTANCE_NAME" represents the default instance
 
-import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
+import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
 
 // ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
 const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
@@ -261,6 +261,12 @@ const getDbMappedOntapVolumes = (
             $responseObject = [ordered]@{}
             $winvolumes = $sqlresponse | foreach { $_ | ConvertFrom-Json }
             foreach ($winvolume in $winvolumes) {
+
+                # check in winvolume volume id is null or empty string
+
+                if ([string]::IsNullOrEmpty($winvolume.volumeid)) {
+                    throw "Could not get volume id for database $dbname, please make sure the database is using iscsi protocol"
+                }
                 $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype
 
                 if ($vol.bustype -ne 'iscsi') {
@@ -763,7 +769,8 @@ const cleanUpOntapResources = (
     volumeIds: string,
     filePaths: string,
     dbName: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = ''
 ) => `
     $fsxid = '${fsxid}'
@@ -771,7 +778,8 @@ const cleanUpOntapResources = (
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $DBName = '${dbName}'
-    $instanceName = "${instanceName}"
+    $executableInstance = "${executableInstance}"
+    $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
@@ -781,59 +789,63 @@ const cleanUpOntapResources = (
 
     try {
         ${getVolumeIdFromPath}
+        try {
+            if ($filePaths.count -ne 0) {
+                $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
 
-        if ($filePaths.count -ne 0) {
-            $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
+                $sqlres = sqlcmd -S $executableInstance -Q $query -y 0
 
-            $sqlres = sqlcmd -Q $query -y 0
+                if (-not [string]::IsNullOrEmpty($sqlres)) {
+                    Write-Information "$logPrefix Database $dbname is in use"
+                    $responseObject['error'] = "SQLServerError: Database $dbname is in use"
+                    return $responseObject | ConvertTo-Json -Depth 5
+                }
 
-            if (-not [string]::IsNullOrEmpty($sqlres)) {
-                Write-Information "$logPrefix Database $dbname is in use"
-                $responseObject['error'] = "SQLServerError: Database $dbname is in use"
-                return $responseObject | ConvertTo-Json -Depth 5
-            }
+                $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
+                $resourceType = ${
+                    instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'
+                }
+                $windowsVolumeIds = $filePaths | ForEach-Object {
+                    Get-VolumeIdFromPath -absolutePath $_
+                }
 
-            $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-            $resourceType = ${
-                instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? '"SQL Server"' : `'SQL Server (${instanceName})'`
-            }
-            $windowsVolumeIds = $filePaths | ForEach-Object {
-                Get-VolumeIdFromPath -absolutePath $_
-            }
+                Write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
+                if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
+                    $sqlgroup = Get-ClusterResource | Where-Object Name -eq $resourceType
+                    $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+                    $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
 
-            Write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
-            if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
-                $sqlgroup = Get-ClusterResource | Where-Object ResourceType -eq $resourceType
-                $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
-                $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
-
-                $clusterdisksToRemove = @()
-                foreach ($resource in $resourcegroup) {
-                    $disks = $resource.GetRelated("MSCluster_Disk")
-                    foreach ($disk in $disks) {
-                        $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
-                        $clusterdisk = ($resource.name).replace('\\r\\n','')
-                        $diskdrive = $diskpart.path
-                        $disklabel = $diskpart.volumelabel
-                        $diskvolume = $diskpart.VolumeGuid
-                        write-debug "Cluster Disk $diskvolume"
-                        if ($windowsVolumeIds -contains $diskpart.VolumeGuid) {
-                            $clusterdisksToRemove += $clusterdisk
+                    $clusterdisksToRemove = @()
+                    foreach ($resource in $resourcegroup) {
+                        $disks = $resource.GetRelated("MSCluster_Disk")
+                        foreach ($disk in $disks) {
+                            $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
+                            $clusterdisk = ($resource.name).replace('\\r\\n','')
+                            $diskdrive = $diskpart.path
+                            $disklabel = $diskpart.volumelabel
+                            $diskvolume = $diskpart.VolumeGuid
+                            write-debug "Cluster Disk $diskvolume"
+                            if ($windowsVolumeIds -contains $diskpart.VolumeGuid) {
+                                $clusterdisksToRemove += $clusterdisk
+                            }
+                        }
+                    }
+                    write-Information "$logPrefix Cluster Disks to remove $clusterdisksToRemove"
+                    if ($clusterdisksToRemove.count -ne 0) {
+                        $clusterdisksToRemove | ForEach-Object {
+                            $diskToRemove = $_
+                            $diskToRemove = $diskToRemove.ToString()
+                            write-Information "$logPrefix Removing disk $diskToRemove"
+                            $null = (Remove-ClusterResourceDependency -Resource $resourceType -Provider $diskToRemove)
+                            $null = (Remove-ClusterSharedVolume -Name $diskToRemove -ErrorAction SilentlyContinue)
+                            $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
                         }
                     }
                 }
-                write-Information "$logPrefix Cluster Disks to remove $clusterdisksToRemove"
-                if ($clusterdisksToRemove.count -ne 0) {
-                    $clusterdisksToRemove | ForEach-Object {
-                        $diskToRemove = $_
-                        $diskToRemove = $diskToRemove.ToString()
-                        write-Information "$logPrefix Removing disk $diskToRemove"
-                        $null = (Remove-ClusterResourceDependency -Resource $resourceType -Provider $diskToRemove)
-                        $null = (Remove-ClusterSharedVolume -Name $diskToRemove -ErrorAction SilentlyContinue)
-                        $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
-                    }
-                }
             }
+        } catch {
+            Write-Information "$logPrefix $($_.Exception.Message)"
+            throw $_.Exception.Message
         }
 
         ${ontapRestRequest()}
@@ -862,7 +874,7 @@ const cleanUpOntapResources = (
 
             try {
                 $deleteQuery = "SET NOCOUNT ON; DROP DATABASE IF EXISTS $DBName;"
-                $sqlresponse =  sqlcmd -S $instanceName -Q $deleteQuery -y 0;
+                $sqlresponse =  sqlcmd -S $executableInstance -Q $deleteQuery -y 0;
                 if (-not [string]::IsNullOrEmpty($sqlresponse)) {
                     throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
                 }
@@ -981,7 +993,7 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, clonedBy: 
     1. Check if the database is in use.
     2. Get the extended properties of the database.
     3. Get the volume id of the windows volumes from file path.
-    4. Drop the database.
+    4. Detach the database, so that db files are retained.
     5. Remove the access path of the partitions.
     6. Remove the cluster disks.
 */
@@ -989,13 +1001,15 @@ const detachDbAndRemoveAccessPath = (
     dbName: string,
     serialNumbers: string,
     filePaths: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = ''
 ) => `
     $dbname = '${dbName}'
     $serialNumbers = '${serialNumbers}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
-    $instanceName = "${instanceName}"
+    $executableInstance = "${executableInstance}"
+    $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\detachdb_remove_accesspath_$dbname.log.txt" -Append | Out-Null
@@ -1021,7 +1035,7 @@ const detachDbAndRemoveAccessPath = (
             SELECT name, value
             FROM fn_listextendedproperty(default, default, default, default, default, default, default) FOR JSON PATH;
 "@
-        $sqlresponse = Sqlcmd -S $instanceName -Q $query -y 0 -m 1
+        $sqlresponse = Sqlcmd -S $executableInstance -Q $query -y 0 -m 1
         $sqlresponse = $sqlresponse | ConvertFrom-JSON
 
         $sqlresponse | ForEach-Object {
@@ -1031,29 +1045,30 @@ const detachDbAndRemoveAccessPath = (
         ${getVolumeIdFromPath}
 
         $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-        $resourceType = ${
-            instanceName === DEFAULT_MSSQL_INSTANCE_NAME ? '"SQL Server"' : `"SQL Server (${instanceName})"`
-        }
+        $resourceType = ${instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'}
         $windowsVolumeIds = $filePaths | ForEach-Object {
             Get-VolumeIdFromPath -absolutePath $_
         }
-        write-Information "Windows Volume Ids: $windowsVolumeIds"
+        write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
 
         try {
-            $deleteQuery = "SET NOCOUNT ON; DROP DATABASE IF EXISTS $DBName;"
-            $sqlresponse =  sqlcmd -S $instanceName -Q $deleteQuery -y 0;
-            if (-not [string]::IsNullOrEmpty($sqlresponse)) {
-                throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
+            $detach = "EXEC sp_detach_db '$dbname', 'true'"
+            $sqlresponse =  sqlcmd -S $executableInstance -Q $detach -y 0;
+
+            Write-Information "$logPrefix Detach response: $sqlresponse"
+
+            if ($sqlresponse -ne $null) {
+                Write-Information "$logPrefix Failed to detach the database $sqlresponse"
+                throw "SQLServerError: Could not detach the database $dbname"
             }
         } catch {
             Write-Information "$logPrefix $($_.Exception.Message)"
             throw $_.Exception.Message
         }
 
+        write-Information "$logPrefix Serial Numbers: $serialNumbers"
         $disklist = Get-disk | Where-Object { $serialNumbers -contains $_.SerialNumber }
         write-Information "$logPrefix Disk List: $disklist"
-        write-Information "$logPrefix Serial Numbers: $serialNumbers"
-
         $mountPoints = $filePaths | ForEach-Object {
             $splits = $_.Split('\\')
             $splits[0] + '\\' + $splits[1] + '\\'
@@ -1073,7 +1088,7 @@ const detachDbAndRemoveAccessPath = (
         }
 
         if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
-            $sqlgroup = Get-ClusterResource | Where-Object ResourceType -eq $resourceType
+            $sqlgroup = Get-ClusterResource | Where-Object Name -eq $resourceType
             $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
             $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
 
@@ -1107,6 +1122,7 @@ const detachDbAndRemoveAccessPath = (
     } catch {
         Write-Information "$logPrefix $($_.Exception.Message)"
         $responseObject['error'] = $_.Exception.Message
+        return $responseObject | ConvertTo-Json -Depth 5
     }
 
     return $responseObject | ConvertTo-Json -Depth 5
@@ -1114,15 +1130,17 @@ const detachDbAndRemoveAccessPath = (
 
 const addAccessPathAndAttachDb = (
     dbName: string,
-    datafile: { serial: string; path: string },
-    logfile: { serial: string; path: string },
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    datafile: string,
+    logfile: string,
+    executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = ''
 ) => `
     $dbname = '${dbName}'
-    $serialNumbers = '${JSON.stringify(datafile)}' | ConvertFrom-Json
-    $filePaths = '${JSON.stringify(logfile)}' | ConvertFrom-Json
-    $instanceName = "${instanceName}"
+    $datafile = '${datafile}' | ConvertFrom-Json
+    $logfile = '${logfile}' | ConvertFrom-Json
+    $executableinstance = "${executableInstance}"
+    $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
 
     Start-Transcript -Path "C:\\cfn\\log\\add_accesspath_attachdb_$dbname.log.txt" -Append | Out-Null
@@ -1137,63 +1155,201 @@ const addAccessPathAndAttachDb = (
             $splits = $path.Split('\\')
             return $splits[0] + '\\' + $splits[1] + '\\'
         }
-        
+
         $dataMountPoint = Get-VirtualMountPoint -path $datafile.path
         $logMountPoint = Get-VirtualMountPoint -path $logfile.path
+        Write-Information "$logPrefix Mount Points: $dataMountPoint $logMountPoint"
+        Write-Information "$logPrefix Serial Number: $($datafile.serial) $($logfile.serial)"
 
-        Get-Partition | ForEach-Object {
-            $partition = $_
-            if ($partition.AccessPaths -contains $dataMountPoint -or $partition.AccessPaths -contains $logMountPoint) {
-                Write-Information "$logPrefix Access path already exists for $dataMountPoint or $logMountPoint"
-                $accessPathExists = $true
+        if ($dbname.Length -gt 25) {
+            $dbname = $dbname.Substring(0, 25)
+        }
+        $datalabel = $dbname + '-Data'
+        $loglabel = $dbname + '-Log'
+
+        $disklist = Get-disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -ceq $datafile.serial -or $_.SerialNumber -ceq $logfile.serial }
+        write-Information "$logPrefix Disk List: $disklist"
+
+        $disklist | ForEach-Object {
+            $disk = $_
+            $disknumber = $disk.Number
+            $null= (echo "select disk $disknumber" "attributes disk clear readonly" | diskpart)
+            if ($disk.IsReadOnly -ne $False) {
+                Set-Disk -Number $disk.Number -IsReadOnly $False -ErrorAction SilentlyContinue
+                Start-Sleep 2
+            }
+            
+            if ($disk.IsOffline -ne $False) {
+                Set-Disk -Number $disk.Number -IsOffline $False -ErrorAction SilentlyContinue
+                Start-Sleep 2
+            }
+            
+            if ($disk.PartitionStyle -eq 'RAW') {
+                Set-Disk -Number $disk.Number -PartitionStyle GPT -ErrorAction SilentlyContinue
+                Start-Sleep 2
             }
         }
 
         # If access path does not exist, only then add the access path
-        if ($accessPathExists -ne $true) {
-            $datadisk = Get-disk | Where-Object { $_.SerialNumber -ceq $datafile.serial }
-            $logdisk = Get-disk | Where-Object { $_.SerialNumber -ceq $logfile.serial }
+        $datadisk = ($disklist | Where-Object { $_.SerialNumber -ceq $datafile.serial })
+        $logdisk = ($disklist | Where-Object { $_.SerialNumber -ceq $logfile.serial })
+        $datadisknumber = $datadisk.Number
+        $logdisknumber = $logdisk.Number
 
-            Write-Information "$logPrefix Mount Points: $dataMountPoint $logMountPoint"
+        $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
+        $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
 
-            $datapartition = Get-Partition -DiskNumber $datadisk.Number -PartitionNumber 2
-            $logpartition = Get-Partition -DiskNumber $logdisk.Number -PartitionNumber 2
-            Write-Information "$logPrefix Partition accesspaths: $($datapartition.AccessPaths) $($logpartition.AccessPaths)"
+        $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
+        $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
-            if ($datapartition.AccessPaths -notcontains $dataMountPoint) {
-                Add-PartitionAccessPath -DiskNumber $datadisk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $dataMountPoint
-            }
-            
-            if ($logpartition.AccessPaths -notcontains $logMountPoint) {
-                Add-PartitionAccessPath -DiskNumber $logdisk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $logMountPoint
+        Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
+        Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
+
+        try {
+            $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
+
+            if ($clusterServiceStatus -eq 'Running') {
+                # Add new disks to Cluster Storage
+                #In some cases onlining disk and setting Filesystem label fails and volume returns empty in PS cmdlet. Fail check with diskpart
+
+                if ($datadisk.IsOffline -ne $False) {
+                    $null= (echo "select disk $datadisknumber" "select partition 2" "select volume" "online vol" | diskpart)
+                    Start-Sleep 20 
+                }
+
+                if ($logdisk.IsOffline -ne $False) {
+                    $null= (echo "select disk $logdisknumber" "select partition 2" "select volume" "online vol" | diskpart)
+                    Start-Sleep 20 
+                }
+
+                $clusterdatadisk = Get-ClusterResource -Name $datalabel -ErrorAction SilentlyContinue
+                $clusterlogdisk = Get-ClusterResource -Name $loglabel -ErrorAction SilentlyContinue
+
+                if ([string]::IsNullOrEmpty($clusterdatadisk)) {
+                    $availabledatadisk = Get-Disk | Where-Object { $_.Number -eq $datadisknumber }
+                    $clusterdatadisk = ($availabledatadisk | Add-ClusterDisk -ErrorAction stop)
+                    }
+                if ([string]::IsNullOrEmpty($clusterlogdisk)) {
+                    $availablelogdisk = Get-Disk | Where-Object { $_.Number -eq $logdisknumber }
+                    $clusterlogdisk = ($availablelogdisk | Add-ClusterDisk -ErrorAction stop)
+                }
+                write-information "$logPrefix ClusterDataDisk: $clusterdatadisk ClusterLogDisk: $clusterlogdisk"
+
+                try {
+                    $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($instanceName)")
+                    $SQLGroup = $SQLRoleGroup[0]
+
+                    if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
+                        $null = (Move-ClusterResource -Name $($clusterdatadisk.Name) -Group $SQLGroup)
+                        $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
+
+                        #Add dependency on new disks in SQL Server Resource
+                        $ClusterResourceName = ${
+                            instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'
+                        }
+                        $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterdatadisk.Name))
+                        $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterlogdisk.Name))
+
+                        #Rename new cluster disks to user friendly name
+                        (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
+                        (Get-ClusterResource -Name $($clusterlogdisk.Name)).name = $loglabel
+                    }
+                }
+                catch {
+                    $responseObject['error'] = $_.Exception.Message
+                    $responseObject['message'] = "Failed to add disks to SQL Server Role dependency in cluster"
+                    return ($responseObject | ConvertTo-Json -Depth 5)
+                    exit 1
+                }
             }
         }
+        catch {
+            $responseObject['error'] = $_.Exception.Message
+            $responseObject['message'] = 'Failed to add disks to cluster storage'
+            return ($responseObject | ConvertTo-Json -Depth 5)
+            exit 1
+        }
+        Write-Information "$logPrefix Partition accesspaths: $($datapartition.AccessPaths) $($logpartition.AccessPaths)"
 
-        $selectquery = "SET NOCOUNT ON; SELECT name FROM sys.databases where name = '$dbname' FOR JSON PATH;"
-        $sqlresponse =  sqlcmd -S $instanceName -Q $selectquery -y 0;
+        if ($datapartition.AccessPaths -notcontains $dataMountPoint) {
+            $null = (New-Item -ItemType Directory -Path $dataMountPoint -Force)
+            $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $dataMountPoint -ErrorAction stop
+            $null = (Get-Partition -DiskNumber $datadisknumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
+        }
 
-        if ($sqlresponse -ne $null) {
-            Write-Information "$logPrefix Database $dbname already exists"
-            $responseObject['info'] = 'Database $dbname already exists'
-            return $responseObject | ConvertTo-Json -Depth 5
+        if ($logpartition.AccessPaths -notcontains $logMountPoint) {
+            $null = (New-Item -ItemType Directory -Path $logMountPoint -Force)
+            $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logMountPoint -ErrorAction stop
+            $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
+        }
+
+        try {
+            Get-Partition | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
+                $partition = $_
+                $partition.AccessPaths | ForEach-Object {
+                    $accessPath = $_
+                    Write-Information "$LogPrefix AccessPath: $accessPath"
+                    if ($accessPath) {
+                        $matched = $accessPath -match '^[A-Z]:\\$'
+                        Write-Information "$LogPrefix Matched: $matched"
+                        if ($matched -eq $True -and $accessPath -notcontains $DataDriveLetter -and $accessPath -notcontains $logDriveLetter) {
+                            $accessDrive = $matches[0]
+                            $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
+                        }
+                    }
+                }
+            }
+
+            Get-ChildItem -Path $dataMountPoint -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+            Get-ChildItem -Path $logMountPoint -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+        } catch {
+            $errorMsg = "Failed to remove stale junction paths"
+            Write-Information "$LogPrefix $errorMsg"
+            throw $errorMsg
+        }
+
+        try {
+            $DataFilePath = $datafile.path
+            $LogFilePath = $logfile.path
+            $DataFileLeaf = Split-Path -Path $DataFilePath -Leaf
+            $LogFileLeaf = Split-Path -Path $LogFilePath -Leaf
+            $newDataFilePath = (Get-ChildItem -Path $dataMountPoint -Recurse -Filter $DataFileLeaf).FullName
+            $newLogFilePath = (Get-ChildItem -Path $logMountPoint -Recurse -Filter $LogFileLeaf).FullName
+            if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
+                $responseObject['dataPath'] = $newDataFilePath
+                $responseObject['logPath'] = $newLogFilePath
+                Write-Information "$LogPrefix NewFilePaths: $newDataFilePath $newLogFilePath"
+            }
+            else {
+                throw 
+            }
+        } catch {
+            $errorMsg = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
+            Write-Information "$LogPrefix $errorMsg"
+            throw $errorMsg
         }
 
         $attachQuery = @"
-            CREATE DATABASE $dbname ON  
-            ${[datafile.path, logfile.path].map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
-            FOR ATTACH;
+            IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '$dbname')
+            BEGIN
+                CREATE DATABASE $dbname
+                ON (FILENAME = '$($datafile.path)'),(FILENAME = '$($logfile.path)')
+                FOR ATTACH
+            END;
 "@
-        $attachresponse =  sqlcmd -S $instanceName -Q $attachQuery -y 0;
+        $attachresponse =  sqlcmd -S $executableinstance -Q $attachQuery -y 0;
         if ($attachresponse -ne $null) {
-            Write-Information "$logPrefix Failed to attach the database $attachresponse"
-            $responseObject['error'] = $attachresponse
-            return $responseObject | ConvertTo-Json -Depth 5
+            $errorMessage = "SQLServerError: Could not create and attach the database $dbname. $attachresponse"
+            Write-Information "$logPrefix $errorMessag"
+            throw $errorMessage
         }
     } catch {
         Write-Information "$logPrefix $($_.Exception.Message)"
         $responseObject['error'] = $_.Exception.Message
         return $responseObject | ConvertTo-Json -Depth 5
     }
+
+    return $responseObject | ConvertTo-Json -Depth 5
 `;
 
 const splitFlexCloneVolumes = (

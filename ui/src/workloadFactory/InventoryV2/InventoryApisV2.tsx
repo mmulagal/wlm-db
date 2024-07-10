@@ -129,7 +129,7 @@ const InventoryApisV2 = () => {
         if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
             try {
                 const result: any = await getFsxCredentialStatusListApi({
-                    credentialId: credId,
+                    credentialsId: credId,
                     regionId: regionId,
                     fsxIds: fsxIdsList.join(',')
                 });

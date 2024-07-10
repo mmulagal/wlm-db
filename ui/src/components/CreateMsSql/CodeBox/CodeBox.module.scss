@@ -4,7 +4,7 @@
     flex-direction: column;
     top: 56px;
     right: 0;
-    width: 638px;
+    width: 33vw;
     height: calc(100% - 56px);
     background-color: var(--grey-70);
     border-left: 1px solid var(--border);
@@ -261,8 +261,8 @@
     }
 }
 
-@media screen and (max-width: 1500px) {
-    .codebox {
-        width: 476px !important;
-    }
-}
+// @media screen and (max-width: 1500px) {
+//     .codebox {
+//         width: 476px !important;
+//     }
+// }

@@ -537,3 +537,5 @@ export const PROTECTION_TEXT_STATUS = {
     YES: 'Yes',
     NO: 'No'
 };
+
+export const PREPARE_API_ENDPOINT = '/mssql/prepare';

@@ -97,7 +97,7 @@ const JobMonitoring = () => {
             </div>
 
             <div className={styles.chartContainer}>
-                <div>
+                <div style={{ width: '49.8%', maxWidth: '790px' }}>
                     <JobDistribution />
                 </div>
 

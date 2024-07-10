@@ -516,8 +516,8 @@ async function createSandbox(
     }
 
     const job = await registerJob(accountId, credentialsId, region, {
-        name: `Create sandbox ${dest.database} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
-        description: `Create sandbox ${dest.database} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
+        name: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
+        description: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
         resourceName: dest.database,
         initiator: 'SYSTEM',
         startTime: Date.now(),
@@ -625,7 +625,7 @@ async function validateSelectedDrives(
         driveLetter: string;
         availableSize: number;
         isNetappDrive: boolean;
-        isDriveClustered?: boolean;
+        isClusteredWithSelectedInstance?: boolean;
     }>,
     selectedDrive: string,
     metadata: Metadata
@@ -653,7 +653,7 @@ async function validateSelectedDrives(
     if (!matchedExistingDrive.isNetappDrive) {
         throw createError(412, `Selected drive ${selectedDrive} is not a NetApp drive`);
     }
-    if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
+    if (isClustered === 'true' && !matchedExistingDrive.isClusteredWithSelectedInstance) {
         throw createError(
             412,
             `Selected  drive ${selectedDrive} is non clustered drive or drive not part of SQL server`
@@ -1011,7 +1011,7 @@ async function invokeVirtualMount(
         const logFileName = `${mountPoints.logDrive}:\\${logMappingfile}`;
 
         try {
-            const isDefaultSqlServerInstance: boolean = destDetails.instanceName === DEFAULT_INSTANCE_NAME;
+            const isDefaultSqlServerInstance: boolean = destDetails.databaseInstanceName === DEFAULT_INSTANCE_NAME;
 
             let command = [
                 `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -InstanceName '${destDetails.databaseInstanceName}' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
@@ -1304,6 +1304,7 @@ async function startCleanup(
                 JSON.stringify(filePaths),
                 destDetails.database,
                 destDetails.instanceName,
+                destDetails.databaseInstanceName,
                 `SandBox:${destDetails.database}:`
             )
         ];
@@ -2180,6 +2181,7 @@ async function detachSandboxAndAccessPath(
                 JSON.stringify([mappings.data.lunSerialNumber, mappings.log.lunSerialNumber]),
                 JSON.stringify([mappings.data.fileName, mappings.log.fileName]),
                 resourceDetails.instanceName,
+                resourceDetails.databaseInstanceName,
                 `SandBox:${resourceDetails.database}:`
             )
         ];
@@ -2190,12 +2192,21 @@ async function detachSandboxAndAccessPath(
                     'test-db',
                     '["123456789", "987654321"]',
                     '["S:\\test-db-Data", "L:\\test-db-Log"]',
-                    DEFAULT_MSSQL_INSTANCE_NAME
+                    DEFAULT_MSSQL_INSTANCE_NAME,
+                    DEFAULT_INSTANCE_NAME
                 )
             ];
         }
 
-        const resp = await callSsmExecution(credentialsId, region, command, resourceDetails.activeNodeInstanceId);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            resourceDetails.activeNodeInstanceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
 
         if (!resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Interval Server Error');
@@ -2244,7 +2255,7 @@ async function reAttachSandboxAndAccessPath(
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errMsg;
 
-    const detachJob = await registerJob(accountId, credentialsId, region, {
+    const reattachJob = await registerJob(accountId, credentialsId, region, {
         name: `Re-attach sandbox and access path for ${resourceDetails.database}`,
         startTime: Date.now(),
         description: `Re-attach sandbox and access path for ${resourceDetails.database} in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
@@ -2258,16 +2269,26 @@ async function reAttachSandboxAndAccessPath(
         const command = [
             addAccessPathAndAttachDb(
                 resourceDetails.database,
-                { serial: mappings.log.lunSerialNumber, path: mappings.log.fileName },
-                { serial: mappings.data.lunSerialNumber, path: mappings.data.fileName },
+                JSON.stringify({ serial: mappings.data.lunSerialNumber, path: mappings.data.fileName }),
+                JSON.stringify({ serial: mappings.log.lunSerialNumber, path: mappings.log.fileName }),
                 resourceDetails.instanceName,
+                resourceDetails.databaseInstanceName,
                 `SandBox:${resourceDetails.database}:`
             )
         ];
-        const resp = await callSsmExecution(credentialsId, region, command, resourceDetails.activeNodeInstanceId);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            resourceDetails.activeNodeInstanceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
 
         if (!resp) {
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Interval Server Error');
+            logger.error('Failed to re-attach sandbox and add access path, SSM command response is empty');
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to re-attach: Internal Server Error');
         }
 
         const jsonResp = sqlResponseParsing(resp);
@@ -2284,7 +2305,7 @@ async function reAttachSandboxAndAccessPath(
         errMsg = e.message || e || 'Internal Server Error';
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, detachJob.id, {
+        await updateJobDetails(accountId, credentialsId, region, reattachJob.id, {
             status,
             endTime: Date.now(),
             error: errMsg

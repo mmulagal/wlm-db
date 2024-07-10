@@ -98,9 +98,6 @@ const SelectTarget = () => {
     }, [selectedDatabaseHost, selectedSourceDbInstance]);
 
     const isValidDBName = () => {
-        if (isDemoMode) {
-            return '';
-        }
         if (showError && !selectedDatabase) {
             return GENERAL.ACTION_REQUIRED;
         }

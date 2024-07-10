@@ -36,7 +36,7 @@ const SandboxDistributionDate = () => {
                         >
                             {GENERAL.ONE_SEVEN_DAYS}
                         </DsTypography>
-                        {windowSize.width > 1500 && !isNA && (
+                        {windowSize.width > 1870 && !isNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
@@ -44,7 +44,7 @@ const SandboxDistributionDate = () => {
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
-                        {windowSize.width <= 1500 && !isNA && (
+                        {windowSize.width <= 1870 && !isNA && (
                             <DsTypography variant="Regular_14">{`(${
                                 getSandboxDistributionByAge(aggregatedSandboxList)['0-7']
                             })`}</DsTypography>
@@ -70,7 +70,7 @@ const SandboxDistributionDate = () => {
                         >
                             {GENERAL.SEVEN_FOURTEEN_DAYS}
                         </DsTypography>
-                        {windowSize.width > 1500 && !isNA && (
+                        {windowSize.width > 1870 && !isNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
@@ -78,7 +78,7 @@ const SandboxDistributionDate = () => {
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
-                        {windowSize.width <= 1500 && !isNA && (
+                        {windowSize.width <= 1870 && !isNA && (
                             <DsTypography variant="Regular_14">{`(${
                                 getSandboxDistributionByAge(aggregatedSandboxList)['8-14']
                             })`}</DsTypography>
@@ -105,7 +105,7 @@ const SandboxDistributionDate = () => {
                             {GENERAL.FOURTEEN_THIRTY_DAYS}
                         </DsTypography>
 
-                        {windowSize.width > 1500 && !isNA && (
+                        {windowSize.width > 1870 && !isNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
@@ -114,7 +114,7 @@ const SandboxDistributionDate = () => {
                             </>
                         )}
 
-                        {windowSize.width <= 1500 && !isNA && (
+                        {windowSize.width <= 1870 && !isNA && (
                             <DsTypography variant="Regular_14">{`(${
                                 getSandboxDistributionByAge(aggregatedSandboxList)['15-30']
                             })`}</DsTypography>
@@ -140,7 +140,7 @@ const SandboxDistributionDate = () => {
                         >
                             {GENERAL.THIRTY_PLUS_DAYS}
                         </DsTypography>
-                        {windowSize.width > 1500 && !isNA && (
+                        {windowSize.width > 1870 && !isNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
@@ -149,7 +149,7 @@ const SandboxDistributionDate = () => {
                             </>
                         )}
 
-                        {windowSize.width <= 1500 && !isNA && (
+                        {windowSize.width <= 1870 && !isNA && (
                             <DsTypography variant="Regular_14">{`(${
                                 getSandboxDistributionByAge(aggregatedSandboxList)['30+']
                             })`}</DsTypography>

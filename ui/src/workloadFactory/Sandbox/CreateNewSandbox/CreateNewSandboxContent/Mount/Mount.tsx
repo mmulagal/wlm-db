@@ -14,7 +14,11 @@ import { GENERAL } from '../../../../../utils/appConstants';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 import { useEffect, useMemo, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
-import { generateOptionType, sortListOfDict } from '../../../../../utils/utilityFunctions';
+import {
+    generateOptionType,
+    isClusteredWithSelectedInstance,
+    sortListOfDict
+} from '../../../../../utils/utilityFunctions';
 import { getDefaultDriveLetters } from '../../../SandboxUtility';
 
 const Mount = () => {
@@ -80,7 +84,7 @@ const Mount = () => {
     const disableDriveMsg = (val: any) => {
         if (!val?.isNetappDrive) {
             return GENERAL.NON_NETAPP_DRIVE;
-        } else if ('isDriveClustered' in val ? !val.isDriveClustered : false) {
+        } else if (isClusteredWithSelectedInstance(val)) {
             return GENERAL.NON_CLUSTERED_DRIVE;
         }
         return '';
@@ -93,7 +97,7 @@ const Mount = () => {
                 val?.driveLetter,
                 val?.driveLetter,
                 '',
-                !val?.isNetappDrive || ('isDriveClustered' in val ? !val.isDriveClustered : false),
+                !val?.isNetappDrive || isClusteredWithSelectedInstance(val),
                 disableDriveMsg(val),
                 val
             );
@@ -109,7 +113,7 @@ const Mount = () => {
                 val?.driveLetter,
                 val?.driveLetter,
                 '',
-                !val?.isNetappDrive || ('isDriveClustered' in val ? !val.isDriveClustered : false),
+                !val?.isNetappDrive || isClusteredWithSelectedInstance(val),
                 disableDriveMsg(val),
                 val
             );
