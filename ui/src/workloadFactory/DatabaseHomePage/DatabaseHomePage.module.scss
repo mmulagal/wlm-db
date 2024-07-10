@@ -26,7 +26,7 @@
 
     .secondLevelContainer {
         display: flex;
-        width: 82.4%;
+        width: 86%;
     }
 
     .buttonsContainer {
@@ -49,7 +49,7 @@
     .jobContainer {
         margin-top: 24px;
         margin-bottom: 80px;
-        width: 82.4%;
+        width: 86%;
         height: 336px;
         background-color: var(--content-background);
         box-shadow: 2px 2px 6px var(--grey-15);
@@ -91,13 +91,13 @@
 @media screen and (min-width: 1500px) {
     .databaseHome {
         .buttonsContainer {
-            width: 82.4%;
+            width: 86%;
         }
         .fourthLevelContainer {
-            width: 82.4%;
+            width: 86%;
         }
         .thirdLevelContainer {
-            width: 82.4%;
+            width: 86%;
         }
     }
 }
