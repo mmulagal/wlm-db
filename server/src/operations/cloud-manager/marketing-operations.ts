@@ -6,7 +6,8 @@ import {
     ManualModeMarketingRequestBody,
     getManualModeStorageSavings,
     getStorageSavings,
-    FsxCostCalculations
+    FsxCostCalculations,
+    FsxCalculation
 } from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes } from '../../utils/utils';
@@ -90,7 +91,7 @@ function getMarketingApiManualModeRequestBody(
     };
 }
 
-function handleMarketingApiFsxCalculationObject(fsxCalculationData: any) {
+function handleMarketingApiFsxCalculationObject(fsxCalculationData: FsxCalculation) {
     logger.debug('Handling marketing FSx calculation object', fsxCalculationData);
     const fsxCalculationObject = camelizeKeys(fsxCalculationData);
     const { totalStorageCapacity, effectiveCapacity, ssdTierReqCapacity, capacityPoolTier, monthlySnapshotCapacity } =

@@ -496,6 +496,7 @@ async function getVolumesListFromStorage(accountId: string, credentialsId: strin
 
 export {
     StorageSummary,
+    FsxCalculation,
     FsxCostCalculations,
     EbsCostCalculation,
     ManualModeMarketingRequestBody,

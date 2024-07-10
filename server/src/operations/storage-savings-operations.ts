@@ -290,10 +290,10 @@ async function aoagStorageSavingsCalculations(
             }
         ] = allNodesComputeLicenseDetails;
 
-        const singleFsxCalculationData = single
+        const singleFsxCalculationData = single?.fsx_calculation
             ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
             : undefined;
-        const multiFsxCalculationData = multi
+        const multiFsxCalculationData = multi?.fsx_calculation
             ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
             : undefined;
         return {
@@ -615,10 +615,12 @@ async function performStorageSavingsCalculations(
     const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
     const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
 
-    const singleFsxCalculationData = single
+    const singleFsxCalculationData = single?.fsx_calculation
         ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
         : undefined;
-    const multiFsxCalculationData = multi ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation) : undefined;
+    const multiFsxCalculationData = multi?.fsx_calculation
+        ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+        : undefined;
     return {
         compute,
         license,
