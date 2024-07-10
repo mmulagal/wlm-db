@@ -42,7 +42,46 @@ const JobStatus = () => {
 
                 {/* <div className={styles.jobSeparator} /> */}
 
-                <div className={styles.rightSection}>
+                <div className={styles.secondarySection}>
+                    <div className={styles.firstBlock}>
+                        <Typography variant="Semibold_14">{GENERAL.JOBS_DISTRIBUTION}</Typography>
+                        <Typography variant="Regular_13">{GENERAL.JOB_STATUS_DAYS}</Typography>
+                    </div>
+
+                    <div className={styles.JobStatusContainer}>
+                        <div className={styles.tile}>
+                            <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.completed || 0) + GENERAL.JOB_STATUS_JOBS}
+                            </Typography>
+                            <div className={styles.firstPart}>
+                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
+                                <Typography variant="Regular_14">{GENERAL.JOB_STATUS_COMPLETED}</Typography>
+                            </div>
+                        </div>
+
+                        <div className={styles.tile}>
+                            <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.inProgress || 0) + GENERAL.JOB_STATUS_JOBS}
+                            </Typography>
+                            <div className={styles.firstPart}>
+                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
+                                <Typography variant="Regular_14">{GENERAL.JOB_STATUS_RUNNING}</Typography>
+                            </div>
+                        </div>
+
+                        <div className={styles.tile} style={{ borderRight: '1px solid var(--border)' }}>
+                            <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.failed || 0) + GENERAL.JOB_STATUS_JOBS}
+                            </Typography>
+                            <div className={styles.firstPart}>
+                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />
+                                <Typography variant="Regular_14">{GENERAL.JOB_STATUS_FAILED}</Typography>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* <div className={styles.rightSection}>
                     <div className={styles.rowData} style={{ marginTop: '0' }}>
                         <Typography variant="Semibold_14">{GENERAL.JOBS_DISTRIBUTION}</Typography>
                         <Typography variant="Regular_13">{GENERAL.JOB_STATUS_DAYS}</Typography>
@@ -84,7 +123,7 @@ const JobStatus = () => {
                     </div>
 
                     <div className={styles.jobSeparator} />
-                </div>
+                </div> */}
             </div>
         </div>
     );
