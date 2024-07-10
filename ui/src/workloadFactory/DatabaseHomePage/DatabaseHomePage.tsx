@@ -9,6 +9,9 @@ import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
 import TopBarButton from './TopBarButton/TopBarButton';
 import { useAppSelector } from '../../store/storeHooks';
+import DashboardSummary from './DashboardSummary/DashboardSummary';
+import DashboardRibbon from './DashboardRibbon/DashboardRibbon';
+import DashboardSandbox from './DashboardSandbox/DashboardSandbox';
 
 const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -36,19 +39,10 @@ const DatabaseHomePage = () => {
                 </div>
 
                 <div className={styles.secondLevelContainer}>
-                    <DatabaseHost />
+                    <DashboardSummary />
                 </div>
 
-                <div className={styles.thirdLevelContainer}>
-                    <div className={styles.ProtectionContainer}>
-                        <ProtectionSection />
-                    </div>
-
-                    {/* Job status */}
-                    <div className={styles.jobContainer}>
-                        <JobStatus />
-                    </div>
-                </div>
+                <DashboardRibbon />
 
                 <div className={styles.fourthLevelContainer}>
                     {/* Bar lines */}
@@ -61,6 +55,22 @@ const DatabaseHomePage = () => {
                             <EstimatedCost hostData={hostCostData} hostsLoading={loading} />
                         </div>
                     </div>
+                </div>
+
+                <div className={styles.thirdLevelContainer}>
+                    <div className={styles.ProtectionContainer}>
+                        <ProtectionSection />
+                    </div>
+
+                    {/* Job status */}
+                    <div className={styles.sandBoxContainer}>
+                        <DashboardSandbox />
+                    </div>
+                </div>
+
+                {/* Job status */}
+                <div className={styles.jobContainer}>
+                    <JobStatus />
                 </div>
             </div>
 

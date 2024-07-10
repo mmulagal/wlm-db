@@ -260,7 +260,8 @@ const FsxResourceInfoResponse = Type.Optional(
         Type.Object({
             id: Type.String(),
             capacityCost: Type.Number(),
-            operationalCost: Type.Number()
+            operationalCost: Type.Number(),
+            size: Type.Optional(Type.Number())
         })
     )
 );
@@ -552,6 +553,13 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
         description: 'SSM connectivity status to the active EC2 instance hosting the database server.',
         enum: [ConnectionStatus.CONNECTED, ConnectionStatus.NOT_CONNECTED, NOT_AVAILABLE]
     }),
+    storageAllocation: Type.Optional(
+        Type.Object({
+            fsxn: Type.Optional(Type.Number({ description: 'Aggregate FSxN size in bytes' })),
+            fsxw: Type.Optional(Type.Number({ description: 'Aggregate FSxW size in bytes' })),
+            ebs: Type.Optional(Type.Number({ description: 'Aggregate EBS size in bytes' }))
+        })
+    ),
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),

@@ -290,6 +290,16 @@ async function getHostAndSqlServerInfo(
                     fsxId: fsx.FileSystemId!,
                     type: FileSystemType.WINDOWS
                 });
+                endPointIpWithFsxInfo.set(`${fsx.DNSName!}`, {
+                    fsxId: fsx.FileSystemId!,
+                    type: FileSystemType.WINDOWS
+                });
+                fsx.WindowsConfiguration?.Aliases?.forEach(alias =>
+                    endPointIpWithFsxInfo.set(`${alias.Name}`, {
+                        fsxId: fsx.FileSystemId!,
+                        type: FileSystemType.WINDOWS
+                    })
+                );
             });
 
         api1EndTime = performance.now();
@@ -1924,6 +1934,13 @@ async function manageSqlServerV2(
                     if (windowsAuthentication === false && sqlServerAuthentication === false) {
                         throw Error(
                             'Authentication to SQL Server instance is not possible. Check if the SQL Server service is running, stored credentials are valid, or windows authentication is enabled.'
+                        );
+                    }
+
+                    // Temporary check until manage of sql auth is supported
+                    if (windowsAuthentication === false) {
+                        throw Error(
+                            'Managing SQL Server instance is not possible. Check if the SQL Server service is running or windows authentication is enabled'
                         );
                     }
 

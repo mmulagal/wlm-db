@@ -186,6 +186,13 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
         return formatFractionalNumber(cost, 2);
     })();
 
+    const totalAzCost = (() => {
+        let cost = 0;
+        cost += viewCalculationsResponse?.fsxOntapCalculation?.totalThroughputAndIopsMonthly || 0;
+        cost += viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyStorageCharge || 0;
+        return formatFractionalNumber(cost, 2);
+    })();
+
     const result = {
         fsxInstanceCalculation: formatViewCalcInstance(
             selectedDeploymentModel,
@@ -406,7 +413,8 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
         totalEBSEc2MachineCost: totalEbsEc2MachineCost,
         fsxTotalCost: totalFsxCost,
         ebsTotalCost: totalEbsCost,
-        fsxSnapshotTotalCost: totalFsxSnapshotCost
+        fsxSnapshotTotalCost: totalFsxSnapshotCost,
+        totalAzCost: totalAzCost
     };
     return result;
 };

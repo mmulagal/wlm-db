@@ -4,9 +4,10 @@ import { ReactComponent as Instance } from '../../../assets/instance.svg';
 import { ReactComponent as Database } from '../../../assets/icon database.svg';
 import { ReactComponent as Line } from '../../../assets/Line 265.svg';
 import styles from './DashboardSummary.module.scss';
-import { DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 
 const DashboardSummary = () => {
+    const loading = false;
     const windowSize = useResize();
     return (
         <div className={styles.dashboardSummary}>
@@ -18,9 +19,14 @@ const DashboardSummary = () => {
                             <Host />
                         </div>
                         <div className={styles.textContainer}>
-                            <DsTypography variant="Regular_32" style={{ lineHeight: '43px' }}>
-                                20
-                            </DsTypography>
+                            <div className={styles.loadingContainer}>
+                                <DsTypography variant="Regular_32" style={{ lineHeight: '43px' }}>
+                                    20
+                                </DsTypography>
+                                {/* <div style={{ height: '42px' }} /> */}
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
+
                             <DsTypography variant="Regular_14">Total Hosts</DsTypography>
                         </div>
                     </div>
@@ -31,9 +37,13 @@ const DashboardSummary = () => {
                             <Instance />
                         </div>
                         <div className={styles.textContainer}>
-                            <DsTypography variant="Regular_32" style={{ lineHeight: '43px' }}>
-                                120
-                            </DsTypography>
+                            <div className={styles.loadingContainer}>
+                                <DsTypography variant="Regular_32" style={{ lineHeight: '43px' }}>
+                                    120
+                                </DsTypography>
+                                {/* <div style={{ height: '42px' }} /> */}
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
                             <DsTypography variant="Regular_14">Total instances</DsTypography>
                         </div>
                     </div>
@@ -43,9 +53,13 @@ const DashboardSummary = () => {
 
                     {/* Section 3 Managed Instances */}
                     <div className={styles.textContainer}>
-                        <DsTypography variant="Regular_32" style={{ lineHeight: '43px' }}>
-                            100
-                        </DsTypography>
+                        <div className={styles.loadingContainer}>
+                            <DsTypography variant="Regular_32" style={{ lineHeight: '43px' }}>
+                                100
+                            </DsTypography>
+                            {/* <div style={{ height: '42px' }} /> */}
+                            {loading && <DsFlashingDotsLoader />}
+                        </div>
                         <DsTypography variant="Regular_14">Managed instances</DsTypography>
                     </div>
 
@@ -56,9 +70,13 @@ const DashboardSummary = () => {
                             <Database />
                         </div>
                         <div className={styles.textContainer}>
-                            <DsTypography variant="Regular_32" style={{ lineHeight: '43px' }}>
-                                120
-                            </DsTypography>
+                            <div className={styles.loadingContainer}>
+                                <DsTypography variant="Regular_32" style={{ lineHeight: '43px' }}>
+                                    120
+                                </DsTypography>
+                                {/* <div style={{ height: '42px' }} /> */}
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
                             <DsTypography variant="Regular_14">Total databases</DsTypography>
                         </div>
                     </div>
@@ -68,9 +86,13 @@ const DashboardSummary = () => {
 
                     {/* Section 5 Managed databases */}
                     <div className={styles.textContainer}>
-                        <DsTypography variant="Regular_32" style={{ lineHeight: '43px' }}>
-                            100
-                        </DsTypography>
+                        <div className={styles.loadingContainer}>
+                            <DsTypography variant="Regular_32" style={{ lineHeight: '43px' }}>
+                                100
+                            </DsTypography>
+                            {/* <div style={{ height: '42px' }} /> */}
+                            {loading && <DsFlashingDotsLoader />}
+                        </div>
                         <DsTypography variant="Regular_14">Managed databases</DsTypography>
                     </div>
                 </div>
@@ -84,9 +106,13 @@ const DashboardSummary = () => {
                             <Host />
                         </div>
                         <div className={styles.textContainer}>
-                            <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
-                                20
-                            </DsTypography>
+                            <div className={styles.loadingContainer}>
+                                <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                    20
+                                </DsTypography>
+                                {/* <div style={{ height: '42px' }} /> */}
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
                             <DsTypography variant="Regular_14">Total Hosts</DsTypography>
                         </div>
                     </div>
@@ -97,19 +123,24 @@ const DashboardSummary = () => {
                             <Instance />
                         </div>
                         <div className={styles.textContainer}>
-                            <DsTypography
-                                variant="Regular_24"
-                                className={styles.combinedValue}
-                                style={{ lineHeight: '36px' }}
-                            >
-                                <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
-                                    100
+                            <div className={styles.loadingContainer}>
+                                <DsTypography
+                                    variant="Regular_24"
+                                    className={styles.combinedValue}
+                                    style={{ lineHeight: '36px' }}
+                                >
+                                    <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                        100
+                                    </DsTypography>
+                                    <Line />
+                                    <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                        120
+                                    </DsTypography>
                                 </DsTypography>
-                                <Line />
-                                <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
-                                    120
-                                </DsTypography>
-                            </DsTypography>
+                                {/* <div style={{ height: '42px' }} /> */}
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
+
                             <DsTypography variant="Regular_14">Managed instances</DsTypography>
                         </div>
                     </div>
@@ -121,19 +152,25 @@ const DashboardSummary = () => {
                             <Database />
                         </div>
                         <div className={styles.textContainer}>
-                            <DsTypography
-                                variant="Regular_24"
-                                className={styles.combinedValue}
-                                style={{ lineHeight: '36px' }}
-                            >
-                                <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
-                                    100
+                            <div className={styles.loadingContainer}>
+                                <DsTypography
+                                    variant="Regular_24"
+                                    className={styles.combinedValue}
+                                    style={{ lineHeight: '36px' }}
+                                >
+                                    <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                        100
+                                    </DsTypography>
+                                    <Line />
+                                    <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                        120
+                                    </DsTypography>
                                 </DsTypography>
-                                <Line />
-                                <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
-                                    120
-                                </DsTypography>
-                            </DsTypography>
+
+                                {/* <div style={{ height: '42px' }} /> */}
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
+
                             <DsTypography variant="Regular_14">Managed databases</DsTypography>
                         </div>
                     </div>

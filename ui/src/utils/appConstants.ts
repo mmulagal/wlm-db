@@ -942,8 +942,6 @@ export const GENERAL = {
     TO_VIEW_STORAGE: 'To view storage cost savings, enter your configuration.',
     CATEGORY_POINT_ONE: 'Microsoft SQL server on FSx for ONTAP',
     CATEGORY_POINT_TWO: 'Microsoft SQL server on Amazon Elastic Block Store (EBS)',
-    MS_EBS_CALCULATION: 'Microsoft SQL server on EBS calculation',
-    MS_ONTAP_CALCULATION: 'Microsoft SQL server on FSx for ONTAP calculation',
     VIEW_CALC_TEXT:
         'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
@@ -1027,7 +1025,25 @@ export const GENERAL = {
         `Database instance ${instanceName} unmanaged successfully.`,
     UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unmanage.`,
     NOT_OPTIMIZED:
-        "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use."
+        "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use.",
+    // Explore savings view calculations related consts
+    MS_EBS_CALCULATION: 'Microsoft SQL server on EBS calculation',
+    MS_ONTAP_CALCULATION: 'Microsoft SQL EC2 on FSx for ONTAP calculation',
+    ES_CLONES: 'Clones',
+    ES_EBS: 'Elastic Block Storage',
+    ES_GP3_VOLUME_TYPE: 'GP3 volume type',
+    ES_IO2_VOLUME_TYPE: 'io2 volume type',
+    ES_IO1_VOLUME_TYPE: 'io1 volume type',
+    ES_GP2_VOLUME_TYPE: 'GP2 volume type',
+    ES_ST1_VOLUME_TYPE: 'St1 volume type',
+    ES_EBS_TOTAL_COST: 'EBS total cost',
+    ES_MSSQL_EC2_INSTANCES: 'Microsoft SQL EC2 Instances',
+    ES_SNAPSHOTS: 'Snapshots',
+    ES_EBS_SNAPSHOTS_DESC: 'Snapshots calcs are based on primary DB volumes only (not replicas).',
+    ES_EBS_CLONES_DESC: 'Clone calcs are based on primary DB volumes only (not replicas).',
+    ES_TOTAL_MONTHLY_COST: 'Total monthly cost',
+    ES_FSXN_MULTI: 'FSx for ONTAP - multi availability zone',
+    ES_FSXN_SINGLE: 'FSx for ONTAP - single availability zone'
 };
 
 export const CODE_VIEWER = {
