@@ -493,17 +493,13 @@ async function formatStorageSavingsCalculationMetrics(
         single,
         multi
     } = await invokeMarketingApi(accountId, credentialsId, region, sqlServerDeploymentType, ebsVolumeIds, params);
-    const { fsxOntapCalculation, fsxOntapSnapshotCalculation, fsxCloneCalculation } =
-        sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
-            ? derivePropertiesBasedOnDeploymentType(multi, params)
-            : derivePropertiesBasedOnDeploymentType(single, params);
+
     const totalMonthlyClonedCopiesCount =
         params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
 
     return {
-        fsxOntapCalculation,
-        fsxOntapSnapshotCalculation,
-        fsxCloneCalculation,
+        single: derivePropertiesBasedOnDeploymentType(single, params),
+        multi: derivePropertiesBasedOnDeploymentType(multi, params),
         ebs,
         ebsCalculationBreakdown: {
             ...(gp2 && {

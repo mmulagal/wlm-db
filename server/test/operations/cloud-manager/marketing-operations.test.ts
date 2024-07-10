@@ -56,8 +56,8 @@ describe('Marketing API operations', () => {
         );
 
         expect(result.ebsCalculationBreakdown).toBeDefined();
-        expect(result.fsxCloneCalculation).toBeDefined();
-        expect(result.fsxOntapCalculation).toBeDefined();
+        expect(result.single.fsxCloneCalculation).toBeDefined();
+        expect(result.single.fsxOntapCalculation).toBeDefined();
     });
 
     it('should handle fsx calculation object', async () => {

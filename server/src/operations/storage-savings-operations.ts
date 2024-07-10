@@ -425,9 +425,8 @@ async function aoagStorageSavingsMetrics(
         );
         // Consider only volumes associated with unique database in primary and partner nodes for snapshot calculation and to draw a storage savings comparison with FSXn
         const {
-            fsxOntapCalculation,
-            fsxOntapSnapshotCalculation,
-            fsxCloneCalculation,
+            single,
+            multi,
             ebsCalculationBreakdown: uniqueEbsVolumeBreakdown
         } = await formatStorageSavingsCalculationMetrics(
             accountId,
@@ -445,9 +444,8 @@ async function aoagStorageSavingsMetrics(
             ebsCalculation: Object.entries(allEbsVolumesBreakdown).map(([key, value]) => ({
                 [key]: value.ebsCostCalculation
             })),
-            fsxOntapCalculation,
-            fsxOntapSnapshotCalculation,
-            fsxCloneCalculation,
+            single,
+            multi,
             ebsCloneCalculation: Object.entries(uniqueEbsVolumeBreakdown).map(([key, value]) => ({
                 [key]: value.ebsCloneCalculation
             })),
@@ -684,15 +682,14 @@ async function getStorageSavingsCalculationMetrics(
         existingComputeCalculation,
         existingLicenseCalculation
     } = formatRecommendations([currentNodeComputeLicenseDetails]);
-    const { ebsCalculationBreakdown, fsxOntapCalculation, fsxCloneCalculation, fsxOntapSnapshotCalculation } =
-        await formatStorageSavingsCalculationMetrics(
-            accountId,
-            credentialsId,
-            region,
-            ebsVolumeIds,
-            params,
-            sqlServerDeploymentType!
-        );
+    const { ebsCalculationBreakdown, single, multi } = await formatStorageSavingsCalculationMetrics(
+        accountId,
+        credentialsId,
+        region,
+        ebsVolumeIds,
+        params,
+        sqlServerDeploymentType!
+    );
 
     return {
         recommendedComputeCalculation,
@@ -708,9 +705,8 @@ async function getStorageSavingsCalculationMetrics(
         ebsSnapshotCalculation: Object.entries(ebsCalculationBreakdown).map(([key, value]) => ({
             [key]: value.ebsSnapshotCalculation
         })),
-        fsxOntapCalculation,
-        fsxCloneCalculation,
-        fsxOntapSnapshotCalculation
+        single,
+        multi
     };
 }
 
