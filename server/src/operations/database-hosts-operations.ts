@@ -1669,7 +1669,7 @@ async function getDatabaseInstanceSummary(
         databasesCount.totalCount += userDatabase.length;
     }
 
-    if (getDbCount && databasesCount.totalCount) {
+    if (getDbCount && databasesCount?.totalCount) {
         databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
     }
 
