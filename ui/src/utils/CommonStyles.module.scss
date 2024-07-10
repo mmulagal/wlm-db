@@ -141,3 +141,22 @@
     text-overflow: ellipsis;
     line-height: 24px;
 }
+
+.exploreSavingsCalculation {
+    .accordionContentSet {
+        [class*='Layout_grid-item'] {
+            height: 64px !important;
+            display: flex;
+            align-items: center;
+            padding-left: 24px !important;
+        }
+    }
+    [class*='AccordionCard-module_accordion-card-content'] {
+        padding-right: 40px !important;
+    }
+    .heading-content {
+        width: 100%;
+        position: relative;
+        left: 15%;
+    }
+}

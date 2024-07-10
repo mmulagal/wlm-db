@@ -224,7 +224,10 @@ export interface ViewCalculationsInterface {
         totalEbsSnapshotCost?: number | string;
         ebsSnapshotCost?: number | string;
     };
+    totalFsxEc2MachineCost?: number | string;
+    totalEBSEc2MachineCost?: number | string;
     fsxTotalCost?: number | string;
     ebsTotalCost?: number | string;
     fsxSnapshotTotalCost?: number | string;
+    totalAzCost?: number | string;
 }
