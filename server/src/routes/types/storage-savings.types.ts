@@ -88,8 +88,8 @@ const StorageSavingsResponse = Type.Object({
         existing: Type.Number(),
         recommended: Type.Number()
     }),
-    single: fsxCalculationData,
-    multi: fsxCalculationData
+    single: Type.Optional(fsxCalculationData),
+    multi: Type.Optional(fsxCalculationData)
 });
 
 const PriceUnitObject = Type.Object({
@@ -234,6 +234,7 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
     recommendedLicenseCalculation: Type.Array(LicenseCalculationObject),
     existingComputeCalculation: Type.Array(ComputeCalculationObject),
     existingLicenseCalculation: Type.Array(LicenseCalculationObject),
+    // TODO: Uncomment below 3 lines after fixing the issue with the Type.Mapped and remove the next 3 lines
     // ebsCalculation: Type.Array(Type.Mapped(Type.Union([Type.Optional(Type.Literal('gp2')),Type.Literal('gp3'),Type.Optional(Type.Literal('io1')),Type.Optional(Type.Literal('io2'))]), () =>
     //     ebsCostCalculation
     // )),
@@ -266,16 +267,20 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
             st1: Type.Optional(ebsSnapshotCalculation)
         })
     ),
-    single: Type.Object({
-        fsxOntapCalculation: Type.Optional(fsxOntapCalculation),
-        fsxOntapSnapshotCalculation: Type.Optional(fsxOntapSnapshotCalculation),
-        fsxCloneCalculation: Type.Optional(fsxCloneCalculation)
-    }),
-    multi: Type.Object({
-        fsxOntapCalculation: Type.Optional(fsxOntapCalculation),
-        fsxOntapSnapshotCalculation: Type.Optional(fsxOntapSnapshotCalculation),
-        fsxCloneCalculation: Type.Optional(fsxCloneCalculation)
-    })
+    single: Type.Optional(
+        Type.Object({
+            fsxOntapCalculation: Type.Optional(fsxOntapCalculation),
+            fsxOntapSnapshotCalculation: Type.Optional(fsxOntapSnapshotCalculation),
+            fsxCloneCalculation: Type.Optional(fsxCloneCalculation)
+        })
+    ),
+    multi: Type.Optional(
+        Type.Object({
+            fsxOntapCalculation: Type.Optional(fsxOntapCalculation),
+            fsxOntapSnapshotCalculation: Type.Optional(fsxOntapSnapshotCalculation),
+            fsxCloneCalculation: Type.Optional(fsxCloneCalculation)
+        })
+    )
 });
 
 type StorageSavingsResponseType = Static<typeof StorageSavingsResponse>;

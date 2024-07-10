@@ -97,10 +97,10 @@ describe('Marketing API operations ', () => {
                     monthlyChangeRatePercentage: 30
                 }
             );
-            expect(resp.single.fsxOntapCalculation).toBeDefined();
-            expect(resp.single.fsxOntapSnapshotCalculation).toBeDefined();
+            expect(resp.single?.fsxOntapCalculation).toBeDefined();
+            expect(resp.single?.fsxOntapSnapshotCalculation).toBeDefined();
             expect(resp.ebsCalculation).toBeDefined();
-            expect(resp.single.fsxCloneCalculation).toBeDefined();
+            expect(resp.single?.fsxCloneCalculation).toBeDefined();
         }
     });
 

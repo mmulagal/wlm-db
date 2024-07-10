@@ -289,8 +289,8 @@ interface CalculateEbsComparisonResponse {
         clones: number;
         total: number;
     };
-    single: FsxCostCalculations;
-    multi: FsxCostCalculations;
+    single?: FsxCostCalculations;
+    multi?: FsxCostCalculations;
 }
 
 interface ManualModeEbsComparisonResponse {

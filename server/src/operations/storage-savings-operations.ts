@@ -290,8 +290,12 @@ async function aoagStorageSavingsCalculations(
             }
         ] = allNodesComputeLicenseDetails;
 
-        const singleFsxCalculationData = handleMarketingApiFsxCalculationObject(single.fsx_calculation);
-        const multiFsxCalculationData = handleMarketingApiFsxCalculationObject(multi.fsx_calculation);
+        const singleFsxCalculationData = single
+            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+            : undefined;
+        const multiFsxCalculationData = multi
+            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+            : undefined;
         return {
             compute: {
                 existing: {
@@ -338,20 +342,24 @@ async function aoagStorageSavingsCalculations(
                     existingLicenseMonthlyPrice!,
                 recommended: fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
             },
-            single: {
-                fsxCalculation: singleFsxCalculationData,
-                fsxBreakdown: fsxStorageCapacityBreakdown(
-                    singleFsxCalculationData.totalStorageCapacity,
-                    SqlServerDeploymentModel.SQL_AOAG_SHORT
-                )
-            },
-            multi: {
-                fsxCalculation: multiFsxCalculationData,
-                fsxBreakdown: fsxStorageCapacityBreakdown(
-                    multiFsxCalculationData.totalStorageCapacity,
-                    SqlServerDeploymentModel.SQL_AOAG_SHORT
-                )
-            }
+            ...(singleFsxCalculationData && {
+                single: {
+                    fsxCalculation: singleFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        singleFsxCalculationData.totalStorageCapacity,
+                        SqlServerDeploymentModel.SQL_AOAG_SHORT
+                    )
+                }
+            }),
+            ...(multiFsxCalculationData && {
+                multi: {
+                    fsxCalculation: multiFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        multiFsxCalculationData.totalStorageCapacity,
+                        SqlServerDeploymentModel.SQL_AOAG_SHORT
+                    )
+                }
+            })
         };
     }
     throw createError(
@@ -607,8 +615,10 @@ async function performStorageSavingsCalculations(
     const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
     const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
 
-    const singleFsxCalculationData = handleMarketingApiFsxCalculationObject(single.fsx_calculation);
-    const multiFsxCalculationData = handleMarketingApiFsxCalculationObject(multi.fsx_calculation);
+    const singleFsxCalculationData = single
+        ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+        : undefined;
+    const multiFsxCalculationData = multi ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation) : undefined;
     return {
         compute,
         license,
@@ -618,20 +628,24 @@ async function performStorageSavingsCalculations(
             existing: ebs.total || 0 + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
         },
-        single: {
-            fsxCalculation: singleFsxCalculationData,
-            fsxBreakdown: fsxStorageCapacityBreakdown(
-                singleFsxCalculationData.totalStorageCapacity,
-                sqlServerDeploymentType!
-            )
-        },
-        multi: {
-            fsxCalculation: multiFsxCalculationData,
-            fsxBreakdown: fsxStorageCapacityBreakdown(
-                multiFsxCalculationData.totalStorageCapacity,
-                sqlServerDeploymentType!
-            )
-        }
+        ...(singleFsxCalculationData && {
+            single: {
+                fsxCalculation: singleFsxCalculationData,
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    singleFsxCalculationData.totalStorageCapacity,
+                    sqlServerDeploymentType!
+                )
+            }
+        }),
+        ...(multiFsxCalculationData && {
+            multi: {
+                fsxCalculation: multiFsxCalculationData,
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    multiFsxCalculationData.totalStorageCapacity,
+                    sqlServerDeploymentType!
+                )
+            }
+        })
     };
 }
 

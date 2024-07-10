@@ -152,18 +152,22 @@ async function invokeMarketingApi(
             ebs: ebsTotal,
             ebsClassification: instanceEbs[0],
             fsx,
-            single: {
-                fsx_calculation,
-                fsx_clone_cost_calculation,
-                fsx_cost_calculation_no_snapshot,
-                fsx_snapshot_cost_calculation
-            },
-            multi: {
-                fsx_calculation,
-                fsx_clone_cost_calculation,
-                fsx_cost_calculation_no_snapshot,
-                fsx_snapshot_cost_calculation
-            }
+            ...(sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_AOAG_SHORT && {
+                single: {
+                    fsx_calculation,
+                    fsx_clone_cost_calculation,
+                    fsx_cost_calculation_no_snapshot,
+                    fsx_snapshot_cost_calculation
+                }
+            }),
+            ...(sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT && {
+                multi: {
+                    fsx_calculation,
+                    fsx_clone_cost_calculation,
+                    fsx_cost_calculation_no_snapshot,
+                    fsx_snapshot_cost_calculation
+                }
+            })
         };
     }
     const { gp2, gp3, io1, io2, st1, fsx, ebs, single, multi } = await getStorageSavings(
@@ -498,8 +502,8 @@ async function formatStorageSavingsCalculationMetrics(
         params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
 
     return {
-        single: derivePropertiesBasedOnDeploymentType(single, params),
-        multi: derivePropertiesBasedOnDeploymentType(multi, params),
+        ...(single && { single: derivePropertiesBasedOnDeploymentType(single, params) }),
+        ...(multi && { multi: derivePropertiesBasedOnDeploymentType(multi, params) }),
         ebs,
         ebsCalculationBreakdown: {
             ...(gp2 && {
