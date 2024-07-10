@@ -42,7 +42,7 @@ describe('Marketing API operations ', () => {
             );
             expect(resp.ebs).toBeDefined();
             expect(resp.fsx).toBeDefined();
-            expect(resp.single.fsxCalculation).toBeDefined();
+            expect(resp.single?.fsxCalculation).toBeDefined();
         }
     });
 
