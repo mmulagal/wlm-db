@@ -50,15 +50,8 @@ const StorageSavingsLicense = Type.Object({
     ),
     message: Type.Optional(Type.String())
 });
-const StorageSavingsResponse = Type.Object({
-    compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
-    license: Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense }),
-    ebs: StorageMetrics,
-    fsx: StorageMetrics,
-    totalSummary: Type.Object({
-        existing: Type.Number(),
-        recommended: Type.Number()
-    }),
+
+const fsxCalculationData = Type.Object({
     fsxCalculation: Type.Object({
         deploymentType: Type.String(),
         numberOfVolumes: Type.Number(),
@@ -86,6 +79,19 @@ const StorageSavingsResponse = Type.Object({
     })
 });
 
+const StorageSavingsResponse = Type.Object({
+    compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
+    license: Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense }),
+    ebs: StorageMetrics,
+    fsx: StorageMetrics,
+    totalSummary: Type.Object({
+        existing: Type.Number(),
+        recommended: Type.Number()
+    }),
+    single: Type.Optional(fsxCalculationData),
+    multi: Type.Optional(fsxCalculationData)
+});
+
 const PriceUnitObject = Type.Object({
     price: Type.Number(),
     unit: Type.String()
@@ -105,125 +111,176 @@ const LicenseCalculationObject = Type.Object({
     licenseIncluded: Type.Optional(Type.Boolean()),
     hoursInMonth: Type.Number()
 });
+const ebsCostCalculation = Type.Object({
+    numberOfVolumes: Type.Number(),
+    instanceAvgDuration: Type.Number(),
+    hoursInAMonth: Type.Number(),
+    ebsCapacityPrice: PriceUnitObject,
+    storageAmountPerVol: Type.Number(),
+    totalInstanceHours: Type.Number(),
+    ebsInstanceMonth: Type.Number(),
+    ebsStorageCost: Type.Number(),
+    billableIops: Type.Number(),
+    totalBillableIops: Type.Number(),
+    ebsIopsCost: Type.Number(),
+    billableMbps: Type.Number(),
+    billableThroughputMbps: Type.Number(),
+    billableThroughputGbps: Type.Number(),
+    ebsThroughputCost: Type.Number(),
+    ebsTotalCostMonthly: Type.Number()
+});
+const ebsCloneCalculation = Type.Object({
+    clonedCopiesCount: Type.Number(),
+    capacity: Type.Number(),
+    iops: Type.Number(),
+    throughput: Type.Number(),
+    totalCloneMonthlyCost: Type.Number()
+});
+const ebsSnapshotCalculation = Type.Object({
+    ebsInstanceMonth: Type.Number(),
+    totalSnapshots: Type.Number(),
+    initialSnapshotCost: Type.Number(),
+    monthlyCostPerSnapshot: Type.Number(),
+    discountForPartialStorageMonth: Type.Number(),
+    incrementalSnapshotCost: Type.Number(),
+    totalSnapshotCost: Type.Number(),
+    totalEbsSnapshotCost: Type.Number(),
+    ebsSnapshotCost: Type.Number()
+});
+
+const fsxOntapCalculation = Type.Object({
+    numberOfVolumes: Type.Number(),
+    percentageOfDataOnSSDStorage: Type.Number(),
+    fsxnCapacityPrice: PriceUnitObject,
+    maxSsdTierSize: Type.Number(),
+    suggestedFsxnThroughputCapacity: Type.Number(),
+    maxThroughput: Type.Number(),
+    fsxnThroughputPrice: Type.Number(),
+    fsxnIopsPrice: Type.Number(),
+    provisionedSsdIops: Type.Number(),
+    includedIops: Type.Number(),
+    maxSsdIops: Type.Number(),
+    fsxnStoragePrice: PriceUnitObject,
+    desiredStorageCapacity: Type.Number(),
+    ebsCapacity: Type.Number(),
+    percentageOfDataOnSsdStorage: Type.Number(),
+    savingsFromCompressionAndDeduplication: Type.Number(),
+    storageSavingsFromCompressionAndDeduplication: Type.Number(),
+    effectiveFsxnStorageCapacity: Type.Number(),
+    ssdStoragePerMonth: Type.Number(),
+    greaterOfSsdAndMinAllowedSsd: Type.Number(),
+    ssdMonthlyCost: Type.Number(),
+    totalMonthlyCostForFSxSsd: Type.Number(),
+    ratioAfterSavings: Type.Number(),
+    dataOnCapacityPoolStorageFactor: Type.Number(),
+    capacityPoolStorage: Type.Number(),
+    capacityMonthlyCost: Type.Number(),
+    totalMonthlyCostForCapacity: Type.Number(),
+    totalMonthlyStorageCharge: Type.Number(),
+    minFileSystemsNumForStorage: Type.Number(),
+    minFileSystemsNumForThroughputCapacity: Type.Number(),
+    minFileSystemsNumForSsdIops: Type.Number(),
+    requiredNumOfFsxFractional: Type.Number(),
+    requiredNumOfFsx: Type.Number(),
+    minThroughputCapacityRequired: Type.Number(),
+    provisionedThroughputCapacity: Type.Number(),
+    totalMonthlyFsxnThroughputCapacityCost: Type.Number(),
+    includedSsdIops: Type.Number(),
+    additionalSsdIops: Type.Number(),
+    billedAdditionalSsdIops: Type.Number(),
+    additionalBilledCostForSsdIops: Type.Number(),
+    totalThroughputAndIopsMonthly: Type.Number()
+});
+
+const fsxOntapSnapshotCalculation = Type.Object({
+    fsxnSsdPrice: PriceUnitObject,
+    fsxnCapacityPrice: PriceUnitObject,
+    desiredStorageCapacity: Type.Number(),
+    percentageOfDataOnSsdStorage: Type.Number(),
+    savingsFromCompressionAndDeduplication: Type.Number(),
+    storageSavingsFromCompressionAndDeduplication: Type.Number(),
+    effectiveFsxnStorageCapacity: Type.Number(),
+    ssdStoragePerMonth: Type.Number(),
+    ssdMonthlyCost: Type.Number(),
+    totalSnapshotMonthlyCostForFsxSsd: Type.Number(),
+    ratioAfterSavings: Type.Number(),
+    dataOnCapacityPoolStorageFactor: Type.Number(),
+    capacityPoolStorage: Type.Number(),
+    capacityMonthlyCost: Type.Number(),
+    totalMonthlyCostForCapacity: Type.Number(),
+    totalSnapshotMonthlyCost: Type.Number()
+});
+
+const fsxCloneCalculation = Type.Object({
+    clonedCopiesCount: Type.Number(),
+    numberOfClonesInAMonth: Type.Number(),
+    changeRateBetweenClones: Type.Number(),
+    totalFsxnCapacity: Type.Number(),
+    fsxnSsdPrice: PriceUnitObject,
+    cloneRefreshFrequency: Type.String(),
+    monthlyChangeRatePercentage: Type.Number(),
+    desiredStorageCapacity: Type.Number(),
+    percentageOfDataOnSsdStorage: Type.Number(),
+    savingsFromCompressionAndDeduplication: Type.Number(),
+    storageSavingsFromCompressionAndDeduplication: Type.Number(),
+    effectiveFsxnStorageCapacity: Type.Number(),
+    ssdStoragePerMonth: Type.Number(),
+    ssdMonthlyCost: Type.Number(),
+    totalCloneMonthlyCost: Type.Number()
+});
+
 const StorageSavingsCalculationsMetricsResponse = Type.Object({
     recommendedComputeCalculation: Type.Array(ComputeCalculationObject),
     recommendedLicenseCalculation: Type.Array(LicenseCalculationObject),
     existingComputeCalculation: Type.Array(ComputeCalculationObject),
     existingLicenseCalculation: Type.Array(LicenseCalculationObject),
-    fsxOntapCalculation: Type.Object({
-        numberOfVolumes: Type.Number(),
-        percentageOfDataOnSSDStorage: Type.Number(),
-        fsxnCapacityPrice: PriceUnitObject,
-        maxSsdTierSize: Type.Number(),
-        suggestedFsxnThroughputCapacity: Type.Number(),
-        maxThroughput: Type.Number(),
-        fsxnThroughputPrice: Type.Number(),
-        fsxnIopsPrice: Type.Number(),
-        provisionedSsdIops: Type.Number(),
-        includedIops: Type.Number(),
-        maxSsdIops: Type.Number(),
-        fsxnStoragePrice: PriceUnitObject,
-        desiredStorageCapacity: Type.Number(),
-        ebsCapacity: Type.Number(),
-        percentageOfDataOnSsdStorage: Type.Number(),
-        savingsFromCompressionAndDeduplication: Type.Number(),
-        storageSavingsFromCompressionAndDeduplication: Type.Number(),
-        effectiveFsxnStorageCapacity: Type.Number(),
-        ssdStoragePerMonth: Type.Number(),
-        greaterOfSsdAndMinAllowedSsd: Type.Number(),
-        ssdMonthlyCost: Type.Number(),
-        totalMonthlyCostForFSxSsd: Type.Number(),
-        ratioAfterSavings: Type.Number(),
-        dataOnCapacityPoolStorageFactor: Type.Number(),
-        capacityPoolStorage: Type.Number(),
-        capacityMonthlyCost: Type.Number(),
-        totalMonthlyCostForCapacity: Type.Number(),
-        totalMonthlyStorageCharge: Type.Number(),
-        minFileSystemsNumForStorage: Type.Number(),
-        minFileSystemsNumForThroughputCapacity: Type.Number(),
-        minFileSystemsNumForSsdIops: Type.Number(),
-        requiredNumOfFsxFractional: Type.Number(),
-        requiredNumOfFsx: Type.Number(),
-        minThroughputCapacityRequired: Type.Number(),
-        provisionedThroughputCapacity: Type.Number(),
-        totalMonthlyFsxnThroughputCapacityCost: Type.Number(),
-        includedSsdIops: Type.Number(),
-        additionalSsdIops: Type.Number(),
-        billedAdditionalSsdIops: Type.Number(),
-        additionalBilledCostForSsdIops: Type.Number(),
-        totalThroughputAndIopsMonthly: Type.Number()
-    }),
-    fsxOntapSnapshotCalculation: Type.Object({
-        fsxnSsdPrice: PriceUnitObject,
-        fsxnCapacityPrice: PriceUnitObject,
-        desiredStorageCapacity: Type.Number(),
-        percentageOfDataOnSsdStorage: Type.Number(),
-        savingsFromCompressionAndDeduplication: Type.Number(),
-        storageSavingsFromCompressionAndDeduplication: Type.Number(),
-        effectiveFsxnStorageCapacity: Type.Number(),
-        ssdStoragePerMonth: Type.Number(),
-        ssdMonthlyCost: Type.Number(),
-        totalSnapshotMonthlyCostForFsxSsd: Type.Number(),
-        ratioAfterSavings: Type.Number(),
-        dataOnCapacityPoolStorageFactor: Type.Number(),
-        capacityPoolStorage: Type.Number(),
-        capacityMonthlyCost: Type.Number(),
-        totalMonthlyCostForCapacity: Type.Number(),
-        totalSnapshotMonthlyCost: Type.Number()
-    }),
-    ebsCalculation: Type.Object({
-        numberOfVolumes: Type.Number(),
-        instanceAvgDuration: Type.Number(),
-        hoursInAMonth: Type.Number(),
-        ebsCapacityPrice: PriceUnitObject,
-        storageAmountPerVol: Type.Number(),
-        totalInstanceHours: Type.Number(),
-        ebsInstanceMonth: Type.Number(),
-        ebsStorageCost: Type.Number(),
-        billableIops: Type.Number(),
-        totalBillableIops: Type.Number(),
-        ebsIopsCost: Type.Number(),
-        billableMbps: Type.Number(),
-        billableThroughputMbps: Type.Number(),
-        billableThroughputGbps: Type.Number(),
-        ebsThroughputCost: Type.Number(),
-        ebsTotalCostMonthly: Type.Number()
-    }),
-    fsxCloneCalculation: Type.Object({
-        clonedCopiesCount: Type.Number(),
-        numberOfClonesInAMonth: Type.Number(),
-        changeRateBetweenClones: Type.Number(),
-        totalFsxnCapacity: Type.Number(),
-        fsxnSsdPrice: PriceUnitObject,
-        cloneRefreshFrequency: Type.String(),
-        monthlyChangeRatePercentage: Type.Number(),
-        desiredStorageCapacity: Type.Number(),
-        percentageOfDataOnSsdStorage: Type.Number(),
-        savingsFromCompressionAndDeduplication: Type.Number(),
-        storageSavingsFromCompressionAndDeduplication: Type.Number(),
-        effectiveFsxnStorageCapacity: Type.Number(),
-        ssdStoragePerMonth: Type.Number(),
-        ssdMonthlyCost: Type.Number(),
-        totalCloneMonthlyCost: Type.Number()
-    }),
-    ebsCloneCalculation: Type.Object({
-        clonedCopiesCount: Type.Number(),
-        capacity: Type.Number(),
-        iops: Type.Number(),
-        throughput: Type.Number(),
-        totalCloneMonthlyCost: Type.Number()
-    }),
-    ebsSnapshotCalculation: Type.Object({
-        ebsInstanceMonth: Type.Number(),
-        totalSnapshots: Type.Number(),
-        initialSnapshotCost: Type.Number(),
-        monthlyCostPerSnapshot: Type.Number(),
-        discountForPartialStorageMonth: Type.Number(),
-        incrementalSnapshotCost: Type.Number(),
-        totalSnapshotCost: Type.Number(),
-        totalEbsSnapshotCost: Type.Number(),
-        ebsSnapshotCost: Type.Number()
-    })
+    // TODO: Uncomment below 3 lines after fixing the issue with the Type.Mapped and remove the next 3 lines
+    // ebsCalculation: Type.Array(Type.Mapped(Type.Union([Type.Optional(Type.Literal('gp2')),Type.Literal('gp3'),Type.Optional(Type.Literal('io1')),Type.Optional(Type.Literal('io2'))]), () =>
+    //     ebsCostCalculation
+    // )),
+    // ebsCloneCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsCloneCalculation)),
+    // ebsSnapshotCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsSnapshotCalculation)),
+    ebsCalculation: Type.Array(
+        Type.Object({
+            gp2: Type.Optional(ebsCostCalculation),
+            gp3: Type.Optional(ebsCostCalculation),
+            io1: Type.Optional(ebsCostCalculation),
+            io2: Type.Optional(ebsCostCalculation),
+            st1: Type.Optional(ebsCostCalculation)
+        })
+    ),
+    ebsCloneCalculation: Type.Array(
+        Type.Object({
+            gp2: Type.Optional(ebsCloneCalculation),
+            gp3: Type.Optional(ebsCloneCalculation),
+            io1: Type.Optional(ebsCloneCalculation),
+            io2: Type.Optional(ebsCloneCalculation),
+            st1: Type.Optional(ebsCloneCalculation)
+        })
+    ),
+    ebsSnapshotCalculation: Type.Array(
+        Type.Object({
+            gp2: Type.Optional(ebsSnapshotCalculation),
+            gp3: Type.Optional(ebsSnapshotCalculation),
+            io1: Type.Optional(ebsSnapshotCalculation),
+            io2: Type.Optional(ebsSnapshotCalculation),
+            st1: Type.Optional(ebsSnapshotCalculation)
+        })
+    ),
+    single: Type.Optional(
+        Type.Object({
+            fsxOntapCalculation: Type.Optional(fsxOntapCalculation),
+            fsxOntapSnapshotCalculation: Type.Optional(fsxOntapSnapshotCalculation),
+            fsxCloneCalculation: Type.Optional(fsxCloneCalculation)
+        })
+    ),
+    multi: Type.Optional(
+        Type.Object({
+            fsxOntapCalculation: Type.Optional(fsxOntapCalculation),
+            fsxOntapSnapshotCalculation: Type.Optional(fsxOntapSnapshotCalculation),
+            fsxCloneCalculation: Type.Optional(fsxCloneCalculation)
+        })
+    )
 });
 
 type StorageSavingsResponseType = Static<typeof StorageSavingsResponse>;

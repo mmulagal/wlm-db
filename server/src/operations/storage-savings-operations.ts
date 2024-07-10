@@ -146,7 +146,7 @@ async function aoagStorageSavingsCalculations(
             )
         ]);
 
-        const [{ ebs: allEbsDetails }, { ebs, fsx, fsx_calculation: fsxCalculationData }] = await Promise.all([
+        const [{ ebs: allEbsDetails }, { ebs, fsx, single, multi }] = await Promise.all([
             invokeMarketingApi(
                 accountId,
                 credentialsId,
@@ -164,7 +164,6 @@ async function aoagStorageSavingsCalculations(
                 params
             )
         ]);
-
         const allNodesComputeLicenseDetails = currentNodeComputeLicenseDetails.concat(partnerNodeComputeLicenseDetails);
 
         // existing compute and license details
@@ -291,7 +290,12 @@ async function aoagStorageSavingsCalculations(
             }
         ] = allNodesComputeLicenseDetails;
 
-        const fsxCalculation = handleMarketingApiFsxCalculationObject(fsxCalculationData);
+        const singleFsxCalculationData = single?.fsx_calculation
+            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+            : undefined;
+        const multiFsxCalculationData = multi?.fsx_calculation
+            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+            : undefined;
         return {
             compute: {
                 existing: {
@@ -338,11 +342,24 @@ async function aoagStorageSavingsCalculations(
                     existingLicenseMonthlyPrice!,
                 recommended: fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
             },
-            fsxCalculation,
-            fsxBreakdown: fsxStorageCapacityBreakdown(
-                fsxCalculation.totalStorageCapacity,
-                SqlServerDeploymentModel.SQL_AOAG_SHORT
-            )
+            ...(singleFsxCalculationData && {
+                single: {
+                    fsxCalculation: singleFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        singleFsxCalculationData.totalStorageCapacity,
+                        SqlServerDeploymentModel.SQL_AOAG_SHORT
+                    )
+                }
+            }),
+            ...(multiFsxCalculationData && {
+                multi: {
+                    fsxCalculation: multiFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        multiFsxCalculationData.totalStorageCapacity,
+                        SqlServerDeploymentModel.SQL_AOAG_SHORT
+                    )
+                }
+            })
         };
     }
     throw createError(
@@ -406,7 +423,7 @@ async function aoagStorageSavingsMetrics(
         );
 
         // Consider all EBS volumes for storage, iops and throughput calculation
-        const { ebsCalculation } = await formatStorageSavingsCalculationMetrics(
+        const { ebsCalculationBreakdown: allEbsVolumesBreakdown } = await formatStorageSavingsCalculationMetrics(
             accountId,
             credentialsId,
             region,
@@ -414,14 +431,11 @@ async function aoagStorageSavingsMetrics(
             params,
             SqlServerDeploymentModel.SQL_AOAG_SHORT
         );
-
         // Consider only volumes associated with unique database in primary and partner nodes for snapshot calculation and to draw a storage savings comparison with FSXn
         const {
-            fsxOntapCalculation,
-            fsxOntapSnapshotCalculation,
-            fsxCloneCalculation,
-            ebsCloneCalculation,
-            ebsSnapshotCalculation
+            single,
+            multi,
+            ebsCalculationBreakdown: uniqueEbsVolumeBreakdown
         } = await formatStorageSavingsCalculationMetrics(
             accountId,
             credentialsId,
@@ -435,12 +449,17 @@ async function aoagStorageSavingsMetrics(
             recommendedLicenseCalculation,
             existingComputeCalculation,
             existingLicenseCalculation,
-            ebsCalculation,
-            fsxOntapCalculation,
-            fsxOntapSnapshotCalculation,
-            fsxCloneCalculation,
-            ebsCloneCalculation,
-            ebsSnapshotCalculation
+            ebsCalculation: Object.entries(allEbsVolumesBreakdown).map(([key, value]) => ({
+                [key]: value.ebsCostCalculation
+            })),
+            single,
+            multi,
+            ebsCloneCalculation: Object.entries(uniqueEbsVolumeBreakdown).map(([key, value]) => ({
+                [key]: value.ebsCloneCalculation
+            })),
+            ebsSnapshotCalculation: Object.entries(uniqueEbsVolumeBreakdown).map(([key, value]) => ({
+                [key]: value.ebsSnapshotCalculation
+            }))
         };
     }
     throw createError(
@@ -588,26 +607,47 @@ async function performStorageSavingsCalculations(
         params
     );
 
-    const [[{ compute, license }], { ebs, fsx, fsx_calculation: fsxCalculationData }] = await Promise.all([
+    const [[{ compute, license }], { ebs, fsx, single, multi }] = await Promise.all([
         recommendationPromise,
         marketingPromise
     ]);
 
     const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
     const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
-    const fsxCalculation = handleMarketingApiFsxCalculationObject(fsxCalculationData);
 
+    const singleFsxCalculationData = single?.fsx_calculation
+        ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+        : undefined;
+    const multiFsxCalculationData = multi?.fsx_calculation
+        ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+        : undefined;
     return {
         compute,
         license,
         ebs,
         fsx,
         totalSummary: {
-            existing: ebs.total + existingComputeLicensePrice,
+            existing: ebs.total || 0 + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
         },
-        fsxCalculation,
-        fsxBreakdown: fsxStorageCapacityBreakdown(fsxCalculation.totalStorageCapacity, sqlServerDeploymentType!)
+        ...(singleFsxCalculationData && {
+            single: {
+                fsxCalculation: singleFsxCalculationData,
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    singleFsxCalculationData.totalStorageCapacity,
+                    sqlServerDeploymentType!
+                )
+            }
+        }),
+        ...(multiFsxCalculationData && {
+            multi: {
+                fsxCalculation: multiFsxCalculationData,
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    multiFsxCalculationData.totalStorageCapacity,
+                    sqlServerDeploymentType!
+                )
+            }
+        })
     };
 }
 
@@ -658,14 +698,7 @@ async function getStorageSavingsCalculationMetrics(
         existingComputeCalculation,
         existingLicenseCalculation
     } = formatRecommendations([currentNodeComputeLicenseDetails]);
-    const {
-        ebsCalculation,
-        ebsCloneCalculation,
-        ebsSnapshotCalculation,
-        fsxOntapCalculation,
-        fsxCloneCalculation,
-        fsxOntapSnapshotCalculation
-    } = await formatStorageSavingsCalculationMetrics(
+    const { ebsCalculationBreakdown, single, multi } = await formatStorageSavingsCalculationMetrics(
         accountId,
         credentialsId,
         region,
@@ -679,12 +712,17 @@ async function getStorageSavingsCalculationMetrics(
         recommendedLicenseCalculation,
         existingComputeCalculation,
         existingLicenseCalculation,
-        ebsCalculation,
-        ebsCloneCalculation,
-        ebsSnapshotCalculation,
-        fsxOntapCalculation,
-        fsxCloneCalculation,
-        fsxOntapSnapshotCalculation
+        ebsCalculation: Object.entries(ebsCalculationBreakdown).map(([key, value]) => ({
+            [key]: value.ebsCostCalculation
+        })),
+        ebsCloneCalculation: Object.entries(ebsCalculationBreakdown).map(([key, value]) => ({
+            [key]: value.ebsCloneCalculation
+        })),
+        ebsSnapshotCalculation: Object.entries(ebsCalculationBreakdown).map(([key, value]) => ({
+            [key]: value.ebsSnapshotCalculation
+        })),
+        single,
+        multi
     };
 }
 

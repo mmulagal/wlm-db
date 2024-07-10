@@ -42,7 +42,9 @@ describe('Marketing API operations ', () => {
             );
             expect(resp.ebs).toBeDefined();
             expect(resp.fsx).toBeDefined();
-            expect(resp.fsxCalculation).toBeDefined();
+            if (resp.single) {
+                expect(resp.single?.fsxCalculation).toBeDefined();
+            }
         }
     });
 
@@ -97,10 +99,13 @@ describe('Marketing API operations ', () => {
                     monthlyChangeRatePercentage: 30
                 }
             );
-            expect(resp.fsxOntapCalculation).toBeDefined();
-            expect(resp.fsxOntapSnapshotCalculation).toBeDefined();
+
             expect(resp.ebsCalculation).toBeDefined();
-            expect(resp.fsxCloneCalculation).toBeDefined();
+            if (resp.single) {
+                expect(resp.single?.fsxOntapCalculation).toBeDefined();
+                expect(resp.single?.fsxOntapSnapshotCalculation).toBeDefined();
+                expect(resp.single?.fsxCloneCalculation).toBeDefined();
+            }
         }
     });
 
