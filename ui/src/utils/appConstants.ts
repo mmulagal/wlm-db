@@ -913,6 +913,8 @@ export const GENERAL = {
     ES_SAVINGS_SELECTION_TEXT: 'Provide clone and snapshot values to calculate the cost savings.',
     NUMBER_OF_CLONED_COPIES: 'Number of cloned copies',
     MONTHLY_CHANGE_RATE: 'Monthly change rate (%)',
+    MONTHLY_DATA_CHANGE_RATE: 'Monthly data change rate (%)',
+    EC2_SPECIFICATIONS: 'EC2 specifications',
     REFER_SNAPSHOTS: 'This field refer to clones and snapshots',
     VIEW_THE_CALCULATIONS: 'View the calculations',
     EXPORT_PDF: 'Export PDF',
