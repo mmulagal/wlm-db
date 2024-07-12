@@ -1527,6 +1527,9 @@ async function prepareForManage(accountId: string, credentialsId: string, region
         );
     }
 
+    const hostname = await callSsmExecution(credentialsId, region, ['hostname'], ec2InstanceId, accountId);
+    const hostnameMessage: string = isEmpty(hostname) ? '' : `with hostname '${hostname?.trim()}' `;
+
     // Check if any job is already running for the same purpose.
     const jobFilterParams = {
         status: JOBSTATUS.IN_PROGRESS,
@@ -1556,9 +1559,9 @@ async function prepareForManage(accountId: string, credentialsId: string, region
         type: JOBTYPE.PREPARE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: ec2InstanceId,
-        name: `Prepare EC2 '${ec2InstanceId}' for management`,
+        name: `Prepare EC2 '${ec2InstanceId}' ${hostnameMessage}for management`,
         startTime: Date.now(),
-        description: `Prepare EC2 '${ec2InstanceId}' for management by Workload Factory database operations`
+        description: `Prepare EC2 '${ec2InstanceId}' ${hostnameMessage}for management by Workload Factory database operations`
     });
 
     performPrepareTasks(accountId, credentialsId, region, ec2InstanceId, parentJobId);
