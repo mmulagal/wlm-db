@@ -1,4 +1,5 @@
 import {
+    setSavingsCalculatorFrom,
     setSelectedDeploymentModel,
     setSelectedHostDetails,
     setSelectedInstanceId,
@@ -13,11 +14,17 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
     const deploymentModel = (() => {
         return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
+    dispatch(setSavingsCalculatorFrom('Auto'));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(rowData?.id));
     dispatch(setSelectedDeploymentModel(deploymentModel));
     dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || GENERAL.ES_SERVER_NAME));
     setESInstanceData(rowData, dispatch);
+};
+
+export const handleManualTCO = (dispatch: any) => {
+    dispatch(setSavingsCalculatorFrom('Manual'));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {

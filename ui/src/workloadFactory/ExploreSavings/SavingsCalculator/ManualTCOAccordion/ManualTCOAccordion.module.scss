@@ -1,0 +1,17 @@
+.manualAccordion {
+    margin-top: -10px;
+    overflow: hidden;
+    [class*='dsCard'] {
+        box-shadow: none !important;
+    }
+    [class*='dsCard']:hover {
+        background-color: var(--content-background) !important;
+    }
+    [class*='accordionHeader'] {
+        padding: 0 !important;
+    }
+    [class*='isExpanded'] {
+        margin: 0 !important;
+        max-height: 1000px !important;
+    }
+}

@@ -537,10 +537,12 @@ Resources:
                             waitAfterCompletion: 0
                         b-install-powershell-7:
                             command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-powershell7.ps1
-                        c-restart-computer:
+                        c-update-awstoolsmodules:
+                            command: powershell.exe -Command C:\cfn\scripts\sqlontap\Update-AWSToolsModules.ps1
+                        d-restart-computer:
                             command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
                             waitAfterCompletion: forever
-                        d-configure-ontap:
+                        e-configure-ontap:
                             command: !Join
                                 - ''
                                 - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 -Parentstackname
@@ -565,7 +567,7 @@ Resources:
                                   - "' -ResourceID SqlNode -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
-                        e-connect-ontap-instance:
+                        f-connect-ontap-instance:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
@@ -577,7 +579,7 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        f-init-iscsi-disk:
+                        g-init-iscsi-disk:
                             command: powershell.exe -Command "C:\cfn\scripts\sqlontap\Initialize-Iscsidisk.ps1 -IsFCI false"
                 InstancePrep:
                     commands:

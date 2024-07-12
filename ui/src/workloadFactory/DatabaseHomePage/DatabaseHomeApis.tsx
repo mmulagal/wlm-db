@@ -36,6 +36,7 @@ const DatabaseHomeApis = () => {
     const refetchJobSummaryApi = useAppSelector(state => state.msSqlAction.refetchJobSummaryApi);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
 
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
@@ -124,9 +125,6 @@ const DatabaseHomeApis = () => {
             return;
         }
 
-        const hostStatusCount = getManagedHostCount(databaseHostsDataV2);
-        dispatch(addAggregateHostsCountData(hostStatusCount));
-
         const aggrProtection = getManagedAggrProtection(databaseHostsDataV2);
         dispatch(addAggregatedProtectionDbCount(aggrProtection));
 
@@ -138,6 +136,16 @@ const DatabaseHomeApis = () => {
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsDataV2, sandboxSavings]);
+
+    // To have database hosts count data in dashboard - V2
+    useEffect(() => {
+        if (!isInventoryV2 || !databaseHostsDataV2) {
+            return;
+        }
+        const hostStatusCount = getManagedHostCount(databaseHostsDataV2);
+        dispatch(addAggregateHostsCountData(hostStatusCount));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [databaseHostsDataV2, inventoryTableData]);
 
     return <></>;
 };

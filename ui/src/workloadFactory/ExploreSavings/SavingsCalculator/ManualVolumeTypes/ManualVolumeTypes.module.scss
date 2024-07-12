@@ -1,0 +1,45 @@
+.manualVolumeTypes {
+    margin-top: 32px;
+
+    .subText {
+        margin-top: 8px;
+    }
+
+    .overviewTabsVolumeType {
+        margin-top: 24px;
+        display: flex;
+        border-bottom: 1px solid var(--text-disabled);
+
+        .headerPart1 {
+            width: 115.2px;
+            display: flex;
+            justify-content: center;
+            height: 34px;
+            cursor: pointer;
+        }
+    }
+
+    .active {
+        border-bottom: 2px solid var(--text-button-primary);
+        color: var(--text-button-primary);
+    }
+
+    .contentContainer {
+        margin-top: 24px;
+
+        .mainSection {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            .row {
+                display: flex;
+                gap: 24px;
+
+                .deploymentModelWidth {
+                    width: 276px;
+                }
+            }
+        }
+    }
+}
