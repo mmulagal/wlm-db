@@ -321,11 +321,9 @@ interface ManualModeEbsComparisonResponse {
         }
     ];
     fsx: StorageSummary;
-    fsx_calculation: FsxCalculation;
-    fsx_cost_calculation_no_snapshot: FsxNoSnapshotCalculation;
-    fsx_snapshot_cost_calculation: FsxSnapshotCalculation;
-    fsx_clone_cost_calculation: FsxCloneCalculation;
     ebsTotal: StorageSummary;
+    single: FsxCostCalculations;
+    multi: FsxCostCalculations;
 }
 
 interface MarketingRequestBody {
