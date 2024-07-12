@@ -1,21 +1,42 @@
 // ToDo - Write utils dunction for dashboard page here
 
+import store from '../../store/store';
 import { GENERAL } from '../../utils/appConstants';
-import { COSTING_TYPES, STATUS_CONST } from '../../utils/consts';
+import { COSTING_TYPES, INVENTORY_STATUS, STATUS_CONST } from '../../utils/consts';
 import { formatFractionalNumber, formatSizeOnePrecision, isAwsBackupEnabled } from '../../utils/utilityFunctions';
 
 export const getManagedHostCount = (data: any) => {
     let totalDatabases = 0;
     let totahosts = 0;
+    let managedDatabases = 0;
+    let totalInstances = 0;
+    let managedInstances = 0;
     Object.keys(data).map((val: string) => {
         totahosts += 1;
-        data[val]?.databaseInstancesSummary?.map((per: any) => {
-            totalDatabases += per?.databaseCount || 0;
+        totalInstances += data[val]?.databaseInstanceDetails?.length || 0;
+        data[val]?.databaseInstanceDetails?.map((per: any) => {
+            if (per?.isManaged) {
+                managedInstances += 1;
+            }
         });
+
+        const state = store.getState();
+        const inventoryTableData = state.inventoryV2.inventoryTableData;
+        if (inventoryTableData?.[val]) {
+            inventoryTableData[val]?.sqlServerInstances?.map((per: any) => {
+                totalDatabases += per?.databaseCount || 0;
+                if (per?.statusColText === INVENTORY_STATUS.MANAGED) {
+                    managedDatabases += per?.databaseCount || 0;
+                }
+            });
+        }
     });
     return {
         totalDatabases: totalDatabases,
-        totalHosts: totahosts
+        totalHosts: totahosts,
+        managedDatabases: managedDatabases,
+        totalInstances: totalInstances,
+        managedInstances: managedInstances
     };
 };
 

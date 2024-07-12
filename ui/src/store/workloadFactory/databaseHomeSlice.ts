@@ -16,7 +16,10 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         totalUpHosts: 0,
         totalInitializingHosts: 0,
         totalDownHosts: 0,
-        totalFailedHosts: 0
+        totalFailedHosts: 0,
+        totalInstances: 0,
+        managedDatabases: 0,
+        managedInstances: 0
     },
     aggregatedProtectionDbCount: {
         protectedDb: 0,

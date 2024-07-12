@@ -529,7 +529,8 @@ export const INSTANCE_API_FIELDS = {
         'databaseServer',
         'serverDetails',
         'nodeTopology',
-        'usageEstimation'
+        'usageEstimation',
+        'dbCount'
     ]
 };
 
