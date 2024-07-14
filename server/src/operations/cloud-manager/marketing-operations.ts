@@ -139,35 +139,17 @@ async function invokeMarketingApi(
             sqlServerDeploymentType,
             volumes
         ) as ManualModeMarketingRequestBody;
-        const {
-            ebsTotal,
-            instanceEbs,
-            fsx,
-            fsx_calculation,
-            fsx_cost_calculation_no_snapshot,
-            fsx_clone_cost_calculation,
-            fsx_snapshot_cost_calculation
-        } = await getManualModeStorageSavings(accountId, requestBody);
+        const { ebsTotal, instanceEbs, fsx, single, multi } = await getManualModeStorageSavings(accountId, requestBody);
 
         return {
             ebs: ebsTotal,
             ebsClassification: instanceEbs[0],
             fsx,
             ...(sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_AOAG_SHORT && {
-                single: {
-                    fsx_calculation,
-                    fsx_clone_cost_calculation,
-                    fsx_cost_calculation_no_snapshot,
-                    fsx_snapshot_cost_calculation
-                }
+                single
             }),
             ...(sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT && {
-                multi: {
-                    fsx_calculation,
-                    fsx_clone_cost_calculation,
-                    fsx_cost_calculation_no_snapshot,
-                    fsx_snapshot_cost_calculation
-                }
+                multi
             })
         };
     }
