@@ -11,10 +11,25 @@
         display: flex;
 
         .contentSection {
-            padding: 66px 64px 0 64px;
+            padding: 25px 64px 0 64px;
             display: flex;
-            flex-direction: column;
-            gap: 4px;
+            gap: 48px;
+
+            width: 69.47%;
+
+            .leftSide {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                width: 45.77%;
+            }
+
+            .rightSide {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                width: 43.77%;
+            }
 
             .headingPart {
                 display: flex;
@@ -23,7 +38,34 @@
             }
 
             .subText {
-                max-width: 877px;
+                font-size: 16px;
+                line-height: 28px;
+                font-weight: 400;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif,
+                    'Apple Color Emoji', 'Segoe UI Emoji';
+                color: var(--text-primary);
+
+                .link {
+                    color: var(--text-button-primary);
+                    font-weight: 500;
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 1560px) {
+    .exploreSavingsHeader {
+        height: 260px;
+
+        .topPart {
+            .svgContainer {
+                height: 260px;
+
+                svg {
+                    height: 100%;
+                }
             }
         }
     }
