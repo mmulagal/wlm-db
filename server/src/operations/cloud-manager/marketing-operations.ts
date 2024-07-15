@@ -9,7 +9,12 @@ import {
     FsxCostCalculations,
     FsxCalculation
 } from '../../lib/cloud-manager/marketing';
-import { StorageSavingsRequestBodyType } from '../../routes/types/storage-savings.types';
+import {
+    EbsCloneCalculationType,
+    EbsCostCalculationType,
+    EbsSnapshotCalculationType,
+    StorageSavingsRequestBodyType
+} from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes } from '../../utils/utils';
 
 const logger = getLogger();
@@ -229,6 +234,8 @@ function formatEbsCalculationObject(
     };
 
     const ebsSnapshotCalculation = {
+        storageAmount: (convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0) * ebsNumberOfVolumes,
+        numberOfVolumes: ebsNumberOfVolumes,
         ebsInstanceMonth,
         totalSnapshots,
         initialSnapshotCost,
@@ -484,27 +491,46 @@ async function formatStorageSavingsCalculationMetrics(
     const totalMonthlyClonedCopiesCount =
         params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
 
+    const ebsCalculationBreakdown = {
+        ...(gp2 && {
+            gp2: formatEbsCalculationObject(gp2.ebs, gp2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        }),
+        ...(gp3 && {
+            gp3: formatEbsCalculationObject(gp3.ebs, gp3.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        }),
+        ...(io1 && {
+            io1: formatEbsCalculationObject(io1.ebs, io1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        }),
+        ...(io2 && {
+            io2: formatEbsCalculationObject(io2.ebs, io2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        }),
+        ...(st1 && {
+            st1: formatEbsCalculationObject(st1.ebs, st1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+        })
+    };
+
+    const ebsCalculation: { [key: string]: EbsCostCalculationType } = {};
+    const ebsCloneCalculation: { [key: string]: EbsCloneCalculationType } = {};
+    const ebsSnapshotCalculation: { [key: string]: EbsSnapshotCalculationType } = {};
+    Object.entries(ebsCalculationBreakdown).forEach(([key, value]) => {
+        ebsCalculation[key] = value.ebsCostCalculation;
+    });
+
+    Object.entries(ebsCalculationBreakdown).forEach(([key, value]) => {
+        ebsCloneCalculation[key] = value.ebsCloneCalculation;
+    });
+
+    Object.entries(ebsCalculationBreakdown).forEach(([key, value]) => {
+        ebsSnapshotCalculation[key] = value.ebsSnapshotCalculation;
+    });
+
     return {
         ...(single && { single: derivePropertiesBasedOnDeploymentType(single, params) }),
         ...(multi && { multi: derivePropertiesBasedOnDeploymentType(multi, params) }),
         ebs,
-        ebsCalculationBreakdown: {
-            ...(gp2 && {
-                gp2: formatEbsCalculationObject(gp2.ebs, gp2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-            }),
-            ...(gp3 && {
-                gp3: formatEbsCalculationObject(gp3.ebs, gp3.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-            }),
-            ...(io1 && {
-                io1: formatEbsCalculationObject(io1.ebs, io1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-            }),
-            ...(io2 && {
-                io2: formatEbsCalculationObject(io2.ebs, io2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-            }),
-            ...(st1 && {
-                st1: formatEbsCalculationObject(st1.ebs, st1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
-            })
-        }
+        ebsCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation
     };
 }
 
