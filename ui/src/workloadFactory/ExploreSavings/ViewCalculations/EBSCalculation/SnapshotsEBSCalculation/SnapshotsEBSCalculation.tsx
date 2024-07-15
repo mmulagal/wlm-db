@@ -38,7 +38,7 @@ const SnapshotsEBSCalculation = () => {
             >
                 {viewCalculationsResponse && (
                     <AccordionCardContent>
-                        <DsTypography variant="Regular_14">{GENERAL.ES_EBS_SNAPSHOTS_DESC}</DsTypography>
+                        <DsTypography variant="Regular_14">{GENERAL.ES_SNAPSHOTS_DESC}</DsTypography>
                         <DsTypography className={CommonStyles.accordionContentSet}>
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculationForEBS(

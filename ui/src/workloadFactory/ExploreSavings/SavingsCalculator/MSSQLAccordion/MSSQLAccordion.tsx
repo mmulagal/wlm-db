@@ -49,11 +49,19 @@ const MSSQLAccordion = ({ printState }: any) => {
 
     useEffect(() => {
         const selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
-        setFsxData({
-            ...storageSavingsResponse?.fsxCalculation,
-            regionName: selectedRegion,
-            fsxBreakdown: storageSavingsResponse?.fsxBreakdown
-        });
+        if (storageSavingsResponse?.single) {
+            setFsxData({
+                ...storageSavingsResponse?.single?.fsxCalculation,
+                regionName: selectedRegion,
+                fsxBreakdown: storageSavingsResponse?.single?.fsxBreakdown
+            });
+        } else {
+            setFsxData({
+                ...storageSavingsResponse?.multi?.fsxCalculation,
+                regionName: selectedRegion,
+                fsxBreakdown: storageSavingsResponse?.multi?.fsxBreakdown
+            });
+        }
         // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
     }, [storageSavingsResponse]);
 
