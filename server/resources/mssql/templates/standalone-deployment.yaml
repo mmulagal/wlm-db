@@ -538,7 +538,7 @@ Resources:
                         b-install-powershell-7:
                             command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-powershell7.ps1
                         c-update-awstoolsmodules:
-                            command: powershell.exe -Command C:\cfn\scripts\sqlontap\Update-AWSToolsModules.ps1
+                            command: pwsh -Command C:\cfn\scripts\sqlontap\Update-AWSToolsModules.ps1
                         d-restart-computer:
                             command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
                             waitAfterCompletion: forever
