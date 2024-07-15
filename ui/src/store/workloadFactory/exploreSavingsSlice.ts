@@ -32,13 +32,21 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     manualTCONumberOfVolumes: null,
     manualTCOStorageAmount: null,
     manualTCOProvisionedIOPS: null,
-    manualTCOThroughput: null
+    manualTCOThroughput: null,
+    getManualInstanceTypeList: {
+        instanceTypeData: {},
+        instanceTypeLoading: false,
+        instanceTypeError: null
+    }
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        addManualInstanceTypeList: (state, action: PayloadAction<any>) => {
+            state.getManualInstanceTypeList = action.payload;
+        },
         setSelectedManualTCONumberOfVolumes(state, action: PayloadAction<any>) {
             state.manualTCONumberOfVolumes = action.payload;
         },
@@ -151,6 +159,7 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    addManualInstanceTypeList,
     setSelectedManualTCONumberOfVolumes,
     setSelectedManualTCOStorageAmount,
     setSelectedManualTCOProvisionedIOPS,

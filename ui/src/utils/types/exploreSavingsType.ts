@@ -1,3 +1,11 @@
+export interface InstanceType {
+    instanceType?: string;
+    vCpus?: number;
+    ramInMib?: number;
+    iopsInMbps?: number;
+    architecture?: Array<string>;
+}
+
 export interface ExploreSavingsSliceEntities {
     selectedSnapshotFrequency: any;
     numberOfClonedCopies: number | any;
@@ -30,6 +38,11 @@ export interface ExploreSavingsSliceEntities {
     manualTCOStorageAmount: number | any;
     manualTCOProvisionedIOPS: number | any;
     manualTCOThroughput: number | any;
+    getManualInstanceTypeList: {
+        instanceTypeData: { instanceTypes?: InstanceType[] };
+        instanceTypeLoading: false;
+        instanceTypeError: null;
+    };
 }
 
 export interface StorageSavingsInterface {
