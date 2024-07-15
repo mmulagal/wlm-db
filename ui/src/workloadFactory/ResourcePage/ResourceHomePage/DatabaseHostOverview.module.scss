@@ -1,6 +1,6 @@
 .resourcePage {
     height: 90vh;
-    width: 100vw;
+    width: 100%;
     background-color: var(--main-background);
     overflow-y: auto;
     display: flex;
@@ -9,8 +9,8 @@
 
     .breadCrumb {
         margin-top: 16px;
-
-        width: 1687px;
+        max-width: 1687px;
+        width: 90.86%;
         display: flex;
         justify-content: space-between;
 
@@ -26,10 +26,14 @@
 
     .hostTitle {
         margin-top: 40px;
+        width: 87%;
+        max-width: 1607px;
     }
 
     .secondLevel {
         margin-top: 40px;
+        width: 87%;
+        max-width: 1607px;
     }
 }
 ::-webkit-scrollbar {

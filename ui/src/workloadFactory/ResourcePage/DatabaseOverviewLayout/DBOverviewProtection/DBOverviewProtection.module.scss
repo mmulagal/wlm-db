@@ -1,7 +1,7 @@
 .dbOverviewProtection {
     box-shadow: 2px 2px 6px var(--grey-15);
     height: 444px;
-    width: 384px;
+    width: 36.112%;
     background-color: var(--content-background);
 
     .headSection {
@@ -21,18 +21,18 @@
         margin-top: 40px;
 
         .chartContainer {
-            margin-left: 100px;
+            margin-left: 26.04%;
         }
 
         .protectionSeparator {
             margin-top: 40px;
             margin-left: 40px;
-            width: 304px;
+            width: 79.16%;
             border-top: 1px solid var(--border);
         }
 
         .textSection {
-            margin-left: 40px;
+            margin-left: 10.41%;
             margin-top: 16px;
             display: flex;
 
@@ -40,7 +40,7 @@
                 background: var(--border);
                 width: 1px;
                 height: 56px;
-                margin: 0 55px;
+                margin: 0 15.32%;
             }
         }
     }

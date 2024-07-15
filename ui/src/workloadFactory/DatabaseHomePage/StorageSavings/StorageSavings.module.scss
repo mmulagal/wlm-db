@@ -37,10 +37,11 @@
 
     .mainSection {
         padding: 40px;
+        width: 100%;
     }
 
     .progressBar {
-        width: 438px;
+        width: 100%;
         height: 16px;
         background-color: var(--content-background);
         display: flex;
@@ -76,6 +77,14 @@
             width: 1px;
             height: 48px;
             background-color: var(--border);
+        }
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .storageSaving {
+        .progressBar {
+            width: 662px;
         }
     }
 }

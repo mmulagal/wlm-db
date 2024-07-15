@@ -91,7 +91,8 @@ async function getDriveInfoFromNodes(
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string,
     executionTimeout?: string,
-    forSandbox: boolean = false
+    forSandbox: boolean = false,
+    instanceName = DEFAULT_INSTANCE_NAME
 ) {
     logger.info('Getting existing drives info on node', {
         credentialsId,
@@ -153,7 +154,7 @@ async function getDriveInfoFromNodes(
                         availableSize: item.FileSystem,
                         isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
                         ...(sqlDeploymentType === 'FCI' && {
-                            isDriveClustered: item.Owner?.includes('SQL Server') ?? false
+                            isClusteredWithSelectedInstance: item.Owner === `SQL Server (${instanceName})` ?? false
                         })
                     };
                 }
@@ -167,7 +168,7 @@ async function getDriveInfoFromNodes(
                       driveLetter: item?.charAt(0),
                       availableSize: 0,
                       isNetappDrive: false,
-                      ...(sqlDeploymentType === 'FCI' && { isDriveClustered: false })
+                      ...(sqlDeploymentType === 'FCI' && { isClusteredWithSelectedInstance: false })
                   }))
             : [])
     ];
@@ -255,7 +256,8 @@ async function getDriveInfoFromSSM(
                 activeNodeInstanceId as string,
                 standbyNodeInstanceId!,
                 executionTimeout,
-                forSandbox
+                forSandbox,
+                instanceDetail?.database_instance_name
             ),
             forSandbox
                 ? Promise.resolve()
@@ -713,6 +715,7 @@ async function invokeSSMForDatabaseDeployment(
                 isVirtualMountSelected = 'true';
             }
 
+            const customSSMTimeoutValue = getCustomSSMTimeout(dataFileConfig.volumeSize, logFileConfig.volumeSize);
             await newDBInitialization(
                 accountId,
                 credentialsId,
@@ -734,7 +737,8 @@ async function invokeSSMForDatabaseDeployment(
                 isVirtualMountSelected,
                 instanceNameForScript,
                 isDefaultInstance,
-                serverNameWithHostName
+                serverNameWithHostName,
+                customSSMTimeoutValue
             );
 
             await createDatabase(
@@ -1063,7 +1067,8 @@ async function newDBInitialization(
     isVirtualMountSelected: string,
     instanceName: string,
     isDefaultInstance: string,
-    serverNameWithHostName: string
+    serverNameWithHostName: string,
+    customSSMTimeoutValue?: string
 ) {
     logger.info('Initialising new database', {
         accountId,
@@ -1086,7 +1091,8 @@ async function newDBInitialization(
         isVirtualMountSelected,
         instanceName,
         isDefaultInstance,
-        serverNameWithHostName
+        serverNameWithHostName,
+        customSSMTimeoutValue
     });
     let dbInitializecommands;
     if (isDemo()) {
@@ -1124,7 +1130,7 @@ async function newDBInitialization(
             activeNodeInstanceId,
             accountId,
             false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+            customSSMTimeoutValue || CUSTOM_SSM_EXECUTION_TIMEOUT
         );
         logger.debug('New DB initialize is successfully done', newDBInitializeresponse);
 
@@ -1424,7 +1430,7 @@ async function checkDriveExists(
         driveLetter: string;
         availableSize: number;
         isNetappDrive: boolean;
-        isDriveClustered?: boolean;
+        isClusteredWithSelectedInstance?: boolean;
     }>,
     availableDriveLetters: Array<string>,
     selectedDrive: string,
@@ -1493,7 +1499,7 @@ async function checkDriveExists(
         if (!matchedExistingDrive.isNetappDrive) {
             throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a NetApp drive`);
         }
-        if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
+        if (isClustered === 'true' && !matchedExistingDrive.isClusteredWithSelectedInstance) {
             throw createError(
                 412,
                 `Selected ${driveType} drive ${selectedDrive} is non clustered drive or drive not part of SQL server`
@@ -1631,6 +1637,25 @@ async function getDefaultCollationAndVersion(
 
     logger.debug('MSSQL default collation response', { defaultCollation, mssqlVersion });
     return { defaultCollation, mssqlVersion };
+}
+
+/**
+ * Minimum timeout value for SSM execution is 3 minutes
+ * It gets increased by 3 minutes for every 100 GB of volume size
+ * Maximum timeout value is 1 hour
+ */
+function getCustomSSMTimeout(dataVolumeSize: number, logVolumeSize: number) {
+    logger.debug('Calculating custom SSM timeout based on volume size', {
+        dataVolumeSize,
+        logVolumeSize
+    });
+
+    const ONE_HOUR = 60 * 60;
+    const maxVolumeSize = Math.max(dataVolumeSize, logVolumeSize);
+    const derivedTimeout =
+        maxVolumeSize > 100 ? Math.ceil(Number(maxVolumeSize) / 100) * 3 * 60 : Number(CUSTOM_SSM_EXECUTION_TIMEOUT);
+    const maxCustomTimeout = Math.min(derivedTimeout, ONE_HOUR);
+    return maxCustomTimeout ? String(maxCustomTimeout) : CUSTOM_SSM_EXECUTION_TIMEOUT;
 }
 
 export {

@@ -16,7 +16,7 @@ const StoragePerformance = () => {
             read: `${resourceDetails?.performance?.rwMetrics?.latency?.read} ms`,
             write: `${resourceDetails?.performance?.rwMetrics?.latency?.write} ms`,
             separator: true,
-            width: '340px'
+            width: '32.6%'
         },
         {
             image: <IOPS />,
@@ -24,7 +24,7 @@ const StoragePerformance = () => {
             read: `${resourceDetails?.performance?.rwMetrics?.iops?.read}`,
             write: `${resourceDetails?.performance?.rwMetrics?.iops?.write}`,
             separator: true,
-            width: '340px'
+            width: '32.6%'
         },
         {
             image: <Throughput />,
@@ -32,7 +32,7 @@ const StoragePerformance = () => {
             read: `${resourceDetails?.performance?.rwMetrics?.throughput?.read} MBPS`,
             write: `${resourceDetails?.performance?.rwMetrics?.throughput?.write} MBPS`,
             separator: false,
-            width: '390px'
+            width: '37.75%'
         }
     ];
     return (

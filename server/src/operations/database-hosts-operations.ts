@@ -81,7 +81,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { getDatabaseInstanceName, getResourceNameFromTags, isDemo } from '../utils/utils';
+import { convertToBytes, getDatabaseInstanceName, getResourceNameFromTags, isDemo } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 
 const logger = getLogger();
@@ -158,6 +158,8 @@ type EstimationEbsType = {
 interface BackupType {
     [key: string]: boolean;
 }
+
+const isDemoFlow = isDemo();
 
 async function getTopology(
     accountId: string,
@@ -559,11 +561,11 @@ async function getProtectionStatus(
         return {
             isSqlNativeEnabled: Boolean(nativeSqlProtection),
             isAwsBackupEnabled: {
-                fsxn: checkAllTrue(awsBackup),
+                fsxn: isDemoFlow ? true : checkAllTrue(awsBackup),
                 fsxw: Boolean(fsxwBackup),
                 ebs: Boolean(ebsBackup)
             },
-            isFsxOntapSnapshotsEnabled: checkAllTrue(ontapBackup),
+            isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup),
             protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
         };
     } catch (error) {
@@ -746,8 +748,14 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 fsxw: pricingResponse?.fsxwStorage?.fsxwStorageCost,
                 ebs: pricingResponse.ebsStorage?.ebsStorageCost,
                 ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
-                fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById,
-                fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById
+                fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById.map(id => ({
+                    ...id,
+                    size: convertToBytes(id.size!.total, 'GiB')
+                })),
+                fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById.map(id => ({
+                    ...id,
+                    size: convertToBytes(id.size!, 'GiB')
+                }))
             },
             connectivity: pricingResponse?.vpc || 0,
             others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
@@ -1661,7 +1669,7 @@ async function getDatabaseInstanceSummary(
         databasesCount.totalCount += userDatabase.length;
     }
 
-    if (getDbCount && databasesCount.totalCount) {
+    if (getDbCount && databasesCount?.totalCount) {
         databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
     }
 
@@ -1924,6 +1932,26 @@ async function getDatabaseHostSummaryV2(
                 databaseHostDetails.fsxnResourceInfo = usageEstimationData?.storage?.fsxnBreakDownById;
                 databaseHostDetails.fsxwResourceInfo = usageEstimationData?.storage?.fsxwBreakDownById;
                 databaseHostDetails.estimatedUsageCost = usageEstimationData;
+
+                // Aggregate FSxN storage
+                let totalFsxnSize = 0;
+                databaseHostDetails.fsxnResourceInfo?.forEach(resource => {
+                    totalFsxnSize += resource.size!;
+                });
+
+                // Aggregate FSxW storage
+                let totalFsxwSize = 0;
+                databaseHostDetails.fsxwResourceInfo?.forEach(resource => {
+                    totalFsxwSize += resource.size!;
+                });
+
+                // Aggregate EBS storage
+                let totalEbsSize = 0;
+                databaseHostDetails.ebsResourceInfo?.forEach(resource => {
+                    totalEbsSize += resource.size!;
+                });
+
+                databaseHostDetails.storageAllocation = { fsxn: totalFsxnSize, fsxw: totalFsxwSize, ebs: totalEbsSize };
             }
 
             if (shouldQueryNodeTopology && nodeTopology && nodeTopology.ec2Details.length > 0) {
@@ -2218,9 +2246,9 @@ async function getDatabaseDetails(
                 ...(getProtection && {
                     protection: {
                         isAwsBackupEnabled: {
-                            fsxn: checkKey(awsBackup, database.databaseName)
+                            fsxn: isDemoFlow ? true : checkKey(awsBackup, database.databaseName)
                         },
-                        isFsxOntapSnapshotsEnabled: checkKey(ontapBackup, database.databaseName),
+                        isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkKey(ontapBackup, database.databaseName),
                         isSqlNativeEnabled: Boolean(
                             backedupDatabases &&
                                 backedupDatabases?.find(

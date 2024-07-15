@@ -20,13 +20,69 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     savingsCalculatorRefresh: false,
     selectedDeploymentModel: '',
     viewCalculationsResponse: null,
-    viewCalculationsLoading: false
+    viewCalculationsLoading: false,
+    savingsCalculatorFrom: null,
+    selectedManualRegion: null,
+    selectedManualDeploymentModel: null,
+    monthlyBYOLCost: '',
+    manualMonthlyDescription: '',
+    selectedManualServerEdition: null,
+    selectedManualInstanceType: null,
+    selectedVolumeTab: 'io2',
+    manualTCONumberOfVolumes: null,
+    manualTCOStorageAmount: null,
+    manualTCOProvisionedIOPS: null,
+    manualTCOThroughput: null,
+    getManualInstanceTypeList: {
+        instanceTypeData: {},
+        instanceTypeLoading: false,
+        instanceTypeError: null
+    }
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        addManualInstanceTypeList: (state, action: PayloadAction<any>) => {
+            state.getManualInstanceTypeList = action.payload;
+        },
+        setSelectedManualTCONumberOfVolumes(state, action: PayloadAction<any>) {
+            state.manualTCONumberOfVolumes = action.payload;
+        },
+        setSelectedManualTCOStorageAmount(state, action: PayloadAction<any>) {
+            state.manualTCOStorageAmount = action.payload;
+        },
+        setSelectedManualTCOProvisionedIOPS(state, action: PayloadAction<any>) {
+            state.manualTCOProvisionedIOPS = action.payload;
+        },
+        setSelectedManualTCOThroughput(state, action: PayloadAction<any>) {
+            state.manualTCOThroughput = action.payload;
+        },
+        setSelectedVolumeType(state, action: PayloadAction<any>) {
+            state.selectedVolumeTab = action.payload;
+        },
+        setSelectedManualInstanceType(state, action: PayloadAction<any>) {
+            state.selectedManualInstanceType = action.payload;
+        },
+        setSelectedManualServerEdition(state, action: PayloadAction<any>) {
+            state.selectedManualServerEdition = action.payload;
+        },
+        setSelectedMachineDescription(state, action: PayloadAction<any>) {
+            state.manualMonthlyDescription = action.payload;
+        },
+        setSelectedMonthlyBYOLCost(state, action: PayloadAction<any>) {
+            state.monthlyBYOLCost = action.payload;
+        },
+        setSelectedDeploymentModelForManualTCO(state, action: PayloadAction<any>) {
+            state.selectedManualDeploymentModel = action.payload;
+        },
+        setSelectedRegionFromManualTCO(state, action: PayloadAction<any>) {
+            state.selectedManualRegion = action.payload;
+        },
+        setSavingsCalculatorFrom(state, action: PayloadAction<any>) {
+            state.savingsCalculatorFrom = action.payload;
+        },
         setSelectedSnapshotFrequency(state, action: PayloadAction<any>) {
             state.selectedSnapshotFrequency = action.payload;
         },
@@ -103,6 +159,18 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    addManualInstanceTypeList,
+    setSelectedManualTCONumberOfVolumes,
+    setSelectedManualTCOStorageAmount,
+    setSelectedManualTCOProvisionedIOPS,
+    setSelectedManualTCOThroughput,
+    setSelectedVolumeType,
+    setSelectedManualInstanceType,
+    setSelectedManualServerEdition,
+    setSelectedMachineDescription,
+    setSelectedMonthlyBYOLCost,
+    setSelectedDeploymentModelForManualTCO,
+    setSelectedRegionFromManualTCO,
     setSelectedSnapshotFrequency,
     setNumberOfClonedCopies,
     setSelectedCloneRefresh,
@@ -121,7 +189,8 @@ export const {
     addExploreSavingsInitialData,
     setSelectedDeploymentModel,
     setViewCalculationsResponse,
-    setViewCalculationsLoading
+    setViewCalculationsLoading,
+    setSavingsCalculatorFrom
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

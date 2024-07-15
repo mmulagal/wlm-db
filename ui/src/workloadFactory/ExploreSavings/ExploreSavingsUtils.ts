@@ -1,4 +1,5 @@
 import {
+    setSavingsCalculatorFrom,
     setSelectedDeploymentModel,
     setSelectedHostDetails,
     setSelectedInstanceId,
@@ -6,18 +7,24 @@ import {
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { GENERAL } from '../../utils/appConstants';
-import { GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
+import { FSX_AZ_TYPE, GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import { formatFractionalNumber } from '../../utils/utilityFunctions';
 
 export const onClickESHost = (dispatch: any, rowData: any) => {
     const deploymentModel = (() => {
         return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
+    dispatch(setSavingsCalculatorFrom('Auto'));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(rowData?.id));
     dispatch(setSelectedDeploymentModel(deploymentModel));
     dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || GENERAL.ES_SERVER_NAME));
     setESInstanceData(rowData, dispatch);
+};
+
+export const handleManualTCO = (dispatch: any) => {
+    dispatch(setSavingsCalculatorFrom('Manual'));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {
@@ -127,6 +134,25 @@ export const formatViewCalcInstance = (
 };
 
 export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploymentModel: string) => {
+    let azType = '';
+    if (viewCalculationsResponse?.single) {
+        viewCalculationsResponse = {
+            ...viewCalculationsResponse,
+            fsxOntapCalculation: viewCalculationsResponse?.single?.fsxOntapCalculation,
+            fsxOntapSnapshotCalculation: viewCalculationsResponse?.single?.fsxOntapSnapshotCalculation,
+            fsxCloneCalculation: viewCalculationsResponse?.single?.fsxCloneCalculation
+        };
+        azType = FSX_AZ_TYPE.SINGLE;
+    } else if (viewCalculationsResponse?.multi) {
+        viewCalculationsResponse = {
+            ...viewCalculationsResponse,
+            fsxOntapCalculation: viewCalculationsResponse?.multi?.fsxOntapCalculation,
+            fsxOntapSnapshotCalculation: viewCalculationsResponse?.multi?.fsxOntapSnapshotCalculation,
+            fsxCloneCalculation: viewCalculationsResponse?.multi?.fsxCloneCalculation
+        };
+        azType = FSX_AZ_TYPE.MULTI;
+    }
+
     const totalEbsCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
@@ -176,6 +202,7 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
         cost += viewCalculationsResponse?.fsxOntapCalculation?.totalThroughputAndIopsMonthly || 0;
         cost += viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyStorageCharge || 0;
         cost += viewCalculationsResponse?.fsxCloneCalculation?.totalCloneMonthlyCost || 0;
+        cost += viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalSnapshotMonthlyCost || 0;
         return formatFractionalNumber(cost, 2);
     })();
 
@@ -183,6 +210,13 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
         let cost = 0;
         cost += viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForCapacity || 0;
         cost += viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForFsxSsd || 0;
+        return formatFractionalNumber(cost, 2);
+    })();
+
+    const totalAzCost = (() => {
+        let cost = 0;
+        cost += viewCalculationsResponse?.fsxOntapCalculation?.totalThroughputAndIopsMonthly || 0;
+        cost += viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyStorageCharge || 0;
         return formatFractionalNumber(cost, 2);
     })();
 
@@ -406,7 +440,9 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
         totalEBSEc2MachineCost: totalEbsEc2MachineCost,
         fsxTotalCost: totalFsxCost,
         ebsTotalCost: totalEbsCost,
-        fsxSnapshotTotalCost: totalFsxSnapshotCost
+        fsxSnapshotTotalCost: totalFsxSnapshotCost,
+        totalAzCost: totalAzCost,
+        azType: azType
     };
     return result;
 };

@@ -260,7 +260,8 @@ const FsxResourceInfoResponse = Type.Optional(
         Type.Object({
             id: Type.String(),
             capacityCost: Type.Number(),
-            operationalCost: Type.Number()
+            operationalCost: Type.Number(),
+            size: Type.Optional(Type.Number())
         })
     )
 );
@@ -348,7 +349,7 @@ const DriveInfoResponseBody = Type.Object({
             driveLetter: Type.String(),
             availableSize: Type.Number(),
             isNetappDrive: Type.Boolean(),
-            isDriveClustered: Type.Optional(Type.Boolean())
+            isClusteredWithSelectedInstance: Type.Optional(Type.Boolean())
         })
     ),
     defaultDataDrive: Type.Optional(Type.String()),
@@ -372,7 +373,7 @@ const DatabaseHostSummaryParamsWithRegion = Type.Object({
 });
 type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
 
-const CloneDatabaseHostBody = Type.Object({
+const CreateSandboxBody = Type.Object({
     source: Type.Object({
         host: Type.String(), // ec2 instance
         instance: Type.String(), // sql server instance - ideally only one would be there
@@ -384,12 +385,12 @@ const CloneDatabaseHostBody = Type.Object({
         database: Type.String() // database
     }),
     mountPoints: Type.Object({
-        dataDrive: Type.String({ maxLength: 1 }),
-        logDrive: Type.String({ maxLength: 1 })
+        dataDrive: Type.String({ maxLength: 1, pattern: '^[D-Z]$' }),
+        logDrive: Type.String({ maxLength: 1, pattern: '^[D-Z]$' })
     }),
     tag: Type.String({ enum: ['Development', 'QA', 'Integration', 'Training', 'Analytics', 'Other'] })
 });
-type CloneDatabaseHostBodyType = Static<typeof CloneDatabaseHostBody>;
+
 const CollationInfoResponseBody = Type.Object({
     collationList: Type.Array(
         Type.Object({
@@ -552,6 +553,13 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
         description: 'SSM connectivity status to the active EC2 instance hosting the database server.',
         enum: [ConnectionStatus.CONNECTED, ConnectionStatus.NOT_CONNECTED, NOT_AVAILABLE]
     }),
+    storageAllocation: Type.Optional(
+        Type.Object({
+            fsxn: Type.Optional(Type.Number({ description: 'Aggregate FSxN size in bytes' })),
+            fsxw: Type.Optional(Type.Number({ description: 'Aggregate FSxW size in bytes' })),
+            ebs: Type.Optional(Type.Number({ description: 'Aggregate EBS size in bytes' }))
+        })
+    ),
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
@@ -641,8 +649,7 @@ export {
     DatabaseHostsParamsWithRegion,
     DatabaseHostSummaryParamsWithRegion,
     DatabaseHostSummaryParamsWithRegionType,
-    CloneDatabaseHostBody,
-    CloneDatabaseHostBodyType,
+    CreateSandboxBody,
     CollationInfoResponseBodyType,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,

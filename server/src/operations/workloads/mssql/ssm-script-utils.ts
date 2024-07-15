@@ -226,7 +226,7 @@ const validateSQLInstanceConnectivity = (
             $password = $sqlCredentials.password
             
             $serverInstanceName = "$env:COMPUTERNAME"
-            If($sqlinstancename -ne $serverInstanceName) {
+            If($sqlinstancename -ne 'MSSQLSERVER') {
                 $serverInstanceName = "$env:COMPUTERNAME\\$sqlinstancename"
                 
             }

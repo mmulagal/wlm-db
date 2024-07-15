@@ -1,7 +1,6 @@
 .jobChart {
-    margin-top: 28px;
-    width: 160px;
-    height: 160px;
+    width: 184px;
+    height: 184px;
     position: relative;
 
     .center-text {
@@ -16,8 +15,8 @@
     }
 
     .emptyCircle {
-        width: 160px;
-        height: 160px;
+        width: 184px;
+        height: 184px;
         border-radius: 50%;
         border: 1px solid var(--field-border-disabled);
     }

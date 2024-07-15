@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, DsFlashingDotsLoader, DsButton } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTableV2.module.scss';
@@ -11,7 +11,7 @@ import {
     renderInstanceListText,
     renderUnmanagedAZ
 } from '../../Inventory/InventoryUtils';
-import { onClickESHost } from '../ExploreSavingsUtils';
+import { handleManualTCO, onClickESHost } from '../ExploreSavingsUtils';
 import { INVENTORY_STATUS } from '../../../utils/consts';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useEffect, useState } from 'react';
@@ -59,6 +59,7 @@ const ExploreSavingsTableV2 = () => {
             id: '8',
             Header: '',
             accessor: '',
+            isSticky: true,
             width: '181px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -194,6 +195,7 @@ const ExploreSavingsTableV2 = () => {
         pageSize: 50,
         isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
     });
+
     return (
         <div className={styles.exploreSavingTable}>
             <TableTopBar

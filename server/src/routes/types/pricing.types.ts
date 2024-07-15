@@ -75,9 +75,9 @@ const FsxnCostBreakdown = Type.Object({
     size: Type.Optional(
         Type.Object(
             {
-                data: Type.Number(),
-                log: Type.Number(),
-                tempdb: Type.Number(),
+                data: Type.Optional(Type.Number()),
+                log: Type.Optional(Type.Number()),
+                tempdb: Type.Optional(Type.Number()),
                 quorum: Type.Optional(Type.Number()),
                 buffer: Type.Optional(Type.Number()),
                 total: Type.Number()

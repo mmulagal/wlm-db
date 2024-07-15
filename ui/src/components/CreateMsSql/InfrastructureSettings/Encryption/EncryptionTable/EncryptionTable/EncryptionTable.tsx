@@ -24,7 +24,7 @@ const EncryptionTable = () => {
             accessor: 'name',
             id: '1',
             isSortable: false,
-            width: '180px',
+            width: '19.4%',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.keyName}>
@@ -42,13 +42,13 @@ const EncryptionTable = () => {
             Header: GENERAL.KEY_ID,
             accessor: 'id',
             id: '2',
-            width: '348px'
+            width: '37.46%'
         },
         {
             Header: GENERAL.EXPIRATION_DATE,
             accessor: 'formattedDate',
             id: '3',
-            width: '177px',
+            width: '19.13%',
 
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -82,7 +82,7 @@ const EncryptionTable = () => {
             Header: GENERAL.ORIGIN,
             accessor: 'origin',
             id: '4',
-            width: '126px'
+            width: '13.62%'
         }
     ];
 

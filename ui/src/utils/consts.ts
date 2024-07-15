@@ -529,7 +529,8 @@ export const INSTANCE_API_FIELDS = {
         'databaseServer',
         'serverDetails',
         'nodeTopology',
-        'usageEstimation'
+        'usageEstimation',
+        'dbCount'
     ]
 };
 
@@ -539,3 +540,8 @@ export const PROTECTION_TEXT_STATUS = {
 };
 
 export const PREPARE_API_ENDPOINT = '/mssql/prepare';
+
+export const FSX_AZ_TYPE = {
+    SINGLE: 'single',
+    MULTI: 'multi'
+};

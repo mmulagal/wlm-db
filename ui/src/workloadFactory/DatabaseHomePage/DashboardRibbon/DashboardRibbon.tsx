@@ -9,7 +9,7 @@ const DashboardRibbon = () => {
                 <Layer />
             </div>
             <DsTypography variant="Regular_14">
-                The dashboard overview contain information of the managed instances and databases only
+                The Dashboard contains only information about managed instances and databases
             </DsTypography>
         </div>
     );

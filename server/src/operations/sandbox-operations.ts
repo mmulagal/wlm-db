@@ -625,7 +625,7 @@ async function validateSelectedDrives(
         driveLetter: string;
         availableSize: number;
         isNetappDrive: boolean;
-        isDriveClustered?: boolean;
+        isClusteredWithSelectedInstance?: boolean;
     }>,
     selectedDrive: string,
     metadata: Metadata
@@ -653,7 +653,7 @@ async function validateSelectedDrives(
     if (!matchedExistingDrive.isNetappDrive) {
         throw createError(412, `Selected drive ${selectedDrive} is not a NetApp drive`);
     }
-    if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
+    if (isClustered === 'true' && !matchedExistingDrive.isClusteredWithSelectedInstance) {
         throw createError(
             412,
             `Selected  drive ${selectedDrive} is non clustered drive or drive not part of SQL server`
@@ -706,7 +706,8 @@ async function validateCloneParams(
             credentialsId,
             region,
             true,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+            CUSTOM_SSM_EXECUTION_TIMEOUT,
+            destDetails.instance
         );
 
         const [destDatabaseExists, srcDatabaseExists] = await Promise.all([
@@ -2198,7 +2199,15 @@ async function detachSandboxAndAccessPath(
             ];
         }
 
-        const resp = await callSsmExecution(credentialsId, region, command, resourceDetails.activeNodeInstanceId);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            resourceDetails.activeNodeInstanceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
 
         if (!resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Interval Server Error');
@@ -2247,7 +2256,7 @@ async function reAttachSandboxAndAccessPath(
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errMsg;
 
-    const detachJob = await registerJob(accountId, credentialsId, region, {
+    const reattachJob = await registerJob(accountId, credentialsId, region, {
         name: `Re-attach sandbox and access path for ${resourceDetails.database}`,
         startTime: Date.now(),
         description: `Re-attach sandbox and access path for ${resourceDetails.database} in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
@@ -2268,10 +2277,19 @@ async function reAttachSandboxAndAccessPath(
                 `SandBox:${resourceDetails.database}:`
             )
         ];
-        const resp = await callSsmExecution(credentialsId, region, command, resourceDetails.activeNodeInstanceId);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            resourceDetails.activeNodeInstanceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
 
         if (!resp) {
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Interval Server Error');
+            logger.error('Failed to re-attach sandbox and add access path, SSM command response is empty');
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to re-attach: Internal Server Error');
         }
 
         const jsonResp = sqlResponseParsing(resp);
@@ -2288,7 +2306,7 @@ async function reAttachSandboxAndAccessPath(
         errMsg = e.message || e || 'Internal Server Error';
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, detachJob.id, {
+        await updateJobDetails(accountId, credentialsId, region, reattachJob.id, {
             status,
             endTime: Date.now(),
             error: errMsg

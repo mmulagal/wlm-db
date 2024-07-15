@@ -101,7 +101,7 @@ const StorageSavingResource = ({ hostData, hostsLoading }: StorageSavingsProps) 
             </div>
 
             <div className={styles.largeContainer}>
-                <div className={styles.firstSegment} style={{ paddingRight: '0', width: '334px' }}>
+                <div className={styles.firstSegment} style={{ paddingRight: '0', width: '31.39%' }}>
                     <div className={styles.leftSection}>
                         <Savings />
                     </div>

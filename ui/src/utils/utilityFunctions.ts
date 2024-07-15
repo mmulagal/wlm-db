@@ -1572,3 +1572,7 @@ export const isSmbProtocol = (protocolList: Array<string> | undefined) => {
         return false;
     }
 };
+
+export const isClusteredWithSelectedInstance = (val: any) => {
+    return 'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
+};

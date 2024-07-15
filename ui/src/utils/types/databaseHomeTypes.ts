@@ -116,6 +116,9 @@ export interface AggregatedHostsCountRes {
     totalInitializingHosts: number;
     totalDownHosts: number;
     totalFailedHosts: number;
+    totalInstances: number;
+    managedDatabases: number;
+    managedInstances: number;
 }
 
 export interface AggregatedProtectionDbCountRes {

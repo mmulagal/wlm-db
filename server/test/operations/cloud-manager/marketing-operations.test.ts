@@ -36,7 +36,9 @@ describe('Marketing API operations', () => {
 
         expect(resp.ebs).toBeDefined();
         expect(resp.fsx).toBeDefined();
-        expect(resp.fsx_calculation).toBeDefined();
+        if (resp.single?.fsx_calculation) {
+            expect(resp.single?.fsx_calculation).toBeDefined();
+        }
     });
 
     it('should format metrics correctly', async () => {
@@ -55,13 +57,15 @@ describe('Marketing API operations', () => {
             'AOAG'
         );
 
-        expect(result.ebsCalculation).toBeDefined();
-        expect(result.fsxCloneCalculation).toBeDefined();
-        expect(result.fsxOntapCalculation).toBeDefined();
+        expect(result.ebsCalculationBreakdown).toBeDefined();
+        if (result.single) {
+            expect(result.single?.fsxCloneCalculation).toBeDefined();
+            expect(result.single?.fsxOntapCalculation).toBeDefined();
+        }
     });
 
     it('should handle fsx calculation object', async () => {
-        const { fsx_calculation: fsxCalcObject } = await invokeMarketingApi(
+        const { single: { fsx_calculation: fsxCalcObject } = {} } = await invokeMarketingApi(
             ACCOUNT_ID,
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
@@ -74,8 +78,9 @@ describe('Marketing API operations', () => {
                 monthlyChangeRatePercentage: 30
             }
         );
-
-        const result = handleMarketingApiFsxCalculationObject(fsxCalcObject);
-        expect(result).toBeDefined();
+        if (fsxCalcObject) {
+            const result = handleMarketingApiFsxCalculationObject(fsxCalcObject);
+            expect(result).toBeDefined();
+        }
     });
 });

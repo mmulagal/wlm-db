@@ -913,6 +913,8 @@ export const GENERAL = {
     ES_SAVINGS_SELECTION_TEXT: 'Provide clone and snapshot values to calculate the cost savings.',
     NUMBER_OF_CLONED_COPIES: 'Number of cloned copies',
     MONTHLY_CHANGE_RATE: 'Monthly change rate (%)',
+    MONTHLY_DATA_CHANGE_RATE: 'Monthly data change rate (%)',
+    EC2_SPECIFICATIONS: 'EC2 specifications',
     REFER_SNAPSHOTS: 'This field refer to clones and snapshots',
     VIEW_THE_CALCULATIONS: 'View the calculations',
     EXPORT_PDF: 'Export PDF',
@@ -920,8 +922,12 @@ export const GENERAL = {
     ES_SAVINGS_PERCENTAGE: 'Percentage savings',
     ES_HEADING: 'Explore savings of selected host',
     ES_HEADER:
-        'Explore cost savings with Databases automatically. Select a Microsoft SQL server host and then click "Explore Savings". We will calculate your potential savings by moving to Microsoft SQL server using FSx for ONTAP file systems.',
+        'Explore cost savings with Databases automatically. select a Microsoft SQL server host and then click "Explore savings". We\'ll calculate your potential savings by moving to Microsoft SQL server using FSx for ONTAP file systems.',
     ES_SAVINGS: 'Explore savings',
+    MANUAL_EXLORE_SAVINGS: 'Manual explore savings',
+    EXPLORE_SAVING_MANUALLY: 'Explore savings Manually',
+    MANUAL_EXPLORE_SAVINGS_CONTENT:
+        'Alternatively, select the "manual explore savings" option for analysis of potential savings according to your needs and specifications of your Microsoft SQL server configuration.',
     INSTANCE_INFORMATION: 'Instance information:',
     ES_SAVE_CONFIG: 'Save configuration',
     ES_SAVE_CONFIG_DESC:
@@ -942,8 +948,6 @@ export const GENERAL = {
     TO_VIEW_STORAGE: 'To view storage cost savings, enter your configuration.',
     CATEGORY_POINT_ONE: 'Microsoft SQL server on FSx for ONTAP',
     CATEGORY_POINT_TWO: 'Microsoft SQL server on Amazon Elastic Block Store (EBS)',
-    MS_EBS_CALCULATION: 'Microsoft SQL server on EBS calculation',
-    MS_ONTAP_CALCULATION: 'Microsoft SQL server on FSx for ONTAP calculation',
     VIEW_CALC_TEXT:
         'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
@@ -1027,7 +1031,27 @@ export const GENERAL = {
         `Database instance ${instanceName} unmanaged successfully.`,
     UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unmanage.`,
     NOT_OPTIMIZED:
-        "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use."
+        "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use.",
+    // Explore savings view calculations related consts
+    MS_EBS_CALCULATION: 'Microsoft SQL server on EBS calculation',
+    MS_ONTAP_CALCULATION: 'Microsoft SQL EC2 on FSx for ONTAP calculation',
+    ES_CLONES: 'Clones',
+    ES_EBS: 'Elastic Block Storage',
+    ES_GP3_VOLUME_TYPE: 'GP3 volume type',
+    ES_IO2_VOLUME_TYPE: 'io2 volume type',
+    ES_IO1_VOLUME_TYPE: 'io1 volume type',
+    ES_GP2_VOLUME_TYPE: 'GP2 volume type',
+    ES_ST1_VOLUME_TYPE: 'St1 volume type',
+    ES_EBS_TOTAL_COST: 'EBS total cost',
+    ES_MSSQL_EC2_INSTANCES: 'Microsoft SQL EC2 Instances',
+    ES_SNAPSHOTS: 'Snapshots',
+    ES_SNAPSHOTS_DESC: 'Snapshots calcs are based on primary DB volumes only (not replicas).',
+    ES_CLONES_DESC: 'Clones calcs are based on primary DB volumes only (not replicas).',
+    ES_TOTAL_MONTHLY_COST: 'Total monthly cost',
+    ES_FSXN_MULTI: 'FSx for ONTAP - multi availability zone',
+    ES_FSXN_SINGLE: 'FSx for ONTAP - single availability zone',
+    ES_FSXN_AZ_DESC: 'FSxN costs are based on the primary DB volumes since it is a shared storage.',
+    ES_EBS_DESC: 'Costs for EBS are based on all EC2 instances.'
 };
 
 export const CODE_VIEWER = {

@@ -1,10 +1,13 @@
 import { SqlServerDeploymentModel, HOURS_IN_MONTH, STORAGE_SERVICE_DEFAULT_REGION } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import {
-    CalculateEbsComparisonResponse,
+    StorageSummary,
+    EbsCostCalculation,
     ManualModeMarketingRequestBody,
     getManualModeStorageSavings,
-    getStorageSavings
+    getStorageSavings,
+    FsxCostCalculations,
+    FsxCalculation
 } from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes } from '../../utils/utils';
@@ -15,7 +18,7 @@ const logger = getLogger();
 
 function getMonthlyCloneCountFromFrequency(cloneRefreshFrequency: string) {
     const cloneRefreshFrequencyLowerCase = cloneRefreshFrequency.toLowerCase();
-    return cloneRefreshFrequencyLowerCase === 'daily' ? 30 : cloneRefreshFrequencyLowerCase === 'weekly' ? 4 : 1;
+    return cloneRefreshFrequencyLowerCase === 'daily' ? 30 : cloneRefreshFrequencyLowerCase === 'weekly' ? 3 : 1;
 }
 
 function getMarketingApiRequestBody(
@@ -88,7 +91,7 @@ function getMarketingApiManualModeRequestBody(
     };
 }
 
-function handleMarketingApiFsxCalculationObject(fsxCalculationData: any) {
+function handleMarketingApiFsxCalculationObject(fsxCalculationData: FsxCalculation) {
     logger.debug('Handling marketing FSx calculation object', fsxCalculationData);
     const fsxCalculationObject = camelizeKeys(fsxCalculationData);
     const { totalStorageCapacity, effectiveCapacity, ssdTierReqCapacity, capacityPoolTier, monthlySnapshotCapacity } =
@@ -136,55 +139,119 @@ async function invokeMarketingApi(
             sqlServerDeploymentType,
             volumes
         ) as ManualModeMarketingRequestBody;
-        const {
-            ebsTotal,
-            instanceEbs,
-            fsx,
-            fsx_calculation,
-            fsx_cost_calculation_no_snapshot,
-            fsx_clone_cost_calculation,
-            fsx_snapshot_cost_calculation
-        } = await getManualModeStorageSavings(accountId, requestBody);
+        const { ebsTotal, instanceEbs, fsx, single, multi } = await getManualModeStorageSavings(accountId, requestBody);
 
         return {
             ebs: ebsTotal,
-            ebs_cost_calculation: instanceEbs[0].io2?.ebs_cost_calculation,
+            ebsClassification: instanceEbs[0],
             fsx,
-            fsx_calculation,
-            fsx_clone_cost_calculation,
-            fsx_cost_calculation_no_snapshot,
-            fsx_snapshot_cost_calculation
+            ...(sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_AOAG_SHORT && {
+                single
+            }),
+            ...(sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT && {
+                multi
+            })
         };
     }
-    const response = await getStorageSavings(
+    const { gp2, gp3, io1, io2, st1, fsx, ebs, single, multi } = await getStorageSavings(
         accountId,
         credentialsId,
         region,
         getMarketingApiRequestBody(ebsVolumeIds, params, sqlServerDeploymentType)
     );
-    return response;
+
+    return {
+        ebsClassification: { gp2, gp3, io1, io2, st1 },
+        ebs,
+        fsx,
+        single,
+        multi
+    };
 }
 
-async function formatStorageSavingsCalculationMetrics(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    ebsVolumeIds: string[],
-    params: StorageSavingsRequestBodyType,
-    sqlServerDeploymentType: string
+function formatEbsCalculationObject(
+    ebsSummary: StorageSummary,
+    ebsCostCalculationObject: EbsCostCalculation,
+    clonedCopiesCount: number
 ) {
-    logger.debug('Formatting storage savings calculation metrics', {
-        accountId,
-        credentialsId,
-        region,
-        ebsVolumeIds,
-        params
-    });
-    const totalMonthlyClonedCopiesCount =
-        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
+    const { capacity, iops, throughput } = ebsSummary;
 
     const {
-        ebs: { capacity, iops, throughput },
+        instanceAvgDuration,
+        EBSCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
+        numberOfVolumes: ebsNumberOfVolumes,
+        storageAmountPerVol: { size: storageAmountPerVolSize, unit: storageAmountPerVolUnit },
+        totalInstanceHours,
+        EBSInstanceMonth: ebsInstanceMonth,
+        EBSStorageCost: ebsStorageCost,
+        billableIops,
+        totalBillableIops,
+        EBSIopsCost: ebsIopsCost,
+        billableMBps: billableMbps,
+        billableThroughputMBps: billableThroughputMbps,
+        billableThroughputGBps: billableThroughputGbps,
+        EBSThroughputCost: ebsThroughputCost,
+        totalSnapshot: totalSnapshots,
+        initialSnapshotCost,
+        monthlyCostPerSnapshot,
+        discountForPartialStorageMonth,
+        incrementalSnapshotCost,
+        totalSnapshotCost,
+        totalEBSSnapshotCost: totalEbsSnapshotCost,
+        ebsSnapshotCost,
+        AWSEBSTotalCostMonthly: ebsTotalCostMonthly
+    } = ebsCostCalculationObject;
+
+    const ebsCostCalculation = {
+        numberOfVolumes: ebsNumberOfVolumes,
+        instanceAvgDuration,
+        hoursInAMonth: HOURS_IN_MONTH, // (365 * 24) / 12
+        ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
+        storageAmountPerVol: convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0,
+        totalInstanceHours,
+        ebsInstanceMonth,
+        ebsStorageCost,
+        billableIops,
+        totalBillableIops,
+        ebsIopsCost,
+        billableMbps,
+        billableThroughputMbps,
+        billableThroughputGbps,
+        ebsThroughputCost,
+        ebsTotalCostMonthly
+    };
+    const ebsCloneCalculation = {
+        clonedCopiesCount,
+        capacity,
+        iops,
+        throughput,
+        totalCloneMonthlyCost: clonedCopiesCount * (capacity + iops + throughput)
+    };
+
+    const ebsSnapshotCalculation = {
+        ebsInstanceMonth,
+        totalSnapshots,
+        initialSnapshotCost,
+        monthlyCostPerSnapshot,
+        discountForPartialStorageMonth,
+        incrementalSnapshotCost,
+        totalSnapshotCost,
+        totalEbsSnapshotCost,
+        ebsSnapshotCost
+    };
+
+    return {
+        ebsCostCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation
+    };
+}
+
+function derivePropertiesBasedOnDeploymentType(
+    fsxCostCalculations: FsxCostCalculations,
+    params: StorageSavingsRequestBodyType
+) {
+    const {
         fsx_cost_calculation_no_snapshot: {
             desiredStorageCapacityGB: { size: desiredStorageCapacitySize, unit: desiredStorageCapacityUnit },
             numberOfVolumes,
@@ -260,31 +327,6 @@ async function formatStorageSavingsCalculationMetrics(
             totalMonthlyCostForCapacity,
             totalSnapshotMonthlyCost
         },
-        ebs_cost_calculation: {
-            instanceAvgDuration,
-            EBSCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
-            numberOfVolumes: ebsNumberOfVolumes,
-            storageAmountPerVol: { size: storageAmountPerVolSize, unit: storageAmountPerVolUnit },
-            totalInstanceHours,
-            EBSInstanceMonth: ebsInstanceMonth,
-            EBSStorageCost: ebsStorageCost,
-            billableIops,
-            totalBillableIops,
-            EBSIopsCost: ebsIopsCost,
-            billableMBps: billableMbps,
-            billableThroughputMBps: billableThroughputMbps,
-            billableThroughputGBps: billableThroughputGbps,
-            EBSThroughputCost: ebsThroughputCost,
-            totalSnapshot: totalSnapshots,
-            initialSnapshotCost,
-            monthlyCostPerSnapshot,
-            discountForPartialStorageMonth,
-            incrementalSnapshotCost,
-            totalSnapshotCost,
-            totalEBSSnapshotCost: totalEbsSnapshotCost,
-            ebsSnapshotCost,
-            AWSEBSTotalCostMonthly: ebsTotalCostMonthly
-        },
         fsx_clone_cost_calculation: {
             desiredStorageCapacityGB: { size: cloneDesiredStorageCapacityGB, unit: cloneDesiredStorageCapacityGBUnit },
             percentageOfDataOnSSDStorage: percentageOfDataOnSSDStorageClone,
@@ -303,14 +345,11 @@ async function formatStorageSavingsCalculationMetrics(
             SSDMonthlyCost,
             totalCloneMonthlyCost
         }
-    } = (await invokeMarketingApi(
-        accountId,
-        credentialsId,
-        region,
-        sqlServerDeploymentType,
-        ebsVolumeIds,
-        params
-    )) as CalculateEbsComparisonResponse;
+    } = fsxCostCalculations;
+
+    const totalMonthlyClonedCopiesCount =
+        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
+
     return {
         fsxOntapCalculation: {
             numberOfVolumes,
@@ -388,24 +427,6 @@ async function formatStorageSavingsCalculationMetrics(
             totalMonthlyCostForCapacity,
             totalSnapshotMonthlyCost
         },
-        ebsCalculation: {
-            numberOfVolumes: ebsNumberOfVolumes,
-            instanceAvgDuration,
-            hoursInAMonth: HOURS_IN_MONTH, // (365 * 24) / 12
-            ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
-            storageAmountPerVol: convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0,
-            totalInstanceHours,
-            ebsInstanceMonth,
-            ebsStorageCost,
-            billableIops,
-            totalBillableIops,
-            ebsIopsCost,
-            billableMbps,
-            billableThroughputMbps,
-            billableThroughputGbps,
-            ebsThroughputCost,
-            ebsTotalCostMonthly
-        },
         fsxCloneCalculation: {
             cloneRefreshFrequency: params.cloneRefreshFrequency,
             monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
@@ -434,24 +455,55 @@ async function formatStorageSavingsCalculationMetrics(
             ssdStoragePerMonth: convertToBytes(cloneSSDStorageGBPerMonth, cloneSSDStorageGBPerMonthUnit) || 0,
             ssdMonthlyCost: SSDMonthlyCost,
             totalCloneMonthlyCost
-        },
-        ebsCloneCalculation: {
-            clonedCopiesCount: params.clonedCopiesCount,
-            capacity,
-            iops,
-            throughput,
-            totalCloneMonthlyCost: params.clonedCopiesCount * (capacity + iops + throughput)
-        },
-        ebsSnapshotCalculation: {
-            ebsInstanceMonth,
-            totalSnapshots,
-            initialSnapshotCost,
-            monthlyCostPerSnapshot,
-            discountForPartialStorageMonth,
-            incrementalSnapshotCost,
-            totalSnapshotCost,
-            totalEbsSnapshotCost,
-            ebsSnapshotCost
+        }
+    };
+}
+async function formatStorageSavingsCalculationMetrics(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ebsVolumeIds: string[],
+    params: StorageSavingsRequestBodyType,
+    sqlServerDeploymentType: string
+) {
+    logger.debug('Formatting storage savings calculation metrics', {
+        accountId,
+        credentialsId,
+        region,
+        ebsVolumeIds,
+        params
+    });
+
+    const {
+        ebsClassification: { gp2, gp3, io1, st1, io2 } = {},
+        ebs,
+        single,
+        multi
+    } = await invokeMarketingApi(accountId, credentialsId, region, sqlServerDeploymentType, ebsVolumeIds, params);
+
+    const totalMonthlyClonedCopiesCount =
+        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
+
+    return {
+        ...(single && { single: derivePropertiesBasedOnDeploymentType(single, params) }),
+        ...(multi && { multi: derivePropertiesBasedOnDeploymentType(multi, params) }),
+        ebs,
+        ebsCalculationBreakdown: {
+            ...(gp2 && {
+                gp2: formatEbsCalculationObject(gp2.ebs, gp2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+            }),
+            ...(gp3 && {
+                gp3: formatEbsCalculationObject(gp3.ebs, gp3.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+            }),
+            ...(io1 && {
+                io1: formatEbsCalculationObject(io1.ebs, io1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+            }),
+            ...(io2 && {
+                io2: formatEbsCalculationObject(io2.ebs, io2.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+            }),
+            ...(st1 && {
+                st1: formatEbsCalculationObject(st1.ebs, st1.ebs_cost_calculation, totalMonthlyClonedCopiesCount)
+            })
         }
     };
 }

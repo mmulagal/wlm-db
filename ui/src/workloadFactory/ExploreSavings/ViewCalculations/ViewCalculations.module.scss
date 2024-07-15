@@ -26,5 +26,12 @@
             display: flex;
             justify-content: space-between;
         }
+
+        .calcSection {
+            display: grid;
+            gap: 32px;
+            margin-bottom: 60px;
+        }
     }
+
 }

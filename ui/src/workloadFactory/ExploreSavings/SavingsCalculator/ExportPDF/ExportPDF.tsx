@@ -76,30 +76,25 @@ const ExportPDF = ({ printDocument }: any) => {
             )}
             {!isDemoMode && (
                 <>
-                    {/* <div className={viewLoading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer}> */}
-                    <div className={`${styles.insideContainer} ${styles.disabled}`}>
+                    <div
+                        className={
+                            viewLoading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer
+                        }
+                    >
                         <div>
                             <Calculate />
                         </div>
-                        <Popover
-                            popoverClass={styles['popover']}
-                            children={'This feature is currently unavailable'}
-                            trigger="hover"
-                            container={
-                                <DsTypography
-                                    variant="Semibold_14"
-                                    className={styles.text}
-                                    style={{ width: '147px' }}
-                                    // onClick={() =>
-                                    //     viewLoading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
-                                    // }
-                                    onClick={() => () => {}}
-                                    id="view-calculations"
-                                >
-                                    {GENERAL.VIEW_THE_CALCULATIONS}
-                                </DsTypography>
+                        <DsTypography
+                            variant="Semibold_14"
+                            className={styles.text}
+                            style={{ width: '147px' }}
+                            onClick={() =>
+                                viewLoading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                             }
-                        />
+                            id="view-calculations"
+                        >
+                            {GENERAL.VIEW_THE_CALCULATIONS}
+                        </DsTypography>
                     </div>
                 </>
             )}

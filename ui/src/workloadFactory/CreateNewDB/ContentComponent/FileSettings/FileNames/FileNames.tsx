@@ -22,7 +22,11 @@ import {
 } from '../../../../../store/workloadFactory/createNewDBSlice';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
-import { generateOptionType, sortListOfDict } from '../../../../../utils/utilityFunctions';
+import {
+    generateOptionType,
+    isClusteredWithSelectedInstance,
+    sortListOfDict
+} from '../../../../../utils/utilityFunctions';
 
 import styles from './FileNames.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
@@ -130,7 +134,7 @@ const FileNames = () => {
     const disableDriveMsg = (val: any) => {
         if (!val?.isNetappDrive) {
             return GENERAL.NON_NETAPP_DRIVE;
-        } else if ('isDriveClustered' in val ? !val.isDriveClustered : false) {
+        } else if (isClusteredWithSelectedInstance(val)) {
             return GENERAL.NON_CLUSTERED_DRIVE;
         }
         return '';
@@ -144,7 +148,7 @@ const FileNames = () => {
                 val?.driveLetter,
                 val?.driveLetter,
                 DRIVE_LETTER_TYPE.EXISTING,
-                !val?.isNetappDrive || ('isDriveClustered' in val ? !val.isDriveClustered : false),
+                !val?.isNetappDrive || isClusteredWithSelectedInstance(val),
                 disableDriveMsg(val),
                 val
             );
@@ -171,7 +175,7 @@ const FileNames = () => {
                 val?.driveLetter,
                 val?.driveLetter,
                 DRIVE_LETTER_TYPE.EXISTING,
-                !val?.isNetappDrive || ('isDriveClustered' in val ? !val.isDriveClustered : false),
+                !val?.isNetappDrive || isClusteredWithSelectedInstance(val),
                 disableDriveMsg(val),
                 val
             );
@@ -220,7 +224,7 @@ const FileNames = () => {
                     val?.driveLetter,
                     val?.driveLetter,
                     DRIVE_LETTER_TYPE.EXISTING,
-                    !val?.isNetappDrive || ('isDriveClustered' in val ? !val.isDriveClustered : false),
+                    !val?.isNetappDrive || isClusteredWithSelectedInstance(val),
                     disableDriveMsg(val),
                     val
                 );

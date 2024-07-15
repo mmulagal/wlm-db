@@ -1,8 +1,8 @@
 .chartItem {
-    width: 160px;
-    height: 160px;
+    width: 184px;
+    height: 184px;
     position: relative;
-    margin-top: 28px;
+
     .center-text {
         position: absolute;
         width: 100%;
@@ -15,8 +15,8 @@
     }
 
     .emptyCircle {
-        width: 160px;
-        height: 160px;
+        width: 184px;
+        height: 184px;
         border-radius: 50%;
         border: 1px solid var(--field-border-disabled);
     }
