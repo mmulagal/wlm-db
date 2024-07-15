@@ -3,7 +3,7 @@ import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useDispatch } from 'react-redux';
 import styles from './ViewCalculations.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
-import { WLF_TABS } from '../../../utils/consts';
+import { FSX_AZ_TYPE, WLF_TABS } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -73,7 +73,7 @@ const ViewCalculations = () => {
                                 {GENERAL.MS_ONTAP_CALCULATION}
                             </DsTypography>
                             <InstancesOntapCalculation />
-                            {viewCalculationsResponse?.azType === 'single' ? (
+                            {viewCalculationsResponse?.azType === FSX_AZ_TYPE.SINGLE ? (
                                 <FsxnSazCalculation />
                             ) : (
                                 <FsxnMazCalculation />

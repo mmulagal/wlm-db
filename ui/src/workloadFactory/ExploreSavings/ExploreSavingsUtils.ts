@@ -7,7 +7,7 @@ import {
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { GENERAL } from '../../utils/appConstants';
-import { GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
+import { FSX_AZ_TYPE, GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import { formatFractionalNumber } from '../../utils/utilityFunctions';
 
 export const onClickESHost = (dispatch: any, rowData: any) => {
@@ -142,7 +142,7 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             fsxOntapSnapshotCalculation: viewCalculationsResponse?.single?.fsxOntapSnapshotCalculation,
             fsxCloneCalculation: viewCalculationsResponse?.single?.fsxCloneCalculation
         };
-        azType = 'single';
+        azType = FSX_AZ_TYPE.SINGLE;
     } else if (viewCalculationsResponse?.multi) {
         viewCalculationsResponse = {
             ...viewCalculationsResponse,
@@ -150,7 +150,7 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             fsxOntapSnapshotCalculation: viewCalculationsResponse?.multi?.fsxOntapSnapshotCalculation,
             fsxCloneCalculation: viewCalculationsResponse?.multi?.fsxCloneCalculation
         };
-        azType = 'multi';
+        azType = FSX_AZ_TYPE.MULTI;
     }
 
     const totalEbsCost = (() => {

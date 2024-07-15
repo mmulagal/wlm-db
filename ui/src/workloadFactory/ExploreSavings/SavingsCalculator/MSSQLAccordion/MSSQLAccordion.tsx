@@ -63,7 +63,7 @@ const MSSQLAccordion = ({ printState }: any) => {
             });
         }
         // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
-    }, [storageSavingsResponse, selectedHostDetails]);
+    }, [storageSavingsResponse]);
 
     useEffect(() => {
         let instanceType = '';
