@@ -48,19 +48,19 @@ const SavingsCalculatorApi = () => {
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataMutation();
     const [getMssqlInstanceDataApiV2] = useGetMssqlInstanceDataV2Mutation();
     // API call to get Instance Types list for selected credentials and region
-    const {
-        data: instanceTypeData,
-        isFetching: instanceTypeLoading,
-        isError: instanceTypeError
-    } = useGetInstanceTypesQuery({ credentialId: headerSelectedCred, region: headerSelectedRegion });
+    // const {
+    //     data: instanceTypeData,
+    //     isFetching: instanceTypeLoading,
+    //     isError: instanceTypeError
+    // } = useGetInstanceTypesQuery({ credentialId: headerSelectedCred, region: headerSelectedRegion });
 
-    useEffect(() => {
-        if (instanceTypeError) {
-            dispatch(addManualInstanceTypeList({ undefined, instanceTypeLoading, instanceTypeError }));
-        } else {
-            dispatch(addManualInstanceTypeList({ instanceTypeData, instanceTypeLoading, instanceTypeError }));
-        }
-    }, [instanceTypeData, instanceTypeLoading, instanceTypeError]);
+    // useEffect(() => {
+    //     if (instanceTypeError) {
+    //         dispatch(addManualInstanceTypeList({ undefined, instanceTypeLoading, instanceTypeError }));
+    //     } else {
+    //         dispatch(addManualInstanceTypeList({ instanceTypeData, instanceTypeLoading, instanceTypeError }));
+    //     }
+    // }, [instanceTypeData, instanceTypeLoading, instanceTypeError]);
 
     useEffect(() => {
         const selectedRow = unManagedHostFormatedList.filter((item: any) => item?.id === selectedInstanceId);
