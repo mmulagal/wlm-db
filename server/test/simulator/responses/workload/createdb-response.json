@@ -68,6 +68,24 @@
                 "isClusteredWithSelectedInstance": true
             },
             {
+                "driveLetter": "W",
+                "availableSize": 0,
+                "isNetappDrive": false,
+                "isClusteredWithSelectedInstance": false
+            },
+            {
+                "driveLetter": "Y",
+                "availableSize": 0,
+                "isNetappDrive": false,
+                "isClusteredWithSelectedInstance": false
+            },
+            {
+                "driveLetter": "S",
+                "availableSize": 321732804608,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
+            },
+            {
                 "driveLetter": "T",
                 "availableSize": 32064274432,
                 "isNetappDrive": true,
@@ -80,7 +98,7 @@
                 "isClusteredWithSelectedInstance": true
             }
         ],
-        "availableDriveLetters": ["G", "I", "K", "M", "N", "O", "P", "U", "W", "X", "Y"],
+        "availableDriveLetters": ["G", "I", "K", "M", "N", "O", "P", "U", "X"],
         "fsxStorageCapacity": 38482906972160,
         "defaultDataDrive": "S",
         "defaultLogDrive": "L"
@@ -88,82 +106,100 @@
     "getInstanceLevelDriveInfo": {
         "existingDriveInfo": [
             {
-              "driveLetter": "L",
-              "availableSize": 80386654208,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "L",
+                "availableSize": 80386654208,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
             },
             {
-              "driveLetter": "Q",
-              "availableSize": 10653229056,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": false
+                "driveLetter": "Q",
+                "availableSize": 10653229056,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": false
             },
             {
-              "driveLetter": "F",
-              "availableSize": 11181883392,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "F",
+                "availableSize": 11181883392,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
             },
             {
-              "driveLetter": "D",
-              "availableSize": 1068367872,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "D",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
             },
             {
-              "driveLetter": "R",
-              "availableSize": 1068367872,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "R",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
             },
             {
-              "driveLetter": "V",
-              "availableSize": 1068367872,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "V",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
             },
             {
-              "driveLetter": "J",
-              "availableSize": 1068367872,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "J",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
             },
             {
-              "driveLetter": "E",
-              "availableSize": 1068367872,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "E",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
             },
             {
-              "driveLetter": "C",
-              "availableSize": 66177310720,
-              "isNetappDrive": false,
-              "isClusteredWithSelectedInstance": false
+                "driveLetter": "C",
+                "availableSize": 66177310720,
+                "isNetappDrive": false,
+                "isClusteredWithSelectedInstance": false
             },
             {
-              "driveLetter": "H",
-              "availableSize": 1068367872,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "H",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
             },
             {
-              "driveLetter": "S",
-              "availableSize": 321732804608,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "S",
+                "availableSize": 321732804608,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
             },
             {
-              "driveLetter": "T",
-              "availableSize": 32064274432,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "W",
+                "availableSize": 0,
+                "isNetappDrive": false,
+                "isClusteredWithSelectedInstance": false
             },
             {
-              "driveLetter": "Z",
-              "availableSize": 1068367872,
-              "isNetappDrive": true,
-              "isClusteredWithSelectedInstance": true
+                "driveLetter": "Y",
+                "availableSize": 0,
+                "isNetappDrive": false,
+                "isClusteredWithSelectedInstance": false
+            },
+            {
+                "driveLetter": "S",
+                "availableSize": 321732804608,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
+            },
+            {
+                "driveLetter": "T",
+                "availableSize": 32064274432,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
+            },
+            {
+                "driveLetter": "Z",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isClusteredWithSelectedInstance": true
             }
         ],
         "availableDriveLetters": []
