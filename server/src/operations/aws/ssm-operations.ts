@@ -100,8 +100,9 @@ async function executeSSMDocument(
         logger.debug('SSM command Response:', response);
         return response;
     } catch (error) {
-        logger.error('Error fetching command status');
-        throw createError(`Error fetching command status:${error}`);
+        const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
     }
 }
 
