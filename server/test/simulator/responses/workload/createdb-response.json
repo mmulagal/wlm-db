@@ -80,12 +80,6 @@
                 "isClusteredWithSelectedInstance": false
             },
             {
-                "driveLetter": "S",
-                "availableSize": 321732804608,
-                "isNetappDrive": true,
-                "isClusteredWithSelectedInstance": true
-            },
-            {
                 "driveLetter": "T",
                 "availableSize": 32064274432,
                 "isNetappDrive": true,
@@ -182,12 +176,6 @@
                 "availableSize": 0,
                 "isNetappDrive": false,
                 "isClusteredWithSelectedInstance": false
-            },
-            {
-                "driveLetter": "S",
-                "availableSize": 321732804608,
-                "isNetappDrive": true,
-                "isClusteredWithSelectedInstance": true
             },
             {
                 "driveLetter": "T",
