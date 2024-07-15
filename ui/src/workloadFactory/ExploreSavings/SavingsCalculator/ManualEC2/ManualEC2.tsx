@@ -10,12 +10,17 @@ import {
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useMemo } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
-import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
+import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
 
 const ManualEC2 = () => {
     const dispatch = useDispatch();
     const { manualMonthlyDescription, selectedManualServerEdition, selectedManualInstanceType } = useAppSelector(
         state => state.exploreSavings
+    );
+    //Getting the Data from state
+    const { instanceTypeData, instanceTypeLoading } = useAppSelector(
+        state => state.exploreSavings.getManualInstanceTypeList
     );
 
     //Function to generate the options for Select Field
@@ -36,19 +41,38 @@ const ManualEC2 = () => {
     }, []);
 
     //Function to generate the options for Select Field
-    const generateInstanceTypeList = useMemo<optionType[]>((): optionType[] => {
-        const instanceList = [
-            { name: 'm5.xlarge', label: '4vCPU, 16 GiB RAM, 4750Mbps' },
-            { name: 'm5.2xlarge', label: '8vCPU, 16 GiB RAM, 4750Mbps' }
-        ];
-        const options: optionType[] = [];
-        instanceList?.map((val, idx: number) => {
-            const option = generateOptionType(val?.name, val?.name, val?.label, false, '', val);
-            options.push(option);
+    const generateInstances = useMemo<optionType[]>((): optionType[] => {
+        let options: optionType[] = [];
+        let default_instance_item = null;
+
+        instanceTypeData?.instanceTypes?.map((val, idx: number) => {
+            const value = val?.instanceType || '';
+            let label2 = '';
+            if (val?.vCpus) {
+                label2 += val?.vCpus + 'vCPU, ';
+            }
+            if (val?.ramInMib) {
+                label2 += formatSize(val?.ramInMib, 'mib') + ' RAM, ';
+            }
+            if (val?.iopsInMbps) {
+                label2 += val?.iopsInMbps + 'Mbps';
+            }
+            const option = generateOptionType(value, value, label2, false, '', val);
+
+            if (value === DEAFULT_INSTANCE_VALUE) {
+                default_instance_item = option;
+            } else {
+                options.push(option);
+            }
         });
 
+        options = sortListOfDict(options, 'value');
+        if (default_instance_item) {
+            options.unshift(default_instance_item);
+        }
+
         return options;
-    }, []);
+    }, [instanceTypeData]);
     return (
         <div className={styles.manualEc2}>
             <DsTypography variant="Semibold_14">{GENERAL.EC2_SPECIFICATIONS}</DsTypography>
@@ -83,14 +107,12 @@ const ManualEC2 = () => {
                     label={'Instance type'}
                     isClearable={false}
                     variant="two-lines"
-                    defaultValue={
-                        selectedManualInstanceType ? selectedManualInstanceType : [generateInstanceTypeList[0]]
-                    }
+                    defaultValue={selectedManualInstanceType ? selectedManualInstanceType : [generateInstances[0]]}
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedManualInstanceType(selectedOptions));
                     }}
                     isSearchable={true}
-                    options={generateInstanceTypeList}
+                    options={generateInstances}
                     className={styles.setWidth}
                 />
             </div>
