@@ -18,10 +18,12 @@ import InstancesEbsCalculation from './EBSCalculation/InstancesEbsCalculation/In
 import InstancesOntapCalculation from './OntapCalculation/InstancesOntapCalculation/InstancesOntapCalculation';
 import TotalMonthlyCostOntapCalculation from './OntapCalculation/TotalMonthlyCostOntapCalculation/TotalMonthlyCostOntapCalculation';
 import TotalMonthlyCostEbsCalculation from './EBSCalculation/TotalMonthlyCostEbsCalculation/TotalMonthlyCostEbsCalculation';
+import { useEffect, useState } from 'react';
 
 const ViewCalculations = () => {
     const dispatch = useDispatch();
     const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
+    const { viewCalculationsResponse } = useAppSelector(state => state.exploreSavings);
 
     return (
         <div className={styles.viewCalculations}>
@@ -71,8 +73,11 @@ const ViewCalculations = () => {
                                 {GENERAL.MS_ONTAP_CALCULATION}
                             </DsTypography>
                             <InstancesOntapCalculation />
-                            <FsxnSazCalculation />
-                            <FsxnMazCalculation />
+                            {viewCalculationsResponse?.azType === 'single' ? (
+                                <FsxnSazCalculation />
+                            ) : (
+                                <FsxnMazCalculation />
+                            )}
                             <SnapshotsOntapCalculation />
                             <ClonesOntapCalculation />
                             <TotalMonthlyCostOntapCalculation />

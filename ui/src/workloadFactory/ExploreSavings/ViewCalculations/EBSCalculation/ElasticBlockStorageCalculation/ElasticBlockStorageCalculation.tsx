@@ -38,8 +38,11 @@ const ElasticBlockStorageCalculation = () => {
             >
                 {viewCalculationsResponse && (
                     <AccordionCardContent>
+                        <DsTypography variant="Regular_14">{GENERAL.ES_EBS_DESC}</DsTypography>
                         <DsTypography className={CommonStyles.accordionContentSet}>
-                            <DsTypography variant="Semibold_14">{GENERAL.ES_GP3_VOLUME_TYPE}</DsTypography>
+                            <DsTypography variant="Semibold_14" style={{ marginTop: '40px' }}>
+                                {GENERAL.ES_GP3_VOLUME_TYPE}
+                            </DsTypography>
                             <div style={{ marginTop: '16px', marginBottom: '32px' }}>
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,

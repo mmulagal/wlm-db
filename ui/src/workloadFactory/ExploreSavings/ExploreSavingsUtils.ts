@@ -134,6 +134,25 @@ export const formatViewCalcInstance = (
 };
 
 export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploymentModel: string) => {
+    let azType = '';
+    if (viewCalculationsResponse?.single) {
+        viewCalculationsResponse = {
+            ...viewCalculationsResponse,
+            fsxOntapCalculation: viewCalculationsResponse?.single?.fsxOntapCalculation,
+            fsxOntapSnapshotCalculation: viewCalculationsResponse?.single?.fsxOntapSnapshotCalculation,
+            fsxCloneCalculation: viewCalculationsResponse?.single?.fsxCloneCalculation
+        };
+        azType = 'single';
+    } else if (viewCalculationsResponse?.multi) {
+        viewCalculationsResponse = {
+            ...viewCalculationsResponse,
+            fsxOntapCalculation: viewCalculationsResponse?.multi?.fsxOntapCalculation,
+            fsxOntapSnapshotCalculation: viewCalculationsResponse?.multi?.fsxOntapSnapshotCalculation,
+            fsxCloneCalculation: viewCalculationsResponse?.multi?.fsxCloneCalculation
+        };
+        azType = 'multi';
+    }
+
     const totalEbsCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
@@ -183,6 +202,7 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
         cost += viewCalculationsResponse?.fsxOntapCalculation?.totalThroughputAndIopsMonthly || 0;
         cost += viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyStorageCharge || 0;
         cost += viewCalculationsResponse?.fsxCloneCalculation?.totalCloneMonthlyCost || 0;
+        cost += viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalSnapshotMonthlyCost || 0;
         return formatFractionalNumber(cost, 2);
     })();
 
@@ -421,7 +441,8 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
         fsxTotalCost: totalFsxCost,
         ebsTotalCost: totalEbsCost,
         fsxSnapshotTotalCost: totalFsxSnapshotCost,
-        totalAzCost: totalAzCost
+        totalAzCost: totalAzCost,
+        azType: azType
     };
     return result;
 };
