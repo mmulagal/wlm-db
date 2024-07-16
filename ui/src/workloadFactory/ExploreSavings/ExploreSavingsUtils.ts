@@ -8,6 +8,7 @@ import {
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { GENERAL } from '../../utils/appConstants';
 import { FSX_AZ_TYPE, GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
+import { ViewCalculationsInterface } from '../../utils/types/exploreSavingsType';
 import { formatFractionalNumber } from '../../utils/utilityFunctions';
 
 export const onClickESHost = (dispatch: any, rowData: any) => {
@@ -134,7 +135,11 @@ export const formatViewCalcInstance = (
     return instanceCalculationData;
 };
 
-export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploymentModel: string) => {
+export const formatViewCalcData = (
+    viewCalculationsResponse: any,
+    selectedDeploymentModel: string,
+    monthlyChangeRate: string
+) => {
     let azType = '';
     if (viewCalculationsResponse?.single) {
         viewCalculationsResponse = {
@@ -154,7 +159,7 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
         azType = FSX_AZ_TYPE.MULTI;
     }
 
-    const totalEbsCost = (() => {
+    const totalEbsCost = (ebsViewCalculationData: any) => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.computeMonthlyPrice || 0;
@@ -162,13 +167,22 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.computeMonthlyPrice || 0;
             cost += viewCalculationsResponse?.existingComputeCalculation?.[1]?.computeMonthlyPrice || 0;
         }
-        cost += viewCalculationsResponse?.ebsCalculation?.ebsSnapshotCost || 0;
-        cost += viewCalculationsResponse.ebsCalculation.ebsThroughputCost || 0;
-        cost += viewCalculationsResponse?.ebsCalculation?.ebsIopsCost || 0;
-        cost += viewCalculationsResponse?.ebsCalculation?.ebsStorageCost || 0;
-        cost += viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost || 0;
+        cost += ebsViewCalculationData?.ebsSnapshotCalculation?.totalEbsSnapshotCostValue || 0;
+        cost += ebsViewCalculationData?.ebsCloneCalculation?.totalCloneMonthlyCostValue || 0;
+
+        cost += ebsViewCalculationData?.ebsCalculation?.totalEbsThroughputCost || 0;
+        cost += ebsViewCalculationData?.ebsCalculation?.totalEbsIopsCost || 0;
+        cost += ebsViewCalculationData?.ebsCalculation?.totalEbsStorageCost || 0;
         return formatFractionalNumber(cost, 2);
-    })();
+    };
+
+    const onlyEbsCost = (ebsViewCalculationData: any) => {
+        let cost = 0;
+        cost += ebsViewCalculationData?.ebsCalculation?.totalEbsThroughputCost || 0;
+        cost += ebsViewCalculationData?.ebsCalculation?.totalEbsIopsCost || 0;
+        cost += ebsViewCalculationData?.ebsCalculation?.totalEbsStorageCost || 0;
+        return formatFractionalNumber(cost, 2);
+    };
 
     const totalEbsEc2MachineCost = (() => {
         let cost = 0;
@@ -221,7 +235,10 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
         return formatFractionalNumber(cost, 2);
     })();
 
+    const ebsViewCalculationData = getEbsViewCalculationData(viewCalculationsResponse);
+
     const result = {
+        ...ebsViewCalculationData,
         fsxInstanceCalculation: formatViewCalcInstance(
             selectedDeploymentModel,
             {},
@@ -362,41 +379,6 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalSnapshotMonthlyCost
             )
         },
-        ebsCalculation: {
-            numberOfVolumes: formatNumbers(viewCalculationsResponse?.ebsCalculation?.numberOfVolumes),
-            storageAmountPerVol: formatCalcSize(viewCalculationsResponse?.ebsCalculation?.storageAmountPerVol),
-            totalInstanceHours: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalInstanceHours),
-            ebsInstanceMonth: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsInstanceMonth),
-            ebsStorageCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsStorageCost),
-            billableIops: formatNumbers(viewCalculationsResponse?.ebsCalculation?.billableIops),
-            totalBillableIops: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalBillableIops),
-            ebsIopsCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsIopsCost),
-            billableMbps: formatNumbers(viewCalculationsResponse?.ebsCalculation?.billableMbps),
-            billableThroughputMbps: formatNumbers(viewCalculationsResponse?.ebsCalculation?.billableThroughputMbps),
-            billableThroughputGbps: formatNumbers(viewCalculationsResponse?.ebsCalculation?.billableThroughputGbps),
-            ebsThroughputCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsThroughputCost),
-            ebsTotalCostMonthly: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsTotalCostMonthly),
-            instanceAvgDuration: formatNumbers(viewCalculationsResponse?.ebsCalculation?.instanceAvgDuration),
-            ebsCapacityPrice: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsCapacityPrice?.price),
-            hoursInAMonth: formatNumbers(viewCalculationsResponse?.ebsCalculation?.hoursInAMonth)
-        },
-        ebsSnapshotCalculation: {
-            ebsInstanceMonth: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.ebsInstanceMonth),
-            totalSnapshots: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.totalSnapshots),
-            initialSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.initialSnapshotCost),
-            monthlyCostPerSnapshot: formatNumbers(
-                viewCalculationsResponse?.ebsSnapshotCalculation?.monthlyCostPerSnapshot
-            ),
-            discountForPartialStorageMonth: formatNumbers(
-                viewCalculationsResponse?.ebsSnapshotCalculation?.discountForPartialStorageMonth
-            ),
-            incrementalSnapshotCost: formatNumbers(
-                viewCalculationsResponse?.ebsSnapshotCalculation?.incrementalSnapshotCost
-            ),
-            totalSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.totalSnapshotCost),
-            totalEbsSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.totalEbsSnapshotCost),
-            ebsSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.ebsSnapshotCost)
-        },
         fsxCloneCalculation: {
             clonedCopiesCount: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.clonedCopiesCount),
             numberOfClonesInAMonth: formatNumbers(
@@ -430,20 +412,174 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             ssdMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.ssdMonthlyCost),
             totalCloneMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.totalCloneMonthlyCost)
         },
-        ebsCloneCalculation: {
-            clonedCopiesCount: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.clonedCopiesCount),
-            capacity: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.capacity),
-            iops: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.iops),
-            throughput: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.throughput),
-            totalCloneMonthlyCost: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost)
-        },
         totalFsxEc2MachineCost: totalFsxEc2MachineCost,
         totalEBSEc2MachineCost: totalEbsEc2MachineCost,
         fsxTotalCost: totalFsxCost,
-        ebsTotalCost: totalEbsCost,
+        ebsTotalCost: totalEbsCost(ebsViewCalculationData),
+        ebsOnlyCost: onlyEbsCost(ebsViewCalculationData),
         fsxSnapshotTotalCost: totalFsxSnapshotCost,
         totalAzCost: totalAzCost,
-        azType: azType
+        azType: azType,
+        monthlyChangeRate: monthlyChangeRate
     };
+    return result;
+};
+
+export const getEbsViewCalculationData = (viewCalculationsResponse: any) => {
+    let ebsSnapshotCalculation = {
+        ebsInstanceMonth: 0,
+        totalSnapshots: 0,
+        initialSnapshotCost: 0,
+        monthlyCostPerSnapshot: 0,
+        discountForPartialStorageMonth: 0,
+        incrementalSnapshotCost: 0,
+        totalSnapshotCost: 0,
+        totalEbsSnapshotCost: 0,
+        ebsSnapshotCost: 0
+    };
+    let ebsCloneCalculation = {
+        clonedCopiesCount: 0,
+        capacity: 0,
+        iops: 0,
+        throughput: 0,
+        totalCloneMonthlyCost: 0
+    };
+    Object.keys(viewCalculationsResponse?.ebsSnapshotCalculation).map((key: string) => {
+        ebsSnapshotCalculation = {
+            ebsInstanceMonth:
+                ebsSnapshotCalculation.ebsInstanceMonth +
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsInstanceMonth || 0,
+            totalSnapshots:
+                ebsSnapshotCalculation.totalSnapshots +
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.totalSnapshots || 0,
+            initialSnapshotCost:
+                ebsSnapshotCalculation.initialSnapshotCost +
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.initialSnapshotCost || 0,
+            monthlyCostPerSnapshot:
+                ebsSnapshotCalculation.monthlyCostPerSnapshot +
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.monthlyCostPerSnapshot || 0,
+            discountForPartialStorageMonth:
+                ebsSnapshotCalculation.discountForPartialStorageMonth +
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.discountForPartialStorageMonth || 0,
+            incrementalSnapshotCost:
+                ebsSnapshotCalculation.incrementalSnapshotCost +
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.incrementalSnapshotCost || 0,
+            totalSnapshotCost:
+                ebsSnapshotCalculation.totalSnapshotCost +
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.totalSnapshotCost || 0,
+            totalEbsSnapshotCost:
+                ebsSnapshotCalculation.totalEbsSnapshotCost +
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.totalEbsSnapshotCost || 0,
+            ebsSnapshotCost:
+                ebsSnapshotCalculation.ebsSnapshotCost +
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsSnapshotCost || 0
+        };
+    });
+
+    Object.keys(viewCalculationsResponse?.ebsCloneCalculation).map((key: string) => {
+        ebsCloneCalculation = {
+            clonedCopiesCount:
+                ebsCloneCalculation.clonedCopiesCount +
+                viewCalculationsResponse?.ebsCloneCalculation?.[key]?.clonedCopiesCount,
+            capacity: ebsCloneCalculation.capacity + viewCalculationsResponse?.ebsCloneCalculation?.[key]?.capacity,
+            iops: ebsCloneCalculation.iops + viewCalculationsResponse?.ebsCloneCalculation?.[key]?.iops,
+            throughput:
+                ebsCloneCalculation.throughput + viewCalculationsResponse?.ebsCloneCalculation?.[key]?.throughput,
+            totalCloneMonthlyCost:
+                ebsCloneCalculation.totalCloneMonthlyCost +
+                viewCalculationsResponse?.ebsCloneCalculation?.[key]?.totalCloneMonthlyCost
+        };
+    });
+
+    // let ebsCalculation: any = {};
+    // viewCalculationsResponse?.ebsCalculation?.map((perRow: any) => {
+    //     Object.keys(perRow).map((key: string) => {
+    //         ebsCalculation[key] = {
+    //             numberOfVolumes: (ebsCalculation[key]?.numberOfVolumes || 0) + (perRow[key]?.numberOfVolumes),
+    //             storageAmountPerVol: (ebsCalculation[key]?.storageAmountPerVol || 0) + (perRow[key]?.storageAmountPerVol),
+    //             totalInstanceHours: (ebsCalculation[key]?.totalInstanceHours || 0) + (perRow[key]?.totalInstanceHours),
+    //             ebsInstanceMonth: (ebsCalculation[key]?.ebsInstanceMonth || 0) + (perRow[key]?.ebsInstanceMonth),
+    //             ebsStorageCost: (ebsCalculation[key]?.ebsStorageCost || 0) + (perRow[key]?.ebsStorageCost),
+    //             billableIops: (ebsCalculation[key]?.billableIops || 0) + (perRow[key]?.billableIops),
+    //             totalBillableIops: (ebsCalculation[key]?.totalBillableIops || 0) + (perRow[key]?.totalBillableIops),
+    //             ebsIopsCost: (ebsCalculation[key]?.ebsIopsCost || 0) + (perRow[key]?.ebsIopsCost),
+    //             billableMbps: (ebsCalculation[key]?.billableMbps || 0) + (perRow[key]?.billableMbps),
+    //             billableThroughputMbps: (ebsCalculation[key]?.billableThroughputMbps || 0) + (perRow[key]?.billableThroughputMbps),
+    //             billableThroughputGbps: (ebsCalculation[key]?.billableThroughputGbps || 0) + (perRow[key]?.billableThroughputGbps),
+    //             ebsThroughputCost: (ebsCalculation[key]?.ebsThroughputCost || 0) + (perRow[key]?.ebsThroughputCost),
+    //             ebsTotalCostMonthly: (ebsCalculation[key]?.ebsTotalCostMonthly || 0) + (perRow[key]?.ebsTotalCostMonthly),
+    //             instanceAvgDuration: (ebsCalculation[key]?.instanceAvgDuration || 0) + (perRow[key]?.instanceAvgDuration),
+    //             ebsCapacityPrice: (ebsCalculation[key]?.ebsCapacityPrice || 0) + (perRow[key]?.ebsCapacityPrice?.price),
+    //             hoursInAMonth: (ebsCalculation[key]?.hoursInAMonth || 0) + (perRow[key]?.hoursInAMonth),
+    //         }
+    //     });
+    // });
+
+    return {
+        ebsCalculation: EbsCalculationUpdates(viewCalculationsResponse?.ebsCalculation),
+        ebsSnapshotCalculation: {
+            ebsInstanceMonth: formatNumbers(ebsSnapshotCalculation?.ebsInstanceMonth),
+            totalSnapshots: formatNumbers(ebsSnapshotCalculation?.totalSnapshots),
+            initialSnapshotCost: formatNumbers(ebsSnapshotCalculation?.initialSnapshotCost),
+            monthlyCostPerSnapshot: formatNumbers(ebsSnapshotCalculation?.monthlyCostPerSnapshot),
+            discountForPartialStorageMonth: formatNumbers(ebsSnapshotCalculation?.discountForPartialStorageMonth),
+            incrementalSnapshotCost: formatNumbers(ebsSnapshotCalculation?.incrementalSnapshotCost),
+            totalSnapshotCost: formatNumbers(ebsSnapshotCalculation?.totalSnapshotCost),
+            totalEbsSnapshotCost: formatNumbers(ebsSnapshotCalculation?.totalEbsSnapshotCost),
+            ebsSnapshotCost: formatNumbers(ebsSnapshotCalculation?.ebsSnapshotCost),
+            totalEbsSnapshotCostValue: ebsSnapshotCalculation?.ebsSnapshotCost
+        },
+        ebsCloneCalculation: {
+            clonedCopiesCount: formatNumbers(ebsCloneCalculation?.clonedCopiesCount),
+            capacity: formatNumbers(ebsCloneCalculation?.capacity),
+            iops: formatNumbers(ebsCloneCalculation?.iops),
+            throughput: formatNumbers(ebsCloneCalculation?.throughput),
+            totalCloneMonthlyCost: formatNumbers(ebsCloneCalculation?.totalCloneMonthlyCost),
+            totalCloneMonthlyCostValue: ebsCloneCalculation?.totalCloneMonthlyCost
+        }
+    };
+};
+
+export const EbsCalculationUpdates = (data: any) => {
+    let result: any = {};
+    let totalEbsThroughputCost = 0;
+    let totalEbsIopsCost = 0;
+    let totalEbsStorageCost = 0;
+    let throughPutTextList: any = [];
+    let iopsTextList: any = [];
+    let storageTextList: any = [];
+    Object.keys(data).map((key: string) => {
+        totalEbsThroughputCost += data[key]?.ebsThroughputCost;
+        totalEbsIopsCost += data[key]?.ebsIopsCost;
+        totalEbsStorageCost += data[key]?.ebsStorageCost;
+        throughPutTextList.push(key + ' throughput cost');
+        iopsTextList.push(key + ' IOPS cost');
+        storageTextList.push(key + ' storage cost');
+        result[key] = {
+            numberOfVolumes: formatNumbers(data[key]?.numberOfVolumes),
+            storageAmountPerVol: formatCalcSize(data[key]?.storageAmountPerVol),
+            totalInstanceHours: formatNumbers(data[key]?.totalInstanceHours),
+            ebsInstanceMonth: formatNumbers(data[key]?.ebsInstanceMonth),
+            ebsStorageCost: formatNumbers(data[key]?.ebsStorageCost),
+            billableIops: formatNumbers(data[key]?.billableIops),
+            totalBillableIops: formatNumbers(data[key]?.totalBillableIops),
+            ebsIopsCost: formatNumbers(data[key]?.ebsIopsCost),
+            billableMbps: formatNumbers(data[key]?.billableMbps),
+            billableThroughputMbps: formatNumbers(data[key]?.billableThroughputMbps),
+            billableThroughputGbps: formatNumbers(data[key]?.billableThroughputGbps),
+            ebsThroughputCost: formatNumbers(data[key]?.ebsThroughputCost),
+            ebsTotalCostMonthly: formatNumbers(data[key]?.ebsTotalCostMonthly),
+            instanceAvgDuration: formatNumbers(data[key]?.instanceAvgDuration),
+            ebsCapacityPrice: formatNumbers(data[key]?.ebsCapacityPrice?.price),
+            hoursInAMonth: formatNumbers(data[key]?.hoursInAMonth)
+        };
+    });
+
+    result['totalEbsThroughputCost'] = totalEbsThroughputCost;
+    result['totalEbsIopsCost'] = totalEbsIopsCost;
+    result['totalEbsStorageCost'] = totalEbsStorageCost;
+    result['totalEbsThroughputCostText'] = throughPutTextList.join(' + ');
+    result['totalEbsIopsCostText'] = iopsTextList.join(' + ');
+    result['totalEbsStorageCostText'] = storageTextList.join(' + ');
     return result;
 };

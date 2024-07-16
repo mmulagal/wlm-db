@@ -23,8 +23,11 @@ const SnapshotsEBSCalculation = () => {
                 </DsTypography>
             );
         }
-        // TBD
-        return <DsTypography variant="Regular_14">$XXX</DsTypography>;
+        return (
+            <DsTypography variant="Regular_14">
+                ${viewCalculationsResponse?.ebsSnapshotCalculation?.totalSnapshotCost}
+            </DsTypography>
+        );
     };
 
     return (

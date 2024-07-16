@@ -159,22 +159,11 @@ export interface ViewCalculationsInterface {
     fsxOntapSnapshotCalculation?: FsxOntapSnapshotCalculation;
     fsxCloneCalculation?: FsxCloneCalculation;
     ebsCalculation?: {
-        storageAmountPerVol?: number | string;
-        totalInstanceHours?: number | string;
-        ebsInstanceMonth?: number | string;
-        ebsStorageCost?: number | string;
-        billableIops?: number | string;
-        totalBillableIops?: number | string;
-        ebsIopsCost?: number | string;
-        billableMbps?: number | string;
-        billableThroughputMbps?: number | string;
-        billableThroughputGbps?: number | string;
-        ebsThroughputCost?: number | string;
-        numberOfVolumes?: number;
-        instanceAvgDuration?: number | string;
-        ebsCapacityPrice?: number | string;
-        hoursInAMonth?: number | string;
-        ebsTotalCostMonthly?: number | string;
+        gp3?: EBSCalculation;
+        gp2?: EBSCalculation;
+        io1?: EBSCalculation;
+        io2?: EBSCalculation;
+        st1?: EBSCalculation;
     };
     ebsCloneCalculation?: {
         clonedCopiesCount?: number | string;
@@ -198,9 +187,29 @@ export interface ViewCalculationsInterface {
     totalEBSEc2MachineCost?: number | string;
     fsxTotalCost?: number | string;
     ebsTotalCost?: number | string;
+    ebsOnlyCost?: number | string;
     fsxSnapshotTotalCost?: number | string;
     totalAzCost?: number | string;
     azType?: string;
+}
+
+export interface EBSCalculation {
+    storageAmountPerVol?: number | string;
+    totalInstanceHours?: number | string;
+    ebsInstanceMonth?: number | string;
+    ebsStorageCost?: number | string;
+    billableIops?: number | string;
+    totalBillableIops?: number | string;
+    ebsIopsCost?: number | string;
+    billableMbps?: number | string;
+    billableThroughputMbps?: number | string;
+    billableThroughputGbps?: number | string;
+    ebsThroughputCost?: number | string;
+    numberOfVolumes?: number;
+    instanceAvgDuration?: number | string;
+    ebsCapacityPrice?: { price?: number | string };
+    hoursInAMonth?: number | string;
+    ebsTotalCostMonthly?: number | string;
 }
 
 export interface FsxOntapCalculation {
