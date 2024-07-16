@@ -550,3 +550,5 @@ export const SAVINGS_CALC_MODE = {
     MANUAL: 'Manual',
     AUTO: 'Auto'
 };
+
+export const PARTNER_NODE = 'partner node';
