@@ -111,7 +111,7 @@ const LicenseCalculationObject = Type.Object({
     licenseIncluded: Type.Optional(Type.Boolean()),
     hoursInMonth: Type.Number()
 });
-const ebsCostCalculation = Type.Object({
+const EbsCostCalculation = Type.Object({
     numberOfVolumes: Type.Number(),
     instanceAvgDuration: Type.Number(),
     hoursInAMonth: Type.Number(),
@@ -129,14 +129,17 @@ const ebsCostCalculation = Type.Object({
     ebsThroughputCost: Type.Number(),
     ebsTotalCostMonthly: Type.Number()
 });
-const ebsCloneCalculation = Type.Object({
+const EbsCloneCalculation = Type.Object({
     clonedCopiesCount: Type.Number(),
     capacity: Type.Number(),
     iops: Type.Number(),
     throughput: Type.Number(),
     totalCloneMonthlyCost: Type.Number()
 });
-const ebsSnapshotCalculation = Type.Object({
+const EbsSnapshotCalculation = Type.Object({
+    storageAmount: Type.Number(),
+    numberOfVolumes: Type.Number(),
+    monthlyCostOfSnapshots: Type.Number(),
     ebsInstanceMonth: Type.Number(),
     totalSnapshots: Type.Number(),
     initialSnapshotCost: Type.Number(),
@@ -148,7 +151,7 @@ const ebsSnapshotCalculation = Type.Object({
     ebsSnapshotCost: Type.Number()
 });
 
-const fsxOntapCalculation = Type.Object({
+const FsxOntapCalculation = Type.Object({
     numberOfVolumes: Type.Number(),
     percentageOfDataOnSSDStorage: Type.Number(),
     fsxnCapacityPrice: PriceUnitObject,
@@ -192,7 +195,7 @@ const fsxOntapCalculation = Type.Object({
     totalThroughputAndIopsMonthly: Type.Number()
 });
 
-const fsxOntapSnapshotCalculation = Type.Object({
+const FsxOntapSnapshotCalculation = Type.Object({
     fsxnSsdPrice: PriceUnitObject,
     fsxnCapacityPrice: PriceUnitObject,
     desiredStorageCapacity: Type.Number(),
@@ -211,7 +214,7 @@ const fsxOntapSnapshotCalculation = Type.Object({
     totalSnapshotMonthlyCost: Type.Number()
 });
 
-const fsxCloneCalculation = Type.Object({
+const FsxCloneCalculation = Type.Object({
     clonedCopiesCount: Type.Number(),
     numberOfClonesInAMonth: Type.Number(),
     changeRateBetweenClones: Type.Number(),
@@ -240,48 +243,46 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
     // )),
     // ebsCloneCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsCloneCalculation)),
     // ebsSnapshotCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsSnapshotCalculation)),
-    ebsCalculation: Type.Array(
-        Type.Object({
-            gp2: Type.Optional(ebsCostCalculation),
-            gp3: Type.Optional(ebsCostCalculation),
-            io1: Type.Optional(ebsCostCalculation),
-            io2: Type.Optional(ebsCostCalculation),
-            st1: Type.Optional(ebsCostCalculation)
-        })
-    ),
-    ebsCloneCalculation: Type.Array(
-        Type.Object({
-            gp2: Type.Optional(ebsCloneCalculation),
-            gp3: Type.Optional(ebsCloneCalculation),
-            io1: Type.Optional(ebsCloneCalculation),
-            io2: Type.Optional(ebsCloneCalculation),
-            st1: Type.Optional(ebsCloneCalculation)
-        })
-    ),
-    ebsSnapshotCalculation: Type.Array(
-        Type.Object({
-            gp2: Type.Optional(ebsSnapshotCalculation),
-            gp3: Type.Optional(ebsSnapshotCalculation),
-            io1: Type.Optional(ebsSnapshotCalculation),
-            io2: Type.Optional(ebsSnapshotCalculation),
-            st1: Type.Optional(ebsSnapshotCalculation)
-        })
-    ),
+    ebsCalculation: Type.Object({
+        gp2: Type.Optional(EbsCostCalculation),
+        gp3: Type.Optional(EbsCostCalculation),
+        io1: Type.Optional(EbsCostCalculation),
+        io2: Type.Optional(EbsCostCalculation),
+        st1: Type.Optional(EbsCostCalculation)
+    }),
+    ebsCloneCalculation: Type.Object({
+        gp2: Type.Optional(EbsCloneCalculation),
+        gp3: Type.Optional(EbsCloneCalculation),
+        io1: Type.Optional(EbsCloneCalculation),
+        io2: Type.Optional(EbsCloneCalculation),
+        st1: Type.Optional(EbsCloneCalculation)
+    }),
+    ebsSnapshotCalculation: Type.Object({
+        gp2: Type.Optional(EbsSnapshotCalculation),
+        gp3: Type.Optional(EbsSnapshotCalculation),
+        io1: Type.Optional(EbsSnapshotCalculation),
+        io2: Type.Optional(EbsSnapshotCalculation),
+        st1: Type.Optional(EbsSnapshotCalculation)
+    }),
     single: Type.Optional(
         Type.Object({
-            fsxOntapCalculation: Type.Optional(fsxOntapCalculation),
-            fsxOntapSnapshotCalculation: Type.Optional(fsxOntapSnapshotCalculation),
-            fsxCloneCalculation: Type.Optional(fsxCloneCalculation)
+            fsxOntapCalculation: Type.Optional(FsxOntapCalculation),
+            fsxOntapSnapshotCalculation: Type.Optional(FsxOntapSnapshotCalculation),
+            fsxCloneCalculation: Type.Optional(FsxCloneCalculation)
         })
     ),
     multi: Type.Optional(
         Type.Object({
-            fsxOntapCalculation: Type.Optional(fsxOntapCalculation),
-            fsxOntapSnapshotCalculation: Type.Optional(fsxOntapSnapshotCalculation),
-            fsxCloneCalculation: Type.Optional(fsxCloneCalculation)
+            fsxOntapCalculation: Type.Optional(FsxOntapCalculation),
+            fsxOntapSnapshotCalculation: Type.Optional(FsxOntapSnapshotCalculation),
+            fsxCloneCalculation: Type.Optional(FsxCloneCalculation)
         })
     )
 });
+
+type EbsCloneCalculationType = Static<typeof EbsCloneCalculation>;
+type EbsSnapshotCalculationType = Static<typeof EbsSnapshotCalculation>;
+type EbsCostCalculationType = Static<typeof EbsCostCalculation>;
 
 type StorageSavingsResponseType = Static<typeof StorageSavingsResponse>;
 type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
@@ -329,6 +330,9 @@ type ComputeLicenseCostType = Static<typeof ComputeLicenseCost>;
 
 type StorageSavingsMetricsCalculationsResponseType = Static<typeof StorageSavingsCalculationsMetricsResponse>;
 export {
+    EbsCostCalculationType,
+    EbsCloneCalculationType,
+    EbsSnapshotCalculationType,
     StorageSavingsRequestParams,
     StorageSavingsRequestBody,
     StorageSavingsRequestBodyType,

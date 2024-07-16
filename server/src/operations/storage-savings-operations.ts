@@ -423,7 +423,7 @@ async function aoagStorageSavingsMetrics(
         );
 
         // Consider all EBS volumes for storage, iops and throughput calculation
-        const { ebsCalculationBreakdown: allEbsVolumesBreakdown } = await formatStorageSavingsCalculationMetrics(
+        const { ebsCalculation: allVolumesEbsCalculation } = await formatStorageSavingsCalculationMetrics(
             accountId,
             credentialsId,
             region,
@@ -435,7 +435,8 @@ async function aoagStorageSavingsMetrics(
         const {
             single,
             multi,
-            ebsCalculationBreakdown: uniqueEbsVolumeBreakdown
+            ebsCloneCalculation: uniqueVolumesEbsCloneCalculation,
+            ebsSnapshotCalculation: uniqueVolumesEbsSnapshotCalculation
         } = await formatStorageSavingsCalculationMetrics(
             accountId,
             credentialsId,
@@ -444,22 +445,17 @@ async function aoagStorageSavingsMetrics(
             params,
             SqlServerDeploymentModel.SQL_AOAG_SHORT
         );
+
         return {
             recommendedComputeCalculation,
             recommendedLicenseCalculation,
             existingComputeCalculation,
             existingLicenseCalculation,
-            ebsCalculation: Object.entries(allEbsVolumesBreakdown).map(([key, value]) => ({
-                [key]: value.ebsCostCalculation
-            })),
+            ebsCalculation: allVolumesEbsCalculation,
             single,
             multi,
-            ebsCloneCalculation: Object.entries(uniqueEbsVolumeBreakdown).map(([key, value]) => ({
-                [key]: value.ebsCloneCalculation
-            })),
-            ebsSnapshotCalculation: Object.entries(uniqueEbsVolumeBreakdown).map(([key, value]) => ({
-                [key]: value.ebsSnapshotCalculation
-            }))
+            ebsCloneCalculation: uniqueVolumesEbsCloneCalculation,
+            ebsSnapshotCalculation: uniqueVolumesEbsSnapshotCalculation
         };
     }
     throw createError(
@@ -698,29 +694,24 @@ async function getStorageSavingsCalculationMetrics(
         existingComputeCalculation,
         existingLicenseCalculation
     } = formatRecommendations([currentNodeComputeLicenseDetails]);
-    const { ebsCalculationBreakdown, single, multi } = await formatStorageSavingsCalculationMetrics(
-        accountId,
-        credentialsId,
-        region,
-        ebsVolumeIds,
-        params,
-        sqlServerDeploymentType!
-    );
+    const { ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi } =
+        await formatStorageSavingsCalculationMetrics(
+            accountId,
+            credentialsId,
+            region,
+            ebsVolumeIds,
+            params,
+            sqlServerDeploymentType!
+        );
 
     return {
         recommendedComputeCalculation,
         recommendedLicenseCalculation,
         existingComputeCalculation,
         existingLicenseCalculation,
-        ebsCalculation: Object.entries(ebsCalculationBreakdown).map(([key, value]) => ({
-            [key]: value.ebsCostCalculation
-        })),
-        ebsCloneCalculation: Object.entries(ebsCalculationBreakdown).map(([key, value]) => ({
-            [key]: value.ebsCloneCalculation
-        })),
-        ebsSnapshotCalculation: Object.entries(ebsCalculationBreakdown).map(([key, value]) => ({
-            [key]: value.ebsSnapshotCalculation
-        })),
+        ebsCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation,
         single,
         multi
     };

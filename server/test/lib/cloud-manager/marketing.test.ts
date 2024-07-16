@@ -55,7 +55,7 @@ describe('Marketing lib', () => {
         const response = await getManualModeStorageSavings(ACCOUNT_ID, requestBody);
         expect(response.ebsTotal).toBeDefined();
         expect(response.fsx).toBeDefined();
-        
+
         expect(response.multi.fsx_calculation).toBeDefined();
     });
     it('Getting storage instances', async () => {

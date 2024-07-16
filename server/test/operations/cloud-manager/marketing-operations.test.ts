@@ -57,7 +57,7 @@ describe('Marketing API operations', () => {
             'AOAG'
         );
 
-        expect(result.ebsCalculationBreakdown).toBeDefined();
+        expect(result.ebsCalculation).toBeDefined();
         if (result.single) {
             expect(result.single?.fsxCloneCalculation).toBeDefined();
             expect(result.single?.fsxOntapCalculation).toBeDefined();
