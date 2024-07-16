@@ -7,6 +7,7 @@ import {
     FSX_DEPLOYMENT_MODE,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
+    PARTNER_NODE,
     PROTECTION_TEXT_STATUS,
     SQL_DEPLOYMENT_MODE
 } from '../../utils/consts';
@@ -1715,4 +1716,15 @@ export const getProtectionText = (data: any) => {
     }
 
     return protectionText;
+};
+
+export const getPartnerNodeEc2InstanceId = (error: string) => {
+    const pattern = new RegExp(`\\b${PARTNER_NODE}\\b\\s*((?:\\w|-)+)`);
+    const match = pattern.exec(error);
+
+    if (match && match[1]) {
+        return match[1];
+    }
+
+    return null;
 };
