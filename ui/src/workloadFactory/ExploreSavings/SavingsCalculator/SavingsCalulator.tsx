@@ -2,7 +2,7 @@ import { useDispatch } from 'react-redux';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './SavingsCalculator.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
-import { WLF_TABS } from '../../../utils/consts';
+import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
 import { DsTypography } from '@netapp/design-system';
 import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
@@ -14,7 +14,7 @@ import InstanceInformation from './InstanceInformation/InstanceInformation';
 import SelectedVolumeSummary from './SelectedVolumeSummary/SelectedVolumeSummary';
 import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 //@ts-ignore
 import domToPdf from 'dom-to-pdf';
 import ExportPDF from './ExportPDF/ExportPDF';
@@ -30,9 +30,30 @@ import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
-    const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
-    const savingsCalculatorFrom = useAppSelector(state => state.exploreSavings.savingsCalculatorFrom);
-    const { selectedManualDeploymentModel } = useAppSelector(state => state.exploreSavings);
+    const [disableState, setDisableState] = useState(false);
+
+    const {
+        savingsCalculatorFrom,
+        selectedServerName,
+        selectedManualDeploymentModel,
+        selectedManualRegion,
+        numberOfClonedCopies,
+        monthlyChangeRate,
+        selectedManualInstanceType,
+        volumeFilledStatus
+    } = useAppSelector(state => state.exploreSavings);
+
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+            if (selectedManualRegion && numberOfClonedCopies && monthlyChangeRate && volumeFilledStatus) {
+                setDisableState(false);
+            } else {
+                setDisableState(true);
+            }
+        } else {
+            setDisableState(false);
+        }
+    }, [savingsCalculatorFrom, selectedManualRegion, numberOfClonedCopies, monthlyChangeRate, volumeFilledStatus]);
 
     const printDocument = () => {
         setPrintState(true);
@@ -68,7 +89,10 @@ const SavingsCalculator = () => {
                                     }
                                 },
                                 {
-                                    title: selectedServerName
+                                    title:
+                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL
+                                            ? 'Explore savings manually'
+                                            : selectedServerName
                                 }
                             ]}
                         />
@@ -82,7 +106,7 @@ const SavingsCalculator = () => {
                     <div className={styles.contentArea}>
                         {/* Left side code here */}
                         <div className={styles.firstContainer}>
-                            {savingsCalculatorFrom === 'Auto' && (
+                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO && (
                                 <>
                                     <SavingsHeader />
                                     <SavingsSelection printState={printState} />
@@ -91,7 +115,7 @@ const SavingsCalculator = () => {
                                     <SelectedVolumeSummary />
                                 </>
                             )}
-                            {savingsCalculatorFrom === 'Manual' && (
+                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL && (
                                 <>
                                     <SavingsHeader />
                                     <div style={{ padding: '40px' }}>
@@ -109,13 +133,13 @@ const SavingsCalculator = () => {
                         {/* Right side code here */}
                         <div className={styles.secondContainer}>
                             <div className={styles.firstSection}>
-                                <CostSavings />
+                                <CostSavings disableState={disableState} />
                             </div>
                             <div className={styles.secondSection}>
-                                <TotalMonthlyCost />
+                                <TotalMonthlyCost disableState={disableState} />
                             </div>
                             <div className={styles.secondSection}>
-                                <CostBreakdown />
+                                <CostBreakdown disableState={disableState} />
                             </div>
                         </div>
                     </div>

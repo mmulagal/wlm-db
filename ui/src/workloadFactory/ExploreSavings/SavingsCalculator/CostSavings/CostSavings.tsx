@@ -1,5 +1,6 @@
 import { DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
 import { ReactComponent as CostSavingsImage } from '../../../../assets/cost-savings.svg';
+import { ReactComponent as CostSavingsDisabledImage } from '../../../../assets/Cost-Disabled.svg';
 import styles from './CostSavings.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
@@ -8,7 +9,11 @@ import { useEffect, useState } from 'react';
 import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
 import useResize from '../../../../common/hooks/useResize';
 
-const CostSavings = () => {
+type CS = {
+    disableState?: boolean;
+};
+
+const CostSavings = ({ disableState }: CS) => {
     const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
     const windowSize = useResize();
 
@@ -41,7 +46,7 @@ const CostSavings = () => {
         <div className={styles.costSavings}>
             <div className={styles.leftSide}>
                 <div className={styles.setImage}>
-                    <CostSavingsImage />
+                    {disableState ? <CostSavingsDisabledImage /> : <CostSavingsImage />}
                 </div>
                 <div className={costZeroCase ? `${styles.textContent} ${styles.changeWidth}` : styles.textContent}>
                     <div className={styles.topValue}>
@@ -50,10 +55,17 @@ const CostSavings = () => {
                             className={
                                 storageSavingsLoading ? `${styles.dollar} ${styles.dollarHeight}` : styles.dollar
                             }
+                            style={{ color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)' }}
                         >
                             $
                         </DsTypography>
-                        <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
+                        <DsTypography
+                            variant="Regular_32"
+                            style={{
+                                lineHeight: 'unset',
+                                color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
+                            }}
+                        >
                             {/* {!storageSavingsLoading && savings} */}
                             {!storageSavingsLoading && !costZeroCase && Number(savings).toLocaleString()}
                             {!storageSavingsLoading && costZeroCase && Number(0).toLocaleString()}
@@ -61,7 +73,13 @@ const CostSavings = () => {
                     </div>
 
                     <div className={styles.bottomValue}>
-                        <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
+                        <DsTypography
+                            variant="Regular_14"
+                            style={{
+                                lineHeight: 'unset',
+                                color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
+                            }}
+                        >
                             {GENERAL.ES_COST_SAVINGS}
                         </DsTypography>
                         {storageSavingsLoading && <FlashingDotsLoader />}
@@ -69,14 +87,22 @@ const CostSavings = () => {
                 </div>
             </div>
 
-            <div className={costZeroCase ? `${styles.separator} ${styles.separatorNewWidth}` : styles.separator} />
+            <div
+                className={costZeroCase ? `${styles.separator} ${styles.separatorNewWidth}` : styles.separator}
+                style={{ color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)' }}
+            />
             {costZeroCase && windowSize.width > 1500 && (
                 <div className={styles.costZeroCase}>
                     <div>
                         <InfoIcon />
                     </div>
 
-                    <DsTypography variant="Regular_14">{GENERAL.NOTICE_MESSAGE_COST_SAVINGS}</DsTypography>
+                    <DsTypography
+                        variant="Regular_14"
+                        style={{ color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)' }}
+                    >
+                        {GENERAL.NOTICE_MESSAGE_COST_SAVINGS}
+                    </DsTypography>
                 </div>
             )}
             {costZeroCase && windowSize.width < 1500 && (
@@ -101,7 +127,13 @@ const CostSavings = () => {
             {!costZeroCase && (
                 <div className={styles.rightSide}>
                     <div className={styles.firstRow}>
-                        <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
+                        <DsTypography
+                            variant="Regular_32"
+                            style={{
+                                lineHeight: 'unset',
+                                color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
+                            }}
+                        >
                             {!storageSavingsLoading && formatFractionalNumber(savingsPer, 0)}
                         </DsTypography>
                         <DsTypography
@@ -109,13 +141,20 @@ const CostSavings = () => {
                             className={
                                 storageSavingsLoading ? `${styles.dollar} ${styles.dollarHeight}` : styles.dollar
                             }
+                            style={{ color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)' }}
                         >
                             %
                         </DsTypography>
                     </div>
 
                     <div className={styles.bottomValue}>
-                        <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
+                        <DsTypography
+                            variant="Regular_14"
+                            style={{
+                                lineHeight: 'unset',
+                                color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
+                            }}
+                        >
                             {GENERAL.ES_SAVINGS_PERCENTAGE}
                         </DsTypography>
                         {storageSavingsLoading && <FlashingDotsLoader />}

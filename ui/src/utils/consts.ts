@@ -545,3 +545,8 @@ export const FSX_AZ_TYPE = {
     SINGLE: 'single',
     MULTI: 'multi'
 };
+
+export const SAVINGS_CALC_MODE = {
+    MANUAL: 'Manual',
+    AUTO: 'Auto'
+};
