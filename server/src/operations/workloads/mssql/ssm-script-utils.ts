@@ -22,7 +22,7 @@ foreach ($disk in $disks) {
             }
 
             if ($deploymentType -eq 'FCI') {
-                $clusterResource = Get-WmiObject -Namespace "root\MSCluster" -Class "MSCluster_Resource" | Where-Object { $_.Name -eq $logicalDisk.VolumeName }
+                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object { $_.Name -eq $logicalDisk.VolumeName }
                 $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
             }
 
