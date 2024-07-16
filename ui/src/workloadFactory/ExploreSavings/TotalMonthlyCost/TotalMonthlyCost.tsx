@@ -5,15 +5,22 @@ import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 
-const TotalMonthlyCost = () => {
+type TMC = {
+    disableState?: boolean;
+};
+const TotalMonthlyCost = ({ disableState = false }: TMC) => {
     const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
-    const noData = false;
+    const noData = disableState;
     const costZeroCase = false;
 
     return (
         <div className={styles.totalMonthlyCost}>
             <div className={styles.headSection}>
-                <DsTypography variant="Semibold_16" className={styles.title}>
+                <DsTypography
+                    variant="Semibold_16"
+                    className={styles.title}
+                    style={{ color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)' }}
+                >
                     {GENERAL.TOTAL_MONTHLY_COST}
                 </DsTypography>
                 {storageSavingsLoading && <DsFlashingDotsLoader />}

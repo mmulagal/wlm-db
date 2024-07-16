@@ -1,6 +1,6 @@
 import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './ManualTCOFields.module.scss';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -38,6 +38,10 @@ const ManualTCOFields = () => {
         return options;
     }, []);
 
+    useEffect(() => {
+        dispatch(setSelectedRegionFromManualTCO(generateRegionList[0]));
+    }, [generateRegionList]);
+
     //Function to generate the options for Select Field
     const generateSQLEditionList = useMemo<optionType[]>((): optionType[] => {
         const deploymentModel = [
@@ -54,6 +58,10 @@ const ManualTCOFields = () => {
 
         return options;
     }, []);
+
+    useEffect(() => {
+        dispatch(setSelectedManualServerEdition(generateSQLEditionList[0]));
+    }, [generateSQLEditionList]);
 
     //Function to generate the options for Select Field
     const generateDeploymentModelList = useMemo<optionType[]>((): optionType[] => {

@@ -38,6 +38,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
         instanceTypeLoading: false,
         instanceTypeError: null
     },
+    volumeFilledStatus: false,
     manualTCOVolumeTypes: {
         io2: {
             manualTCONumberOfVolumes: null,
@@ -108,6 +109,9 @@ const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setVolumeFilledStatus: (state, action: PayloadAction<any>) => {
+            state.volumeFilledStatus = action.payload;
+        },
         addManualInstanceTypeList: (state, action: PayloadAction<any>) => {
             state.getManualInstanceTypeList = action.payload;
         },
@@ -228,6 +232,7 @@ const exploreSavingsSlice = createSlice({
 
 export const {
     addManualInstanceTypeList,
+    setVolumeFilledStatus,
     setVolumeTypeOperation,
     setSelectedSecondaryManualInstanceType,
     setSecondarySelectedMachineDescription,

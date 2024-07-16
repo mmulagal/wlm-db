@@ -46,6 +46,7 @@ export interface ExploreSavingsSliceEntities {
         instanceTypeError: null;
     };
     manualTCOVolumeTypes: any;
+    volumeFilledStatus: boolean;
 }
 
 export interface StorageSavingsInterface {
