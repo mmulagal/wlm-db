@@ -65,6 +65,7 @@ const SecondaryManualEC2 = () => {
                     }}
                     value={manualSecondaryMachineDescription}
                     className={styles.setWidth}
+                    isOptional
                 />
 
                 <SelectField

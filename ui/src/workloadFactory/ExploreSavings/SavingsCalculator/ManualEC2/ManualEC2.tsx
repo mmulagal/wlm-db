@@ -65,6 +65,7 @@ const ManualEC2 = () => {
                     }}
                     value={manualMonthlyDescription}
                     className={styles.setWidth}
+                    isOptional
                 />
 
                 <SelectField

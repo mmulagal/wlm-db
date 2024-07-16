@@ -38,6 +38,7 @@ export interface ExploreSavingsSliceEntities {
     selectedManualInstanceType: any;
     selectedSecondaryManualInstanceType: any;
     selectedVolumeTab: string;
+    selectedVolumeTabForSecondary: string;
     manualTCOVolumeTypes2: any;
     getManualInstanceTypeList: {
         instanceTypeData: { instanceTypes?: InstanceType[] };

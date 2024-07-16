@@ -1,6 +1,11 @@
 .manualVolumeTypes {
     margin-top: 32px;
 
+    .volSection {
+        display: flex;
+        gap: 8px;
+    }
+
     .subText {
         margin-top: 8px;
     }

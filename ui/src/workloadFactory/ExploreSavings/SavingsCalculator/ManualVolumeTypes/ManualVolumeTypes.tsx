@@ -4,17 +4,62 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { setSelectedVolumeType, setVolumeTypeOperation } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import ManualTCOInputComponent from './ManualTCOInputComponent';
+import { useEffect, useState } from 'react';
+import { allPropertiesHaveValues, calculateTotalVolumes } from '../savingsUtil';
 
 const ManualVolumeTypes = () => {
     const dispatch = useDispatch();
     const { selectedVolumeTab, manualTCOVolumeTypes } = useAppSelector(state => state.exploreSavings);
+
+    const [volumesFilled, setVolumesFilled] = useState(0);
+    const [totalVolumes, setTotalVolumes] = useState(0);
+
+    useEffect(() => {
+        const io1Complete = allPropertiesHaveValues({
+            manualTCONumberOfVolumes: manualTCOVolumeTypes?.io1?.manualTCONumberOfVolumes,
+            manualTCOStorageAmount: manualTCOVolumeTypes?.io1?.manualTCOStorageAmount,
+            manualTCOProvisionedIOPS: manualTCOVolumeTypes?.io1?.manualTCOProvisionedIOPS
+        });
+        const io2Complete = allPropertiesHaveValues(manualTCOVolumeTypes?.io2);
+        const gp2Complete = allPropertiesHaveValues({
+            manualTCONumberOfVolumes: manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes,
+            manualTCOStorageAmount: manualTCOVolumeTypes?.gp2?.manualTCOStorageAmount
+        });
+        const gp3Complete = allPropertiesHaveValues(manualTCOVolumeTypes?.gp3);
+        const st1Complete = allPropertiesHaveValues({
+            manualTCONumberOfVolumes: manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes,
+            manualTCOStorageAmount: manualTCOVolumeTypes?.st1?.manualTCOStorageAmount
+        });
+        const result = io1Complete + io2Complete + gp2Complete + gp3Complete + st1Complete;
+
+        setVolumesFilled(result);
+        if (result > 0) {
+            setTotalVolumes(
+                calculateTotalVolumes(
+                    io1Complete,
+                    io2Complete,
+                    gp2Complete,
+                    gp3Complete,
+                    st1Complete,
+                    manualTCOVolumeTypes
+                )
+            );
+        } else {
+            setTotalVolumes(0);
+        }
+    }, [manualTCOVolumeTypes]);
 
     const handleSelect = (value: string) => {
         dispatch(setSelectedVolumeType(value));
     };
     return (
         <div className={styles.manualVolumeTypes}>
-            <DsTypography variant="Semibold_14">Volume Types</DsTypography>
+            <div className={styles.volSection}>
+                <DsTypography variant="Semibold_14">Volume Types</DsTypography>
+                <DsTypography variant="Regular_14">
+                    (Volume types filled: {volumesFilled} &nbsp;|&nbsp; Total volumes: {totalVolumes})
+                </DsTypography>
+            </div>
             <DsTypography variant="Regular_14" className={styles.subText}>
                 At least one volume type should be filled.
             </DsTypography>
