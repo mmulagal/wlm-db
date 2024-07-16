@@ -31,6 +31,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualInstanceType: null,
     selectedSecondaryManualInstanceType: null,
     selectedVolumeTab: 'gp2',
+    selectedVolumeTabForSecondary: 'gp2',
 
     getManualInstanceTypeList: {
         instanceTypeData: {},
@@ -119,6 +120,9 @@ const exploreSavingsSlice = createSlice({
 
         setSelectedVolumeType(state, action: PayloadAction<any>) {
             state.selectedVolumeTab = action.payload;
+        },
+        setSelectedVolumeTabForSecondary(state, action: PayloadAction<any>) {
+            state.selectedVolumeTabForSecondary = action.payload;
         },
         setSelectedManualInstanceType(state, action: PayloadAction<any>) {
             state.selectedManualInstanceType = action.payload;
@@ -240,6 +244,7 @@ export const {
     setSelectedCloneRefresh,
     setMonthlyChangeRate,
     setSaveConfigName,
+    setSelectedVolumeTabForSecondary,
     setUnmanagedExploreSavingsHost,
     setSelectedInstanceId,
     setSelectedPartnerInstanceId,

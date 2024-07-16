@@ -1291,3 +1291,29 @@ export const mergeAoagVolumesList = (listA: any[], listB: any[]) => {
     }
     return Array.from(mergedMap.values());
 };
+
+export const allPropertiesHaveValues = (obj: any) => {
+    for (let key in obj) {
+        if (obj[key] === null || obj[key] === undefined || obj[key] === '') {
+            return 0;
+        }
+    }
+    return 1;
+};
+
+export const calculateTotalVolumes = (
+    io1Complete: number,
+    io2Complete: number,
+    gp2Complete: number,
+    gp3Complete: number,
+    st1Complete: number,
+    manualTCOVolumeTypes: any
+) => {
+    return (
+        Number(io1Complete ? manualTCOVolumeTypes?.io1?.manualTCONumberOfVolumes : 0) +
+        Number(io2Complete ? manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes : 0) +
+        Number(gp2Complete ? manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes : 0) +
+        Number(gp3Complete ? manualTCOVolumeTypes?.gp3?.manualTCONumberOfVolumes : 0) +
+        Number(st1Complete ? manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes : 0)
+    );
+};
