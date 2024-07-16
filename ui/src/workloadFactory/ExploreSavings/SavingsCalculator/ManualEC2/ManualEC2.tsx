@@ -76,7 +76,7 @@ const ManualEC2 = () => {
                     label={'Instance type'}
                     isClearable={false}
                     variant="two-lines"
-                    defaultValue={selectedManualInstanceType ? selectedManualInstanceType : [generateInstances[0]]}
+                    value={selectedManualInstanceType}
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedManualInstanceType(selectedOptions));
                     }}

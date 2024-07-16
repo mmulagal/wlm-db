@@ -113,7 +113,7 @@ const exploreSavingsSlice = createSlice({
             state.volumeFilledStatus = action.payload;
         },
         addManualInstanceTypeList: (state, action: PayloadAction<any>) => {
-            state.getManualInstanceTypeList = action.payload;
+            state.getManualInstanceTypeList.instanceTypeData = action.payload;
         },
         setVolumeTypeOperation(state, action: PayloadAction<any>) {
             state.manualTCOVolumeTypes[action.payload.type][action.payload.mode] = action.payload.value;
