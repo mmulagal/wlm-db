@@ -1,10 +1,10 @@
-import { DsTypography, TextField } from '@netapp/design-system';
+import { TextField } from '@netapp/design-system';
 import styles from './ManualEC2.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import {
-    setSelectedMachineDescription,
-    setSelectedManualInstanceType
+    setSecondarySelectedMachineDescription,
+    setSelectedSecondaryManualInstanceType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useMemo } from 'react';
@@ -12,9 +12,11 @@ import { SelectField, optionType } from '@netapp/design-system/dist/components/S
 import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
 
-const ManualEC2 = () => {
+const SecondaryManualEC2 = () => {
     const dispatch = useDispatch();
-    const { manualMonthlyDescription, selectedManualInstanceType } = useAppSelector(state => state.exploreSavings);
+    const { manualSecondaryMachineDescription, selectedSecondaryManualInstanceType } = useAppSelector(
+        state => state.exploreSavings
+    );
     //Getting the Data from state
     const { instanceTypeData, instanceTypeLoading } = useAppSelector(
         state => state.exploreSavings.getManualInstanceTypeList
@@ -55,15 +57,13 @@ const ManualEC2 = () => {
     }, [instanceTypeData]);
     return (
         <div className={styles.manualEc2}>
-            <DsTypography variant="Semibold_14">{GENERAL.EC2_SPECIFICATIONS}</DsTypography>
-
             <div className={styles.firstRow}>
                 <TextField
                     label={'Machine description'}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        dispatch(setSelectedMachineDescription(e.target.value));
+                        dispatch(setSecondarySelectedMachineDescription(e.target.value));
                     }}
-                    value={manualMonthlyDescription}
+                    value={manualSecondaryMachineDescription}
                     className={styles.setWidth}
                 />
 
@@ -71,9 +71,13 @@ const ManualEC2 = () => {
                     label={'Instance type'}
                     isClearable={false}
                     variant="two-lines"
-                    defaultValue={selectedManualInstanceType ? selectedManualInstanceType : [generateInstances[0]]}
+                    defaultValue={
+                        selectedSecondaryManualInstanceType
+                            ? selectedSecondaryManualInstanceType
+                            : [generateInstances[0]]
+                    }
                     onChange={(selectedOptions: any): void => {
-                        dispatch(setSelectedManualInstanceType(selectedOptions));
+                        dispatch(setSelectedSecondaryManualInstanceType(selectedOptions));
                     }}
                     isSearchable={true}
                     options={generateInstances}
@@ -84,4 +88,4 @@ const ManualEC2 = () => {
     );
 };
 
-export default ManualEC2;
+export default SecondaryManualEC2;
