@@ -203,11 +203,6 @@ const ExploreSavingsTableV2 = () => {
                 tableProps={tableProps}
                 pluralTitle={`${GENERAL.ES_TABLE_TITLE}s`}
                 singularTitle={GENERAL.ES_TABLE_TITLE}
-                actionsRight={
-                    <DsButton type="text" onClick={() => handleManualTCO(dispatch)} isDisabled>
-                        Manual explore savings
-                    </DsButton>
-                }
             />
             <Table
                 //@ts-ignore

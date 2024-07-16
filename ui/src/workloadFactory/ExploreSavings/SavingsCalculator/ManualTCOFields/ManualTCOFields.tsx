@@ -1,6 +1,6 @@
 import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './ManualTCOFields.module.scss';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -8,6 +8,7 @@ import {
     setMonthlyChangeRate,
     setNumberOfClonedCopies,
     setSelectedDeploymentModelForManualTCO,
+    setSelectedManualServerEdition,
     setSelectedMonthlyBYOLCost,
     setSelectedRegionFromManualTCO
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
@@ -21,7 +22,8 @@ const ManualTCOFields = () => {
         selectedManualDeploymentModel,
         monthlyBYOLCost,
         numberOfClonedCopies,
-        monthlyChangeRate
+        monthlyChangeRate,
+        selectedManualServerEdition
     } = useAppSelector(state => state.exploreSavings);
 
     //Function to generate the options for Select Field
@@ -35,6 +37,31 @@ const ManualTCOFields = () => {
 
         return options;
     }, []);
+
+    useEffect(() => {
+        dispatch(setSelectedRegionFromManualTCO(generateRegionList[0]));
+    }, [generateRegionList]);
+
+    //Function to generate the options for Select Field
+    const generateSQLEditionList = useMemo<optionType[]>((): optionType[] => {
+        const deploymentModel = [
+            'SQL server Standard',
+            'SQL server Enterprise',
+            'SQL server Web',
+            'SQL server Developer'
+        ];
+        const options: optionType[] = [];
+        deploymentModel?.map((val, idx: number) => {
+            const option = generateOptionType(val, val, '', false, '', val);
+            options.push(option);
+        });
+
+        return options;
+    }, []);
+
+    useEffect(() => {
+        dispatch(setSelectedManualServerEdition(generateSQLEditionList[0]));
+    }, [generateSQLEditionList]);
 
     //Function to generate the options for Select Field
     const generateDeploymentModelList = useMemo<optionType[]>((): optionType[] => {
@@ -98,13 +125,17 @@ const ManualTCOFields = () => {
                         className={styles.deploymentModelWidth}
                     />
 
-                    <TextField
-                        label={'Monthly SQL BYOL costs($)'}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            dispatch(setSelectedMonthlyBYOLCost(e.target.value));
+                    <SelectField
+                        label={'SQL server edition'}
+                        isClearable={false}
+                        defaultValue={
+                            selectedManualServerEdition ? selectedManualServerEdition : [generateSQLEditionList[0]]
+                        }
+                        onChange={(selectedOptions: any): void => {
+                            dispatch(setSelectedManualServerEdition(selectedOptions));
                         }}
-                        isOptional={true}
-                        value={monthlyBYOLCost}
+                        isSearchable={generateSQLEditionList.length > 5}
+                        options={generateSQLEditionList}
                         className={styles.deploymentModelWidth}
                     />
                 </div>
@@ -131,6 +162,18 @@ const ManualTCOFields = () => {
                         className={styles.deploymentModelWidth}
                         info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
                         error={errorForChangeRate()}
+                    />
+                </div>
+
+                <div className={styles.secondRow}>
+                    <TextField
+                        label={'Monthly SQL BYOL costs($)'}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            dispatch(setSelectedMonthlyBYOLCost(e.target.value));
+                        }}
+                        isOptional={true}
+                        value={monthlyBYOLCost}
+                        className={styles.deploymentModelWidth}
                     />
                 </div>
             </div>

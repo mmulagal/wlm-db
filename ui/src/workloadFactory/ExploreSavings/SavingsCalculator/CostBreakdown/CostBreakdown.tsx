@@ -8,7 +8,11 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 
-const CostBreakdown = () => {
+type CB = {
+    disableState: boolean;
+};
+
+const CostBreakdown = ({ disableState = false }: CB) => {
     const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
 
     const [calculatedResponse, setCalculatedResponse] = useState({});
@@ -42,6 +46,7 @@ const CostBreakdown = () => {
                         <Text
                             color={!calculatedResponse && 'text-disabled'}
                             level={data?.type === 'Total summary' ? '14' : '13'}
+                            style={{ color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)' }}
                         >
                             {data?.isTooltip ? (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -55,8 +60,8 @@ const CostBreakdown = () => {
                     </GridItem>
                     <GridItem lg="4">
                         <Text style={{ paddingLeft: 10 }}>
-                            {!loading && calculatedResponse && data?.fsx}
-                            {loading && (
+                            {!disableState && !loading && calculatedResponse && data?.fsx}
+                            {!disableState && loading && (
                                 <div style={{ position: 'relative', top: '5px' }}>
                                     <DsFlashingDotsLoader />
                                 </div>
@@ -65,8 +70,8 @@ const CostBreakdown = () => {
                     </GridItem>
                     <GridItem lg="4">
                         <Text style={{ paddingLeft: 10 }}>
-                            {!loading && calculatedResponse && data?.ebs}
-                            {loading && (
+                            {!disableState && !loading && calculatedResponse && data?.ebs}
+                            {!disableState && loading && (
                                 <div style={{ position: 'relative', top: '5px' }}>
                                     <DsFlashingDotsLoader />
                                 </div>
@@ -81,7 +86,11 @@ const CostBreakdown = () => {
     return (
         <div className={styles.costBreakdown}>
             <div className={styles.headSection}>
-                <DsTypography variant="Semibold_16" className={styles.title}>
+                <DsTypography
+                    variant="Semibold_16"
+                    className={styles.title}
+                    style={{ color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)' }}
+                >
                     {GENERAL.ES_COST_BREAKDOWN}
                 </DsTypography>
                 {loading && <DsFlashingDotsLoader />}
@@ -93,7 +102,7 @@ const CostBreakdown = () => {
                         <CardTableContent columns="lg-3" style={{ padding: 0, height: '56px' }}>
                             <div
                                 style={
-                                    !calculatedResponse
+                                    !calculatedResponse || disableState
                                         ? {
                                               color: 'var(--text-disabled)',
                                               marginLeft: 16
@@ -108,14 +117,18 @@ const CostBreakdown = () => {
                                 <div
                                     className={styles['table-header']}
                                     style={
-                                        calculatedResponse
-                                            ? { backgroundColor: 'var(--chart-9)' }
-                                            : { backgroundColor: 'var(--border)' }
+                                        !calculatedResponse || disableState
+                                            ? { backgroundColor: 'var(--border)' }
+                                            : { backgroundColor: 'var(--chart-9)' }
                                     }
                                 ></div>
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
-                                    style={{ width: '121px', fontWeight: '500' }}
+                                    style={{
+                                        width: '121px',
+                                        fontWeight: '500',
+                                        color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                    }}
                                 >
                                     {' '}
                                     {GENERAL.ES_MSSQL_SERVER}
@@ -125,14 +138,18 @@ const CostBreakdown = () => {
                                 <div
                                     className={styles['table-header']}
                                     style={
-                                        calculatedResponse
-                                            ? { backgroundColor: 'var(--chart-6)' }
-                                            : { backgroundColor: 'var(--border)' }
+                                        !calculatedResponse || disableState
+                                            ? { backgroundColor: 'var(--border)' }
+                                            : { backgroundColor: 'var(--chart-6)' }
                                     }
                                 ></div>
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
-                                    style={{ width: '121px', fontWeight: '500' }}
+                                    style={{
+                                        width: '121px',
+                                        fontWeight: '500',
+                                        color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                    }}
                                 >
                                     {' '}
                                     {GENERAL.ES_MSSQL_EBS}

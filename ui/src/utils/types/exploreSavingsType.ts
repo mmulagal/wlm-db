@@ -1,3 +1,13 @@
+export interface InstanceType {
+    instanceType?: string;
+    vCpus?: number;
+    ramInMib?: number;
+    iopsInMbps?: number;
+    architecture?: Array<string>;
+}
+
+export interface ManualTCOVolTypes {}
+
 export interface ExploreSavingsSliceEntities {
     selectedSnapshotFrequency: any;
     numberOfClonedCopies: number | any;
@@ -23,13 +33,20 @@ export interface ExploreSavingsSliceEntities {
     selectedManualDeploymentModel: string | any;
     monthlyBYOLCost: string;
     manualMonthlyDescription: string;
+    manualSecondaryMachineDescription: string;
     selectedManualServerEdition: any;
     selectedManualInstanceType: any;
+    selectedSecondaryManualInstanceType: any;
     selectedVolumeTab: string;
-    manualTCONumberOfVolumes: number | any;
-    manualTCOStorageAmount: number | any;
-    manualTCOProvisionedIOPS: number | any;
-    manualTCOThroughput: number | any;
+    selectedVolumeTabForSecondary: string;
+    manualTCOVolumeTypes2: any;
+    getManualInstanceTypeList: {
+        instanceTypeData: { instanceTypes?: InstanceType[] };
+        instanceTypeLoading: false;
+        instanceTypeError: null;
+    };
+    manualTCOVolumeTypes: any;
+    volumeFilledStatus: boolean;
 }
 
 export interface StorageSavingsInterface {
@@ -53,6 +70,23 @@ export interface StorageSavingsInterface {
         license?: number | string;
         total?: number | string;
     };
+    single?: StorageSavingsFsxnForAZ;
+    multi?: StorageSavingsFsxnForAZ;
+    totalSummary?: {
+        existing?: number | string;
+        recommended?: number | string;
+    };
+    compute?: {
+        existing?: RecommendedCompute;
+        recommended?: RecommendedCompute;
+    };
+    license?: {
+        existing?: RecommendedLicense;
+        recommended?: RecommendedLicense;
+    };
+}
+
+export interface StorageSavingsFsxnForAZ {
     fsxCalculation?: {
         deploymentType?: string;
         numberOfVolumes?: number;
@@ -68,18 +102,6 @@ export interface StorageSavingsInterface {
         useCase?: string;
         regionName?: string;
         monthlySnapshotCapacity?: number | string;
-    };
-    totalSummary?: {
-        existing?: number | string;
-        recommended?: number | string;
-    };
-    compute?: {
-        existing?: RecommendedCompute;
-        recommended?: RecommendedCompute;
-    };
-    license?: {
-        existing?: RecommendedLicense;
-        recommended?: RecommendedLicense;
     };
     fsxBreakdown?: {
         fsxDataLunSize?: number | string;
@@ -123,66 +145,19 @@ export interface ViewCalculationsInterface {
     existingLicenseCalculation?: Array<RecommendedLicense>;
     ebsInstanceCalculation?: Array<RecommendedIntanceInterface>;
     fsxInstanceCalculation?: Array<RecommendedIntanceInterface>;
-    fsxOntapCalculation?: {
-        desiredStorageCapacity?: number | string;
-        percentageOfDataOnSsdStorage?: number | string;
-        savingsFromCompressionAndDeduplication?: number | string;
-        storageSavingsFromCompressionAndDeduplication?: number | string;
-        effectiveFsxnStorageCapacity?: number | string;
-        ssdStoragePerMonth?: number | string;
-        greaterOfSsdAndMinAllowedSsd?: number | string;
-        ssdMonthlyCost?: number | string;
-        totalMonthlyCostForFSxSsd?: number | string;
-        ratioAfterSavings?: number | string;
-        dataOnCapacityPoolStorageFactor?: number | string;
-        capacityPoolStorage?: number | string;
-        capacityMonthlyCost?: number | string;
-        totalMonthlyCostForCapacity?: number | string;
-        totalMonthlyStorageCharge?: number | string;
-        minFileSystemsNumForStorage?: number | string;
-        minFileSystemsNumForThroughputCapacity?: number | string;
-        minFileSystemsNumForSsdIops?: number | string;
-        requiredNumOfFsxFractional?: number | string;
-        requiredNumOfFsx?: number | string;
-        minThroughputCapacityRequired?: number | string;
-        provisionedThroughputCapacity?: number | string;
-        totalMonthlyFsxnThroughputCapacityCost?: number | string;
-        includedSsdIops?: number | string;
-        additionalSsdIops?: number | string;
-        billedAdditionalSsdIops?: number | string;
-        additionalBilledCostForSsdIops?: number | string;
-        totalThroughputAndIopsMonthly?: number | string;
-        ebsCapacity?: number | string;
-        numberOfVolumes?: number;
-        fsxnStoragePrice?: number | string;
-        fsxnCapacityPrice?: number | string;
-        fsxnIopsPrice?: number | string;
-        maxSsdTierSize?: number | string;
-        suggestedFsxnThroughputCapacity?: number | string;
-        maxThroughput?: number | string;
-        fsxnThroughputPrice?: number | string;
-        provisionedSsdIops?: number | string;
-        includedIops?: number | string;
-        maxSsdIops?: number | string;
+    single?: {
+        fsxOntapCalculation?: FsxOntapCalculation;
+        fsxOntapSnapshotCalculation?: FsxOntapSnapshotCalculation;
+        fsxCloneCalculation?: FsxCloneCalculation;
     };
-    fsxOntapSnapshotCalculation?: {
-        fsxnSsdPrice?: number | string;
-        fsxnCapacityPrice?: number | string;
-        desiredStorageCapacity?: number | string;
-        percentageOfDataOnSsdStorage?: number | string;
-        savingsFromCompressionAndDeduplication?: number | string;
-        storageSavingsFromCompressionAndDeduplication?: number | string;
-        effectiveFsxnStorageCapacity?: number | string;
-        ssdStoragePerMonth?: number | string;
-        ssdMonthlyCost?: number | string;
-        totalSnapshotMonthlyCostForFsxSsd?: number | string;
-        ratioAfterSavings?: number | string;
-        dataOnCapacityPoolStorageFactor?: number | string;
-        capacityPoolStorage?: number | string;
-        capacityMonthlyCost?: number | string;
-        totalMonthlyCostForCapacity?: number | string;
-        totalSnapshotMonthlyCost?: number | string;
+    multi?: {
+        fsxOntapCalculation?: FsxOntapCalculation;
+        fsxOntapSnapshotCalculation?: FsxOntapSnapshotCalculation;
+        fsxCloneCalculation?: FsxCloneCalculation;
     };
+    fsxOntapCalculation?: FsxOntapCalculation;
+    fsxOntapSnapshotCalculation?: FsxOntapSnapshotCalculation;
+    fsxCloneCalculation?: FsxCloneCalculation;
     ebsCalculation?: {
         storageAmountPerVol?: number | string;
         totalInstanceHours?: number | string;
@@ -200,23 +175,6 @@ export interface ViewCalculationsInterface {
         ebsCapacityPrice?: number | string;
         hoursInAMonth?: number | string;
         ebsTotalCostMonthly?: number | string;
-    };
-    fsxCloneCalculation?: {
-        clonedCopiesCount?: number | string;
-        numberOfClonesInAMonth?: number | string;
-        changeRateBetweenClones?: number | string;
-        totalFsxnCapacity?: number | string;
-        fsxnSsdPrice?: number | string;
-        cloneRefreshFrequency?: string;
-        monthlyChangeRatePercentage?: number | string;
-        desiredStorageCapacity?: number | string;
-        percentageOfDataOnSsdStorage?: number | string;
-        savingsFromCompressionAndDeduplication?: number | string;
-        storageSavingsFromCompressionAndDeduplication?: number | string;
-        effectiveFsxnStorageCapacity?: number | string;
-        ssdStoragePerMonth?: number | string;
-        ssdMonthlyCost?: number | string;
-        totalCloneMonthlyCost?: number | string;
     };
     ebsCloneCalculation?: {
         clonedCopiesCount?: number | string;
@@ -242,4 +200,85 @@ export interface ViewCalculationsInterface {
     ebsTotalCost?: number | string;
     fsxSnapshotTotalCost?: number | string;
     totalAzCost?: number | string;
+    azType?: string;
+}
+
+export interface FsxOntapCalculation {
+    desiredStorageCapacity?: number | string;
+    percentageOfDataOnSsdStorage?: number | string;
+    savingsFromCompressionAndDeduplication?: number | string;
+    storageSavingsFromCompressionAndDeduplication?: number | string;
+    effectiveFsxnStorageCapacity?: number | string;
+    ssdStoragePerMonth?: number | string;
+    greaterOfSsdAndMinAllowedSsd?: number | string;
+    ssdMonthlyCost?: number | string;
+    totalMonthlyCostForFSxSsd?: number | string;
+    ratioAfterSavings?: number | string;
+    dataOnCapacityPoolStorageFactor?: number | string;
+    capacityPoolStorage?: number | string;
+    capacityMonthlyCost?: number | string;
+    totalMonthlyCostForCapacity?: number | string;
+    totalMonthlyStorageCharge?: number | string;
+    minFileSystemsNumForStorage?: number | string;
+    minFileSystemsNumForThroughputCapacity?: number | string;
+    minFileSystemsNumForSsdIops?: number | string;
+    requiredNumOfFsxFractional?: number | string;
+    requiredNumOfFsx?: number | string;
+    minThroughputCapacityRequired?: number | string;
+    provisionedThroughputCapacity?: number | string;
+    totalMonthlyFsxnThroughputCapacityCost?: number | string;
+    includedSsdIops?: number | string;
+    additionalSsdIops?: number | string;
+    billedAdditionalSsdIops?: number | string;
+    additionalBilledCostForSsdIops?: number | string;
+    totalThroughputAndIopsMonthly?: number | string;
+    ebsCapacity?: number | string;
+    numberOfVolumes?: number;
+    fsxnStoragePrice?: number | string;
+    fsxnCapacityPrice?: number | string;
+    fsxnIopsPrice?: number | string;
+    maxSsdTierSize?: number | string;
+    suggestedFsxnThroughputCapacity?: number | string;
+    maxThroughput?: number | string;
+    fsxnThroughputPrice?: number | string;
+    provisionedSsdIops?: number | string;
+    includedIops?: number | string;
+    maxSsdIops?: number | string;
+}
+
+export interface FsxOntapSnapshotCalculation {
+    fsxnSsdPrice?: number | string;
+    fsxnCapacityPrice?: number | string;
+    desiredStorageCapacity?: number | string;
+    percentageOfDataOnSsdStorage?: number | string;
+    savingsFromCompressionAndDeduplication?: number | string;
+    storageSavingsFromCompressionAndDeduplication?: number | string;
+    effectiveFsxnStorageCapacity?: number | string;
+    ssdStoragePerMonth?: number | string;
+    ssdMonthlyCost?: number | string;
+    totalSnapshotMonthlyCostForFsxSsd?: number | string;
+    ratioAfterSavings?: number | string;
+    dataOnCapacityPoolStorageFactor?: number | string;
+    capacityPoolStorage?: number | string;
+    capacityMonthlyCost?: number | string;
+    totalMonthlyCostForCapacity?: number | string;
+    totalSnapshotMonthlyCost?: number | string;
+}
+
+export interface FsxCloneCalculation {
+    clonedCopiesCount?: number | string;
+    numberOfClonesInAMonth?: number | string;
+    changeRateBetweenClones?: number | string;
+    totalFsxnCapacity?: number | string;
+    fsxnSsdPrice?: number | string;
+    cloneRefreshFrequency?: string;
+    monthlyChangeRatePercentage?: number | string;
+    desiredStorageCapacity?: number | string;
+    percentageOfDataOnSsdStorage?: number | string;
+    savingsFromCompressionAndDeduplication?: number | string;
+    storageSavingsFromCompressionAndDeduplication?: number | string;
+    effectiveFsxnStorageCapacity?: number | string;
+    ssdStoragePerMonth?: number | string;
+    ssdMonthlyCost?: number | string;
+    totalCloneMonthlyCost?: number | string;
 }

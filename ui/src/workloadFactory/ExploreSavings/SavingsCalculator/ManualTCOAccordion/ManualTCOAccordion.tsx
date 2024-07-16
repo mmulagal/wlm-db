@@ -1,7 +1,7 @@
 import { DsAccordion } from '@netapp/design-system';
 import styles from './ManualTCOAccordion.module.scss';
-import ManualEC2 from '../ManualEC2/ManualEC2';
-import ManualVolumeTypes from '../ManualVolumeTypes/ManualVolumeTypes';
+import SecondaryManualEC2 from '../ManualEC2/SecondaryManualEC2';
+import SecondaryManualVolType from '../ManualVolumeTypes/SecondaryManualVolType';
 
 const ManualTCOAccordion = () => {
     return (
@@ -13,8 +13,8 @@ const ManualTCOAccordion = () => {
                 value=""
                 children={
                     <div>
-                        <ManualEC2 />
-                        <ManualVolumeTypes />
+                        <SecondaryManualEC2 />
+                        <SecondaryManualVolType />
                     </div>
                 }
             />

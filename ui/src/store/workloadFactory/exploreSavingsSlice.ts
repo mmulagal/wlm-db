@@ -26,42 +26,122 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualDeploymentModel: null,
     monthlyBYOLCost: '',
     manualMonthlyDescription: '',
+    manualSecondaryMachineDescription: '',
     selectedManualServerEdition: null,
     selectedManualInstanceType: null,
-    selectedVolumeTab: 'io2',
-    manualTCONumberOfVolumes: null,
-    manualTCOStorageAmount: null,
-    manualTCOProvisionedIOPS: null,
-    manualTCOThroughput: null
+    selectedSecondaryManualInstanceType: null,
+    selectedVolumeTab: 'gp2',
+    selectedVolumeTabForSecondary: 'gp2',
+
+    getManualInstanceTypeList: {
+        instanceTypeData: {},
+        instanceTypeLoading: false,
+        instanceTypeError: null
+    },
+    volumeFilledStatus: false,
+    manualTCOVolumeTypes: {
+        io2: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        io1: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        gp2: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        gp3: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        st1: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        }
+    },
+    manualTCOVolumeTypes2: {
+        io2: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        io1: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        gp2: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        gp3: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        st1: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        }
+    }
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
-        setSelectedManualTCONumberOfVolumes(state, action: PayloadAction<any>) {
-            state.manualTCONumberOfVolumes = action.payload;
+        setVolumeFilledStatus: (state, action: PayloadAction<any>) => {
+            state.volumeFilledStatus = action.payload;
         },
-        setSelectedManualTCOStorageAmount(state, action: PayloadAction<any>) {
-            state.manualTCOStorageAmount = action.payload;
+        addManualInstanceTypeList: (state, action: PayloadAction<any>) => {
+            state.getManualInstanceTypeList = action.payload;
         },
-        setSelectedManualTCOProvisionedIOPS(state, action: PayloadAction<any>) {
-            state.manualTCOProvisionedIOPS = action.payload;
+        setVolumeTypeOperation(state, action: PayloadAction<any>) {
+            state.manualTCOVolumeTypes[action.payload.type][action.payload.mode] = action.payload.value;
         },
-        setSelectedManualTCOThroughput(state, action: PayloadAction<any>) {
-            state.manualTCOThroughput = action.payload;
+        setSecondaryVolumeTypeOperation(state, action: PayloadAction<any>) {
+            state.manualTCOVolumeTypes2[action.payload.type][action.payload.mode] = action.payload.value;
         },
+
         setSelectedVolumeType(state, action: PayloadAction<any>) {
             state.selectedVolumeTab = action.payload;
         },
+        setSelectedVolumeTabForSecondary(state, action: PayloadAction<any>) {
+            state.selectedVolumeTabForSecondary = action.payload;
+        },
         setSelectedManualInstanceType(state, action: PayloadAction<any>) {
             state.selectedManualInstanceType = action.payload;
+        },
+        setSelectedSecondaryManualInstanceType(state, action: PayloadAction<any>) {
+            state.selectedSecondaryManualInstanceType = action.payload;
         },
         setSelectedManualServerEdition(state, action: PayloadAction<any>) {
             state.selectedManualServerEdition = action.payload;
         },
         setSelectedMachineDescription(state, action: PayloadAction<any>) {
             state.manualMonthlyDescription = action.payload;
+        },
+        setSecondarySelectedMachineDescription(state, action: PayloadAction<any>) {
+            state.manualSecondaryMachineDescription = action.payload;
         },
         setSelectedMonthlyBYOLCost(state, action: PayloadAction<any>) {
             state.monthlyBYOLCost = action.payload;
@@ -151,10 +231,12 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
-    setSelectedManualTCONumberOfVolumes,
-    setSelectedManualTCOStorageAmount,
-    setSelectedManualTCOProvisionedIOPS,
-    setSelectedManualTCOThroughput,
+    addManualInstanceTypeList,
+    setVolumeFilledStatus,
+    setVolumeTypeOperation,
+    setSelectedSecondaryManualInstanceType,
+    setSecondarySelectedMachineDescription,
+    setSecondaryVolumeTypeOperation,
     setSelectedVolumeType,
     setSelectedManualInstanceType,
     setSelectedManualServerEdition,
@@ -167,6 +249,7 @@ export const {
     setSelectedCloneRefresh,
     setMonthlyChangeRate,
     setSaveConfigName,
+    setSelectedVolumeTabForSecondary,
     setUnmanagedExploreSavingsHost,
     setSelectedInstanceId,
     setSelectedPartnerInstanceId,

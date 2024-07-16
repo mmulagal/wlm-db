@@ -922,8 +922,12 @@ export const GENERAL = {
     ES_SAVINGS_PERCENTAGE: 'Percentage savings',
     ES_HEADING: 'Explore savings of selected host',
     ES_HEADER:
-        'Explore cost savings with Databases automatically. Select a Microsoft SQL server host and then click "Explore Savings". We will calculate your potential savings by moving to Microsoft SQL server using FSx for ONTAP file systems.',
+        'Explore cost savings with Databases automatically. select a Microsoft SQL server host and then click "Explore savings". We\'ll calculate your potential savings by moving to Microsoft SQL server using FSx for ONTAP file systems.',
     ES_SAVINGS: 'Explore savings',
+    MANUAL_EXLORE_SAVINGS: 'Manual explore savings',
+    EXPLORE_SAVING_MANUALLY: 'Explore savings Manually',
+    MANUAL_EXPLORE_SAVINGS_CONTENT:
+        'Alternatively, select the "manual explore savings" option for analysis of potential savings according to your needs and specifications of your Microsoft SQL server configuration.',
     INSTANCE_INFORMATION: 'Instance information:',
     ES_SAVE_CONFIG: 'Save configuration',
     ES_SAVE_CONFIG_DESC:
@@ -1041,11 +1045,13 @@ export const GENERAL = {
     ES_EBS_TOTAL_COST: 'EBS total cost',
     ES_MSSQL_EC2_INSTANCES: 'Microsoft SQL EC2 Instances',
     ES_SNAPSHOTS: 'Snapshots',
-    ES_EBS_SNAPSHOTS_DESC: 'Snapshots calcs are based on primary DB volumes only (not replicas).',
-    ES_EBS_CLONES_DESC: 'Clone calcs are based on primary DB volumes only (not replicas).',
+    ES_SNAPSHOTS_DESC: 'Snapshots calcs are based on primary DB volumes only (not replicas).',
+    ES_CLONES_DESC: 'Clones calcs are based on primary DB volumes only (not replicas).',
     ES_TOTAL_MONTHLY_COST: 'Total monthly cost',
     ES_FSXN_MULTI: 'FSx for ONTAP - multi availability zone',
-    ES_FSXN_SINGLE: 'FSx for ONTAP - single availability zone'
+    ES_FSXN_SINGLE: 'FSx for ONTAP - single availability zone',
+    ES_FSXN_AZ_DESC: 'FSxN costs are based on the primary DB volumes since it is a shared storage.',
+    ES_EBS_DESC: 'Costs for EBS are based on all EC2 instances.'
 };
 
 export const CODE_VIEWER = {

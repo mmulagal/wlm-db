@@ -540,3 +540,15 @@ export const PROTECTION_TEXT_STATUS = {
 };
 
 export const PREPARE_API_ENDPOINT = '/mssql/prepare';
+
+export const FSX_AZ_TYPE = {
+    SINGLE: 'single',
+    MULTI: 'multi'
+};
+
+export const SAVINGS_CALC_MODE = {
+    MANUAL: 'Manual',
+    AUTO: 'Auto'
+};
+
+export const PARTNER_NODE = 'partner node';
