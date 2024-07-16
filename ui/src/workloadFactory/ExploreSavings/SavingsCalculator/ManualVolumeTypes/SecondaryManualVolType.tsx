@@ -2,10 +2,10 @@ import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './ManualVolumeTypes.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import { setSelectedVolumeType, setVolumeTypeOperation } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import { setSelectedVolumeType } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import ManualTCOInputComponent from './ManualTCOInputComponent';
 
-const ManualVolumeTypes = () => {
+const SecondaryManualVolType = () => {
     const dispatch = useDispatch();
     const { selectedVolumeTab, manualTCOVolumeTypes } = useAppSelector(state => state.exploreSavings);
 
@@ -71,20 +71,18 @@ const ManualVolumeTypes = () => {
             </div>
 
             <div className={styles.contentContainer}>
-                {selectedVolumeTab === 'io2' && <ManualTCOInputComponent type="io2" from="primary" />}
-                {selectedVolumeTab === 'io1' && (
-                    <ManualTCOInputComponent type="io1" throughPutDisable={true} from="primary" />
-                )}
+                {selectedVolumeTab === 'io2' && <ManualTCOInputComponent type="io2" />}
+                {selectedVolumeTab === 'io1' && <ManualTCOInputComponent type="io1" throughPutDisable={true} />}
                 {selectedVolumeTab === 'gp2' && (
-                    <ManualTCOInputComponent type="gp2" throughPutDisable={true} IOPSDisable={true} from="primary" />
+                    <ManualTCOInputComponent type="gp2" throughPutDisable={true} IOPSDisable={true} />
                 )}
-                {selectedVolumeTab === 'gp3' && <ManualTCOInputComponent type="gp3" from="primary" />}
+                {selectedVolumeTab === 'gp3' && <ManualTCOInputComponent type="gp3" />}
                 {selectedVolumeTab === 'st1' && (
-                    <ManualTCOInputComponent type="st1" throughPutDisable={true} IOPSDisable={true} from="primary" />
+                    <ManualTCOInputComponent type="st1" throughPutDisable={true} IOPSDisable={true} />
                 )}
             </div>
         </div>
     );
 };
 
-export default ManualVolumeTypes;
+export default SecondaryManualVolType;

@@ -26,17 +26,80 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualDeploymentModel: null,
     monthlyBYOLCost: '',
     manualMonthlyDescription: '',
+    manualSecondaryMachineDescription: '',
     selectedManualServerEdition: null,
     selectedManualInstanceType: null,
-    selectedVolumeTab: 'io2',
-    manualTCONumberOfVolumes: null,
-    manualTCOStorageAmount: null,
-    manualTCOProvisionedIOPS: null,
-    manualTCOThroughput: null,
+    selectedSecondaryManualInstanceType: null,
+    selectedVolumeTab: 'gp2',
+
     getManualInstanceTypeList: {
         instanceTypeData: {},
         instanceTypeLoading: false,
         instanceTypeError: null
+    },
+    manualTCOVolumeTypes: {
+        io2: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        io1: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        gp2: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        gp3: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        st1: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        }
+    },
+    manualTCOVolumeTypes2: {
+        io2: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        io1: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        gp2: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        gp3: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        },
+        st1: {
+            manualTCONumberOfVolumes: null,
+            manualTCOStorageAmount: null,
+            manualTCOProvisionedIOPS: null,
+            manualTCOThroughput: null
+        }
     }
 };
 
@@ -47,29 +110,30 @@ const exploreSavingsSlice = createSlice({
         addManualInstanceTypeList: (state, action: PayloadAction<any>) => {
             state.getManualInstanceTypeList = action.payload;
         },
-        setSelectedManualTCONumberOfVolumes(state, action: PayloadAction<any>) {
-            state.manualTCONumberOfVolumes = action.payload;
+        setVolumeTypeOperation(state, action: PayloadAction<any>) {
+            state.manualTCOVolumeTypes[action.payload.type][action.payload.mode] = action.payload.value;
         },
-        setSelectedManualTCOStorageAmount(state, action: PayloadAction<any>) {
-            state.manualTCOStorageAmount = action.payload;
+        setSecondaryVolumeTypeOperation(state, action: PayloadAction<any>) {
+            state.manualTCOVolumeTypes2[action.payload.type][action.payload.mode] = action.payload.value;
         },
-        setSelectedManualTCOProvisionedIOPS(state, action: PayloadAction<any>) {
-            state.manualTCOProvisionedIOPS = action.payload;
-        },
-        setSelectedManualTCOThroughput(state, action: PayloadAction<any>) {
-            state.manualTCOThroughput = action.payload;
-        },
+
         setSelectedVolumeType(state, action: PayloadAction<any>) {
             state.selectedVolumeTab = action.payload;
         },
         setSelectedManualInstanceType(state, action: PayloadAction<any>) {
             state.selectedManualInstanceType = action.payload;
         },
+        setSelectedSecondaryManualInstanceType(state, action: PayloadAction<any>) {
+            state.selectedSecondaryManualInstanceType = action.payload;
+        },
         setSelectedManualServerEdition(state, action: PayloadAction<any>) {
             state.selectedManualServerEdition = action.payload;
         },
         setSelectedMachineDescription(state, action: PayloadAction<any>) {
             state.manualMonthlyDescription = action.payload;
+        },
+        setSecondarySelectedMachineDescription(state, action: PayloadAction<any>) {
+            state.manualSecondaryMachineDescription = action.payload;
         },
         setSelectedMonthlyBYOLCost(state, action: PayloadAction<any>) {
             state.monthlyBYOLCost = action.payload;
@@ -160,10 +224,10 @@ const exploreSavingsSlice = createSlice({
 
 export const {
     addManualInstanceTypeList,
-    setSelectedManualTCONumberOfVolumes,
-    setSelectedManualTCOStorageAmount,
-    setSelectedManualTCOProvisionedIOPS,
-    setSelectedManualTCOThroughput,
+    setVolumeTypeOperation,
+    setSelectedSecondaryManualInstanceType,
+    setSecondarySelectedMachineDescription,
+    setSecondaryVolumeTypeOperation,
     setSelectedVolumeType,
     setSelectedManualInstanceType,
     setSelectedManualServerEdition,

@@ -8,6 +8,7 @@ import {
     setMonthlyChangeRate,
     setNumberOfClonedCopies,
     setSelectedDeploymentModelForManualTCO,
+    setSelectedManualServerEdition,
     setSelectedMonthlyBYOLCost,
     setSelectedRegionFromManualTCO
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
@@ -21,7 +22,8 @@ const ManualTCOFields = () => {
         selectedManualDeploymentModel,
         monthlyBYOLCost,
         numberOfClonedCopies,
-        monthlyChangeRate
+        monthlyChangeRate,
+        selectedManualServerEdition
     } = useAppSelector(state => state.exploreSavings);
 
     //Function to generate the options for Select Field
@@ -29,6 +31,23 @@ const ManualTCOFields = () => {
         const regions = ['us-east-1 | US East (N.Virginia)', 'us-east-1 | US East (Ohio)'];
         const options: optionType[] = [];
         regions?.map((val, idx: number) => {
+            const option = generateOptionType(val, val, '', false, '', val);
+            options.push(option);
+        });
+
+        return options;
+    }, []);
+
+    //Function to generate the options for Select Field
+    const generateSQLEditionList = useMemo<optionType[]>((): optionType[] => {
+        const deploymentModel = [
+            'SQL server Standard',
+            'SQL server Enterprise',
+            'SQL server Web',
+            'SQL server Developer'
+        ];
+        const options: optionType[] = [];
+        deploymentModel?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '', val);
             options.push(option);
         });
@@ -98,13 +117,17 @@ const ManualTCOFields = () => {
                         className={styles.deploymentModelWidth}
                     />
 
-                    <TextField
-                        label={'Monthly SQL BYOL costs($)'}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            dispatch(setSelectedMonthlyBYOLCost(e.target.value));
+                    <SelectField
+                        label={'SQL server edition'}
+                        isClearable={false}
+                        defaultValue={
+                            selectedManualServerEdition ? selectedManualServerEdition : [generateSQLEditionList[0]]
+                        }
+                        onChange={(selectedOptions: any): void => {
+                            dispatch(setSelectedManualServerEdition(selectedOptions));
                         }}
-                        isOptional={true}
-                        value={monthlyBYOLCost}
+                        isSearchable={generateSQLEditionList.length > 5}
+                        options={generateSQLEditionList}
                         className={styles.deploymentModelWidth}
                     />
                 </div>
@@ -131,6 +154,18 @@ const ManualTCOFields = () => {
                         className={styles.deploymentModelWidth}
                         info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
                         error={errorForChangeRate()}
+                    />
+                </div>
+
+                <div className={styles.secondRow}>
+                    <TextField
+                        label={'Monthly SQL BYOL costs($)'}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            dispatch(setSelectedMonthlyBYOLCost(e.target.value));
+                        }}
+                        isOptional={true}
+                        value={monthlyBYOLCost}
+                        className={styles.deploymentModelWidth}
                     />
                 </div>
             </div>

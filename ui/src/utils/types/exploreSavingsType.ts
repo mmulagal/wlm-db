@@ -6,6 +6,8 @@ export interface InstanceType {
     architecture?: Array<string>;
 }
 
+export interface ManualTCOVolTypes {}
+
 export interface ExploreSavingsSliceEntities {
     selectedSnapshotFrequency: any;
     numberOfClonedCopies: number | any;
@@ -31,18 +33,18 @@ export interface ExploreSavingsSliceEntities {
     selectedManualDeploymentModel: string | any;
     monthlyBYOLCost: string;
     manualMonthlyDescription: string;
+    manualSecondaryMachineDescription: string;
     selectedManualServerEdition: any;
     selectedManualInstanceType: any;
+    selectedSecondaryManualInstanceType: any;
     selectedVolumeTab: string;
-    manualTCONumberOfVolumes: number | any;
-    manualTCOStorageAmount: number | any;
-    manualTCOProvisionedIOPS: number | any;
-    manualTCOThroughput: number | any;
+    manualTCOVolumeTypes2: any;
     getManualInstanceTypeList: {
         instanceTypeData: { instanceTypes?: InstanceType[] };
         instanceTypeLoading: false;
         instanceTypeError: null;
     };
+    manualTCOVolumeTypes: any;
 }
 
 export interface StorageSavingsInterface {
