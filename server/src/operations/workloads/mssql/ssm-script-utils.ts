@@ -32,7 +32,7 @@ foreach ($disk in $disks) {
 }
 
 
-$isoDriveLetters = @(wmic logicaldisk where drivetype=5 get deviceid /format:value | Select-String -Pattern "DeviceID=" | ForEach-Object { $_.ToString().Split('=')[1] })
+$isoDriveLetters = Get-WmiObject -Class Win32_CDROMDrive -Property Drive | Select-Object -ExpandProperty Drive
 
 foreach ($isoDriveLetter in $isoDriveLetters) {
     $isoObject = [PSCustomObject]@{
