@@ -427,6 +427,8 @@ export const formatViewCalcData = (
 
 export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculationsInterface) => {
     let ebsSnapshotCalculation = {
+        storageAmount: 0,
+        monthlyCostOfSnapshots: 0,
         ebsInstanceMonth: 0,
         totalSnapshots: 0,
         initialSnapshotCost: 0,
@@ -446,6 +448,12 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
     };
     Object.keys(viewCalculationsResponse?.ebsSnapshotCalculation || {}).map((key: string) => {
         ebsSnapshotCalculation = {
+            storageAmount:
+                ebsSnapshotCalculation.storageAmount +
+                viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.storageAmount,
+            monthlyCostOfSnapshots:
+                ebsSnapshotCalculation.monthlyCostOfSnapshots +
+                viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.monthlyCostOfSnapshots,
             ebsInstanceMonth:
                 ebsSnapshotCalculation.ebsInstanceMonth +
                     viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsInstanceMonth || 0,
@@ -494,6 +502,8 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
     return {
         ebsCalculation: EbsCalculationUpdates(viewCalculationsResponse?.ebsCalculation || {}),
         ebsSnapshotCalculation: {
+            storageAmount: formatCalcSize(ebsSnapshotCalculation?.storageAmount),
+            monthlyCostOfSnapshots: formatNumbers(ebsSnapshotCalculation?.monthlyCostOfSnapshots),
             ebsInstanceMonth: formatNumbers(ebsSnapshotCalculation?.ebsInstanceMonth),
             totalSnapshots: formatNumbers(ebsSnapshotCalculation?.totalSnapshots),
             initialSnapshotCost: formatNumbers(ebsSnapshotCalculation?.initialSnapshotCost),
