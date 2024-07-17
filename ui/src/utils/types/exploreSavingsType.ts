@@ -171,6 +171,7 @@ export interface ViewCalculationsInterface {
     };
     ebsSnapshotCalculation?: {
         storageAmount?: number | string;
+        monthlyCostOfSnapshots?: number | string;
         ebsInstanceMonth?: number | string;
         totalSnapshots?: number | string;
         initialSnapshotCost?: number | string;
