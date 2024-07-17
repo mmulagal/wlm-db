@@ -1403,10 +1403,10 @@ const createInstances = (state: any) => {
         manualTCOVolumeTypes2
     } = state.exploreSavings;
     instanceArr.push({
-        instanceDescription: selectedManualInstanceType.label,
-        instanceType: selectedManualInstanceType.value,
+        instanceDescription: selectedManualInstanceType?.label,
+        instanceType: selectedManualInstanceType?.value,
         isPrimary: true,
-        sqlServerEdition: selectedManualServerEdition.value,
+        sqlServerEdition: selectedManualServerEdition?.value,
         volumes: generateVolumesData(manualTCOVolumeTypes)
     });
     if (selectedManualDeploymentModel?.label !== 'Standalone' && secondaryVolumeFilledStatus) {
@@ -1426,7 +1426,7 @@ export const generateManualStorageSavingsPayload = () => {
     const state = store.getState();
     const { numberOfClonedCopies, monthlyChangeRate, selectedManualDeploymentModel } = state.exploreSavings;
     const payloadObj: any = {};
-    payloadObj.sqlServerDeploymentType = selectedManualDeploymentModel.value;
+    payloadObj.sqlServerDeploymentType = selectedManualDeploymentModel?.value;
     payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
     payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
     payloadObj.instances = createInstances(state);
