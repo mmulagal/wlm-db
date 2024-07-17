@@ -22,7 +22,9 @@ import { GENERAL } from '../../../utils/appConstants';
 import {
     addExploreSavingsInitialData,
     setStorageSavingsLoading,
-    setStorageSavingsResponse
+    setStorageSavingsResponse,
+    setViewCalculationsLoading,
+    setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
@@ -30,8 +32,9 @@ import ManualTCOFields from './ManualTCOFields/ManualTCOFields';
 import ManualEC2 from './ManualEC2/ManualEC2';
 import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
-import { useGetManualStorageSavingsMutation } from '../../../utils/apiService';
+import { useGetManualStorageSavingsMutation, useGetManualViewCalculationsMutation } from '../../../utils/apiService';
 import { generateManualStorageSavingsPayload } from './savingsUtil';
+import { formatViewCalcData } from '../ExploreSavingsUtils';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
@@ -39,6 +42,7 @@ const SavingsCalculator = () => {
     const [disableState, setDisableState] = useState(false);
 
     const [getManualStorageSavingsApi] = useGetManualStorageSavingsMutation();
+    const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
 
     const {
         savingsCalculatorFrom,
@@ -59,7 +63,7 @@ const SavingsCalculator = () => {
 
     const getManualStorageSavingsData = async () => {
         const payload = generateManualStorageSavingsPayload();
-        console.log(payload);
+
         try {
             const result = await getManualStorageSavingsApi({
                 regionId: selectedManualRegion?.data?.regionCode,
@@ -72,9 +76,29 @@ const SavingsCalculator = () => {
         }
     };
 
+    const getManualViewCalculationsData = async () => {
+        const payload = generateManualStorageSavingsPayload();
+        try {
+            const result = await getManualViewCalculationsApi({
+                regionId: selectedManualRegion?.data?.regionCode,
+                payload: payload
+            });
+            dispatch(
+                setViewCalculationsResponse(
+                    formatViewCalcData(result?.data, selectedManualDeploymentModel?.label, monthlyChangeRate)
+                )
+            );
+            dispatch(setViewCalculationsLoading(false));
+        } catch (error) {
+            dispatch(setViewCalculationsLoading(false));
+        }
+    };
+
     const triggerManualStorageAPI = () => {
         dispatch(setStorageSavingsLoading(true));
+        dispatch(setViewCalculationsLoading(true));
         getManualStorageSavingsData();
+        getManualViewCalculationsData();
     };
 
     useEffect(() => {

@@ -28,4 +28,10 @@ router.post(
     }
 );
 
+router.post(`${BASE_URL}/v1/regions/:region/manual-storage-savings/calculations`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, ViewCalculations);
+    }, 5000);
+});
+
 export default router;
