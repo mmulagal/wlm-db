@@ -14,8 +14,8 @@ const SavingsCalculatorManualApi = () => {
 
     useEffect(() => {
         getInstanceTypes({
-            credentialsId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            region: headerSelectedRegion?.label2
         })
             .then(res => {
                 dispatch(addManualInstanceTypeList(res?.data));
