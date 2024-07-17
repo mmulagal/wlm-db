@@ -553,3 +553,8 @@ export const SAVINGS_CALC_MODE = {
 };
 
 export const PARTNER_NODE = 'partner node';
+
+export const FINDINGS = {
+    OPTIMIZED: 'OPTIMIZED',
+    NOT_OPTIMIZED: 'NOT_OPTIMIZED'
+};
