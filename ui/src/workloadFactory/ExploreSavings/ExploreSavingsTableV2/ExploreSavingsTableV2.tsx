@@ -56,7 +56,7 @@ const ExploreSavingsTableV2 = () => {
 
     const lastColDetails = () => {
         return {
-            id: '8',
+            id: '9',
             Header: '',
             accessor: '',
             isSticky: true,
@@ -87,7 +87,7 @@ const ExploreSavingsTableV2 = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '280px',
+            width: '270px',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.name;
                 return (
@@ -118,8 +118,8 @@ const ExploreSavingsTableV2 = () => {
         {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'serverInstallationMode',
-            id: '6',
-            width: '230px',
+            id: '2',
+            width: '225px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -128,7 +128,7 @@ const ExploreSavingsTableV2 = () => {
         {
             Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
             accessor: 'storageType',
-            id: '2',
+            id: '3',
             width: '160px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
@@ -136,9 +136,30 @@ const ExploreSavingsTableV2 = () => {
             }
         },
         {
+            Header: 'SQL server instances',
+            accessor: 'totalInstance',
+            id: '4',
+            width: '200px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return (
+                    <div>
+                        {cellData && Number(cellData) !== 0 ? (
+                            <>
+                                <Typography variant="Regular_14">{cellData + ' instances'}</Typography>
+                            </>
+                        ) : (
+                            ''
+                        )}
+                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                    </div>
+                );
+            }
+        },
+        {
             Header: GENERAL.DB_HOST_INSTANCE_ID,
             accessor: 'instanceListText',
-            id: '3',
+            id: '5',
             width: '200px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
@@ -149,8 +170,8 @@ const ExploreSavingsTableV2 = () => {
         {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
             accessor: 'allocatedCapacityText',
-            id: '4',
-            width: '200px',
+            id: '6',
+            width: '180px',
             isSortable: true,
             accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
@@ -160,8 +181,8 @@ const ExploreSavingsTableV2 = () => {
         {
             Header: GENERAL.DB_HOST_AVAILABILITY,
             accessor: 'azType',
-            id: '5',
-            width: '180px',
+            id: '7',
+            width: '150px',
             filterOptions: [
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
@@ -170,16 +191,16 @@ const ExploreSavingsTableV2 = () => {
                 return renderUnmanagedAZ(cellData, rowData, styles);
             }
         },
-        {
-            Header: GENERAL.DB_HOST_ESTIMATED_COST,
-            accessor: 'totalCost',
-            id: '7',
-            width: '176px',
-            isSortable: true,
-            renderCell: (cellData: any, rowData: any) => {
-                return renderEstimatedCost(cellData, rowData, styles);
-            }
-        },
+        // {
+        //     Header: GENERAL.DB_HOST_ESTIMATED_COST,
+        //     accessor: 'totalCost',
+        //     id: '8',
+        //     width: '176px',
+        //     isSortable: true,
+        //     renderCell: (cellData: any, rowData: any) => {
+        //         return renderEstimatedCost(cellData, rowData, styles);
+        //     }
+        // },
         lastColDetails()
     ];
 

@@ -936,7 +936,7 @@ export const GENERAL = {
     MS_SQL_TWO_INSTANCES: 'Microsoft SQL Server EC2 instance - 2 instances',
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
     SAVINGS_HEADER: 'Microsoft SQL server on Amazon Elastic Block Store (EBS) configuration.',
-    ES_NUMBER_OF_DB: 'Number of databases',
+    ES_NUMBER_OF_INSTANCE: 'Number of instances',
     ES_HOST_NAME: 'Host name',
     ES_NUMBER_OF_VOLS: 'Number of volumes',
     SUMMARY_TEXT: 'Summary of the selected volumes by volume type:',
@@ -1045,13 +1045,16 @@ export const GENERAL = {
     ES_EBS_TOTAL_COST: 'EBS total cost',
     ES_MSSQL_EC2_INSTANCES: 'Microsoft SQL EC2 Instances',
     ES_SNAPSHOTS: 'Snapshots',
-    ES_SNAPSHOTS_DESC: 'Snapshots calcs are based on primary DB volumes only (not replicas).',
-    ES_CLONES_DESC: 'Clones calcs are based on primary DB volumes only (not replicas).',
+    ES_SNAPSHOTS_DESC: 'Snapshot calculations are based on primary database volumes only and not on replicas.',
+    ES_CLONES_DESC: 'Clone calculations are based on primary database volumes only and not on replicas.',
     ES_TOTAL_MONTHLY_COST: 'Total monthly cost',
     ES_FSXN_MULTI: 'FSx for ONTAP - multi availability zone',
     ES_FSXN_SINGLE: 'FSx for ONTAP - single availability zone',
-    ES_FSXN_AZ_DESC: 'FSxN costs are based on the primary DB volumes since it is a shared storage.',
-    ES_EBS_DESC: 'Costs for EBS are based on all EC2 instances.'
+    ES_FSXN_AZ_DESC:
+        'FSx for ONTAP costs are based on primary database volumes only because these volumes and their replicas share a file system.',
+    ES_EBS_DESC: 'Costs for EBS are based on all EC2 instances.',
+    ES_SQL_EDITION_MULTI_TOOLTIP:
+        'The value is determined by the highest SQL Server edition found in all SQL Server instances on the host.'
 };
 
 export const CODE_VIEWER = {
