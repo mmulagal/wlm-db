@@ -24,9 +24,7 @@ export interface ExploreSavingsSliceEntities {
     selectedPartnerHostDetails: any;
     getPartnerHostDetailsLoading: boolean;
     storageSavingsResponse: StorageSavingsInterface;
-    manualStorageSavingsResponse: StorageSavingsInterface;
     storageSavingsLoading: boolean;
-    manualStorageSavingsLoading: boolean;
     savingsCalculatorRefresh: boolean;
     selectedDeploymentModel: string;
     viewCalculationsResponse: ViewCalculationsInterface | null;

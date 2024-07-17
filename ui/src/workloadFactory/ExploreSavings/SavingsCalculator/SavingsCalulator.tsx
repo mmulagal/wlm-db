@@ -21,7 +21,6 @@ import ExportPDF from './ExportPDF/ExportPDF';
 import { GENERAL } from '../../../utils/appConstants';
 import {
     addExploreSavingsInitialData,
-    setManualStorageSavingsLoading,
     setStorageSavingsLoading,
     setStorageSavingsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -69,7 +68,7 @@ const SavingsCalculator = () => {
             dispatch(setStorageSavingsLoading(false));
             dispatch(setStorageSavingsResponse(result?.data));
         } catch (error) {
-            dispatch(setManualStorageSavingsLoading(false));
+            dispatch(setStorageSavingsLoading(false));
         }
     };
 

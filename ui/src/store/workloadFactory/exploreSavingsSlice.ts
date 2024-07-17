@@ -16,9 +16,9 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedPartnerHostDetails: {},
     getPartnerHostDetailsLoading: false,
     storageSavingsResponse: {},
-    manualStorageSavingsResponse: {},
+
     storageSavingsLoading: false,
-    manualStorageSavingsLoading: false,
+
     savingsCalculatorRefresh: false,
     selectedDeploymentModel: '',
     viewCalculationsResponse: null,
@@ -112,12 +112,6 @@ const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
-        setManualStorageSavingsLoading: (state, action: PayloadAction<any>) => {
-            state.manualStorageSavingsLoading = action.payload;
-        },
-        setManualStorageSavingsResponse: (state, action: PayloadAction<any>) => {
-            state.manualStorageSavingsResponse = action.payload;
-        },
         setVolumeFilledStatus: (state, action: PayloadAction<any>) => {
             state.volumeFilledStatus = action.payload;
         },
@@ -243,8 +237,6 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
-    setManualStorageSavingsLoading,
-    setManualStorageSavingsResponse,
     addManualInstanceTypeList,
     setVolumeFilledStatus,
     setSecondaryVolumeFilledStatus,
