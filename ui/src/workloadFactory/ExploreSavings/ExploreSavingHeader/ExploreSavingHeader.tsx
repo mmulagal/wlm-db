@@ -40,10 +40,9 @@ const ExploreSavingHeader = () => {
 
                         <span className={styles.subText}>
                             <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span> &nbsp;
-                            {/* <span className={styles.link} onClick={() => handleManualTCO(dispatch)}>
+                            <span className={styles.link} onClick={() => handleManualTCO(dispatch)}>
                                 {GENERAL.EXPLORE_SAVING_MANUALLY}
-                            </span> */}
-                            <span className={styles.link}>{GENERAL.EXPLORE_SAVING_MANUALLY}</span>
+                            </span>
                         </span>
                     </div>
                 </div>
