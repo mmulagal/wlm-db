@@ -105,3 +105,32 @@
         text-overflow: ellipsis;
     }
 }
+
+@media screen and (min-width: 1351px) and (max-width: 1500px) {
+    .fileNames {
+        .headerContainer {
+            max-width: 253px;
+            overflow: hidden;
+
+            .headerText {
+                max-width: 150px;
+            }
+        }
+
+        .inputSection {
+            .driveSelectField {
+                width: 193px;
+            }
+
+            .firstRow {
+                .advFileNameText {
+                    width: 142px;
+                }
+            }
+
+            .pathSection {
+                width: 290px;
+            }
+        }
+    }
+}

@@ -65,12 +65,18 @@
     }
 }
 
-@media screen and (min-width: 1351px) and (max-width: 1520px) {
+@media screen and (min-width: 1351px) and (max-width: 1500px) {
     .cardComponent {
         .easy-create {
             .tag {
                 position: relative;
                 right: 0;
+            }
+
+            .easy-create-content {
+                .easy-create-content-text {
+                    width: 80%;
+                }
             }
         }
     }
