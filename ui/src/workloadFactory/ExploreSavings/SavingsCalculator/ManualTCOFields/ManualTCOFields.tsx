@@ -1,7 +1,7 @@
 import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './ManualTCOFields.module.scss';
 import { useEffect, useMemo } from 'react';
-import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { generateOptionType, regionsSort } from '../../../../utils/utilityFunctions';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
@@ -25,18 +25,19 @@ const ManualTCOFields = () => {
         monthlyChangeRate,
         selectedManualServerEdition
     } = useAppSelector(state => state.exploreSavings);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     //Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
-        const regions = ['us-east-1 | US East (N.Virginia)', 'us-east-1 | US East (Ohio)'];
         const options: optionType[] = [];
-        regions?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '', val);
+        const sortedRegionsData = regionsSort(regionsData?.regions || []);
+        sortedRegionsData?.map((val, idx: number) => {
+            const regionValue = val.regionCode + ' | ' + val.regionName;
+            const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
         });
-
         return options;
-    }, []);
+    }, [regionsData]);
 
     useEffect(() => {
         dispatch(setSelectedRegionFromManualTCO(generateRegionList[0]));
@@ -74,6 +75,10 @@ const ManualTCOFields = () => {
 
         return options;
     }, []);
+
+    useEffect(() => {
+        dispatch(setSelectedDeploymentModelForManualTCO(generateDeploymentModelList[0]));
+    }, [generateDeploymentModelList]);
 
     const errorForClonedCopiesCount = () => {
         if (numberOfClonedCopies > 10) {

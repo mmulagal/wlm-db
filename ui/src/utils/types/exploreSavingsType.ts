@@ -10,6 +10,7 @@ export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
     selectedSnapshotFrequency: any;
+    secondaryVolumeFilledStatus: boolean;
     numberOfClonedCopies: number | any;
     selectedCloneRefresh: any;
     monthlyChangeRate: number | any;
@@ -23,7 +24,9 @@ export interface ExploreSavingsSliceEntities {
     selectedPartnerHostDetails: any;
     getPartnerHostDetailsLoading: boolean;
     storageSavingsResponse: StorageSavingsInterface;
+    manualStorageSavingsResponse: StorageSavingsInterface;
     storageSavingsLoading: boolean;
+    manualStorageSavingsLoading: boolean;
     savingsCalculatorRefresh: boolean;
     selectedDeploymentModel: string;
     viewCalculationsResponse: ViewCalculationsInterface | null;

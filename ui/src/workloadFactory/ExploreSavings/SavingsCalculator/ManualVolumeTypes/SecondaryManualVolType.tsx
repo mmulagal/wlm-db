@@ -3,6 +3,7 @@ import styles from './ManualVolumeTypes.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import {
+    setSecondaryVolumeFilledStatus,
     setSelectedVolumeTabForSecondary,
     setSelectedVolumeType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
@@ -37,6 +38,7 @@ const SecondaryManualVolType = () => {
 
         setVolumesFilled(result);
         if (result > 0) {
+            dispatch(setSecondaryVolumeFilledStatus(true));
             setTotalVolumes(
                 calculateTotalVolumes(
                     io1Complete,
@@ -48,6 +50,7 @@ const SecondaryManualVolType = () => {
                 )
             );
         } else {
+            dispatch(setSecondaryVolumeFilledStatus(false));
             setTotalVolumes(0);
         }
     }, [manualTCOVolumeTypes2]);

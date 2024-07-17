@@ -16,7 +16,9 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedPartnerHostDetails: {},
     getPartnerHostDetailsLoading: false,
     storageSavingsResponse: {},
+    manualStorageSavingsResponse: {},
     storageSavingsLoading: false,
+    manualStorageSavingsLoading: false,
     savingsCalculatorRefresh: false,
     selectedDeploymentModel: '',
     viewCalculationsResponse: null,
@@ -39,6 +41,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
         instanceTypeError: null
     },
     volumeFilledStatus: false,
+    secondaryVolumeFilledStatus: false,
     manualTCOVolumeTypes: {
         io2: {
             manualTCONumberOfVolumes: null,
@@ -109,8 +112,17 @@ const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setManualStorageSavingsLoading: (state, action: PayloadAction<any>) => {
+            state.manualStorageSavingsLoading = action.payload;
+        },
+        setManualStorageSavingsResponse: (state, action: PayloadAction<any>) => {
+            state.manualStorageSavingsResponse = action.payload;
+        },
         setVolumeFilledStatus: (state, action: PayloadAction<any>) => {
             state.volumeFilledStatus = action.payload;
+        },
+        setSecondaryVolumeFilledStatus: (state, action: PayloadAction<any>) => {
+            state.secondaryVolumeFilledStatus = action.payload;
         },
         addManualInstanceTypeList: (state, action: PayloadAction<any>) => {
             state.getManualInstanceTypeList.instanceTypeData = action.payload;
@@ -231,8 +243,11 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setManualStorageSavingsLoading,
+    setManualStorageSavingsResponse,
     addManualInstanceTypeList,
     setVolumeFilledStatus,
+    setSecondaryVolumeFilledStatus,
     setVolumeTypeOperation,
     setSelectedSecondaryManualInstanceType,
     setSecondarySelectedMachineDescription,

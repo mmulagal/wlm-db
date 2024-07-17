@@ -1327,3 +1327,108 @@ export const calculateTotalVolumes = (
         Number(st1Complete ? manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes : 0)
     );
 };
+
+const generateVolumesData = (manualTCOVolumeTypes: any) => {
+    const arr = [];
+    const io1Complete = allPropertiesHaveValues({
+        manualTCONumberOfVolumes: manualTCOVolumeTypes?.io1?.manualTCONumberOfVolumes,
+        manualTCOStorageAmount: manualTCOVolumeTypes?.io1?.manualTCOStorageAmount,
+        manualTCOProvisionedIOPS: manualTCOVolumeTypes?.io1?.manualTCOProvisionedIOPS
+    });
+    const io2Complete = allPropertiesHaveValues(manualTCOVolumeTypes?.io2);
+    const gp2Complete = allPropertiesHaveValues({
+        manualTCONumberOfVolumes: manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes,
+        manualTCOStorageAmount: manualTCOVolumeTypes?.gp2?.manualTCOStorageAmount
+    });
+    const gp3Complete = allPropertiesHaveValues(manualTCOVolumeTypes?.gp3);
+    const st1Complete = allPropertiesHaveValues({
+        manualTCONumberOfVolumes: manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes,
+        manualTCOStorageAmount: manualTCOVolumeTypes?.st1?.manualTCOStorageAmount
+    });
+    if (st1Complete) {
+        arr.push({
+            volumeType: 'st1',
+            volumeNumber: +manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes,
+            storageAmount: +manualTCOVolumeTypes?.st1?.manualTCOStorageAmount
+        });
+    }
+    if (gp3Complete) {
+        arr.push({
+            volumeType: 'gp3',
+            volumeNumber: +manualTCOVolumeTypes?.gp3?.manualTCONumberOfVolumes,
+            storageAmount: +manualTCOVolumeTypes?.gp3?.manualTCOStorageAmount,
+            volumeIops: +manualTCOVolumeTypes?.gp3?.manualTCOProvisionedIOPS,
+            throughput: +manualTCOVolumeTypes?.gp3?.manualTCOThroughput
+        });
+    }
+    if (gp2Complete) {
+        arr.push({
+            volumeType: 'gp2',
+            volumeNumber: +manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes,
+            storageAmount: +manualTCOVolumeTypes?.gp2?.manualTCOStorageAmount
+        });
+    }
+    if (io2Complete) {
+        arr.push({
+            volumeType: 'io2',
+            volumeNumber: +manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes,
+            storageAmount: +manualTCOVolumeTypes?.io2?.manualTCOStorageAmount,
+            volumeIops: +manualTCOVolumeTypes?.io2?.manualTCOProvisionedIOPS,
+            throughput: +manualTCOVolumeTypes?.io2?.manualTCOThroughput
+        });
+    }
+    if (io1Complete) {
+        arr.push({
+            volumeType: 'io1',
+            volumeNumber: +manualTCOVolumeTypes?.io1?.manualTCONumberOfVolumes,
+            storageAmount: +manualTCOVolumeTypes?.io1?.manualTCOStorageAmount,
+            volumeIops: +manualTCOVolumeTypes?.io1?.manualTCOProvisionedIOPS
+        });
+    }
+    return arr;
+};
+
+const createInstances = (state: any) => {
+    const instanceArr = [];
+    const {
+        selectedManualDeploymentModel,
+
+        selectedManualServerEdition,
+        selectedManualInstanceType,
+        selectedSecondaryManualInstanceType,
+        manualMonthlyDescription,
+        manualSecondaryMachineDescription,
+        manualTCOVolumeTypes,
+        secondaryVolumeFilledStatus,
+        manualTCOVolumeTypes2
+    } = state.exploreSavings;
+    instanceArr.push({
+        instanceDescription: selectedManualInstanceType.label,
+        instanceType: selectedManualInstanceType.value,
+        isPrimary: true,
+        sqlServerEdition: selectedManualServerEdition.value,
+        volumes: generateVolumesData(manualTCOVolumeTypes)
+    });
+    if (selectedManualDeploymentModel?.label !== 'Standalone' && secondaryVolumeFilledStatus) {
+        instanceArr.push({
+            instanceDescription: selectedSecondaryManualInstanceType?.label,
+            instanceType: selectedSecondaryManualInstanceType?.value,
+            isPrimary: false,
+            sqlServerEdition: selectedManualServerEdition?.value,
+            volumes: generateVolumesData(manualTCOVolumeTypes2)
+        });
+    }
+
+    return instanceArr;
+};
+
+export const generateManualStorageSavingsPayload = () => {
+    const state = store.getState();
+    const { numberOfClonedCopies, monthlyChangeRate, selectedManualDeploymentModel } = state.exploreSavings;
+    const payloadObj: any = {};
+    payloadObj.sqlServerDeploymentType = selectedManualDeploymentModel.value;
+    payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
+    payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
+    payloadObj.instances = createInstances(state);
+    return payloadObj;
+};
