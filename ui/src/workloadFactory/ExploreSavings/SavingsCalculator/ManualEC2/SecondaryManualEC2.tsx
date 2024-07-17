@@ -7,7 +7,7 @@ import {
     setSelectedSecondaryManualInstanceType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
@@ -55,6 +55,10 @@ const SecondaryManualEC2 = () => {
 
         return options;
     }, [instanceTypeData]);
+
+    useEffect(() => {
+        dispatch(setSelectedSecondaryManualInstanceType(generateInstances[0]));
+    }, [generateInstances]);
     return (
         <div className={styles.manualEc2}>
             <div className={styles.firstRow}>

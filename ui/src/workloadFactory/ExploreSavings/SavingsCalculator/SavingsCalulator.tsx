@@ -19,41 +19,97 @@ import { useEffect, useState } from 'react';
 import domToPdf from 'dom-to-pdf';
 import ExportPDF from './ExportPDF/ExportPDF';
 import { GENERAL } from '../../../utils/appConstants';
-import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    addExploreSavingsInitialData,
+    setManualStorageSavingsLoading,
+    setStorageSavingsLoading,
+    setStorageSavingsResponse
+} from '../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import ManualTCOFields from './ManualTCOFields/ManualTCOFields';
 import ManualEC2 from './ManualEC2/ManualEC2';
 import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
+import { useGetManualStorageSavingsMutation } from '../../../utils/apiService';
+import { generateManualStorageSavingsPayload } from './savingsUtil';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
     const [disableState, setDisableState] = useState(false);
 
+    const [getManualStorageSavingsApi] = useGetManualStorageSavingsMutation();
+
     const {
         savingsCalculatorFrom,
         selectedServerName,
-        selectedManualDeploymentModel,
-        selectedManualRegion,
         numberOfClonedCopies,
         monthlyChangeRate,
+        selectedManualDeploymentModel,
+        selectedManualRegion,
+        selectedManualServerEdition,
         selectedManualInstanceType,
-        volumeFilledStatus
+        monthlyBYOLCost,
+        manualMonthlyDescription,
+        manualSecondaryMachineDescription,
+        manualTCOVolumeTypes,
+        volumeFilledStatus,
+        manualTCOVolumeTypes2
     } = useAppSelector(state => state.exploreSavings);
+
+    const getManualStorageSavingsData = async () => {
+        const payload = generateManualStorageSavingsPayload();
+        console.log(payload);
+        try {
+            const result = await getManualStorageSavingsApi({
+                regionId: selectedManualRegion?.data?.regionCode,
+                payload: payload
+            });
+            dispatch(setStorageSavingsLoading(false));
+            dispatch(setStorageSavingsResponse(result?.data));
+        } catch (error) {
+            dispatch(setManualStorageSavingsLoading(false));
+        }
+    };
+
+    const triggerManualStorageAPI = () => {
+        dispatch(setStorageSavingsLoading(true));
+        getManualStorageSavingsData();
+    };
 
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
-            if (selectedManualRegion && numberOfClonedCopies && monthlyChangeRate && volumeFilledStatus) {
+            if (
+                selectedManualRegion &&
+                numberOfClonedCopies &&
+                monthlyChangeRate &&
+                volumeFilledStatus &&
+                selectedManualInstanceType
+            ) {
                 setDisableState(false);
+                triggerManualStorageAPI();
             } else {
                 setDisableState(true);
             }
         } else {
             setDisableState(false);
         }
-    }, [savingsCalculatorFrom, selectedManualRegion, numberOfClonedCopies, monthlyChangeRate, volumeFilledStatus]);
+    }, [
+        savingsCalculatorFrom,
+        numberOfClonedCopies,
+        monthlyChangeRate,
+        selectedManualDeploymentModel,
+        selectedManualRegion,
+        selectedManualServerEdition,
+        selectedManualInstanceType,
+        monthlyBYOLCost,
+        manualMonthlyDescription,
+        manualSecondaryMachineDescription,
+        manualTCOVolumeTypes,
+        volumeFilledStatus,
+        manualTCOVolumeTypes2
+    ]);
 
     const printDocument = () => {
         setPrintState(true);
