@@ -831,13 +831,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
         SnapshotCalculation: [
             {
                 label: 'Storage amount of EBS dbs volumes',
-                value: `XXX`,
+                value: `${viewCalculation.ebsSnapshotCalculation.storageAmount}`,
                 text: `Storage amount of src primary dbs not including replica data in GiB`
             },
             {
                 label: 'Initial snapshots cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}`,
-                text: `Storage amount of EBS primary dbs volumes (XXX) x EBS snapshots price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost})`
+                text: `Storage amount of EBS primary dbs volumes (${viewCalculation.ebsSnapshotCalculation.storageAmount}) x EBS snapshots price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost})`
             },
             {
                 label: 'Monthly change rate',
@@ -846,8 +846,8 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             },
             {
                 label: 'Monthly cost of snapshots',
-                value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}`,
-                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x storage amount of EBS primary dbs (XXX) x EBS snapshot price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost})`
+                value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostOfSnapshots}`,
+                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x storage amount of EBS primary dbs (${viewCalculation.ebsSnapshotCalculation.storageAmount}) x EBS snapshot price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost})`
             },
             {
                 label: 'Discount for partial storage month',
