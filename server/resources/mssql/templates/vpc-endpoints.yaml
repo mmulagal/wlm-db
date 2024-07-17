@@ -13,7 +13,9 @@ Metadata:
                   - VPCId
                   - VPCCIDR
                   - PreferredSubnetId
+                  - PreferredSubnetCidrblock
                   - StandbySubnetId
+                  - StandbySubnetCidrblock
                   - S3EndpointExists
                   - CloudformationEndpointExists
                   - SsmEndpointExists
@@ -29,8 +31,12 @@ Metadata:
                 default: VPCCIDR for instances launched in existing VPC. Also used for setting up security groups. For example, 10.0.0.8/16
             PreferredSubnetId:
                 default: Preferred subnet.
+            PreferredSubnetCidrblock:
+                default: Preferred subnet cidr block.
             StandbySubnetId:
                 default: Standby subnet.
+            StandbySubnetCidrblock:
+                default: Standby subnet cidr block.
             S3EndpointExists:
                 default: Boolean to check if an S3 endpoint exists in the vpc.
             CloudformationEndpointExists:
@@ -60,12 +66,23 @@ Parameters:
     PreferredSubnetId:
         Description: Specify the preferred subnet for your file system.
         Type: AWS::EC2::Subnet::Id
+    
+    PreferredSubnetCidrblock:
+        Description: Cidrblock for preferred subnet.
+        Type: String
+        AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
 
     StandbySubnetId:
         Description: Specify the standby subnet for your file system.
         Type: String
         Default: subnet-123456
     
+    StandbySubnetCidrblock:
+        Description: Cidrblock for standby subnet.
+        Type: String
+        AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+        Default: 10.1.1.1/18
+        
     S3EndpointRouteTables:
         Description: Route table ids to attach to S3 gateway endpoint.
         Type: String
@@ -117,6 +134,7 @@ Parameters:
 
 Conditions:
     SingleZone: !Equals [!Ref StandbySubnetId, 'subnet-123456']
+    MultiZone: !Not [!Equals [!Ref StandbySubnetId, 'subnet-123456']]
     CreateCloudformationEndpoint: !Equals [!Ref CloudformationEndpointExists, 'false']
     CreateSsmEndpoint: !Equals [!Ref SsmEndpointExists, 'false']
     CreateSqsEndpoint: !Equals [!Ref SqsEndpointExists, 'false']
@@ -129,10 +147,12 @@ Conditions:
     CreateSG: {"Fn::Or": [{"Condition": "CreateCloudformationEndpoint"}, {"Condition": "CreateSsmEndpoint" },{"Condition": "CreateSqsEndpoint" },
                 {"Condition": "CreateS3Endpoint"}, {"Condition": "CreateCloudwatchLogsEndpoint"}, {"Condition": "CreateFsxEndpoint"},
                 {"Condition": "CreateEc2Endpoint"}, {"Condition": "CreateEc2MessagesEndpoint"}, {"Condition": "CreateSSMMessagesEndpoint"}]}
+    CreateSingleZoneSG: {"Fn::And": [{"Condition": "SingleZone"},{"Condition": "CreateSG"}]}
+    CreateMultiZoneSG: {"Fn::And": [{"Condition": "MultiZone"},{"Condition": "CreateSG"}]}
 
 Resources:
-    HttpsSecurityGroup:
-      Condition: CreateSG
+    HttpsSecurityGroupSingleZone:
+      Condition: CreateSingleZoneSG
       Type: AWS::EC2::SecurityGroup
       Properties:
         GroupDescription: 'Allow HTTPS traffic from the VPC'
@@ -142,6 +162,30 @@ Resources:
             FromPort: 443
             ToPort: 443
             CidrIp: !Ref VPCCIDR
+          - IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            CidrIp: !Ref PreferredSubnetCidrblock
+
+    HttpsSecurityGroupMultiZone:
+      Condition: CreateMultiZoneSG
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: 'Allow HTTPS traffic from the VPC'
+        VpcId: !Ref VPCId
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            CidrIp: !Ref VPCCIDR
+          - IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            CidrIp: !Ref PreferredSubnetCidrblock
+          - IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            CidrIp: !Ref StandbySubnetCidrblock
 
     S3Endpoint:
       Condition: CreateS3Endpoint
@@ -163,7 +207,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-          - !Ref HttpsSecurityGroup
+            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
     
     SqsEndpoint:
       Condition: CreateSqsEndpoint
@@ -176,7 +220,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-          - !Ref HttpsSecurityGroup
+            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
     
     SsmEndpoint:
       Condition: CreateSsmEndpoint
@@ -189,7 +233,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-          - !Ref HttpsSecurityGroup
+            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
     
     SsmMessagesEndpoint:
       Condition: CreateSSMMessagesEndpoint
@@ -202,7 +246,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-          - !Ref HttpsSecurityGroup
+            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
     
     Ec2MessagesEndpoint:
       Condition: CreateEc2MessagesEndpoint
@@ -215,7 +259,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-          - !Ref HttpsSecurityGroup
+            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
     
     CloudwatchLogsEndpoint:
       Condition: CreateCloudwatchLogsEndpoint
@@ -228,7 +272,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-          - !Ref HttpsSecurityGroup
+            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
 
     FsxEndpoint:
       Condition: CreateFsxEndpoint
@@ -241,7 +285,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-          - !Ref HttpsSecurityGroup
+            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
     
     Ec2Endpoint:
       Condition: CreateEc2Endpoint
@@ -254,4 +298,4 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-          - !Ref HttpsSecurityGroup
+            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]

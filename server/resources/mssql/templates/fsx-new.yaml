@@ -39,7 +39,9 @@ Metadata:
                   - VPCID
                   - VPCCIDR
                   - PreferredSubnetId
+                  - PreferredSubnetCidrblock
                   - StandbySubnetId
+                  - StandbySubnetCidrblock
                   - PreferredRouteTableId
                   - StandbyRouteTableId
                   - ParentStackName
@@ -90,6 +92,10 @@ Metadata:
                 default: Preferred VPC route table
             StandbyRouteTableId:
                 default: Standby VPC route table
+            PreferredSubnetCidrblock:
+                default: Preferred subnet cidr block.
+            StandbySubnetCidrblock:
+                default: Standby subnet cidr block.
             ParentStackName:
                 default: Name of the parent CloudFormation stack
 
@@ -210,6 +216,17 @@ Parameters:
         Description: Standby VPC route tables to associate with your file system.
         Type: String
         Default: rtb-123456
+
+    PreferredSubnetCidrblock:
+        Description: Cidrblock for preferred subnet.
+        Type: String
+        AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    
+    StandbySubnetCidrblock:
+        Description: Cidrblock for standby subnet.
+        Type: String
+        AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+        Default: 10.1.1.1/18
     
     ParentStackName:
         Description: Name of the parent CloudFormation stack.
@@ -219,10 +236,12 @@ Parameters:
 Conditions:
     FSxIsProvisionModeAutomatic: !Equals [!Ref FSxDiskIops, '3']
     FSxIsKmsKeyIdEmpty: !Equals [!Ref FSxKmsKeyId, '']
+    FSxIsSingleZoneDeployment: !Equals [!Ref DeploymentMode, 'SINGLE_AZ_1']
     FSxIsMultiZoneDeployment: !Equals [!Ref DeploymentMode, 'MULTI_AZ_1']
 
 Resources:
-    ONTAPSecurityGroup:
+    ONTAPSecurityGroupSingleZone:
+        Condition: FSxIsSingleZoneDeployment
         Type: AWS::EC2::SecurityGroup
         Properties:
             GroupDescription: Allow access to the Workload instances
@@ -232,107 +251,324 @@ Resources:
                 - IpProtocol: ICMP
                   FromPort: -1
                   ToPort: -1
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 139
                   ToPort: 139
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 443
                   ToPort: 443
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: udp
                   FromPort: 4045
                   ToPort: 4045
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 111
                   ToPort: 111
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: udp
                   FromPort: 2049
                   ToPort: 2049
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 10000
                   ToPort: 10000
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 635
                   ToPort: 635
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 4046
                   ToPort: 4046
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 2049
                   ToPort: 2049
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 3260
                   ToPort: 3260
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: udp
                   FromPort: 4046
                   ToPort: 4046
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 11104
                   ToPort: 11104
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 11105
                   ToPort: 11105
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: udp
                   FromPort: 4049
                   ToPort: 4049
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: udp
                   FromPort: 139
                   ToPort: 139
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 161
                   ToPort: 162
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 4045
                   ToPort: 4045
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 135
                   ToPort: 135
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: udp
                   FromPort: 135
                   ToPort: 135
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 749
                   ToPort: 749
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: udp
                   FromPort: 111
                   ToPort: 111
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: tcp
                   FromPort: 22
                   ToPort: 22
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: udp
                   FromPort: 161
                   ToPort: 162
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: udp
                   FromPort: 635
                   ToPort: 635
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
                 - IpProtocol: udp
                   FromPort: 137
                   ToPort: 137
-                  CidrIp: !Ref VPCCIDR
+                  CidrIp: !Ref PreferredSubnetCidrblock
+    
+    ONTAPSecurityGroupMultiZone:
+        Condition: FSxIsMultiZoneDeployment
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Allow access to the Workload instances
+            VpcId:
+                Ref: VPCID
+            SecurityGroupIngress:
+                - IpProtocol: ICMP
+                  FromPort: -1
+                  ToPort: -1
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 139
+                  ToPort: 139
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 443
+                  ToPort: 443
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 4045
+                  ToPort: 4045
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 111
+                  ToPort: 111
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 2049
+                  ToPort: 2049
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 10000
+                  ToPort: 10000
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 635
+                  ToPort: 635
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 4046
+                  ToPort: 4046
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 2049
+                  ToPort: 2049
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 3260
+                  ToPort: 3260
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 4046
+                  ToPort: 4046
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 11104
+                  ToPort: 11104
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 11105
+                  ToPort: 11105
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 4049
+                  ToPort: 4049
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 139
+                  ToPort: 139
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 161
+                  ToPort: 162
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 4045
+                  ToPort: 4045
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 135
+                  ToPort: 135
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 135
+                  ToPort: 135
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 749
+                  ToPort: 749
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 111
+                  ToPort: 111
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 161
+                  ToPort: 162
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 635
+                  ToPort: 635
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 137
+                  ToPort: 137
+                  CidrIp: !Ref PreferredSubnetCidrblock
+                - IpProtocol: ICMP
+                  FromPort: -1
+                  ToPort: -1
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 139
+                  ToPort: 139
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 443
+                  ToPort: 443
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 4045
+                  ToPort: 4045
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 111
+                  ToPort: 111
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 2049
+                  ToPort: 2049
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 10000
+                  ToPort: 10000
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 635
+                  ToPort: 635
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 4046
+                  ToPort: 4046
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 2049
+                  ToPort: 2049
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 3260
+                  ToPort: 3260
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 4046
+                  ToPort: 4046
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 11104
+                  ToPort: 11104
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 11105
+                  ToPort: 11105
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 4049
+                  ToPort: 4049
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 139
+                  ToPort: 139
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 161
+                  ToPort: 162
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 4045
+                  ToPort: 4045
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 135
+                  ToPort: 135
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 135
+                  ToPort: 135
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 749
+                  ToPort: 749
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 111
+                  ToPort: 111
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 161
+                  ToPort: 162
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 635
+                  ToPort: 635
+                  CidrIp: !Ref StandbySubnetCidrblock
+                - IpProtocol: udp
+                  FromPort: 137
+                  ToPort: 137
+                  CidrIp: !Ref StandbySubnetCidrblock
 
     FSxFileSystemConfiguration:
         Type: AWS::FSx::FileSystem
@@ -340,7 +576,7 @@ Resources:
             FileSystemType: ONTAP
             KmsKeyId: !If [FSxIsKmsKeyIdEmpty, !Ref AWS::NoValue, !Ref FSxKmsKeyId]
             SecurityGroupIds:
-                - Ref: ONTAPSecurityGroup
+                !If [FSxIsMultiZoneDeployment, [!Ref ONTAPSecurityGroupMultiZone], [!Ref ONTAPSecurityGroupSingleZone]]
             StorageCapacity: !Ref FSxStorageCapacity
             StorageType: SSD # This is the only type supported for FSx/ONTAP.
             SubnetIds:
@@ -451,7 +687,11 @@ Outputs:
             Name: !Sub ${AWS::StackName}-FSxFileSystemResourceARN
     FsxSecurityGroupID:
         Description: Security group for the FSx for ONTAP file system
-        Value: !GetAtt ONTAPSecurityGroup.GroupId
+        Value: 
+          !If
+              - FSxIsMultiZoneDeployment
+              - !GetAtt ONTAPSecurityGroupMultiZone.GroupId
+              - !GetAtt ONTAPSecurityGroupSingleZone.GroupId
         Export:
             Name: !Sub ${AWS::StackName}-FsxSecurityGroupID
 
