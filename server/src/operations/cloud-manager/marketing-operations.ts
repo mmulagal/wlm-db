@@ -239,7 +239,7 @@ function formatEbsCalculationObject(
     const ebsSnapshotCalculation = {
         storageAmount: storageAmountOfEbs * ebsNumberOfVolumes,
         numberOfVolumes: ebsNumberOfVolumes,
-        monthlyCostOfSnapshots: monthlyChangeRatePercentage * sizeInGigaBytes(storageAmountOfEbs, 'B') * 0.05, // ebs snapshot price is 0.05 per GB
+        monthlyCostOfSnapshots: (monthlyChangeRatePercentage / 100) * sizeInGigaBytes(storageAmountOfEbs, 'B') * 0.05, // ebs snapshot price is 0.05 per GB
         ebsInstanceMonth,
         totalSnapshots,
         initialSnapshotCost,
