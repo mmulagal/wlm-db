@@ -97,3 +97,17 @@
         }
     }
 }
+
+@media screen and (min-width: 1351px) and (max-width: 1500px) {
+    .dbDistribution {
+        .utilizationContainer {
+            gap: 32px;
+
+            .textContainer {
+                .separatorProtection {
+                    width: 190px;
+                }
+            }
+        }
+    }
+}
