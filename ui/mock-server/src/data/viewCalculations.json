@@ -1,208 +1,204 @@
 {
-   "recommendedComputeCalculation": [
-       {
-           "instanceType": "m7i-flex.large",
-           "hoursInMonth": 730,
-           "computeHourlyPrice": 0.18815,
-           "instanceMonthlyPrice": 487.7495,
-           "computeMonthlyPrice": 137.3495
-       },
-       {
-           "instanceType": "m7i-flex.large",
-           "hoursInMonth": 730,
-           "computeHourlyPrice": 0.18815,
-           "instanceMonthlyPrice": 487.7495,
-           "computeMonthlyPrice": 137.3495
-       }
-   ],
-   "recommendedLicenseCalculation": [
-       {
-           "hoursInMonth": 730,
-           "sqlServerEdition": "Standard Edition (64-bit)",
-           "licenseHourlyPrice": 0.48,
-           "licenseIncluded": true
-       },
-       {
-           "hoursInMonth": 730,
-           "sqlServerEdition": "Standard Edition (64-bit)",
-           "licenseHourlyPrice": 0.48,
-           "licenseIncluded": true
-       }
-   ],
-   "existingComputeCalculation": [
-       {
-           "instanceType": "m5.2xlarge",
-           "hoursInMonth": 730,
-           "computeHourlyPrice": 0.772,
-           "instanceMonthlyPrice": 2753.56,
-           "computeMonthlyPrice": 563.5600000000001
-       },
-       {
-           "instanceType": "m5.2xlarge",
-           "hoursInMonth": 730,
-           "computeHourlyPrice": 0.772,
-           "instanceMonthlyPrice": 2753.56,
-           "computeMonthlyPrice": 563.5600000000001
-       }
-   ],
-   "existingLicenseCalculation": [
-       {
-           "hoursInMonth": 730,
-           "sqlServerEdition": "Enterprise Edition (64-bit)",
-           "licenseHourlyPrice": 3,
-           "licenseIncluded": true
-       },
-       {
-           "hoursInMonth": 730,
-           "sqlServerEdition": "Enterprise Edition (64-bit)",
-           "licenseHourlyPrice": 3,
-           "licenseIncluded": true
-       }
-   ],
-   "ebsCalculation": [
-       {
-           "io2": {
-               "numberOfVolumes": 2,
-               "instanceAvgDuration": 730,
-               "hoursInAMonth": 730,
-               "ebsCapacityPrice": {
-                   "price": 0.125,
-                   "unit": "UsdPerGiB"
-               },
-               "storageAmountPerVol": 10995116277760,
-               "totalInstanceHours": 1460,
-               "ebsInstanceMonth": 2,
-               "ebsStorageCost": 2560,
-               "billableIops": 40000,
-               "totalBillableIops": 40000,
-               "ebsIopsCost": 4888,
-               "billableMbps": 0,
-               "billableThroughputMbps": 0,
-               "billableThroughputGbps": 0,
-               "ebsThroughputCost": 0,
-               "ebsTotalCostMonthly": 10929.6
-           }
-       }
-   ],
-   "ebsCloneCalculation": [
-       {
-           "io2": {
-               "clonedCopiesCount": 30,
-               "capacity": 2560,
-               "iops": 4888,
-               "throughput": 0,
-               "totalCloneMonthlyCost": 223440
-           }
-       }
-   ],
-   "ebsSnapshotCalculation": [
-       {
-           "io2": {
-               "ebsInstanceMonth": 2,
-               "totalSnapshots": 30,
-               "initialSnapshotCost": 512,
-               "monthlyCostPerSnapshot": 81.92000000000002,
-               "discountForPartialStorageMonth": 40.96000000000001,
-               "incrementalSnapshotCost": 1228.8000000000002,
-               "totalSnapshotCost": 1740.8000000000002,
-               "totalEbsSnapshotCost": 3481.6000000000004,
-               "ebsSnapshotCost": 3481.6000000000004
-           }
-       }
-   ],
-   "single": {
-       "fsxOntapCalculation": {
-           "numberOfVolumes": 1,
-           "percentageOfDataOnSSDStorage": 1,
-           "fsxnCapacityPrice": {
-               "price": 0.0438,
-               "unit": "UsdPerGiB"
-           },
-           "maxSsdTierSize": 211106232532992,
-           "suggestedFsxnThroughputCapacity": 128,
-           "maxThroughput": 4096,
-           "fsxnThroughputPrice": 1.2,
-           "fsxnIopsPrice": 0.034,
-           "provisionedSsdIops": 40000,
-           "includedIops": 3,
-           "maxSsdIops": 160000,
-           "fsxnStoragePrice": {
-               "price": 0.25,
-               "unit": "UsdPerGiB"
-           },
-           "desiredStorageCapacity": 10995116277760,
-           "ebsCapacity": 10995116277760,
-           "percentageOfDataOnSsdStorage": 1,
-           "savingsFromCompressionAndDeduplication": 0,
-           "storageSavingsFromCompressionAndDeduplication": 0,
-           "effectiveFsxnStorageCapacity": 10995116277760,
-           "ssdStoragePerMonth": 10995116277760,
-           "greaterOfSsdAndMinAllowedSsd": 10995116277760,
-           "ssdMonthlyCost": 2560,
-           "totalMonthlyCostForFSxSsd": 2560,
-           "ratioAfterSavings": 1,
-           "dataOnCapacityPoolStorageFactor": 0,
-           "capacityPoolStorage": 0,
-           "capacityMonthlyCost": 0,
-           "totalMonthlyCostForCapacity": 0,
-           "totalMonthlyStorageCharge": 2560,
-           "minFileSystemsNumForStorage": 0.052083333333333336,
-           "minFileSystemsNumForThroughputCapacity": 0.25,
-           "minFileSystemsNumForSsdIops": 0.25,
-           "requiredNumOfFsxFractional": 0.25,
-           "requiredNumOfFsx": 1,
-           "minThroughputCapacityRequired": 128,
-           "provisionedThroughputCapacity": 1024,
-           "totalMonthlyFsxnThroughputCapacityCost": 1228.8,
-           "includedSsdIops": 30720,
-           "additionalSsdIops": 9280,
-           "billedAdditionalSsdIops": 9280,
-           "additionalBilledCostForSsdIops": 315.52000000000004,
-           "totalThroughputAndIopsMonthly": 1544.32
-       },
-       "fsxOntapSnapshotCalculation": {
-           "fsxnSsdPrice": {
-               "price": 0.25,
-               "unit": "UsdPerGiB"
-           },
-           "fsxnCapacityPrice": {
-               "price": 0.0438,
-               "unit": "UsdPerGiB"
-           },
-           "desiredStorageCapacity": 52776558133248,
-           "percentageOfDataOnSsdStorage": 0.1,
-           "savingsFromCompressionAndDeduplication": 0,
-           "storageSavingsFromCompressionAndDeduplication": 0,
-           "effectiveFsxnStorageCapacity": 52776558133248,
-           "ssdStoragePerMonth": 5277655813324.801,
-           "ssdMonthlyCost": 2560,
-           "totalSnapshotMonthlyCostForFsxSsd": 1228.8000000000002,
-           "ratioAfterSavings": 1,
-           "dataOnCapacityPoolStorageFactor": 0.9,
-           "capacityPoolStorage": 47498902319923.2,
-           "capacityMonthlyCost": 1937.57184,
-           "totalMonthlyCostForCapacity": 1937.57184,
-           "totalSnapshotMonthlyCost": 3166.3718400000002
-       },
-       "fsxCloneCalculation": {
-           "clonedCopiesCount": 1,
-           "numberOfClonesInAMonth": 30,
-           "changeRateBetweenClones": 0.26666666666666666,
-           "totalFsxnCapacity": 10995116277760,
-           "fsxnSsdPrice": {
-               "price": 0.25,
-               "unit": "UsdPerGiB"
-           },
-           "cloneRefreshFrequency": "Daily",
-           "monthlyChangeRatePercentage": 8,
-           "desiredStorageCapacity": 879609302220.7999,
-           "percentageOfDataOnSsdStorage": 1,
-           "savingsFromCompressionAndDeduplication": 0,
-           "storageSavingsFromCompressionAndDeduplication": 0,
-           "effectiveFsxnStorageCapacity": 879609302220.7999,
-           "ssdStoragePerMonth": 879609302220.7999,
-           "ssdMonthlyCost": 204.79999999999998,
-           "totalCloneMonthlyCost": 204.79999999999998
-       }
-   }
+    "recommendedComputeCalculation": [
+        {
+            "instanceType": "m7i-flex.large",
+            "hoursInMonth": 730,
+            "computeHourlyPrice": 0.18316,
+            "instanceMonthlyPrice": 484.10679999999996,
+            "computeMonthlyPrice": 133.7068
+        },
+        {
+            "instanceType": "m7i-flex.large",
+            "hoursInMonth": 730,
+            "computeHourlyPrice": 0.18316,
+            "instanceMonthlyPrice": 484.10679999999996,
+            "computeMonthlyPrice": 133.7068
+        }
+    ],
+    "recommendedLicenseCalculation": [
+        {
+            "hoursInMonth": 730,
+            "sqlServerEdition": "Standard Edition (64-bit)",
+            "licenseHourlyPrice": 0.48,
+            "licenseIncluded": true
+        },
+        {
+            "hoursInMonth": 730,
+            "sqlServerEdition": "Standard Edition (64-bit)",
+            "licenseHourlyPrice": 0.48,
+            "licenseIncluded": true
+        }
+    ],
+    "existingComputeCalculation": [
+        {
+            "instanceType": "m5.2xlarge",
+            "hoursInMonth": 730,
+            "computeHourlyPrice": 0.752,
+            "instanceMonthlyPrice": 2738.96,
+            "computeMonthlyPrice": 548.96
+        },
+        {
+            "instanceType": "m5.2xlarge",
+            "hoursInMonth": 730,
+            "computeHourlyPrice": 0.752,
+            "instanceMonthlyPrice": 2738.96,
+            "computeMonthlyPrice": 548.96
+        }
+    ],
+    "existingLicenseCalculation": [
+        {
+            "hoursInMonth": 730,
+            "sqlServerEdition": "Enterprise Edition (64-bit)",
+            "licenseHourlyPrice": 3,
+            "licenseIncluded": true
+        },
+        {
+            "hoursInMonth": 730,
+            "sqlServerEdition": "Enterprise Edition (64-bit)",
+            "licenseHourlyPrice": 3,
+            "licenseIncluded": true
+        }
+    ],
+    "ebsCalculation": {
+        "io2": {
+            "numberOfVolumes": 2,
+            "instanceAvgDuration": 730,
+            "hoursInAMonth": 730,
+            "ebsCapacityPrice": {
+                "price": 0.125,
+                "unit": "UsdPerGiB"
+            },
+            "storageAmountPerVol": 10995116277760,
+            "totalInstanceHours": 1460,
+            "ebsInstanceMonth": 2,
+            "ebsStorageCost": 2560,
+            "billableIops": 40000,
+            "totalBillableIops": 40000,
+            "ebsIopsCost": 4888,
+            "billableMbps": 0,
+            "billableThroughputMbps": 0,
+            "billableThroughputGbps": 0,
+            "ebsThroughputCost": 0,
+            "ebsTotalCostMonthly": 10929.6
+        }
+    },
+    "ebsCloneCalculation": {
+        "io2": {
+            "clonedCopiesCount": 30,
+            "capacity": 2560,
+            "iops": 4888,
+            "throughput": 0,
+            "totalCloneMonthlyCost": 223440
+        }
+    },
+    "ebsSnapshotCalculation": {
+        "io2": {
+            "storageAmount": 21990232555520,
+            "numberOfVolumes": 2,
+            "ebsInstanceMonth": 2,
+            "totalSnapshots": 30,
+            "initialSnapshotCost": 512,
+            "monthlyCostPerSnapshot": 81.92000000000002,
+            "discountForPartialStorageMonth": 40.96000000000001,
+            "incrementalSnapshotCost": 1228.8000000000002,
+            "totalSnapshotCost": 1740.8000000000002,
+            "totalEbsSnapshotCost": 3481.6000000000004,
+            "ebsSnapshotCost": 3481.6000000000004
+        }
+    },
+    "multi": {
+        "fsxOntapCalculation": {
+            "numberOfVolumes": 1,
+            "percentageOfDataOnSSDStorage": 1,
+            "fsxnCapacityPrice": {
+                "price": 0.0438,
+                "unit": "UsdPerGiB"
+            },
+            "maxSsdTierSize": 211106232532992,
+            "suggestedFsxnThroughputCapacity": 128,
+            "maxThroughput": 4096,
+            "fsxnThroughputPrice": 1.2,
+            "fsxnIopsPrice": 0.034,
+            "provisionedSsdIops": 40000,
+            "includedIops": 3,
+            "maxSsdIops": 160000,
+            "fsxnStoragePrice": {
+                "price": 0.25,
+                "unit": "UsdPerGiB"
+            },
+            "desiredStorageCapacity": 10995116277760,
+            "ebsCapacity": 10995116277760,
+            "percentageOfDataOnSsdStorage": 1,
+            "savingsFromCompressionAndDeduplication": 0,
+            "storageSavingsFromCompressionAndDeduplication": 0,
+            "effectiveFsxnStorageCapacity": 10995116277760,
+            "ssdStoragePerMonth": 10995116277760,
+            "greaterOfSsdAndMinAllowedSsd": 10995116277760,
+            "ssdMonthlyCost": 2560,
+            "totalMonthlyCostForFSxSsd": 2560,
+            "ratioAfterSavings": 1,
+            "dataOnCapacityPoolStorageFactor": 0,
+            "capacityPoolStorage": 0,
+            "capacityMonthlyCost": 0,
+            "totalMonthlyCostForCapacity": 0,
+            "totalMonthlyStorageCharge": 2560,
+            "minFileSystemsNumForStorage": 0.052083333333333336,
+            "minFileSystemsNumForThroughputCapacity": 0.25,
+            "minFileSystemsNumForSsdIops": 0.25,
+            "requiredNumOfFsxFractional": 0.25,
+            "requiredNumOfFsx": 1,
+            "minThroughputCapacityRequired": 128,
+            "provisionedThroughputCapacity": 1024,
+            "totalMonthlyFsxnThroughputCapacityCost": 1228.8,
+            "includedSsdIops": 30720,
+            "additionalSsdIops": 9280,
+            "billedAdditionalSsdIops": 9280,
+            "additionalBilledCostForSsdIops": 315.52000000000004,
+            "totalThroughputAndIopsMonthly": 1544.32
+        },
+        "fsxOntapSnapshotCalculation": {
+            "fsxnSsdPrice": {
+                "price": 0.25,
+                "unit": "UsdPerGiB"
+            },
+            "fsxnCapacityPrice": {
+                "price": 0.0438,
+                "unit": "UsdPerGiB"
+            },
+            "desiredStorageCapacity": 52776558133248,
+            "percentageOfDataOnSsdStorage": 0.1,
+            "savingsFromCompressionAndDeduplication": 0,
+            "storageSavingsFromCompressionAndDeduplication": 0,
+            "effectiveFsxnStorageCapacity": 52776558133248,
+            "ssdStoragePerMonth": 5277655813324.801,
+            "ssdMonthlyCost": 2560,
+            "totalSnapshotMonthlyCostForFsxSsd": 1228.8000000000002,
+            "ratioAfterSavings": 1,
+            "dataOnCapacityPoolStorageFactor": 0.9,
+            "capacityPoolStorage": 47498902319923.2,
+            "capacityMonthlyCost": 1937.57184,
+            "totalMonthlyCostForCapacity": 1937.57184,
+            "totalSnapshotMonthlyCost": 3166.3718400000002
+        },
+        "fsxCloneCalculation": {
+            "clonedCopiesCount": 1,
+            "numberOfClonesInAMonth": 30,
+            "changeRateBetweenClones": 0.26666666666666666,
+            "totalFsxnCapacity": 10995116277760,
+            "fsxnSsdPrice": {
+                "price": 0.25,
+                "unit": "UsdPerGiB"
+            },
+            "cloneRefreshFrequency": "Daily",
+            "monthlyChangeRatePercentage": 8,
+            "desiredStorageCapacity": 879609302220.7999,
+            "percentageOfDataOnSsdStorage": 1,
+            "savingsFromCompressionAndDeduplication": 0,
+            "storageSavingsFromCompressionAndDeduplication": 0,
+            "effectiveFsxnStorageCapacity": 879609302220.7999,
+            "ssdStoragePerMonth": 879609302220.7999,
+            "ssdMonthlyCost": 204.79999999999998,
+            "totalCloneMonthlyCost": 204.79999999999998
+        }
+    }
 }

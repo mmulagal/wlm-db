@@ -23,8 +23,11 @@ const ClonesEBSCalculation = () => {
                 </DsTypography>
             );
         }
-        // To Do
-        return <DsTypography variant="Regular_14">$XXX</DsTypography>;
+        return (
+            <DsTypography variant="Regular_14">
+                ${viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost}
+            </DsTypography>
+        );
     };
 
     return (

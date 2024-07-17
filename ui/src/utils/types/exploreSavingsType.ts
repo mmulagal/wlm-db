@@ -159,22 +159,7 @@ export interface ViewCalculationsInterface {
     fsxOntapSnapshotCalculation?: FsxOntapSnapshotCalculation;
     fsxCloneCalculation?: FsxCloneCalculation;
     ebsCalculation?: {
-        storageAmountPerVol?: number | string;
-        totalInstanceHours?: number | string;
-        ebsInstanceMonth?: number | string;
-        ebsStorageCost?: number | string;
-        billableIops?: number | string;
-        totalBillableIops?: number | string;
-        ebsIopsCost?: number | string;
-        billableMbps?: number | string;
-        billableThroughputMbps?: number | string;
-        billableThroughputGbps?: number | string;
-        ebsThroughputCost?: number | string;
-        numberOfVolumes?: number;
-        instanceAvgDuration?: number | string;
-        ebsCapacityPrice?: number | string;
-        hoursInAMonth?: number | string;
-        ebsTotalCostMonthly?: number | string;
+        [key: string]: EBSCalculation;
     };
     ebsCloneCalculation?: {
         clonedCopiesCount?: number | string;
@@ -182,6 +167,7 @@ export interface ViewCalculationsInterface {
         iops?: number | string;
         throughput?: number | string;
         totalCloneMonthlyCost?: number | string;
+        [key: string]: any;
     };
     ebsSnapshotCalculation?: {
         ebsInstanceMonth?: number | string;
@@ -193,14 +179,47 @@ export interface ViewCalculationsInterface {
         totalSnapshotCost?: number | string;
         totalEbsSnapshotCost?: number | string;
         ebsSnapshotCost?: number | string;
+        [key: string]: any;
     };
     totalFsxEc2MachineCost?: number | string;
     totalEBSEc2MachineCost?: number | string;
     fsxTotalCost?: number | string;
     ebsTotalCost?: number | string;
+    ebsOnlyCost?: number | string;
     fsxSnapshotTotalCost?: number | string;
     totalAzCost?: number | string;
     azType?: string;
+}
+
+export interface EBSSnapshotsCalculation {
+    ebsInstanceMonth?: number | string;
+    totalSnapshots?: number | string;
+    initialSnapshotCost?: number | string;
+    monthlyCostPerSnapshot?: number | string;
+    discountForPartialStorageMonth?: number | string;
+    incrementalSnapshotCost?: number | string;
+    totalSnapshotCost?: number | string;
+    totalEbsSnapshotCost?: number | string;
+    ebsSnapshotCost?: number | string;
+}
+
+export interface EBSCalculation {
+    storageAmountPerVol?: number | string;
+    totalInstanceHours?: number | string;
+    ebsInstanceMonth?: number | string;
+    ebsStorageCost?: number | string;
+    billableIops?: number | string;
+    totalBillableIops?: number | string;
+    ebsIopsCost?: number | string;
+    billableMbps?: number | string;
+    billableThroughputMbps?: number | string;
+    billableThroughputGbps?: number | string;
+    ebsThroughputCost?: number | string;
+    numberOfVolumes?: number;
+    instanceAvgDuration?: number | string;
+    ebsCapacityPrice?: { price?: number | string };
+    hoursInAMonth?: number | string;
+    ebsTotalCostMonthly?: number | string;
 }
 
 export interface FsxOntapCalculation {
@@ -234,8 +253,8 @@ export interface FsxOntapCalculation {
     totalThroughputAndIopsMonthly?: number | string;
     ebsCapacity?: number | string;
     numberOfVolumes?: number;
-    fsxnStoragePrice?: number | string;
-    fsxnCapacityPrice?: number | string;
+    fsxnStoragePrice?: { price: number | string };
+    fsxnCapacityPrice?: { price: number | string };
     fsxnIopsPrice?: number | string;
     maxSsdTierSize?: number | string;
     suggestedFsxnThroughputCapacity?: number | string;
@@ -247,8 +266,8 @@ export interface FsxOntapCalculation {
 }
 
 export interface FsxOntapSnapshotCalculation {
-    fsxnSsdPrice?: number | string;
-    fsxnCapacityPrice?: number | string;
+    fsxnSsdPrice?: { price: number | string };
+    fsxnCapacityPrice?: { price: number | string };
     desiredStorageCapacity?: number | string;
     percentageOfDataOnSsdStorage?: number | string;
     savingsFromCompressionAndDeduplication?: number | string;
@@ -263,6 +282,7 @@ export interface FsxOntapSnapshotCalculation {
     capacityMonthlyCost?: number | string;
     totalMonthlyCostForCapacity?: number | string;
     totalSnapshotMonthlyCost?: number | string;
+    totalMonthlyCostForFsxSsd?: number | string;
 }
 
 export interface FsxCloneCalculation {
@@ -270,7 +290,7 @@ export interface FsxCloneCalculation {
     numberOfClonesInAMonth?: number | string;
     changeRateBetweenClones?: number | string;
     totalFsxnCapacity?: number | string;
-    fsxnSsdPrice?: number | string;
+    fsxnSsdPrice?: { price: number | string };
     cloneRefreshFrequency?: string;
     monthlyChangeRatePercentage?: number | string;
     desiredStorageCapacity?: number | string;

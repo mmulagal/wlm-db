@@ -832,22 +832,22 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Storage amount of EBS dbs volumes',
                 value: `XXX`,
-                text: `Storage amount of src primary dbs not including replica data in GiB = XXX GiB`
+                text: `Storage amount of src primary dbs not including replica data in GiB`
             },
             {
                 label: 'Initial snapshots cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}`,
-                text: `Storage amount of EBS primary dbs volumes x EBS snapshots price`
+                text: `Storage amount of EBS primary dbs volumes (XXX) x EBS snapshots price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost})`
             },
             {
                 label: 'Monthly change rate',
-                value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}`,
+                value: `${viewCalculation.monthlyChangeRate}%`,
                 text: `Input data`
             },
             {
                 label: 'Monthly cost of snapshots',
                 value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}`,
-                text: `Monthly change rate x storage amount of EBS primary dbs x EBS snapshot price = XXX`
+                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x storage amount of EBS primary dbs (XXX) x EBS snapshot price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost})`
             },
             {
                 label: 'Discount for partial storage month',
@@ -873,227 +873,237 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             },
             {
                 label: 'EBS storage cost for clone',
-                value: `$XXX`,
+                value: `$${viewCalculation.ebsCloneCalculation.capacity}`,
                 text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
             },
             {
                 label: 'EBS iops cost for clone',
-                value: `$XXX`,
+                value: `$${viewCalculation.ebsCloneCalculation.iops}`,
                 text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
             },
             {
                 label: 'EBS throughput cost for clone',
-                value: `$XXX`,
+                value: `$${viewCalculation.ebsCloneCalculation.throughput}`,
                 text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
             },
             {
                 label: 'Clones total monthly cost',
-                value: `$XXX`,
-                text: `Number of Cloned copies x (primary EBS storage cost + primary EBS iops cost + primary EBS throughput cost)= XXX`
+                value: `$${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost}`,
+                text: `Number of Cloned copies (${viewCalculation.ebsCloneCalculation.clonedCopiesCount}) x (primary EBS storage cost ($${viewCalculation.ebsCloneCalculation.capacity}) + primary EBS iops cost ($${viewCalculation.ebsCloneCalculation.iops}) + primary EBS throughput cost ($${viewCalculation.ebsCloneCalculation.throughput}))`
             }
         ],
         totalMonthlyCost: [
             {
                 label: 'Total monthly EC2 machine cost',
-                value: `$XXX`,
+                value: `$${viewCalculation.totalEBSEc2MachineCost}`,
                 text: ``
             },
             {
                 label: 'Total monthly storage cost',
-                value: `$XXX`,
+                value: `$${viewCalculation.ebsCalculation.totalEbsStorageCost}`,
                 text: `Total storage cost across all volume disc types`
             },
             {
                 label: 'Total monthly iops cost',
-                value: `$XXX`,
+                value: `$${viewCalculation.ebsCalculation.totalEbsIopsCost}`,
                 text: `Total iops cost across all volume disc types`
             },
             {
                 label: 'Total monthly throughput cost',
-                value: `$XXX`,
+                value: `$${viewCalculation.ebsCalculation.totalEbsThroughputCost}`,
                 text: `Total throughput cost across all volume disc types`
             },
             {
                 label: 'Total monthly snapshots cost',
-                value: `$XXX`,
+                value: `$${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}`,
                 text: ''
             },
             {
                 label: 'Total monthly clones cost',
-                value: `$XXX`,
+                value: `$${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost}`,
                 text: ''
             },
             {
                 label: 'Total monthly cost',
                 value: `$${viewCalculation.ebsTotalCost}`,
-                text: `Total EC2 cost ($XXX) + Total Storage cost ($XXX) + Total throughput and IOPS cost ($XXX) + Total snapshots cost ($XXX) + Total Clone cost ($XXX)`
+                text: `Total EC2 cost ($${viewCalculation.totalEBSEc2MachineCost}) + Total storage cost ($${viewCalculation.ebsCalculation.totalEbsStorageCost}) + Total throughput cost ($${viewCalculation.ebsCalculation.totalEbsThroughputCost}) + Total IOPS cost ($${viewCalculation.ebsCalculation.totalEbsIopsCost}) + Total snapshots cost ($${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}) + Total Clone cost ($${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost})`
             }
         ],
-        gp3VolumeType: [
-            {
-                label: 'Unit conversions'
-            },
-            {
-                label: 'Total storage amount',
-                value: `XXX GiB`,
-                text: `Storage amount of disc type in GiB`
-            },
-            {
-                label: 'Pricing calculations'
-            },
-            {
-                label: 'EBS storage cost',
-                value: `$XXX`,
-                text: `Total storage amount x EBS capacity price`
-            },
-            {
-                label: 'Billable IOPS',
-                value: `XXX IOPS`,
-                text: ``
-            },
-            {
-                label: 'Total billable IOPS',
-                value: `XXX IOPS`,
-                text: ``
-            },
-            {
-                label: 'EBS IOPS cost',
-                value: `$XXX`,
-                text: ``
-            },
-            {
-                label: 'Billable MiB/s',
-                value: `XXX MiB/s`,
-                text: ``
-            },
-            {
-                label: 'Billable throughout (MiB/s)',
-                value: `XXX MiB/s`,
-                text: ``
-            },
-            {
-                label: 'Billable throughout (GiB/s)',
-                value: `XXX GiB/s`,
-                text: `Billable throughput (MiB/s)/1024`
-            },
-            {
-                label: 'EBS throughput cost',
-                value: `$XXX`,
-                text: ``
-            }
-        ],
-        io2VolumeType: [
-            {
-                label: 'Unit conversions'
-            },
-            {
-                label: 'Total storage amount',
-                value: `XXX GiB`,
-                text: `Storage amount of disc type in GiB`
-            },
-            {
-                label: 'Pricing calculations'
-            },
-            {
-                label: 'EBS storage cost',
-                value: `$XXX`,
-                text: `Total storage amount x EBS capacity price`
-            },
-            {
-                label: 'Billable IOPS',
-                value: `XXX IOPS`,
-                text: ``
-            },
-            {
-                label: 'EBS IOPS cost',
-                value: `$XXX`,
-                text: ``
-            }
-        ],
-        io1VolumeType: [
-            {
-                label: 'Unit conversions'
-            },
-            {
-                label: 'Total storage amount',
-                value: `XXX GiB`,
-                text: `Storage amount of disc type in GiB`
-            },
-            {
-                label: 'Pricing calculations'
-            },
-            {
-                label: 'EBS storage cost',
-                value: `$XXX`,
-                text: `Total storage amount x EBS capacity price`
-            },
-            {
-                label: 'Billable IOPS',
-                value: `XXX IOPS`,
-                text: ``
-            },
-            {
-                label: 'EBS IOPS cost',
-                value: `$XXX`,
-                text: ``
-            }
-        ],
-        gp2VolumeType: [
-            {
-                label: 'Unit conversions'
-            },
-            {
-                label: 'Total storage amount',
-                value: `XXX GiB`,
-                text: `Storage amount of disc type in GiB`
-            },
-            {
-                label: 'Pricing calculations'
-            },
-            {
-                label: 'EBS storage cost',
-                value: `$XXX`,
-                text: `Total storage amount x EBS capacity price`
-            }
-        ],
-        st1VolumeType: [
-            {
-                label: 'Unit conversions'
-            },
-            {
-                label: 'Total storage amount',
-                value: `XXX GiB`,
-                text: `Storage amount of disc type in GiB`
-            },
-            {
-                label: 'Pricing calculations'
-            },
-            {
-                label: 'EBS storage cost',
-                value: `$XXX`,
-                text: `Total storage amount x EBS capacity price`
-            }
-        ],
+        gp3VolumeType: viewCalculation?.ebsCalculation?.gp3
+            ? [
+                  {
+                      label: 'Unit conversions'
+                  },
+                  {
+                      label: 'Total storage amount',
+                      value: `${viewCalculation.ebsCalculation.gp3.storageAmountPerVol}`,
+                      text: `Storage amount of disc type in GiB`
+                  },
+                  {
+                      label: 'Pricing calculations'
+                  },
+                  {
+                      label: 'EBS storage cost',
+                      value: `$${viewCalculation.ebsCalculation.gp3.ebsStorageCost}`,
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.gp3.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.gp3.ebsCapacityPrice})`
+                  },
+                  {
+                      label: 'Billable IOPS',
+                      value: `${viewCalculation.ebsCalculation.gp3.billableIops} IOPS`,
+                      text: ``
+                  },
+                  {
+                      label: 'Total billable IOPS ',
+                      value: `${viewCalculation.ebsCalculation.gp3.totalBillableIops} IOPS`,
+                      text: ``
+                  },
+                  {
+                      label: 'EBS IOPS cost',
+                      value: `$${viewCalculation.ebsCalculation.gp3.ebsIopsCost}`,
+                      text: ``
+                  },
+                  {
+                      label: 'Billable MiB/s',
+                      value: `${viewCalculation.ebsCalculation.gp3.billableMbps} MiB/s`,
+                      text: ``
+                  },
+                  {
+                      label: 'Billable throughout (MiB/s)',
+                      value: `${viewCalculation.ebsCalculation.gp3.billableThroughputMbps} MiB/s`,
+                      text: ``
+                  },
+                  {
+                      label: 'Billable throughout (GiB/s)',
+                      value: `${viewCalculation.ebsCalculation.gp3.billableThroughputGbps} GiB/s`,
+                      text: `Billable throughput (${viewCalculation.ebsCalculation.gp3.billableThroughputMbps}  MiB/s)/1024`
+                  },
+                  {
+                      label: 'EBS throughput cost',
+                      value: `$${viewCalculation.ebsCalculation.gp3.ebsThroughputCost}`,
+                      text: ``
+                  }
+              ]
+            : [],
+        io2VolumeType: viewCalculation?.ebsCalculation?.io2
+            ? [
+                  {
+                      label: 'Unit conversions'
+                  },
+                  {
+                      label: 'Total storage amount',
+                      value: `${viewCalculation.ebsCalculation.io2.storageAmountPerVol}`,
+                      text: `Storage amount of disc type in GiB`
+                  },
+                  {
+                      label: 'Pricing calculations'
+                  },
+                  {
+                      label: 'EBS storage cost',
+                      value: `$${viewCalculation.ebsCalculation.io2.ebsStorageCost}`,
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.io2.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.io2.ebsCapacityPrice})`
+                  },
+                  {
+                      label: 'Billable IOPS',
+                      value: `${viewCalculation.ebsCalculation.io2.billableIops} IOPS`,
+                      text: ``
+                  },
+                  {
+                      label: 'EBS IOPS cost',
+                      value: `$${viewCalculation.ebsCalculation.io2.ebsIopsCost}`,
+                      text: ``
+                  }
+              ]
+            : [],
+        io1VolumeType: viewCalculation?.ebsCalculation?.io1
+            ? [
+                  {
+                      label: 'Unit conversions'
+                  },
+                  {
+                      label: 'Total storage amount',
+                      value: `${viewCalculation.ebsCalculation.io1.storageAmountPerVol}`,
+                      text: `Storage amount of disc type in GiB`
+                  },
+                  {
+                      label: 'Pricing calculations'
+                  },
+                  {
+                      label: 'EBS storage cost',
+                      value: `$${viewCalculation.ebsCalculation.io1.ebsStorageCost}`,
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.io1.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.io1.ebsCapacityPrice})`
+                  },
+                  {
+                      label: 'Billable IOPS',
+                      value: `${viewCalculation.ebsCalculation.io1.billableIops} IOPS`,
+                      text: ``
+                  },
+                  {
+                      label: 'EBS IOPS cost',
+                      value: `$${viewCalculation.ebsCalculation.io1.ebsIopsCost}`,
+                      text: ``
+                  }
+              ]
+            : [],
+        gp2VolumeType: viewCalculation?.ebsCalculation?.gp2
+            ? [
+                  {
+                      label: 'Unit conversions'
+                  },
+                  {
+                      label: 'Total storage amount',
+                      value: `${viewCalculation.ebsCalculation.gp2.storageAmountPerVol}`,
+                      text: `Storage amount of disc type in GiB`
+                  },
+                  {
+                      label: 'Pricing calculations'
+                  },
+                  {
+                      label: 'EBS storage cost',
+                      value: `$${viewCalculation.ebsCalculation.gp2.ebsStorageCost}`,
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.gp2.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.gp2.ebsCapacityPrice})`
+                  }
+              ]
+            : [],
+        st1VolumeType: viewCalculation?.ebsCalculation?.st1
+            ? [
+                  {
+                      label: 'Unit conversions'
+                  },
+                  {
+                      label: 'Total storage amount',
+                      value: `${viewCalculation.ebsCalculation.st1.storageAmountPerVol}`,
+                      text: `Storage amount of disc type in GiB`
+                  },
+                  {
+                      label: 'Pricing calculations'
+                  },
+                  {
+                      label: 'EBS storage cost',
+                      value: `$${viewCalculation.ebsCalculation.st1.ebsStorageCost}`,
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.st1.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.st1.ebsCapacityPrice})`
+                  }
+              ]
+            : [],
         ebsTotalCost: [
             {
                 label: 'Total storage cost',
-                value: `$XXX`,
-                text: `GP3 storage cost + GP2 storage cost + io2 storage cost + io1 storage cost + st1 storage cost`
+                value: `$${viewCalculation.ebsCalculation.totalEbsStorageCost}`,
+                text: `${viewCalculation.ebsCalculation.totalEbsStorageCostText}`
             },
             {
                 label: 'Total IOPS cost',
-                value: `$XXX`,
-                text: `GP3 IOPS cost + GP2 IOPS cost + io2 storage cost + io1 storage cost + st1 storage cost`
+                value: `$${viewCalculation.ebsCalculation.totalEbsIopsCost}`,
+                text: `${viewCalculation.ebsCalculation.totalEbsIopsCostText}`
             },
             {
                 label: 'Total throughput cost',
-                value: `$XXX`,
-                text: `GP3 throughput cost + GP2 throughput cost + io2 storage cost + io1 storage cost + st1 storage cost`
+                value: `$${viewCalculation.ebsCalculation.totalEbsThroughputCost}`,
+                text: `${viewCalculation.ebsCalculation.totalEbsThroughputCostText}`
             },
             {
                 label: 'EBS total cost',
-                value: `$XXX`,
-                text: `Total storage cost + Total IOPS cost + Total throughput cost`
+                value: `$${viewCalculation.ebsOnlyCost}`,
+                text: `Total storage cost ($${viewCalculation.ebsCalculation.totalEbsStorageCost}) + Total IOPS cost ($${viewCalculation.ebsCalculation.totalEbsIopsCost}) + Total throughput cost ($${viewCalculation.ebsCalculation.totalEbsThroughputCost})`
             }
         ]
     };

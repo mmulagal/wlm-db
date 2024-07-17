@@ -23,7 +23,7 @@ const TotalMonthlyCostEbsCalculation = () => {
                 </DsTypography>
             );
         }
-        return <DsTypography variant="Regular_14">$XXX</DsTypography>;
+        return <DsTypography variant="Regular_14">${viewCalculationsResponse?.ebsTotalCost}</DsTypography>;
     };
     return (
         <div className={CommonStyles.exploreSavingsCalculation}>

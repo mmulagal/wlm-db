@@ -131,7 +131,11 @@ const SavingsCalculatorApi = () => {
                 payload: payload
             });
             if (result && !result?.error) {
-                dispatch(setViewCalculationsResponse(formatViewCalcData(result?.data, selectedDeploymentModel)));
+                dispatch(
+                    setViewCalculationsResponse(
+                        formatViewCalcData(result?.data, selectedDeploymentModel, monthlyChangeRate)
+                    )
+                );
                 dispatch(setViewCalculationsLoading(false));
             } else {
                 dispatch(setViewCalculationsLoading(false));
