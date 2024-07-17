@@ -131,7 +131,7 @@ export const calculatedFSXData = (fsxData: any) => {
             value: fsxData?.totalStorageCapacity
                 ? formatSizeTwoPrecision(fsxData?.totalStorageCapacity)
                 : GENERAL.NOT_AVAILABLE,
-            text: 'The number of volumes that you need multiplied by the selected volume size.'
+            text: 'According to EBS total capacity of primary database volumes.'
         },
 
         {
@@ -196,7 +196,7 @@ export const MSSQLServerInstance = (sqlData: any) => {
             value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
             text:
                 sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                    ? 'The equivalent deployment mode of Always On Availability Group in EBS is Failover Cluster Instance in FSx for ONTAP'
+                    ? 'The equivalent deployment mode of Always on availability group in EBS is failover cluster instance in FSx for ONTAP'
                     : 'Database deployment mode selected based on the current EBS database deployment mode'
         },
         {
@@ -212,7 +212,7 @@ export const MSSQLServerInstance = (sqlData: any) => {
         {
             label: 'Database instance type',
             value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
-            text: 'Database instance type selected based on the source EC2 instance type'
+            text: 'Database instance type selected based on the EC2 instance type'
         }
     ];
 };
