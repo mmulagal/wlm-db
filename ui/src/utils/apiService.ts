@@ -954,6 +954,7 @@ export const {
     useGetKmsKeysQuery,
     useGetKeyPairsQuery,
     useGetInstanceTypesQuery,
+    useLazyGetInstanceTypesQuery,
     useGetFsxnListQuery,
     useCreateSqlTemplateMutation,
     useDeploySqlTemplateMutation,

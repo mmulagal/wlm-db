@@ -24,7 +24,8 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
 
 export const handleManualTCO = (dispatch: any) => {
     dispatch(setSavingsCalculatorFrom('Manual'));
-    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+
+    dispatch(setSelectedHeaderTab(WLF_TABS.REDIRECT_COMPONENT));
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {
