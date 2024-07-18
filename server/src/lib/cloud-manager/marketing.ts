@@ -46,6 +46,14 @@ interface EbsCostCalculation {
     AWSEBSTotalCostMonthly: number;
     requestedThroughputMBps: number;
     includedThroughputMBps: number;
+    ebsSnapshotPrice: {
+        price: number;
+        unit: string;
+    };
+    amountChangedPerSnapshot: {
+        size: number;
+        unit: string;
+    };
 }
 
 interface FsxCalculation {

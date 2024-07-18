@@ -139,7 +139,10 @@ const EbsCloneCalculation = Type.Object({
 const EbsSnapshotCalculation = Type.Object({
     storageAmount: Type.Number(),
     numberOfVolumes: Type.Number(),
+    ebsSnapshotPrice: PriceUnitObject,
+    amountChangedPerSnapshot: Type.Number(),
     monthlyCostOfSnapshots: Type.Number(),
+    monthlyChangeRatePercentage: Type.Number(),
     ebsInstanceMonth: Type.Number(),
     totalSnapshots: Type.Number(),
     initialSnapshotCost: Type.Number(),

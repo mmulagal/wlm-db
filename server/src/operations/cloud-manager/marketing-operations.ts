@@ -205,7 +205,9 @@ function formatEbsCalculationObject(
         totalSnapshotCost,
         totalEBSSnapshotCost: totalEbsSnapshotCost,
         ebsSnapshotCost,
-        AWSEBSTotalCostMonthly: ebsTotalCostMonthly
+        AWSEBSTotalCostMonthly: ebsTotalCostMonthly,
+        ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: ebsSnapshotPriceUnit },
+        amountChangedPerSnapshot: { size: amountChangedPerSnapshotSize, unit: amountChangedPerSnapshotUnit }
     } = ebsCostCalculationObject;
 
     const ebsCostCalculation = {
@@ -235,11 +237,15 @@ function formatEbsCalculationObject(
     };
 
     const storageAmountOfEbs = convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0;
+    const amountChangedPerSnapshot = convertToBytes(amountChangedPerSnapshotSize, amountChangedPerSnapshotUnit) || 0;
 
     const ebsSnapshotCalculation = {
         storageAmount: storageAmountOfEbs * ebsNumberOfVolumes,
         numberOfVolumes: ebsNumberOfVolumes,
-        monthlyCostOfSnapshots: (monthlyChangeRatePercentage / 100) * sizeInGigaBytes(storageAmountOfEbs, 'B') * 0.05, // ebs snapshot price is 0.05 per GB
+        ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: ebsSnapshotPriceUnit },
+        amountChangedPerSnapshot,
+        monthlyCostOfSnapshots: sizeInGigaBytes(amountChangedPerSnapshot, 'B') * ebsSnapshotPrice,
+        monthlyChangeRatePercentage,
         ebsInstanceMonth,
         totalSnapshots,
         initialSnapshotCost,
