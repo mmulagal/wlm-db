@@ -6,7 +6,9 @@ const GET_ACTIVE_NODE_DRIVE_INFO = (
     deploymentType: string
 ) => ` $disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
 $deploymentType  = '${deploymentType}'
-$results = foreach ($disk in $disks) {
+$results = New-Object System.Collections.ArrayList
+
+foreach ($disk in $disks) {
     $partitions = Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
 
     foreach ($partition in $partitions) {
@@ -24,9 +26,36 @@ $results = foreach ($disk in $disks) {
                 $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
             }
 
-            $logicalDiskObject
+            [void]$results.Add($logicalDiskObject)
         }
     }
+}
+
+
+$isoDriveLetters = Get-WmiObject -Class Win32_CDROMDrive -Property Drive | Select-Object -ExpandProperty Drive
+
+foreach ($isoDriveLetter in $isoDriveLetters) {
+    $isoObject = [PSCustomObject]@{
+        Manufacturer = 'CD ROM'
+        LogicalDisk = $isoDriveLetter
+        FileSystem = 0
+        Owner = 'null'
+    }
+
+    [void]$results.Add($isoObject)
+}
+
+$smbDriveLetters = Get-WmiObject -Class Win32_MappedLogicalDisk | Where-Object { $_.ProviderName -like '\\*' } | Select-Object -ExpandProperty DeviceID
+
+foreach ($driveLetter in $smbDriveLetters) {
+    $smbObject = [PSCustomObject]@{
+        Manufacturer = 'SMB'
+        LogicalDisk = $driveLetter
+        FileSystem = 0
+        Owner = 'null'
+    }
+
+    [void]$results.Add($smbObject)
 }
 $results | ConvertTo-Json
  `;

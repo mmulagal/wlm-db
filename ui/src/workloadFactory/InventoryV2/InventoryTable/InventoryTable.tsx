@@ -144,7 +144,8 @@ const InventoryTable = () => {
                     instanceListText: instanceList.join(','),
                     instanceNameListText: instanceNameList.join(', '),
                     vpcIdAndNameText: vpcIdAndNameText,
-                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
+                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
+                    nameForSorting: inventoryTableData[key]?.name?.toLowerCase()
                 };
                 result.push(rowData);
             });
@@ -503,7 +504,7 @@ const InventoryTable = () => {
         {
             id: '1',
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'status',
+            accessor: 'nameForSorting',
             isSortable: true,
             width: '228px',
             isSticky: true,

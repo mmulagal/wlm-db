@@ -11,9 +11,8 @@ import {
     renderInstanceListText,
     renderUnmanagedAZ
 } from '../../Inventory/InventoryUtils';
-import { handleManualTCO, onClickESHost } from '../ExploreSavingsUtils';
+import { onClickESHost } from '../ExploreSavingsUtils';
 import { INVENTORY_STATUS } from '../../../utils/consts';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useEffect, useState } from 'react';
 
 const ExploreSavingsTableV2 = () => {
@@ -22,7 +21,6 @@ const ExploreSavingsTableV2 = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
-    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const [tableData, setTableData] = useState<any>([]);
 
     useEffect(() => {
@@ -44,7 +42,8 @@ const ExploreSavingsTableV2 = () => {
                 const rowData = {
                     ...perRow,
                     instanceListText: instanceList.join(','),
-                    instanceNameListText: instanceNameList.join(', ')
+                    instanceNameListText: instanceNameList.join(', '),
+                    nameForSorting: perRow?.name?.toLowerCase()
                 };
                 result.push(rowData);
             });
@@ -83,7 +82,7 @@ const ExploreSavingsTableV2 = () => {
     const ExploreSavingsColDefs: ColumnProps[] = [
         {
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'status',
+            accessor: 'nameForSorting',
             id: '1',
             isSortable: true,
             isSticky: true,
@@ -108,8 +107,6 @@ const ExploreSavingsTableV2 = () => {
                                 {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
                                 {!rowData?.status && !rowData?.loading && 'Unknown'}
                             </Typography>
-                            <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">{GENERAL.MSSQL}</Typography>
                         </div>
                     </div>
                 );
@@ -160,7 +157,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_INSTANCE_ID,
             accessor: 'instanceListText',
             id: '5',
-            width: '200px',
+            width: '211px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
@@ -171,7 +168,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
             accessor: 'allocatedCapacityText',
             id: '6',
-            width: '180px',
+            width: '190px',
             isSortable: true,
             accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
@@ -182,7 +179,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_AVAILABILITY,
             accessor: 'azType',
             id: '7',
-            width: '150px',
+            width: '170px',
             filterOptions: [
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
