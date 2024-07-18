@@ -239,6 +239,12 @@ export const formatViewCalcData = (
 
     const result = {
         ...ebsViewCalculationData,
+        ebsCalculation: {
+            ...ebsViewCalculationData?.ebsCalculation,
+            totalEbsThroughputCost: formatNumbers(ebsViewCalculationData?.ebsCalculation?.totalEbsThroughputCost),
+            totalEbsIopsCost: formatNumbers(ebsViewCalculationData?.ebsCalculation?.totalEbsIopsCost),
+            totalEbsStorageCost: formatNumbers(ebsViewCalculationData?.ebsCalculation?.totalEbsStorageCost)
+        },
         fsxInstanceCalculation: formatViewCalcInstance(
             selectedDeploymentModel,
             {},
