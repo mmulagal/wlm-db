@@ -492,15 +492,12 @@ async function formatStorageSavingsCalculationMetrics(
         multi
     } = await invokeMarketingApi(accountId, credentialsId, region, sqlServerDeploymentType, ebsVolumeIds, params);
 
-    const totalMonthlyClonedCopiesCount =
-        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
-
     const ebsCalculationBreakdown = {
         ...(gp2 && {
             gp2: formatEbsCalculationObject(
                 gp2.ebs,
                 gp2.ebs_cost_calculation,
-                totalMonthlyClonedCopiesCount,
+                params.clonedCopiesCount,
                 params.monthlyChangeRatePercentage
             )
         }),
@@ -508,7 +505,7 @@ async function formatStorageSavingsCalculationMetrics(
             gp3: formatEbsCalculationObject(
                 gp3.ebs,
                 gp3.ebs_cost_calculation,
-                totalMonthlyClonedCopiesCount,
+                params.clonedCopiesCount,
                 params.monthlyChangeRatePercentage
             )
         }),
@@ -516,7 +513,7 @@ async function formatStorageSavingsCalculationMetrics(
             io1: formatEbsCalculationObject(
                 io1.ebs,
                 io1.ebs_cost_calculation,
-                totalMonthlyClonedCopiesCount,
+                params.clonedCopiesCount,
                 params.monthlyChangeRatePercentage
             )
         }),
@@ -524,7 +521,7 @@ async function formatStorageSavingsCalculationMetrics(
             io2: formatEbsCalculationObject(
                 io2.ebs,
                 io2.ebs_cost_calculation,
-                totalMonthlyClonedCopiesCount,
+                params.clonedCopiesCount,
                 params.monthlyChangeRatePercentage
             )
         }),
@@ -532,7 +529,7 @@ async function formatStorageSavingsCalculationMetrics(
             st1: formatEbsCalculationObject(
                 st1.ebs,
                 st1.ebs_cost_calculation,
-                totalMonthlyClonedCopiesCount,
+                params.clonedCopiesCount,
                 params.monthlyChangeRatePercentage
             )
         })
