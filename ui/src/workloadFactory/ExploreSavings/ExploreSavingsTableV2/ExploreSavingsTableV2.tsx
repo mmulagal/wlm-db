@@ -11,9 +11,8 @@ import {
     renderInstanceListText,
     renderUnmanagedAZ
 } from '../../Inventory/InventoryUtils';
-import { handleManualTCO, onClickESHost } from '../ExploreSavingsUtils';
+import { onClickESHost } from '../ExploreSavingsUtils';
 import { INVENTORY_STATUS } from '../../../utils/consts';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useEffect, useState } from 'react';
 
 const ExploreSavingsTableV2 = () => {
@@ -22,7 +21,6 @@ const ExploreSavingsTableV2 = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
-    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const [tableData, setTableData] = useState<any>([]);
 
     useEffect(() => {
@@ -44,7 +42,8 @@ const ExploreSavingsTableV2 = () => {
                 const rowData = {
                     ...perRow,
                     instanceListText: instanceList.join(','),
-                    instanceNameListText: instanceNameList.join(', ')
+                    instanceNameListText: instanceNameList.join(', '),
+                    nameForSorting: perRow?.name?.toLowerCase()
                 };
                 result.push(rowData);
             });
@@ -83,7 +82,7 @@ const ExploreSavingsTableV2 = () => {
     const ExploreSavingsColDefs: ColumnProps[] = [
         {
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'status',
+            accessor: 'name',
             id: '1',
             isSortable: true,
             isSticky: true,

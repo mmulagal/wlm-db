@@ -488,7 +488,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity}`,
-                text: 'Monthly change rate x FSXn storage capacity = '
+                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x FSXn storage capacity (${viewCalculation.fsxOntapCalculation.desiredStorageCapacity})`
             },
             {
                 label: 'Percentage of data on SSD storage',
