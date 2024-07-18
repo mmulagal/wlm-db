@@ -18,7 +18,7 @@ import getLogger from '../utils/logger';
 import { determineSmallerInstance, getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { NodeDetails } from '../utils/common-types';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
-import { getDatabaseInstanceName } from '../utils/utils';
+import { getDatabaseInstanceName, getMonthlyPriceFromHourlyPrice } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -252,10 +252,29 @@ async function handleInstanceRecommendation(
                     instanceType,
                     price: recommendedInstanceHourlyPrice,
                     basePrice: recommendedInstanceHourlyPriceWithoutLicense,
+                    computeHourlyPrice: recommendedInstanceHourlyPrice
+                        ? getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPrice)
+                        : undefined,
+                    instanceHourlyPrice: recommendedInstanceHourlyPriceWithoutLicense
+                        ? getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPriceWithoutLicense)
+                        : undefined,
                     hoursInMonth: HOURS_IN_MONTH,
                     licenseIncluded: true // recommending an instance with the license included; TODO: change this logic when supporting BYOL; i.e if the recommended Standard instance with license included is expensive than the existing Enterprise instance with BYOL; change the licenseIncluded to false
                 })),
-                recommendationOptions: compact(instanceRecommendations).map(({ instanceType }) => instanceType),
+                recommendationOptions: instanceRecommendations?.map(({ instanceType, pricingDetails }) => {
+                    const basePrice = pricingDetails?.NA?.pricePerUnit;
+                    const price = pricingDetails[recommendedSqlLicenseType]?.pricePerUnit;
+                    const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(price);
+                    const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(basePrice);
+                    return {
+                        instanceType,
+                        price,
+                        basePrice,
+                        computeMonthlyPrice,
+                        instanceMonthlyPrice,
+                        hoursInMonth: HOURS_IN_MONTH
+                    };
+                }),
                 message: recommendationMessage
             };
         } else {
@@ -500,6 +519,11 @@ export default async function getSqlInstanceLicenseRecommendations(
                     existingInstanceTypePricingsDetails
                 );
                 // existing compute and license details
+                const ePrice =
+                    existingInstanceTypePricingsDetails.get(ec2InstanceType)?.pricingDetails[existingLicenseType]
+                        ?.pricePerUnit;
+                const eBasePrice =
+                    existingInstanceTypePricingsDetails.get(ec2InstanceType)?.pricingDetails.NA?.pricePerUnit;
                 existingCompute = {
                     price: existingInstanceHourlyPrice, // could be undefined if the pricing information is not available for a certain instance type
                     baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
@@ -514,6 +538,8 @@ export default async function getSqlInstanceLicenseRecommendations(
                             basePrice:
                                 existingInstanceTypePricingsDetails.get(ec2InstanceType)?.pricingDetails.NA
                                     ?.pricePerUnit,
+                            computeHourlyPrice: ePrice ? getMonthlyPriceFromHourlyPrice(ePrice) : undefined,
+                            instanceHourlyPrice: eBasePrice ? getMonthlyPriceFromHourlyPrice(eBasePrice) : undefined,
                             hoursInMonth: HOURS_IN_MONTH,
                             licenseIncluded: WIN_SQL_EC2_USAGE_OPERATION.includes(usageOperation)
                         })

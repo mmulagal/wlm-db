@@ -77,16 +77,14 @@ async function identifyComputeOptimizerRecommendationOptions(
         if (pricingDetails?.NA?.pricePerUnit) {
             recommendationOptionsWithPrices.push({
                 recommendationOption,
-                price: pricingDetails.NA.pricePerUnit
+                price: pricingDetails.NA.pricePerUnit,
+                pricingDetails
             });
         }
     }
     recommendationOptionsWithPrices.sort((a, b) => a.price - b.price);
 
-    const sortedRecommendationOptions = recommendationOptionsWithPrices.map(
-        optionWithPrice => optionWithPrice.recommendationOption
-    );
-    return sortedRecommendationOptions;
+    return recommendationOptionsWithPrices;
 }
 
 async function manageInstanceRecommendationPreReqs(
@@ -255,19 +253,25 @@ async function getInstanceRecommendations(
                 recommendationOptions
             );
 
-            const allRecommendedTypes = compact(
-                recommendationOptionsSortedByPrice.map(optionWithPrice => optionWithPrice.instanceType)
+            const allRecommendedInstanceDetails = compact(
+                recommendationOptionsSortedByPrice.map(optionWithPrice => {
+                    const { pricingDetails, recommendationOption: { instanceType } = {} } = optionWithPrice;
+                    return {
+                        instanceType,
+                        pricingDetails
+                    };
+                })
             );
 
             // return items present in both allRecommendedTypes and instanceTypes
-            const recommendedInstanceTypes = allRecommendedTypes.filter((type: string) =>
-                instanceTypes?.includes(type)
+            const recommendedInstanceTypes = allRecommendedInstanceDetails.filter(({ instanceType = '' }) =>
+                instanceTypes?.includes(instanceType)
             );
 
             if (isEmpty(recommendedInstanceTypes)) {
                 throw new Error('We are unable to recommend an instance type for the instance.');
             }
-            return { finding, instanceRecommendations: recommendationOptionsSortedByPrice, message };
+            return { finding, instanceRecommendations: allRecommendedInstanceDetails, message };
         }
         return { finding, message: 'Instance is already optimized' };
     }

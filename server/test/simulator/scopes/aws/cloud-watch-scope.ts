@@ -123,8 +123,6 @@ cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'VolumeReadBytes' })
     ]
 });
 
-
-
 cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'VolumeWriteBytes' }).resolves({
     Datapoints: [
         {

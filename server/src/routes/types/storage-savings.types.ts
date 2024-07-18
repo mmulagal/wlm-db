@@ -32,6 +32,16 @@ const StorageMetrics = Type.Object({
     total: Type.Number()
 });
 
+const MachinePriceDetails = Type.Object({
+    instanceType: Type.String(),
+    price: Type.Number(),
+    basePrice: Type.Number(),
+    computeMonthlyPrice: Type.Number(),
+    instanceMonthlyPrice: Type.Number(),
+    hoursInMonth: Type.Number(),
+    licenseIncluded: Type.Optional(Type.Boolean())
+});
+
 const StorageSavingsCompute = Type.Object({
     instanceType: Type.String(),
     computeMonthlyPrice: Type.Optional(Type.Number()),
@@ -40,8 +50,8 @@ const StorageSavingsCompute = Type.Object({
         Type.String({ enum: [FINDING.OPTIMIZED, FINDING.NOT_OPTIMIZED, FINDING.INSUFFICIENT_DATA] })
     ),
     message: Type.Optional(Type.String()),
-    machineDetails: Type.Optional(Type.Any()),
-    recommendationOptions: Type.Optional(Type.Any())
+    machineDetails: Type.Optional(MachinePriceDetails),
+    recommendationOptions: Type.Optional(MachinePriceDetails)
 });
 
 const StorageSavingsLicense = Type.Object({
