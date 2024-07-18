@@ -1043,14 +1043,16 @@ async function getActiveSqlNodeAndInstanceDetails(
     region: string,
     nodeIds: string[],
     databaseInstanceName: string,
-    resourceId?: string
+    resourceId?: string,
+    resourceName?: string
 ) {
     logger.info('Getting active SQL node and instance details', {
         credentialsId,
         region,
         nodeIds,
         databaseInstanceName,
-        resourceId
+        resourceId,
+        resourceName
     });
     try {
         for (const nodeId of nodeIds) {
@@ -1075,15 +1077,15 @@ async function getActiveSqlNodeAndInstanceDetails(
                 }
             } else {
                 logger.error(
-                    `SSM status of node ${nodeId} is not running :${connectionStatus.Status}  for resourceid: ${resourceId}`
+                    `SSM status of node ${nodeId} is not running :${connectionStatus.Status}  for resourceid: ${resourceId}, resource name : ${resourceName}`
                 );
             }
         }
-        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${nodeIds} for resourceid: ${resourceId}`;
+        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${nodeIds} for resourceid: ${resourceId}, resource name : ${resourceName}    `;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     } catch (err) {
-        const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId} credentialsId: ${credentialsId}, region: ${region}, nodeIds:${nodeIds} , ${err}`;
+        const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId}, resource name: ${resourceName} credentialsId: ${credentialsId}, region: ${region}, nodeIds:${nodeIds} , ${err}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -1098,7 +1100,7 @@ async function getActiveNodeAndInstanceDetails(
 ) {
     logger.info('Fetching instance details', { accountId, credentialsId, region });
 
-    const { resource_id: resourceId, metadata } = resourceDetails;
+    const { resource_id: resourceId, metadata, resource_name: resourceName } = resourceDetails;
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
     const { database_instance_name: instanceName } = databaseInstanceDetails;
 
@@ -1107,10 +1109,11 @@ async function getActiveNodeAndInstanceDetails(
         region,
         [node1InstanceId, ...(node2InstanceId ? [node2InstanceId] : [])],
         instanceName,
-        resourceId
+        resourceId,
+        resourceName || ''
     );
     if (!activeNodeResponse) {
-        const errorMessage = `${node1InstanceId} , ${node2InstanceId} are not in active state for resource: ${resourceId} `;
+        const errorMessage = `${node1InstanceId} , ${node2InstanceId} are not in active state for resource id: ${resourceId}, resource name : ${resourceName} `;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }

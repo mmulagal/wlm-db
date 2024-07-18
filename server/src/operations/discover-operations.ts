@@ -394,10 +394,21 @@ async function getHostAndSqlInfoFromPsOutput(
     let api1EndTime;
 
     api1StartTime = performance.now();
-    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all([
-        pollCommandStatus(credentialsId, region, commandInvocationParam),
-        getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
-    ]);
+
+    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all(
+        [
+            pollCommandStatus(credentialsId, region, commandInvocationParam),
+            getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
+        ].map((p, index) =>
+            p.catch(error => {
+                if (index === 0) {
+                    const errorMessage = `Error fetching command status ${error}, on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
+                    logger.error(errorMessage);
+                    throw createError(errorMessage);
+                }
+            })
+        )
+    );
 
     logger.info(`SQL Parameter details for ${ssmTarget.ec2InstanceId}: ${ec2SqlParametersInfo}`);
 
