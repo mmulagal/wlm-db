@@ -237,11 +237,11 @@ const SavingsCalculator = () => {
                     </div>
 
                     {/* Accordion here */}
-                    <MSSQLAccordion printState={printState} />
+                    <MSSQLAccordion printState={printState} disableState={disableState} />
                 </div>
 
                 {/* last section */}
-                <ExportPDF printDocument={printDocument} />
+                <ExportPDF printDocument={printDocument} disableState={disableState} />
             </div>
         </div>
     );
