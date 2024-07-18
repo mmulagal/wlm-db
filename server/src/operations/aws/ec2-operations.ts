@@ -798,13 +798,14 @@ async function getInstanceDetailsByPrivateIp(credentialsId: string, region: stri
     Reservations?.forEach(({ Instances }) => {
         const [instance] = Instances || [];
         if (instance) {
-            const { InstanceId, PrivateIpAddress, InstanceType, Tags } = instance;
+            const { InstanceId, PrivateIpAddress, InstanceType, Tags, UsageOperation } = instance;
             if (InstanceId && PrivateIpAddress && InstanceType) {
                 instanceDetails.push({
                     ec2InstanceId: InstanceId,
                     ec2InstancePrivateIpAddress: PrivateIpAddress,
                     ec2InstanceType: InstanceType,
-                    ec2InstanceName: isDemo() ? `sqlnode-${randomize('0', 5)}` : getResourceNameFromTags(Tags)
+                    ec2InstanceName: isDemo() ? `sqlnode-${randomize('0', 5)}` : getResourceNameFromTags(Tags),
+                    ec2UsageOperation: UsageOperation
                 });
             }
         }

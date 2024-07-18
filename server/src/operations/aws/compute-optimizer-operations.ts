@@ -4,7 +4,7 @@ import {
     PreferredResourceName,
     InstanceRecommendationOption
 } from '@aws-sdk/client-compute-optimizer';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import {
     getEC2InstanceRecommendations,
     getEffectiveRecommendationPreferences,
@@ -15,6 +15,7 @@ import getLogger from '../../utils/logger';
 import { getCredentialsDetails } from '../cloud-manager/credentials-operations';
 import { getInstanceTypesFromInstanceRequirements } from './ec2-operations';
 import { getSqlInstancePricingDetails } from './pricing-operations';
+import { FINDING } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -54,14 +55,14 @@ async function createRecommendationForResource(
     await putRecommendationPreferences(region, credentialsId, accountId, putRecParams);
 }
 
-async function identifyCheaperRecommendationOption(
+async function identifyComputeOptimizerRecommendationOptions(
     accountId: string,
     region: string,
     credentialsId: string,
     currentInstanceType: string,
     instanceRecommendationOptions: InstanceRecommendationOption[]
 ) {
-    logger.info('Identifying cheaper recommendation option', {
+    logger.info('Identifying compute optimiser recommendation options', {
         accountId,
         region,
         credentialsId,
@@ -69,19 +70,93 @@ async function identifyCheaperRecommendationOption(
         instanceRecommendationOptions
     });
 
-    const {
-        NA: { pricePerUnit: currenceInstancePrice }
-    } = await getSqlInstancePricingDetails(region, currentInstanceType, 'windows');
-    let cheaperRecommendationOption;
+    const recommendationOptionsWithPrices = [];
     for (const recommendationOption of instanceRecommendationOptions) {
         const { instanceType = '' } = recommendationOption;
         const pricingDetails = await getSqlInstancePricingDetails(region, instanceType, 'windows'); // Assuming this function returns pricing details for a specific instance type
-        if (pricingDetails?.NA?.pricePerUnit && pricingDetails?.NA?.pricePerUnit < currenceInstancePrice) {
-            cheaperRecommendationOption = recommendationOption;
+        if (pricingDetails?.NA?.pricePerUnit) {
+            recommendationOptionsWithPrices.push({
+                recommendationOption,
+                price: pricingDetails.NA.pricePerUnit
+            });
         }
     }
+    recommendationOptionsWithPrices.sort((a, b) => a.price - b.price);
 
-    return cheaperRecommendationOption;
+    const sortedRecommendationOptions = recommendationOptionsWithPrices.map(
+        optionWithPrice => optionWithPrice.recommendationOption
+    );
+    return sortedRecommendationOptions;
+}
+
+async function manageInstanceRecommendationPreReqs(
+    awsAccountId: string,
+    region: string,
+    credentialsId: string,
+    resourceArn: string,
+    accountId: string,
+    instanceId: string,
+    ebsVolumeIds: string[],
+    sqlServerDeploymentType: string
+) {
+    const instanceTypes = await getInstanceTypesFromInstanceRequirements(
+        credentialsId,
+        region,
+        [instanceId],
+        ebsVolumeIds,
+        sqlServerDeploymentType
+    );
+
+    if (instanceTypes && instanceTypes.length <= 0) {
+        throw new Error(
+            'Instance types not found for the instance requirements, unable to create recommendation preference'
+        );
+    }
+
+    const { preferredResources: [{ includeList }] = [] } = await getEffectiveRecommendationPreferences(
+        region,
+        credentialsId,
+        accountId,
+        {
+            resourceArn
+        }
+    );
+
+    const isRecommendationPreferenceExists = includeList && includeList?.length > 1 && includeList?.[0] !== '*'; // includeList includes a list of ec2 instance types ; by default it is * so the length is 1; if its more than 1, that means we have added recommendation preferences
+    if (!isRecommendationPreferenceExists) {
+        await createRecommendationForResource(
+            region,
+            credentialsId,
+            accountId,
+            instanceId,
+            instanceTypes,
+            awsAccountId
+        );
+        throw new Error(
+            'Recommendation preference created for the instance; it takes about 24hours for compute optimizer to recommend an instance; skipping recommendations'
+        );
+    }
+
+    return instanceTypes;
+}
+
+function getFindingMapping(finding: string) {
+    switch (finding) {
+        case 'OVER_PROVISIONED':
+        case 'Overprovisioned':
+            return FINDING.NOT_OPTIMIZED;
+        case 'UNDER_PROVISIONED':
+        case 'Underprovisioned':
+            return FINDING.UNDER_PROVISIONED;
+        case 'OPTIMIZED':
+        case 'Optimized':
+            return FINDING.OPTIMIZED;
+        case 'NOT_OPTIMIZED':
+        case 'NotOptimized':
+            return FINDING.NOT_OPTIMIZED;
+        default:
+            return FINDING.INSUFFICIENT_DATA;
+    }
 }
 
 async function getInstanceRecommendations(
@@ -106,92 +181,95 @@ async function getInstanceRecommendations(
     const { awsAccountId } = derivePropertiesFromARN(arn!) || {};
     if (awsAccountId) {
         const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
-        const { preferredResources: [{ includeList }] = [] } = await getEffectiveRecommendationPreferences(
+        let message: string | undefined;
+        let instanceTypes: string[] = [];
+        try {
+            instanceTypes =
+                (await manageInstanceRecommendationPreReqs(
+                    awsAccountId,
+                    region,
+                    credentialsId,
+                    resourceArn,
+                    accountId,
+                    instanceId,
+                    ebsVolumeIds,
+                    sqlServerDeploymentType
+                )) || [];
+        } catch (error: any) {
+            logger.error('Error while managing instance recommendation prerequisites', error);
+            message = error.message;
+        }
+        const coParams = {
+            instanceArns: [resourceArn],
+            recommendateionPreferences: {
+                cpuVendorArchitectures: ['CURRENT'] // CURRENT to view recommendations that are based on the same CPU vendor and architecture as the current instance.
+            },
+            Filters: [
+                {
+                    name: 'Finding',
+                    values: ['Overprovisioned']
+                },
+                {
+                    name: 'InferredWorkloadTypes',
+                    values: ['SQLServer']
+                },
+                {
+                    name: 'FindingReasonCodes',
+                    values: [
+                        'CPUOverprovisioned',
+                        'MemoryOverprovisioned',
+                        'NetworkBandwidthOverprovisioned',
+                        'NetworkPPSOverprovisioned'
+                    ]
+                }
+            ]
+        };
+
+        const computeOptimizerInstanceRecommendations = await getEC2InstanceRecommendations(
             region,
             credentialsId,
             accountId,
-            {
-                resourceArn: getEc2Arn(awsAccountId, region, instanceId)
-            }
+            coParams
         );
-        const isRecommendationPreferenceExists = includeList && includeList?.length > 1 && includeList?.[0] !== '*'; // includeList includes a list of ec2 instance types ; by default it is * so the length is 1; if its more than 1, that means we have added recommendation preferences
-        if (isRecommendationPreferenceExists) {
-            const coParams = {
-                instanceArns: [resourceArn],
-                recommendateionPreferences: {
-                    cpuVendorArchitectures: ['CURRENT'] // CURRENT to view recommendations that are based on the same CPU vendor and architecture as the current instance.
-                },
-                Filters: [
-                    {
-                        name: 'Finding',
-                        values: ['Overprovisioned']
-                    },
-                    {
-                        name: 'InferredWorkloadTypes',
-                        values: ['SQLServer']
-                    },
-                    {
-                        name: 'FindingReasonCodes',
-                        values: [
-                            'CPUOverprovisioned',
-                            'MemoryOverprovisioned',
-                            'NetworkBandwidthOverprovisioned',
-                            'NetworkPPSOverprovisioned'
-                        ]
-                    }
-                ]
-            };
-            const computeOptimizerInstanceRecommendations = await getEC2InstanceRecommendations(
-                region,
-                credentialsId,
-                accountId,
-                coParams
-            );
-            logger.debug(
-                'computeOptimizerInstanceRecommendations response:',
-                JSON.stringify(computeOptimizerInstanceRecommendations)
-            );
 
-            if (isEmpty(computeOptimizerInstanceRecommendations?.instanceRecommendations)) {
-                throw new Error('No instance recommendations available for the instance');
-            }
+        const finding = computeOptimizerInstanceRecommendations?.instanceRecommendations?.[0]?.finding
+            ? getFindingMapping(computeOptimizerInstanceRecommendations.instanceRecommendations[0].finding)
+            : FINDING.INSUFFICIENT_DATA;
+
+        logger.debug(
+            'computeOptimizerInstanceRecommendations response:',
+            JSON.stringify(computeOptimizerInstanceRecommendations)
+        );
+
+        if (isEmpty(computeOptimizerInstanceRecommendations?.instanceRecommendations)) {
+            throw new Error('No instance recommendations available for the instance');
+        }
+        if (finding === FINDING.NOT_OPTIMIZED) {
             const [{ currentInstanceType = '', recommendationOptions = [] } = {}] =
                 computeOptimizerInstanceRecommendations?.instanceRecommendations || [];
-            const cheaperRecommendationOption = await identifyCheaperRecommendationOption(
+            const recommendationOptionsSortedByPrice = await identifyComputeOptimizerRecommendationOptions(
                 accountId,
                 region,
                 credentialsId,
                 currentInstanceType,
                 recommendationOptions
             );
-            if (isEmpty(cheaperRecommendationOption)) {
-                throw new Error('We are unable to recommend a cheaper instance type than the current instance type');
+
+            const allRecommendedTypes = compact(
+                recommendationOptionsSortedByPrice.map(optionWithPrice => optionWithPrice.instanceType)
+            );
+
+            // return items present in both allRecommendedTypes and instanceTypes
+            const recommendedInstanceTypes = allRecommendedTypes.filter((type: string) =>
+                instanceTypes?.includes(type)
+            );
+
+            if (isEmpty(recommendedInstanceTypes)) {
+                throw new Error('We are unable to recommend an instance type for the instance.');
             }
-            return cheaperRecommendationOption;
+            return { finding, instanceRecommendations: recommendationOptionsSortedByPrice, message };
         }
-        const instanceTypes = await getInstanceTypesFromInstanceRequirements(
-            credentialsId,
-            region,
-            [instanceId],
-            ebsVolumeIds,
-            sqlServerDeploymentType
-        );
-
-        if (instanceTypes?.length) {
-            await createRecommendationForResource(
-                region,
-                credentialsId,
-                accountId,
-                instanceId,
-                instanceTypes,
-                awsAccountId
-            );
-            throw new Error(
-                'Recommendation preference created for the instance; it takes about 24hours for compute optimizer to recommend an instance; skipping recommendations'
-            );
-        }
-
-        throw new Error('Instance types not found for the instance requirements; Unable to recommend an instance type');
+        return { finding, message: 'Instance is already optimized' };
     }
     throw new Error('AWS Account ID details associated with the Database host not found');
 }

@@ -62,3 +62,80 @@ cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'StorageCapacityUtil
         }
     ]
 });
+
+cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'CPUUtilization' }).resolves({
+    Datapoints: [
+        {
+            Timestamp: new Date(),
+            Maximum: 9895604649984,
+            Unit: 'Bytes'
+        },
+        {
+            Timestamp: new Date(),
+            Maximum: 9895604649984,
+            Unit: 'Bytes'
+        }
+    ]
+});
+
+cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'NetworkIn' }).resolves({
+    Datapoints: [
+        {
+            Timestamp: new Date(),
+            Average: 9895604649984,
+            Unit: 'Bytes'
+        },
+        {
+            Timestamp: new Date(),
+            Average: 9895604649984,
+            Unit: 'Bytes'
+        }
+    ]
+});
+
+cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'NetworkOut' }).resolves({
+    Datapoints: [
+        {
+            Timestamp: new Date(),
+            Average: 9895604649984,
+            Unit: 'Bytes'
+        },
+        {
+            Timestamp: new Date(),
+            Average: 9895604649984,
+            Unit: 'Bytes'
+        }
+    ]
+});
+
+cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'VolumeReadBytes' }).resolves({
+    Datapoints: [
+        {
+            Timestamp: new Date(),
+            Sum: 9895604649984,
+            Unit: 'Bytes'
+        },
+        {
+            Timestamp: new Date(),
+            Sum: 9895604649984,
+            Unit: 'Bytes'
+        }
+    ]
+});
+
+
+
+cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'VolumeWriteBytes' }).resolves({
+    Datapoints: [
+        {
+            Timestamp: new Date(),
+            Sum: 9895604649984,
+            Unit: 'Bytes'
+        },
+        {
+            Timestamp: new Date(),
+            Sum: 9895604649984,
+            Unit: 'Bytes'
+        }
+    ]
+});
