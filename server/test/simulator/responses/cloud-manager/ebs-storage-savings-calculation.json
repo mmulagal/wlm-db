@@ -67,9 +67,9 @@
       }
     }
   },
-  "multi": {
+  "single": {
     "fsx_calculation": {
-      "deploymentType": "Multi",
+      "deploymentType": "Single",
       "numberOfVolumes": 1,
       "throughput": 0,
       "totalStorageCapacity": {
