@@ -34,7 +34,7 @@ const TableLayout = ({ data }: any) => {
     );
 };
 
-const MSSQLAccordion = ({ printState }: any) => {
+const MSSQLAccordion = ({ printState, disableState }: any) => {
     const isMutliFsx = false;
     const dispatch = useDispatch();
     const [saveConfigData] = useSaveConfigDataMutation();
@@ -124,7 +124,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                 title={GENERAL.RECOMMENDED_ES_TITLE}
                 variant="Default"
                 value=""
-                isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
+                isDisabled={storageSavingsLoading || selectedHostDetails?.loading || disableState}
                 isExpanded={printState}
                 headerActions={[
                     isMutliFsx ? (

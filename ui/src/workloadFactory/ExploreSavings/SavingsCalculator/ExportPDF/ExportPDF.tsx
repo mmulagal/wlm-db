@@ -10,7 +10,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 
-const ExportPDF = ({ printDocument }: any) => {
+const ExportPDF = ({ printDocument, disableState }: any) => {
     const { storageSavingsLoading, selectedHostDetails, viewCalculationsLoading } = useAppSelector(
         state => state.exploreSavings
     );
@@ -35,7 +35,11 @@ const ExportPDF = ({ printDocument }: any) => {
 
     return (
         <div className={styles.exportPdf}>
-            <div className={loading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer}>
+            <div
+                className={
+                    loading || disableState ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer
+                }
+            >
                 <div>
                     <Download />
                 </div>
@@ -43,7 +47,7 @@ const ExportPDF = ({ printDocument }: any) => {
                     variant="Semibold_14"
                     className={styles.text}
                     style={{ width: '80px' }}
-                    onClick={() => (loading ? () => {} : handleExport())}
+                    onClick={() => (loading || disableState ? () => {} : handleExport())}
                     id="export-pdf"
                 >
                     {GENERAL.EXPORT_PDF}
@@ -54,7 +58,9 @@ const ExportPDF = ({ printDocument }: any) => {
                 <>
                     <div
                         className={
-                            viewLoading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer
+                            viewLoading || disableState
+                                ? `${styles.insideContainer} ${styles.disabled}`
+                                : styles.insideContainer
                         }
                     >
                         <div>
@@ -65,7 +71,9 @@ const ExportPDF = ({ printDocument }: any) => {
                             className={styles.text}
                             style={{ width: '147px' }}
                             onClick={() =>
-                                viewLoading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
+                                viewLoading || disableState
+                                    ? () => {}
+                                    : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                             }
                             id="view-calculations"
                         >
@@ -78,7 +86,9 @@ const ExportPDF = ({ printDocument }: any) => {
                 <>
                     <div
                         className={
-                            viewLoading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer
+                            viewLoading || disableState
+                                ? `${styles.insideContainer} ${styles.disabled}`
+                                : styles.insideContainer
                         }
                     >
                         <div>
@@ -89,7 +99,9 @@ const ExportPDF = ({ printDocument }: any) => {
                             className={styles.text}
                             style={{ width: '147px' }}
                             onClick={() =>
-                                viewLoading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
+                                viewLoading || disableState
+                                    ? () => {}
+                                    : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                             }
                             id="view-calculations"
                         >
