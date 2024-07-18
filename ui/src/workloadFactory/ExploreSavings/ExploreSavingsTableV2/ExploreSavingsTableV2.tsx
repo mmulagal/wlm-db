@@ -157,7 +157,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_INSTANCE_ID,
             accessor: 'instanceListText',
             id: '5',
-            width: '200px',
+            width: '211px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
@@ -168,7 +168,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
             accessor: 'allocatedCapacityText',
             id: '6',
-            width: '180px',
+            width: '190px',
             isSortable: true,
             accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
@@ -179,7 +179,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_AVAILABILITY,
             accessor: 'azType',
             id: '7',
-            width: '150px',
+            width: '170px',
             filterOptions: [
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
