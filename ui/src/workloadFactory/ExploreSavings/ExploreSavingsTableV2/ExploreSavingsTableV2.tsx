@@ -82,7 +82,7 @@ const ExploreSavingsTableV2 = () => {
     const ExploreSavingsColDefs: ColumnProps[] = [
         {
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'name',
+            accessor: 'nameForSorting',
             id: '1',
             isSortable: true,
             isSticky: true,
