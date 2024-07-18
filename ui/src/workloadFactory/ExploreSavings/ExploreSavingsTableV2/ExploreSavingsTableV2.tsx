@@ -108,8 +108,6 @@ const ExploreSavingsTableV2 = () => {
                                 {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
                                 {!rowData?.status && !rowData?.loading && 'Unknown'}
                             </Typography>
-                            <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">{GENERAL.MSSQL}</Typography>
                         </div>
                     </div>
                 );
