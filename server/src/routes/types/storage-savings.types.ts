@@ -16,7 +16,7 @@ const StorageSavingsRequestBody = Type.Object({
     clonedCopiesCount: Type.Number({
         minimum: 0
     }),
-    cloneRefreshFrequency: Type.String({ enum: ['Daily', 'Weekly', 'Monthly'] }),
+    cloneRefreshFrequency: Type.String({ enum: ['Daily', 'Weekly', 'Monthly'] }), // TODO: to be removed depending as per remove clone frequency input UX
     monthlyChangeRatePercentage: Type.Number({
         minimum: 0,
         maximum: 100
@@ -234,7 +234,7 @@ const FsxCloneCalculation = Type.Object({
     changeRateBetweenClones: Type.Number(),
     totalFsxnCapacity: Type.Number(),
     fsxnSsdPrice: PriceUnitObject,
-    cloneRefreshFrequency: Type.String(),
+    cloneRefreshFrequency: Type.String(), // TODO: to be removed depending as per remove clone frequency input UX
     monthlyChangeRatePercentage: Type.Number(),
     desiredStorageCapacity: Type.Number(),
     percentageOfDataOnSsdStorage: Type.Number(),

@@ -354,12 +354,13 @@ function derivePropertiesBasedOnDeploymentType(
             SSDCloneStorageGBPerMonth: { size: cloneSSDStorageGBPerMonth, unit: cloneSSDStorageGBPerMonthUnit },
             SSDStorageGBPerMonth: { size: totalSsdStorageGBPerMonthSize, unit: totalSsdStorageGBPerMonthUnit },
             SSDMonthlyCost,
-            totalCloneMonthlyCost
+            totalCloneMonthlyCost,
+            changeRateBetweenClones
         }
     } = fsxCostCalculations;
 
     const totalMonthlyClonedCopiesCount =
-        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
+        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0; // TODO: to be removed depending as per remove clone frequency input UX
 
     return {
         fsxOntapCalculation: {
@@ -439,15 +440,12 @@ function derivePropertiesBasedOnDeploymentType(
             totalSnapshotMonthlyCost
         },
         fsxCloneCalculation: {
-            cloneRefreshFrequency: params.cloneRefreshFrequency,
+            cloneRefreshFrequency: params.cloneRefreshFrequency, // TODO: to be removed depending as per remove clone frequency input UX
             monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
             clonedCopiesCount: params.clonedCopiesCount,
-            changeRateBetweenClones:
-                totalMonthlyClonedCopiesCount > 0
-                    ? params.monthlyChangeRatePercentage / totalMonthlyClonedCopiesCount
-                    : 0,
+            changeRateBetweenClones,
             totalFsxnCapacity: convertToBytes(totalSsdStorageGBPerMonthSize, totalSsdStorageGBPerMonthUnit) || 0,
-            numberOfClonesInAMonth: totalMonthlyClonedCopiesCount,
+            numberOfClonesInAMonth: totalMonthlyClonedCopiesCount, // TODO: to be removed depending as per remove clone frequency input UX
             fsxnSsdPrice: { price: fsxnSsdClonePrice, unit: fsxnSsdClonePriceUnit },
             desiredStorageCapacity:
                 convertToBytes(cloneDesiredStorageCapacityGB, cloneDesiredStorageCapacityGBUnit) || 0,
