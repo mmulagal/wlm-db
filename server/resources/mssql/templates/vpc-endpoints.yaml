@@ -151,8 +151,7 @@ Conditions:
     CreateMultiZoneSG: {"Fn::And": [{"Condition": "MultiZone"},{"Condition": "CreateSG"}]}
 
 Resources:
-    HttpsSecurityGroupSingleZone:
-      Condition: CreateSingleZoneSG
+    HttpsSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
         GroupDescription: 'Allow HTTPS traffic from the VPC'
@@ -166,26 +165,13 @@ Resources:
             FromPort: 443
             ToPort: 443
             CidrIp: !Ref PreferredSubnetCidrblock
-
-    HttpsSecurityGroupMultiZone:
-      Condition: CreateMultiZoneSG
-      Type: AWS::EC2::SecurityGroup
-      Properties:
-        GroupDescription: 'Allow HTTPS traffic from the VPC'
-        VpcId: !Ref VPCId
-        SecurityGroupIngress:
-          - IpProtocol: tcp
-            FromPort: 443
-            ToPort: 443
-            CidrIp: !Ref VPCCIDR
-          - IpProtocol: tcp
-            FromPort: 443
-            ToPort: 443
-            CidrIp: !Ref PreferredSubnetCidrblock
-          - IpProtocol: tcp
-            FromPort: 443
-            ToPort: 443
-            CidrIp: !Ref StandbySubnetCidrblock
+          - !If
+              - CreateMultiZoneSG
+              - IpProtocol: tcp
+                FromPort: 443
+                ToPort: 443
+                CidrIp: !Ref StandbySubnetCidrblock
+              - !Ref AWS::NoValue
 
     S3Endpoint:
       Condition: CreateS3Endpoint
@@ -207,7 +193,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
+            - !Ref HttpsSecurityGroup
     
     SqsEndpoint:
       Condition: CreateSqsEndpoint
@@ -220,7 +206,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
+            - !Ref HttpsSecurityGroup
     
     SsmEndpoint:
       Condition: CreateSsmEndpoint
@@ -233,7 +219,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
+            - !Ref HttpsSecurityGroup
     
     SsmMessagesEndpoint:
       Condition: CreateSSMMessagesEndpoint
@@ -246,7 +232,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
+            - !Ref HttpsSecurityGroup
     
     Ec2MessagesEndpoint:
       Condition: CreateEc2MessagesEndpoint
@@ -259,7 +245,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
+            - !Ref HttpsSecurityGroup
     
     CloudwatchLogsEndpoint:
       Condition: CreateCloudwatchLogsEndpoint
@@ -272,7 +258,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
+            - !Ref HttpsSecurityGroup
 
     FsxEndpoint:
       Condition: CreateFsxEndpoint
@@ -285,7 +271,7 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
+            - !Ref HttpsSecurityGroup
     
     Ec2Endpoint:
       Condition: CreateEc2Endpoint
@@ -298,4 +284,4 @@ Resources:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
         SecurityGroupIds: 
-            !If [SingleZone, [!Ref HttpsSecurityGroupSingleZone], [!Ref HttpsSecurityGroupMultiZone]]
+            - !Ref HttpsSecurityGroup

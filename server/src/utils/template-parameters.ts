@@ -168,6 +168,7 @@ const PARAMETERS = [
         description: 'CIDR Block for private subnet 1',
         constraintDescription: 'CIDR block parameter must be in the form x.x.x.x/16-28',
         type: 'String',
+        default: '10.0.0.0/16',
         pattern:
             '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$'
     },

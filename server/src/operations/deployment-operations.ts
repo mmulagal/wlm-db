@@ -115,6 +115,30 @@ import { describeSubnets, getAmis } from '../lib/aws/ec2';
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
 
+async function getSubnetsCidr(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    sqlConfiguration: SQLConfigurationType
+) {
+    logger.info('Fetch cidr block for subnets', credentialsId, region);
+
+    const subnetIds =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.privateSubnet1Id!]
+            : [networkConfiguration.privateSubnet1Id!, networkConfiguration.privateSubnet2Id!];
+    const { Subnets } = await describeSubnets(credentialsId!, region!, { SubnetIds: subnetIds });
+    const subnetCidrs = Subnets?.map(({ SubnetId: subnetId, CidrBlock: cidrBlock }) => ({ subnetId, cidrBlock }));
+    const privateSubnet1Cidr = subnetCidrs
+        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet1Id)
+        .map(subnet => subnet.cidrBlock);
+    const privateSubnet2Cidr = subnetCidrs
+        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet2Id)
+        .map(subnet => subnet.cidrBlock);
+
+    return { privateSubnet1Cidr, privateSubnet2Cidr };
+}
+
 async function formatTemplateParameters(
     networkConfiguration: CFNetworkConfigurationType,
     ec2Configuration: EC2ConfigurationType,
@@ -179,18 +203,10 @@ async function formatTemplateParameters(
             ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
             : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
 
-    const subnetIds =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.privateSubnet1Id!]
-            : [networkConfiguration.privateSubnet1Id!, networkConfiguration.privateSubnet2Id!];
-    const { Subnets } = await describeSubnets(credentialsId!, region!, { SubnetIds: subnetIds });
-    const subnetCidrs = Subnets?.map(({ SubnetId: subnetId, CidrBlock: cidrBlock }) => ({ subnetId, cidrBlock }));
-    const privateSubnet1Cidr = subnetCidrs
-        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet1Id)
-        .map(subnet => subnet.cidrBlock);
-    const privateSubnet2Cidr = subnetCidrs
-        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet2Id)
-        .map(subnet => subnet.cidrBlock);
+    const { privateSubnet1Cidr, privateSubnet2Cidr } =
+        credentialsId && region
+            ? await getSubnetsCidr(credentialsId!, region!, networkConfiguration, sqlConfiguration)
+            : { privateSubnet1Cidr: '', privateSubnet2Cidr: '' };
 
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
@@ -755,18 +771,12 @@ async function createCloudFormationTemplateForUserDeployment(
             ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
             : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
 
-    const subnetIds =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.privateSubnet1Id!]
-            : [networkConfiguration.privateSubnet1Id!, networkConfiguration.privateSubnet2Id!];
-    const { Subnets } = await describeSubnets(credentialsId!, region!, { SubnetIds: subnetIds });
-    const subnetCidrs = Subnets?.map(({ SubnetId: subnetId, CidrBlock: cidrBlock }) => ({ subnetId, cidrBlock }));
-    const privateSubnet1Cidr = subnetCidrs
-        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet1Id)
-        .map(subnet => subnet.cidrBlock);
-    const privateSubnet2Cidr = subnetCidrs
-        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet2Id)
-        .map(subnet => subnet.cidrBlock);
+    const { privateSubnet1Cidr, privateSubnet2Cidr } = await getSubnetsCidr(
+        credentialsId!,
+        region!,
+        networkConfiguration,
+        sqlConfiguration
+    );
 
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
