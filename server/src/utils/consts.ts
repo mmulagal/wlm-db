@@ -796,6 +796,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'DependentPackages',
         url: `${WLMDB}/Installer/dependent-packages.zip`
+    },
+    {
+        name: 'ArtifactsSignatures',
+        url: `${WLMDB}/signig_files.zip`
     }
 ];
 

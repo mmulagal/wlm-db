@@ -443,6 +443,8 @@ Resources:
                             source: {{{ Sqlspcu }}}
                         C:\cfn\Installer\dependent-packages.zip:
                             source: {{{ DependentPackages }}}
+                        C:\cfn\signig_files.zip:
+                            source: {{{ ArtifactsSignatures }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         a-unpack-common-scripts:
