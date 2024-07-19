@@ -467,7 +467,7 @@ Resources:
                   - FSxIsMultiZoneDeployment
                   - IpProtocol: tcp
                     FromPort: 161
-                      ToPort: 161
+                    ToPort: 162
                     CidrIp: !Ref StandbySubnetCidrblock
                   - !Ref AWS::NoValue
                 - !If
@@ -516,7 +516,7 @@ Resources:
                   - FSxIsMultiZoneDeployment
                   - IpProtocol: udp
                     FromPort: 161
-                      ToPort: 161
+                    ToPort: 162
                     CidrIp: !Ref StandbySubnetCidrblock
                   - !Ref AWS::NoValue
                 - !If
@@ -526,7 +526,7 @@ Resources:
                     ToPort: 635
                     CidrIp: !Ref StandbySubnetCidrblock
                   - !Ref AWS::NoValue
-                 - !If
+                - !If
                   - FSxIsMultiZoneDeployment
                   - IpProtocol: udp
                     FromPort: 137
