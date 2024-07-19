@@ -32,15 +32,18 @@ const StorageMetrics = Type.Object({
     total: Type.Number()
 });
 
-const MachinePriceDetails = Type.Object({
-    instanceType: Type.String(),
-    price: Type.Number(),
-    basePrice: Type.Number(),
-    computeMonthlyPrice: Type.Number(),
-    instanceMonthlyPrice: Type.Number(),
-    hoursInMonth: Type.Number(),
-    licenseIncluded: Type.Optional(Type.Boolean())
-});
+const MachinePriceDetails = Type.Array(
+    Type.Object({
+        instanceType: Type.String(),
+        price: Type.Optional(Type.Number()),
+        basePrice: Type.Optional(Type.Number()),
+        computeMonthlyPrice: Type.Optional(Type.Number()),
+        instanceMonthlyPrice: Type.Optional(Type.Number()),
+        hoursInMonth: Type.Number(),
+        licenseIncluded: Type.Optional(Type.Boolean()),
+        licenseMonthlyPrice: Type.Optional(Type.Number())
+    })
+);
 
 const StorageSavingsCompute = Type.Object({
     instanceType: Type.String(),

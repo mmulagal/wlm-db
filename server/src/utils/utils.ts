@@ -582,8 +582,10 @@ function convertToBytes(size: number, unit: string) {
     return numeral(`${size}${unit}`).value();
 }
 
-function getMonthlyPriceFromHourlyPrice(hourlyPrice: number) {
-    return hourlyPrice * HOURS_IN_MONTH;
+function getMonthlyPriceFromHourlyPrice(hourlyPrice?: number) {
+    if (hourlyPrice !== undefined) {
+        return hourlyPrice * HOURS_IN_MONTH;
+    }
 }
 
 function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true) {

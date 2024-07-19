@@ -240,6 +240,12 @@ async function handleInstanceRecommendation(
 
             computeFinding = finding;
             const recommendedNodeInstanceTypes = Array(totalNodesCount).fill(recommendedInstanceType);
+            const rcomputeMonthlyPrice = recommendedInstanceHourlyPrice
+                ? getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPrice)
+                : undefined;
+            const rinstanceMonthlyPrice = recommendedInstanceHourlyPriceWithoutLicense
+                ? getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPriceWithoutLicense)
+                : undefined;
             recommendedCompute = {
                 price: recommendedInstanceHourlyPrice
                     ? recommendedInstanceHourlyPrice * totalNodesCount
@@ -252,12 +258,12 @@ async function handleInstanceRecommendation(
                     instanceType,
                     price: recommendedInstanceHourlyPrice,
                     basePrice: recommendedInstanceHourlyPriceWithoutLicense,
-                    computeHourlyPrice: recommendedInstanceHourlyPrice
-                        ? getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPrice)
-                        : undefined,
-                    instanceHourlyPrice: recommendedInstanceHourlyPriceWithoutLicense
-                        ? getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPriceWithoutLicense)
-                        : undefined,
+                    computeMonthlyPrice: rcomputeMonthlyPrice,
+                    instanceMonthlyPrice: rinstanceMonthlyPrice,
+                    licenseMonthlyPrice:
+                        rcomputeMonthlyPrice !== undefined && rinstanceMonthlyPrice !== undefined
+                            ? rcomputeMonthlyPrice - rinstanceMonthlyPrice
+                            : undefined,
                     hoursInMonth: HOURS_IN_MONTH,
                     licenseIncluded: true // recommending an instance with the license included; TODO: change this logic when supporting BYOL; i.e if the recommended Standard instance with license included is expensive than the existing Enterprise instance with BYOL; change the licenseIncluded to false
                 })),
@@ -272,6 +278,10 @@ async function handleInstanceRecommendation(
                         basePrice,
                         computeMonthlyPrice,
                         instanceMonthlyPrice,
+                        licenseMonthlyPrice:
+                            computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
+                                ? computeMonthlyPrice - instanceMonthlyPrice
+                                : undefined,
                         hoursInMonth: HOURS_IN_MONTH
                     };
                 }),
@@ -431,7 +441,6 @@ export default async function getSqlInstanceLicenseRecommendations(
                     };
                 }
             >();
-
             await Promise.all(
                 Object.entries(instanceTypeCount).map(async ([instanceType, count]) => {
                     const pricingDetails = await getSqlInstancePricingDetails(region, instanceType, 'windows');
@@ -519,30 +528,40 @@ export default async function getSqlInstanceLicenseRecommendations(
                     existingInstanceTypePricingsDetails
                 );
                 // existing compute and license details
-                const ePrice =
-                    existingInstanceTypePricingsDetails.get(ec2InstanceType)?.pricingDetails[existingLicenseType]
-                        ?.pricePerUnit;
-                const eBasePrice =
-                    existingInstanceTypePricingsDetails.get(ec2InstanceType)?.pricingDetails.NA?.pricePerUnit;
                 existingCompute = {
                     price: existingInstanceHourlyPrice, // could be undefined if the pricing information is not available for a certain instance type
                     baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
                     instanceType: nodeInstanceTypes.join(', '),
                     finding: computeFinding,
                     machineDetails: nodeInstances.map(
-                        ({ ec2InstanceType: instanceType, ec2UsageOperation: usageOperation }) => ({
-                            instanceType,
-                            price: existingInstanceTypePricingsDetails.get(ec2InstanceType)?.pricingDetails[
-                                existingLicenseType
-                            ]?.pricePerUnit,
-                            basePrice:
-                                existingInstanceTypePricingsDetails.get(ec2InstanceType)?.pricingDetails.NA
-                                    ?.pricePerUnit,
-                            computeHourlyPrice: ePrice ? getMonthlyPriceFromHourlyPrice(ePrice) : undefined,
-                            instanceHourlyPrice: eBasePrice ? getMonthlyPriceFromHourlyPrice(eBasePrice) : undefined,
-                            hoursInMonth: HOURS_IN_MONTH,
-                            licenseIncluded: WIN_SQL_EC2_USAGE_OPERATION.includes(usageOperation)
-                        })
+                        ({ ec2InstanceType: instanceType, ec2UsageOperation: usageOperation }) => {
+                            const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(
+                                existingInstanceTypePricingsDetails.get(instanceType)?.pricingDetails[
+                                    existingLicenseType
+                                ]?.pricePerUnit
+                            );
+                            const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(
+                                existingInstanceTypePricingsDetails.get(instanceType)?.pricingDetails.NA?.pricePerUnit
+                            );
+
+                            return {
+                                instanceType,
+                                price: existingInstanceTypePricingsDetails.get(instanceType)?.pricingDetails[
+                                    existingLicenseType
+                                ]?.pricePerUnit,
+                                basePrice:
+                                    existingInstanceTypePricingsDetails.get(instanceType)?.pricingDetails.NA
+                                        ?.pricePerUnit,
+                                computeMonthlyPrice,
+                                instanceMonthlyPrice,
+                                licenseMonthlyPrice:
+                                    computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
+                                        ? computeMonthlyPrice - instanceMonthlyPrice
+                                        : undefined,
+                                hoursInMonth: HOURS_IN_MONTH,
+                                licenseIncluded: WIN_SQL_EC2_USAGE_OPERATION.includes(usageOperation)
+                            };
+                        }
                     )
                 };
 
