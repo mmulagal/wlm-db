@@ -195,7 +195,7 @@ try {
         $NtAuthorityUser = 'NT AUTHORITY\SYSTEM'
         $NtAuthorityUserQuery = "set nocount on; select name from sys.server_principals where name = 'NT AUTHORITY\SYSTEM'"
         $NtAuthorityUserQueryResponse = sqlcmd -S $ServerInstanceName -Q $NtAuthorityUserQuery -h -1
-        if ((-Not [string]::IsNullOrEmpty($NtAuthorityUserQueryResponse)) -and ($NtAuthorityUserQueryResponse.TrimStart().TrimEnd() -ne $NtAuthorityUser)) {
+        if (([string]::IsNullOrEmpty($NtAuthorityUserQueryResponse))) {
             Write-Output "Creating NT AUTHORITY\SYSTEM login"
             sqlcmd -S $ServerInstanceName -Q "CREATE LOGIN [$NtAuthorityUser] FROM WINDOWS ;" 
         }
