@@ -137,7 +137,7 @@ const SandboxStorageSaving = () => {
                                 )}
 
                                 <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
-                                    {GENERAL.SANDBOX_STORAGE_SAVINGS}
+                                    {windowSize.width > 1872 ? GENERAL.SANDBOX_STORAGE_SAVINGS : GENERAL.SAVINGS}
                                 </DsTypography>
                             </div>
                         </div>
