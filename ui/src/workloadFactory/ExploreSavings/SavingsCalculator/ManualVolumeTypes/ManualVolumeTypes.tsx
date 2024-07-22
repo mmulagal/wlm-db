@@ -122,7 +122,9 @@ const ManualVolumeTypes = () => {
             </div>
 
             <div className={styles.contentContainer}>
-                {selectedVolumeTab === 'io2' && <ManualTCOInputComponent type="io2" from="primary" />}
+                {selectedVolumeTab === 'io2' && (
+                    <ManualTCOInputComponent type="io2" throughPutDisable={true} from="primary" />
+                )}
                 {selectedVolumeTab === 'io1' && (
                     <ManualTCOInputComponent type="io1" throughPutDisable={true} from="primary" />
                 )}
