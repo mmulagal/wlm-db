@@ -15,6 +15,16 @@
                 "licenseMonthlyPrice": 350.4,
                 "hoursInMonth": 730,
                 "licenseIncluded": true
+            },
+            {
+                "instanceType": "m7i-flex.large",
+                "price": 0.66316,
+                "basePrice": 0.18316,
+                "computeMonthlyPrice": 484.10679999999996,
+                "instanceMonthlyPrice": 133.7068,
+                "licenseMonthlyPrice": 350.4,
+                "hoursInMonth": 730,
+                "licenseIncluded": true
             }
         ],
         "recommendationOptions": [
@@ -51,6 +61,16 @@
         "instanceMonthlyPrice": 487.64000000000004,
         "computeMonthlyPrice": 137.24,
         "machineDetails": [
+            {
+                "instanceType": "m5.large",
+                "price": 0.668,
+                "basePrice": 0.188,
+                "computeMonthlyPrice": 487.64000000000004,
+                "instanceMonthlyPrice": 137.24,
+                "licenseMonthlyPrice": 350.40000000000003,
+                "hoursInMonth": 730,
+                "licenseIncluded": true
+            },
             {
                 "instanceType": "m5.large",
                 "price": 0.668,

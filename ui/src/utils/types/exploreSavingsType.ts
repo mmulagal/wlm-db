@@ -28,6 +28,7 @@ export interface ExploreSavingsSliceEntities {
     savingsCalculatorRefresh: boolean;
     selectedDeploymentModel: string;
     viewCalculationsResponse: ViewCalculationsInterface | null;
+    viewCalculationsApiResponse: ViewCalculationsInterface | null;
     viewCalculationsLoading: boolean;
     savingsCalculatorFrom: string | null;
     selectedManualRegion: any;

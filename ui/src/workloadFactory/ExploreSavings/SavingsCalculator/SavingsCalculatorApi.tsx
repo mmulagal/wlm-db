@@ -16,6 +16,7 @@ import {
     setSelectedPartnerInstanceId,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
+    setViewCalculationsApiResponse,
     setViewCalculationsLoading,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -117,6 +118,7 @@ const SavingsCalculatorApi = () => {
                 payload: payload
             });
             if (result && !result?.error) {
+                dispatch(setViewCalculationsApiResponse(result?.data));
                 dispatch(
                     setViewCalculationsResponse(
                         formatViewCalcData(result?.data, selectedDeploymentModel, monthlyChangeRate)

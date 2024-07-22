@@ -20,6 +20,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     savingsCalculatorRefresh: false,
     selectedDeploymentModel: '',
     viewCalculationsResponse: null,
+    viewCalculationsApiResponse: null,
     viewCalculationsLoading: false,
     savingsCalculatorFrom: null,
     selectedManualRegion: null,
@@ -220,6 +221,7 @@ const exploreSavingsSlice = createSlice({
             state.savingsCalculatorRefresh = false;
             state.selectedDeploymentModel = '';
             state.viewCalculationsResponse = null;
+            state.viewCalculationsApiResponse = null;
             state.viewCalculationsLoading = false;
             state.recommendedTargetInstance = '';
         },
@@ -228,6 +230,9 @@ const exploreSavingsSlice = createSlice({
         },
         setViewCalculationsResponse(state, action: PayloadAction<any>) {
             state.viewCalculationsResponse = action.payload;
+        },
+        setViewCalculationsApiResponse(state, action: PayloadAction<any>) {
+            state.viewCalculationsApiResponse = action.payload;
         },
         setViewCalculationsLoading(state, action: PayloadAction<any>) {
             state.viewCalculationsLoading = action.payload;
@@ -272,6 +277,7 @@ export const {
     addExploreSavingsInitialData,
     setSelectedDeploymentModel,
     setViewCalculationsResponse,
+    setViewCalculationsApiResponse,
     setViewCalculationsLoading,
     setSavingsCalculatorFrom,
     setRecommendedTargetInstance

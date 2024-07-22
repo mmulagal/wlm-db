@@ -23,6 +23,7 @@ import {
     addExploreSavingsInitialData,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
+    setViewCalculationsApiResponse,
     setViewCalculationsLoading,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -50,6 +51,7 @@ const SavingsCalculator = () => {
         numberOfClonedCopies,
         monthlyChangeRate,
         selectedManualDeploymentModel,
+        selectedDeploymentModel,
         selectedManualRegion,
         selectedManualServerEdition,
         selectedManualInstanceType,
@@ -60,11 +62,17 @@ const SavingsCalculator = () => {
         volumeFilledStatus,
         manualTCOVolumeTypes2,
         recommendedTargetInstance,
-        storageSavingsResponse
+        storageSavingsResponse,
+        viewCalculationsApiResponse
     } = useAppSelector(state => state.exploreSavings);
 
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
+        dispatch(
+            setViewCalculationsResponse(
+                formatViewCalcData(viewCalculationsApiResponse || {}, selectedDeploymentModel, monthlyChangeRate)
+            )
+        );
     }, [recommendedTargetInstance]);
 
     const getManualStorageSavingsData = async () => {
@@ -89,6 +97,7 @@ const SavingsCalculator = () => {
                 regionId: selectedManualRegion?.data?.regionCode,
                 payload: payload
             });
+            dispatch(setViewCalculationsApiResponse(result?.data));
             dispatch(
                 setViewCalculationsResponse(
                     formatViewCalcData(result?.data, selectedManualDeploymentModel?.label, monthlyChangeRate)

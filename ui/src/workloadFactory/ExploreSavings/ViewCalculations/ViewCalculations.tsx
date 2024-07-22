@@ -6,7 +6,10 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySl
 import { FSX_AZ_TYPE, SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    addExploreSavingsInitialData,
+    setViewCalculationsResponse
+} from '../../../store/workloadFactory/exploreSavingsSlice';
 import SnapshotsEBSCalculation from './EBSCalculation/SnapshotsEBSCalculation/SnapshotsEBSCalculation';
 import ClonesEBSCalculation from './EBSCalculation/ClonesEBSCalculation/ClonesEBSCalculation';
 import SnapshotsOntapCalculation from './OntapCalculation/SnapshotsOntapCalculation/SnapshotsOntapCalculation';
