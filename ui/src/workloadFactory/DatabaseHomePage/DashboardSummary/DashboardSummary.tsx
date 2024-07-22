@@ -21,7 +21,7 @@ const DashboardSummary = () => {
     const windowSize = useResize();
     return (
         <div className={styles.dashboardSummary}>
-            {windowSize.width > 1890 && (
+            {windowSize.width > 1818 && (
                 <div className={styles.mainContainer}>
                     {/* section 1 Hosts */}
                     <div className={styles.valueContainer}>
@@ -108,7 +108,7 @@ const DashboardSummary = () => {
                 </div>
             )}
 
-            {windowSize.width > 1500 && windowSize.width < 1890 && (
+            {windowSize.width > 1428 && windowSize.width < 1818 && (
                 <div className={styles.mainContainer}>
                     {/* section 1 Hosts */}
                     <div className={styles.valueContainer}>
@@ -187,7 +187,7 @@ const DashboardSummary = () => {
                 </div>
             )}
 
-            {windowSize.width < 1500 && (
+            {windowSize.width < 1428 && (
                 <div className={styles.mainContainer}>
                     {/* section 1 Hosts */}
                     <div className={styles.valueContainer}>
