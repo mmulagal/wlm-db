@@ -1190,7 +1190,7 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\common.zip -SignatureFilePath C:\cfn\signig_files\common.sig 
-                                    -PubFilePath C:\cfn\signig_files\common.pub -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                    -PubFilePath C:\cfn\signig_files\common.pub -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -1206,7 +1206,7 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\sqlfci.zip -SignatureFilePath C:\cfn\signig_files\sqlfci.sig 
-                                    -PubFilePath C:\cfn\signig_files\sqlfci.pub -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                    -PubFilePath C:\cfn\signig_files\sqlfci.pub -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -1218,7 +1218,7 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\sqlontap.zip -SignatureFilePath C:\cfn\signig_files\sqlontap.sig 
-                                    -PubFilePath C:\cfn\signig_files\sqlontap.pub -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                    -PubFilePath C:\cfn\signig_files\sqlontap.pub -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -1236,7 +1236,7 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dbcreate.zip -SignatureFilePath C:\cfn\signig_files\dbcreate.sig 
-                                    -PubFilePath C:\cfn\signig_files\dbcreate.pub -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                    -PubFilePath C:\cfn\signig_files\dbcreate.pub -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -1259,7 +1259,7 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dependent-packages.zip -SignatureFilePath C:\cfn\signig_files\dependent-packages.sig 
-                                    -PubFilePath C:\cfn\signig_files\dependent-packages.pub -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                    -PubFilePath C:\cfn\signig_files\dependent-packages.pub -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0 
