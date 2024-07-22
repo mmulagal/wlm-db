@@ -859,6 +859,7 @@ export const GENERAL = {
     SB_STATUS: 'Status',
     SANDBOX_SOURCE_DATABASES: 'Source databases',
     SANDBOX_STORAGE_SAVINGS: 'Storage savings',
+    SAVINGS: 'Savings',
     SANDBOX_CONSUMED_STORAGE: 'Consumed storage',
     SANDBOX_SAVINGS: 'Sandboxes savings',
     SANDBOX_CONSUMED_SAVING: 'Consumed savings',
