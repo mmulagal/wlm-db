@@ -88,7 +88,7 @@
     }
 }
 
-@media screen and (min-width: 1500px) {
+@media screen and (min-width: 1890px) {
     .databaseHome {
         .buttonsContainer {
             width: 86%;
@@ -98,6 +98,50 @@
         }
         .thirdLevelContainer {
             width: 86%;
+        }
+    }
+}
+
+@media screen and (min-width: 1501px) and (max-width: 1890px) {
+    .databaseHome {
+        .secondLevelContainer {
+            width: 81.4%;
+        }
+        [class*='dashboardRibbon'] {
+            width: 81.4%;
+        }
+        .buttonsContainer {
+            width: 81.4%;
+        }
+        .fourthLevelContainer {
+            width: 81.4%;
+        }
+        .thirdLevelContainer {
+            width: 81.4%;
+        }
+        .jobContainer {
+            width: 81.4%;
+        }
+
+        .fourthLevelContainer {
+            .barContainer {
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+
+                .commonContainer {
+                    width: 100% !important;
+
+                    [class*='estimatedCost'] {
+                        [class*='bottomSection'] {
+                            max-width: none;
+                            [class*='container'] {
+                                width: 140px !important;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
