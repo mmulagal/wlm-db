@@ -71,9 +71,12 @@ const SandboxStorageSaving = () => {
     };
     return (
         <div className={styles.sandboxStorageSaving}>
-            {windowSize.width > 1500 && (
+            {windowSize.width > 1428 && (
                 <div className={styles.largeContainer}>
-                    <div className={styles.firstSegment} style={{ paddingRight: '0', width: '31.39%' }}>
+                    <div
+                        className={`${styles.firstSegment} ${styles.setWidth}`}
+                        style={{ paddingRight: '0', width: '31.39%' }}
+                    >
                         <div className={styles.leftSection}>
                             <Savings />
                         </div>
@@ -97,7 +100,7 @@ const SandboxStorageSaving = () => {
                                 </DsTypography>
                             )}
                             <DsTypography variant="Regular_14" className={isNA ? CommonStyles.notAvailable : ''}>
-                                {GENERAL.SANDBOX_STORAGE_SAVINGS}
+                                {'Sandboxes storage savings'}
                             </DsTypography>
                         </div>
                     </div>
@@ -142,7 +145,7 @@ const SandboxStorageSaving = () => {
                 </div>
             )}
 
-            {windowSize.width <= 1500 && (
+            {windowSize.width <= 1428 && (
                 <div className={styles.smallContainer}>
                     <div className={styles.firstSegment} style={{ paddingRight: '0', width: '294px' }}>
                         <div className={styles.leftSection}>
