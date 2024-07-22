@@ -69,9 +69,9 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'Compute',
-            fsx: calculatedResponse?.compute?.recommended?.computeMonthlyPrice
+            fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
                 ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.compute?.recommended?.computeMonthlyPrice, 2)
+                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)
                   ).toLocaleString()}`
                 : '$0',
             ebs: calculatedResponse?.compute?.existing?.computeMonthlyPrice
@@ -84,9 +84,9 @@ export const comparisonData = (calculatedResponse: any) => {
             type: 'SQL license',
             isTooltip:
                 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
-            fsx: calculatedResponse?.license?.recommended?.licenseMonthlyPrice
+            fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
                 ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.license?.recommended?.licenseMonthlyPrice, 2)
+                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)
                   ).toLocaleString()}`
                 : '$0',
             ebs: calculatedResponse?.license?.existing?.licenseMonthlyPrice
@@ -97,9 +97,9 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'Total summary',
-            fsx: calculatedResponse?.totalSummary?.recommended
+            fsx: calculatedResponse?.totalSummary?.recommendedTotal
                 ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.totalSummary?.recommended, 2)
+                      formatFractionalNumber(calculatedResponse?.totalSummary?.recommendedTotal, 2)
                   ).toLocaleString()}`
                 : '$0',
             ebs: calculatedResponse?.totalSummary?.existing

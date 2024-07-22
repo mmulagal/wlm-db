@@ -16,9 +16,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedPartnerHostDetails: {},
     getPartnerHostDetailsLoading: false,
     storageSavingsResponse: {},
-
     storageSavingsLoading: false,
-
     savingsCalculatorRefresh: false,
     selectedDeploymentModel: '',
     viewCalculationsResponse: null,
@@ -34,7 +32,6 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedSecondaryManualInstanceType: null,
     selectedVolumeTab: 'gp2',
     selectedVolumeTabForSecondary: 'gp2',
-
     getManualInstanceTypeList: {
         instanceTypeData: {},
         instanceTypeLoading: false,
@@ -105,7 +102,8 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
             manualTCOProvisionedIOPS: null,
             manualTCOThroughput: null
         }
-    }
+    },
+    recommendedTargetInstance: ''
 };
 
 const exploreSavingsSlice = createSlice({
@@ -223,6 +221,7 @@ const exploreSavingsSlice = createSlice({
             state.selectedDeploymentModel = '';
             state.viewCalculationsResponse = null;
             state.viewCalculationsLoading = false;
+            state.recommendedTargetInstance = '';
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
@@ -232,6 +231,9 @@ const exploreSavingsSlice = createSlice({
         },
         setViewCalculationsLoading(state, action: PayloadAction<any>) {
             state.viewCalculationsLoading = action.payload;
+        },
+        setRecommendedTargetInstance(state, action: PayloadAction<any>) {
+            state.recommendedTargetInstance = action.payload;
         }
     }
 });
@@ -271,7 +273,8 @@ export const {
     setSelectedDeploymentModel,
     setViewCalculationsResponse,
     setViewCalculationsLoading,
-    setSavingsCalculatorFrom
+    setSavingsCalculatorFrom,
+    setRecommendedTargetInstance
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

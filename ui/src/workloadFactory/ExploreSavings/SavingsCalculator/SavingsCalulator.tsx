@@ -34,7 +34,7 @@ import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
 import { useGetManualStorageSavingsMutation, useGetManualViewCalculationsMutation } from '../../../utils/apiService';
 import { generateManualStorageSavingsPayload } from './savingsUtil';
-import { formatViewCalcData } from '../ExploreSavingsUtils';
+import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
@@ -58,8 +58,14 @@ const SavingsCalculator = () => {
         manualSecondaryMachineDescription,
         manualTCOVolumeTypes,
         volumeFilledStatus,
-        manualTCOVolumeTypes2
+        manualTCOVolumeTypes2,
+        recommendedTargetInstance,
+        storageSavingsResponse
     } = useAppSelector(state => state.exploreSavings);
+
+    useEffect(() => {
+        dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
+    }, [recommendedTargetInstance]);
 
     const getManualStorageSavingsData = async () => {
         const payload = generateManualStorageSavingsPayload();
@@ -70,7 +76,7 @@ const SavingsCalculator = () => {
                 payload: payload
             });
             dispatch(setStorageSavingsLoading(false));
-            dispatch(setStorageSavingsResponse(result?.data));
+            dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data)));
         } catch (error) {
             dispatch(setStorageSavingsLoading(false));
         }
