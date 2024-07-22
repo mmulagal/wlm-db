@@ -16,7 +16,7 @@ const StorageSavingsRequestBody = Type.Object({
     clonedCopiesCount: Type.Number({
         minimum: 0
     }),
-    cloneRefreshFrequency: Type.String({ enum: ['Daily', 'Weekly', 'Monthly'] }),
+    cloneRefreshFrequency: Type.String({ enum: ['Daily', 'Weekly', 'Monthly'] }), // TODO: to be removed depending as per remove clone frequency input UX
     monthlyChangeRatePercentage: Type.Number({
         minimum: 0,
         maximum: 100
@@ -32,6 +32,19 @@ const StorageMetrics = Type.Object({
     total: Type.Number()
 });
 
+const MachinePriceDetails = Type.Array(
+    Type.Object({
+        instanceType: Type.String(),
+        price: Type.Optional(Type.Number()),
+        basePrice: Type.Optional(Type.Number()),
+        computeMonthlyPrice: Type.Optional(Type.Number()),
+        instanceMonthlyPrice: Type.Optional(Type.Number()),
+        hoursInMonth: Type.Number(),
+        licenseIncluded: Type.Optional(Type.Boolean()),
+        licenseMonthlyPrice: Type.Optional(Type.Number())
+    })
+);
+
 const StorageSavingsCompute = Type.Object({
     instanceType: Type.String(),
     computeMonthlyPrice: Type.Optional(Type.Number()),
@@ -39,7 +52,9 @@ const StorageSavingsCompute = Type.Object({
     finding: Type.Optional(
         Type.String({ enum: [FINDING.OPTIMIZED, FINDING.NOT_OPTIMIZED, FINDING.INSUFFICIENT_DATA] })
     ),
-    message: Type.Optional(Type.String())
+    message: Type.Optional(Type.String()),
+    machineDetails: Type.Optional(MachinePriceDetails),
+    recommendationOptions: Type.Optional(MachinePriceDetails)
 });
 
 const StorageSavingsLicense = Type.Object({
@@ -103,7 +118,9 @@ const ComputeCalculationObject = Type.Object({
     instanceHourlyPrice: Type.Optional(Type.Number()),
     hoursInMonth: Type.Number(),
     instanceMonthlyPrice: Type.Optional(Type.Number()),
-    computeMonthlyPrice: Type.Optional(Type.Number())
+    computeMonthlyPrice: Type.Optional(Type.Number()),
+    machineDetails: Type.Optional(Type.Any()),
+    recommendationOptions: Type.Optional(Type.Any())
 });
 const LicenseCalculationObject = Type.Object({
     sqlServerEdition: Type.Optional(Type.String()),
@@ -220,7 +237,7 @@ const FsxCloneCalculation = Type.Object({
     changeRateBetweenClones: Type.Number(),
     totalFsxnCapacity: Type.Number(),
     fsxnSsdPrice: PriceUnitObject,
-    cloneRefreshFrequency: Type.String(),
+    cloneRefreshFrequency: Type.String(), // TODO: to be removed depending as per remove clone frequency input UX
     monthlyChangeRatePercentage: Type.Number(),
     desiredStorageCapacity: Type.Number(),
     percentageOfDataOnSsdStorage: Type.Number(),
@@ -233,10 +250,10 @@ const FsxCloneCalculation = Type.Object({
 });
 
 const StorageSavingsCalculationsMetricsResponse = Type.Object({
-    recommendedComputeCalculation: Type.Array(ComputeCalculationObject),
-    recommendedLicenseCalculation: Type.Array(LicenseCalculationObject),
-    existingComputeCalculation: Type.Array(ComputeCalculationObject),
-    existingLicenseCalculation: Type.Array(LicenseCalculationObject),
+    recommendedComputeCalculation: ComputeCalculationObject,
+    recommendedLicenseCalculation: LicenseCalculationObject,
+    existingComputeCalculation: ComputeCalculationObject,
+    existingLicenseCalculation: LicenseCalculationObject,
     // TODO: Uncomment below 3 lines after fixing the issue with the Type.Mapped and remove the next 3 lines
     // ebsCalculation: Type.Array(Type.Mapped(Type.Union([Type.Optional(Type.Literal('gp2')),Type.Literal('gp3'),Type.Optional(Type.Literal('io1')),Type.Optional(Type.Literal('io2'))]), () =>
     //     ebsCostCalculation
@@ -296,7 +313,9 @@ const ComputeDetails = Type.Object({
     instanceMonthlyPrice: Type.Optional(Type.Number()),
     hoursInMonth: Type.Number(),
     message: Type.Optional(Type.String()),
-    finding: Type.Optional(Type.String())
+    finding: Type.Optional(Type.String()),
+    machineDetails: Type.Optional(Type.Any()),
+    recommendationOptions: Type.Optional(Type.Any())
 });
 
 const LicenseDetails = Type.Object({
