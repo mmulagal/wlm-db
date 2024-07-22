@@ -59,7 +59,7 @@ function getMarketingApiManualModeRequestBody(
     sqlServerDeploymentType: string,
     items: { volumeType: string; volumeNumber: number; storageAmount: number; volumeIops: number; throughput: number }[]
 ) {
-    const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
+    const { snapshotFrequency, clonedCopiesCount, monthlyChangeRatePercentage } = params || {};
 
     return {
         useCase: 'Low-latency',
@@ -67,11 +67,10 @@ function getMarketingApiManualModeRequestBody(
         deploymentType: sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ? 'Multi' : 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
-            snapshotMonthlyChangeRatePcg: monthlyChangeRatePercentage
+            snapshotPercentageChange: monthlyChangeRatePercentage
         },
         clones: {
-            cloneFreq: cloneRefreshFrequency.toLocaleLowerCase(),
-            cloneMonthlyChangeRatePcg: monthlyChangeRatePercentage,
+            changeRate: monthlyChangeRatePercentage,
             cloneEnvs: clonedCopiesCount > 0 ? clonedCopiesCount : 0
         },
         instances: [
@@ -205,7 +204,9 @@ function formatEbsCalculationObject(
         totalSnapshotCost,
         totalEBSSnapshotCost: totalEbsSnapshotCost,
         ebsSnapshotCost,
-        AWSEBSTotalCostMonthly: ebsTotalCostMonthly
+        AWSEBSTotalCostMonthly: ebsTotalCostMonthly,
+        ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: ebsSnapshotPriceUnit },
+        amountChangedPerSnapshot: { size: amountChangedPerSnapshotSize, unit: amountChangedPerSnapshotUnit }
     } = ebsCostCalculationObject;
 
     const ebsCostCalculation = {
@@ -235,11 +236,15 @@ function formatEbsCalculationObject(
     };
 
     const storageAmountOfEbs = convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0;
+    const amountChangedPerSnapshot = convertToBytes(amountChangedPerSnapshotSize, amountChangedPerSnapshotUnit) || 0;
 
     const ebsSnapshotCalculation = {
         storageAmount: storageAmountOfEbs * ebsNumberOfVolumes,
         numberOfVolumes: ebsNumberOfVolumes,
-        monthlyCostOfSnapshots: (monthlyChangeRatePercentage / 100) * sizeInGigaBytes(storageAmountOfEbs, 'B') * 0.05, // ebs snapshot price is 0.05 per GB
+        ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: ebsSnapshotPriceUnit },
+        amountChangedPerSnapshot,
+        monthlyCostOfSnapshots: sizeInGigaBytes(amountChangedPerSnapshot, 'B') * ebsSnapshotPrice,
+        monthlyChangeRatePercentage,
         ebsInstanceMonth,
         totalSnapshots,
         initialSnapshotCost,

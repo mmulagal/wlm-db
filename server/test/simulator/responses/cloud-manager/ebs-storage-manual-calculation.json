@@ -43,7 +43,15 @@
                     "ebsSnapshotCost": 3481.6000000000004,
                     "AWSEBSTotalCostMonthly": 10929.6,
                     "requestedThroughputMBps": 128,
-                    "includedThroughputMBps": 0
+                    "includedThroughputMBps": 0,
+                    "ebsSnapshotPrice": {
+                        "price": 0.05,
+                        "unit": "UsdPerGiB"
+                      },
+                      "amountChangedPerSnapshot": {
+                        "size": 4.2666666666666675,
+                        "unit": "GiB"
+                      }
                 }
             }
         }
