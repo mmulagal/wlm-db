@@ -358,12 +358,11 @@ interface ManualModeMarketingRequestBody {
     deploymentType: string;
     snapshots: {
         snapshotFreq: string;
-        snapshotMonthlyChangeRatePcg: number;
+        snapshotPercentageChange: number;
     };
     clones?: {
-        cloneFreq: string;
         cloneEnvs: number;
-        cloneMonthlyChangeRatePcg: number;
+        changeRate: number;
     };
     instances: [
         {

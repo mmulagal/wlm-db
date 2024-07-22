@@ -59,7 +59,7 @@ function getMarketingApiManualModeRequestBody(
     sqlServerDeploymentType: string,
     items: { volumeType: string; volumeNumber: number; storageAmount: number; volumeIops: number; throughput: number }[]
 ) {
-    const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
+    const { snapshotFrequency, clonedCopiesCount, monthlyChangeRatePercentage } = params || {};
 
     return {
         useCase: 'Low-latency',
@@ -67,11 +67,10 @@ function getMarketingApiManualModeRequestBody(
         deploymentType: sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ? 'Multi' : 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
-            snapshotMonthlyChangeRatePcg: monthlyChangeRatePercentage
+            snapshotPercentageChange: monthlyChangeRatePercentage
         },
         clones: {
-            cloneFreq: cloneRefreshFrequency.toLocaleLowerCase(),
-            cloneMonthlyChangeRatePcg: monthlyChangeRatePercentage,
+            changeRate: monthlyChangeRatePercentage,
             cloneEnvs: clonedCopiesCount > 0 ? clonedCopiesCount : 0
         },
         instances: [
