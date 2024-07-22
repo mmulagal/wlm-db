@@ -50,6 +50,7 @@
 
             .driveSelectField {
                 width: 190px;
+                min-width: 188px;
                 --menu-max-height: 255px;
 
                 [class*='Select-module_option-with-secondary'] {
@@ -60,7 +61,8 @@
             .pathSection {
                 display: flex;
                 height: 41px;
-                width: 660px;
+                max-width: 660px;
+                width: 590px;
                 background-color: var(--main-background);
                 padding: 10px 24px;
                 white-space: nowrap;
