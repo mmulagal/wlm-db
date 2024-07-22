@@ -800,6 +800,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'ArtifactsSignatures',
         url: `${WLMDB}/signig_files.zip`
+    },
+    {
+        name: 'OpenSSL',
+        url: `${WLMDB}/OpenSSL-Win64.zip`
     }
 ];
 

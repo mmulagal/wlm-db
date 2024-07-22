@@ -508,30 +508,65 @@ Resources:
                             source: {{{ DependentPackages }}}
                         C:\cfn\signig_files.zip:
                             source: {{{ ArtifactsSignatures }}}
+                        C:\cfn\OpenSSL-Win64.zip:
+                            source: {{{ OpenSSL }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
-                        b-unpack-common-scripts:
+                        a-unpack-signatures:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\signig_files.zip -Destination C:\cfn
+                            waitAfterCompletion: '0'
+                        b-unpack-openssl:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\OpenSSL-Win64.zip -Destination C:\cfn
+                            waitAfterCompletion: '0'
+                        c-verify-common-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\scripts\common.zip -SignatureFilePath C:\cfn\signig_files\common.sig 
+                                -PubFilePath C:\cfn\signig_files\common.pub
+                            waitAfterCompletion: '0'
+                        d-unpack-common-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\common.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: '0'
-                        d-unpack-DSC-scripts:
+                        d-verify-DSC-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\DSC.zip -SignatureFilePath C:\cfn\signig_files\DSC.sig 
+                                -PubFilePath C:\cfn\signig_files\DSC.pub
+                            waitAfterCompletion: '0'
+                        e-unpack-DSC-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\DSC.zip -Destination C:\cfn
                             waitAfterCompletion: '0'
-                        f-unpack-sqlfci-scripts:
+                        f-verify-sqlfci-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\scripts\sqlfci.zip -SignatureFilePath C:\cfn\signig_files\sqlfci.sig 
+                                -PubFilePath C:\cfn\signig_files\sqlfci.pub
+                            waitAfterCompletion: '0'
+                        g-unpack-sqlfci-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\sqlfci.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: '0'
-                        h-unpack-sqlontap-scripts:
+                        h-verify-sqlontap-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\scripts\sqlontap.zip -SignatureFilePath C:\cfn\signig_files\sqlontap.sig 
+                                -PubFilePath C:\cfn\signig_files\sqlontap.pub
+                            waitAfterCompletion: '0'
+                        i-unpack-sqlontap-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\sqlontap.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: '0'
                         j-unpack-sqlspcu-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\sqlspcu.zip -Destination C:\cfn
-                        l-unpack-powershell-scripts:
+                        k-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
+                        l-verify-dbcreate-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\scripts\dbcreate.zip -SignatureFilePath C:\cfn\signig_files\dbcreate.sig 
+                                -PubFilePath C:\cfn\signig_files\dbcreate.pub
+                            waitAfterCompletion: '0'
                         m-unpack-dbcreate-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\dbcreate.zip -Destination C:\cfn\scripts
@@ -547,7 +582,12 @@ Resources:
                         q-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0 
-                        r-unpack-dependentpackages:
+                        r-verify-dependentpackages-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\scripts\dependentpackages.zip -SignatureFilePath C:\cfn\signig_files\dependentpackages.sig 
+                                -PubFilePath C:\cfn\signig_files\dependentpackages.pub
+                            waitAfterCompletion: '0'
+                        s-unpack-dependentpackages:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
                 InitialSetup:
@@ -1116,30 +1156,60 @@ Resources:
                             source: {{{ DependentPackages }}}
                         C:\cfn\signig_files.zip:
                             source: {{{ ArtifactsSignatures }}}
+                        C:\cfn\OpenSSL-Win64.zip:
+                            source: {{{ OpenSSL }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
-                        b-unpack-common-scripts:
+                        a-unpack-signatures:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\signig_files.zip -Destination C:\cfn
+                            waitAfterCompletion: '0'
+                        b-unpack-openssl:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\OpenSSL-Win64.zip -Destination C:\cfn
+                            waitAfterCompletion: '0'
+                        c-verify-common-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\scripts\common.zip -SignatureFilePath C:\cfn\signig_files\common.sig 
+                                -PubFilePath C:\cfn\signig_files\common.pub
+                            waitAfterCompletion: '0'
+                        d-unpack-common-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\common.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: '0'
-                        d-unpack-sqlha-scripts:
+                        e-unpack-sqlha-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\DSC.zip -Destination C:\cfn
                             waitAfterCompletion: '0'
-                        f-unpack-sqlfci-scripts:
+                        f-verify-sqlfci-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\scripts\sqlfci.zip -SignatureFilePath C:\cfn\signig_files\sqlfci.sig 
+                                -PubFilePath C:\cfn\signig_files\sqlfci.pub
+                            waitAfterCompletion: '0'
+                        g-unpack-sqlfci-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\sqlfci.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: '0'
-                        h-unpack-sqlontap-scripts:
+                        h-verify-sqlontap-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\scripts\sqlontap.zip -SignatureFilePath C:\cfn\signig_files\sqlontap.sig 
+                                -PubFilePath C:\cfn\signig_files\sqlontap.pub
+                            waitAfterCompletion: '0'
+                        i-unpack-sqlontap-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\sqlontap.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: '0'
                         j-unpack-sqlspcu-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\sqlspcu.zip -Destination C:\cfn
-                        l-unpack-powershell-scripts:
+                        k-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
+                        l-verify-dbcreate-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\scripts\dbcreate.zip -SignatureFilePath C:\cfn\signig_files\dbcreate.sig 
+                                -PubFilePath C:\cfn\signig_files\dbcreate.pub
+                            waitAfterCompletion: '0'
                         m-unpack-dbcreate-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\dbcreate.zip -Destination C:\cfn\scripts
@@ -1154,8 +1224,13 @@ Resources:
                             waitAfterCompletion: 0
                         q-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
-                            waitAfterCompletion: 0 
-                        r-unpack-dependentpackages:
+                            waitAfterCompletion: 0
+                        r-verify-dependentpackages-signature:
+                            command: powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1
+                                -FilePath C:\cfn\scripts\dependentpackages.zip -SignatureFilePath C:\cfn\signig_files\dependentpackages.sig 
+                                -PubFilePath C:\cfn\signig_files\dependentpackages.pub
+                            waitAfterCompletion: '0' 
+                        s-unpack-dependentpackages:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
                 InitialSetup:
