@@ -21,7 +21,7 @@ const DashboardSummary = () => {
     const windowSize = useResize();
     return (
         <div className={styles.dashboardSummary}>
-            {windowSize.width > 1500 && (
+            {windowSize.width > 1890 && (
                 <div className={styles.mainContainer}>
                     {/* section 1 Hosts */}
                     <div className={styles.valueContainer}>
@@ -104,6 +104,85 @@ const DashboardSummary = () => {
                             {loading && <DsFlashingDotsLoader />}
                         </div>
                         <DsTypography variant="Regular_14">Managed databases</DsTypography>
+                    </div>
+                </div>
+            )}
+
+            {windowSize.width > 1500 && windowSize.width < 1890 && (
+                <div className={styles.mainContainer}>
+                    {/* section 1 Hosts */}
+                    <div className={styles.valueContainer}>
+                        <div className={styles.imageContainer}>
+                            <Host />
+                        </div>
+                        <div className={styles.textContainer}>
+                            <div className={styles.loadingContainer}>
+                                <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                    {hostData?.totalHosts}
+                                </DsTypography>
+                                {/* <div style={{ height: '42px' }} /> */}
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
+                            <DsTypography variant="Regular_14">Total Hosts</DsTypography>
+                        </div>
+                    </div>
+
+                    {/* Section 2 Instances */}
+                    <div className={`${styles.valueContainer} ${styles.marginAdjust}`}>
+                        <div className={styles.imageContainer}>
+                            <Instance />
+                        </div>
+                        <div className={styles.textContainer}>
+                            <div className={styles.loadingContainer}>
+                                <DsTypography
+                                    variant="Regular_24"
+                                    className={styles.combinedValue}
+                                    style={{ lineHeight: '36px' }}
+                                >
+                                    <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                        {hostData?.managedInstances}
+                                    </DsTypography>
+                                    <Line />
+                                    <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                        {hostData?.totalInstances}
+                                    </DsTypography>
+                                </DsTypography>
+                                {/* <div style={{ height: '42px' }} /> */}
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
+
+                            <DsTypography variant="Regular_14">Managed instances</DsTypography>
+                        </div>
+                    </div>
+
+                    {/* Section 3 Total databases */}
+
+                    <div className={`${styles.valueContainer} ${styles.marginAdjust}`}>
+                        <div className={styles.imageContainer}>
+                            <Database />
+                        </div>
+                        <div className={styles.textContainer}>
+                            <div className={styles.loadingContainer}>
+                                <DsTypography
+                                    variant="Regular_24"
+                                    className={styles.combinedValue}
+                                    style={{ lineHeight: '36px' }}
+                                >
+                                    <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                        {hostData?.managedDatabases}
+                                    </DsTypography>
+                                    <Line />
+                                    <DsTypography variant="Regular_24" style={{ lineHeight: '36px' }}>
+                                        {hostData?.totalDatabases}
+                                    </DsTypography>
+                                </DsTypography>
+
+                                {/* <div style={{ height: '42px' }} /> */}
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
+
+                            <DsTypography variant="Regular_14">Managed databases</DsTypography>
+                        </div>
                     </div>
                 </div>
             )}
