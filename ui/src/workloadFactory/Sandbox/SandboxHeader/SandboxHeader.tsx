@@ -20,7 +20,7 @@ const SandboxHeader = () => {
     };
     return (
         <>
-            {windowSize.width > 1500 && (
+            {windowSize.width > 1658 && (
                 <div className={styles.sandboxHeader}>
                     <div className={styles.imageHolder}>
                         <Illustration />
@@ -41,7 +41,37 @@ const SandboxHeader = () => {
                     </div>
                 </div>
             )}
-            {windowSize.width <= 1500 && (
+
+            {windowSize.width > 1429 && windowSize.width < 1658 && (
+                <div className={styles.sandboxHeaderLowerResolution}>
+                    <div className={styles.imageHolder}>
+                        {' '}
+                        <Illustration />
+                    </div>
+                    <div className={styles.secondLevel}>
+                        <div className={styles.contentHolder}>
+                            <DsTypography variant="Semibold_16">{GENERAL.SANDBOXES}</DsTypography>
+                            <DsTypography variant="Regular_14" style={{ marginTop: '5px' }}>
+                                {GENERAL.SANDBOX_HEADER_CONTENT}
+                            </DsTypography>
+                        </div>
+                        <div className={styles.buttonHolder}>
+                            <Button
+                                variant="primary"
+                                style={{ height: '32px' }}
+                                onClick={() => navigate('../create-new-sandbox')}
+                            >
+                                {GENERAL.CREATE_SANDBOX}
+                            </Button>
+                            <Button variant="text" isThin onClick={() => handleBanner()}>
+                                {GENERAL.DONT_SHOW_AGAIN}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {windowSize.width <= 1428 && (
                 <div className={styles.sandboxHeaderLowerResolution}>
                     <div className={styles.imageHolder}>
                         {' '}

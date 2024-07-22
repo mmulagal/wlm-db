@@ -65,3 +65,18 @@
         }
     }
 }
+
+@media screen and (min-width: 1429px) and (max-width: 1658px) {
+    .sandboxHeaderLowerResolution {
+        width: 87.3%;
+        gap: 90px;
+        .secondLevel {
+            gap: 0;
+            .contentHolder {
+                width: 780px;
+                height: 130px;
+                padding-top: 0;
+            }
+        }
+    }
+}
