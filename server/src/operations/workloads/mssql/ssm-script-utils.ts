@@ -2,9 +2,44 @@ import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
 
 /* eslint-disable no-useless-escape */
 
-const GET_ACTIVE_NODE_DRIVE_INFO = (
-    deploymentType: string
-) => ` $disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
+const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string) => ` 
+Function GetSMBMappedDrivesWithPath() {
+    $DriveLetterPath = @{}
+    $Errors = ''
+    #User List
+    $RootKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey(“USERS”,$Computer)
+    $SubKeyNames = $RootKey.GetSubKeyNames()
+    ForEach ($SubKeyName in $SubKeyNames)
+        {
+            if (($SubKeyName.Contains(“_Classes”) -ne $True))
+                {
+                    #Drive List
+                    try {
+                    $NetworkKey = $RootKey.OpenSubKey($SubKeyName + “\\Network”)
+                    } catch {$Errors += "$RootKey-$SubKeyName : $_."}
+                    if ($NetworkKey -ne $Null)
+                        {
+                            $MappedDrives = $NetworkKey.GetSubKeyNames()
+                           
+                              ForEach ($MappedDrive in $MappedDrives)
+                                {
+                                  try {
+                                  $DriveKey = $NetworkKey.OpenSubKey($MappedDrive)
+                                  $DrivePath = ($DriveKey.GetValue(“RemotePath”) -split '\\share')[0].Trim('\\')
+                                  if(! $DriveLetterPath.ContainsKey($MappedDrive.ToUpper()+':')) {
+                                      $DriveLetterPath.Add($MappedDrive.ToUpper()+':', $DrivePath)            
+                                  }  
+                                }catch {$Errors += "$SubKeyName-$NetworkKey : $_."}     
+                                }
+                                
+                        } 
+                }
+        }
+
+    return $DriveLetterPath.Keys 
+  }
+
+$disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
 $deploymentType  = '${deploymentType}'
 $results = New-Object System.Collections.ArrayList
 
@@ -45,7 +80,7 @@ foreach ($isoDriveLetter in $isoDriveLetters) {
     [void]$results.Add($isoObject)
 }
 
-$smbDriveLetters = Get-WmiObject -Class Win32_MappedLogicalDisk | Where-Object { $_.ProviderName -like '\\*' } | Select-Object -ExpandProperty DeviceID
+$smbDriveLetters = GetSMBMappedDrivesWithPath
 
 foreach ($driveLetter in $smbDriveLetters) {
     $smbObject = [PSCustomObject]@{
