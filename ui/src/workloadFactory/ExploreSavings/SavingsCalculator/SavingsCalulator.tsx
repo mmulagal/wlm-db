@@ -251,36 +251,23 @@ const SavingsCalculator = () => {
                     </div>
 
                     {/* Text Area */}
-                    {isMutliFsx ? (
-                        <div className={styles.selectionArea}>
-                            <div>
-                                <SuggestionDisable />
-                            </div>
-                            <div className={styles.textContent}>
-                                <DsTypography variant="Semibold_16" className={styles.textDisable}>
-                                    {GENERAL.SELECTION_BASED_TEXT}
-                                </DsTypography>
-                                <DsTypography
-                                    variant="Regular_14"
-                                    className={`${styles.secondText} ${styles.textDisable}`}
-                                >
-                                    {GENERAL.SELECTION_BASED_SECOND}
-                                </DsTypography>
-                            </div>
+
+                    <div className={styles.selectionArea}>
+                        <div>{isMutliFsx ? <SuggestionDisable /> : <Suggestion />}</div>
+                        <div className={styles.textContent}>
+                            <DsTypography variant="Semibold_16" className={isMutliFsx ? styles.textDisable : ''}>
+                                {GENERAL.SELECTION_BASED_TEXT}
+                            </DsTypography>
+                            <DsTypography
+                                variant="Regular_14"
+                                className={
+                                    isMutliFsx ? `${styles.secondText} ${styles.textDisable}` : styles.secondText
+                                }
+                            >
+                                {GENERAL.SELECTION_BASED_SECOND}
+                            </DsTypography>
                         </div>
-                    ) : (
-                        <div className={styles.selectionArea}>
-                            <div>
-                                <Suggestion />
-                            </div>
-                            <div className={styles.textContent}>
-                                <DsTypography variant="Semibold_16">{GENERAL.SELECTION_BASED_TEXT}</DsTypography>
-                                <DsTypography variant="Regular_14" className={styles.secondText}>
-                                    {GENERAL.SELECTION_BASED_SECOND}
-                                </DsTypography>
-                            </div>
-                        </div>
-                    )}
+                    </div>
 
                     {/* Accordion here */}
                     <MSSQLAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
