@@ -830,39 +830,39 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
         ],
         SnapshotCalculation: [
             {
-                label: 'Storage amount of EBS dbs volumes',
-                value: `${viewCalculation.ebsSnapshotCalculation.storageAmount}`,
-                text: `Storage amount of src primary dbs not including replica data in GiB`
+                label: 'Total snapshots',
+                value: `${viewCalculation.ebsSnapshotCalculation.totalSnapshots}`,
+                text: `Storage amount of primary database volumes`
             },
             {
-                label: 'Initial snapshots cost',
+                label: 'Amount changed in GiB per snapshot',
+                value: `${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`,
+                text: `(Monthly change rate% / 100)/total snapshots x Storage amount of EBS primary dbs volumes= (${viewCalculation.monthlyChangeRate}%/100)/${viewCalculation.ebsSnapshotCalculation.totalSnapshots} x${viewCalculation.ebsSnapshotCalculation.storageAmountPerMonth}= ${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`
+            },
+            {
+                label: 'Initial snapshot cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}`,
-                text: `Storage amount of EBS primary dbs volumes (${viewCalculation.ebsSnapshotCalculation.storageAmount}) x EBS snapshots price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost})`
+                text: `Storage amount of EBS primary dbs volumes (${viewCalculation.ebsSnapshotCalculation.storageAmountPerMonth}) x EBS snapshots price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotPrice})`
             },
             {
-                label: 'Monthly change rate',
-                value: `${viewCalculation.monthlyChangeRate}%`,
-                text: `Input data`
-            },
-            {
-                label: 'Monthly cost of snapshots',
-                value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostOfSnapshots}`,
-                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x storage amount of EBS primary dbs (${viewCalculation.ebsSnapshotCalculation.storageAmount}) x EBS snapshot price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost})`
+                label: 'Monthly cost of each snapshot',
+                value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}`,
+                text: `Amount changed in GiB per snapshot (${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}) x EBS snapshot price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotPrice})`
             },
             {
                 label: 'Discount for partial storage month',
                 value: `$${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth}`,
-                text: `Monthly cost of snapshots ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
+                text: `Monthly cost of each snapshots ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
             },
             {
                 label: 'Incremental snapshot cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost}`,
-                text: `Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth}))`
+                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth})) x Total snapshots (${viewCalculation.ebsSnapshotCalculation.totalSnapshots})`
             },
             {
                 label: 'Total snapshots cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}`,
-                text: `Initial snapshot cost ($${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost})`
+                text: `Initial snapshots cost ($${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}) + Incremental snapshots cost ($${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost})`
             }
         ],
         cloneCalculation: [
