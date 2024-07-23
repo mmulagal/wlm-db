@@ -649,18 +649,17 @@ const InventoryTable = () => {
                 return renderEstimatedCost(cellData, rowData, styles);
             }
         },
-        // ToDo - disabled only for GA release
-        // {
-        //     id: '8',
-        //     Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-        //     accessor: 'allocatedCapacity',
-        //     isSortable: true,
-        //     width: '216px',
-        //     accessorForTextFilter: 'allocatedCapacityText',
-        //     renderCell: (cellData: string | number, rowData: any) => {
-        //         return renderAllocatedCapacity(rowData?.allocatedCapacityText, rowData);
-        //     }
-        // },
+        {
+            id: '8',
+            Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
+            accessor: 'allocatedCapacity',
+            isSortable: true,
+            width: '216px',
+            accessorForTextFilter: 'allocatedCapacityText',
+            renderCell: (cellData: string | number, rowData: any) => {
+                return renderAllocatedCapacity(rowData?.allocatedCapacityText, rowData);
+            }
+        },
         lastColDetails()
     ];
 

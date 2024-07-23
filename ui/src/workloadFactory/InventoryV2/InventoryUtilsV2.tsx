@@ -978,11 +978,7 @@ export const updateInventoryDatawithInstancesRes = (
         } else if (partnerInstanceData && !partnerInstanceData?.loading) {
             const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
             let mergedCost = mergeEstimatedCost(instanceRow, partnerInstanceData);
-            let allocatedCapacity = getMergedAllocatedCapacity(
-                inventoryRow?.serverInstallationMode,
-                instanceRow?.data,
-                partnerInstanceData?.data
-            );
+            let allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data, partnerInstanceData?.data]);
             let ebsResourceInfo = mergeEbsResourceInfo(instanceRow, partnerInstanceData);
             result = {
                 ...inventoryRow,
@@ -1005,7 +1001,7 @@ export const updateInventoryDatawithInstancesRes = (
                 clusterNodeDetails: instanceRow?.data?.clusterNodeDetails
             };
         } else {
-            const allocatedCapacity = getAllocatedCapacity(instanceRow?.data);
+            const allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data]);
             const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
             result = {
                 ...inventoryRow,
@@ -1108,29 +1104,41 @@ export const mergeEbsResourceInfo = (instanceRow: any, partnerInstanceData: any)
     return [...instanceEbsData, ...partnerInstanceEbsData];
 };
 
-export const getMergedAllocatedCapacity = (
-    installationMode: string | undefined,
-    node: ManagedHostsRowInterface | undefined,
-    partner: ManagedHostsRowInterface | undefined
-) => {
-    let allocatedCapacity = 0;
-    if (node?.databaseInstancesSummary && node?.databaseInstancesSummary?.length > 0) {
-        node?.databaseInstancesSummary?.map(perRow => {
-            allocatedCapacity +=
-                (perRow?.storage?.fsxn?.size || 0) +
-                (perRow?.storage?.fsxw?.size || 0) +
-                (perRow?.storage?.ebs?.size || 0);
+export const getMergedAllocatedCapacity = (nodeList: Array<ManagedHostsRowInterface | undefined>) => {
+    let fsxnCapacity = 0;
+    let fsxwCapacity = 0;
+    let ebsCapacity = 0;
+    let uniqueFsxnId: Array<String> = [];
+    let uniqueFsxwId: Array<String> = [];
+    let uniqueVolId: Array<String> = [];
+    nodeList?.map(node => {
+        node?.fsxnResourceInfo?.map((perFsx: any) => {
+            if (!uniqueFsxnId.includes(perFsx?.id)) {
+                fsxnCapacity += perFsx?.size;
+                uniqueFsxnId.push(perFsx?.id);
+            }
         });
-    }
-    // Do we need to check only for AOAG -> installationMode === GENERAL.AOAG
-    if (partner?.databaseInstancesSummary && partner?.databaseInstancesSummary?.length > 0) {
-        partner?.databaseInstancesSummary?.map(perRow => {
-            allocatedCapacity +=
-                (perRow?.storage?.fsxn?.size || 0) +
-                (perRow?.storage?.fsxw?.size || 0) +
-                (perRow?.storage?.ebs?.size || 0);
+    });
+
+    nodeList?.map(node => {
+        node?.fsxwResourceInfo?.map((perFsxw: any) => {
+            if (!uniqueFsxwId.includes(perFsxw?.id)) {
+                fsxwCapacity += perFsxw?.size;
+                uniqueFsxwId.push(perFsxw?.id);
+            }
         });
-    }
+    });
+
+    nodeList?.map(node => {
+        node?.ebsResourceInfo?.map((perVol: any) => {
+            if (!uniqueVolId.includes(perVol?.id)) {
+                ebsCapacity += perVol?.size;
+                uniqueVolId.push(perVol?.id);
+            }
+        });
+    });
+
+    let allocatedCapacity = fsxnCapacity + fsxwCapacity + ebsCapacity;
     return allocatedCapacity;
 };
 
