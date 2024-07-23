@@ -90,7 +90,8 @@ try {
     $AccessDenied = Select-String -Path C:\cfn\log\test-cluster1.txt -Pattern "Access is denied."
     if (-not ([string]::IsNullOrEmpty($AccessDenied)) ) 
         {
-            Write-Output "Encountered access denied. Re-attempting Test-Cluster."
+            Write-Output "Encountered access denied. Re-attempting Test-Cluster after 5 seconds."
+            Start-sleep -s 5
             Invoke-Command -scriptblock { Test-Cluster } -Credential $Credentials -ComputerName $HostName -Authentication credssp > C:\cfn\log\test-cluster2.txt 2>&1 
         } 
    
