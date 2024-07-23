@@ -1,15 +1,20 @@
 import createError from 'http-errors';
-import { compact, isEmpty } from 'lodash-es';
+import { cloneDeep, compact, isEmpty } from 'lodash-es';
 import { getHostAndSqlServerInfo } from './discover-operations';
-import { FileSystemTypes, HOURS_IN_MONTH, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
+import { FINDING, FileSystemTypes, HOURS_IN_MONTH, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
 import {
+    ComputeDetailsType,
     ComputeLicenseCostType,
+    LicenseDetailsType,
+    ManualStorageSavingsRequestBodyType,
     StorageSavingsMetricsCalculationsResponseType,
     StorageSavingsRequestBodyType,
     StorageSavingsResponseType
 } from '../routes/types/storage-savings.types';
 import {
+    formatManualStorageSavingsCalculationMetrics,
     formatStorageSavingsCalculationMetrics,
+    getMarketingApiManualModeRequestBody,
     handleMarketingApiFsxCalculationObject,
     invokeMarketingApi
 } from './cloud-manager/marketing-operations';
@@ -18,6 +23,8 @@ import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice } from '../
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import getSqlInstanceLicenseRecommendations from './recommendation-operations';
+import { ManualModeMarketingRequestBody, getManualModeStorageSavings } from '../lib/cloud-manager/marketing';
+import { deriveInstanceCountPricingDetails, getPricingByLicenseType } from './aws/pricing-operations';
 
 const logger = getLogger();
 
@@ -579,4 +586,274 @@ async function getStorageSavingsCalculationMetrics(
     };
 }
 
-export { performStorageSavingsCalculations, getStorageSavingsCalculationMetrics };
+function handleManualModeRecommendations(
+    sqlServerDeploymentType: string,
+    sqlServerEdition: string,
+    monthlySqlByolCost: number,
+    existingComputeDetails: ComputeDetailsType,
+    existingLicenseDetails: LicenseDetailsType,
+    existingInstanceTypePricingDetails: Map<
+        string,
+        { count: number; pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } }
+    >,
+    awsInstanceLicenseMonthlyPrice?: number
+) {
+    logger.info('Handling manual mode recommendations ', {
+        sqlServerDeploymentType,
+        sqlServerEdition,
+        monthlySqlByolCost,
+        existingComputeDetails,
+        existingLicenseDetails,
+        existingInstanceTypePricingDetails,
+        awsInstanceLicenseMonthlyPrice
+    });
+    const existingInstanceHourlyPriceWithoutLicense = getPricingByLicenseType('NA', existingInstanceTypePricingDetails);
+
+    const recommendedLicenseDetails = cloneDeep(existingLicenseDetails);
+    recommendedLicenseDetails.finding = undefined;
+
+    const recommendedComputeDetails = cloneDeep(existingComputeDetails);
+    recommendedComputeDetails.finding = undefined;
+    if (
+        SqlServerDeploymentModel.SQL_AOAG_SHORT === sqlServerDeploymentType &&
+        sqlServerEdition?.toLowerCase().includes('enterprise')
+    ) {
+        // As per requirement DBS-2753: Downgrade Enterprise to Standard could be suggested in case of AOAG config.
+        const instanceHourlyPrice = getPricingByLicenseType('SQL Std', existingInstanceTypePricingDetails);
+        awsInstanceLicenseMonthlyPrice =
+            instanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
+                ? (instanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense) * HOURS_IN_MONTH
+                : undefined;
+        recommendedComputeDetails.instanceHourlyPrice = instanceHourlyPrice;
+        recommendedComputeDetails.instanceMonthlyPrice = instanceHourlyPrice
+            ? getMonthlyPriceFromHourlyPrice(instanceHourlyPrice)
+            : undefined;
+
+        const licenseHourlyPrice =
+            instanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
+                ? instanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense
+                : undefined;
+        recommendedLicenseDetails.licenseHourlyPrice = licenseHourlyPrice;
+        recommendedLicenseDetails.licenseMonthlyPrice = licenseHourlyPrice
+            ? getMonthlyPriceFromHourlyPrice(licenseHourlyPrice)
+            : undefined;
+        recommendedLicenseDetails.licenseIncluded = true;
+        recommendedLicenseDetails.sqlServerEdition = 'Standard Edition';
+        recommendedLicenseDetails.message =
+            'Downgrade Enterprise Edition to Standard Edition if you are not using any of the enterprise features';
+    }
+
+    // As per requirement DBS-2753 : In case of BYOL License, please suggest the equivalent license included cost, in case it's cheaper than the BYOL cost mentioned. otherwise, do not compare SQL License costs and mention N/A in the cost breakdown.
+    if (monthlySqlByolCost && monthlySqlByolCost > 0) {
+        if (awsInstanceLicenseMonthlyPrice && monthlySqlByolCost > awsInstanceLicenseMonthlyPrice) {
+            recommendedLicenseDetails.licenseHourlyPrice = awsInstanceLicenseMonthlyPrice / HOURS_IN_MONTH;
+            recommendedLicenseDetails.licenseMonthlyPrice = awsInstanceLicenseMonthlyPrice;
+            recommendedLicenseDetails.licenseIncluded = true;
+            recommendedLicenseDetails.message = 'License included cost from AWS is cheaper than the BYOL cost';
+        } else {
+            recommendedLicenseDetails.licenseHourlyPrice = undefined;
+            recommendedLicenseDetails.licenseIncluded = false;
+            recommendedLicenseDetails.message = 'We could not find a cheaper license included cost';
+        }
+    }
+
+    return { recommendedComputeDetails, recommendedLicenseDetails };
+}
+
+async function manualModeComputeLicenseDetails(region: string, params: ManualStorageSavingsRequestBodyType) {
+    logger.info('Getting manual mode compute and license details ', { region, params });
+
+    const { sqlServerDeploymentType, sqlServerEdition, monthlySqlByolCost, ec2Instances } = params;
+
+    const instanceTypes = ec2Instances.map(instance => instance.ec2InstanceType);
+
+    const existingInstanceTypesPricingDetails = await deriveInstanceCountPricingDetails(instanceTypes, region);
+
+    const existingInstanceHourlyPriceWithoutLicense = getPricingByLicenseType(
+        'NA',
+        existingInstanceTypesPricingDetails
+    );
+
+    const existingComputePrice = existingInstanceHourlyPriceWithoutLicense;
+
+    let existingInstanceHourlyPrice = existingInstanceHourlyPriceWithoutLicense;
+    let existingLicensePrice;
+
+    const existingSqlServerEditionLowerCase = sqlServerEdition?.toLowerCase();
+
+    let awsInstanceLicenseMonthlyPrice;
+    if (
+        existingSqlServerEditionLowerCase &&
+        ((existingSqlServerEditionLowerCase.includes('enterprise') &&
+            !existingSqlServerEditionLowerCase.includes('evaluation')) ||
+            existingSqlServerEditionLowerCase.includes('web') ||
+            existingSqlServerEditionLowerCase.includes('standard'))
+    ) {
+        const existingLicenseType = existingSqlServerEditionLowerCase?.includes('enterprise')
+            ? 'SQL Ent'
+            : existingSqlServerEditionLowerCase?.includes('web')
+            ? 'SQL Web'
+            : 'SQL Std';
+
+        existingInstanceHourlyPrice = getPricingByLicenseType(existingLicenseType, existingInstanceTypesPricingDetails);
+
+        awsInstanceLicenseMonthlyPrice =
+            existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
+                ? (existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense) * HOURS_IN_MONTH
+                : undefined;
+        existingLicensePrice =
+            existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
+                ? existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense
+                : undefined;
+    } else if (monthlySqlByolCost && monthlySqlByolCost > 0) {
+        existingLicensePrice = monthlySqlByolCost / HOURS_IN_MONTH;
+    } else {
+        existingLicensePrice = 0;
+    }
+
+    const computeDetails = {
+        instanceType: instanceTypes.join(', '),
+        finding: undefined,
+        windowsOsVersion: undefined,
+        computeHourlyPrice: existingComputePrice,
+        computeMonthlyPrice: existingComputePrice ? getMonthlyPriceFromHourlyPrice(existingComputePrice) : undefined,
+        instanceMonthlyPrice: existingInstanceHourlyPrice
+            ? getMonthlyPriceFromHourlyPrice(existingInstanceHourlyPrice)
+            : undefined,
+        hoursInMonth: HOURS_IN_MONTH,
+        message: undefined
+    };
+
+    const licenseDetails = {
+        finding:
+            monthlySqlByolCost && awsInstanceLicenseMonthlyPrice && monthlySqlByolCost > awsInstanceLicenseMonthlyPrice
+                ? FINDING.NOT_OPTIMIZED
+                : undefined,
+        licenseHourlyPrice: existingLicensePrice,
+        licenseIncluded:
+            monthlySqlByolCost && monthlySqlByolCost > 0 ? false : !!(existingLicensePrice && existingLicensePrice > 0),
+        licenseMonthlyPrice:
+            existingLicensePrice && existingLicensePrice >= 0
+                ? existingLicensePrice * HOURS_IN_MONTH
+                : existingLicensePrice,
+        hoursInMonth: HOURS_IN_MONTH,
+        sqlServerEdition
+    };
+
+    const { recommendedComputeDetails, recommendedLicenseDetails } = handleManualModeRecommendations(
+        sqlServerDeploymentType!,
+        sqlServerEdition!,
+        monthlySqlByolCost!,
+        computeDetails,
+        licenseDetails,
+        existingInstanceTypesPricingDetails,
+        awsInstanceLicenseMonthlyPrice!
+    );
+
+    return {
+        compute: {
+            existing: computeDetails,
+            recommended: recommendedComputeDetails
+        },
+        license: {
+            existing: licenseDetails,
+            recommended: recommendedLicenseDetails
+        }
+    };
+}
+
+async function performManualModeStorageSavingsCalculations(
+    accountId: string,
+    region: string,
+    params: ManualStorageSavingsRequestBodyType
+) {
+    logger.info('Getting manual mode storage savings calculations ', {
+        accountId,
+        region,
+        params
+    });
+    const marketingRequestBody = getMarketingApiManualModeRequestBody(region, params) as ManualModeMarketingRequestBody;
+
+    const { ebsTotal, fsx, single, multi } = await getManualModeStorageSavings(accountId, marketingRequestBody);
+
+    const { compute, license } = await manualModeComputeLicenseDetails(region, params);
+
+    const singleFsxCalculationData = single?.fsx_calculation
+        ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+        : undefined;
+    const multiFsxCalculationData = multi?.fsx_calculation
+        ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+        : undefined;
+
+    return {
+        compute,
+        license,
+        ebs: ebsTotal,
+        fsx,
+        ...(singleFsxCalculationData && {
+            single: {
+                fsxCalculation: singleFsxCalculationData,
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    singleFsxCalculationData.totalStorageCapacity,
+                    params.sqlServerDeploymentType!
+                )
+            }
+        }),
+        ...(multiFsxCalculationData && {
+            multi: {
+                fsxCalculation: multiFsxCalculationData,
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    multiFsxCalculationData.totalStorageCapacity,
+                    params.sqlServerDeploymentType!
+                )
+            }
+        }),
+        totalSummary: {
+            existing:
+                ebsTotal.total ||
+                0 +
+                    Number(compute?.existing?.computeMonthlyPrice || 0) +
+                    Number(license?.existing?.licenseMonthlyPrice || 0),
+            recommended:
+                fsx.total +
+                Number(compute?.recommended?.computeMonthlyPrice || 0) +
+                Number(license?.recommended?.licenseMonthlyPrice || 0)
+        }
+    };
+}
+
+async function getManualModeStorageSavingsCalculationMetrics(
+    accountId: string,
+    region: string,
+    params: ManualStorageSavingsRequestBodyType
+): Promise<StorageSavingsMetricsCalculationsResponseType> {
+    logger.info('Getting manual mode storage savings calculation metrics ', {
+        accountId,
+        region,
+        params
+    });
+
+    const { compute, license } = await manualModeComputeLicenseDetails(region, params);
+
+    const { ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi } =
+        await formatManualStorageSavingsCalculationMetrics(accountId, region, params);
+
+    return {
+        recommendedComputeCalculation: compute.recommended,
+        recommendedLicenseCalculation: license.recommended,
+        existingComputeCalculation: compute.existing,
+        existingLicenseCalculation: license.existing,
+        ebsCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation,
+        ...(single && { single }),
+        ...(multi && { multi })
+    };
+}
+
+export {
+    performStorageSavingsCalculations,
+    getStorageSavingsCalculationMetrics,
+    performManualModeStorageSavingsCalculations,
+    getManualModeStorageSavingsCalculationMetrics
+};

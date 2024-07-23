@@ -301,33 +301,33 @@ interface CalculateEbsComparisonResponse {
     multi?: FsxCostCalculations;
 }
 
+interface InstanceEbsData {
+    instanceName?: string;
+    isPrimary: boolean;
+    gp2?: {
+        ebs: StorageSummary;
+        ebs_cost_calculation: EbsCostCalculation;
+    };
+    gp3?: {
+        ebs: StorageSummary;
+        ebs_cost_calculation: EbsCostCalculation;
+    };
+    io1?: {
+        ebs: StorageSummary;
+        ebs_cost_calculation: EbsCostCalculation;
+    };
+    io2?: {
+        ebs: StorageSummary;
+        ebs_cost_calculation: EbsCostCalculation;
+    };
+    st1?: {
+        ebs: StorageSummary;
+        ebs_cost_calculation: EbsCostCalculation;
+    };
+}
+
 interface ManualModeEbsComparisonResponse {
-    instanceEbs: [
-        {
-            instanceName?: string;
-            isPrimary: boolean;
-            gp2?: {
-                ebs: StorageSummary;
-                ebs_cost_calculation: EbsCostCalculation;
-            };
-            gp3?: {
-                ebs: StorageSummary;
-                ebs_cost_calculation: EbsCostCalculation;
-            };
-            io1?: {
-                ebs: StorageSummary;
-                ebs_cost_calculation: EbsCostCalculation;
-            };
-            io2?: {
-                ebs: StorageSummary;
-                ebs_cost_calculation: EbsCostCalculation;
-            };
-            st1?: {
-                ebs: StorageSummary;
-                ebs_cost_calculation: EbsCostCalculation;
-            };
-        }
-    ];
+    instanceEbs: InstanceEbsData[];
     fsx: StorageSummary;
     ebsTotal: StorageSummary;
     single: FsxCostCalculations;
@@ -504,6 +504,7 @@ export {
     FsxCalculation,
     FsxCostCalculations,
     EbsCostCalculation,
+    InstanceEbsData,
     ManualModeMarketingRequestBody,
     getStorageSavings,
     getManualModeStorageSavings,

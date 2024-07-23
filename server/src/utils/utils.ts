@@ -371,8 +371,15 @@ function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
 
     switch (currentUnit.toLocaleUpperCase()) {
         case 'B':
+        case 'BYTE':
+        case 'BYTES':
             return size / 1024 / 1024 / 1024;
+        case 'KB':
+            return size / 1000 / 1000;
+        case 'KIB':
+            return size / 1024 / 1024;
         case 'MB':
+            return size / 1000;
         case 'MIB':
             return size / 1024;
         default:

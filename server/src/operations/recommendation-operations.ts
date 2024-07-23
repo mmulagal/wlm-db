@@ -13,7 +13,11 @@ import {
 import { getInstanceRecommendations } from './aws/compute-optimizer-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { ENTERPRISE_CHECK_QUERY } from './workloads/mssql/queries';
-import { getSqlInstancePricingDetails } from './aws/pricing-operations';
+import {
+    deriveInstanceCountPricingDetails,
+    getPricingByLicenseType,
+    getSqlInstancePricingDetails
+} from './aws/pricing-operations';
 import getLogger from '../utils/logger';
 import { determineSmallerInstance, getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { NodeDetails } from '../utils/common-types';
@@ -319,24 +323,6 @@ async function handleInstanceRecommendation(
     return { computeFinding, recommendedCompute };
 }
 
-function getPricingByLicenseType(
-    licenseType: string,
-    existingInstanceTypePricingsDetails: Map<
-        string,
-        { count: number; pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } }
-    >
-): number | undefined {
-    logger.info('Getting pricing by license type', { licenseType, existingInstanceTypePricingsDetails });
-    let instanceHourlyPrice: number | undefined;
-    for (const [, { count, pricingDetails }] of existingInstanceTypePricingsDetails) {
-        if (pricingDetails[licenseType]?.pricePerUnit) {
-            instanceHourlyPrice = Number(instanceHourlyPrice || 0) + pricingDetails[licenseType].pricePerUnit * count;
-        }
-    }
-
-    return instanceHourlyPrice;
-}
-
 export default async function getSqlInstanceLicenseRecommendations(
     accountId: string,
     credentialsId: string,
@@ -414,7 +400,6 @@ export default async function getSqlInstanceLicenseRecommendations(
                 if (nodeInstances[0].ec2InstanceType !== nodeInstances[1].ec2InstanceType) {
                     const smallerInstanceType = await determineSmallerInstance(
                         region,
-                        credentialsId,
                         nodeInstanceTypes as _InstanceType[]
                     );
                     const smallerInstance = clusterNodeDetails.find(
@@ -424,28 +409,9 @@ export default async function getSqlInstanceLicenseRecommendations(
                 }
             }
 
-            const instanceTypeCount: { [key: string]: number } = nodeInstanceTypes.reduce((acc, instanceType) => {
-                acc[instanceType] = (acc[instanceType] || 0) + 1;
-                return acc;
-            }, {} as { [key: string]: number });
-
-            const existingInstanceTypePricingsDetails = new Map<
-                string,
-                {
-                    count: number;
-                    pricingDetails: {
-                        [preInstalledSw: string]: {
-                            pricePerUnit: number;
-                            unit: string;
-                        };
-                    };
-                }
-            >();
-            await Promise.all(
-                Object.entries(instanceTypeCount).map(async ([instanceType, count]) => {
-                    const pricingDetails = await getSqlInstancePricingDetails(region, instanceType, 'windows');
-                    existingInstanceTypePricingsDetails.set(instanceType, { count, pricingDetails });
-                })
+            const existingInstanceTypesPricingDetails = await deriveInstanceCountPricingDetails(
+                nodeInstanceTypes,
+                region
             );
 
             /*
@@ -478,7 +444,7 @@ export default async function getSqlInstanceLicenseRecommendations(
 
             const existingInstanceHourlyPriceWithoutLicense = getPricingByLicenseType(
                 'NA',
-                existingInstanceTypePricingsDetails
+                existingInstanceTypesPricingDetails
             );
 
             const processorArchitecture =
@@ -502,7 +468,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                     : SQL_STD;
                 const existingInstanceHourlyPrice = getPricingByLicenseType(
                     existingLicenseType,
-                    existingInstanceTypePricingsDetails
+                    existingInstanceTypesPricingDetails
                 );
 
                 const { licenseFinding: currentLicenseFinding, recommendedLicenseType: recommendedSqlLicenseType } =
@@ -520,12 +486,12 @@ export default async function getSqlInstanceLicenseRecommendations(
 
                 let recommendedInstanceHourlyPrice: number | undefined = getPricingByLicenseType(
                     recommendedSqlLicenseType,
-                    existingInstanceTypePricingsDetails
+                    existingInstanceTypesPricingDetails
                 );
 
                 let recommendedInstanceHourlyPriceWithoutLicense: number | undefined = getPricingByLicenseType(
                     'NA',
-                    existingInstanceTypePricingsDetails
+                    existingInstanceTypesPricingDetails
                 );
                 // existing compute and license details
                 existingCompute = {
@@ -536,21 +502,21 @@ export default async function getSqlInstanceLicenseRecommendations(
                     machineDetails: nodeInstances.map(
                         ({ ec2InstanceType: instanceType, ec2UsageOperation: usageOperation }) => {
                             const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(
-                                existingInstanceTypePricingsDetails.get(instanceType)?.pricingDetails[
+                                existingInstanceTypesPricingDetails.get(instanceType)?.pricingDetails[
                                     existingLicenseType
                                 ]?.pricePerUnit
                             );
                             const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(
-                                existingInstanceTypePricingsDetails.get(instanceType)?.pricingDetails.NA?.pricePerUnit
+                                existingInstanceTypesPricingDetails.get(instanceType)?.pricingDetails.NA?.pricePerUnit
                             );
 
                             return {
                                 instanceType,
-                                price: existingInstanceTypePricingsDetails.get(instanceType)?.pricingDetails[
+                                price: existingInstanceTypesPricingDetails.get(instanceType)?.pricingDetails[
                                     existingLicenseType
                                 ]?.pricePerUnit,
                                 basePrice:
-                                    existingInstanceTypePricingsDetails.get(instanceType)?.pricingDetails.NA
+                                    existingInstanceTypesPricingDetails.get(instanceType)?.pricingDetails.NA
                                         ?.pricePerUnit,
                                 computeMonthlyPrice,
                                 instanceMonthlyPrice,

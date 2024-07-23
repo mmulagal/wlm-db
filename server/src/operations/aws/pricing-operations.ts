@@ -906,4 +906,58 @@ async function getSqlInstancePricingDetails(
     return pricingDetails;
 }
 
-export { getProductRates, calculateFsxWindowsCapacityPrice, getSqlInstancePricingDetails, calculatePrice };
+function getPricingByLicenseType(
+    licenseType: string,
+    existingInstanceTypesPricingDetails: Map<
+        string,
+        { count: number; pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } }
+    >
+): number | undefined {
+    logger.info('Getting pricing by license type', { licenseType, existingInstanceTypesPricingDetails });
+    let instanceHourlyPrice: number | undefined;
+    for (const [, { count, pricingDetails }] of existingInstanceTypesPricingDetails) {
+        if (pricingDetails[licenseType]?.pricePerUnit) {
+            instanceHourlyPrice = Number(instanceHourlyPrice || 0) + pricingDetails[licenseType].pricePerUnit * count;
+        }
+    }
+
+    return instanceHourlyPrice;
+}
+
+async function deriveInstanceCountPricingDetails(nodeInstanceTypes: string[], region: string) {
+    logger.info('Deriving instance count pricing details', { nodeInstanceTypes, region });
+
+    const instanceTypeCount: { [key: string]: number } = nodeInstanceTypes.reduce((acc, instanceType) => {
+        acc[instanceType] = (acc[instanceType] || 0) + 1;
+        return acc;
+    }, {} as { [key: string]: number });
+
+    const existingInstanceTypePricingsDetails = new Map<
+        string,
+        {
+            count: number;
+            pricingDetails: {
+                [preInstalledSw: string]: {
+                    pricePerUnit: number;
+                    unit: string;
+                };
+            };
+        }
+    >();
+    await Promise.all(
+        Object.entries(instanceTypeCount).map(async ([instanceType, count]) => {
+            const pricingDetails = await getSqlInstancePricingDetails(region, instanceType, 'windows');
+            existingInstanceTypePricingsDetails.set(instanceType, { count, pricingDetails });
+        })
+    );
+
+    return existingInstanceTypePricingsDetails;
+}
+export {
+    getProductRates,
+    calculateFsxWindowsCapacityPrice,
+    getSqlInstancePricingDetails,
+    calculatePrice,
+    getPricingByLicenseType,
+    deriveInstanceCountPricingDetails
+};

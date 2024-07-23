@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import { SqlServerDeploymentModel, HOURS_IN_MONTH, STORAGE_SERVICE_DEFAULT_REGION } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import {
@@ -7,12 +8,14 @@ import {
     getManualModeStorageSavings,
     getStorageSavings,
     FsxCostCalculations,
-    FsxCalculation
+    FsxCalculation,
+    InstanceEbsData
 } from '../../lib/cloud-manager/marketing';
 import {
     EbsCloneCalculationType,
     EbsCostCalculationType,
     EbsSnapshotCalculationType,
+    ManualStorageSavingsRequestBodyType,
     StorageSavingsRequestBodyType
 } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes, sizeInGigaBytes } from '../../utils/utils';
@@ -31,9 +34,9 @@ function getMarketingApiRequestBody(
     params: StorageSavingsRequestBodyType,
     sqlServerDeploymentType: string
 ) {
-    const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
+    const { snapshotFrequency, cloneRefreshFrequency, clonedCopiesCount, monthlyChangeRatePercentage } = params || {};
 
-    const monthlyCloneCount = getMonthlyCloneCountFromFrequency(cloneRefreshFrequency);
+    const monthlyCloneCount = getMonthlyCloneCountFromFrequency(cloneRefreshFrequency!);
     return {
         useCase: 'Low-latency',
         volumeIds: ebsVolumeIds,
@@ -53,13 +56,45 @@ function getMarketingApiRequestBody(
     };
 }
 
-function getMarketingApiManualModeRequestBody(
-    region: string,
-    params: StorageSavingsRequestBodyType,
-    sqlServerDeploymentType: string,
-    items: { volumeType: string; volumeNumber: number; storageAmount: number; volumeIops: number; throughput: number }[]
-) {
-    const { snapshotFrequency, clonedCopiesCount, monthlyChangeRatePercentage } = params || {};
+function hasDuplicateVolumeType(volumes: any[]) {
+    const volumeTypes = volumes.map((volume: { volumeType: string }) => volume.volumeType);
+    const uniqueVolumeTypes = new Set(volumeTypes);
+    return volumeTypes.length > uniqueVolumeTypes.size;
+}
+
+function getMarketingApiManualModeRequestBody(region: string, params: ManualStorageSavingsRequestBodyType) {
+    logger.info('Handling marketing manual mode request body', params);
+
+    const { snapshotFrequency, sqlServerDeploymentType, clonedCopiesCount, monthlyChangeRatePercentage, ec2Instances } =
+        params || {};
+
+    const instancesObject = ec2Instances.map(instance => {
+        const { ec2InstanceDescription, isPrimary, volumes } = instance;
+
+        if (hasDuplicateVolumeType(volumes)) {
+            throw new Error('Duplicate volume types are not allowed');
+        }
+
+        const volumeArray = volumes.map(volume => {
+            const { volumeType, volumeNumber, storageAmount, volumeIops, throughput } = volume;
+            return {
+                volumeType,
+                volumeNumber,
+                storageAmount: {
+                    size: sizeInGigaBytes(storageAmount, 'B') * volumeNumber,
+                    unit: 'GiB'
+                },
+                ...(volumeIops && { volumeIops: volumeIops * volumeNumber }),
+                ...(throughput && { throughput: throughput * volumeNumber })
+            };
+        });
+
+        return {
+            instanceName: ec2InstanceDescription,
+            isPrimary,
+            volumes: volumeArray
+        };
+    });
 
     return {
         useCase: 'Low-latency',
@@ -73,25 +108,7 @@ function getMarketingApiManualModeRequestBody(
             changeRate: monthlyChangeRatePercentage,
             cloneEnvs: clonedCopiesCount > 0 ? clonedCopiesCount : 0
         },
-        instances: [
-            {
-                instanceName: undefined,
-                isPrimary: true,
-                volumes: items.map(volume => {
-                    const { volumeType, volumeNumber, storageAmount, volumeIops, throughput } = volume;
-                    return {
-                        volumeType,
-                        volumeNumber,
-                        storageAmount: {
-                            size: storageAmount,
-                            unit: 'GiB'
-                        },
-                        volumeIops,
-                        throughput
-                    };
-                })
-            }
-        ]
+        instances: instancesObject
     };
 }
 
@@ -128,6 +145,8 @@ async function invokeMarketingApi(
     // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         // Setting to default region as us-east-1 to make the call to storage service, where we have the instance and volume details for demo
+
+        const { clonedCopiesCount, monthlyChangeRatePercentage } = params;
         region = STORAGE_SERVICE_DEFAULT_REGION;
         let volumes = [
             { volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 2, volumeIops: 40000, throughput: 128 }
@@ -137,13 +156,27 @@ async function invokeMarketingApi(
                 { volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 10, volumeIops: 40000, throughput: 128 }
             ];
         }
-        const requestBody = getMarketingApiManualModeRequestBody(
-            region,
-            params,
+
+        const marketingRequestBody = getMarketingApiManualModeRequestBody(region, {
+            clonedCopiesCount,
             sqlServerDeploymentType,
-            volumes
-        ) as ManualModeMarketingRequestBody;
-        const { ebsTotal, instanceEbs, fsx, single, multi } = await getManualModeStorageSavings(accountId, requestBody);
+            monthlyChangeRatePercentage,
+            snapshotFrequency: 'daily',
+            sqlServerEdition: 'Enterprise',
+            ec2Instances: [
+                {
+                    ec2InstanceDescription: 'Primary',
+                    ec2InstanceType: 'm5.4xlarge',
+                    isPrimary: true,
+                    volumes
+                }
+            ]
+        }) as ManualModeMarketingRequestBody;
+
+        const { ebsTotal, instanceEbs, fsx, single, multi } = await getManualModeStorageSavings(
+            accountId,
+            marketingRequestBody
+        );
 
         return {
             ebs: ebsTotal,
@@ -364,9 +397,6 @@ function derivePropertiesBasedOnDeploymentType(
         }
     } = fsxCostCalculations;
 
-    const totalMonthlyClonedCopiesCount =
-        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0; // TODO: to be removed depending as per remove clone frequency input UX
-
     return {
         fsxOntapCalculation: {
             numberOfVolumes,
@@ -445,12 +475,10 @@ function derivePropertiesBasedOnDeploymentType(
             totalSnapshotMonthlyCost
         },
         fsxCloneCalculation: {
-            cloneRefreshFrequency: params.cloneRefreshFrequency, // TODO: to be removed depending as per remove clone frequency input UX
             monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
             clonedCopiesCount: params.clonedCopiesCount,
             changeRateBetweenClones,
             totalFsxnCapacity: convertToBytes(totalSsdStorageGBPerMonthSize, totalSsdStorageGBPerMonthUnit) || 0,
-            numberOfClonesInAMonth: totalMonthlyClonedCopiesCount, // TODO: to be removed depending as per remove clone frequency input UX
             fsxnSsdPrice: { price: fsxnSsdClonePrice, unit: fsxnSsdClonePriceUnit },
             desiredStorageCapacity:
                 convertToBytes(cloneDesiredStorageCapacityGB, cloneDesiredStorageCapacityGBUnit) || 0,
@@ -472,6 +500,7 @@ function derivePropertiesBasedOnDeploymentType(
         }
     };
 }
+
 async function formatStorageSavingsCalculationMetrics(
     accountId: string,
     credentialsId: string,
@@ -563,10 +592,207 @@ async function formatStorageSavingsCalculationMetrics(
     };
 }
 
+// InstanceEbsData is the response from marketing API for the manual mode. This contains ebs volume level breakdown per disk type at each instance level. However, we would like to aggregate the data from all instances to derive storage related metrics (snapshots and clones are from primary instance only)
+// Map volumes function is used to collect ebsCostCalculation at each disk type from all instances
+function mapVolumes(
+    instanceEbs: InstanceEbsData[],
+    volumeTypes: string[],
+    clonedCopiesCount: number,
+    monthlyChangeRatePercentage: number
+) {
+    logger.info('Mapping volumes from manual mode response', {
+        instanceEbs,
+        volumeTypes,
+        clonedCopiesCount,
+        monthlyChangeRatePercentage
+    });
+
+    const volumesCalculationsList: VolumeCalculationObject = {
+        gp2: [],
+        gp3: [],
+        io2: [],
+        st1: [],
+        io1: []
+    };
+
+    instanceEbs.forEach((instance: InstanceEbsData) => {
+        volumeTypes.forEach((volumeType: string) => {
+            const instanceVolumeTypeData = instance[volumeType as keyof InstanceEbsData] as any;
+            if (instanceVolumeTypeData) {
+                volumesCalculationsList[volumeType as keyof VolumeCalculationObject].push(
+                    formatEbsCalculationObject(
+                        instanceVolumeTypeData.ebs as StorageSummary,
+                        instanceVolumeTypeData.ebs_cost_calculation as EbsCostCalculation,
+                        clonedCopiesCount,
+                        monthlyChangeRatePercentage
+                    ).ebsCostCalculation
+                );
+            }
+        });
+    });
+
+    return volumesCalculationsList;
+}
+
+// Once we have the list of ebsCostCalculation for each disk type from all instances, we aggregate the data to derive the total cost for each disk type
+function aggregateData(volumeList: EbsCostCalculationType[]): EbsCostCalculationType {
+    const excludedKeys = ['instanceAvgDuration', 'hoursInAMonth', 'ebsCapacityPrice']; // these are static values and should not be aggregated
+    const aggregatedData: { [key: string]: any } = {};
+    volumeList.forEach((item: any) => {
+        for (const key in item) {
+            if (!excludedKeys.includes(key)) {
+                aggregatedData[key] = (aggregatedData[key] || 0) + item[key];
+            } else {
+                aggregatedData[key] = item[key];
+            }
+        }
+    });
+    return aggregatedData as EbsCostCalculationType;
+}
+
+interface VolumeCalculationObject {
+    gp2: EbsCostCalculationType[];
+    gp3: EbsCostCalculationType[];
+    io1: EbsCostCalculationType[];
+    io2: EbsCostCalculationType[];
+    st1: EbsCostCalculationType[];
+}
+
+// Snapshot and clone calculations are derived from primary instance only.
+async function derivePrimaryInstanceEbsCostCalculation(
+    instanceEbs: InstanceEbsData[],
+    clonedCopiesCount: number,
+    monthlyChangeRatePercentage: number
+) {
+    logger.info('Deriving primary instance EBS cost calculation', {
+        instanceEbs,
+        clonedCopiesCount,
+        monthlyChangeRatePercentage
+    });
+
+    const primaryInstance = instanceEbs.find(instance => instance.isPrimary);
+
+    const { gp2, gp3, io1, io2, st1 } = primaryInstance || {};
+    const ebsCalculationBreakdown = {
+        ...(gp2 && {
+            gp2: formatEbsCalculationObject(
+                gp2.ebs,
+                gp2.ebs_cost_calculation,
+                clonedCopiesCount,
+                monthlyChangeRatePercentage
+            )
+        }),
+        ...(gp3 && {
+            gp3: formatEbsCalculationObject(
+                gp3.ebs,
+                gp3.ebs_cost_calculation,
+                clonedCopiesCount,
+                monthlyChangeRatePercentage
+            )
+        }),
+        ...(io1 && {
+            io1: formatEbsCalculationObject(
+                io1.ebs,
+                io1.ebs_cost_calculation,
+                clonedCopiesCount,
+                monthlyChangeRatePercentage
+            )
+        }),
+        ...(io2 && {
+            io2: formatEbsCalculationObject(
+                io2.ebs,
+                io2.ebs_cost_calculation,
+                clonedCopiesCount,
+                monthlyChangeRatePercentage
+            )
+        }),
+        ...(st1 && {
+            st1: formatEbsCalculationObject(
+                st1.ebs,
+                st1.ebs_cost_calculation,
+                clonedCopiesCount,
+                monthlyChangeRatePercentage
+            )
+        })
+    };
+
+    const ebsCalculation: { [key: string]: EbsCostCalculationType } = {};
+    const ebsCloneCalculation: { [key: string]: EbsCloneCalculationType } = {};
+    const ebsSnapshotCalculation: { [key: string]: EbsSnapshotCalculationType } = {};
+    Object.entries(ebsCalculationBreakdown).forEach(([key, value]) => {
+        ebsCalculation[key] = value.ebsCostCalculation;
+    });
+
+    Object.entries(ebsCalculationBreakdown).forEach(([key, value]) => {
+        ebsCloneCalculation[key] = value.ebsCloneCalculation;
+    });
+
+    Object.entries(ebsCalculationBreakdown).forEach(([key, value]) => {
+        ebsSnapshotCalculation[key] = value.ebsSnapshotCalculation;
+    });
+
+    return {
+        ebsCloneCalculation,
+        ebsSnapshotCalculation
+    };
+}
+
+async function formatManualStorageSavingsCalculationMetrics(
+    accountId: string,
+    region: string,
+    params: ManualStorageSavingsRequestBodyType
+) {
+    logger.info('Formatting manual storage savings calculation metrics', { accountId, region, params });
+
+    const marketingRequestBody = getMarketingApiManualModeRequestBody(region, params) as ManualModeMarketingRequestBody;
+
+    const { instanceEbs, single, multi, ebsTotal } = await getManualModeStorageSavings(accountId, marketingRequestBody);
+
+    const { ebsSnapshotCalculation, ebsCloneCalculation } = await derivePrimaryInstanceEbsCostCalculation(
+        instanceEbs,
+        params.clonedCopiesCount,
+        params.monthlyChangeRatePercentage
+    );
+
+    const volumeTypes = ['gp2', 'gp3', 'io2', 'st1', 'io1'];
+    const volumesList = mapVolumes(
+        instanceEbs,
+        volumeTypes,
+        params.clonedCopiesCount,
+        params.monthlyChangeRatePercentage
+    );
+
+    const { gp2, gp3, io2, st1, io1 } = volumesList;
+
+    const allVolumesEbsCalculation = {
+        ...(!isEmpty(gp2) && { gp2: aggregateData(gp2) }),
+        ...(!isEmpty(gp3) && { gp3: aggregateData(gp3) }),
+        ...(!isEmpty(io2) && { io2: aggregateData(io2) }),
+        ...(!isEmpty(st1) && { st1: aggregateData(st1) }),
+        ...(!isEmpty(io1) && { io1: aggregateData(io1) })
+    };
+
+    const reqObject = {
+        clonedCopiesCount: params.clonedCopiesCount,
+        monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+        snapshotFrequency: params.snapshotFrequency
+    };
+
+    return {
+        ...(single && { single: derivePropertiesBasedOnDeploymentType(single, reqObject) }),
+        ...(multi && { multi: derivePropertiesBasedOnDeploymentType(multi, reqObject) }),
+        ebs: ebsTotal,
+        ebsCalculation: allVolumesEbsCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation
+    };
+}
 export {
     invokeMarketingApi,
     handleMarketingApiFsxCalculationObject,
     formatStorageSavingsCalculationMetrics,
     getMarketingApiRequestBody,
-    getMarketingApiManualModeRequestBody
+    getMarketingApiManualModeRequestBody,
+    formatManualStorageSavingsCalculationMetrics,
+    derivePropertiesBasedOnDeploymentType
 };

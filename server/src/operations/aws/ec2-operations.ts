@@ -620,12 +620,10 @@ async function isEbsAwsBackupEnabled(credentialsId: string, region: string, ebsV
     return backups.Snapshots?.length !== 0;
 }
 
-async function determineSmallerInstance(credentialsId: string, region: string, instanceTypes: _InstanceType[]) {
-    const { InstanceTypes: instanceTypesListWithDetails } = await describeInstanceType(
-        credentialsId,
-        region,
-        instanceTypes
-    );
+async function determineSmallerInstance(region: string, instanceTypes: _InstanceType[]) {
+    logger.info('Determining smaller instance type', region, instanceTypes);
+
+    const { InstanceTypes: instanceTypesListWithDetails } = await describeInstanceType(region, instanceTypes);
     let [smallerInstanceType] = instanceTypesListWithDetails || [];
 
     if (instanceTypesListWithDetails?.length && instanceTypesListWithDetails?.length > 1) {
@@ -653,12 +651,9 @@ async function determineSmallerInstance(credentialsId: string, region: string, i
 
     return smallerInstanceType;
 }
-async function determineBiggerInstance(credentialsId: string, region: string, instanceTypes: _InstanceType[]) {
-    const { InstanceTypes: instanceTypesListWithDetails } = await describeInstanceType(
-        credentialsId,
-        region,
-        instanceTypes
-    );
+async function determineBiggerInstance(region: string, instanceTypes: _InstanceType[]) {
+    logger.info('Determining bigger instance type', region, instanceTypes);
+    const { InstanceTypes: instanceTypesListWithDetails } = await describeInstanceType(region, instanceTypes);
     let [biggerInstanceType] = instanceTypesListWithDetails || [];
 
     if (instanceTypesListWithDetails?.length && instanceTypesListWithDetails?.length > 1) {
@@ -716,11 +711,7 @@ async function getInstanceTypesFromInstanceRequirements(
             instanceIds
         );
 
-        const { MemoryInfo, VCpuInfo, NetworkInfo } = await determineBiggerInstance(
-            credentialsId,
-            region,
-            currentInstanceTypes
-        );
+        const { MemoryInfo, VCpuInfo, NetworkInfo } = await determineBiggerInstance(region, currentInstanceTypes);
 
         let requiredNetworkBandwidth = averageNetworkBandwidthGbps;
         if (deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
