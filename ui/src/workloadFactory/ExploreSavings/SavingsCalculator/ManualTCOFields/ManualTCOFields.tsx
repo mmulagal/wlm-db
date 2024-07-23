@@ -10,10 +10,12 @@ import {
     setSelectedDeploymentModelForManualTCO,
     setSelectedManualServerEdition,
     setSelectedMonthlyBYOLCost,
-    setSelectedRegionFromManualTCO
+    setSelectedRegionFromManualTCO,
+    setSelectedSnapshotFrequency
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 
 const ManualTCOFields = () => {
     const dispatch = useDispatch();
@@ -23,7 +25,8 @@ const ManualTCOFields = () => {
         monthlyBYOLCost,
         numberOfClonedCopies,
         monthlyChangeRate,
-        selectedManualServerEdition
+        selectedManualServerEdition,
+        selectedSnapshotFrequency
     } = useAppSelector(state => state.exploreSavings);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
@@ -79,6 +82,23 @@ const ManualTCOFields = () => {
     useEffect(() => {
         dispatch(setSelectedDeploymentModelForManualTCO(generateDeploymentModelList[0]));
     }, [generateDeploymentModelList]);
+
+    //Function to generate the options for Select Field
+    const generateSnapshotFrequency = useMemo<optionType[]>((): optionType[] => {
+        const frequency = SNAPSHOT_FREQUENCY;
+        const options: optionType[] = [];
+        frequency?.map((val, idx: number) => {
+            const option = generateOptionType(val?.value, val?.label, '', false, '', val);
+            options.push(option);
+        });
+        return options;
+    }, []);
+
+    useEffect(() => {
+        if (!selectedSnapshotFrequency) {
+            dispatch(setSelectedSnapshotFrequency(generateSnapshotFrequency[2]));
+        }
+    }, [generateSnapshotFrequency]);
 
     const errorForClonedCopiesCount = () => {
         if (numberOfClonedCopies > 10) {
@@ -147,17 +167,6 @@ const ManualTCOFields = () => {
 
                 <div className={styles.secondRow}>
                     <TextField
-                        label={GENERAL.NUMBER_OF_CLONED_COPIES}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            dispatch(setNumberOfClonedCopies(numVal));
-                        }}
-                        value={numberOfClonedCopies}
-                        className={styles.deploymentModelWidth}
-                        error={errorForClonedCopiesCount()}
-                    />
-
-                    <TextField
                         label={GENERAL.MONTHLY_DATA_CHANGE_RATE}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
@@ -168,9 +177,32 @@ const ManualTCOFields = () => {
                         info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
                         error={errorForChangeRate()}
                     />
+                    <SelectField
+                        label={GENERAL.ES_SNAPSHOT_FREQUENCY}
+                        isClearable={false}
+                        defaultValue={
+                            selectedSnapshotFrequency ? selectedSnapshotFrequency : [generateSnapshotFrequency[2]]
+                        }
+                        onChange={(selectedOptions: any): void => {
+                            dispatch(setSelectedSnapshotFrequency(selectedOptions));
+                        }}
+                        isSearchable={generateSnapshotFrequency.length > 5}
+                        options={generateSnapshotFrequency}
+                        className={styles.deploymentModelWidth}
+                    />
                 </div>
 
                 <div className={styles.secondRow}>
+                    <TextField
+                        label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            dispatch(setNumberOfClonedCopies(numVal));
+                        }}
+                        value={numberOfClonedCopies}
+                        className={styles.deploymentModelWidth}
+                        error={errorForClonedCopiesCount()}
+                    />
                     <TextField
                         label={'Monthly SQL BYOL costs($)'}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
