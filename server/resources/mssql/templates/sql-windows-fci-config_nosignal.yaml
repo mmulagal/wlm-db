@@ -992,6 +992,9 @@ Resources:
                         d-cleanup-DSC:
                             command: powershell -Command "Remove-Item C:\cfn\DSC* -Force -Recurse"
                             waitAfterCompletion: '0'
+                        e-cleanup-OpenSSL:
+                            command: powershell -Command "Remove-Item C:\cfn\OpenSSL* -Force -Recurse"
+                            waitAfterCompletion: '0'
                 Finalize:
                     commands:
                         a-signal-resource:
@@ -1529,6 +1532,9 @@ Resources:
                             waitAfterCompletion: '0'
                         c-cleanup-DSC:
                             command: powershell -Command "Remove-Item C:\cfn\DSC* -Force -Recurse"
+                            waitAfterCompletion: '0'
+                        d-cleanup-OpenSSL:
+                            command: powershell -Command "Remove-Item C:\cfn\OpenSSL* -Force -Recurse"
                             waitAfterCompletion: '0'
                 Finalize:
                     commands:
