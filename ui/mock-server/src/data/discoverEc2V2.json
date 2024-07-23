@@ -150,7 +150,7 @@
                         "EC2AMAZ-3UTIH78"
                     ],
                     "nodeIps": [],
-                    "sqlServerDeploymentType": "Standalone",
+                    "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [
@@ -177,7 +177,7 @@
                         "EC2AMAZ-3UTIH78"
                     ],
                     "nodeIps": [],
-                    "sqlServerDeploymentType": "Standalone",
+                    "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [
@@ -204,7 +204,7 @@
                         "EC2AMAZ-3UTIH78"
                     ],
                     "nodeIps": [],
-                    "sqlServerDeploymentType": "Standalone",
+                    "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [

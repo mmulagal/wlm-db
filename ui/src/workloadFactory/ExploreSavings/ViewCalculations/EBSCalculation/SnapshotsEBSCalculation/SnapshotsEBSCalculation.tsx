@@ -23,8 +23,11 @@ const SnapshotsEBSCalculation = () => {
                 </DsTypography>
             );
         }
-        // TBD
-        return <DsTypography variant="Regular_14">$XXX</DsTypography>;
+        return (
+            <DsTypography variant="Regular_14">
+                ${viewCalculationsResponse?.ebsSnapshotCalculation?.totalSnapshotCost}
+            </DsTypography>
+        );
     };
 
     return (
@@ -38,7 +41,7 @@ const SnapshotsEBSCalculation = () => {
             >
                 {viewCalculationsResponse && (
                     <AccordionCardContent>
-                        <DsTypography variant="Regular_14">{GENERAL.ES_EBS_SNAPSHOTS_DESC}</DsTypography>
+                        <DsTypography variant="Regular_14">{GENERAL.ES_SNAPSHOTS_DESC}</DsTypography>
                         <DsTypography className={CommonStyles.accordionContentSet}>
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculationForEBS(

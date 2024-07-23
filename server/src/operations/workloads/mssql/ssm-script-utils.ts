@@ -2,11 +2,48 @@ import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
 
 /* eslint-disable no-useless-escape */
 
-const GET_ACTIVE_NODE_DRIVE_INFO = (
-    deploymentType: string
-) => ` $disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
+const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string) => ` 
+Function GetSMBMappedDrivesWithPath() {
+    $DriveLetterPath = @{}
+    $Errors = ''
+    #User List
+    $RootKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey(“USERS”,$Computer)
+    $SubKeyNames = $RootKey.GetSubKeyNames()
+    ForEach ($SubKeyName in $SubKeyNames)
+        {
+            if (($SubKeyName.Contains(“_Classes”) -ne $True))
+                {
+                    #Drive List
+                    try {
+                    $NetworkKey = $RootKey.OpenSubKey($SubKeyName + “\\Network”)
+                    } catch {$Errors += "$RootKey-$SubKeyName : $_."}
+                    if ($NetworkKey -ne $Null)
+                        {
+                            $MappedDrives = $NetworkKey.GetSubKeyNames()
+                           
+                              ForEach ($MappedDrive in $MappedDrives)
+                                {
+                                  try {
+                                  $DriveKey = $NetworkKey.OpenSubKey($MappedDrive)
+                                  $DrivePath = ($DriveKey.GetValue(“RemotePath”) -split '\\share')[0].Trim('\\')
+                                  if(! $DriveLetterPath.ContainsKey($MappedDrive.ToUpper()+':')) {
+                                      $DriveLetterPath.Add($MappedDrive.ToUpper()+':', $DrivePath)            
+                                  }  
+                                }catch {$Errors += "$SubKeyName-$NetworkKey : $_."}     
+                                }
+                                
+                        } 
+                }
+        }
+
+    return $DriveLetterPath.Keys 
+  }
+
+$disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
 $deploymentType  = '${deploymentType}'
-$results = foreach ($disk in $disks) {
+$results = New-Object System.Collections.ArrayList
+
+foreach ($disk in $disks) {
     $partitions = Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
 
     foreach ($partition in $partitions) {
@@ -24,9 +61,36 @@ $results = foreach ($disk in $disks) {
                 $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
             }
 
-            $logicalDiskObject
+            [void]$results.Add($logicalDiskObject)
         }
     }
+}
+
+
+$isoDriveLetters = Get-WmiObject -Class Win32_CDROMDrive -Property Drive | Select-Object -ExpandProperty Drive
+
+foreach ($isoDriveLetter in $isoDriveLetters) {
+    $isoObject = [PSCustomObject]@{
+        Manufacturer = 'CD ROM'
+        LogicalDisk = $isoDriveLetter
+        FileSystem = 0
+        Owner = 'null'
+    }
+
+    [void]$results.Add($isoObject)
+}
+
+$smbDriveLetters = GetSMBMappedDrivesWithPath
+
+foreach ($driveLetter in $smbDriveLetters) {
+    $smbObject = [PSCustomObject]@{
+        Manufacturer = 'SMB'
+        LogicalDisk = $driveLetter
+        FileSystem = 0
+        Owner = 'null'
+    }
+
+    [void]$results.Add($smbObject)
 }
 $results | ConvertTo-Json
  `;

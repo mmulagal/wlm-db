@@ -1,0 +1,19 @@
+.mainSection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .row {
+        display: flex;
+        gap: 24px;
+
+        [class*='Popover-module_base'] {
+            top: -50px !important;
+            max-width: 185px;
+        }
+
+        .deploymentModelWidth {
+            width: 276px;
+        }
+    }
+}

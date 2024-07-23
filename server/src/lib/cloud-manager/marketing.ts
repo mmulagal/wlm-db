@@ -46,6 +46,14 @@ interface EbsCostCalculation {
     AWSEBSTotalCostMonthly: number;
     requestedThroughputMBps: number;
     includedThroughputMBps: number;
+    ebsSnapshotPrice: {
+        price: number;
+        unit: string;
+    };
+    amountChangedPerSnapshot: {
+        size: number;
+        unit: string;
+    };
 }
 
 interface FsxCalculation {
@@ -321,11 +329,9 @@ interface ManualModeEbsComparisonResponse {
         }
     ];
     fsx: StorageSummary;
-    fsx_calculation: FsxCalculation;
-    fsx_cost_calculation_no_snapshot: FsxNoSnapshotCalculation;
-    fsx_snapshot_cost_calculation: FsxSnapshotCalculation;
-    fsx_clone_cost_calculation: FsxCloneCalculation;
     ebsTotal: StorageSummary;
+    single: FsxCostCalculations;
+    multi: FsxCostCalculations;
 }
 
 interface MarketingRequestBody {
@@ -352,12 +358,11 @@ interface ManualModeMarketingRequestBody {
     deploymentType: string;
     snapshots: {
         snapshotFreq: string;
-        snapshotMonthlyChangeRatePcg: number;
+        snapshotPercentageChange: number;
     };
     clones?: {
-        cloneFreq: string;
         cloneEnvs: number;
-        cloneMonthlyChangeRatePcg: number;
+        changeRate: number;
     };
     instances: [
         {

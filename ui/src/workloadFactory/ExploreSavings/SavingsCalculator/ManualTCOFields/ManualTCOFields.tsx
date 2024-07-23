@@ -1,18 +1,21 @@
 import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './ManualTCOFields.module.scss';
-import { useMemo } from 'react';
-import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { useEffect, useMemo } from 'react';
+import { generateOptionType, regionsSort } from '../../../../utils/utilityFunctions';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
     setMonthlyChangeRate,
     setNumberOfClonedCopies,
     setSelectedDeploymentModelForManualTCO,
+    setSelectedManualServerEdition,
     setSelectedMonthlyBYOLCost,
-    setSelectedRegionFromManualTCO
+    setSelectedRegionFromManualTCO,
+    setSelectedSnapshotFrequency
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 
 const ManualTCOFields = () => {
     const dispatch = useDispatch();
@@ -21,20 +24,48 @@ const ManualTCOFields = () => {
         selectedManualDeploymentModel,
         monthlyBYOLCost,
         numberOfClonedCopies,
-        monthlyChangeRate
+        monthlyChangeRate,
+        selectedManualServerEdition,
+        selectedSnapshotFrequency
     } = useAppSelector(state => state.exploreSavings);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     //Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
-        const regions = ['us-east-1 | US East (N.Virginia)', 'us-east-1 | US East (Ohio)'];
         const options: optionType[] = [];
-        regions?.map((val, idx: number) => {
+        const sortedRegionsData = regionsSort(regionsData?.regions || []);
+        sortedRegionsData?.map((val, idx: number) => {
+            const regionValue = val.regionCode + ' | ' + val.regionName;
+            const option = generateOptionType(regionValue, regionValue, '', false, '', val);
+            options.push(option);
+        });
+        return options;
+    }, [regionsData]);
+
+    useEffect(() => {
+        dispatch(setSelectedRegionFromManualTCO(generateRegionList[0]));
+    }, [generateRegionList]);
+
+    //Function to generate the options for Select Field
+    const generateSQLEditionList = useMemo<optionType[]>((): optionType[] => {
+        const deploymentModel = [
+            'SQL server Standard',
+            'SQL server Enterprise',
+            'SQL server Web',
+            'SQL server Developer'
+        ];
+        const options: optionType[] = [];
+        deploymentModel?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '', val);
             options.push(option);
         });
 
         return options;
     }, []);
+
+    useEffect(() => {
+        dispatch(setSelectedManualServerEdition(generateSQLEditionList[0]));
+    }, [generateSQLEditionList]);
 
     //Function to generate the options for Select Field
     const generateDeploymentModelList = useMemo<optionType[]>((): optionType[] => {
@@ -47,6 +78,27 @@ const ManualTCOFields = () => {
 
         return options;
     }, []);
+
+    useEffect(() => {
+        dispatch(setSelectedDeploymentModelForManualTCO(generateDeploymentModelList[0]));
+    }, [generateDeploymentModelList]);
+
+    //Function to generate the options for Select Field
+    const generateSnapshotFrequency = useMemo<optionType[]>((): optionType[] => {
+        const frequency = SNAPSHOT_FREQUENCY;
+        const options: optionType[] = [];
+        frequency?.map((val, idx: number) => {
+            const option = generateOptionType(val?.value, val?.label, '', false, '', val);
+            options.push(option);
+        });
+        return options;
+    }, []);
+
+    useEffect(() => {
+        if (!selectedSnapshotFrequency) {
+            dispatch(setSelectedSnapshotFrequency(generateSnapshotFrequency[2]));
+        }
+    }, [generateSnapshotFrequency]);
 
     const errorForClonedCopiesCount = () => {
         if (numberOfClonedCopies > 10) {
@@ -98,13 +150,44 @@ const ManualTCOFields = () => {
                         className={styles.deploymentModelWidth}
                     />
 
-                    <TextField
-                        label={'Monthly SQL BYOL costs($)'}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            dispatch(setSelectedMonthlyBYOLCost(e.target.value));
+                    <SelectField
+                        label={'SQL server edition'}
+                        isClearable={false}
+                        defaultValue={
+                            selectedManualServerEdition ? selectedManualServerEdition : [generateSQLEditionList[0]]
+                        }
+                        onChange={(selectedOptions: any): void => {
+                            dispatch(setSelectedManualServerEdition(selectedOptions));
                         }}
-                        isOptional={true}
-                        value={monthlyBYOLCost}
+                        isSearchable={generateSQLEditionList.length > 5}
+                        options={generateSQLEditionList}
+                        className={styles.deploymentModelWidth}
+                    />
+                </div>
+
+                <div className={styles.secondRow}>
+                    <TextField
+                        label={GENERAL.MONTHLY_DATA_CHANGE_RATE}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            dispatch(setMonthlyChangeRate(numVal));
+                        }}
+                        value={monthlyChangeRate ? monthlyChangeRate : ''}
+                        className={styles.deploymentModelWidth}
+                        info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
+                        error={errorForChangeRate()}
+                    />
+                    <SelectField
+                        label={GENERAL.ES_SNAPSHOT_FREQUENCY}
+                        isClearable={false}
+                        defaultValue={
+                            selectedSnapshotFrequency ? selectedSnapshotFrequency : [generateSnapshotFrequency[2]]
+                        }
+                        onChange={(selectedOptions: any): void => {
+                            dispatch(setSelectedSnapshotFrequency(selectedOptions));
+                        }}
+                        isSearchable={generateSnapshotFrequency.length > 5}
+                        options={generateSnapshotFrequency}
                         className={styles.deploymentModelWidth}
                     />
                 </div>
@@ -120,17 +203,14 @@ const ManualTCOFields = () => {
                         className={styles.deploymentModelWidth}
                         error={errorForClonedCopiesCount()}
                     />
-
                     <TextField
-                        label={GENERAL.MONTHLY_DATA_CHANGE_RATE}
+                        label={'Monthly SQL BYOL costs($)'}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            dispatch(setMonthlyChangeRate(numVal));
+                            dispatch(setSelectedMonthlyBYOLCost(e.target.value));
                         }}
-                        value={monthlyChangeRate ? monthlyChangeRate : ''}
+                        isOptional={true}
+                        value={monthlyBYOLCost}
                         className={styles.deploymentModelWidth}
-                        info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
-                        error={errorForChangeRate()}
                     />
                 </div>
             </div>

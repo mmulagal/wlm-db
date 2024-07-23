@@ -930,6 +930,20 @@ export const exploreSavingsApi = createApi({
                     body: payload
                 })
             }),
+            getManualStorageSavings: builder.mutation({
+                query: ({ regionId, payload }) => ({
+                    url: `v1/regions/${regionId}/manual-storage-savings`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            getManualViewCalculations: builder.mutation({
+                query: ({ regionId, payload }) => ({
+                    url: `v1/regions/${regionId}/manual-storage-savings/calculations`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             getViewCalculations: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload }) => ({
                     url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/calculations`,
@@ -954,6 +968,7 @@ export const {
     useGetKmsKeysQuery,
     useGetKeyPairsQuery,
     useGetInstanceTypesQuery,
+    useLazyGetInstanceTypesQuery,
     useGetFsxnListQuery,
     useCreateSqlTemplateMutation,
     useDeploySqlTemplateMutation,
@@ -1051,4 +1066,9 @@ export const {
     useLazyGetRollbackSnapshotsQuery
 } = sandboxApi;
 
-export const { useGetStorageSavingsMutation, useGetViewCalculationsMutation } = exploreSavingsApi;
+export const {
+    useGetStorageSavingsMutation,
+    useGetViewCalculationsMutation,
+    useGetManualStorageSavingsMutation,
+    useGetManualViewCalculationsMutation
+} = exploreSavingsApi;

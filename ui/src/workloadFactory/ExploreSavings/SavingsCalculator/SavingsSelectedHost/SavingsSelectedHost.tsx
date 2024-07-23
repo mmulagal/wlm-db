@@ -13,7 +13,7 @@ const SavingsSelectedHost = () => {
 
     const [totalVolume, setTotalVolume] = useState(0);
     const [hostname, setHostname] = useState('');
-    const [noOfDatabase, setNoOfDatabase] = useState('');
+    const [noOfInstances, setNoOfInstances] = useState('');
 
     useEffect(() => {
         let volumeCount = 0;
@@ -25,15 +25,11 @@ const SavingsSelectedHost = () => {
         }
         setTotalVolume(volumeCount);
         if (isInventoryV2) {
-            let databaseCount: any = 0;
-            selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
-                databaseCount += perRow?.databaseCount || 0;
-            });
             setHostname(selectedHostDetails?.name);
-            setNoOfDatabase(databaseCount);
+            setNoOfInstances(selectedHostDetails?.totalInstance);
         } else {
             setHostname(selectedHostDetails?.databaseServer?.activeNode);
-            setNoOfDatabase(selectedHostDetails?.databaseCount);
+            setNoOfInstances(selectedHostDetails?.totalInstance);
         }
     }, [selectedHostDetails, selectedPartnerHostDetails]);
 
@@ -75,7 +71,7 @@ const SavingsSelectedHost = () => {
                             style={{ display: 'flex', justifyContent: 'center' }}
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
-                            {noOfDatabase || GENERAL.NOT_AVAILABLE}
+                            {noOfInstances || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     )}
                     {selectedHostDetails?.loading && (
@@ -87,7 +83,7 @@ const SavingsSelectedHost = () => {
                         variant="Regular_14"
                         className={isDisabled ? `${styles.heading} ${styles.disabledContent}` : styles.heading}
                     >
-                        {GENERAL.ES_NUMBER_OF_DB}{' '}
+                        {GENERAL.ES_NUMBER_OF_INSTANCE}{' '}
                     </DsTypography>
                 </div>
 

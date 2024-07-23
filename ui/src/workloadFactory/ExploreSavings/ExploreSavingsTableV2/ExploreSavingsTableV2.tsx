@@ -11,9 +11,8 @@ import {
     renderInstanceListText,
     renderUnmanagedAZ
 } from '../../Inventory/InventoryUtils';
-import { handleManualTCO, onClickESHost } from '../ExploreSavingsUtils';
+import { onClickESHost } from '../ExploreSavingsUtils';
 import { INVENTORY_STATUS } from '../../../utils/consts';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useEffect, useState } from 'react';
 
 const ExploreSavingsTableV2 = () => {
@@ -22,7 +21,6 @@ const ExploreSavingsTableV2 = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
-    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const [tableData, setTableData] = useState<any>([]);
 
     useEffect(() => {
@@ -44,7 +42,8 @@ const ExploreSavingsTableV2 = () => {
                 const rowData = {
                     ...perRow,
                     instanceListText: instanceList.join(','),
-                    instanceNameListText: instanceNameList.join(', ')
+                    instanceNameListText: instanceNameList.join(', '),
+                    nameForSorting: perRow?.name?.toLowerCase()
                 };
                 result.push(rowData);
             });
@@ -56,7 +55,7 @@ const ExploreSavingsTableV2 = () => {
 
     const lastColDetails = () => {
         return {
-            id: '8',
+            id: '9',
             Header: '',
             accessor: '',
             isSticky: true,
@@ -83,11 +82,11 @@ const ExploreSavingsTableV2 = () => {
     const ExploreSavingsColDefs: ColumnProps[] = [
         {
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'status',
+            accessor: 'nameForSorting',
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '280px',
+            width: '270px',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.name;
                 return (
@@ -108,8 +107,6 @@ const ExploreSavingsTableV2 = () => {
                                 {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
                                 {!rowData?.status && !rowData?.loading && 'Unknown'}
                             </Typography>
-                            <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">{GENERAL.MSSQL}</Typography>
                         </div>
                     </div>
                 );
@@ -118,8 +115,8 @@ const ExploreSavingsTableV2 = () => {
         {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'serverInstallationMode',
-            id: '6',
-            width: '230px',
+            id: '2',
+            width: '225px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -128,7 +125,7 @@ const ExploreSavingsTableV2 = () => {
         {
             Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
             accessor: 'storageType',
-            id: '2',
+            id: '3',
             width: '160px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
@@ -136,10 +133,31 @@ const ExploreSavingsTableV2 = () => {
             }
         },
         {
-            Header: GENERAL.DB_HOST_INSTANCE_ID,
-            accessor: 'instanceListText',
-            id: '3',
+            Header: 'SQL server instances',
+            accessor: 'totalInstance',
+            id: '4',
             width: '200px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return (
+                    <div>
+                        {cellData && Number(cellData) !== 0 ? (
+                            <>
+                                <Typography variant="Regular_14">{cellData + ' instances'}</Typography>
+                            </>
+                        ) : (
+                            ''
+                        )}
+                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                    </div>
+                );
+            }
+        },
+        {
+            Header: GENERAL.DB_HOST_INSTANCE,
+            accessor: 'instanceListText',
+            id: '5',
+            width: '211px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
@@ -149,8 +167,8 @@ const ExploreSavingsTableV2 = () => {
         {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
             accessor: 'allocatedCapacityText',
-            id: '4',
-            width: '200px',
+            id: '6',
+            width: '190px',
             isSortable: true,
             accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
@@ -160,8 +178,8 @@ const ExploreSavingsTableV2 = () => {
         {
             Header: GENERAL.DB_HOST_AVAILABILITY,
             accessor: 'azType',
-            id: '5',
-            width: '180px',
+            id: '7',
+            width: '170px',
             filterOptions: [
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
@@ -170,16 +188,16 @@ const ExploreSavingsTableV2 = () => {
                 return renderUnmanagedAZ(cellData, rowData, styles);
             }
         },
-        {
-            Header: GENERAL.DB_HOST_ESTIMATED_COST,
-            accessor: 'totalCost',
-            id: '7',
-            width: '176px',
-            isSortable: true,
-            renderCell: (cellData: any, rowData: any) => {
-                return renderEstimatedCost(cellData, rowData, styles);
-            }
-        },
+        // {
+        //     Header: GENERAL.DB_HOST_ESTIMATED_COST,
+        //     accessor: 'totalCost',
+        //     id: '8',
+        //     width: '176px',
+        //     isSortable: true,
+        //     renderCell: (cellData: any, rowData: any) => {
+        //         return renderEstimatedCost(cellData, rowData, styles);
+        //     }
+        // },
         lastColDetails()
     ];
 
@@ -203,11 +221,6 @@ const ExploreSavingsTableV2 = () => {
                 tableProps={tableProps}
                 pluralTitle={`${GENERAL.ES_TABLE_TITLE}s`}
                 singularTitle={GENERAL.ES_TABLE_TITLE}
-                actionsRight={
-                    <DsButton type="text" onClick={() => handleManualTCO(dispatch)} isDisabled>
-                        Manual explore savings
-                    </DsButton>
-                }
             />
             <Table
                 //@ts-ignore

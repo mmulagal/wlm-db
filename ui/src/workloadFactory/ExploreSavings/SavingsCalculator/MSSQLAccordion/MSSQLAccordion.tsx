@@ -34,13 +34,11 @@ const TableLayout = ({ data }: any) => {
     );
 };
 
-const MSSQLAccordion = ({ printState }: any) => {
-    const isMutliFsx = false;
+const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const dispatch = useDispatch();
     const [saveConfigData] = useSaveConfigDataMutation();
-    const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails, viewCalculationsLoading } =
+        useAppSelector(state => state.exploreSavings);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
@@ -49,11 +47,19 @@ const MSSQLAccordion = ({ printState }: any) => {
 
     useEffect(() => {
         const selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
-        setFsxData({
-            ...storageSavingsResponse?.fsxCalculation,
-            regionName: selectedRegion,
-            fsxBreakdown: storageSavingsResponse?.fsxBreakdown
-        });
+        if (storageSavingsResponse?.single) {
+            setFsxData({
+                ...storageSavingsResponse?.single?.fsxCalculation,
+                regionName: selectedRegion,
+                fsxBreakdown: storageSavingsResponse?.single?.fsxBreakdown
+            });
+        } else {
+            setFsxData({
+                ...storageSavingsResponse?.multi?.fsxCalculation,
+                regionName: selectedRegion,
+                fsxBreakdown: storageSavingsResponse?.multi?.fsxBreakdown
+            });
+        }
         // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
     }, [storageSavingsResponse]);
 
@@ -116,7 +122,14 @@ const MSSQLAccordion = ({ printState }: any) => {
                 title={GENERAL.RECOMMENDED_ES_TITLE}
                 variant="Default"
                 value=""
-                isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
+                isDisabled={
+                    storageSavingsLoading ||
+                    selectedHostDetails?.loading ||
+                    disableState ||
+                    viewCalculationsLoading ||
+                    isMutliFsx
+                }
+                disabledReason={isMutliFsx ? GENERAL.ES_MULTI_FSX_DISABLE_MSG : ''}
                 isExpanded={printState}
                 headerActions={[
                     isMutliFsx ? (
@@ -137,7 +150,12 @@ const MSSQLAccordion = ({ printState }: any) => {
                             <div id="es-save-config">
                                 <DsButton
                                     type="text"
-                                    isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
+                                    isDisabled={
+                                        storageSavingsLoading ||
+                                        selectedHostDetails?.loading ||
+                                        viewCalculationsLoading ||
+                                        isMutliFsx
+                                    }
                                     onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                                 >
                                     {GENERAL.ES_SAVE_CONFIG}
@@ -150,7 +168,12 @@ const MSSQLAccordion = ({ printState }: any) => {
                         <div style={{ height: '32px' }} id="es-create" className={styles.buttonContainer}>
                             <DsButton
                                 type="button"
-                                isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}
+                                isDisabled={
+                                    isMutliFsx ||
+                                    storageSavingsLoading ||
+                                    selectedHostDetails?.loading ||
+                                    viewCalculationsLoading
+                                }
                                 onClick={() => handleCreateClick()}
                             >
                                 {GENERAL.CREATE}
@@ -174,7 +197,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                                 )
                             )}
                             <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
-                                FSxN 1
+                                {GENERAL.FSX_FOR_ONTAP} 1
                             </DsTypography>
                             {calculatedFSXData(fsxData).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
@@ -183,7 +206,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                             )}
 
                             <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
-                                FSxN 2
+                                {GENERAL.FSX_FOR_ONTAP} 2
                             </DsTypography>
                             {calculatedFSXData(fsxData).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (

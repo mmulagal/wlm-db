@@ -41,6 +41,7 @@ const SnapshotsOntapCalculation = () => {
             >
                 {viewCalculationsResponse && (
                     <AccordionCardContent>
+                        <DsTypography variant="Regular_14">{GENERAL.ES_SNAPSHOTS_DESC}</DsTypography>
                         <DsTypography className={CommonStyles.accordionContentSet}>
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculation(

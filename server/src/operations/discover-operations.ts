@@ -394,10 +394,21 @@ async function getHostAndSqlInfoFromPsOutput(
     let api1EndTime;
 
     api1StartTime = performance.now();
-    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all([
-        pollCommandStatus(credentialsId, region, commandInvocationParam),
-        getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
-    ]);
+
+    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all(
+        [
+            pollCommandStatus(credentialsId, region, commandInvocationParam),
+            getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
+        ].map((p, index) =>
+            p.catch(error => {
+                if (index === 0) {
+                    const errorMessage = `Error fetching command status ${error}, on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
+                    logger.error(errorMessage);
+                    throw createError(errorMessage);
+                }
+            })
+        )
+    );
 
     logger.info(`SQL Parameter details for ${ssmTarget.ec2InstanceId}: ${ec2SqlParametersInfo}`);
 
@@ -1527,6 +1538,9 @@ async function prepareForManage(accountId: string, credentialsId: string, region
         );
     }
 
+    const hostname = await callSsmExecution(credentialsId, region, ['hostname'], ec2InstanceId, accountId);
+    const hostnameMessage: string = isEmpty(hostname) ? '' : `with hostname '${hostname?.trim()}' `;
+
     // Check if any job is already running for the same purpose.
     const jobFilterParams = {
         status: JOBSTATUS.IN_PROGRESS,
@@ -1556,9 +1570,9 @@ async function prepareForManage(accountId: string, credentialsId: string, region
         type: JOBTYPE.PREPARE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: ec2InstanceId,
-        name: `Prepare EC2 '${ec2InstanceId}' for management`,
+        name: `Prepare EC2 '${ec2InstanceId}' ${hostnameMessage}for management`,
         startTime: Date.now(),
-        description: `Prepare EC2 '${ec2InstanceId}' for management by Workload Factory database operations`
+        description: `Prepare EC2 '${ec2InstanceId}' ${hostnameMessage}for management by Workload Factory database operations`
     });
 
     performPrepareTasks(accountId, credentialsId, region, ec2InstanceId, parentJobId);
@@ -1765,6 +1779,8 @@ async function manageSqlServerV2(
                 callSsmExecution(credentialsId, region, GET_MISSING_RESOURCE_DETAILS, ec2InstanceId, accountId)
             ]);
 
+        const node1InstanceId = ec2InstanceId;
+        let node2InstanceId;
         const precheckErrorList: string[] = [];
         const missingResourceJson = JSON.parse(missingResourceDetails!);
 
@@ -1793,6 +1809,53 @@ async function manageSqlServerV2(
 
         if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
             precheckErrorList.push('Failed to get network interface details.');
+        } else if (clusterNetworkIpDetails) {
+            const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails);
+            if (clusterNetworkIpDetailsJson.clusterNetworkIps.length > 1) {
+                // FCI/AOAG environment
+                const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
+                    credentialsId,
+                    region,
+                    clusterNetworkIpDetailsJson.clusterNetworkIps
+                );
+                const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
+                if (!isEmpty(temp)) {
+                    if (!isDemoFlow) {
+                        node2InstanceId = temp.ec2InstanceId;
+                    }
+
+                    const node2ssmStatus = await getSSMConnectionStatus(credentialsId, region, node2InstanceId!);
+                    if (node2ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+                        precheckErrorList.push(`No SSM connectivity on partner node ${node2InstanceId}.`);
+                    } else {
+                        const node2missingResourceDetails = await callSsmExecution(
+                            credentialsId,
+                            region,
+                            GET_MISSING_RESOURCE_DETAILS,
+                            node2InstanceId!,
+                            accountId
+                        );
+
+                        const node2missingResourceJson = JSON.parse(node2missingResourceDetails!);
+
+                        if (node2missingResourceJson[IS_PS7_AVAILABLE] === false) {
+                            precheckErrorList.push(
+                                `PowerShell 7 is required for managing the resource on partner node ${node2InstanceId}. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4.`
+                            );
+                        }
+                        if (node2missingResourceJson[UNAVAILABLE_PS_MODULES]) {
+                            precheckErrorList.push(
+                                `PowerShell modules ${node2missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource on partner node ${node2InstanceId}. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
+                            );
+                        }
+                        if (node2missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
+                            precheckErrorList.push(
+                                `Files required for database operations are not available on partner node ${node2InstanceId}. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
+                            );
+                        }
+                    }
+                }
+            }
         }
 
         if (isEmpty(adDetails) || adDetails?.includes(FAILURE_INFO)) {
@@ -1811,62 +1874,6 @@ async function manageSqlServerV2(
         }
 
         const { sqlServerInstances } = items[0];
-
-        const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails!);
-        const node1InstanceId = ec2InstanceId;
-        let node2InstanceId;
-
-        if (clusterNetworkIpDetailsJson.clusterNetworkIps.length > 1) {
-            // FCI/AOAG environment
-            const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
-                credentialsId,
-                region,
-                clusterNetworkIpDetailsJson.clusterNetworkIps
-            );
-            const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
-            if (!isEmpty(temp)) {
-                if (
-                    !isDemoFlow &&
-                    sqlServerInstances?.[0]?.sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_STANDALONE_SHORT
-                ) {
-                    node2InstanceId = temp.ec2InstanceId;
-                }
-            }
-
-            const node2ssmStatus = await getSSMConnectionStatus(credentialsId, region, node2InstanceId!);
-            if (node2ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
-                throw createError(
-                    HttpErrorCodes.VALIDATION_ERROR,
-                    `No SSM connectivity on partner node ${node2InstanceId}.`
-                );
-            }
-
-            const node2missingResourceDetails = await callSsmExecution(
-                credentialsId,
-                region,
-                GET_MISSING_RESOURCE_DETAILS,
-                node2InstanceId!,
-                accountId
-            );
-
-            const node2missingResourceJson = JSON.parse(node2missingResourceDetails!);
-
-            if (node2missingResourceJson[IS_PS7_AVAILABLE] === false) {
-                precheckErrorList.push(
-                    'PowerShell 7 is required for managing the resource on partner node. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4.'
-                );
-            }
-            if (node2missingResourceJson[UNAVAILABLE_PS_MODULES]) {
-                precheckErrorList.push(
-                    `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource on partner node. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
-                );
-            }
-            if (node2missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
-                precheckErrorList.push(
-                    'Files required for database operations are not available on partner node. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".'
-                );
-            }
-        }
 
         let resourceId;
         let isResourceTobeCreated: boolean;

@@ -3,7 +3,7 @@ import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useDispatch } from 'react-redux';
 import styles from './ViewCalculations.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
-import { WLF_TABS } from '../../../utils/consts';
+import { FSX_AZ_TYPE, SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -22,6 +22,7 @@ import TotalMonthlyCostEbsCalculation from './EBSCalculation/TotalMonthlyCostEbs
 const ViewCalculations = () => {
     const dispatch = useDispatch();
     const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
+    const { viewCalculationsResponse, savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
 
     return (
         <div className={styles.viewCalculations}>
@@ -36,7 +37,10 @@ const ViewCalculations = () => {
                             }
                         },
                         {
-                            title: selectedServerName,
+                            title:
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL
+                                    ? 'Explore savings manually'
+                                    : selectedServerName,
                             onClick: () => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                             }
@@ -71,8 +75,11 @@ const ViewCalculations = () => {
                                 {GENERAL.MS_ONTAP_CALCULATION}
                             </DsTypography>
                             <InstancesOntapCalculation />
-                            <FsxnSazCalculation />
-                            <FsxnMazCalculation />
+                            {viewCalculationsResponse?.azType === FSX_AZ_TYPE.SINGLE ? (
+                                <FsxnSazCalculation />
+                            ) : (
+                                <FsxnMazCalculation />
+                            )}
                             <SnapshotsOntapCalculation />
                             <ClonesOntapCalculation />
                             <TotalMonthlyCostOntapCalculation />

@@ -21,7 +21,8 @@ import {
     INVENTORY_STATUS,
     INVENTORY_ACTIONS,
     SSM_TROUBLESHOOTING_LINK,
-    PREPARE_API_ENDPOINT
+    PREPARE_API_ENDPOINT,
+    PARTNER_NODE
 } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
@@ -44,6 +45,7 @@ import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
 import {
+    getPartnerNodeEc2InstanceId,
     handleManageNotification,
     handleManageTriggerNotification,
     sortInventoryTableData,
@@ -142,7 +144,8 @@ const InventoryTable = () => {
                     instanceListText: instanceList.join(','),
                     instanceNameListText: instanceNameList.join(', '),
                     vpcIdAndNameText: vpcIdAndNameText,
-                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
+                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
+                    nameForSorting: inventoryTableData[key]?.name?.toLowerCase()
                 };
                 result.push(rowData);
             });
@@ -203,36 +206,71 @@ const InventoryTable = () => {
                     // handle prepare API
                     const errorList = res?.error?.data?.message?.split('\n');
                     let prepareApiRequired = false;
+                    let sourceNodePrepareRequired = false;
+                    let partnerNodeEc2Id;
                     errorList.map((errorItem: any) => {
                         if (errorItem.includes(PREPARE_API_ENDPOINT)) {
                             prepareApiRequired = true;
+                            if (errorItem.includes(PARTNER_NODE)) {
+                                partnerNodeEc2Id = getPartnerNodeEc2InstanceId(errorItem);
+                            } else {
+                                sourceNodePrepareRequired = true;
+                            }
                         }
                     });
                     if (prepareApiRequired) {
-                        prepareHostApi({
-                            credentialId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
-                            regionId: updatedState?.headers?.headerSelectedRegion?.label2,
-                            instanceId: rowData?.ec2InstanceId
-                        }).then((prepareRes: any) => {
-                            if (prepareRes && !prepareRes?.error) {
-                                const msgObj =
-                                    instances.length === 1
-                                        ? isDetected
-                                            ? GENERAL.PREPARE_DETECTED_INSTANCE_INFO
-                                            : GENERAL.PREPARE_INSTANCE_INFO
-                                        : isDetected
-                                        ? GENERAL.PREPARE_DETECTED_INSTANCES_INFO
-                                        : GENERAL.PREPARE_INSTANCES_INFO;
-                                installModuleNotification(
-                                    styles,
-                                    instances.length === 1 ? instances[0] : '',
-                                    dispatch,
-                                    msgObj
-                                );
-                            } else {
-                                handleManageNotification(instances, [], '', isDetected, dispatch, styles);
-                            }
-                        });
+                        if (sourceNodePrepareRequired) {
+                            prepareHostApi({
+                                credentialId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
+                                regionId: updatedState?.headers?.headerSelectedRegion?.label2,
+                                instanceId: rowData?.ec2InstanceId
+                            }).then((prepareRes: any) => {
+                                if (prepareRes && !prepareRes?.error) {
+                                    const msgObj =
+                                        instances.length === 1
+                                            ? isDetected
+                                                ? GENERAL.PREPARE_DETECTED_INSTANCE_INFO
+                                                : GENERAL.PREPARE_INSTANCE_INFO
+                                            : isDetected
+                                            ? GENERAL.PREPARE_DETECTED_INSTANCES_INFO
+                                            : GENERAL.PREPARE_INSTANCES_INFO;
+                                    installModuleNotification(
+                                        styles,
+                                        instances.length === 1 ? instances[0] : '',
+                                        dispatch,
+                                        msgObj
+                                    );
+                                } else {
+                                    handleManageNotification(instances, [], '', isDetected, dispatch, styles);
+                                }
+                            });
+                        }
+                        if (partnerNodeEc2Id) {
+                            prepareHostApi({
+                                credentialId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
+                                regionId: updatedState?.headers?.headerSelectedRegion?.label2,
+                                instanceId: partnerNodeEc2Id
+                            }).then((prepareRes: any) => {
+                                if (prepareRes && !prepareRes?.error) {
+                                    const msgObj =
+                                        instances.length === 1
+                                            ? isDetected
+                                                ? GENERAL.PREPARE_DETECTED_INSTANCE_INFO
+                                                : GENERAL.PREPARE_INSTANCE_INFO
+                                            : isDetected
+                                            ? GENERAL.PREPARE_DETECTED_INSTANCES_INFO
+                                            : GENERAL.PREPARE_INSTANCES_INFO;
+                                    installModuleNotification(
+                                        styles,
+                                        instances.length === 1 ? instances[0] : '',
+                                        dispatch,
+                                        msgObj
+                                    );
+                                } else {
+                                    handleManageNotification(instances, [], '', isDetected, dispatch, styles);
+                                }
+                            });
+                        }
                     } else {
                         handleManageNotification(instances, [], errorList[0], isDetected, dispatch, styles);
                     }
@@ -466,7 +504,7 @@ const InventoryTable = () => {
         {
             id: '1',
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'status',
+            accessor: 'nameForSorting',
             isSortable: true,
             width: '228px',
             isSticky: true,

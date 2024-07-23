@@ -18,3 +18,11 @@
     position: relative;
     left: 10%;
 }
+
+@media screen and (min-width: 1351px) and (max-width: 1500px) {
+    .availability-zone {
+        .selectField {
+            width: 40%;
+        }
+    }
+}

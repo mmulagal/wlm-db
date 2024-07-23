@@ -53,3 +53,15 @@
         }
     }
 }
+
+@media screen and (min-width: 1351px) and (max-width: 1500px) {
+    .welcome-image-container {
+        .welcome-cards-container {
+            .card-row {
+                .card {
+                    height: 88px;
+                }
+            }
+        }
+    }
+}

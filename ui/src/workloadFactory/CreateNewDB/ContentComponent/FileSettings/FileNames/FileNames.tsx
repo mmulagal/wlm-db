@@ -255,7 +255,10 @@ const FileNames = () => {
             (selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE ? driveLetter && driveLetterLogFile : true)
         ) {
             return (
-                <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
+                <DsTypography
+                    variant="Regular_14"
+                    className={`${CommonStyles.setHeaderStyle} ${styles.headerContainer}`}
+                >
                     <div className={styles.headerText}>
                         <DsTypography variant="Regular_14" className={styles.headerWrap} title={newUserDBFileName}>
                             {`${GENERAL.DATA_FILE_NAME}: ${newUserDBFileName}`}{' '}

@@ -4,9 +4,11 @@ import {
     useGetMssqlInstanceDataMutation,
     useGetMssqlInstanceDataV2Mutation,
     useGetStorageSavingsMutation,
-    useGetViewCalculationsMutation
+    useGetViewCalculationsMutation,
+    useGetInstanceTypesQuery
 } from '../../../utils/apiService';
 import {
+    addManualInstanceTypeList,
     setGetPartnerHostDetailsLoading,
     setSavingsCalculatorRefresh,
     setSelectedHostDetails,
@@ -14,13 +16,14 @@ import {
     setSelectedPartnerInstanceId,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
+    setViewCalculationsApiResponse,
     setViewCalculationsLoading,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../../store/store';
 import { setMssqlInstancesData as setMssqlInstancesDataV1 } from '../../../store/workloadFactory/inventorySlice';
 import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
-import { formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
+import { formatStorageSavingsRecommendedData, formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
 import { GENERAL } from '../../../utils/appConstants';
 import { INSTANCE_API_FIELDS } from '../../../utils/consts';
 
@@ -89,7 +92,7 @@ const SavingsCalculatorApi = () => {
                 payload: payload
             });
             if (result && !result?.error) {
-                dispatch(setStorageSavingsResponse(result?.data));
+                dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data)));
                 dispatch(setStorageSavingsLoading(false));
             } else {
                 dispatch(setStorageSavingsLoading(false));
@@ -115,7 +118,12 @@ const SavingsCalculatorApi = () => {
                 payload: payload
             });
             if (result && !result?.error) {
-                dispatch(setViewCalculationsResponse(formatViewCalcData(result?.data, selectedDeploymentModel)));
+                dispatch(setViewCalculationsApiResponse(result?.data));
+                dispatch(
+                    setViewCalculationsResponse(
+                        formatViewCalcData(result?.data, selectedDeploymentModel, monthlyChangeRate)
+                    )
+                );
                 dispatch(setViewCalculationsLoading(false));
             } else {
                 dispatch(setViewCalculationsLoading(false));

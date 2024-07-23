@@ -88,7 +88,7 @@
     }
 }
 
-@media screen and (min-width: 1500px) {
+@media screen and (min-width: 1818px) {
     .databaseHome {
         .buttonsContainer {
             width: 86%;
@@ -102,7 +102,67 @@
     }
 }
 
-@media screen and (max-width: 1500px) {
+@media screen and (min-width: 1429px) and (max-width: 1818px) {
+    .databaseHome {
+        .secondLevelContainer {
+            width: 81.4%;
+        }
+        [class*='dashboardRibbon'] {
+            width: 81.4%;
+        }
+        .buttonsContainer {
+            width: 81.4%;
+        }
+        .fourthLevelContainer {
+            width: 81.4%;
+        }
+
+        .jobContainer {
+            width: 81.4%;
+
+            [class*='mainSection'] {
+                gap: 40px !important;
+            }
+        }
+
+        .fourthLevelContainer {
+            .barContainer {
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+
+                .commonContainer {
+                    width: 100% !important;
+
+                    [class*='estimatedCost'] {
+                        [class*='bottomSection'] {
+                            max-width: none;
+                            [class*='container'] {
+                                width: 140px !important;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Width adjust only for Protection and sandbox
+@media screen and (min-width: 1429px) and (max-width: 1650px) {
+    .thirdLevelContainer {
+        width: 80.4%;
+    }
+}
+
+// Width adjust only for Protection and sandbox
+@media screen and (min-width: 1651px) and (max-width: 1818px) {
+    .thirdLevelContainer {
+        width: 81.4%;
+    }
+}
+
+@media screen and (max-width: 1429px) {
     .databaseHome {
         [class*='topBarButtons'] {
             width: 744px;

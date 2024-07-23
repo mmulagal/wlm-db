@@ -370,6 +370,8 @@ function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
     }
 
     switch (currentUnit.toLocaleUpperCase()) {
+        case 'B':
+            return size / 1024 / 1024 / 1024;
         case 'MB':
         case 'MIB':
             return size / 1024;
@@ -580,8 +582,10 @@ function convertToBytes(size: number, unit: string) {
     return numeral(`${size}${unit}`).value();
 }
 
-function getMonthlyPriceFromHourlyPrice(hourlyPrice: number) {
-    return hourlyPrice * HOURS_IN_MONTH;
+function getMonthlyPriceFromHourlyPrice(hourlyPrice?: number) {
+    if (hourlyPrice !== undefined) {
+        return hourlyPrice * HOURS_IN_MONTH;
+    }
 }
 
 function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true) {

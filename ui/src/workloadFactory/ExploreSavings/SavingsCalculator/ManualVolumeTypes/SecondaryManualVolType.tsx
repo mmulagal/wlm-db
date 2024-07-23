@@ -1,44 +1,44 @@
-import { DsTypography, TextField } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
 import styles from './ManualVolumeTypes.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import {
-    setSelectedVolumeType,
-    setVolumeFilledStatus,
-    setVolumeTypeOperation
+    setSecondaryVolumeFilledStatus,
+    setSelectedVolumeTabForSecondary,
+    setSelectedVolumeType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import ManualTCOInputComponent from './ManualTCOInputComponent';
-import { useEffect, useState } from 'react';
 import { allPropertiesHaveValues, calculateTotalVolumes } from '../savingsUtil';
+import { useEffect, useState } from 'react';
 
-const ManualVolumeTypes = () => {
+const SecondaryManualVolType = () => {
     const dispatch = useDispatch();
-    const { selectedVolumeTab, manualTCOVolumeTypes } = useAppSelector(state => state.exploreSavings);
+    const { selectedVolumeTabForSecondary, manualTCOVolumeTypes2 } = useAppSelector(state => state.exploreSavings);
 
     const [volumesFilled, setVolumesFilled] = useState(0);
     const [totalVolumes, setTotalVolumes] = useState(0);
 
     useEffect(() => {
         const io1Complete = allPropertiesHaveValues({
-            manualTCONumberOfVolumes: manualTCOVolumeTypes?.io1?.manualTCONumberOfVolumes,
-            manualTCOStorageAmount: manualTCOVolumeTypes?.io1?.manualTCOStorageAmount,
-            manualTCOProvisionedIOPS: manualTCOVolumeTypes?.io1?.manualTCOProvisionedIOPS
+            manualTCONumberOfVolumes: manualTCOVolumeTypes2?.io1?.manualTCONumberOfVolumes,
+            manualTCOStorageAmount: manualTCOVolumeTypes2?.io1?.manualTCOStorageAmount,
+            manualTCOProvisionedIOPS: manualTCOVolumeTypes2?.io1?.manualTCOProvisionedIOPS
         });
-        const io2Complete = allPropertiesHaveValues(manualTCOVolumeTypes?.io2);
+        const io2Complete = allPropertiesHaveValues(manualTCOVolumeTypes2?.io2);
         const gp2Complete = allPropertiesHaveValues({
-            manualTCONumberOfVolumes: manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes,
-            manualTCOStorageAmount: manualTCOVolumeTypes?.gp2?.manualTCOStorageAmount
+            manualTCONumberOfVolumes: manualTCOVolumeTypes2?.gp2?.manualTCONumberOfVolumes,
+            manualTCOStorageAmount: manualTCOVolumeTypes2?.gp2?.manualTCOStorageAmount
         });
-        const gp3Complete = allPropertiesHaveValues(manualTCOVolumeTypes?.gp3);
+        const gp3Complete = allPropertiesHaveValues(manualTCOVolumeTypes2?.gp3);
         const st1Complete = allPropertiesHaveValues({
-            manualTCONumberOfVolumes: manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes,
-            manualTCOStorageAmount: manualTCOVolumeTypes?.st1?.manualTCOStorageAmount
+            manualTCONumberOfVolumes: manualTCOVolumeTypes2?.st1?.manualTCONumberOfVolumes,
+            manualTCOStorageAmount: manualTCOVolumeTypes2?.st1?.manualTCOStorageAmount
         });
         const result = io1Complete + io2Complete + gp2Complete + gp3Complete + st1Complete;
 
         setVolumesFilled(result);
         if (result > 0) {
-            dispatch(setVolumeFilledStatus(true));
+            dispatch(setSecondaryVolumeFilledStatus(true));
             setTotalVolumes(
                 calculateTotalVolumes(
                     io1Complete,
@@ -46,17 +46,17 @@ const ManualVolumeTypes = () => {
                     gp2Complete,
                     gp3Complete,
                     st1Complete,
-                    manualTCOVolumeTypes
+                    manualTCOVolumeTypes2
                 )
             );
         } else {
+            dispatch(setSecondaryVolumeFilledStatus(false));
             setTotalVolumes(0);
-            dispatch(setVolumeFilledStatus(false));
         }
-    }, [manualTCOVolumeTypes]);
+    }, [manualTCOVolumeTypes2]);
 
     const handleSelect = (value: string) => {
-        dispatch(setSelectedVolumeType(value));
+        dispatch(setSelectedVolumeTabForSecondary(value));
     };
     return (
         <div className={styles.manualVolumeTypes}>
@@ -72,7 +72,9 @@ const ManualVolumeTypes = () => {
                 <DsTypography
                     variant="Regular_14"
                     className={
-                        selectedVolumeTab === 'gp2' ? `${styles.headerPart1} ${styles.active}` : `${styles.headerPart1}`
+                        selectedVolumeTabForSecondary === 'gp2'
+                            ? `${styles.headerPart1} ${styles.active}`
+                            : `${styles.headerPart1}`
                     }
                     onClick={() => handleSelect('gp2')}
                 >
@@ -82,7 +84,9 @@ const ManualVolumeTypes = () => {
                 <DsTypography
                     variant="Regular_14"
                     className={
-                        selectedVolumeTab === 'gp3' ? `${styles.headerPart1} ${styles.active}` : `${styles.headerPart1}`
+                        selectedVolumeTabForSecondary === 'gp3'
+                            ? `${styles.headerPart1} ${styles.active}`
+                            : `${styles.headerPart1}`
                     }
                     onClick={() => handleSelect('gp3')}
                 >
@@ -92,7 +96,9 @@ const ManualVolumeTypes = () => {
                 <DsTypography
                     variant="Regular_14"
                     className={
-                        selectedVolumeTab === 'io1' ? `${styles.headerPart1} ${styles.active}` : `${styles.headerPart1}`
+                        selectedVolumeTabForSecondary === 'io1'
+                            ? `${styles.headerPart1} ${styles.active}`
+                            : `${styles.headerPart1}`
                     }
                     onClick={() => handleSelect('io1')}
                 >
@@ -101,7 +107,9 @@ const ManualVolumeTypes = () => {
                 <DsTypography
                     variant="Regular_14"
                     className={
-                        selectedVolumeTab === 'io2' ? `${styles.headerPart1} ${styles.active}` : `${styles.headerPart1}`
+                        selectedVolumeTabForSecondary === 'io2'
+                            ? `${styles.headerPart1} ${styles.active}`
+                            : `${styles.headerPart1}`
                     }
                     onClick={() => handleSelect('io2')}
                 >
@@ -111,7 +119,9 @@ const ManualVolumeTypes = () => {
                 <DsTypography
                     variant="Regular_14"
                     className={
-                        selectedVolumeTab === 'st1' ? `${styles.headerPart1} ${styles.active}` : `${styles.headerPart1}`
+                        selectedVolumeTabForSecondary === 'st1'
+                            ? `${styles.headerPart1} ${styles.active}`
+                            : `${styles.headerPart1}`
                     }
                     onClick={() => handleSelect('st1')}
                 >
@@ -120,22 +130,20 @@ const ManualVolumeTypes = () => {
             </div>
 
             <div className={styles.contentContainer}>
-                {selectedVolumeTab === 'io2' && (
-                    <ManualTCOInputComponent type="io2" throughPutDisable={true} from="primary" />
+                {selectedVolumeTabForSecondary === 'io2' && <ManualTCOInputComponent type="io2" />}
+                {selectedVolumeTabForSecondary === 'io1' && (
+                    <ManualTCOInputComponent type="io1" throughPutDisable={true} />
                 )}
-                {selectedVolumeTab === 'io1' && (
-                    <ManualTCOInputComponent type="io1" throughPutDisable={true} from="primary" />
+                {selectedVolumeTabForSecondary === 'gp2' && (
+                    <ManualTCOInputComponent type="gp2" throughPutDisable={true} IOPSDisable={true} />
                 )}
-                {selectedVolumeTab === 'gp2' && (
-                    <ManualTCOInputComponent type="gp2" throughPutDisable={true} IOPSDisable={true} from="primary" />
-                )}
-                {selectedVolumeTab === 'gp3' && <ManualTCOInputComponent type="gp3" from="primary" />}
-                {selectedVolumeTab === 'st1' && (
-                    <ManualTCOInputComponent type="st1" throughPutDisable={true} IOPSDisable={true} from="primary" />
+                {selectedVolumeTabForSecondary === 'gp3' && <ManualTCOInputComponent type="gp3" />}
+                {selectedVolumeTabForSecondary === 'st1' && (
+                    <ManualTCOInputComponent type="st1" throughPutDisable={true} IOPSDisable={true} />
                 )}
             </div>
         </div>
     );
 };
 
-export default ManualVolumeTypes;
+export default SecondaryManualVolType;

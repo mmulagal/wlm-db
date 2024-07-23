@@ -37,7 +37,36 @@
     }
 }
 
-@media screen and (max-width: 1500px) {
+@media screen and (min-width: 1429px) and (max-width: 1818px) {
+    .dashboardSummary {
+        padding: 32px 40px 32px 40px;
+        height: 124px;
+
+        .mainContainer {
+            justify-content: space-between;
+            .valueContainer {
+                gap: 12px;
+
+                .imageContainer {
+                    svg {
+                        width: 56px;
+                        height: 56px;
+                    }
+                }
+            }
+
+            .textContainer {
+                .combinedValue {
+                    display: flex;
+                    gap: 4px;
+                    align-items: center;
+                }
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 1428px) {
     .dashboardSummary {
         width: 744px;
         padding: 32px 24px 32px 40px;

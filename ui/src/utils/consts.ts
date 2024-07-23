@@ -292,7 +292,8 @@ export const WLF_TABS = {
     DATABASE_LIST: 'Database list',
     MANAGED_HOSTS: 'Managed hosts',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
-    UNDETECTED_HOSTS: 'Undetected hosts'
+    UNDETECTED_HOSTS: 'Undetected hosts',
+    REDIRECT_COMPONENT: 'Redirect Component'
 };
 
 export const DRIVE_LETTER_TYPE = {
@@ -540,3 +541,20 @@ export const PROTECTION_TEXT_STATUS = {
 };
 
 export const PREPARE_API_ENDPOINT = '/mssql/prepare';
+
+export const FSX_AZ_TYPE = {
+    SINGLE: 'single',
+    MULTI: 'multi'
+};
+
+export const SAVINGS_CALC_MODE = {
+    MANUAL: 'Manual',
+    AUTO: 'Auto'
+};
+
+export const PARTNER_NODE = 'partner node';
+
+export const FINDINGS = {
+    OPTIMIZED: 'OPTIMIZED',
+    NOT_OPTIMIZED: 'NOT_OPTIMIZED'
+};
