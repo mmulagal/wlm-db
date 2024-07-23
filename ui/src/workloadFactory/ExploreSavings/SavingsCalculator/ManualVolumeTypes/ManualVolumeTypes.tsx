@@ -62,9 +62,7 @@ const ManualVolumeTypes = () => {
         <div className={styles.manualVolumeTypes}>
             <div className={styles.volSection}>
                 <DsTypography variant="Semibold_14">Volume Types</DsTypography>
-                <DsTypography variant="Regular_14">
-                    (Volume types filled: {volumesFilled} &nbsp;|&nbsp; Total volumes: {totalVolumes})
-                </DsTypography>
+                <DsTypography variant="Regular_14">(Total volumes: {totalVolumes})</DsTypography>
             </div>
             <DsTypography variant="Regular_14" className={styles.subText}>
                 At least one volume type should be filled.

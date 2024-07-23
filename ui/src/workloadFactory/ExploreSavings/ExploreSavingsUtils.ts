@@ -482,7 +482,9 @@ export const formatViewCalcData = (
 
 export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculationsInterface) => {
     let ebsSnapshotCalculation = {
+        amountChangedPerSnapshot: 0,
         storageAmount: 0,
+        storageAmountPerMonth: 0,
         monthlyCostOfSnapshots: 0,
         ebsInstanceMonth: 0,
         totalSnapshots: 0,
@@ -492,7 +494,8 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
         incrementalSnapshotCost: 0,
         totalSnapshotCost: 0,
         totalEbsSnapshotCost: 0,
-        ebsSnapshotCost: 0
+        ebsSnapshotCost: 0,
+        ebsSnapshotPrice: 0
     };
     let ebsCloneCalculation = {
         clonedCopiesCount: 0,
@@ -503,6 +506,13 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
     };
     Object.keys(viewCalculationsResponse?.ebsSnapshotCalculation || {}).map((key: string) => {
         ebsSnapshotCalculation = {
+            amountChangedPerSnapshot:
+                ebsSnapshotCalculation.amountChangedPerSnapshot +
+                viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.amountChangedPerSnapshot,
+            storageAmountPerMonth:
+                ebsSnapshotCalculation.storageAmountPerMonth +
+                (viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.storageAmount || 0) /
+                    (viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsInstanceMonth || 0),
             storageAmount:
                 ebsSnapshotCalculation.storageAmount +
                 viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.storageAmount,
@@ -535,7 +545,10 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
                     viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.totalEbsSnapshotCost || 0,
             ebsSnapshotCost:
                 ebsSnapshotCalculation.ebsSnapshotCost +
-                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsSnapshotCost || 0
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsSnapshotCost || 0,
+            ebsSnapshotPrice:
+                ebsSnapshotCalculation.ebsSnapshotPrice +
+                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsSnapshotPrice?.price || 0
         };
     });
 
@@ -557,6 +570,8 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
     return {
         ebsCalculation: EbsCalculationUpdates(viewCalculationsResponse?.ebsCalculation || {}),
         ebsSnapshotCalculation: {
+            amountChangedPerSnapshot: formatCalcSize(ebsSnapshotCalculation?.amountChangedPerSnapshot),
+            storageAmountPerMonth: formatCalcSize(ebsSnapshotCalculation?.storageAmountPerMonth),
             storageAmount: formatCalcSize(ebsSnapshotCalculation?.storageAmount),
             monthlyCostOfSnapshots: formatNumbers(ebsSnapshotCalculation?.monthlyCostOfSnapshots),
             ebsInstanceMonth: formatNumbers(ebsSnapshotCalculation?.ebsInstanceMonth),
@@ -568,6 +583,7 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
             totalSnapshotCost: formatNumbers(ebsSnapshotCalculation?.totalSnapshotCost),
             totalEbsSnapshotCost: formatNumbers(ebsSnapshotCalculation?.totalEbsSnapshotCost),
             ebsSnapshotCost: formatNumbers(ebsSnapshotCalculation?.ebsSnapshotCost),
+            ebsSnapshotPrice: formatNumbers(ebsSnapshotCalculation?.ebsSnapshotPrice),
             totalEbsSnapshotCostValue: ebsSnapshotCalculation?.ebsSnapshotCost
         },
         ebsCloneCalculation: {
