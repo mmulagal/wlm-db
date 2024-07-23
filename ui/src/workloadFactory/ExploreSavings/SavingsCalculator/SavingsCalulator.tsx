@@ -13,6 +13,7 @@ import SavingsSelectedHost from './SavingsSelectedHost/SavingsSelectedHost';
 import InstanceInformation from './InstanceInformation/InstanceInformation';
 import SelectedVolumeSummary from './SelectedVolumeSummary/SelectedVolumeSummary';
 import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
+import { ReactComponent as SuggestionDisable } from '../../../assets/SuggestionDisable.svg';
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
 import { useEffect, useState } from 'react';
 //@ts-ignore
@@ -41,6 +42,7 @@ const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
     const [disableState, setDisableState] = useState(false);
+    const [isMutliFsx, setIsMutliFsx] = useState(false);
 
     const [getManualStorageSavingsApi] = useGetManualStorageSavingsMutation();
     const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
@@ -63,7 +65,8 @@ const SavingsCalculator = () => {
         manualTCOVolumeTypes2,
         recommendedTargetInstance,
         storageSavingsResponse,
-        viewCalculationsApiResponse
+        viewCalculationsApiResponse,
+        viewCalculationsResponse
     } = useAppSelector(state => state.exploreSavings);
 
     useEffect(() => {
@@ -74,6 +77,15 @@ const SavingsCalculator = () => {
             )
         );
     }, [recommendedTargetInstance]);
+
+    useEffect(() => {
+        const requiredNumOfFsx = viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsx;
+        if (requiredNumOfFsx && Number(requiredNumOfFsx) > 1) {
+            setIsMutliFsx(true);
+        } else {
+            setIsMutliFsx(false);
+        }
+    }, [viewCalculationsResponse]);
 
     const getManualStorageSavingsData = async () => {
         const payload = generateManualStorageSavingsPayload();
@@ -239,24 +251,43 @@ const SavingsCalculator = () => {
                     </div>
 
                     {/* Text Area */}
-                    <div className={styles.selectionArea}>
-                        <div>
-                            <Suggestion />
+                    {isMutliFsx ? (
+                        <div className={styles.selectionArea}>
+                            <div>
+                                <SuggestionDisable />
+                            </div>
+                            <div className={styles.textContent}>
+                                <DsTypography variant="Semibold_16" className={styles.textDisable}>
+                                    {GENERAL.SELECTION_BASED_TEXT}
+                                </DsTypography>
+                                <DsTypography
+                                    variant="Regular_14"
+                                    className={`${styles.secondText} ${styles.textDisable}`}
+                                >
+                                    {GENERAL.SELECTION_BASED_SECOND}
+                                </DsTypography>
+                            </div>
                         </div>
-                        <div className={styles.textContent}>
-                            <DsTypography variant="Semibold_16">{GENERAL.SELECTION_BASED_TEXT}</DsTypography>
-                            <DsTypography variant="Regular_14" className={styles.secondText}>
-                                {GENERAL.SELECTION_BASED_SECOND}
-                            </DsTypography>
+                    ) : (
+                        <div className={styles.selectionArea}>
+                            <div>
+                                <Suggestion />
+                            </div>
+                            <div className={styles.textContent}>
+                                <DsTypography variant="Semibold_16">{GENERAL.SELECTION_BASED_TEXT}</DsTypography>
+                                <DsTypography variant="Regular_14" className={styles.secondText}>
+                                    {GENERAL.SELECTION_BASED_SECOND}
+                                </DsTypography>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Accordion here */}
-                    <MSSQLAccordion printState={printState} disableState={disableState} />
+                    <MSSQLAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
                 </div>
 
                 {/* last section */}
-                <ExportPDF printDocument={printDocument} disableState={disableState} />
+                <ExportPDF printDocument={printDocument} disableState={disableState} isMutliFsx={isMutliFsx} />
             </div>
         </div>
     );

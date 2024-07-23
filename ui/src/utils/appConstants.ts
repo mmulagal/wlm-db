@@ -445,6 +445,7 @@ export const GENERAL = {
     DB_HOST_ALLOCATED_CAPACITY: 'Allocated capacity',
     DB_HOST_INSTANCE_NAME: 'EC2 instance name',
     DB_HOST_INSTANCE_ID: 'EC2 instance ID',
+    DB_HOST_INSTANCE: 'EC2 instance',
     DB_HOST_VPC: 'VPC',
     DB_HOST_AVAILABILITY: 'Availability',
     DB_HOST_TYPE: 'Type',
@@ -1057,7 +1058,9 @@ export const GENERAL = {
         'FSx for ONTAP costs are based on primary database volumes only because these volumes and their replicas share a file system.',
     ES_EBS_DESC: 'Costs for EBS are based on all EC2 instances.',
     ES_SQL_EDITION_MULTI_TOOLTIP:
-        'The value is determined by the highest SQL Server edition found in all SQL Server instances on the host.'
+        'The value is determined by the highest SQL Server edition found in all SQL Server instances on the host.',
+    ES_MULTI_FSX_DISABLE_MSG:
+        'Deployment of Microsoft SQL Server over multiple FSx for ONTAP is currently not supported.'
 };
 
 export const CODE_VIEWER = {

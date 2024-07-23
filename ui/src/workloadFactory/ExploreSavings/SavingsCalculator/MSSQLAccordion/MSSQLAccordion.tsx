@@ -34,22 +34,16 @@ const TableLayout = ({ data }: any) => {
     );
 };
 
-const MSSQLAccordion = ({ printState, disableState }: any) => {
+const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const dispatch = useDispatch();
     const [saveConfigData] = useSaveConfigDataMutation();
-    const {
-        storageSavingsLoading,
-        storageSavingsResponse,
-        selectedHostDetails,
-        viewCalculationsLoading,
-        viewCalculationsResponse
-    } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails, viewCalculationsLoading } =
+        useAppSelector(state => state.exploreSavings);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const [fsxData, setFsxData] = useState({});
     const [msSqlInstance, setMsSqlInstance] = useState({});
-    const [isMutliFsx, setIsMutliFsx] = useState(false);
 
     useEffect(() => {
         const selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
@@ -68,18 +62,6 @@ const MSSQLAccordion = ({ printState, disableState }: any) => {
         }
         // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
     }, [storageSavingsResponse]);
-
-    useEffect(() => {
-        const fsxOntapRes =
-            viewCalculationsResponse?.single?.fsxOntapCalculation ||
-            viewCalculationsResponse?.multi?.fsxOntapCalculation ||
-            {};
-        if (fsxOntapRes?.requiredNumOfFsx && Number(fsxOntapRes?.requiredNumOfFsx) > 1) {
-            setIsMutliFsx(true);
-        } else {
-            setIsMutliFsx(false);
-        }
-    }, [viewCalculationsResponse]);
 
     useEffect(() => {
         let instanceType = '';
@@ -140,7 +122,14 @@ const MSSQLAccordion = ({ printState, disableState }: any) => {
                 title={GENERAL.RECOMMENDED_ES_TITLE}
                 variant="Default"
                 value=""
-                isDisabled={storageSavingsLoading || selectedHostDetails?.loading || disableState}
+                isDisabled={
+                    storageSavingsLoading ||
+                    selectedHostDetails?.loading ||
+                    disableState ||
+                    viewCalculationsLoading ||
+                    isMutliFsx
+                }
+                disabledReason={isMutliFsx ? GENERAL.ES_MULTI_FSX_DISABLE_MSG : ''}
                 isExpanded={printState}
                 headerActions={[
                     isMutliFsx ? (

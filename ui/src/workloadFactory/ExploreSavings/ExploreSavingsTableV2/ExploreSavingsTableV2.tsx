@@ -154,7 +154,7 @@ const ExploreSavingsTableV2 = () => {
             }
         },
         {
-            Header: GENERAL.DB_HOST_INSTANCE_ID,
+            Header: GENERAL.DB_HOST_INSTANCE,
             accessor: 'instanceListText',
             id: '5',
             width: '211px',
