@@ -1,6 +1,7 @@
 import { AccordionCard, AccordionCardContent, AccordionController, DsTypography, Popover } from '@netapp/design-system';
 import styles from './LearnHowDialog.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
+//@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import { ReactComponent as CopyIcon } from '../../../../../assets/ic_copy.svg';
 
