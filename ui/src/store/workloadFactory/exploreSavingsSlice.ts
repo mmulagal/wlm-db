@@ -16,12 +16,11 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedPartnerHostDetails: {},
     getPartnerHostDetailsLoading: false,
     storageSavingsResponse: {},
-
     storageSavingsLoading: false,
-
     savingsCalculatorRefresh: false,
     selectedDeploymentModel: '',
     viewCalculationsResponse: null,
+    viewCalculationsApiResponse: null,
     viewCalculationsLoading: false,
     savingsCalculatorFrom: null,
     selectedManualRegion: null,
@@ -34,7 +33,6 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedSecondaryManualInstanceType: null,
     selectedVolumeTab: 'gp2',
     selectedVolumeTabForSecondary: 'gp2',
-
     getManualInstanceTypeList: {
         instanceTypeData: {},
         instanceTypeLoading: false,
@@ -105,7 +103,8 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
             manualTCOProvisionedIOPS: null,
             manualTCOThroughput: null
         }
-    }
+    },
+    recommendedTargetInstance: ''
 };
 
 const exploreSavingsSlice = createSlice({
@@ -222,7 +221,9 @@ const exploreSavingsSlice = createSlice({
             state.savingsCalculatorRefresh = false;
             state.selectedDeploymentModel = '';
             state.viewCalculationsResponse = null;
+            state.viewCalculationsApiResponse = null;
             state.viewCalculationsLoading = false;
+            state.recommendedTargetInstance = '';
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
@@ -230,8 +231,14 @@ const exploreSavingsSlice = createSlice({
         setViewCalculationsResponse(state, action: PayloadAction<any>) {
             state.viewCalculationsResponse = action.payload;
         },
+        setViewCalculationsApiResponse(state, action: PayloadAction<any>) {
+            state.viewCalculationsApiResponse = action.payload;
+        },
         setViewCalculationsLoading(state, action: PayloadAction<any>) {
             state.viewCalculationsLoading = action.payload;
+        },
+        setRecommendedTargetInstance(state, action: PayloadAction<any>) {
+            state.recommendedTargetInstance = action.payload;
         }
     }
 });
@@ -270,8 +277,10 @@ export const {
     addExploreSavingsInitialData,
     setSelectedDeploymentModel,
     setViewCalculationsResponse,
+    setViewCalculationsApiResponse,
     setViewCalculationsLoading,
-    setSavingsCalculatorFrom
+    setSavingsCalculatorFrom,
+    setRecommendedTargetInstance
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

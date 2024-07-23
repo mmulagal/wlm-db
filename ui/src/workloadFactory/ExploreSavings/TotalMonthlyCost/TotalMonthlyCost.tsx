@@ -73,8 +73,8 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                     <>
                         <ComparisonChart
                             data={[
-                                storageSavingsResponse?.totalSummary?.recommended
-                                    ? Number(storageSavingsResponse?.totalSummary?.recommended)
+                                storageSavingsResponse?.totalSummary?.recommendedTotal
+                                    ? Number(storageSavingsResponse?.totalSummary?.recommendedTotal)
                                     : 0,
                                 storageSavingsResponse?.totalSummary?.existing
                                     ? Number(storageSavingsResponse?.totalSummary?.existing)

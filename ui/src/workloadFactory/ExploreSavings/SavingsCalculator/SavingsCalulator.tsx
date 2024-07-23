@@ -23,6 +23,7 @@ import {
     addExploreSavingsInitialData,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
+    setViewCalculationsApiResponse,
     setViewCalculationsLoading,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -34,7 +35,7 @@ import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
 import { useGetManualStorageSavingsMutation, useGetManualViewCalculationsMutation } from '../../../utils/apiService';
 import { generateManualStorageSavingsPayload } from './savingsUtil';
-import { formatViewCalcData } from '../ExploreSavingsUtils';
+import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
@@ -50,6 +51,7 @@ const SavingsCalculator = () => {
         numberOfClonedCopies,
         monthlyChangeRate,
         selectedManualDeploymentModel,
+        selectedDeploymentModel,
         selectedManualRegion,
         selectedManualServerEdition,
         selectedManualInstanceType,
@@ -58,8 +60,20 @@ const SavingsCalculator = () => {
         manualSecondaryMachineDescription,
         manualTCOVolumeTypes,
         volumeFilledStatus,
-        manualTCOVolumeTypes2
+        manualTCOVolumeTypes2,
+        recommendedTargetInstance,
+        storageSavingsResponse,
+        viewCalculationsApiResponse
     } = useAppSelector(state => state.exploreSavings);
+
+    useEffect(() => {
+        dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
+        dispatch(
+            setViewCalculationsResponse(
+                formatViewCalcData(viewCalculationsApiResponse || {}, selectedDeploymentModel, monthlyChangeRate)
+            )
+        );
+    }, [recommendedTargetInstance]);
 
     const getManualStorageSavingsData = async () => {
         const payload = generateManualStorageSavingsPayload();
@@ -70,7 +84,7 @@ const SavingsCalculator = () => {
                 payload: payload
             });
             dispatch(setStorageSavingsLoading(false));
-            dispatch(setStorageSavingsResponse(result?.data));
+            dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data)));
         } catch (error) {
             dispatch(setStorageSavingsLoading(false));
         }
@@ -83,6 +97,7 @@ const SavingsCalculator = () => {
                 regionId: selectedManualRegion?.data?.regionCode,
                 payload: payload
             });
+            dispatch(setViewCalculationsApiResponse(result?.data));
             dispatch(
                 setViewCalculationsResponse(
                     formatViewCalcData(result?.data, selectedManualDeploymentModel?.label, monthlyChangeRate)

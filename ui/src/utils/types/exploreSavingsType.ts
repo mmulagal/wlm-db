@@ -28,6 +28,7 @@ export interface ExploreSavingsSliceEntities {
     savingsCalculatorRefresh: boolean;
     selectedDeploymentModel: string;
     viewCalculationsResponse: ViewCalculationsInterface | null;
+    viewCalculationsApiResponse: ViewCalculationsInterface | null;
     viewCalculationsLoading: boolean;
     savingsCalculatorFrom: string | null;
     selectedManualRegion: any;
@@ -48,6 +49,7 @@ export interface ExploreSavingsSliceEntities {
     };
     manualTCOVolumeTypes: any;
     volumeFilledStatus: boolean;
+    recommendedTargetInstance: string;
 }
 
 export interface StorageSavingsInterface {
@@ -76,6 +78,7 @@ export interface StorageSavingsInterface {
     totalSummary?: {
         existing?: number | string;
         recommended?: number | string;
+        recommendedTotal?: number | string;
     };
     compute?: {
         existing?: RecommendedCompute;
@@ -85,6 +88,7 @@ export interface StorageSavingsInterface {
         existing?: RecommendedLicense;
         recommended?: RecommendedLicense;
     };
+    recommendedInstance?: any;
 }
 
 export interface StorageSavingsFsxnForAZ {
@@ -130,6 +134,8 @@ export interface RecommendedCompute {
     instanceMonthlyPrice?: number | string;
     hoursInMonth?: number | string;
     windowsOsVersion?: string;
+    machineDetails?: Array<any>;
+    recommendationOptions?: Array<any>;
 }
 
 export interface RecommendedLicense {
@@ -140,10 +146,11 @@ export interface RecommendedLicense {
 }
 
 export interface ViewCalculationsInterface {
-    recommendedComputeCalculation?: Array<RecommendedCompute>;
-    recommendedLicenseCalculation?: Array<RecommendedLicense>;
-    existingComputeCalculation: Array<RecommendedCompute>;
-    existingLicenseCalculation?: Array<RecommendedLicense>;
+    recommendedInstance?: Array<any>;
+    recommendedComputeCalculation?: RecommendedCompute;
+    recommendedLicenseCalculation?: RecommendedLicense;
+    existingComputeCalculation?: RecommendedCompute;
+    existingLicenseCalculation?: RecommendedLicense;
     ebsInstanceCalculation?: Array<RecommendedIntanceInterface>;
     fsxInstanceCalculation?: Array<RecommendedIntanceInterface>;
     single?: {

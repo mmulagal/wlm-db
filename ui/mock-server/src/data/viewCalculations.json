@@ -1,64 +1,94 @@
 {
-    "recommendedComputeCalculation": [
-        {
-            "instanceType": "m7i-flex.large",
-            "hoursInMonth": 730,
-            "computeHourlyPrice": 0.18316,
-            "instanceMonthlyPrice": 484.10679999999996,
-            "computeMonthlyPrice": 133.7068
-        },
-        {
-            "instanceType": "m7i-flex.large",
-            "hoursInMonth": 730,
-            "computeHourlyPrice": 0.18316,
-            "instanceMonthlyPrice": 484.10679999999996,
-            "computeMonthlyPrice": 133.7068
-        }
-    ],
-    "recommendedLicenseCalculation": [
-        {
-            "hoursInMonth": 730,
-            "sqlServerEdition": "Standard Edition (64-bit)",
-            "licenseHourlyPrice": 0.48,
-            "licenseIncluded": true
-        },
-        {
-            "hoursInMonth": 730,
-            "sqlServerEdition": "Standard Edition (64-bit)",
-            "licenseHourlyPrice": 0.48,
-            "licenseIncluded": true
-        }
-    ],
-    "existingComputeCalculation": [
-        {
-            "instanceType": "m5.2xlarge",
-            "hoursInMonth": 730,
-            "computeHourlyPrice": 0.752,
-            "instanceMonthlyPrice": 2738.96,
-            "computeMonthlyPrice": 548.96
-        },
-        {
-            "instanceType": "m5.2xlarge",
-            "hoursInMonth": 730,
-            "computeHourlyPrice": 0.752,
-            "instanceMonthlyPrice": 2738.96,
-            "computeMonthlyPrice": 548.96
-        }
-    ],
-    "existingLicenseCalculation": [
-        {
-            "hoursInMonth": 730,
-            "sqlServerEdition": "Enterprise Edition (64-bit)",
-            "licenseHourlyPrice": 3,
-            "licenseIncluded": true
-        },
-        {
-            "hoursInMonth": 730,
-            "sqlServerEdition": "Enterprise Edition (64-bit)",
-            "licenseHourlyPrice": 3,
-            "licenseIncluded": true
-        }
-    ],
+    "recommendedComputeCalculation": {
+        "instanceType": "m7i-flex.large",
+        "hoursInMonth": 730,
+        "computeHourlyPrice": 0.18316,
+        "instanceMonthlyPrice": 484.10679999999996,
+        "computeMonthlyPrice": 133.7068,
+        "machineDetails": [
+            {
+                "instanceType": "m7i-flex.large",
+                "price": 0.66316,
+                "basePrice": 0.18316,
+                "computeMonthlyPrice": 484.10679999999996,
+                "instanceMonthlyPrice": 133.7068,
+                "licenseMonthlyPrice": 350.4,
+                "hoursInMonth": 730,
+                "licenseIncluded": true
+            },
+            {
+                "instanceType": "m7i-flex.large",
+                "price": 0.66316,
+                "basePrice": 0.18316,
+                "computeMonthlyPrice": 484.10679999999996,
+                "instanceMonthlyPrice": 133.7068,
+                "licenseMonthlyPrice": 350.4,
+                "hoursInMonth": 730,
+                "licenseIncluded": true
+            }
+        ],
+        "recommendationOptions": [
+            {
+                "instanceType": "m7i-flex.large",
+                "price": 0.66316,
+                "basePrice": 0.18316,
+                "computeMonthlyPrice": 484.10679999999996,
+                "instanceMonthlyPrice": 133.7068,
+                "licenseMonthlyPrice": 350.4,
+                "hoursInMonth": 730
+            },
+            {
+                "instanceType": "m2.xlarge",
+                "price": 1.084,
+                "basePrice": 0.345,
+                "computeMonthlyPrice": 791.32,
+                "instanceMonthlyPrice": 251.85,
+                "licenseMonthlyPrice": 539.47,
+                "hoursInMonth": 730
+            }
+        ]
+    },
+    "recommendedLicenseCalculation": {
+        "hoursInMonth": 730,
+        "sqlServerEdition": "Standard Edition (64-bit)",
+        "licenseHourlyPrice": 0.48000000000000004,
+        "licenseIncluded": true
+    },
+    "existingComputeCalculation": {
+        "instanceType": "m5.large",
+        "hoursInMonth": 730,
+        "computeHourlyPrice": 0.188,
+        "instanceMonthlyPrice": 487.64000000000004,
+        "computeMonthlyPrice": 137.24,
+        "machineDetails": [
+            {
+                "instanceType": "m5.large",
+                "price": 0.668,
+                "basePrice": 0.188,
+                "computeMonthlyPrice": 487.64000000000004,
+                "instanceMonthlyPrice": 137.24,
+                "licenseMonthlyPrice": 350.40000000000003,
+                "hoursInMonth": 730,
+                "licenseIncluded": true
+            },
+            {
+                "instanceType": "m5.large",
+                "price": 0.668,
+                "basePrice": 0.188,
+                "computeMonthlyPrice": 487.64000000000004,
+                "instanceMonthlyPrice": 137.24,
+                "licenseMonthlyPrice": 350.40000000000003,
+                "hoursInMonth": 730,
+                "licenseIncluded": true
+            }
+        ]
+    },
+    "existingLicenseCalculation": {
+        "hoursInMonth": 730,
+        "sqlServerEdition": "Standard Edition (64-bit)",
+        "licenseHourlyPrice": 0.48000000000000004,
+        "licenseIncluded": true
+    },
     "ebsCalculation": {
         "io2": {
             "numberOfVolumes": 2,
@@ -84,17 +114,18 @@
     },
     "ebsCloneCalculation": {
         "io2": {
-            "clonedCopiesCount": 30,
+            "clonedCopiesCount": 1,
             "capacity": 2560,
             "iops": 4888,
             "throughput": 0,
-            "totalCloneMonthlyCost": 223440
+            "totalCloneMonthlyCost": 7448
         }
     },
     "ebsSnapshotCalculation": {
         "io2": {
             "storageAmount": 21990232555520,
             "numberOfVolumes": 2,
+            "monthlyCostOfSnapshots": 40.96000000000001,
             "ebsInstanceMonth": 2,
             "totalSnapshots": 30,
             "initialSnapshotCost": 512,
@@ -106,7 +137,7 @@
             "ebsSnapshotCost": 3481.6000000000004
         }
     },
-    "multi": {
+    "single": {
         "fsxOntapCalculation": {
             "numberOfVolumes": 1,
             "percentageOfDataOnSSDStorage": 1,
