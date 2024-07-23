@@ -136,6 +136,7 @@ export interface RecommendedCompute {
     windowsOsVersion?: string;
     machineDetails?: Array<any>;
     recommendationOptions?: Array<any>;
+    finding?: string;
 }
 
 export interface RecommendedLicense {
