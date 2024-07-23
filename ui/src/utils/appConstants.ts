@@ -915,6 +915,44 @@ export const GENERAL = {
     NUMBER_OF_CLONED_COPIES: 'Number of cloned copies',
     MONTHLY_CHANGE_RATE: 'Monthly change rate (%)',
     MONTHLY_DATA_CHANGE_RATE: 'Monthly data change rate (%)',
+    RECOMMENDED_INSTANCE_TYPE: 'Recommended instance type',
+    RECOMMENDED_INSTANCE_TYPE_INFO:
+        'We base instance type recommendations on Amazon CloudWatch metrics (CPU, bandwidth, network, and more) taken over the last 14 days and AWS Compute Optimizer. If instances are over-provisioned, we recommend an instance type that may meet your needs better.',
+    MISSING_PERMISSIONS_NOTICE: 'Improve cost accuracy.',
+    RECOMMENDATIONS_UNAVAILABLE_NOTICE: 'Recommendations are unavailable.',
+    RECOMMENDATIONS_UNAVAILABLE_TOOLTIP:
+        'Recommendations are unavailable because of insufficient metrics or the analysis is still in progress.',
+    LEARN_HOW: 'Learn how',
+    LEARN_HOW_DIALOG: {
+        TITLE: 'Improve compute cost accuracy',
+        HEADER_TEXT:
+            'For more accurate results based on AWS cloud watch metrics and Compute Optimizer, follow these steps.',
+        STEP1_HEADER: 'Grant AWS cloud watch and compute optimizer permissions.',
+        STEP1_POINT1: 'Sign in to the AWS Management Console and open the IAM service.',
+        STEP1_POINT2:
+            'Edit the policy for the IAM role. Copy and add the following AWS CloudWatch and Compute Optimizer permissions.',
+        PERMISSIONS: {
+            Version: '2012-10-17',
+            Statement: [
+                { Effect: 'Allow', Action: 'compute-optimizer:GetEnrollmentStatus', Resource: '*' },
+                { Effect: 'Allow', Action: 'compute-optimizer:PutRecommendationPreferences', Resource: '*' },
+                { Effect: 'Allow', Action: 'compute-optimizer:GetEffectiveRecommendationPreferences', Resource: '*' },
+                { Effect: 'Allow', Action: 'compute-optimizer:GetEC2InstanceRecommendations', Resource: '*' },
+                { Effect: 'Allow', Action: 'autoscaling:DescribeAutoScalingGroups', Resource: '*' },
+                { Effect: 'Allow', Action: 'autoscaling:DescribeAutoScalingInstances', Resource: '*' }
+            ]
+        },
+        STEP2_HEADER: 'Opt the billable AWS account in to AWS Compute Optimizer.',
+        STEP2_TITLE: 'Ensure the payer account opt in to the compute optimizer.',
+        STEP2_POINT1: 'Open the AWS Compute Optimizer console ',
+        STEP2_POINT1_LINK: 'https://console.aws.amazon.com/compute-optimizer/',
+        STEP2_POINT2: 'Choose Get started.',
+        STEP2_POINT3: 'On the Account setup page, review the Getting started and Setting up your account sections.',
+        STEP2_POINT4:
+            'The following options : Only this account/ All accounts within organization are displayed if the account that you are signed in to is the management account of your organization. Choose one before continuing to the next step.',
+        STEP2_POINT5: 'Choose Opt in.',
+        FOOTER_TEXT: 'The changes take effect within 24 hours.'
+    },
     EC2_SPECIFICATIONS: 'EC2 specifications',
     REFER_SNAPSHOTS: 'This field refer to clones and snapshots',
     VIEW_THE_CALCULATIONS: 'View the calculations',
