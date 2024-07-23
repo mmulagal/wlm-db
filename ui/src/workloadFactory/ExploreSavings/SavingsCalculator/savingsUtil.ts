@@ -1403,18 +1403,16 @@ const createInstances = (state: any) => {
         manualTCOVolumeTypes2
     } = state.exploreSavings;
     instanceArr.push({
-        instanceDescription: selectedManualInstanceType?.label,
-        instanceType: selectedManualInstanceType?.value,
+        ec2InstanceDescription: manualMonthlyDescription,
+        ec2InstanceType: selectedManualInstanceType?.value,
         isPrimary: true,
-        sqlServerEdition: selectedManualServerEdition?.value,
         volumes: generateVolumesData(manualTCOVolumeTypes)
     });
     if (selectedManualDeploymentModel?.label !== 'Standalone' && secondaryVolumeFilledStatus) {
         instanceArr.push({
-            instanceDescription: selectedSecondaryManualInstanceType?.label,
-            instanceType: selectedSecondaryManualInstanceType?.value,
+            ec2InstanceDescription: manualSecondaryMachineDescription,
+            ec2InstanceType: selectedSecondaryManualInstanceType?.value,
             isPrimary: false,
-            sqlServerEdition: selectedManualServerEdition?.value,
             volumes: generateVolumesData(manualTCOVolumeTypes2)
         });
     }
@@ -1422,13 +1420,39 @@ const createInstances = (state: any) => {
     return instanceArr;
 };
 
+const setSQLServerEdition = (value: string) => {
+    switch (value) {
+        case 'SQL server Enterprise':
+            return 'Enterprise Edition';
+        case 'SQL server Standard':
+            return 'Standard Edition';
+        case 'SQL server Web':
+            return 'Web Edition';
+        case 'SQL server Developer':
+            return 'Developer Edition';
+    }
+};
+
 export const generateManualStorageSavingsPayload = () => {
     const state = store.getState();
-    const { numberOfClonedCopies, monthlyChangeRate, selectedManualDeploymentModel } = state.exploreSavings;
+    const {
+        numberOfClonedCopies,
+        monthlyChangeRate,
+        selectedManualDeploymentModel,
+        selectedSnapshotFrequency,
+        monthlyBYOLCost,
+        selectedManualServerEdition
+    } = state.exploreSavings;
     const payloadObj: any = {};
-    payloadObj.sqlServerDeploymentType = selectedManualDeploymentModel?.value;
+    payloadObj.sqlServerDeploymentType =
+        selectedManualDeploymentModel?.value !== 'Standalone' ? 'AOAG' : selectedManualDeploymentModel?.value;
     payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
+    payloadObj.snapshotFrequency = selectedSnapshotFrequency?.value;
     payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
-    payloadObj.instances = createInstances(state);
+    if (monthlyBYOLCost) {
+        payloadObj.monthlySqlByolCost = Number(monthlyBYOLCost);
+    }
+    payloadObj.sqlServerEdition = setSQLServerEdition(selectedManualServerEdition?.value);
+    payloadObj.ec2Instances = createInstances(state);
     return payloadObj;
 };
