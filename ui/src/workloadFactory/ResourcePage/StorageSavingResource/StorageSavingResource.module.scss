@@ -126,6 +126,39 @@
             background-color: var(--border);
         }
     }
+
+    .smallContainer {
+        height: 116px;
+        display: flex;
+        gap: 36px;
+
+        .separator {
+            border-right: 1px solid var(--field-border-disabled);
+            height: 58px;
+            margin-top: 24px;
+        }
+
+        .consumedSaving {
+            display: flex;
+            flex-direction: column;
+            width: 127px;
+            padding-top: 24px;
+        }
+        .valueContainer {
+            display: flex;
+            gap: 11px;
+
+            .setUnit {
+                position: relative;
+                bottom: -15px;
+            }
+        }
+    }
+
+    .loadingContainer {
+        height: 35px;
+        display: flex;
+    }
 }
 
 // @media screen and (min-width: 1576px) and (max-width: 1720px) {

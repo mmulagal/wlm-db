@@ -46,15 +46,53 @@
     }
 }
 
-@media screen and (min-width: 1351px) and (max-width: 1500px) {
-    .dbOverviewProtection {
-        .mainContainer {
-            .chartContainer {
-                margin-left: 17%;
-            }
+.dbOverviewProtectionSmallScreen {
+    box-shadow: 2px 2px 6px var(--grey-15);
+    height: 332px;
+    width: 100%;
+    background-color: var(--content-background);
 
-            .textSection {
-                margin-left: 0%;
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+
+    .title {
+        display: flex;
+    }
+
+    .mainContainer {
+        padding: 40px;
+        display: flex;
+        gap: 40px;
+        width: 100%;
+        .chartContainer {
+        }
+
+        .textAreaSection {
+            display: flex;
+            flex-direction: column;
+            width: 68%;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .protectionSeparator {
+            border-top: 1px solid var(--border);
+        }
+
+        .textSection {
+            display: flex;
+
+            .dbHostSeparator {
+                background: var(--border);
+                width: 1px;
+                height: 56px;
+                margin: 0 15.32%;
             }
         }
     }
