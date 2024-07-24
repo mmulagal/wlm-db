@@ -99,7 +99,11 @@ const LearnHowDialog = () => {
                                             <div className={styles.numberDigit}>a &nbsp;|</div>
                                             <div className={styles.content}>
                                                 {GENERAL.LEARN_HOW_DIALOG.STEP2_POINT1}
-                                                <a href={GENERAL.LEARN_HOW_DIALOG.STEP2_POINT1_LINK} target="_blank">
+                                                <a
+                                                    href={GENERAL.LEARN_HOW_DIALOG.STEP2_POINT1_LINK}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
                                                     {GENERAL.LEARN_HOW_DIALOG.STEP2_POINT1_LINK}
                                                 </a>
                                             </div>

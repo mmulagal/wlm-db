@@ -682,3 +682,25 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
     }
     return result;
 };
+
+export const generateLabel2ForInstanceType = (options: any, option: any, existingTypeObj: any) => {
+    if (option === existingTypeObj?.instanceType) {
+        return 'Current instance type';
+    } else {
+        const selectedOption = options.find((item: any) => item.instanceType === option);
+        if (selectedOption?.computeMonthlyPrice) {
+            const existingComputePrice: number = existingTypeObj?.computeMonthlyPrice
+                ? parseFloat(existingTypeObj?.computeMonthlyPrice?.toString())
+                : 0;
+            const computeCostSavingPercent =
+                existingComputePrice && selectedOption?.computeMonthlyPrice
+                    ? Math.round(
+                          (100 * (existingComputePrice - selectedOption?.computeMonthlyPrice)) / existingComputePrice
+                      )
+                    : 0;
+            const label2 = computeCostSavingPercent ? `Saves upto ${computeCostSavingPercent}% in compute costs` : '';
+            return label2;
+        }
+        return '';
+    }
+};
