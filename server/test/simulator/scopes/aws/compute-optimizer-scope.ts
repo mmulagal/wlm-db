@@ -4,6 +4,7 @@ import {
     GetEC2InstanceRecommendationsCommandOutput,
     GetEffectiveRecommendationPreferencesCommand,
     GetEffectiveRecommendationPreferencesCommandOutput,
+    GetEnrollmentStatusCommand,
     PutRecommendationPreferencesCommand
 } from '@aws-sdk/client-compute-optimizer';
 import { mockClient } from 'aws-sdk-client-mock';
@@ -13,6 +14,11 @@ import instanceRecommendationsResponse from '../../responses/aws/compute-optimiz
 const computeOptimizerMock = mockClient(ComputeOptimizerClient);
 
 computeOptimizerMock
+    .on(GetEnrollmentStatusCommand)
+    .resolves({
+        status: 'Active',
+        memberAccountsEnrolled: true
+    })
     .on(GetEffectiveRecommendationPreferencesCommand)
     .resolves(getEffectiveRecommendationResponse as GetEffectiveRecommendationPreferencesCommandOutput)
     .on(PutRecommendationPreferencesCommand)

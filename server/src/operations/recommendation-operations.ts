@@ -19,6 +19,7 @@ import { determineSmallerInstance, getInstanceDetailsByPrivateIp } from './aws/e
 import { NodeDetails } from '../utils/common-types';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getDatabaseInstanceName, getMonthlyPriceFromHourlyPrice } from '../utils/utils';
+import { getEnrollmentStatus } from '../lib/aws/compute-optimizer';
 
 const logger = getLogger();
 
@@ -244,6 +245,7 @@ async function handleInstanceRecommendation(
     let recommendedCompute;
     let computeFinding = FINDING.OPTIMIZED;
     try {
+        await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
         const {
             finding,
             message: recommendationMessage,
@@ -345,7 +347,14 @@ async function handleInstanceRecommendation(
             region,
             instanceId: instanceIdToUseForRecommendations
         });
+
         computeFinding = FINDING.INSUFFICIENT_DATA;
+        if (
+            error?.message?.includes('Compute Optimizer is not enabled for the account') ||
+            error?.message?.includes('not authorized')
+        ) {
+            computeFinding = FINDING.INSUFFICIENT_PERMISSIONS;
+        }
         recommendedCompute = getExistingAsRecommended(
             totalNodesCount,
             existingInstanceType,
@@ -374,6 +383,19 @@ function getPricingByLicenseType(
     }
 
     return instanceHourlyPrice;
+}
+
+async function checkComputeOptimizerEnrollmentStatus(accountId: string, credentialsId: string, region: string) {
+    logger.info('Checking Compute Optimizer enrollment status', { accountId, credentialsId, region });
+
+    const { status: enrollmentStatus } = await getEnrollmentStatus(region, credentialsId, accountId);
+
+    if (enrollmentStatus?.toLowerCase() !== 'active') {
+        const errMsg =
+            'Compute Optimizer is not enabled for the account. Please enable Compute Optimizer and try again.';
+        logger.error(errMsg, { accountId, credentialsId, region });
+        throw createError(HttpErrorCodes.BAD_REQUEST, errMsg);
+    }
 }
 
 export default async function getSqlInstanceLicenseRecommendations(

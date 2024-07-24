@@ -2,7 +2,9 @@ import {
     ResourceType,
     ScopeName,
     PreferredResourceName,
-    InstanceRecommendationOption
+    InstanceRecommendationOption,
+    LookBackPeriodPreference,
+    CpuVendorArchitecture
 } from '@aws-sdk/client-compute-optimizer';
 import { compact, isEmpty } from 'lodash-es';
 import {
@@ -38,7 +40,7 @@ async function createRecommendationForResource(
 
     const putRecParams = {
         resourceType: ResourceType.EC2_INSTANCE,
-        loopBackPeriod: 'DAYS_14',
+        lookBackPeriod: LookBackPeriodPreference.DAYS_14,
         scope: {
             name: ScopeName.RESOURCE_ARN,
             value: instanceArn
@@ -180,27 +182,22 @@ async function getInstanceRecommendations(
     if (awsAccountId) {
         const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
         let message: string | undefined;
-        let instanceTypes: string[] = [];
-        try {
-            instanceTypes =
-                (await manageInstanceRecommendationPreReqs(
-                    awsAccountId,
-                    region,
-                    credentialsId,
-                    resourceArn,
-                    accountId,
-                    instanceId,
-                    ebsVolumeIds,
-                    sqlServerDeploymentType
-                )) || [];
-        } catch (error: any) {
-            logger.error('Error while managing instance recommendation prerequisites', error);
-            message = error.message;
-        }
+        const instanceTypes: string[] =
+            (await manageInstanceRecommendationPreReqs(
+                awsAccountId,
+                region,
+                credentialsId,
+                resourceArn,
+                accountId,
+                instanceId,
+                ebsVolumeIds,
+                sqlServerDeploymentType
+            )) || [];
+
         const coParams = {
             instanceArns: [resourceArn],
-            recommendateionPreferences: {
-                cpuVendorArchitectures: ['CURRENT'] // CURRENT to view recommendations that are based on the same CPU vendor and architecture as the current instance.
+            recommendationPreferences: {
+                cpuVendorArchitectures: [CpuVendorArchitecture.CURRENT] // CURRENT to view recommendations that are based on the same CPU vendor and architecture as the current instance.
             },
             Filters: [
                 {
@@ -273,7 +270,7 @@ async function getInstanceRecommendations(
             }
             return { finding, instanceRecommendations: allRecommendedInstanceDetails, message };
         }
-        return { finding, message: 'Instance is already optimized' };
+        return { finding, message: 'Instance is already optimized or under provisioned. No recommendations available' };
     }
     throw new Error('AWS Account ID details associated with the Database host not found');
 }
