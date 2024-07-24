@@ -139,17 +139,35 @@ const InstanceInformation = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return !storageSavingsLoading ? (
                     <>
+                        {rowData.details === 'Instance type' && (
+                            <div className={styles.instanceTypeTooltip}>
+                                <TooltipInfo>{GENERAL.INSTANCE_TYPE_FINDINGS_TOOLTIP}</TooltipInfo>
+                            </div>
+                        )}
                         {rowData?.findings === FINDINGS.NOT_OPTIMIZED && (
                             <div className={styles.tooltips}>
                                 {rowData.details === 'SQL Edition' && (
                                     <TooltipInfo>{GENERAL.NOT_OPTIMIZED}</TooltipInfo>
                                 )}
-                                <DsTypography variant="Regular_14">Not optimized</DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {rowData?.details === 'Instance type'
+                                        ? GENERAL.FINDINGS.OVER_PROVISIONED
+                                        : GENERAL.FINDINGS.NOT_OPTIMIZED}
+                                </DsTypography>
                             </div>
                         )}
 
                         {rowData?.findings === FINDINGS.OPTIMIZED && (
-                            <DsTypography variant="Regular_14">Optimized</DsTypography>
+                            <DsTypography variant="Regular_14">{GENERAL.FINDINGS.OPTIMIZED}</DsTypography>
+                        )}
+
+                        {rowData?.findings === FINDINGS.UNDER_PROVISIONED && (
+                            <DsTypography variant="Regular_14">{GENERAL.FINDINGS.UNDER_PROVISIONED}</DsTypography>
+                        )}
+
+                        {(rowData?.findings === FINDINGS.INSUFFICIENT_DATA ||
+                            rowData?.findings === FINDINGS.INSUFFICIENT_PERMISSIONS) && (
+                            <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
                         )}
                     </>
                 ) : (
