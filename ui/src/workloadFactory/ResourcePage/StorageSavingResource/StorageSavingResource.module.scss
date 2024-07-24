@@ -53,7 +53,7 @@
             width: 68.32%;
             .secondRow {
                 display: flex;
-                gap: 32px;
+                gap: 10px;
 
                 .bottomRow {
                     display: flex;
@@ -125,6 +125,39 @@
             height: 48px;
             background-color: var(--border);
         }
+    }
+
+    .smallContainer {
+        height: 116px;
+        display: flex;
+        gap: 36px;
+
+        .separator {
+            border-right: 1px solid var(--field-border-disabled);
+            height: 58px;
+            margin-top: 24px;
+        }
+
+        .consumedSaving {
+            display: flex;
+            flex-direction: column;
+            width: 127px;
+            padding-top: 24px;
+        }
+        .valueContainer {
+            display: flex;
+            gap: 11px;
+
+            .setUnit {
+                position: relative;
+                bottom: -15px;
+            }
+        }
+    }
+
+    .loadingContainer {
+        height: 35px;
+        display: flex;
     }
 }
 

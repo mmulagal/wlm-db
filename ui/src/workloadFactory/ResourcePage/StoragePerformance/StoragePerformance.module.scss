@@ -54,4 +54,46 @@
             margin-top: 20px;
         }
     }
+
+    .smallMainContainer {
+        display: flex;
+        flex-direction: column;
+        .cardSection {
+            padding: 16px 40px;
+            display: flex;
+            gap: 40px;
+            align-items: center;
+
+            .leftSection {
+                display: flex;
+                gap: 24px;
+                align-items: center;
+            }
+
+            .rightSection {
+                .valueText {
+                    display: flex;
+                    gap: 16px;
+                    align-items: center;
+
+                    .smallSeparator {
+                        height: 16px;
+                        border-left: 1px solid #a7a7a7;
+                    }
+                }
+            }
+        }
+        .separator {
+            width: calc(100% - 80px);
+            height: 1px;
+            border-bottom: 1px solid var(--border);
+            margin-left: 40px;
+        }
+    }
+}
+
+@media screen and (max-width: 1800px) {
+    .storagePerformance {
+        height: 324px;
+    }
 }

@@ -8,20 +8,29 @@ type SC = {
     text: string;
     boldValue?: boolean;
     isLoading?: boolean;
+    loadingInFirstRow?: boolean;
 };
 
-const SquareComponent = ({ value, color, text, boldValue, isLoading = false }: SC) => {
+const SquareComponent = ({ value, color, text, boldValue, loadingInFirstRow = false, isLoading = false }: SC) => {
     return (
         <div className={styles.container}>
             {!boldValue && (
-                <Typography className={styles.valueText} variant="Regular_14">
-                    {value}
-                </Typography>
+                <div className={styles.headerArea}>
+                    <Typography className={styles.valueText} variant="Regular_14">
+                        {value}
+                    </Typography>
+
+                    {loadingInFirstRow && (
+                        <div className={styles.loadingClass}>
+                            <DsFlashingDotsLoader />
+                        </div>
+                    )}
+                </div>
             )}
             {boldValue && <Typography variant="Semibold_14">{value}</Typography>}
             <div className={styles.bottomRow}>
                 <div className={styles.square} style={{ backgroundColor: color }} />
-                <Typography variant="Regular_14" style={{ lineHeight: 'unset' }}>
+                <Typography variant="Regular_14" style={{ lineHeight: 'unset', width: 'max-content' }}>
                     {text}
                 </Typography>
                 {isLoading && <DsFlashingDotsLoader />}

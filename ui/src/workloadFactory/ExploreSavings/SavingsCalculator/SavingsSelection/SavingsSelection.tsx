@@ -1,4 +1,4 @@
-import { DsTypography, SelectField, TextField } from '@netapp/design-system';
+import { Button, DsTooltipInfo, DsTypography, SelectField, TextField, useDialog } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './SavingsSelection.module.scss';
 import { useEffect, useMemo, useState } from 'react';
@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux';
 import {
     setMonthlyChangeRate,
     setNumberOfClonedCopies,
+    setRecommendedTargetInstance,
     setSelectedCloneRefresh,
     setSelectedSnapshotFrequency
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
@@ -14,19 +15,46 @@ import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
-import { SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
+import { FINDINGS, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
+import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import LearnHowDialog from './LearnHowDialog/LearnHowDialog';
+import { generateLabel2ForInstanceType } from '../../ExploreSavingsUtils';
 
 const SavingsSelection = ({ printState }: any) => {
     const dispatch = useDispatch();
-    const { selectedSnapshotFrequency, numberOfClonedCopies, selectedCloneRefresh, monthlyChangeRate, loading } =
-        useAppSelector(state => state.exploreSavings);
+    const {
+        selectedSnapshotFrequency,
+        numberOfClonedCopies,
+        selectedCloneRefresh,
+        monthlyChangeRate,
+        loading,
+        storageSavingsResponse,
+        storageSavingsLoading,
+        recommendedTargetInstance
+    } = useAppSelector(state => state.exploreSavings);
 
     const [noOfClonedCopies, setNoOfClonedCopies] = useState<any>(numberOfClonedCopies);
     const [monthlyChangeRateNo, setMonthlyChangeRateNo] = useState<any>(monthlyChangeRate);
+    const [instanceTypeData, setInstanceTypeData] = useState<any>({
+        missingPermissions: false,
+        options: [],
+        existingInstanceType: ''
+    });
 
     // Debounce variable
     const [clonedText, setClonedText] = useSearchDebounce(1000);
     const [changeRateText, setChangeRateText] = useSearchDebounce(1000);
+
+    const { setDialog, closeDialog } = useDialog();
+
+    useEffect(() => {
+        setInstanceTypeData({
+            missingPermissions:
+                storageSavingsResponse?.compute?.existing?.finding === FINDINGS.INSUFFICIENT_PERMISSIONS,
+            options: storageSavingsResponse?.compute?.recommended?.recommendationOptions || [],
+            existingInstanceType: storageSavingsResponse?.compute?.existing?.instanceType
+        });
+    }, [storageSavingsResponse?.compute]);
 
     useEffect(() => {
         setClonedText(noOfClonedCopies);
@@ -78,6 +106,42 @@ const SavingsSelection = ({ printState }: any) => {
         return options;
     }, []);
 
+    const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
+        let options: optionType[] = [];
+        instanceTypeData.options.map((option: any) => {
+            options.push(
+                generateOptionType(
+                    option?.instanceType,
+                    `${option?.instanceType} (for all instances)`,
+                    generateLabel2ForInstanceType(
+                        instanceTypeData.options,
+                        option?.instanceType,
+                        storageSavingsResponse?.compute?.existing
+                    ),
+                    false,
+                    ''
+                )
+            );
+        });
+        options.push(
+            generateOptionType(
+                instanceTypeData?.existingInstanceType,
+                instanceTypeData?.existingInstanceType,
+                generateLabel2ForInstanceType(
+                    [],
+                    instanceTypeData?.existingInstanceType,
+                    storageSavingsResponse?.compute?.existing
+                ),
+                false,
+                ''
+            )
+        );
+        if (options.length > 1) {
+            dispatch(setRecommendedTargetInstance(options[0].value));
+        }
+        return options;
+    }, [instanceTypeData.options]);
+
     useEffect(() => {
         if (!selectedCloneRefresh) {
             dispatch(setSelectedCloneRefresh(generateCloneRefresh[0]));
@@ -94,6 +158,17 @@ const SavingsSelection = ({ printState }: any) => {
         if (monthlyChangeRateNo > 100) {
             return GENERAL.CHANGE_RATE_MAX_LIMIT;
         }
+    };
+
+    const handleLearnHowClick = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.LEARN_HOW_DIALOG.TITLE}
+                content={<LearnHowDialog />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => closeDialog()}
+            />
+        );
     };
 
     return (
@@ -188,6 +263,62 @@ const SavingsSelection = ({ printState }: any) => {
                     <DsTypography variant="Regular_14" className={styles.contentWidth}>
                         {GENERAL.REFER_SNAPSHOTS}
                     </DsTypography>
+                </div>
+            </div>
+            <div className={styles.secondRow}>
+                <div className={styles.instanceTypeContainer}>
+                    <SelectField
+                        label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
+                        info={GENERAL.RECOMMENDED_INSTANCE_TYPE_INFO}
+                        isClearable={false}
+                        isDisabled={
+                            instanceTypeData?.missingPermissions || generateRecommendedInstanceTypes.length === 1
+                        }
+                        variant="two-lines"
+                        isLoading={storageSavingsLoading}
+                        value={generateOptionType(
+                            recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                            recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                            generateLabel2ForInstanceType(
+                                instanceTypeData?.options,
+                                recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                                storageSavingsResponse?.compute?.existing
+                            ),
+                            false,
+                            ''
+                        )}
+                        onChange={(selectedOptions: any): void => {
+                            const selectedVal = selectedOptions.value;
+                            dispatch(
+                                setRecommendedTargetInstance(
+                                    selectedVal === instanceTypeData?.existingInstanceType ? '' : selectedVal
+                                )
+                            );
+                        }}
+                        isSearchable={generateRecommendedInstanceTypes?.length > 5}
+                        options={generateRecommendedInstanceTypes}
+                        className={styles.widthSet}
+                    />
+                    {(instanceTypeData?.missingPermissions ||
+                        (generateRecommendedInstanceTypes?.length === 1 && !storageSavingsLoading)) && (
+                        <div className={styles.errorContainer}>
+                            <InfoIcon />
+                            <DsTypography variant="Regular_13">
+                                {instanceTypeData?.missingPermissions
+                                    ? GENERAL.MISSING_PERMISSIONS_NOTICE
+                                    : GENERAL.RECOMMENDATIONS_UNAVAILABLE_NOTICE}
+                            </DsTypography>
+                            {instanceTypeData?.missingPermissions ? (
+                                <Button variant="text" onClick={handleLearnHowClick}>
+                                    {GENERAL.LEARN_HOW}
+                                </Button>
+                            ) : (
+                                <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                    {GENERAL.RECOMMENDATIONS_UNAVAILABLE_TOOLTIP}
+                                </DsTooltipInfo>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -23,6 +23,7 @@ import { determineSmallerInstance, getInstanceDetailsByPrivateIp } from './aws/e
 import { NodeDetails } from '../utils/common-types';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getDatabaseInstanceName, getMonthlyPriceFromHourlyPrice } from '../utils/utils';
+import { getEnrollmentStatus } from '../lib/aws/compute-optimizer';
 
 const logger = getLogger();
 
@@ -182,6 +183,42 @@ sqlServerEdition = Edition =	Installed product edition of the instance of SQL Se
     return sqlServerInstances.find(sqlServerInstance => sqlServerInstance.windowsAuthentication === true);
 }
 
+function getExistingAsRecommended(
+    totalNodesCount: number,
+    existingInstanceType: string,
+    existingInstanceHourlyPrice?: number,
+    existingInstanceHourlyPriceWithoutLicense?: number,
+    message?: string
+) {
+    const recommendedNodeInstanceTypes = Array(totalNodesCount).fill(existingInstanceType);
+    const rinstanceMonthlyPrice = existingInstanceHourlyPrice
+        ? getMonthlyPriceFromHourlyPrice(existingInstanceHourlyPrice)
+        : undefined;
+    const rcomputeMonthlyPrice = existingInstanceHourlyPriceWithoutLicense
+        ? getMonthlyPriceFromHourlyPrice(existingInstanceHourlyPriceWithoutLicense)
+        : undefined;
+    return {
+        price: existingInstanceHourlyPrice,
+        baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
+        instanceType: recommendedNodeInstanceTypes.join(', '),
+        machineDetails: recommendedNodeInstanceTypes.map(instanceType => ({
+            instanceType,
+            price: existingInstanceHourlyPrice,
+            basePrice: existingInstanceHourlyPriceWithoutLicense,
+            computeMonthlyPrice: rcomputeMonthlyPrice,
+            instanceMonthlyPrice: rinstanceMonthlyPrice,
+            licenseMonthlyPrice:
+                rcomputeMonthlyPrice !== undefined && rinstanceMonthlyPrice !== undefined
+                    ? rinstanceMonthlyPrice - rcomputeMonthlyPrice
+                    : undefined,
+            hoursInMonth: HOURS_IN_MONTH,
+            licenseIncluded: true // recommending an instance with the license included
+        })),
+        message,
+        recommendationOptions: []
+    };
+}
+
 async function handleInstanceRecommendation(
     accountId: string,
     credentialsId: string,
@@ -212,6 +249,7 @@ async function handleInstanceRecommendation(
     let recommendedCompute;
     let computeFinding = FINDING.OPTIMIZED;
     try {
+        await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
         const {
             finding,
             message: recommendationMessage,
@@ -257,7 +295,7 @@ async function handleInstanceRecommendation(
                 baseInstancePrice: recommendedInstanceHourlyPriceWithoutLicense
                     ? recommendedInstanceHourlyPriceWithoutLicense * totalNodesCount
                     : recommendedInstanceHourlyPriceWithoutLicense,
-                instanceType: totalNodesCount > 0 ? recommendedNodeInstanceTypes.join(', ') : recommendedInstanceType,
+                instanceType: recommendedNodeInstanceTypes.join(', '),
                 machineDetails: recommendedNodeInstanceTypes.map(instanceType => ({
                     instanceType,
                     price: recommendedInstanceHourlyPrice,
@@ -297,12 +335,14 @@ async function handleInstanceRecommendation(
                     ? 'No instance change recommended as per Compute Optimizer'
                     : 'Instance Recommendations not available for the instance';
             computeFinding = finding || FINDING.OPTIMIZED;
-            recommendedCompute = {
-                price: existingInstanceHourlyPrice,
-                baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
-                instanceType: existingInstanceType,
+
+            recommendedCompute = getExistingAsRecommended(
+                totalNodesCount,
+                existingInstanceType,
+                existingInstanceHourlyPrice,
+                existingInstanceHourlyPriceWithoutLicense,
                 message
-            };
+            );
         }
     } catch (error: any) {
         logger.error('Error getting instance recommendations', {
@@ -311,16 +351,55 @@ async function handleInstanceRecommendation(
             region,
             instanceId: instanceIdToUseForRecommendations
         });
+
         computeFinding = FINDING.INSUFFICIENT_DATA;
-        recommendedCompute = {
-            price: existingInstanceHourlyPrice,
-            baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
-            instanceType: existingInstanceType,
-            message: error.message
-        };
+        if (
+            error?.message?.includes('Compute Optimizer is not enabled for the account') ||
+            error?.message?.includes('not authorized')
+        ) {
+            computeFinding = FINDING.INSUFFICIENT_PERMISSIONS;
+        }
+        recommendedCompute = getExistingAsRecommended(
+            totalNodesCount,
+            existingInstanceType,
+            existingInstanceHourlyPrice,
+            existingInstanceHourlyPriceWithoutLicense,
+            error.message
+        );
     }
 
     return { computeFinding, recommendedCompute };
+}
+
+function getPricingByLicenseType(
+    licenseType: string,
+    existingInstanceTypePricingsDetails: Map<
+        string,
+        { count: number; pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } }
+    >
+): number | undefined {
+    logger.info('Getting pricing by license type', { licenseType, existingInstanceTypePricingsDetails });
+    let instanceHourlyPrice: number | undefined;
+    for (const [, { count, pricingDetails }] of existingInstanceTypePricingsDetails) {
+        if (pricingDetails[licenseType]?.pricePerUnit) {
+            instanceHourlyPrice = Number(instanceHourlyPrice || 0) + pricingDetails[licenseType].pricePerUnit * count;
+        }
+    }
+
+    return instanceHourlyPrice;
+}
+
+async function checkComputeOptimizerEnrollmentStatus(accountId: string, credentialsId: string, region: string) {
+    logger.info('Checking Compute Optimizer enrollment status', { accountId, credentialsId, region });
+
+    const { status: enrollmentStatus } = await getEnrollmentStatus(region, credentialsId, accountId);
+
+    if (enrollmentStatus?.toLowerCase() !== 'active') {
+        const errMsg =
+            'Compute Optimizer is not enabled for the account. Please enable Compute Optimizer and try again.';
+        logger.error(errMsg, { accountId, credentialsId, region });
+        throw createError(HttpErrorCodes.BAD_REQUEST, errMsg);
+    }
 }
 
 export default async function getSqlInstanceLicenseRecommendations(

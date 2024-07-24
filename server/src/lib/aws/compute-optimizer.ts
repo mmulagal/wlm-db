@@ -5,7 +5,8 @@ import {
     GetEC2InstanceRecommendationsRequest,
     PutRecommendationPreferencesRequest,
     GetEffectiveRecommendationPreferencesCommand,
-    GetEffectiveRecommendationPreferencesRequest
+    GetEffectiveRecommendationPreferencesRequest,
+    GetEnrollmentStatusCommand
 } from '@aws-sdk/client-compute-optimizer';
 import getLogger from '../../utils/logger';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -20,6 +21,16 @@ async function getComputeOptimizerClient(region: string, credentialsId: string, 
     } = await getCredentialsDetails(credentialsId, accountId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
     return new ComputeOptimizerClient({ credentials, region });
+}
+
+async function getEnrollmentStatus(region: string, credentialsId: string, accountId: string) {
+    logger.info('Getting compute optimizer enrollment status', { region, credentialsId, accountId });
+    const computeOptimizer = await getComputeOptimizerClient(region, credentialsId, accountId);
+
+    const resp = await computeOptimizer.send(new GetEnrollmentStatusCommand({}));
+    logger.debug('getEnrollmentStatus response:', resp);
+
+    return resp;
 }
 
 async function getEC2InstanceRecommendations(
@@ -67,4 +78,9 @@ async function getEffectiveRecommendationPreferences(
     return resp;
 }
 
-export { getEC2InstanceRecommendations, putRecommendationPreferences, getEffectiveRecommendationPreferences };
+export {
+    getEnrollmentStatus,
+    getEC2InstanceRecommendations,
+    putRecommendationPreferences,
+    getEffectiveRecommendationPreferences
+};

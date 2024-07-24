@@ -69,9 +69,9 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'Compute',
-            fsx: calculatedResponse?.compute?.recommended?.computeMonthlyPrice
+            fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
                 ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.compute?.recommended?.computeMonthlyPrice, 2)
+                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)
                   ).toLocaleString()}`
                 : '$0',
             ebs: calculatedResponse?.compute?.existing?.computeMonthlyPrice
@@ -84,9 +84,9 @@ export const comparisonData = (calculatedResponse: any) => {
             type: 'SQL license',
             isTooltip:
                 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
-            fsx: calculatedResponse?.license?.recommended?.licenseMonthlyPrice
+            fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
                 ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.license?.recommended?.licenseMonthlyPrice, 2)
+                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)
                   ).toLocaleString()}`
                 : '$0',
             ebs: calculatedResponse?.license?.existing?.licenseMonthlyPrice
@@ -97,9 +97,9 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'Total summary',
-            fsx: calculatedResponse?.totalSummary?.recommended
+            fsx: calculatedResponse?.totalSummary?.recommendedTotal
                 ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.totalSummary?.recommended, 2)
+                      formatFractionalNumber(calculatedResponse?.totalSummary?.recommendedTotal, 2)
                   ).toLocaleString()}`
                 : '$0',
             ebs: calculatedResponse?.totalSummary?.existing
@@ -724,7 +724,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       {
                           label: 'EC2 machine2 cost',
                           value: `${viewCalculation.ebsInstanceCalculation?.[1]?.computeMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[1]?.hoursInAMonth}`
                       },
                       {
                           label: 'Total EC2 machines cost',
@@ -830,39 +830,39 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
         ],
         SnapshotCalculation: [
             {
-                label: 'Storage amount of EBS dbs volumes',
-                value: `${viewCalculation.ebsSnapshotCalculation.storageAmount}`,
-                text: `Storage amount of src primary dbs not including replica data in GiB`
+                label: 'Total snapshots',
+                value: `${viewCalculation.ebsSnapshotCalculation.totalSnapshots}`,
+                text: `Storage amount of primary database volumes`
             },
             {
-                label: 'Initial snapshots cost',
+                label: 'Amount changed in GiB per snapshot',
+                value: `${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`,
+                text: `(Monthly change rate% / 100)/total snapshots x Storage amount of EBS primary dbs volumes= (${viewCalculation.monthlyChangeRate}%/100)/${viewCalculation.ebsSnapshotCalculation.totalSnapshots} x${viewCalculation.ebsSnapshotCalculation.storageAmountPerMonth}= ${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`
+            },
+            {
+                label: 'Initial snapshot cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}`,
-                text: `Storage amount of EBS primary dbs volumes (${viewCalculation.ebsSnapshotCalculation.storageAmount}) x EBS snapshots price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost})`
+                text: `Storage amount of EBS primary dbs volumes (${viewCalculation.ebsSnapshotCalculation.storageAmountPerMonth}) x EBS snapshots price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotPrice})`
             },
             {
-                label: 'Monthly change rate',
-                value: `${viewCalculation.monthlyChangeRate}%`,
-                text: `Input data`
-            },
-            {
-                label: 'Monthly cost of snapshots',
-                value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostOfSnapshots}`,
-                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x storage amount of EBS primary dbs (${viewCalculation.ebsSnapshotCalculation.storageAmount}) x EBS snapshot price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost})`
+                label: 'Monthly cost of each snapshot',
+                value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}`,
+                text: `Amount changed in GiB per snapshot (${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}) x EBS snapshot price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotPrice})`
             },
             {
                 label: 'Discount for partial storage month',
                 value: `$${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth}`,
-                text: `Monthly cost of snapshots ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
+                text: `Monthly cost of each snapshots ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
             },
             {
                 label: 'Incremental snapshot cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost}`,
-                text: `Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth}))`
+                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth})) x Total snapshots (${viewCalculation.ebsSnapshotCalculation.totalSnapshots})`
             },
             {
                 label: 'Total snapshots cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}`,
-                text: `Initial snapshot cost ($${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost})`
+                text: `Initial snapshots cost ($${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}) + Incremental snapshots cost ($${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost})`
             }
         ],
         cloneCalculation: [
@@ -1403,18 +1403,16 @@ const createInstances = (state: any) => {
         manualTCOVolumeTypes2
     } = state.exploreSavings;
     instanceArr.push({
-        instanceDescription: selectedManualInstanceType?.label,
-        instanceType: selectedManualInstanceType?.value,
+        ec2InstanceDescription: manualMonthlyDescription,
+        ec2InstanceType: selectedManualInstanceType?.value,
         isPrimary: true,
-        sqlServerEdition: selectedManualServerEdition?.value,
         volumes: generateVolumesData(manualTCOVolumeTypes)
     });
     if (selectedManualDeploymentModel?.label !== 'Standalone' && secondaryVolumeFilledStatus) {
         instanceArr.push({
-            instanceDescription: selectedSecondaryManualInstanceType?.label,
-            instanceType: selectedSecondaryManualInstanceType?.value,
+            ec2InstanceDescription: manualSecondaryMachineDescription,
+            ec2InstanceType: selectedSecondaryManualInstanceType?.value,
             isPrimary: false,
-            sqlServerEdition: selectedManualServerEdition?.value,
             volumes: generateVolumesData(manualTCOVolumeTypes2)
         });
     }
@@ -1422,13 +1420,39 @@ const createInstances = (state: any) => {
     return instanceArr;
 };
 
+const setSQLServerEdition = (value: string) => {
+    switch (value) {
+        case 'SQL server Enterprise':
+            return 'Enterprise Edition';
+        case 'SQL server Standard':
+            return 'Standard Edition';
+        case 'SQL server Web':
+            return 'Web Edition';
+        case 'SQL server Developer':
+            return 'Developer Edition';
+    }
+};
+
 export const generateManualStorageSavingsPayload = () => {
     const state = store.getState();
-    const { numberOfClonedCopies, monthlyChangeRate, selectedManualDeploymentModel } = state.exploreSavings;
+    const {
+        numberOfClonedCopies,
+        monthlyChangeRate,
+        selectedManualDeploymentModel,
+        selectedSnapshotFrequency,
+        monthlyBYOLCost,
+        selectedManualServerEdition
+    } = state.exploreSavings;
     const payloadObj: any = {};
-    payloadObj.sqlServerDeploymentType = selectedManualDeploymentModel?.value;
+    payloadObj.sqlServerDeploymentType =
+        selectedManualDeploymentModel?.value !== 'Standalone' ? 'AOAG' : selectedManualDeploymentModel?.value;
     payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
+    payloadObj.snapshotFrequency = selectedSnapshotFrequency?.value;
     payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
-    payloadObj.instances = createInstances(state);
+    if (monthlyBYOLCost) {
+        payloadObj.monthlySqlByolCost = Number(monthlyBYOLCost);
+    }
+    payloadObj.sqlServerEdition = setSQLServerEdition(selectedManualServerEdition?.value);
+    payloadObj.ec2Instances = createInstances(state);
     return payloadObj;
 };

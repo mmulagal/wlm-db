@@ -1,4 +1,4 @@
-import { TextField } from '@netapp/design-system';
+import { DsTextField, Popover, TextField } from '@netapp/design-system';
 import styles from './ManualTCOInputComponent.module.scss';
 import { useDispatch } from 'react-redux';
 import {
@@ -6,6 +6,7 @@ import {
     setVolumeTypeOperation
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type ManualInputs = {
     type: string;
@@ -66,6 +67,15 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
             }
         }
 
+        return '';
+    };
+
+    const handleStorageCapacityLimit = () => {
+        const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount;
+        const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount;
+        if ((primaryVol > 0 && primaryVol > 16384) || (secondaryVol > 0 && secondaryVol > 16384)) {
+            return 'Maximum capacity allowed: 16 TiB.';
+        }
         return '';
     };
     return (
@@ -129,74 +139,106 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                             : manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount
                     }
                     className={styles.deploymentModelWidth}
+                    info="Maximum capacity allowed: 16 TiB."
+                    error={handleStorageCapacityLimit()}
                 />
             </div>
 
             {/* Second Row */}
             <div className={styles.row}>
-                <TextField
-                    label={'Provisioned IOPS per volume'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        if (from === 'primary') {
-                            dispatch(
-                                setVolumeTypeOperation({
-                                    type: type,
-                                    mode: 'manualTCOProvisionedIOPS',
-                                    value: numVal
-                                })
-                            );
-                        } else {
-                            dispatch(
-                                setSecondaryVolumeTypeOperation({
-                                    type: type,
-                                    mode: 'manualTCOProvisionedIOPS',
-                                    value: numVal
-                                })
-                            );
+                {IOPSDisable ? (
+                    <Popover
+                        popoverClass={styles['copy-popover']}
+                        children={GENERAL.IOPS_DISABLE_TOOLTIP}
+                        trigger="hover"
+                        container={
+                            <TextField
+                                label={'Provisioned IOPS per volume'}
+                                isDisabled={true}
+                                className={styles.deploymentModelWidth}
+                            />
                         }
-                    }}
-                    isDisabled={IOPSDisable}
-                    value={
-                        from === 'primary'
-                            ? manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS
-                            : manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS
-                    }
-                    className={styles.deploymentModelWidth}
-                    error={handleIOPSError()}
-                />
+                    />
+                ) : (
+                    <TextField
+                        label={'Provisioned IOPS per volume'}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            if (from === 'primary') {
+                                dispatch(
+                                    setVolumeTypeOperation({
+                                        type: type,
+                                        mode: 'manualTCOProvisionedIOPS',
+                                        value: numVal
+                                    })
+                                );
+                            } else {
+                                dispatch(
+                                    setSecondaryVolumeTypeOperation({
+                                        type: type,
+                                        mode: 'manualTCOProvisionedIOPS',
+                                        value: numVal
+                                    })
+                                );
+                            }
+                        }}
+                        isDisabled={IOPSDisable}
+                        value={
+                            from === 'primary'
+                                ? manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS
+                                : manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS
+                        }
+                        className={styles.deploymentModelWidth}
+                        error={handleIOPSError()}
+                    />
+                )}
 
-                <TextField
-                    label={'Throughput MB/s-default'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        if (from === 'primary') {
-                            dispatch(
-                                setVolumeTypeOperation({
-                                    type: type,
-                                    mode: 'manualTCOThroughput',
-                                    value: numVal
-                                })
-                            );
-                        } else {
-                            dispatch(
-                                setSecondaryVolumeTypeOperation({
-                                    type: type,
-                                    mode: 'manualTCOThroughput',
-                                    value: numVal
-                                })
-                            );
+                {throughPutDisable ? (
+                    <Popover
+                        popoverClass={styles['copy-popover']}
+                        children={GENERAL.THROUGHPUT_DISABLE_TOOLTIP}
+                        trigger="hover"
+                        container={
+                            <TextField
+                                label={'Throughput MB/s-default'}
+                                isDisabled={true}
+                                className={styles.deploymentModelWidth}
+                            />
                         }
-                    }}
-                    isDisabled={throughPutDisable}
-                    value={
-                        from === 'primary'
-                            ? manualTCOVolumeTypes?.[type]?.manualTCOThroughput
-                            : manualTCOVolumeTypes2?.[type]?.manualTCOThroughput
-                    }
-                    className={styles.deploymentModelWidth}
-                    error={handleThroughputError()}
-                />
+                    />
+                ) : (
+                    <TextField
+                        label={'Throughput MB/s-default'}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            if (from === 'primary') {
+                                dispatch(
+                                    setVolumeTypeOperation({
+                                        type: type,
+                                        mode: 'manualTCOThroughput',
+                                        value: numVal
+                                    })
+                                );
+                            } else {
+                                dispatch(
+                                    setSecondaryVolumeTypeOperation({
+                                        type: type,
+                                        mode: 'manualTCOThroughput',
+                                        value: numVal
+                                    })
+                                );
+                            }
+                        }}
+                        isDisabled={throughPutDisable}
+                        value={
+                            from === 'primary'
+                                ? manualTCOVolumeTypes?.[type]?.manualTCOThroughput
+                                : manualTCOVolumeTypes2?.[type]?.manualTCOThroughput
+                        }
+                        className={styles.deploymentModelWidth}
+                        error={handleThroughputError()}
+                    />
+                )}
             </div>
         </div>
     );

@@ -880,7 +880,7 @@ async function getSqlInstancePricingDetails(
 
     const pricingResult = await getProducts(params);
     const pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } = {};
-    if (pricingResult.PriceList) {
+    if (pricingResult?.PriceList) {
         pricingResult.PriceList.forEach(priceItem => {
             const item = (priceItem as LazyJsonString).deserializeJSON();
             const { terms, product } = item;

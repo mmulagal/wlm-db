@@ -41,6 +41,26 @@
                 font-size: 14px;
             }
         }
+
+        .instanceTypeContainer {
+            display: flex;
+            flex-direction: column;
+
+            .errorContainer {
+                display: flex;
+                flex-direction: row;
+                gap: 4px;
+                align-items: center;
+                margin: -32px 0 36px 0;
+
+                svg {
+                    width: 16px;
+                    path {
+                        fill: var(--icon-primary);
+                    }
+                }
+            }
+        }
     }
 
     .notice {

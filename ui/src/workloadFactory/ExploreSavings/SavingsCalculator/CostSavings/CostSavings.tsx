@@ -22,8 +22,8 @@ const CostSavings = ({ disableState }: CS) => {
     const [costZeroCase, setCostZeroCase] = useState(false);
 
     useEffect(() => {
-        const fsxTotal = storageSavingsResponse?.totalSummary?.recommended
-            ? Number(storageSavingsResponse?.totalSummary?.recommended)
+        const fsxTotal = storageSavingsResponse?.totalSummary?.recommendedTotal
+            ? Number(storageSavingsResponse?.totalSummary?.recommendedTotal)
             : 0;
         const ebsTotal = storageSavingsResponse?.totalSummary?.existing
             ? Number(storageSavingsResponse?.totalSummary?.existing)

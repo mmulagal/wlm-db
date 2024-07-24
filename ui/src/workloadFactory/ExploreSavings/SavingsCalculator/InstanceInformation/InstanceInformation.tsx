@@ -5,7 +5,7 @@ import styles from './InstanceInformation.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import { FINDINGS, FSX_AZ_TYPE } from '../../../../utils/consts';
+import { FINDINGS } from '../../../../utils/consts';
 
 const InstanceInformation = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
@@ -14,6 +14,7 @@ const InstanceInformation = () => {
 
     const [tableData, setTableData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [noOfInstances, setNoOfInstances] = useState(0);
 
     useEffect(() => {
         setLoading(selectedHostDetails?.loading);
@@ -24,12 +25,8 @@ const InstanceInformation = () => {
         const findingsDbModel = selectedHostDetails?.serverInstallationMode.includes(GENERAL.AOAG)
             ? FINDINGS.NOT_OPTIMIZED
             : FINDINGS.OPTIMIZED;
-        let azType = '';
-        if (storageSavingsResponse?.single) {
-            azType = FSX_AZ_TYPE.SINGLE;
-        } else if (storageSavingsResponse?.multi) {
-            azType = FSX_AZ_TYPE.MULTI;
-        }
+
+        setNoOfInstances(selectedHostDetails?.totalInstance || 0);
 
         if (isInventoryV2) {
             let instanceTypelist = [];
@@ -52,22 +49,19 @@ const InstanceInformation = () => {
                     details: 'Instance type',
                     value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
                     id: '1',
-                    findings: findingsComputeData,
-                    azType: azType
+                    findings: findingsComputeData
                 },
                 {
                     details: 'SQL Edition',
                     value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
                     id: '2',
-                    findings: findingsLicenseData,
-                    azType: azType
+                    findings: findingsLicenseData
                 },
                 {
                     details: 'Deployment model',
                     value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
                     id: '3',
-                    findings: findingsDbModel,
-                    azType: azType
+                    findings: findingsDbModel
                 }
             ];
             setTableData(data);
@@ -83,22 +77,19 @@ const InstanceInformation = () => {
                     details: 'Instance type',
                     value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
                     id: '1',
-                    findings: findingsComputeData,
-                    azType: azType
+                    findings: findingsComputeData
                 },
                 {
                     details: 'SQL Edition',
                     value: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
                     id: '2',
-                    findings: findingsLicenseData,
-                    azType: azType
+                    findings: findingsLicenseData
                 },
                 {
                     details: 'Deployment model',
                     value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
                     id: '3',
-                    findings: findingsDbModel,
-                    azType: azType
+                    findings: findingsDbModel
                 }
             ];
             setTableData(data);
@@ -114,7 +105,7 @@ const InstanceInformation = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.tooltips}>
-                        {rowData.details === 'SQL Edition' && rowData.azType === FSX_AZ_TYPE.MULTI && (
+                        {rowData.details === 'SQL Edition' && noOfInstances > 1 && (
                             <TooltipInfo>{GENERAL.ES_SQL_EDITION_MULTI_TOOLTIP}</TooltipInfo>
                         )}
                         <DsTypography variant="Regular_14" style={{ minWidth: '125px' }}>
@@ -148,17 +139,35 @@ const InstanceInformation = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return !storageSavingsLoading ? (
                     <>
+                        {rowData.details === 'Instance type' && (
+                            <div className={styles.instanceTypeTooltip}>
+                                <TooltipInfo>{GENERAL.INSTANCE_TYPE_FINDINGS_TOOLTIP}</TooltipInfo>
+                            </div>
+                        )}
                         {rowData?.findings === FINDINGS.NOT_OPTIMIZED && (
                             <div className={styles.tooltips}>
                                 {rowData.details === 'SQL Edition' && (
                                     <TooltipInfo>{GENERAL.NOT_OPTIMIZED}</TooltipInfo>
                                 )}
-                                <DsTypography variant="Regular_14">Not optimized</DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {rowData?.details === 'Instance type'
+                                        ? GENERAL.FINDINGS.OVER_PROVISIONED
+                                        : GENERAL.FINDINGS.NOT_OPTIMIZED}
+                                </DsTypography>
                             </div>
                         )}
 
                         {rowData?.findings === FINDINGS.OPTIMIZED && (
-                            <DsTypography variant="Regular_14">Optimized</DsTypography>
+                            <DsTypography variant="Regular_14">{GENERAL.FINDINGS.OPTIMIZED}</DsTypography>
+                        )}
+
+                        {rowData?.findings === FINDINGS.UNDER_PROVISIONED && (
+                            <DsTypography variant="Regular_14">{GENERAL.FINDINGS.UNDER_PROVISIONED}</DsTypography>
+                        )}
+
+                        {(rowData?.findings === FINDINGS.INSUFFICIENT_DATA ||
+                            rowData?.findings === FINDINGS.INSUFFICIENT_PERMISSIONS) && (
+                            <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
                         )}
                     </>
                 ) : (

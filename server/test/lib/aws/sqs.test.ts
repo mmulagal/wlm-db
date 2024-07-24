@@ -1,7 +1,7 @@
 import { QueueAttributeName } from '@aws-sdk/client-sqs';
 import { createQueue, listQueues, receiveMessage } from '../../../src/lib/aws/sqs';
 
-// import '../../simulator/scopes/aws/sqs-scope';
+import '../../simulator/scopes/aws/sqs-scope';
 
 describe('SQS lib functions', () => {
     it('should create of SQS queue', async () => {

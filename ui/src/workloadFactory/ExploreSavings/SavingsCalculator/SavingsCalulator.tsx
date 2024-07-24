@@ -13,6 +13,7 @@ import SavingsSelectedHost from './SavingsSelectedHost/SavingsSelectedHost';
 import InstanceInformation from './InstanceInformation/InstanceInformation';
 import SelectedVolumeSummary from './SelectedVolumeSummary/SelectedVolumeSummary';
 import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
+import { ReactComponent as SuggestionDisable } from '../../../assets/SuggestionDisable.svg';
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
 import { useEffect, useState } from 'react';
 //@ts-ignore
@@ -23,6 +24,7 @@ import {
     addExploreSavingsInitialData,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
+    setViewCalculationsApiResponse,
     setViewCalculationsLoading,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -34,12 +36,13 @@ import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
 import { useGetManualStorageSavingsMutation, useGetManualViewCalculationsMutation } from '../../../utils/apiService';
 import { generateManualStorageSavingsPayload } from './savingsUtil';
-import { formatViewCalcData } from '../ExploreSavingsUtils';
+import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
     const [disableState, setDisableState] = useState(false);
+    const [isMutliFsx, setIsMutliFsx] = useState(false);
 
     const [getManualStorageSavingsApi] = useGetManualStorageSavingsMutation();
     const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
@@ -50,6 +53,7 @@ const SavingsCalculator = () => {
         numberOfClonedCopies,
         monthlyChangeRate,
         selectedManualDeploymentModel,
+        selectedDeploymentModel,
         selectedManualRegion,
         selectedManualServerEdition,
         selectedManualInstanceType,
@@ -58,8 +62,30 @@ const SavingsCalculator = () => {
         manualSecondaryMachineDescription,
         manualTCOVolumeTypes,
         volumeFilledStatus,
-        manualTCOVolumeTypes2
+        manualTCOVolumeTypes2,
+        recommendedTargetInstance,
+        storageSavingsResponse,
+        viewCalculationsApiResponse,
+        viewCalculationsResponse
     } = useAppSelector(state => state.exploreSavings);
+
+    useEffect(() => {
+        dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
+        dispatch(
+            setViewCalculationsResponse(
+                formatViewCalcData(viewCalculationsApiResponse || {}, selectedDeploymentModel, monthlyChangeRate)
+            )
+        );
+    }, [recommendedTargetInstance]);
+
+    useEffect(() => {
+        const requiredNumOfFsx = viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsx;
+        if (requiredNumOfFsx && Number(requiredNumOfFsx) > 1) {
+            setIsMutliFsx(true);
+        } else {
+            setIsMutliFsx(false);
+        }
+    }, [viewCalculationsResponse]);
 
     const getManualStorageSavingsData = async () => {
         const payload = generateManualStorageSavingsPayload();
@@ -70,7 +96,7 @@ const SavingsCalculator = () => {
                 payload: payload
             });
             dispatch(setStorageSavingsLoading(false));
-            dispatch(setStorageSavingsResponse(result?.data));
+            dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data)));
         } catch (error) {
             dispatch(setStorageSavingsLoading(false));
         }
@@ -83,6 +109,7 @@ const SavingsCalculator = () => {
                 regionId: selectedManualRegion?.data?.regionCode,
                 payload: payload
             });
+            dispatch(setViewCalculationsApiResponse(result?.data));
             dispatch(
                 setViewCalculationsResponse(
                     formatViewCalcData(result?.data, selectedManualDeploymentModel?.label, monthlyChangeRate)
@@ -224,24 +251,30 @@ const SavingsCalculator = () => {
                     </div>
 
                     {/* Text Area */}
+
                     <div className={styles.selectionArea}>
-                        <div>
-                            <Suggestion />
-                        </div>
+                        <div>{isMutliFsx ? <SuggestionDisable /> : <Suggestion />}</div>
                         <div className={styles.textContent}>
-                            <DsTypography variant="Semibold_16">{GENERAL.SELECTION_BASED_TEXT}</DsTypography>
-                            <DsTypography variant="Regular_14" className={styles.secondText}>
+                            <DsTypography variant="Semibold_16" className={isMutliFsx ? styles.textDisable : ''}>
+                                {GENERAL.SELECTION_BASED_TEXT}
+                            </DsTypography>
+                            <DsTypography
+                                variant="Regular_14"
+                                className={
+                                    isMutliFsx ? `${styles.secondText} ${styles.textDisable}` : styles.secondText
+                                }
+                            >
                                 {GENERAL.SELECTION_BASED_SECOND}
                             </DsTypography>
                         </div>
                     </div>
 
                     {/* Accordion here */}
-                    <MSSQLAccordion printState={printState} disableState={disableState} />
+                    <MSSQLAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
                 </div>
 
                 {/* last section */}
-                <ExportPDF printDocument={printDocument} disableState={disableState} />
+                <ExportPDF printDocument={printDocument} disableState={disableState} isMutliFsx={isMutliFsx} />
             </div>
         </div>
     );
