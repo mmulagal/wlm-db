@@ -4,19 +4,19 @@ param(
     [string]$DBName,
 
     [Parameter(Mandatory = $true)]
-    [string]$DataFilePath,
+    [string]$DataFilePathString,
 
     [Parameter(Mandatory = $true)]
-    [string]$LogFilePath,
+    [string]$LogFilePathString,
 
     [Parameter(Mandatory = $true)]
-    [string]$DataSerial,
+    [string]$DataSerialString,
 
     [Parameter(Mandatory = $true)]
-    [string]$LogSerial,
+    [string]$LogSerialString,
 
     [Parameter(Mandatory = $true)]
-    [string]$InstanceName,
+    [string]$DbInstanceName,
 
     [Parameter(Mandatory = $true)]
     [string]$IsDefaultInstance,
@@ -30,10 +30,17 @@ $ErrorActionPreference = "Stop"
 
 $IsDefaultInstance = [System.Convert]::ToBoolean($IsDefaultInstance)
 
+$DataFilePath = $DataFilePathString.Split(',')
+$LogFilePath = $LogFilePathString.Split(',')
+$DataSerial = $DataSerialString.Split(',')
+$LogSerial = $LogSerialString.Split(',')
+
+Write-Information "$LogPrefix DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
+
 try {
     $responseObject = [ordered]@{}
 
-    if ($DataFilePath -eq $null -or $LogFilePath -eq $null -or $DataSerial -eq $null -or $LogSerial -eq $null) {
+    if ($DataFilePath.Count -eq 0 -or $LogFilePath.Count -eq 0 -or $DataSerial.Count -eq 0 -or $LogSerial.Count -eq 0) {
         Write-Information "$LogPrefix DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
         throw "DataFilePath or LogFilePath or DataSerial or LogSerial is null"
     }
@@ -47,14 +54,18 @@ try {
     $datalabel = $DBName + '-Data'
     $loglabel = $DBName + '-Log'
 
-    $DataDriveLetter = $DataFilePath.Substring(0, 1)
-    $LogDriveLetter = $LogFilePath.Substring(0, 1)
+    $DataDriveLetter = $DataFilePath[0].Substring(0, 1)
+    $LogDriveLetter = $LogFilePath[0].Substring(0, 1)
     $datafolder = $DataDriveLetter + ':\' + $datalabel
     $logfolder = $LogDriveLetter + ':\' + $loglabel
 
     $retry = 0
     do {
-        $disklist = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -ceq $DataSerial -or $_.SerialNumber -ceq $LogSerial })
+        $disklist = @()
+        ($DataSerial + $LogSerial) | ForEach-Object {
+            $serial = $_
+            $disklist += (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -ceq $serial })
+        }
         $diskcount = $disklist.Number.Count
         if ($retry -gt 0) {
             Start-Sleep 20
@@ -101,22 +112,34 @@ try {
     $null = (New-Item -ItemType Directory -Path $datafolder -Force)
     $null = (New-Item -ItemType Directory -Path $logfolder -Force)
 
-    $datadisk = ($disklist | Where-Object { $_.SerialNumber -ceq $DataSerial })
-    $logdisk = ($disklist | Where-Object { $_.SerialNumber -ceq $LogSerial })
-    $datadisknumber = $datadisk.Number
-    $logdisknumber = $logdisk.Number
+    $datadisks = ($disklist | Where-Object { $DataSerial.Contains($_.SerialNumber) })
+    $logdisks = ($disklist | Where-Object { $LogSerial.Contains($_.SerialNumber ) })
 
-    $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
-    $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
+    $datadisknumbers = @()
+    $dataPartitions = @()
+    $logdisknumbers = @()
+    $logPartitions = @()
+    $datadisks | ForEach-Object {
+        $datadisknumber = $_.Number
+        $datadiskpartition = Get-Partition -DiskNumber $datadisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
+        $null = $datadiskpartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
-    $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
-    $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
+        Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel    
+        $datadisknumbers += $datadisknumber
+        $dataPartitions += $datadiskpartition
+    }
+
+    $logdisks | ForEach-Object {
+        $logdisknumber = $_.Number
+        $logdiskpartition = Get-Partition -DiskNumber $logdisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
+        $null = $logdiskpartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
+
+        Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
+        $logdisknumbers += $logdisknumber
+        $logPartitions += $logdiskpartition
+    }
 
     Write-Information "$LogPrefix DataFolder: $datafolder $logfolder"
-
-
-    Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
-    Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
 
 }
 catch {
@@ -139,50 +162,78 @@ try {
         # Add new disks to Cluster Storage
         #In some cases onlining disk and setting Filesystem label fails and volume returns empty in PS cmdlet. Fail check with diskpart
 
-        if ($datadisk.IsOffline -ne $False) {
-        $null= (echo "select disk $datadisknumber" "select partition 2" "select volume" "online vol" | diskpart)
-        Start-Sleep 20 
+        foreach ($datadisk in $datadisks) {
+            if ($datadisk.IsOffline -ne $False) {
+                $null= (echo "select disk $($datadisk.Number)" "select partition 2" "select volume" "online vol" | diskpart)
+                Start-Sleep 20 
+            }    
         }
-
-        if ($logdisk.IsOffline -ne $False) {
-        $null= (echo "select disk $logdisknumber" "select partition 2" "select volume" "online vol" | diskpart)
-        Start-Sleep 20 
-        }
-
-        $clusterdatadisk = Get-ClusterResource -Name $datalabel -ErrorAction SilentlyContinue
-        $clusterlogdisk = Get-ClusterResource -Name $loglabel -ErrorAction SilentlyContinue
-
-        if ([string]::IsNullOrEmpty($clusterdatadisk)) {
-            $availabledatadisk = Get-Disk | Where-Object { $_.Number -eq $datadisknumber }
-            $clusterdatadisk = ($availabledatadisk | Add-ClusterDisk -ErrorAction stop)
+        
+        foreach ($logdisk in $logdisks) {
+            if ($logdisk.IsOffline -ne $False) {
+                $null= (echo "select disk $($logdisk.Number)" "select partition 2" "select volume" "online vol" | diskpart)
+                Start-Sleep 20 
             }
-        if ([string]::IsNullOrEmpty($clusterlogdisk)) {
-            $availablelogdisk = Get-Disk | Where-Object { $_.Number -eq $logdisknumber }
-            $clusterlogdisk = ($availablelogdisk | Add-ClusterDisk -ErrorAction stop)
         }
+
+        $clusterdatadisks = Get-ClusterResource -Name $datalabel -ErrorAction SilentlyContinue
+        $clusterlogdisks = Get-ClusterResource -Name $loglabel -ErrorAction SilentlyContinue
+
+        if ([string]::IsNullOrEmpty($clusterdatadisks)) {
+            $availabledatadisks = Get-Disk | Where-Object { $datadisknumbers.Contains($_.Number) }
+            $clusterdatadisks = ($availabledatadisks | Add-ClusterDisk -ErrorAction stop)
+        }
+
+        if ([string]::IsNullOrEmpty($clusterlogdisks)) {
+            $availablelogdisks = Get-Disk | Where-Object { $logdisknumbers.Contains($_.Number) }
+            $clusterlogdisks = ($availablelogdisks | Add-ClusterDisk -ErrorAction stop)
+        }
+
+        Write-Debug "$LogPrefix ClusterDataDisks: $clusterdatadisks ClusterLogDisks: $clusterlogdisks"
 
         try {
-            $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($InstanceName)")
+            $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($DbInstanceName)")
             $SQLGroup = $SQLRoleGroup[0]
+            
+            foreach ($clusterdatadisk in $clusterdatadisks) {
+                
+                if ($clusterdatadisk.OwnerGroup -ne $SQLGroup) {
+                    $null = (Move-ClusterResource -Name $($clusterdatadisk.Name) -Group $SQLGroup)
+                }
 
-            if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
-                $null = (Move-ClusterResource -Name $($clusterdatadisk.Name) -Group $SQLGroup)
-                $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
-
-                #Add dependency on new disks in SQL Server Resource
+                #     #Add dependency on new disks in SQL Server Resource
                 if ($IsDefaultInstance -eq $True){
                     $ClusterResourceName = "SQL Server"
                 }
                 else {
-                    $ClusterResourceName = "SQL Server ($InstanceName)"
+                    $ClusterResourceName = "SQL Server ($DbInstanceName)"
                 }
+
                 $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterdatadisk.Name))
+
+                #     #Rename new cluster disks to user friendly name
+                (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
+            }
+
+            foreach ($clusterlogdisk in $clusterlogdisks) {
+                if ($clusterlogdisk.OwnerGroup -ne $SQLGroup) {
+                    $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
+                }
+
+                #     #Add dependency on new disks in SQL Server Resource
+                if ($IsDefaultInstance -eq $True){
+                    $ClusterResourceName = "SQL Server"
+                }
+                else {
+                    $ClusterResourceName = "SQL Server ($DbInstanceName)"
+                }
+
                 $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterlogdisk.Name))
 
-                #Rename new cluster disks to user friendly name
-                (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
+                #     #Rename new cluster disks to user friendly name
                 (Get-ClusterResource -Name $($clusterlogdisk.Name)).name = $loglabel
             }
+
         }
         catch {
             $responseObject['error'] = $_.Exception.Message
@@ -201,14 +252,18 @@ catch {
 
 try {
     Start-Sleep 5
-    if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
-        $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
-        $null = (Get-Partition -DiskNumber $datadisknumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
+    foreach ($dataPartition in $dataPartitions) {
+        if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
+            $null = Add-PartitionAccessPath -DiskNumber $dataPartition.DiskNumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
+            $null = (Get-Partition -DiskNumber $dataPartition.DiskNumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
+        }
     }
 
-    if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
-        $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
-        $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
+    foreach ($logPartition in $logPartitions) {
+        if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
+            $null = Add-PartitionAccessPath -DiskNumber $logPartition.DiskNumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
+            $null = (Get-Partition -DiskNumber $logPartition.DiskNumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
+        }
     }
 }catch {
         $responseObject['error'] = $_.Exception.Message
@@ -219,7 +274,7 @@ try {
     }
 
 try {
-    Get-Partition | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
+    Get-Partition | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Where-Object { $datadisknumbers.Contains($_.DiskNumber) -or $logdisknumbers.Contains($_.DiskNumber) } | ForEach-Object {
         $partition = $_
         $partition.AccessPaths | ForEach-Object {
             $accessPath = $_
@@ -242,20 +297,32 @@ try {
 }
 
 try {
-    $DataFileLeaf = Split-Path -Path $DataFilePath -Leaf
-    $LogFileLeaf = Split-Path -Path $LogFilePath -Leaf
-    $newDataFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $DataFileLeaf).FullName
-    $newLogFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $LogFileLeaf).FullName
-    if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
-        $responseObject['dataPath'] = $newDataFilePath
-        $responseObject['logPath'] = $newLogFilePath
-        Write-Information "$LogPrefix NewFilePaths: $newDataFilePath $newLogFilePath"
+    $responseObject['dataPath'] = @()
+    $responseObject['logPath'] = @()
+
+    ($DataFilePath + $LogFilePath) | ForEach-Object {
+        $path = $_
+        $fileLeaf = Split-Path -Path $path -Leaf
+        $pathType = ''
+        if ($path.Contains('\data\')) {
+            $newFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $fileLeaf).FullName
+            $pathType = 'dataPath'
+        } else {
+            $newFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $fileLeaf).FullName
+            $pathType = 'logPath'
+        }
+
+        if (Test-Path $newFilePath) {
+            $responseObject[$pathType] += $newFilePath
+        } else {
+            throw
+        }
+        
     }
-    else {
-        throw 
-    }
+
+    Write-Information "$LogPrefix NewFilePaths: $($responseObject['dataPath']) $($responseObject['logPath'])"
 } catch {
-    $responseObject['error'] = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
+    $responseObject['error'] = "Failed to validate newpaths $($responseObject['dataPath']) $($responseObject['logPath'])"
 }
 
 
