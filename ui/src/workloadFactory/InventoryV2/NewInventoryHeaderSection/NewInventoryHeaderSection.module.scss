@@ -54,7 +54,7 @@
         .valueArea {
             margin-top: 24px;
             display: flex;
-            gap: 24px;
+            gap: 0;
             align-items: center;
 
             .firstBlock {
@@ -73,7 +73,8 @@
                 width: 1px;
                 height: 56px;
                 background-color: var(--border);
-                margin-left: 16px;
+                margin-left: 24px;
+                margin-right: 24px;
             }
             [class*='SquareComponent_valueText'] {
                 font-size: 32px !important;
@@ -91,5 +92,11 @@
         .firstPart {
             gap: 40px;
         }
+    }
+}
+
+@media screen and (min-width: 1501px) and (max-width: 1770px) {
+    .chartSection {
+        gap: 92px;
     }
 }

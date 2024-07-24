@@ -3,6 +3,17 @@
     flex-direction: column;
     gap: 5px;
 
+    .headerArea {
+        display: flex;
+        gap: 8px;
+
+        .loadingClass {
+            display: flex;
+            position: relative;
+            top: 8px;
+        }
+    }
+
     .valueText {
         font-size: 14px;
     }

@@ -69,6 +69,15 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
 
         return '';
     };
+
+    const handleStorageCapacityLimit = () => {
+        const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount;
+        const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount;
+        if ((primaryVol > 0 && primaryVol > 16384) || (secondaryVol > 0 && secondaryVol > 16384)) {
+            return 'Maximum capacity allowed: 16 TiB.';
+        }
+        return '';
+    };
     return (
         <div className={styles.mainSection}>
             <div className={styles.row}>
@@ -130,6 +139,8 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                             : manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount
                     }
                     className={styles.deploymentModelWidth}
+                    info="Maximum capacity allowed: 16 TiB."
+                    error={handleStorageCapacityLimit()}
                 />
             </div>
 

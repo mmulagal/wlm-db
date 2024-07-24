@@ -57,7 +57,8 @@ const NewInventoryHeaderSection = () => {
                                         value={String(inventoryChartData?.detectedHost || 0)}
                                         color="var(--chart-4)"
                                         text={GENERAL.DETECTED_HOSTS}
-                                        isLoading={loading}
+                                        isLoading={false}
+                                        loadingInFirstRow={loading}
                                     />
                                 </div>
 
@@ -68,7 +69,8 @@ const NewInventoryHeaderSection = () => {
                                         value={String(inventoryChartData?.undetectedHost || 0)}
                                         color="var(--chart-2)"
                                         text={GENERAL.HOSTS_PENDING_DETECTION}
-                                        isLoading={loading}
+                                        isLoading={false}
+                                        loadingInFirstRow={loading}
                                     />
                                 </div>
                             </div>
@@ -95,7 +97,8 @@ const NewInventoryHeaderSection = () => {
                                         value={String(inventoryChartData?.managedInstance || 0)}
                                         color="var(--chart-9)"
                                         text={GENERAL.MANAGED_INSTANCES}
-                                        isLoading={loading}
+                                        isLoading={false}
+                                        loadingInFirstRow={loading}
                                     />
                                 </div>
 
@@ -106,7 +109,8 @@ const NewInventoryHeaderSection = () => {
                                         value={String(inventoryChartData?.unmanagedInstance || 0)}
                                         color="#DE9EFF"
                                         text={GENERAL.UNMANAGED_INSTANCES}
-                                        isLoading={loading}
+                                        isLoading={false}
+                                        loadingInFirstRow={loading}
                                     />
                                 </div>
                             </div>

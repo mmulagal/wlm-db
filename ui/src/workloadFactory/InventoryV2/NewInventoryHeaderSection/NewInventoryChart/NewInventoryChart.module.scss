@@ -20,6 +20,21 @@
     }
 }
 
+@media screen and (min-width: 1501px) and (max-width: 1770px) {
+    .inventoryChart {
+        width: 160px;
+        height: 160px;
+
+        position: relative;
+        top: 18px;
+
+        .emptyCircle {
+            width: 160px;
+            height: 160px;
+        }
+    }
+}
+
 @media screen and (max-width: 1500px) {
     .inventoryChart {
         width: 160px;
