@@ -35,11 +35,26 @@ const ManualModeInstances = Type.Array(
         isPrimary: Type.Boolean(),
         volumes: Type.Array(
             Type.Object({
-                volumeType: Type.String(),
-                volumeNumber: Type.Number(),
-                storageAmount: Type.Number(),
-                volumeIops: Type.Optional(Type.Number()),
-                throughput: Type.Optional(Type.Number())
+                volumeType: Type.String(Type.String({ enum: ['gp2', 'gp3', 'io1', 'io2', 'st1'] })),
+                volumeNumber: Type.Number({
+                    minimum: 1
+                }),
+                storageAmount: Type.Number({
+                    minimum: 1024 * 1024 * 1024, // 1 GB
+                    maximum: 16 * 1024 * 1024 * 1024 * 1024 // 16 TB
+                }),
+                volumeIops: Type.Optional(
+                    Type.Number({
+                        minimum: 100,
+                        maximum: 16000
+                    })
+                ),
+                throughput: Type.Optional(
+                    Type.Number({
+                        minimum: 125,
+                        maximum: 1000
+                    })
+                )
             })
         )
     })
