@@ -98,14 +98,26 @@
     }
 }
 
-@media screen and (min-width: 1351px) and (max-width: 1500px) {
+@media screen and (max-width: 1800px) {
     .dbDistribution {
+        width: 100%;
+
         .utilizationContainer {
-            gap: 32px;
+            width: 100%;
+            gap: 12.5%;
+
+            .barContainer {
+                gap: 40px;
+                .firstBar {
+                    width: 60px;
+                }
+            }
 
             .textContainer {
+                width: 100%;
+
                 .separatorProtection {
-                    width: 190px;
+                    width: 100%;
                 }
             }
         }

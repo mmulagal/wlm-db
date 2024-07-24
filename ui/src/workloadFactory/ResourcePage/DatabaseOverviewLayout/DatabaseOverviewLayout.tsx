@@ -1,7 +1,6 @@
 import { useAppSelector } from '../../../store/storeHooks';
-import { getAggrCost, getAggrStorageSavings } from '../../../utils/utilityFunctions';
-import EstimatedCost from '../../DatabaseHomePage/EstimatedCost/EstimatedCost';
-import StorageSavings from '../../DatabaseHomePage/StorageSavings/StorageSavings';
+import { getAggrStorageSavings } from '../../../utils/utilityFunctions';
+
 import DBDistributionSection from '../DBDistributionSection/DBDistributionSection';
 import InformationSection from '../InformationSection/InformationSection';
 import StoragePerformance from '../StoragePerformance/StoragePerformance';
@@ -13,6 +12,7 @@ import Diagram from './Diagram/Diagram';
 
 const DatabaseOverviewLayout = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+
     return (
         <div className={styles.databaseOverview}>
             <div className={styles.leftSidePart}>
@@ -30,10 +30,6 @@ const DatabaseOverviewLayout = () => {
                                 hostsLoading={resourceLoading}
                             />
                         </div>
-
-                        {/* <div className={styles.commonContainer}>
-                            <EstimatedCost hostData={getAggrCost([resourceDetails])} hostsLoading={resourceLoading} />
-                        </div> */}
                     </div>
                 </div>
 
