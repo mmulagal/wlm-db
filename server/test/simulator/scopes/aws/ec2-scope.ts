@@ -136,7 +136,17 @@ for (let i = 0; i < images.length; i += 1) {
 
 ec2Mock.on(DescribeRegionsCommand).resolves(fsxRegionsResponse);
 
-ec2Mock.on(DescribeInstanceTypesCommand).resolves(ec2InstanaceTypes);
+ec2Mock.on(DescribeInstanceTypesCommand).callsFake(async (command: DescribeInstanceTypesCommand) => {
+    const instanceTypes = command?.InstanceTypes || [];
+    if (instanceTypes.length === 0) {
+        return ec2InstanaceTypes;
+    }
+    return {
+        InstanceTypes: ec2InstanaceTypes.InstanceTypes.filter(instanceType =>
+            instanceTypes.includes(instanceType.InstanceType)
+        )
+    };
+});
 
 ec2Mock.on(DescribeRouteTablesCommand).resolves(routeTablesResponse);
 

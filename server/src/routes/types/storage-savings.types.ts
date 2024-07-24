@@ -16,11 +16,52 @@ const StorageSavingsRequestBody = Type.Object({
     clonedCopiesCount: Type.Number({
         minimum: 0
     }),
-    cloneRefreshFrequency: Type.String({ enum: ['Daily', 'Weekly', 'Monthly'] }), // TODO: to be removed depending as per remove clone frequency input UX
+    cloneRefreshFrequency: Type.Optional(Type.String({ enum: ['Daily', 'Weekly', 'Monthly'] })), // TODO: to be removed depending as per remove clone frequency input UX
     monthlyChangeRatePercentage: Type.Number({
         minimum: 0,
         maximum: 100
     })
+});
+
+const ManualStorageSavingsRequestParams = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    region: Type.String({ minLength: 1 })
+});
+
+const ManualModeInstances = Type.Array(
+    Type.Object({
+        ec2InstanceDescription: Type.String(),
+        ec2InstanceType: Type.String(),
+        isPrimary: Type.Boolean(),
+        volumes: Type.Array(
+            Type.Object({
+                volumeType: Type.String(),
+                volumeNumber: Type.Number(),
+                storageAmount: Type.Number(),
+                volumeIops: Type.Optional(Type.Number()),
+                throughput: Type.Optional(Type.Number())
+            })
+        )
+    })
+);
+
+const ManualStorageSavingsRequestBody = Type.Object({
+    sqlServerDeploymentType: Type.String(),
+    sqlServerEdition: Type.String({
+        enum: ['Standard Edition', 'Enterprise Edition', 'Web Edition', 'Express Edition', 'Developer Edition']
+    }),
+    monthlyChangeRatePercentage: Type.Number({
+        minimum: 0,
+        maximum: 100
+    }),
+    snapshotFrequency: Type.String({
+        enum: ['NoSnapShotStorage', 'Hourly', 'Daily', 'Weekly', 'Monthly', '2xDaily', '3xDaily', '4xDaily', '6xDaily']
+    }),
+    clonedCopiesCount: Type.Number({
+        minimum: 0
+    }),
+    monthlySqlByolCost: Type.Optional(Type.Number()),
+    ec2Instances: ManualModeInstances
 });
 
 const StorageMetrics = Type.Object({
@@ -236,11 +277,9 @@ const FsxOntapSnapshotCalculation = Type.Object({
 
 const FsxCloneCalculation = Type.Object({
     clonedCopiesCount: Type.Number(),
-    numberOfClonesInAMonth: Type.Number(),
     changeRateBetweenClones: Type.Number(),
     totalFsxnCapacity: Type.Number(),
     fsxnSsdPrice: PriceUnitObject,
-    cloneRefreshFrequency: Type.String(), // TODO: to be removed depending as per remove clone frequency input UX
     monthlyChangeRatePercentage: Type.Number(),
     desiredStorageCapacity: Type.Number(),
     percentageOfDataOnSsdStorage: Type.Number(),
@@ -306,6 +345,7 @@ type EbsCostCalculationType = Static<typeof EbsCostCalculation>;
 
 type StorageSavingsResponseType = Static<typeof StorageSavingsResponse>;
 type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
+type ManualStorageSavingsRequestBodyType = Static<typeof ManualStorageSavingsRequestBody>;
 
 const ComputeDetails = Type.Object({
     instanceType: Type.String(),
@@ -351,16 +391,25 @@ const ComputeLicenseCost = Type.Object({
 type ComputeLicenseCostType = Static<typeof ComputeLicenseCost>;
 
 type StorageSavingsMetricsCalculationsResponseType = Static<typeof StorageSavingsCalculationsMetricsResponse>;
+
+type ComputeDetailsType = Static<typeof ComputeDetails>;
+type LicenseDetailsType = Static<typeof LicenseDetails>;
 export {
     EbsCostCalculationType,
     EbsCloneCalculationType,
     EbsSnapshotCalculationType,
     StorageSavingsRequestParams,
     StorageSavingsRequestBody,
+    ManualStorageSavingsRequestParams,
+    ManualStorageSavingsRequestBody,
+    ManualModeInstances,
     StorageSavingsRequestBodyType,
+    ManualStorageSavingsRequestBodyType,
     StorageSavingsResponse,
     StorageSavingsResponseType,
     StorageSavingsCalculationsMetricsResponse,
     StorageSavingsMetricsCalculationsResponseType,
-    ComputeLicenseCostType
+    ComputeLicenseCostType,
+    ComputeDetailsType,
+    LicenseDetailsType
 };

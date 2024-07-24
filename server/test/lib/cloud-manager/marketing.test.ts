@@ -40,22 +40,25 @@ describe('Marketing lib', () => {
         const volumes = [
             { volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 2, volumeIops: 40000, throughput: 128 }
         ];
-        const requestBody = getMarketingApiManualModeRequestBody(
-            DEFAULT_AWS_REGION,
-            {
-                snapshotFrequency: 'daily',
-                clonedCopiesCount: 1,
-                cloneRefreshFrequency: 'daily',
-                monthlyChangeRatePercentage: 30
-            },
-            'AOAG',
-            volumes
-        ) as ManualModeMarketingRequestBody;
+        const requestBody = getMarketingApiManualModeRequestBody(DEFAULT_AWS_REGION, {
+            sqlServerDeploymentType: 'AOAG',
+            clonedCopiesCount: 1,
+            monthlyChangeRatePercentage: 30,
+            snapshotFrequency: 'daily',
+            sqlServerEdition: 'Enterprise',
+            ec2Instances: [
+                {
+                    ec2InstanceDescription: 'test',
+                    ec2InstanceType: 'm5.2xlarge',
+                    isPrimary: true,
+                    volumes
+                }
+            ]
+        }) as ManualModeMarketingRequestBody;
 
         const response = await getManualModeStorageSavings(ACCOUNT_ID, requestBody);
         expect(response.ebsTotal).toBeDefined();
         expect(response.fsx).toBeDefined();
-
         expect(response.multi.fsx_calculation).toBeDefined();
     });
     it('Getting storage instances', async () => {

@@ -1,9 +1,16 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { getStorageSavingsSchema, getStorageSavingsCalculationMetricsSchema } from './schemas/storage-savings-schema';
+import {
+    getStorageSavingsSchema,
+    getManualStorageSavingsSchema,
+    getStorageSavingsCalculationMetricsSchema,
+    getManualStorageSavingsCalculationMetricsSchema
+} from './schemas/storage-savings-schema';
 import {
     getStorageSavingsCalculationMetrics,
-    performStorageSavingsCalculations
+    performStorageSavingsCalculations,
+    getManualModeStorageSavingsCalculationMetrics,
+    performManualModeStorageSavingsCalculations
 } from '../operations/storage-savings-operations';
 
 export default function storageSavingsRoutes(fastify: FastifyInstance) {
@@ -38,6 +45,34 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
                 instanceId,
                 body
             );
+            return reply.send(response);
+        }
+    );
+
+    server.post(
+        '/v1/regions/:region/manual-storage-savings',
+        { schema: getManualStorageSavingsSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, region },
+                body
+            } = request;
+
+            const response = await performManualModeStorageSavingsCalculations(accountId, region, body);
+            return reply.send(response);
+        }
+    );
+
+    server.post(
+        '/v1/regions/:region/manual-storage-savings/calculations',
+        { schema: getManualStorageSavingsCalculationMetricsSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, region },
+                body
+            } = request;
+
+            const response = await getManualModeStorageSavingsCalculationMetrics(accountId, region, body);
             return reply.send(response);
         }
     );
