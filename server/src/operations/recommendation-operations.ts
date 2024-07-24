@@ -312,8 +312,8 @@ async function handleInstanceRecommendation(
                 recommendationOptions: instanceRecommendations?.map(({ instanceType, pricingDetails }) => {
                     const basePrice = pricingDetails?.NA?.pricePerUnit;
                     const price = pricingDetails[recommendedSqlLicenseType]?.pricePerUnit;
-                    const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(price);
-                    const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(basePrice);
+                    const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(basePrice);
+                    const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(price);
                     return {
                         instanceType,
                         price,
