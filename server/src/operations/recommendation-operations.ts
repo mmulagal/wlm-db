@@ -371,24 +371,6 @@ async function handleInstanceRecommendation(
     return { computeFinding, recommendedCompute };
 }
 
-function getPricingByLicenseType(
-    licenseType: string,
-    existingInstanceTypePricingsDetails: Map<
-        string,
-        { count: number; pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } }
-    >
-): number | undefined {
-    logger.info('Getting pricing by license type', { licenseType, existingInstanceTypePricingsDetails });
-    let instanceHourlyPrice: number | undefined;
-    for (const [, { count, pricingDetails }] of existingInstanceTypePricingsDetails) {
-        if (pricingDetails[licenseType]?.pricePerUnit) {
-            instanceHourlyPrice = Number(instanceHourlyPrice || 0) + pricingDetails[licenseType].pricePerUnit * count;
-        }
-    }
-
-    return instanceHourlyPrice;
-}
-
 async function checkComputeOptimizerEnrollmentStatus(accountId: string, credentialsId: string, region: string) {
     logger.info('Checking Compute Optimizer enrollment status', { accountId, credentialsId, region });
 
