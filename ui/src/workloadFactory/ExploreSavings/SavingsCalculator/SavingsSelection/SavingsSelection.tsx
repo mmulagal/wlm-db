@@ -18,6 +18,7 @@ import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import { FINDINGS, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import LearnHowDialog from './LearnHowDialog/LearnHowDialog';
+import { generateLabel2ForInstanceType } from '../../ExploreSavingsUtils';
 
 const SavingsSelection = ({ printState }: any) => {
     const dispatch = useDispatch();
@@ -48,7 +49,8 @@ const SavingsSelection = ({ printState }: any) => {
 
     useEffect(() => {
         setInstanceTypeData({
-            missingPermissions: storageSavingsResponse?.compute?.existing?.finding === FINDINGS.INSUFFICIENT_DATA,
+            missingPermissions:
+                storageSavingsResponse?.compute?.existing?.finding === FINDINGS.INSUFFICIENT_PERMISSIONS,
             options: storageSavingsResponse?.compute?.recommended?.recommendationOptions || [],
             existingInstanceType: storageSavingsResponse?.compute?.existing?.instanceType
         });
@@ -107,13 +109,29 @@ const SavingsSelection = ({ printState }: any) => {
     const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
         let options: optionType[] = [];
         instanceTypeData.options.map((option: any) => {
-            options.push(generateOptionType(option?.instanceType, option?.instanceType, '', false, '', option));
+            options.push(
+                generateOptionType(
+                    option?.instanceType,
+                    `${option?.instanceType} (for all instances)`,
+                    generateLabel2ForInstanceType(
+                        instanceTypeData.options,
+                        option?.instanceType,
+                        storageSavingsResponse?.compute?.existing
+                    ),
+                    false,
+                    ''
+                )
+            );
         });
         options.push(
             generateOptionType(
                 instanceTypeData?.existingInstanceType,
                 instanceTypeData?.existingInstanceType,
-                '',
+                generateLabel2ForInstanceType(
+                    [],
+                    instanceTypeData?.existingInstanceType,
+                    storageSavingsResponse?.compute?.existing
+                ),
                 false,
                 ''
             )
@@ -256,11 +274,16 @@ const SavingsSelection = ({ printState }: any) => {
                         isDisabled={
                             instanceTypeData?.missingPermissions || generateRecommendedInstanceTypes.length === 1
                         }
+                        variant="two-lines"
                         isLoading={storageSavingsLoading}
                         value={generateOptionType(
                             recommendedTargetInstance || instanceTypeData.existingInstanceType,
                             recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                            '',
+                            generateLabel2ForInstanceType(
+                                instanceTypeData?.options,
+                                recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                                storageSavingsResponse?.compute?.existing
+                            ),
                             false,
                             ''
                         )}

@@ -956,6 +956,16 @@ export const GENERAL = {
         STEP2_POINT5: 'Choose Opt in.',
         FOOTER_TEXT: 'The changes take effect within 24 hours.'
     },
+    FINDINGS: {
+        OPTIMIZED: 'Optimized',
+        NOT_OPTIMIZED: 'Not optimized',
+        OVER_PROVISIONED: 'Over-provisioned',
+        INSUFFICIENT_DATA: 'N/A',
+        UNDER_PROVISIONED: 'Under-provisioned',
+        INSUFFICIENT_PERMISSIONS: 'N/A'
+    },
+    INSTANCE_TYPE_FINDINGS_TOOLTIP:
+        'Displays findings (over-provisioned, under-provisioned, or optimized) based on analysis of Amazon CloudWatch metrics (CPU, bandwidth, network, and more) of the current instance and on the current memory of the instance. No finding appears when Workload Factory has insufficient permissions or unavailable metrics.',
     EC2_SPECIFICATIONS: 'EC2 specifications',
     REFER_SNAPSHOTS: 'This field refer to clones and snapshots',
     VIEW_THE_CALCULATIONS: 'View the calculations',
