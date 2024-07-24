@@ -1328,6 +1328,10 @@ export const calculateTotalVolumes = (
     );
 };
 
+const byteConversion = (gib: number) => {
+    return gib * Math.pow(1024, 3);
+};
+
 const generateVolumesData = (manualTCOVolumeTypes: any) => {
     const arr = [];
     const io1Complete = allPropertiesHaveValues({
@@ -1349,14 +1353,14 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
         arr.push({
             volumeType: 'st1',
             volumeNumber: +manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes,
-            storageAmount: +manualTCOVolumeTypes?.st1?.manualTCOStorageAmount
+            storageAmount: byteConversion(+manualTCOVolumeTypes?.st1?.manualTCOStorageAmount)
         });
     }
     if (gp3Complete) {
         arr.push({
             volumeType: 'gp3',
             volumeNumber: +manualTCOVolumeTypes?.gp3?.manualTCONumberOfVolumes,
-            storageAmount: +manualTCOVolumeTypes?.gp3?.manualTCOStorageAmount,
+            storageAmount: byteConversion(+manualTCOVolumeTypes?.gp3?.manualTCOStorageAmount),
             volumeIops: +manualTCOVolumeTypes?.gp3?.manualTCOProvisionedIOPS,
             throughput: +manualTCOVolumeTypes?.gp3?.manualTCOThroughput
         });
@@ -1365,14 +1369,14 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
         arr.push({
             volumeType: 'gp2',
             volumeNumber: +manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes,
-            storageAmount: +manualTCOVolumeTypes?.gp2?.manualTCOStorageAmount
+            storageAmount: byteConversion(+manualTCOVolumeTypes?.gp2?.manualTCOStorageAmount)
         });
     }
     if (io2Complete) {
         arr.push({
             volumeType: 'io2',
             volumeNumber: +manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes,
-            storageAmount: +manualTCOVolumeTypes?.io2?.manualTCOStorageAmount,
+            storageAmount: byteConversion(+manualTCOVolumeTypes?.io2?.manualTCOStorageAmount),
             volumeIops: +manualTCOVolumeTypes?.io2?.manualTCOProvisionedIOPS,
             throughput: +manualTCOVolumeTypes?.io2?.manualTCOThroughput
         });
@@ -1381,7 +1385,7 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
         arr.push({
             volumeType: 'io1',
             volumeNumber: +manualTCOVolumeTypes?.io1?.manualTCONumberOfVolumes,
-            storageAmount: +manualTCOVolumeTypes?.io1?.manualTCOStorageAmount,
+            storageAmount: byteConversion(+manualTCOVolumeTypes?.io1?.manualTCOStorageAmount),
             volumeIops: +manualTCOVolumeTypes?.io1?.manualTCOProvisionedIOPS
         });
     }
