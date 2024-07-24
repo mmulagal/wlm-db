@@ -724,7 +724,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       {
                           label: 'EC2 machine2 cost',
                           value: `${viewCalculation.ebsInstanceCalculation?.[1]?.computeMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[1]?.hoursInAMonth}`
                       },
                       {
                           label: 'Total EC2 machines cost',

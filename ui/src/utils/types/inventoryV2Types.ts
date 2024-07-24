@@ -271,6 +271,23 @@ export interface ManagedHostsRowInterface {
     estimatedUsageCost?: EstimatedUsageCostInterface;
     databaseInstancesSummary?: Array<DatabaseInstancesSummaryInterface>;
     nodeInstanceError?: string;
+    fsxnResourceInfo?: Array<{
+        id?: string;
+        capacityCost?: number;
+        operationalCost?: number;
+        size?: number;
+    }>;
+    fsxwResourceInfo?: Array<{
+        id?: string;
+        capacityCost?: number;
+        operationalCost?: number;
+        size?: number;
+    }>;
+    storageAllocation?: {
+        fsxw?: number;
+        fsxn?: number;
+        ebs?: number;
+    };
 }
 
 export interface EC2DetailsInterface {
