@@ -9,7 +9,7 @@ import {
     GET_DEFAULT_COLLATION,
     GET_STANDBY_NODE_DRIVE_LIST
 } from './workloads/mssql/ssm-script-utils';
-import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
+import { checkDatabaseExists, getActiveSqlNode, ActiveSqlNodeDetails } from './workloads/mssql/mssql-operations';
 import {
     convertGiBToBytes,
     sqlResponseParsing,
@@ -195,7 +195,8 @@ async function getDriveInfoFromSSM(
     node2InstanceId?: string,
     executionTimeout?: string,
     forSandbox: boolean = false,
-    instanceDetail?: DatabaseInstance
+    instanceDetail?: DatabaseInstance,
+    activeNodeInstance?: ActiveSqlNodeDetails
 ) {
     logger.info('Getting drive information from SSM', {
         accountId,
@@ -208,9 +209,28 @@ async function getDriveInfoFromSSM(
         instanceDetail
     });
 
-    // Check SSM Connection status
-    let { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName, instancesDetails } =
-        await getActiveSqlNode(credentialsId, region!, node1InstanceId, node2InstanceId);
+    let isSSMConnected;
+    let activeNodeInstanceId;
+    let standbyNodeInstanceId;
+    let instanceName;
+    let instancesDetails;
+
+    if (activeNodeInstance && activeNodeInstance.activeNodeInstanceId) {
+        ({ isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName, instancesDetails } =
+            activeNodeInstance);
+    }
+
+    if (
+        isSSMConnected === undefined ||
+        !activeNodeInstanceId ||
+        !standbyNodeInstanceId ||
+        !instanceName ||
+        !instancesDetails?.length
+    ) {
+        // Check SSM Connection status
+        ({ isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName, instancesDetails } =
+            await getActiveSqlNode(credentialsId, region!, node1InstanceId, node2InstanceId));
+    }
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
         const errorMessage = `Unable to access drive details for host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
@@ -284,7 +304,8 @@ async function getDriveInfo(
     region: string,
     forSandbox: boolean = false,
     executionTimeout?: string,
-    databaseInstanceId?: string
+    databaseInstanceId?: string,
+    activeNodeDetails?: ActiveSqlNodeDetails
 ): Promise<DriveInfoResponseBodyType> {
     logger.info(
         'Fetching drive details and storage capacity of the database host',
@@ -293,7 +314,8 @@ async function getDriveInfo(
         credentialsId,
         region,
         forSandbox,
-        databaseInstanceId
+        databaseInstanceId,
+        activeNodeDetails
     );
 
     const {
@@ -331,6 +353,7 @@ async function getDriveInfo(
                 executionTimeout,
                 forSandbox,
                 instanceDetail as unknown as DatabaseInstance
+                // activeNodeDetails
             )
         ]);
     } catch (error) {
@@ -591,6 +614,13 @@ async function invokeSSMForDatabaseDeployment(
                 throw createError(errorMessage);
             }
         }
+        const activeNodeDetails = {
+            isSSMConnected,
+            activeNodeInstanceId,
+            standbyNodeInstanceId,
+            instanceName: sqlInstanceName,
+            instancesDetails
+        };
 
         await validateParams(
             accountId,
@@ -608,6 +638,7 @@ async function invokeSSMForDatabaseDeployment(
             collation,
             sqlInstanceName,
             serverNameWithHostName,
+            activeNodeDetails as ActiveSqlNodeDetails,
             databaseInstanceId
         );
 
@@ -1278,6 +1309,7 @@ async function validateParams(
     collation: string,
     instanceName: string,
     serverNameWithHostName: string,
+    activeNodeDetails: ActiveSqlNodeDetails,
     databaseInstanceId?: string
 ) {
     logger.info('validating parameters for database user creation', {
@@ -1380,7 +1412,8 @@ async function validateParams(
             region,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT,
-            databaseInstanceId
+            databaseInstanceId,
+            activeNodeDetails
         );
 
         // check whether the drive selection detail is right
