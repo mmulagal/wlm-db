@@ -69,7 +69,7 @@ describe(' Secrets Manager string', () => {
         expect(response).toBe(fsxArn);
     });
     it('Generate Fsx ARN', async () => {
-        const response = await isNetworkConfigurationViolated(networkConfiguration, FCI);
+        const response = await isNetworkConfigurationViolated(networkConfiguration, FCI, false);
         expect(response.isViolated).toBe(false);
     });
     it('Split domain from username', async () => {
