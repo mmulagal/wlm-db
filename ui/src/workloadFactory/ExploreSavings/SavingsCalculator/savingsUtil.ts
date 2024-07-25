@@ -335,7 +335,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxOntapCalculation.desiredStorageCapacity}`,
-                text: `EBS capacity (${viewCalculation.fsxOntapCalculation.ebsCapacity}) x Number of volumes (${viewCalculation.fsxOntapCalculation.numberOfVolumes})`
+                text: `Total required capacity according to EBS storage capacity`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -953,18 +953,8 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       text: ``
                   },
                   {
-                      label: 'Total billable IOPS ',
-                      value: `${viewCalculation.ebsCalculation.gp3.totalBillableIops} IOPS`,
-                      text: ``
-                  },
-                  {
                       label: 'EBS IOPS cost',
                       value: `$${viewCalculation.ebsCalculation.gp3.ebsIopsCost}`,
-                      text: ``
-                  },
-                  {
-                      label: 'Billable MiB/s',
-                      value: `${viewCalculation.ebsCalculation.gp3.billableMbps} MiB/s`,
                       text: ``
                   },
                   {
