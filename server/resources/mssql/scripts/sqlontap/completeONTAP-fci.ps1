@@ -85,9 +85,16 @@ try {
     $HostName = hostname
     #$fsList = Get-FSXFileSystem|?{$_.Tags.Key -eq 'aws:cloudformation:stack-name' -and $_.Tags.Value -eq $Stackname}
     #Need to run cluster validation first
-    Invoke-Command -scriptblock { Test-Cluster } -Credential $Credentials -ComputerName $HostName -Authentication credssp
-
-
+    
+    Invoke-Command -scriptblock { Test-Cluster } -Credential $Credentials -ComputerName $HostName -Authentication credssp > C:\cfn\log\test-cluster1.txt 2>&1 
+    $AccessDenied = Select-String -Path C:\cfn\log\test-cluster1.txt -Pattern "Access is denied."
+    if (-not ([string]::IsNullOrEmpty($AccessDenied)) ) 
+        {
+            Write-Output "Encountered access denied. Re-attempting Test-Cluster after 5 seconds."
+            Start-sleep -s 5
+            Invoke-Command -scriptblock { Test-Cluster } -Credential $Credentials -ComputerName $HostName -Authentication credssp > C:\cfn\log\test-cluster2.txt 2>&1 
+        } 
+   
     # Find path to SQL Installer media, if not found then pick installer hosted in S3.
     If(Test-Path -path "C:\SQLServerSetup\setup.exe") {
        $SQLMediaPath = "C:\SQLServerSetup\setup.exe"
