@@ -260,7 +260,11 @@ function getSubjectFromBearerToken() {
     return decodedToken?.payload.sub;
 }
 
-function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigurationType, deploymentMode: string) {
+function isNetworkConfigurationViolated(
+    networkConfiguration: CFNetworkConfigurationType,
+    deploymentMode: string,
+    isExistingFSx: boolean
+) {
     const noViolation = { isViolated: false };
 
     if (deploymentMode === STANDALONE) {
@@ -288,7 +292,7 @@ function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigura
         return noViolation;
     }
 
-    if (networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id) {
+    if (!isExistingFSx && networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id) {
         return {
             isViolated: true,
             violationMessage: FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
