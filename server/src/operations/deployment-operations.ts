@@ -669,7 +669,7 @@ async function createCloudFormationTemplateForUserDeployment(
     const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
         networkConfiguration,
         sqlConfiguration.sqlDeploymentMode,
-        !!fsxConfiguration.fsxFileSystemId
+        Boolean(fsxConfiguration.fsxFileSystemId)
     );
 
     if (vpcValidationCheck.isViolated) {
@@ -897,7 +897,7 @@ async function deployCloudFormationTemplate(
     const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
         networkConfiguration,
         sqlConfiguration.sqlDeploymentMode,
-        !!fsxConfiguration.fsxFileSystemId
+        Boolean(fsxConfiguration.fsxFileSystemId)
     );
 
     if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
