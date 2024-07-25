@@ -42,7 +42,12 @@ import {
     getConnectionInfo
 } from './workloads/mssql/sandbox-scripts';
 import { DatabaseInstance, Metadata, ResourceDetails, Sandbox, databaseInstanceMetadata } from '../utils/common-types';
-import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
+import {
+    ActiveSqlNodeDetails,
+    checkDatabaseExists,
+    getActiveSqlNode,
+    getSqlServerVersion
+} from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getDatabaseInstanceName, isDemo, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
@@ -477,6 +482,7 @@ interface HostAndDbInfo extends DbInfo {
     metadata: Metadata;
     databaseInstanceName?: string;
     instanceMetadata?: databaseInstanceMetadata;
+    activeNodeDetails?: ActiveSqlNodeDetails;
 }
 
 interface ClonedVolume {
@@ -525,7 +531,16 @@ async function createSandbox(
         type: JOBTYPE.SANDBOX
     });
 
-    startSandboxCreation(accountId, credentialsId, region, job.id, srcDetails, destDetails, tag, mountPoints);
+    startSandboxCreation(
+        accountId,
+        credentialsId,
+        region,
+        job.id,
+        srcDetails,
+        destDetails as HostAndDbInfo,
+        tag,
+        mountPoints
+    );
 
     return { jobId: job.id };
 }
@@ -707,7 +722,8 @@ async function validateCloneParams(
             region,
             true,
             CUSTOM_SSM_EXECUTION_TIMEOUT,
-            destDetails.instance
+            destDetails.instance,
+            destDetails.activeNodeDetails
         );
 
         const [destDatabaseExists, srcDatabaseExists] = await Promise.all([
@@ -2945,7 +2961,8 @@ async function runSandboxPreValidations(
                 destInstanceDetail.database_instance_name,
                 destInstanceDetail.is_default
             ),
-            instanceMetadata: destInstanceMetadata
+            instanceMetadata: destInstanceMetadata,
+            activeNodeDetails: destStatus
         }
     };
 }

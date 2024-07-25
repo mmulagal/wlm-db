@@ -783,6 +783,15 @@ async function getNativeSQLBackedupDatabases(resourceId: string, activeNodeInsta
     }
 }
 
+interface ActiveSqlNodeDetails {
+    isSSMConnected: boolean;
+    activeNodeInstanceId: string;
+    standbyNodeInstanceId?: string;
+    instanceName: string;
+    ssmConnectionStatus: string;
+    instancesDetails: InstanceDetails[];
+}
+
 async function getActiveSqlNode(
     credentialsId: string,
     region: string,
@@ -1149,5 +1158,6 @@ export {
     getActiveSqlInstanceName,
     getAllInstanceDetails,
     getActiveNodeAndInstanceDetails,
-    getActiveSqlNodeAndInstanceDetails
+    getActiveSqlNodeAndInstanceDetails,
+    ActiveSqlNodeDetails
 };
