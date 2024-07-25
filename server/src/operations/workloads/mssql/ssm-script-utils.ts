@@ -932,8 +932,8 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
 
 const sqlQueryExecution = (instance: string, query: string) =>
     `
-    $serverInstanceName = ${instance}
-    $query = ${query}
+    $serverInstanceName = "${instance}"
+    $query = "${query}"
 
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
     $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
