@@ -1325,7 +1325,8 @@ const byteConversion = (gib: number) => {
 export const checkForIO1Valid = (data: any) => {
     const volIops = Number(data?.manualTCOProvisionedIOPS);
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    if (volIops < 100 || volIops > 64000 || volStorageSaving > 16384) {
+    const volData = Number(data?.manualTCONumberOfVolumes);
+    if (volIops < 100 || volIops > 64000 || volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;
@@ -1334,7 +1335,8 @@ export const checkForIO1Valid = (data: any) => {
 export const checkForIO2Valid = (data: any) => {
     const volIops = Number(data?.manualTCOProvisionedIOPS);
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    if (volIops < 100 || volIops > 256000 || volStorageSaving > 16384) {
+    const volData = Number(data?.manualTCONumberOfVolumes);
+    if (volIops < 100 || volIops > 256000 || volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;
@@ -1342,7 +1344,8 @@ export const checkForIO2Valid = (data: any) => {
 
 export const gp2Valid = (data: any) => {
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    if (volStorageSaving > 16384) {
+    const volData = Number(data?.manualTCONumberOfVolumes);
+    if (volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;
@@ -1351,16 +1354,25 @@ export const gp2Valid = (data: any) => {
 export const checkForGp3Valid = (data: any) => {
     const volIops = Number(data?.manualTCOProvisionedIOPS);
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    const volThroughput = data?.manualTCOThroughput;
-    if (volIops < 3000 || volIops > 16000 || volStorageSaving > 16384 || volThroughput < 125 || volThroughput > 1000) {
+    const volThroughput = Number(data?.manualTCOThroughput);
+    const volData = Number(data?.manualTCONumberOfVolumes);
+    if (
+        volIops < 3000 ||
+        volIops > 16000 ||
+        volStorageSaving > 16384 ||
+        volThroughput < 125 ||
+        volThroughput > 1000 ||
+        volData > 1000000000
+    ) {
         return false;
     }
     return true;
 };
 
 export const checkForSt1Valid = (data: any) => {
+    const volData = Number(data?.manualTCONumberOfVolumes);
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    if (volStorageSaving > 16384) {
+    if (volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;

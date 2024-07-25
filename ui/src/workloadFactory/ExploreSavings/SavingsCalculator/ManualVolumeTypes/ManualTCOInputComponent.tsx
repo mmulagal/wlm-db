@@ -70,6 +70,16 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         return '';
     };
 
+    const handleVolumeError = () => {
+        const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCONumberOfVolumes;
+        const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCONumberOfVolumes;
+        if ((primaryVol > 0 && primaryVol > 1000000000) || (secondaryVol > 0 && secondaryVol > 1000000000)) {
+            return 'Maximum value is 1000000000';
+        }
+
+        return;
+    };
+
     const handleStorageCapacityLimit = () => {
         const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount;
         const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount;
@@ -117,6 +127,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                             : manualTCOVolumeTypes2?.[type]?.manualTCONumberOfVolumes
                     }
                     className={styles.deploymentModelWidth}
+                    error={handleVolumeError()}
                 />
 
                 <TextField
