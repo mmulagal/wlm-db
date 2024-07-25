@@ -1303,14 +1303,14 @@ const addAccessPathAndAttachDb = (
 
                 foreach ($datadisk in $datadisks) {
                     if ($datadisk.IsOffline -ne $False) {
-                        $null= (echo "select disk $datadisknumber" "select partition 2" "select volume" "online vol" | diskpart)
+                        $null= (echo "select disk $datadisk.Number" "select partition 2" "select volume" "online vol" | diskpart)
                         Start-Sleep 20 
                     }
                 }
 
                 foreach ($logdisk in $logdisks) {
                     if ($logdisk.IsOffline -ne $False) {
-                        $null= (echo "select disk $logdisknumber" "select partition 2" "select volume" "online vol" | diskpart)
+                        $null= (echo "select disk $logdisk.Number" "select partition 2" "select volume" "online vol" | diskpart)
                         Start-Sleep 20 
                     }
                 }
@@ -1380,7 +1380,7 @@ const addAccessPathAndAttachDb = (
 
         $dataMountPoints | Sort-Object -Unique | ForEach-Object {
             $dataMountPoint = $_
-            for ($datapartition in $dataPartitions) { 
+            foreach ($datapartition in $dataPartitions) { 
                 if ($datapartition.AccessPaths -notcontains $dataMountPoint) {
                     $null = (New-Item -ItemType Directory -Path $dataMountPoint -Force)
                     $null = Add-PartitionAccessPath -DiskNumber $datapartition.DiskNumber -PartitionNumber ($datapartition).PartitionNumber -AccessPath $dataMountPoint -ErrorAction stop
@@ -1391,7 +1391,7 @@ const addAccessPathAndAttachDb = (
 
         $logMountPoints | Sort-Object -Unique | ForEach-Object {
             $logMountPoint = $_
-            for ($logpartition in $logPartitions) {
+            foreach ($logpartition in $logPartitions) {
                 if ($logpartition.AccessPaths -notcontains $logMountPoint) {
                     $null = (New-Item -ItemType Directory -Path $logMountPoint -Force)
                     $null = Add-PartitionAccessPath -DiskNumber $logpartition.DiskNumber -PartitionNumber ($logpartition).PartitionNumber -AccessPath $logMountPoint -ErrorAction stop
@@ -1418,6 +1418,10 @@ const addAccessPathAndAttachDb = (
             }
 
             $dataMountPoints | Sort-Object -Unique | ForEach-Object {
+                Get-ChildItem -Path $_ -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+            }
+
+            $logMountPoints | Sort-Object -Unique | ForEach-Object {
                 Get-ChildItem -Path $_ -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
             }
         } catch {
