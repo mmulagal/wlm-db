@@ -43,7 +43,7 @@ const ManualTCOFields = () => {
     }, [regionsData]);
 
     useEffect(() => {
-        dispatch(setSelectedRegionFromManualTCO(generateRegionList[0]));
+        if (!selectedManualRegion) dispatch(setSelectedRegionFromManualTCO(generateRegionList[0]));
     }, [generateRegionList]);
 
     //Function to generate the options for Select Field
@@ -64,7 +64,7 @@ const ManualTCOFields = () => {
     }, []);
 
     useEffect(() => {
-        dispatch(setSelectedManualServerEdition(generateSQLEditionList[0]));
+        if (!selectedManualServerEdition) dispatch(setSelectedManualServerEdition(generateSQLEditionList[0]));
     }, [generateSQLEditionList]);
 
     //Function to generate the options for Select Field
@@ -80,7 +80,8 @@ const ManualTCOFields = () => {
     }, []);
 
     useEffect(() => {
-        dispatch(setSelectedDeploymentModelForManualTCO(generateDeploymentModelList[0]));
+        if (!selectedManualDeploymentModel)
+            dispatch(setSelectedDeploymentModelForManualTCO(generateDeploymentModelList[0]));
     }, [generateDeploymentModelList]);
 
     //Function to generate the options for Select Field

@@ -73,9 +73,17 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
     const handleStorageCapacityLimit = () => {
         const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount;
         const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount;
-        if ((primaryVol > 0 && primaryVol > 16384) || (secondaryVol > 0 && secondaryVol > 16384)) {
-            return 'Maximum capacity allowed: 16 TiB.';
+        if (type === 'io2') {
+            if ((primaryVol > 0 && primaryVol > 65536) || (secondaryVol > 0 && secondaryVol > 65536)) {
+                return 'Maximum capacity allowed: 64 TiB.';
+            }
         }
+        if (type !== 'io2') {
+            if ((primaryVol > 0 && primaryVol > 16384) || (secondaryVol > 0 && secondaryVol > 16384)) {
+                return 'Maximum capacity allowed: 16 TiB.';
+            }
+        }
+
         return '';
     };
     return (
@@ -139,7 +147,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                             : manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount
                     }
                     className={styles.deploymentModelWidth}
-                    info="Maximum capacity allowed: 16 TiB."
+                    info={type === 'io2' ? 'Maximum capacity allowed: 64 TiB.' : 'Maximum capacity allowed: 16 TiB.'}
                     error={handleStorageCapacityLimit()}
                 />
             </div>

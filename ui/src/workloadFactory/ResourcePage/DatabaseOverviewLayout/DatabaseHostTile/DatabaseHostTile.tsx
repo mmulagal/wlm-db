@@ -20,7 +20,15 @@ const DatabaseHostTile = () => {
                     {resourceLoading ? (
                         <FlashingDotsLoader className={styles.loaderHeight} />
                     ) : (
-                        <Typography variant="Semibold_14">
+                        <Typography
+                            variant="Semibold_14"
+                            className={styles.textManage}
+                            title={
+                                isInventoryV2
+                                    ? selectedHostname + ' \\ ' + selectedDatabaseInstanceName
+                                    : resourceDetails?.name
+                            }
+                        >
                             {isInventoryV2
                                 ? selectedHostname + ' \\ ' + selectedDatabaseInstanceName
                                 : resourceDetails?.name}
@@ -41,7 +49,9 @@ const DatabaseHostTile = () => {
                 ) : (
                     <div className={styles.firstSection}>
                         {resourceDetails.status === 'Up' ? <Success /> : <Failure />}
-                        <Typography variant="Semibold_14">{resourceDetails.status}</Typography>
+                        <Typography variant="Semibold_14" className={styles.textManage} title={resourceDetails.status}>
+                            {resourceDetails.status}
+                        </Typography>
                     </div>
                 )}
                 <Typography variant="Regular_14">{GENERAL.STATUS}</Typography>
@@ -54,7 +64,9 @@ const DatabaseHostTile = () => {
                     {resourceLoading ? (
                         <FlashingDotsLoader className={styles.loaderHeight} />
                     ) : (
-                        <Typography variant="Semibold_14">{resourceDetails.databaseCount}</Typography>
+                        <Typography variant="Semibold_14" className={styles.textManage}>
+                            {resourceDetails.databaseCount}
+                        </Typography>
                     )}
                 </div>
                 <Typography variant="Regular_14">{GENERAL.NO_OF_DBS}</Typography>
@@ -67,7 +79,13 @@ const DatabaseHostTile = () => {
                     {resourceLoading ? (
                         <FlashingDotsLoader className={styles.loaderHeight} />
                     ) : (
-                        <Typography variant="Semibold_14">{resourceDetails?.databaseServer?.serverVersion}</Typography>
+                        <Typography
+                            variant="Semibold_14"
+                            className={styles.textManage}
+                            title={resourceDetails?.databaseServer?.serverVersion}
+                        >
+                            {resourceDetails?.databaseServer?.serverVersion}
+                        </Typography>
                     )}
                 </div>
 
@@ -81,7 +99,11 @@ const DatabaseHostTile = () => {
                     {resourceLoading ? (
                         <FlashingDotsLoader className={styles.loaderHeight} />
                     ) : (
-                        <Typography variant="Semibold_14">
+                        <Typography
+                            variant="Semibold_14"
+                            className={styles.textManage}
+                            title={resourceDetails?.topology?.serverInstallationMode}
+                        >
                             {resourceDetails?.topology?.serverInstallationMode}
                         </Typography>
                     )}
@@ -97,7 +119,13 @@ const DatabaseHostTile = () => {
                     {resourceLoading ? (
                         <FlashingDotsLoader className={styles.loaderHeight} />
                     ) : (
-                        <Typography variant="Semibold_14">{resourceDetails?.databaseServer?.serverEdition}</Typography>
+                        <Typography
+                            variant="Semibold_14"
+                            className={styles.textManage}
+                            title={resourceDetails?.databaseServer?.serverEdition}
+                        >
+                            {resourceDetails?.databaseServer?.serverEdition}
+                        </Typography>
                     )}
                 </div>
 

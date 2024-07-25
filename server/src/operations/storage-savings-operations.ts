@@ -810,10 +810,9 @@ async function performManualModeStorageSavingsCalculations(
         }),
         totalSummary: {
             existing:
-                ebsTotal.total ||
-                0 +
-                    Number(compute?.existing?.computeMonthlyPrice || 0) +
-                    Number(license?.existing?.licenseMonthlyPrice || 0),
+                Number(ebsTotal.total || 0) +
+                Number(compute?.existing?.computeMonthlyPrice || 0) +
+                Number(license?.existing?.licenseMonthlyPrice || 0),
             recommended:
                 fsx.total +
                 Number(compute?.recommended?.computeMonthlyPrice || 0) +

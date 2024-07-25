@@ -9,6 +9,8 @@ export interface InstanceType {
 export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
+    disableState: boolean;
+    requestedPayload: any;
     selectedSnapshotFrequency: any;
     secondaryVolumeFilledStatus: boolean;
     numberOfClonedCopies: number | any;
