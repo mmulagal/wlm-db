@@ -2289,15 +2289,14 @@ async function reAttachSandboxAndAccessPath(
     resourceDetails: HostAndDbInfo,
     mappings: VolumeLunMapping
 ) {
-    logger.info(
-        'Re-attach sandbox and access path',
+    logger.info('Re-attach sandbox and access path', {
         accountId,
         credentialsId,
         region,
         parentJobId,
         resourceDetails,
         mappings
-    );
+    });
 
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errMsg;
