@@ -55,7 +55,7 @@ const ManualEC2 = () => {
     }, [instanceTypeData]);
 
     useEffect(() => {
-        dispatch(setSelectedManualInstanceType(generateInstances[0]));
+        if (!selectedManualInstanceType) dispatch(setSelectedManualInstanceType(generateInstances[0]));
     }, [generateInstances]);
     return (
         <div className={styles.manualEc2}>
@@ -80,6 +80,7 @@ const ManualEC2 = () => {
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedManualInstanceType(selectedOptions));
                     }}
+                    isLoading={instanceTypeLoading}
                     isSearchable={true}
                     options={generateInstances}
                     className={styles.setWidth}

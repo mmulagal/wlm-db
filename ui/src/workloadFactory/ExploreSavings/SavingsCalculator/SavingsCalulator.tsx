@@ -22,10 +22,7 @@ import ExportPDF from './ExportPDF/ExportPDF';
 import { GENERAL } from '../../../utils/appConstants';
 import {
     addExploreSavingsInitialData,
-    setStorageSavingsLoading,
     setStorageSavingsResponse,
-    setViewCalculationsApiResponse,
-    setViewCalculationsLoading,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -35,13 +32,13 @@ import ManualEC2 from './ManualEC2/ManualEC2';
 import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
 import { useGetManualStorageSavingsMutation, useGetManualViewCalculationsMutation } from '../../../utils/apiService';
-import { generateManualStorageSavingsPayload } from './savingsUtil';
+
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
-    const [disableState, setDisableState] = useState(false);
+    // const [disableState, setDisableState] = useState(false);
     const [isMutliFsx, setIsMutliFsx] = useState(false);
 
     const [getManualStorageSavingsApi] = useGetManualStorageSavingsMutation();
@@ -50,23 +47,14 @@ const SavingsCalculator = () => {
     const {
         savingsCalculatorFrom,
         selectedServerName,
-        numberOfClonedCopies,
         monthlyChangeRate,
         selectedManualDeploymentModel,
         selectedDeploymentModel,
-        selectedManualRegion,
-        selectedManualServerEdition,
-        selectedManualInstanceType,
-        monthlyBYOLCost,
-        manualMonthlyDescription,
-        manualSecondaryMachineDescription,
-        manualTCOVolumeTypes,
-        volumeFilledStatus,
-        manualTCOVolumeTypes2,
         recommendedTargetInstance,
         storageSavingsResponse,
         viewCalculationsApiResponse,
-        viewCalculationsResponse
+        viewCalculationsResponse,
+        disableState
     } = useAppSelector(state => state.exploreSavings);
 
     useEffect(() => {
@@ -86,80 +74,6 @@ const SavingsCalculator = () => {
             setIsMutliFsx(false);
         }
     }, [viewCalculationsResponse]);
-
-    const getManualStorageSavingsData = async () => {
-        const payload = generateManualStorageSavingsPayload();
-
-        try {
-            const result = await getManualStorageSavingsApi({
-                regionId: selectedManualRegion?.data?.regionCode,
-                payload: payload
-            });
-            dispatch(setStorageSavingsLoading(false));
-            dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data)));
-        } catch (error) {
-            dispatch(setStorageSavingsLoading(false));
-        }
-    };
-
-    const getManualViewCalculationsData = async () => {
-        const payload = generateManualStorageSavingsPayload();
-        try {
-            const result = await getManualViewCalculationsApi({
-                regionId: selectedManualRegion?.data?.regionCode,
-                payload: payload
-            });
-            dispatch(setViewCalculationsApiResponse(result?.data));
-            dispatch(
-                setViewCalculationsResponse(
-                    formatViewCalcData(result?.data, selectedManualDeploymentModel?.label, monthlyChangeRate)
-                )
-            );
-            dispatch(setViewCalculationsLoading(false));
-        } catch (error) {
-            dispatch(setViewCalculationsLoading(false));
-        }
-    };
-
-    const triggerManualStorageAPI = () => {
-        dispatch(setStorageSavingsLoading(true));
-        dispatch(setViewCalculationsLoading(true));
-        getManualStorageSavingsData();
-        getManualViewCalculationsData();
-    };
-
-    useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
-            if (
-                selectedManualRegion &&
-                numberOfClonedCopies &&
-                monthlyChangeRate &&
-                volumeFilledStatus &&
-                selectedManualInstanceType
-            ) {
-                setDisableState(false);
-                triggerManualStorageAPI();
-            } else {
-                setDisableState(true);
-            }
-        } else {
-            setDisableState(false);
-        }
-    }, [
-        savingsCalculatorFrom,
-        numberOfClonedCopies,
-        monthlyChangeRate,
-        selectedManualDeploymentModel,
-        selectedManualRegion,
-        selectedManualServerEdition,
-        selectedManualInstanceType,
-        monthlyBYOLCost,
-        manualMonthlyDescription,
-        manualSecondaryMachineDescription,
-        manualTCOVolumeTypes,
-        volumeFilledStatus,
-        manualTCOVolumeTypes2
-    ]);
 
     const printDocument = () => {
         setPrintState(true);
