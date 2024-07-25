@@ -46,7 +46,7 @@ const ManualModeInstances = Type.Array(
                 volumeIops: Type.Optional(
                     Type.Number({
                         minimum: 100,
-                        maximum: 16000
+                        maximum: 256000 // io2 supportes upto 256000 IOPS
                     })
                 ),
                 throughput: Type.Optional(
