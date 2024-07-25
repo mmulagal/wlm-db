@@ -154,7 +154,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                         storageSavingsLoading ||
                                         selectedHostDetails?.loading ||
                                         viewCalculationsLoading ||
-                                        isMutliFsx
+                                        isMutliFsx ||
+                                        disableState
                                     }
                                     onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                                 >
@@ -172,7 +173,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                     isMutliFsx ||
                                     storageSavingsLoading ||
                                     selectedHostDetails?.loading ||
-                                    viewCalculationsLoading
+                                    viewCalculationsLoading ||
+                                    disableState
                                 }
                                 onClick={() => handleCreateClick()}
                             >
