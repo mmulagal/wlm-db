@@ -14,8 +14,10 @@ Metadata:
           - VPCCIDR
           - PrivateSubnet1ID
           - RouteTable1Id
+          - PrivateSubnet1Cidrblock
           - PrivateSubnet2ID
           - RouteTable2Id
+          - PrivateSubnet2Cidrblock
           - S3EndpointExists
           - CloudformationEndpointExists
           - SsmEndpointExists
@@ -328,6 +330,10 @@ Parameters:
   {{{SSMMessagesEndpointExists}}}
 
   {{{S3EndpointRouteTables}}}
+
+  {{{PrivateSubnet1Cidrblock}}}
+
+  {{{PrivateSubnet2Cidrblock}}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -526,7 +532,6 @@ Resources:
   TrackStackDeploymentWaitConditionHandle:
     Type: 'AWS::CloudFormation::WaitConditionHandle'
     Condition: ShouldSendSaasNotification
-    DependsOn: TrackStackDeployment
   TrackStackDeploymentWaitCondition:
     Type: AWS::CloudFormation::WaitCondition
     Properties:
@@ -571,6 +576,10 @@ Resources:
           Ref: SSMMessagesEndpointExists
         S3EndpointRouteTables:
           Ref: S3EndpointRouteTables
+        PreferredSubnetCidrblock:
+          Ref: PrivateSubnet1Cidrblock
+        StandbySubnetCidrblock:
+          Ref: PrivateSubnet2Cidrblock
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -766,6 +775,10 @@ Resources:
           Ref: FSxDiskIops 
         ParentStackName:
           Ref: AWS::StackName
+        PreferredSubnetCidrblock:
+          Ref: PrivateSubnet1Cidrblock
+        StandbySubnetCidrblock:
+          Ref: PrivateSubnet2Cidrblock
       NotificationARNs:
         Fn::If:
         - IncludeNotification

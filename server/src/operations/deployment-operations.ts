@@ -78,7 +78,9 @@ import {
     STORAGE_PROTOCOLS,
     CUSTOM_AMI_VALIDATION_INSTANCE_TYPE,
     EBS_VOLUME_SIZE,
-    EBS_DEFAULT_VOLUME_SIZE
+    EBS_DEFAULT_VOLUME_SIZE,
+    TEMPLATE_PRIVATESUBNET1_CIDRBLOCK,
+    TEMPLATE_PRIVATESUBNET2_CIDRBLOCK
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -108,10 +110,34 @@ import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
-import { getAmis } from '../lib/aws/ec2';
+import { describeSubnets, getAmis } from '../lib/aws/ec2';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
+
+async function getSubnetsCidr(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    sqlConfiguration: SQLConfigurationType
+) {
+    logger.info('Fetch cidr block for subnets', credentialsId, region);
+
+    const subnetIds =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.privateSubnet1Id!]
+            : [networkConfiguration.privateSubnet1Id!, networkConfiguration.privateSubnet2Id!];
+    const { Subnets } = await describeSubnets(credentialsId!, region!, { SubnetIds: subnetIds });
+    const subnetCidrs = Subnets?.map(({ SubnetId: subnetId, CidrBlock: cidrBlock }) => ({ subnetId, cidrBlock }));
+    const privateSubnet1Cidr = subnetCidrs
+        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet1Id)
+        .map(subnet => subnet.cidrBlock);
+    const privateSubnet2Cidr = subnetCidrs
+        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet2Id)
+        .map(subnet => subnet.cidrBlock);
+
+    return { privateSubnet1Cidr, privateSubnet2Cidr };
+}
 
 async function formatTemplateParameters(
     networkConfiguration: CFNetworkConfigurationType,
@@ -177,6 +203,11 @@ async function formatTemplateParameters(
             ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
             : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
 
+    const { privateSubnet1Cidr, privateSubnet2Cidr } =
+        credentialsId && region
+            ? await getSubnetsCidr(credentialsId!, region!, networkConfiguration, sqlConfiguration)
+            : { privateSubnet1Cidr: '', privateSubnet2Cidr: '' };
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
@@ -187,7 +218,9 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
         { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics },
-        { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() }
+        { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr?.toString() || '' },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
     ];
 
     if (fsxConfiguration.fsxPassword) {
@@ -739,6 +772,13 @@ async function createCloudFormationTemplateForUserDeployment(
             ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
             : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
 
+    const { privateSubnet1Cidr, privateSubnet2Cidr } = await getSubnetsCidr(
+        credentialsId!,
+        region!,
+        networkConfiguration,
+        sqlConfiguration
+    );
+
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
@@ -748,7 +788,9 @@ async function createCloudFormationTemplateForUserDeployment(
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
-        { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() }
+        { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr?.toString() || '' },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
     ];
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${validationNodeInstanceType}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
