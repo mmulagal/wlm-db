@@ -1,6 +1,6 @@
 import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './ManualTCOFields.module.scss';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { generateOptionType, regionsSort } from '../../../../utils/utilityFunctions';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -28,6 +28,7 @@ const ManualTCOFields = () => {
         selectedManualServerEdition,
         selectedSnapshotFrequency
     } = useAppSelector(state => state.exploreSavings);
+    const { headerSelectedRegion } = useAppSelector(state => state.headers);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     //Function to generate the options for Select Field
@@ -43,7 +44,18 @@ const ManualTCOFields = () => {
     }, [regionsData]);
 
     useEffect(() => {
-        if (!selectedManualRegion) dispatch(setSelectedRegionFromManualTCO(generateRegionList[0]));
+        if (!selectedManualRegion) {
+            //@ts-ignore
+            const simplifiedRegions = generateRegionList.map(item => item?.data?.regionCode);
+
+            const foundRegion = simplifiedRegions.indexOf(headerSelectedRegion?.data?.regionCode);
+
+            if (foundRegion === -1) {
+                dispatch(setSelectedRegionFromManualTCO(generateRegionList[0]));
+            } else {
+                dispatch(setSelectedRegionFromManualTCO(generateRegionList[foundRegion]));
+            }
+        }
     }, [generateRegionList]);
 
     //Function to generate the options for Select Field
@@ -112,6 +124,15 @@ const ManualTCOFields = () => {
             return GENERAL.CHANGE_RATE_MAX_LIMIT;
         }
     };
+
+    const setRegionDefaultValue = (list: any) => {
+        //@ts-ignore
+        const simplifiedRegions = generateRegionList.map(item => item?.data?.regionCode);
+
+        const foundRegion = simplifiedRegions.indexOf(headerSelectedRegion?.data?.regionCode);
+
+        return [list[foundRegion]];
+    };
     return (
         <div className={styles.manualTCOFields}>
             <DsTypography variant="Regular_14">
@@ -124,7 +145,9 @@ const ManualTCOFields = () => {
                     <SelectField
                         label={GENERAL.REGION}
                         isClearable={false}
-                        defaultValue={selectedManualRegion ? selectedManualRegion : [generateRegionList[0]]}
+                        defaultValue={
+                            selectedManualRegion ? selectedManualRegion : setRegionDefaultValue(generateRegionList)
+                        }
                         onChange={(selectedOptions: any): void => {
                             dispatch(setSelectedRegionFromManualTCO(selectedOptions));
                         }}

@@ -299,6 +299,9 @@ const exploreSavingsSlice = createSlice({
                     manualTCOThroughput: null
                 }
             };
+            state.selectedManualRegion = null;
+            state.selectedManualDeploymentModel = null;
+            state.selectedManualServerEdition = null;
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
