@@ -85,6 +85,7 @@ const SecondaryManualEC2 = () => {
                         dispatch(setSelectedSecondaryManualInstanceType(selectedOptions));
                     }}
                     isSearchable={true}
+                    isLoading={instanceTypeLoading}
                     options={generateInstances}
                     className={styles.setWidth}
                 />

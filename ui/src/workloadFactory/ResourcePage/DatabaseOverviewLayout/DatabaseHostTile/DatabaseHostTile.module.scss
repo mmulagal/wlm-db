@@ -44,6 +44,13 @@
         .commonSectionLevel {
             display: flex;
             gap: 8px;
+
+            .textManage {
+                max-width: 150px;
+                overflow-x: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 import store from '../../store/store';
 import {
+    setDisableState,
     setSavingsCalculatorFrom,
     setSelectedDeploymentModel,
     setSelectedHostDetails,
@@ -21,6 +22,7 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
         return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
     dispatch(setSavingsCalculatorFrom('Auto'));
+    dispatch(setDisableState(false));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(rowData?.id));
     dispatch(setSelectedDeploymentModel(deploymentModel));
@@ -30,8 +32,8 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
 
 export const handleManualTCO = (dispatch: any) => {
     dispatch(setSavingsCalculatorFrom('Manual'));
-
-    dispatch(setSelectedHeaderTab(WLF_TABS.REDIRECT_COMPONENT));
+    dispatch(setDisableState(true));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {

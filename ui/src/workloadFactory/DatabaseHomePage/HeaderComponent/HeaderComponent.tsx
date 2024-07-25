@@ -52,6 +52,7 @@ import DatabaseHostOverviewV2 from '../../ResourcePage/ResourceHomePage/Database
 import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { updateRefreshBlocked } from '../../../store/authSlice';
 import RedirectComponent from '../../ExploreSavings/SavingsCalculator/RedirectComponent';
+import SavingsCalculatorManualApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorManualAPI';
 
 type Tab = {
     tab: string;
@@ -83,6 +84,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     DatabaseHomeApis();
     JobMonitoringApi();
     SavingsCalculatorApi();
+    SavingsCalculatorManualApi();
     SandboxApis();
 
     useEffect(() => {
@@ -384,7 +386,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                 {selectedHeaderTab === WLF_TABS.SANDBOXES && <Sandbox />}
                 {selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS && <ExploreSavings />}
                 {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
-                {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />}
+                {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
                 {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
             </div>
         )

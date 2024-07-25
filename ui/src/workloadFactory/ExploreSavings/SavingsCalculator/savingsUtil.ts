@@ -1322,6 +1322,50 @@ const byteConversion = (gib: number) => {
     return gib * Math.pow(1024, 3);
 };
 
+export const checkForIO1Valid = (data: any) => {
+    const volIops = Number(data?.manualTCOProvisionedIOPS);
+    const volStorageSaving = Number(data?.manualTCOStorageAmount);
+    if (volIops < 100 || volIops > 64000 || volStorageSaving > 16384) {
+        return false;
+    }
+    return true;
+};
+
+export const checkForIO2Valid = (data: any) => {
+    const volIops = Number(data?.manualTCOProvisionedIOPS);
+    const volStorageSaving = Number(data?.manualTCOStorageAmount);
+    if (volIops < 100 || volIops > 256000 || volStorageSaving > 16384) {
+        return false;
+    }
+    return true;
+};
+
+export const gp2Valid = (data: any) => {
+    const volStorageSaving = Number(data?.manualTCOStorageAmount);
+    if (volStorageSaving > 16384) {
+        return false;
+    }
+    return true;
+};
+
+export const checkForGp3Valid = (data: any) => {
+    const volIops = Number(data?.manualTCOProvisionedIOPS);
+    const volStorageSaving = Number(data?.manualTCOStorageAmount);
+    const volThroughput = data?.manualTCOThroughput;
+    if (volIops < 3000 || volIops > 16000 || volStorageSaving > 16384 || volThroughput < 125 || volThroughput > 1000) {
+        return false;
+    }
+    return true;
+};
+
+export const checkForSt1Valid = (data: any) => {
+    const volStorageSaving = Number(data?.manualTCOStorageAmount);
+    if (volStorageSaving > 16384) {
+        return false;
+    }
+    return true;
+};
+
 const generateVolumesData = (manualTCOVolumeTypes: any) => {
     const arr = [];
     const io1Complete = allPropertiesHaveValues({
@@ -1339,14 +1383,14 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
         manualTCONumberOfVolumes: manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes,
         manualTCOStorageAmount: manualTCOVolumeTypes?.st1?.manualTCOStorageAmount
     });
-    if (st1Complete) {
+    if (st1Complete && checkForSt1Valid(manualTCOVolumeTypes?.st1)) {
         arr.push({
             volumeType: 'st1',
             volumeNumber: +manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes,
             storageAmount: byteConversion(+manualTCOVolumeTypes?.st1?.manualTCOStorageAmount)
         });
     }
-    if (gp3Complete) {
+    if (gp3Complete && checkForGp3Valid(manualTCOVolumeTypes?.gp3)) {
         arr.push({
             volumeType: 'gp3',
             volumeNumber: +manualTCOVolumeTypes?.gp3?.manualTCONumberOfVolumes,
@@ -1355,14 +1399,14 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
             throughput: +manualTCOVolumeTypes?.gp3?.manualTCOThroughput
         });
     }
-    if (gp2Complete) {
+    if (gp2Complete && gp2Valid(manualTCOVolumeTypes?.gp2)) {
         arr.push({
             volumeType: 'gp2',
             volumeNumber: +manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes,
             storageAmount: byteConversion(+manualTCOVolumeTypes?.gp2?.manualTCOStorageAmount)
         });
     }
-    if (io2Complete) {
+    if (io2Complete && checkForIO2Valid(manualTCOVolumeTypes?.io2)) {
         arr.push({
             volumeType: 'io2',
             volumeNumber: +manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes,
@@ -1371,7 +1415,7 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
             throughput: +manualTCOVolumeTypes?.io2?.manualTCOThroughput
         });
     }
-    if (io1Complete) {
+    if (io1Complete && checkForIO1Valid(manualTCOVolumeTypes?.io1)) {
         arr.push({
             volumeType: 'io1',
             volumeNumber: +manualTCOVolumeTypes?.io1?.manualTCONumberOfVolumes,

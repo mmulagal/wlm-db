@@ -7,7 +7,7 @@ import SavingsCalculatorManualApi from './SavingsCalculatorManualAPI';
 const RedirectComponent = () => {
     const dispatch = useDispatch();
 
-    SavingsCalculatorManualApi();
+    // SavingsCalculatorManualApi();
 
     useEffect(() => {
         dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
