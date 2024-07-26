@@ -303,6 +303,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
             </div>
 
             {/* Second Row */}
+            {/* removing tooltip to test */}
             <div className={styles.row}>
                 <TextField
                     label={'Provisioned IOPS per volume'}
