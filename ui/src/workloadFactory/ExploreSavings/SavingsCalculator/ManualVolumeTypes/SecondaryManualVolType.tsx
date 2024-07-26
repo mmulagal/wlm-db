@@ -24,7 +24,11 @@ const SecondaryManualVolType = () => {
             manualTCOStorageAmount: manualTCOVolumeTypes2?.io1?.manualTCOStorageAmount,
             manualTCOProvisionedIOPS: manualTCOVolumeTypes2?.io1?.manualTCOProvisionedIOPS
         });
-        const io2Complete = allPropertiesHaveValues(manualTCOVolumeTypes2?.io2);
+        const io2Complete = allPropertiesHaveValues({
+            manualTCONumberOfVolumes: manualTCOVolumeTypes2?.io2?.manualTCONumberOfVolumes,
+            manualTCOStorageAmount: manualTCOVolumeTypes2?.io2?.manualTCOStorageAmount,
+            manualTCOProvisionedIOPS: manualTCOVolumeTypes2?.io2?.manualTCOProvisionedIOPS
+        });
         const gp2Complete = allPropertiesHaveValues({
             manualTCONumberOfVolumes: manualTCOVolumeTypes2?.gp2?.manualTCONumberOfVolumes,
             manualTCOStorageAmount: manualTCOVolumeTypes2?.gp2?.manualTCOStorageAmount
