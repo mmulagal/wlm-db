@@ -72,6 +72,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
             manualTCOThroughput: null
         }
     },
+
     manualTCOVolumeTypes2: {
         io2: {
             manualTCONumberOfVolumes: null,
@@ -216,6 +217,32 @@ const exploreSavingsSlice = createSlice({
         setSavingsCalculatorRefresh(state, action: PayloadAction<any>) {
             state.savingsCalculatorRefresh = action.payload;
         },
+        setSecondaryVolDetails(state, action: PayloadAction<any>) {
+            state.manualTCOVolumeTypes2.gp2.manualTCONumberOfVolumes = action.payload.gp2.manualTCONumberOfVolumes;
+            state.manualTCOVolumeTypes2.gp2.manualTCOProvisionedIOPS = action.payload.gp2.manualTCOProvisionedIOPS;
+            state.manualTCOVolumeTypes2.gp2.manualTCOStorageAmount = action.payload.gp2.manualTCOStorageAmount;
+            state.manualTCOVolumeTypes2.gp2.manualTCOThroughput = action.payload.gp2.manualTCOThroughput;
+
+            state.manualTCOVolumeTypes2.io2.manualTCONumberOfVolumes = action.payload.io2.manualTCONumberOfVolumes;
+            state.manualTCOVolumeTypes2.io2.manualTCOProvisionedIOPS = action.payload.io2.manualTCOProvisionedIOPS;
+            state.manualTCOVolumeTypes2.io2.manualTCOStorageAmount = action.payload.io2.manualTCOStorageAmount;
+            state.manualTCOVolumeTypes2.io2.manualTCOThroughput = action.payload.io2.manualTCOThroughput;
+
+            state.manualTCOVolumeTypes2.io1.manualTCONumberOfVolumes = action.payload.io1.manualTCONumberOfVolumes;
+            state.manualTCOVolumeTypes2.io1.manualTCOProvisionedIOPS = action.payload.io1.manualTCOProvisionedIOPS;
+            state.manualTCOVolumeTypes2.io1.manualTCOStorageAmount = action.payload.io1.manualTCOStorageAmount;
+            state.manualTCOVolumeTypes2.io1.manualTCOThroughput = action.payload.io1.manualTCOThroughput;
+
+            state.manualTCOVolumeTypes2.gp3.manualTCONumberOfVolumes = action.payload.gp3.manualTCONumberOfVolumes;
+            state.manualTCOVolumeTypes2.gp3.manualTCOProvisionedIOPS = action.payload.gp3.manualTCOProvisionedIOPS;
+            state.manualTCOVolumeTypes2.gp3.manualTCOStorageAmount = action.payload.gp3.manualTCOStorageAmount;
+            state.manualTCOVolumeTypes2.gp3.manualTCOThroughput = action.payload.gp3.manualTCOThroughput;
+
+            state.manualTCOVolumeTypes2.st1.manualTCONumberOfVolumes = action.payload.st1.manualTCONumberOfVolumes;
+            state.manualTCOVolumeTypes2.st1.manualTCOProvisionedIOPS = action.payload.st1.manualTCOProvisionedIOPS;
+            state.manualTCOVolumeTypes2.st1.manualTCOStorageAmount = action.payload.st1.manualTCOStorageAmount;
+            state.manualTCOVolumeTypes2.st1.manualTCOThroughput = action.payload.st1.manualTCOThroughput;
+        },
         addExploreSavingsInitialData(state, action: PayloadAction<any>) {
             state.selectedSnapshotFrequency = null;
             state.numberOfClonedCopies = 1;
@@ -302,6 +329,8 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualRegion = null;
             state.selectedManualDeploymentModel = null;
             state.selectedManualServerEdition = null;
+            state.selectedManualInstanceType = null;
+            state.selectedSecondaryManualInstanceType = null;
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
@@ -322,6 +351,7 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setSecondaryVolDetails,
     setDisableState,
     setInstanceLoading,
     setRequestedPayload,
