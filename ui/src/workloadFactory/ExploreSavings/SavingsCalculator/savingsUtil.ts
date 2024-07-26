@@ -1385,7 +1385,11 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
         manualTCOStorageAmount: manualTCOVolumeTypes?.io1?.manualTCOStorageAmount,
         manualTCOProvisionedIOPS: manualTCOVolumeTypes?.io1?.manualTCOProvisionedIOPS
     });
-    const io2Complete = allPropertiesHaveValues(manualTCOVolumeTypes?.io2);
+    const io2Complete = allPropertiesHaveValues({
+        manualTCONumberOfVolumes: manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes,
+        manualTCOStorageAmount: manualTCOVolumeTypes?.io2?.manualTCOStorageAmount,
+        manualTCOProvisionedIOPS: manualTCOVolumeTypes?.io2?.manualTCOProvisionedIOPS
+    });
     const gp2Complete = allPropertiesHaveValues({
         manualTCONumberOfVolumes: manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes,
         manualTCOStorageAmount: manualTCOVolumeTypes?.gp2?.manualTCOStorageAmount
@@ -1423,8 +1427,7 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
             volumeType: 'io2',
             volumeNumber: +manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes,
             storageAmount: byteConversion(+manualTCOVolumeTypes?.io2?.manualTCOStorageAmount),
-            volumeIops: +manualTCOVolumeTypes?.io2?.manualTCOProvisionedIOPS,
-            throughput: +manualTCOVolumeTypes?.io2?.manualTCOThroughput
+            volumeIops: +manualTCOVolumeTypes?.io2?.manualTCOProvisionedIOPS
         });
     }
     if (io1Complete && checkForIO1Valid(manualTCOVolumeTypes?.io1)) {
