@@ -303,60 +303,31 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
             </div>
 
             {/* Second Row */}
+            {/* removing tooltip to test */}
             <div className={styles.row}>
-                {IOPSDisable ? (
-                    <Popover
-                        popoverClass={styles['copy-popover']}
-                        children={GENERAL.IOPS_DISABLE_TOOLTIP}
-                        trigger="hover"
-                        container={
-                            <TextField
-                                label={'Provisioned IOPS per volume'}
-                                isDisabled={true}
-                                className={styles.deploymentModelWidth}
-                            />
-                        }
-                    />
-                ) : (
-                    <TextField
-                        label={'Provisioned IOPS per volume'}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            setIOPSValue(numVal);
-                        }}
-                        isDisabled={IOPSDisable}
-                        value={iopsValue}
-                        className={styles.deploymentModelWidth}
-                        error={handleIOPSError()}
-                    />
-                )}
+                <TextField
+                    label={'Provisioned IOPS per volume'}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                        setIOPSValue(numVal);
+                    }}
+                    isDisabled={IOPSDisable}
+                    value={iopsValue}
+                    className={styles.deploymentModelWidth}
+                    error={handleIOPSError()}
+                />
 
-                {throughPutDisable ? (
-                    <Popover
-                        popoverClass={styles['copy-popover']}
-                        children={GENERAL.THROUGHPUT_DISABLE_TOOLTIP}
-                        trigger="hover"
-                        container={
-                            <TextField
-                                label={'Throughput MB/s-default'}
-                                isDisabled={true}
-                                className={styles.deploymentModelWidth}
-                            />
-                        }
-                    />
-                ) : (
-                    <TextField
-                        label={'Throughput MB/s-default'}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            setThroughputValue(numVal);
-                        }}
-                        isDisabled={throughPutDisable}
-                        value={throughputValue}
-                        className={styles.deploymentModelWidth}
-                        error={handleThroughputError()}
-                    />
-                )}
+                <TextField
+                    label={'Throughput MB/s-default'}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                        setThroughputValue(numVal);
+                    }}
+                    isDisabled={throughPutDisable}
+                    value={throughputValue}
+                    className={styles.deploymentModelWidth}
+                    error={handleThroughputError()}
+                />
             </div>
         </div>
     );
