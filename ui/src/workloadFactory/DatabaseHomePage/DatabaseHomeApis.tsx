@@ -142,7 +142,7 @@ const DatabaseHomeApis = () => {
         if (!isInventoryV2 || !databaseHostsDataV2) {
             return;
         }
-        const hostStatusCount = getManagedHostCount(databaseHostsDataV2);
+        const hostStatusCount = getManagedHostCount(databaseHostsDataV2, dispatch);
         dispatch(addAggregateHostsCountData(hostStatusCount));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsDataV2, inventoryTableData]);
