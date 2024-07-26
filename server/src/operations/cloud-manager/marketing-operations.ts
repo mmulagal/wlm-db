@@ -81,7 +81,7 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
                 volumeType,
                 volumeNumber,
                 storageAmount: {
-                    size: sizeInGigaBytes(storageAmount, 'B') * volumeNumber,
+                    size: sizeInGigaBytes(storageAmount, 'B'),
                     unit: 'GiB'
                 },
                 volumeIops: volumeIops && volumeIops > 0 ? volumeIops * volumeNumber : 0,
