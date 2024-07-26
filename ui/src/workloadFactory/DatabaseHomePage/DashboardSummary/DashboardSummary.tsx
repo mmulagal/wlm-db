@@ -179,7 +179,7 @@ const DashboardSummary = () => {
                                 </DsTypography>
 
                                 {/* <div style={{ height: '42px' }} /> */}
-                                {loading && <DsFlashingDotsLoader />}
+                                {(loading || managedHostInstanceLoading) && <DsFlashingDotsLoader />}
                             </div>
 
                             <DsTypography variant="Regular_14">Managed databases</DsTypography>
