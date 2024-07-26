@@ -21,40 +21,42 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
     const dispatch = useDispatch();
     const { manualTCOVolumeTypes, manualTCOVolumeTypes2 } = useAppSelector(state => state.exploreSavings);
 
-    const [volumeValue, setVolumeValue] = useState(
+    const [volumeValue, setVolumeValue] = useState<any>(null);
+    const defaultVolumeVal =
         from === 'primary'
             ? manualTCOVolumeTypes?.[type]?.manualTCONumberOfVolumes
-            : manualTCOVolumeTypes2?.[type]?.manualTCONumberOfVolumes
-    );
-    const [storageAmountValue, setStorageAmountValue] = useState(
+            : manualTCOVolumeTypes2?.[type]?.manualTCONumberOfVolumes;
+
+    const [storageAmountValue, setStorageAmountValue] = useState<any>(null);
+    const defaultStorageAmountValue =
         from === 'primary'
             ? manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount
-            : manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount
-    );
-    const [volumeSearch, setVolumeSearch] = useSearchDebounce(500);
+            : manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount;
+    const [volumeSearch, setVolumeSearch] = useSearchDebounce(300);
     //Storage amount debounce logic
 
-    const [storageAmountSearch, setStorageAmountSearch] = useSearchDebounce(500);
+    const [storageAmountSearch, setStorageAmountSearch] = useSearchDebounce(300);
 
-    const [iopsValue, setIOPSValue] = useState(
+    const [iopsValue, setIOPSValue] = useState<any>(null);
+    const defaultIOPSValue =
         from === 'primary'
             ? manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS
-            : manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS
-    );
+            : manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS;
 
-    const [iopsSearch, setIOPSSearch] = useSearchDebounce(500);
+    const [iopsSearch, setIOPSSearch] = useSearchDebounce(300);
 
-    const [throughputValue, setThroughputValue] = useState(
+    const [throughputValue, setThroughputValue] = useState<any>(null);
+
+    const defaultThroughputValue =
         from === 'primary'
             ? manualTCOVolumeTypes?.[type]?.manualTCOThroughput
-            : manualTCOVolumeTypes2?.[type]?.manualTCOThroughput
-    );
+            : manualTCOVolumeTypes2?.[type]?.manualTCOThroughput;
 
-    const [throughputSearch, setThroughputSearch] = useSearchDebounce(500);
+    const [throughputSearch, setThroughputSearch] = useSearchDebounce(300);
 
     //use effect for volume details
     useEffect(() => {
-        setVolumeSearch(volumeValue);
+        setVolumeSearch(volumeValue === null ? defaultVolumeVal : volumeValue);
     }, [volumeValue]);
 
     useEffect(() => {
@@ -79,7 +81,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
 
     //use effect for volume details
     useEffect(() => {
-        setStorageAmountSearch(storageAmountValue);
+        setStorageAmountSearch(storageAmountValue === null ? defaultStorageAmountValue : storageAmountValue);
     }, [storageAmountValue]);
 
     useEffect(() => {
@@ -104,7 +106,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
 
     //iops debounce details
     useEffect(() => {
-        setIOPSSearch(iopsValue);
+        setIOPSSearch(iopsValue === null ? defaultIOPSValue : iopsValue);
     }, [iopsValue]);
 
     useEffect(() => {
@@ -129,7 +131,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
 
     //throughput debounce details
     useEffect(() => {
-        setThroughputSearch(throughputValue);
+        setThroughputSearch(throughputValue === null ? defaultThroughputValue : throughputValue);
     }, [throughputValue]);
 
     useEffect(() => {
@@ -284,7 +286,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                         const numVal = e.target.value.replace(/[^0-9.]/g, '');
                         setVolumeValue(numVal);
                     }}
-                    value={volumeValue}
+                    value={volumeValue === null ? defaultVolumeVal : volumeValue}
                     className={styles.deploymentModelWidth}
                     error={handleVolumeError()}
                 />
@@ -295,7 +297,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                         const numVal = e.target.value.replace(/[^0-9.]/g, '');
                         setStorageAmountValue(numVal);
                     }}
-                    value={storageAmountValue}
+                    value={storageAmountValue === null ? defaultStorageAmountValue : storageAmountValue}
                     className={styles.deploymentModelWidth}
                     info={type === 'io2' ? 'Maximum capacity allowed: 64 TiB.' : 'Maximum capacity allowed: 16 TiB.'}
                     error={handleStorageCapacityLimit()}
@@ -312,7 +314,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                         setIOPSValue(numVal);
                     }}
                     isDisabled={IOPSDisable}
-                    value={iopsValue}
+                    value={iopsValue === null ? defaultIOPSValue : iopsValue}
                     className={styles.deploymentModelWidth}
                     error={handleIOPSError()}
                 />
@@ -324,7 +326,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                         setThroughputValue(numVal);
                     }}
                     isDisabled={throughPutDisable}
-                    value={throughputValue}
+                    value={throughputValue === null ? defaultThroughputValue : throughputValue}
                     className={styles.deploymentModelWidth}
                     error={handleThroughputError()}
                 />
