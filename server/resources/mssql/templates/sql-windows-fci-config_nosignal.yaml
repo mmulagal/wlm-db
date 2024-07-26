@@ -532,7 +532,7 @@ Resources:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\common.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: 0
-                        d-verify-DSC-signature:
+                        e-verify-DSC-signature:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\DSC.zip -SignatureFilePath C:\cfn\signig_files\DSC.sig 
@@ -540,11 +540,11 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        e-unpack-DSC-scripts:
+                        f-unpack-DSC-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\DSC.zip -Destination C:\cfn
                             waitAfterCompletion: 0
-                        f-verify-sqlfci-signature:
+                        g-verify-sqlfci-signature:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\sqlfci.zip -SignatureFilePath C:\cfn\signig_files\sqlfci.sig 
@@ -552,11 +552,11 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        g-unpack-sqlfci-scripts:
+                        h-unpack-sqlfci-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\sqlfci.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: 0
-                        h-verify-sqlontap-signature:
+                        i-verify-sqlontap-signature:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\sqlontap.zip -SignatureFilePath C:\cfn\signig_files\sqlontap.sig 
@@ -564,17 +564,17 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        i-unpack-sqlontap-scripts:
+                        j-unpack-sqlontap-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\sqlontap.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: 0
-                        j-unpack-sqlspcu-scripts:
+                        k-unpack-sqlspcu-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\sqlspcu.zip -Destination C:\cfn
-                        k-unpack-powershell-scripts:
+                        l-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
-                        l-verify-dbcreate-signature:
+                        m-verify-dbcreate-signature:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dbcreate.zip -SignatureFilePath C:\cfn\signig_files\dbcreate.sig 
@@ -582,22 +582,22 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        m-unpack-dbcreate-scripts:
+                        n-unpack-dbcreate-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\dbcreate.zip -Destination C:\cfn\scripts
-                        n-move-execurequeryfromssmscript:
+                        o-move-execurequeryfromssmscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
                             waitAfterCompletion: 0
-                        o-move-ontapscript:
+                        p-move-ontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
-                        p-move-dbcreatescripts:
+                        q-move-dbcreatescripts:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\* -Destination C:\SSM\ -Recurse
                             waitAfterCompletion: 0
-                        q-hide-ssm:
+                        r-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0 
-                        r-verify-dependentpackages-signature:
+                        s-verify-dependentpackages-signature:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dependent-packages.zip -SignatureFilePath C:\cfn\signig_files\dependent-packages.sig 
@@ -605,7 +605,7 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        s-unpack-dependentpackages:
+                        t-unpack-dependentpackages:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
                 InitialSetup:
