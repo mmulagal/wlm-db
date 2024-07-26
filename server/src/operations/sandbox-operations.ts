@@ -1869,7 +1869,9 @@ async function getSandboxSplitEstimate(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
     }
 
-    if (!parsedResp?.data?.parentVolume || !parsedResp?.log?.parentVolume) {
+    const mappingData = [...parsedResp.data, ...parsedResp.log];
+
+    if (mappingData.some(vol => !vol.parentVolume)) {
         throw createError(
             HttpErrorCodes.VALIDATION_ERROR,
             'The sandbox seems to be already split and hence cannot be altered.'
@@ -1882,7 +1884,7 @@ async function getSandboxSplitEstimate(
             srcDetails.fsxId,
             region,
             '/storage/volumes',
-            `uuid=${[parsedResp.data.volumeUuid, parsedResp.log.volumeUuid].join('|')}`,
+            `uuid=${mappingData.map(vol => vol.volumeUuid).join('|')}`,
             'fields=clone.split_estimate'
         )
     ];
@@ -2783,7 +2785,9 @@ async function getSandboxSnapshots(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedMappingResponse.error);
     }
 
-    if (!parsedMappingResponse?.data?.parentVolumeUuid || !parsedMappingResponse?.log?.parentVolumeUuid) {
+    const mappingData = [...parsedMappingResponse.data, ...parsedMappingResponse.log];
+
+    if (mappingData.some(vol => !vol.parentVolume)) {
         const errorMessage = 'The underlying volume doesnot have parents, the volume seems to be already split';
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
@@ -2793,8 +2797,8 @@ async function getSandboxSnapshots(
         getSnapshotsToClone(
             srcDetails.fsxId,
             region,
-            JSON.stringify([parsedMappingResponse.data.parentVolumeUuid, parsedMappingResponse.log.parentVolumeUuid]),
-            parsedMappingResponse.data.parentVolumeUuid,
+            JSON.stringify(mappingData.map(vol => vol.parentVolumeUuid)),
+            mappingData[0].parentVolumeUuid,
             sandboxName,
             TIME_WINDOW
         )
