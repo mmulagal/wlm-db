@@ -578,8 +578,7 @@ Resources:
           Ref: S3EndpointRouteTables
         PreferredSubnetCidrblock:
           Ref: PrivateSubnet1Cidrblock
-        StandbySubnetCidrblock:
-          Ref: PrivateSubnet2Cidrblock
+        StandbySubnetCidrblock: !If [IsFailoverCluster, !Ref PrivateSubnet2Cidrblock, !Ref AWS::NoValue]
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -777,8 +776,7 @@ Resources:
           Ref: AWS::StackName
         PreferredSubnetCidrblock:
           Ref: PrivateSubnet1Cidrblock
-        StandbySubnetCidrblock:
-          Ref: PrivateSubnet2Cidrblock
+        StandbySubnetCidrblock: !If [IsFailoverCluster, !Ref PrivateSubnet2Cidrblock, !Ref AWS::NoValue]
       NotificationARNs:
         Fn::If:
         - IncludeNotification
