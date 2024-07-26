@@ -837,7 +837,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Amount changed in GiB per snapshot',
                 value: `${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`,
-                text: `(Monthly change rate% / 100)/total snapshots x Storage amount of EBS primary dbs volumes= (${viewCalculation.monthlyChangeRate}%/100)/${viewCalculation.ebsSnapshotCalculation.totalSnapshots} x${viewCalculation.ebsSnapshotCalculation.storageAmountPerMonth}= ${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`
+                text: `(Monthly change rate % / total snapshots) x Storage amount of EBS primary dbs volumes= (${viewCalculation.monthlyChangeRate}%/${viewCalculation.ebsSnapshotCalculation.totalSnapshots}) x${viewCalculation.ebsSnapshotCalculation.storageAmountPerMonth}= ${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`
             },
             {
                 label: 'Initial snapshot cost',
@@ -879,12 +879,12 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'EBS iops cost for clone',
                 value: `$${viewCalculation.ebsCloneCalculation.iops}`,
-                text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
+                text: `EBS iops cost of primary dbs volumes not including replica dbs volumes`
             },
             {
                 label: 'EBS throughput cost for clone',
                 value: `$${viewCalculation.ebsCloneCalculation.throughput}`,
-                text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
+                text: `EBS throughput cost of primary dbs volumes not including replica dbs volumes`
             },
             {
                 label: 'Clones total monthly cost',

@@ -1,16 +1,18 @@
 // ToDo - Write utils dunction for dashboard page here
 
 import store from '../../store/store';
+import { setManagedHostInstanceLoading } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import { COSTING_TYPES, INVENTORY_STATUS, STATUS_CONST } from '../../utils/consts';
 import { formatFractionalNumber, formatSizeOnePrecision, isAwsBackupEnabled } from '../../utils/utilityFunctions';
 
-export const getManagedHostCount = (data: any) => {
+export const getManagedHostCount = (data: any, dispatch: any) => {
     let totalDatabases = 0;
     let totahosts = 0;
     let managedDatabases = 0;
     let totalInstances = 0;
     let managedInstances = 0;
+    let isLoading = false;
     Object.keys(data).map((val: string) => {
         totahosts += 1;
         totalInstances += data[val]?.databaseInstanceDetails?.length || 0;
@@ -24,6 +26,9 @@ export const getManagedHostCount = (data: any) => {
         const inventoryTableData = state.inventoryV2.inventoryTableData;
         if (inventoryTableData?.[val]) {
             inventoryTableData[val]?.sqlServerInstances?.map((per: any) => {
+                if (inventoryTableData[val]?.loading) {
+                    isLoading = true;
+                }
                 totalDatabases += per?.databaseCount || 0;
                 if (per?.statusColText === INVENTORY_STATUS.MANAGED) {
                     managedDatabases += per?.databaseCount || 0;
@@ -31,6 +36,8 @@ export const getManagedHostCount = (data: any) => {
             });
         }
     });
+
+    dispatch(setManagedHostInstanceLoading(isLoading));
     return {
         totalDatabases: totalDatabases,
         totalHosts: totahosts,

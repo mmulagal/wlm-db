@@ -787,6 +787,7 @@ export const formatDiscoverInstanceData = (
             databaseInstanceName: perRow?.sqlServerInstance,
             status: perRow?.sqlServerState,
             // databaseCount: 0,
+            databaseCount: perRow?.databaseCount,
             statusColText: statusObj ? statusObj?.[0]?.status : INVENTORY_STATUS.UNDETECTED,
             fileSystemDeploymentMode: getFileSystemDeploymentMode(perRow?.deploymentTypes?.[0]?.type || ''),
             fileSystemType: getDiscoverFileSystemType(perRow),
@@ -1279,6 +1280,7 @@ export const updateSqlServerInstancesForUnmanaged = (
                 const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
                 return {
                     ...instRow,
+                    databaseCount: perRow?.databaseCount,
                     fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
                     loading: perfData?.loading,
                     protection: instRow?.protection || perfData?.protection,
