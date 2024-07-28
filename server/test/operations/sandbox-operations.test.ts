@@ -243,7 +243,7 @@ describe('sandbox operations ', () => {
         expect(resp.jobId).toBeDefined();
     });
 
-    it.skip('Get snapshots for clone', async () => {
+    it('Get snapshots for clone', async () => {
         const resp = await getSandboxSnapshots(
             ACCOUNT_ID,
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
