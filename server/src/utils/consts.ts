@@ -667,6 +667,8 @@ const TEMPLATE_EC2_ENDPOINT = 'Ec2EndpointExists';
 const TEMPLATE_EC2MESSAGES_ENDPOINT = 'Ec2MessagesEndpointExists';
 const TEMPLATE_SSMMESSAGES_ENDPOINT = 'SSMMessagesEndpointExists';
 const TEMPLATE_S3GATEWAY_ROUTETABLES = 'S3EndpointRouteTables';
+const TEMPLATE_PRIVATESUBNET1_CIDRBLOCK = 'PrivateSubnet1Cidrblock';
+const TEMPLATE_PRIVATESUBNET2_CIDRBLOCK = 'PrivateSubnet2Cidrblock';
 
 const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
@@ -796,6 +798,14 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'DependentPackages',
         url: `${WLMDB}/Installer/dependent-packages.zip`
+    },
+    {
+        name: 'ArtifactsSignatures',
+        url: `${WLMDB}/signig_files.zip`
+    },
+    {
+        name: 'OpenSSL',
+        url: `${WLMDB}/OpenSSL-Win64.zip`
     }
 ];
 
@@ -1481,5 +1491,7 @@ export {
     STORAGE_SERVICE_DEFAULT_REGION,
     FINDING,
     SQL_SERVICE_STATE,
+    TEMPLATE_PRIVATESUBNET1_CIDRBLOCK,
+    TEMPLATE_PRIVATESUBNET2_CIDRBLOCK,
     WIN_SQL_EC2_USAGE_OPERATION
 };

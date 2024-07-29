@@ -1,6 +1,6 @@
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { compact, groupBy, isEmpty } from 'lodash-es';
+import { compact, groupBy, isEmpty, uniqBy } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
@@ -39,7 +39,9 @@ import {
     deleteExtendedPropertiesScript,
     checkDatabaseIntegrityScript,
     getSnapshotsToClone,
-    getConnectionInfo
+    getConnectionInfo,
+    invokeVirtualMountScript
+    // invokeVirtualMountScript
 } from './workloads/mssql/sandbox-scripts';
 import { DatabaseInstance, Metadata, ResourceDetails, Sandbox, databaseInstanceMetadata } from '../utils/common-types';
 import {
@@ -469,8 +471,8 @@ interface VolumeLunMap {
 interface VolumeLunMapping {
     svm: string;
     collation?: string;
-    data: VolumeLunMap;
-    log: VolumeLunMap;
+    data: Array<VolumeLunMap>;
+    log: Array<VolumeLunMap>;
 }
 
 interface HostAndDbInfo extends DbInfo {
@@ -491,8 +493,8 @@ interface ClonedVolume {
     lunSerialNumber: string;
 }
 interface ClonedVolumes {
-    log: ClonedVolume;
-    data: ClonedVolume;
+    log: Array<ClonedVolume>;
+    data: Array<ClonedVolume>;
 }
 
 interface MountPoints {
@@ -596,7 +598,7 @@ async function startSandboxCreation(
             mappings,
             clonedVolumes,
             mountPoints
-        )) as { dataPath: string; logPath: string };
+        )) as { dataPath: Array<string>; logPath: Array<string> };
 
         await createCloneDb(accountId, credentialsId, region, parentJobId, destDetails, mountPaths, mappings.collation);
 
@@ -621,8 +623,10 @@ async function startSandboxCreation(
             parentJobId,
             srcDetails,
             destDetails,
-            clonedVolumes ? [clonedVolumes.data.volumeId, clonedVolumes.log.volumeId] : [],
-            compact([mountPaths?.dataPath, mountPaths?.logPath])
+            clonedVolumes
+                ? [...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)]
+                : [],
+            compact([...(mountPaths ? mountPaths.dataPath : []), ...(mountPaths ? mountPaths?.logPath : [])])
         );
     } finally {
         // clearning all the ssm command cache so that we will get the fresh data once the sandbox is created
@@ -915,8 +919,14 @@ async function createVolumeClone(
                 srcDetails.fsxId,
                 region,
                 mapping.svm,
-                JSON.stringify({ name: mapping.data.volumeName, ...(snapshot && { snapshot }) }),
-                JSON.stringify({ name: mapping.log.volumeName, ...(snapshot && { snapshot }) }),
+                JSON.stringify({
+                    volumes: uniqBy(mapping.data, 'volumeUuid').map(vol => vol.volumeName),
+                    ...(snapshot && { snapshot })
+                }),
+                JSON.stringify({
+                    volumes: uniqBy(mapping.log, 'volumeUuid').map(vol => vol.volumeName),
+                    ...(snapshot && { snapshot })
+                }),
                 [
                     `cloned_by=${getClonedByTagValue(accountId, credentialsId)}`,
                     `source=${destDetails.host}_${destDetails.instance}`.replace(/-/g, '_')
@@ -1019,19 +1029,38 @@ async function invokeVirtualMount(
         if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
             await sleep(45000);
         }
-        const splitDataPath = mappings.data.fileName.split('\\');
-        const dataMappingfile = splitDataPath.slice(1).join('\\');
-        const splitLogPath = mappings.log.fileName.split('\\');
-        const logMappingfile = splitLogPath.slice(1).join('\\');
+        const dataMappingfiles = mappings.data.map(vol => vol.fileName.split('\\').slice(1).join('\\'));
+        const logMappingfiles = mappings.log.map(vol => vol.fileName.split('\\').slice(1).join('\\'));
 
-        const dataFileName = `${mountPoints.dataDrive}:\\${dataMappingfile}`;
-        const logFileName = `${mountPoints.logDrive}:\\${logMappingfile}`;
+        const dataFilePaths = dataMappingfiles.map(file => `${mountPoints.dataDrive}:\\${file}`);
+        const logFilePaths = logMappingfiles.map(file => `${mountPoints.logDrive}:\\${file}`);
 
         try {
             const isDefaultSqlServerInstance: boolean = destDetails.databaseInstanceName === DEFAULT_INSTANCE_NAME;
 
+            // let command = [
+            //     `${INVOKE_VIRTUAL_MOUNT} -DBName '${destDetails.database}' -DataFilePathString '${dataFilePaths.join(
+            //         ','
+            //     )}'  -LogFilePathString '${logFilePaths.join(',')}' -DataSerialString '${clonedVolumes.data
+            //         .map(vol => vol.lunSerialNumber)
+            //         .join(',')}' -LogSerialString '${clonedVolumes.log
+            //         .map(vol => vol.lunSerialNumber)
+            //         .join(',')}' -DbInstanceName '${
+            //         destDetails.databaseInstanceName
+            //     }' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
+            // ];
+
             let command = [
-                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}' -InstanceName '${destDetails.databaseInstanceName}' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
+                invokeVirtualMountScript(
+                    destDetails.database,
+                    JSON.stringify(dataFilePaths),
+                    JSON.stringify(logFilePaths),
+                    JSON.stringify(clonedVolumes.data.map(vol => vol.lunSerialNumber)),
+                    JSON.stringify(clonedVolumes.log.map(vol => vol.lunSerialNumber)),
+                    destDetails.databaseInstanceName!,
+                    isDefaultSqlServerInstance,
+                    `Sandbox:${destDetails.database}:`
+                )
             ];
 
             if (isDemoFlow) {
@@ -1090,7 +1119,7 @@ async function createCloneDb(
     region: string,
     parentJobId: string,
     destDetails: HostAndDbInfo,
-    mountPaths: { dataPath: string; logPath: string },
+    mountPaths: { dataPath: Array<string>; logPath: Array<string> },
     collation?: string
 ) {
     logger.info(
@@ -1124,7 +1153,7 @@ async function createCloneDb(
             createCloneDbScript(
                 destDetails.database,
                 destDetails.instanceName,
-                [mountPaths.dataPath, mountPaths.logPath],
+                [...mountPaths.dataPath, ...mountPaths.logPath],
                 `Sandbox:${destDetails.database}:`
             )
         ];
@@ -1707,8 +1736,8 @@ async function performSandboxDeletion(
             parentJobId,
             resDetails,
             resDetails,
-            [mappings.data.volumeUuid, mappings.log.volumeUuid],
-            [mappings.data.fileName, mappings.log.fileName]
+            [...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)],
+            [...mappings.data.map(map => map.fileName), ...mappings.log.map(map => map.fileName)]
         );
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
@@ -1840,7 +1869,9 @@ async function getSandboxSplitEstimate(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
     }
 
-    if (!parsedResp?.data?.parentVolume || !parsedResp?.log?.parentVolume) {
+    const mappingData = [...parsedResp.data, ...parsedResp.log];
+
+    if (mappingData.some(vol => !vol.parentVolume)) {
         throw createError(
             HttpErrorCodes.VALIDATION_ERROR,
             'The sandbox seems to be already split and hence cannot be altered.'
@@ -1853,7 +1884,7 @@ async function getSandboxSplitEstimate(
             srcDetails.fsxId,
             region,
             '/storage/volumes',
-            `uuid=${[parsedResp.data.volumeUuid, parsedResp.log.volumeUuid].join('|')}`,
+            `uuid=${mappingData.map(vol => vol.volumeUuid).join('|')}`,
             'fields=clone.split_estimate'
         )
     ];
@@ -1966,7 +1997,9 @@ async function performLifecycleUpdate(
             resourceDetails.database
         )) as VolumeLunMapping;
 
-        if (!mappings.data.parentVolume || !mappings.log.parentVolume) {
+        const mappingData = [...mappings.data, ...mappings.log];
+
+        if (mappingData.some(vol => !vol.parentVolume)) {
             throw createError(
                 HttpErrorCodes.VALIDATION_ERROR,
                 'The sandbox seems to be already split and hence cannot be altered.'
@@ -1981,17 +2014,11 @@ async function performLifecycleUpdate(
             resourceDetails,
             resourceDetails,
             {
-                svm: mappings.data.parentSvm!,
-                data: {
-                    ...mappings.data,
-                    volumeName: mappings.data.parentVolume!
-                },
-                log: {
-                    ...mappings.log,
-                    volumeName: mappings.log.parentVolume!
-                }
+                svm: mappings.svm,
+                data: mappings.data.map(vol => ({ ...vol, volumeName: vol.parentVolume! })),
+                log: mappings.log.map(vol => ({ ...vol, volumeName: vol.parentVolume! }))
             },
-            action === SANDBOX_LIFECYCLE_REFRESH ? snapshot : mappings.data?.parentSnapshot
+            action === SANDBOX_LIFECYCLE_REFRESH ? snapshot : mappings.data[0]?.parentSnapshot
         )) as ClonedVolumes;
 
         let extendedProps = (await detachSandboxAndAccessPath(
@@ -2015,10 +2042,10 @@ async function performLifecycleUpdate(
             mappings,
             clonedVolumes,
             {
-                dataDrive: mappings.data.fileName.split(':')[0],
-                logDrive: mappings.log.fileName.split(':')[0]
+                dataDrive: mappings.data[0].fileName.split(':')[0],
+                logDrive: mappings.log[0].fileName.split(':')[0]
             }
-        )) as { dataPath: string; logPath: string };
+        )) as { dataPath: Array<string>; logPath: Array<string> };
 
         await createCloneDb(accountId, credentialsId, region, parentJobId, resourceDetails, mountPaths);
 
@@ -2054,7 +2081,7 @@ async function performLifecycleUpdate(
             parentJobId,
             resourceDetails,
             resourceDetails,
-            [mappings.data.volumeUuid, mappings.log.volumeUuid],
+            [...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)],
             []
         );
 
@@ -2073,7 +2100,9 @@ async function performLifecycleUpdate(
                 parentJobId,
                 resourceDetails,
                 resourceDetails,
-                clonedVolumes ? [clonedVolumes.data.volumeId, clonedVolumes.log.volumeId] : [],
+                clonedVolumes
+                    ? [...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)]
+                    : [],
                 []
             );
 
@@ -2195,8 +2224,11 @@ async function detachSandboxAndAccessPath(
         let command = [
             detachDbAndRemoveAccessPath(
                 resourceDetails.database,
-                JSON.stringify([mappings.data.lunSerialNumber, mappings.log.lunSerialNumber]),
-                JSON.stringify([mappings.data.fileName, mappings.log.fileName]),
+                JSON.stringify([
+                    ...mappings.data.map(vol => vol.lunSerialNumber),
+                    ...mappings.log.map(vol => vol.lunSerialNumber)
+                ]),
+                JSON.stringify([...mappings.data.map(vol => vol.fileName), ...mappings.log.map(vol => vol.fileName)]),
                 resourceDetails.instanceName,
                 resourceDetails.databaseInstanceName,
                 `SandBox:${resourceDetails.database}:`
@@ -2259,15 +2291,14 @@ async function reAttachSandboxAndAccessPath(
     resourceDetails: HostAndDbInfo,
     mappings: VolumeLunMapping
 ) {
-    logger.info(
-        'Re-attach sandbox and access path',
+    logger.info('Re-attach sandbox and access path', {
         accountId,
         credentialsId,
         region,
         parentJobId,
         resourceDetails,
         mappings
-    );
+    });
 
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errMsg;
@@ -2286,8 +2317,8 @@ async function reAttachSandboxAndAccessPath(
         const command = [
             addAccessPathAndAttachDb(
                 resourceDetails.database,
-                JSON.stringify({ serial: mappings.data.lunSerialNumber, path: mappings.data.fileName }),
-                JSON.stringify({ serial: mappings.log.lunSerialNumber, path: mappings.log.fileName }),
+                JSON.stringify(mappings.data.map(vol => ({ serial: vol.lunSerialNumber, path: vol.fileName }))),
+                JSON.stringify(mappings.log.map(vol => ({ serial: vol.lunSerialNumber, path: vol.fileName }))),
                 resourceDetails.instanceName,
                 resourceDetails.databaseInstanceName,
                 `SandBox:${resourceDetails.database}:`
@@ -2381,7 +2412,8 @@ async function performSplitOperation(
             resDetails.database
         )) as VolumeLunMapping;
 
-        if (!mappings.data.parentVolume || !mappings.log.parentVolume) {
+        const mappedVolumes = [...mappings.data, ...mappings.log];
+        if (mappedVolumes.some(vol => !vol.parentVolume)) {
             throw createError(
                 HttpErrorCodes.VALIDATION_ERROR,
                 'The sandbox seems to be already split and hence cannot be altered.'
@@ -2394,8 +2426,8 @@ async function performSplitOperation(
             region,
             parentJobId,
             JSON.stringify([
-                { volumeId: mappings.data.volumeUuid, volumeName: mappings.data.volumeName },
-                { volumeId: mappings.log.volumeUuid, volumeName: mappings.log.volumeName }
+                ...mappings.data.map(vol => ({ volumeId: vol.volumeUuid, volumeName: vol.volumeName })),
+                ...mappings.log.map(vol => ({ volumeId: vol.volumeUuid, volumeName: vol.volumeName }))
             ]),
             resDetails
         );
@@ -2753,7 +2785,9 @@ async function getSandboxSnapshots(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedMappingResponse.error);
     }
 
-    if (!parsedMappingResponse?.data?.parentVolumeUuid || !parsedMappingResponse?.log?.parentVolumeUuid) {
+    const mappingData = [...parsedMappingResponse.data, ...parsedMappingResponse.log];
+
+    if (mappingData.some(vol => !vol.parentVolume)) {
         const errorMessage = 'The underlying volume doesnot have parents, the volume seems to be already split';
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
@@ -2763,8 +2797,8 @@ async function getSandboxSnapshots(
         getSnapshotsToClone(
             srcDetails.fsxId,
             region,
-            JSON.stringify([parsedMappingResponse.data.parentVolumeUuid, parsedMappingResponse.log.parentVolumeUuid]),
-            parsedMappingResponse.data.parentVolumeUuid,
+            JSON.stringify(mappingData.map(vol => vol.parentVolumeUuid)),
+            mappingData[0].parentVolumeUuid,
             sandboxName,
             TIME_WINDOW
         )

@@ -31,7 +31,8 @@ const initialInventoryV2State: InventorySliceData = {
     inventoryExpandedRowHostData: null,
     resetManagedData: false,
     removeSecNodeDiscoveredList: [],
-    unManagedPerfInstanceIdsList: []
+    unManagedPerfInstanceIdsList: [],
+    managedHostInstanceLoading: false
 };
 
 const inventoryV2Slice = createSlice({
@@ -112,6 +113,9 @@ const inventoryV2Slice = createSlice({
         },
         setUnManagedPerfInstanceIdsList: (state, action: PayloadAction<any>) => {
             state.unManagedPerfInstanceIdsList = action.payload;
+        },
+        setManagedHostInstanceLoading: (state, action: PayloadAction<any>) => {
+            state.managedHostInstanceLoading = action.payload;
         }
     }
 });
@@ -141,7 +145,8 @@ export const {
     setDetectedInstanceId,
     setResetManagedData,
     setRemoveSecNodeDiscoveredList,
-    setUnManagedPerfInstanceIdsList
+    setUnManagedPerfInstanceIdsList,
+    setManagedHostInstanceLoading
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

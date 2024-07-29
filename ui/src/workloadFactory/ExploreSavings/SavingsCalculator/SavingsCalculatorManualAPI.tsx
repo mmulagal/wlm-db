@@ -52,18 +52,20 @@ const SavingsCalculatorManualApi = () => {
     const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) dispatch(setInstanceLoading(true));
-        getInstanceTypes({
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2
-        })
-            .then(res => {
-                dispatch(addManualInstanceTypeList(res?.data));
-                dispatch(setInstanceLoading(false));
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+            dispatch(setInstanceLoading(true));
+            getInstanceTypes({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                region: headerSelectedRegion?.label2
             })
-            .catch(error => {
-                dispatch(setInstanceLoading(false));
-            });
+                .then(res => {
+                    dispatch(addManualInstanceTypeList(res?.data));
+                    dispatch(setInstanceLoading(false));
+                })
+                .catch(error => {
+                    dispatch(setInstanceLoading(false));
+                });
+        }
     }, [savingsCalculatorFrom]);
 
     const getManualStorageSavingsData = async () => {

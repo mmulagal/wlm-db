@@ -12,6 +12,7 @@ const DashboardSummary = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedHostsCount);
     const databaseHostsLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
     const fullHostDataLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
+    const managedHostInstanceLoading = useAppSelector(state => state.inventoryV2.managedHostInstanceLoading);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -85,7 +86,7 @@ const DashboardSummary = () => {
                                     {hostData?.totalDatabases}
                                 </DsTypography>
                                 {/* <div style={{ height: '42px' }} /> */}
-                                {loading && <DsFlashingDotsLoader />}
+                                {(loading || managedHostInstanceLoading) && <DsFlashingDotsLoader />}
                             </div>
                             <DsTypography variant="Regular_14">Total databases</DsTypography>
                         </div>
@@ -178,7 +179,7 @@ const DashboardSummary = () => {
                                 </DsTypography>
 
                                 {/* <div style={{ height: '42px' }} /> */}
-                                {loading && <DsFlashingDotsLoader />}
+                                {(loading || managedHostInstanceLoading) && <DsFlashingDotsLoader />}
                             </div>
 
                             <DsTypography variant="Regular_14">Managed databases</DsTypography>
@@ -257,7 +258,7 @@ const DashboardSummary = () => {
                                 </DsTypography>
 
                                 {/* <div style={{ height: '42px' }} /> */}
-                                {loading && <DsFlashingDotsLoader />}
+                                {(loading || managedHostInstanceLoading) && <DsFlashingDotsLoader />}
                             </div>
 
                             <DsTypography variant="Regular_14">Managed databases</DsTypography>

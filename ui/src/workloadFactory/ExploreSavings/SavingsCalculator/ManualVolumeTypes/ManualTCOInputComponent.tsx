@@ -7,6 +7,8 @@ import {
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useEffect, useState } from 'react';
+import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 
 type ManualInputs = {
     type: string;
@@ -19,73 +21,260 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
     const dispatch = useDispatch();
     const { manualTCOVolumeTypes, manualTCOVolumeTypes2 } = useAppSelector(state => state.exploreSavings);
 
+    const [volumeValue, setVolumeValue] = useState(
+        from === 'primary'
+            ? manualTCOVolumeTypes?.[type]?.manualTCONumberOfVolumes
+            : manualTCOVolumeTypes2?.[type]?.manualTCONumberOfVolumes
+    );
+    const [storageAmountValue, setStorageAmountValue] = useState(
+        from === 'primary'
+            ? manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount
+            : manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount
+    );
+    const [volumeSearch, setVolumeSearch] = useSearchDebounce(500);
+    //Storage amount debounce logic
+
+    const [storageAmountSearch, setStorageAmountSearch] = useSearchDebounce(500);
+
+    const [iopsValue, setIOPSValue] = useState(
+        from === 'primary'
+            ? manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS
+            : manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS
+    );
+
+    const [iopsSearch, setIOPSSearch] = useSearchDebounce(500);
+
+    const [throughputValue, setThroughputValue] = useState(
+        from === 'primary'
+            ? manualTCOVolumeTypes?.[type]?.manualTCOThroughput
+            : manualTCOVolumeTypes2?.[type]?.manualTCOThroughput
+    );
+
+    const [throughputSearch, setThroughputSearch] = useSearchDebounce(500);
+
+    //use effect for volume details
+    useEffect(() => {
+        setVolumeSearch(volumeValue);
+    }, [volumeValue]);
+
+    useEffect(() => {
+        if (from === 'primary') {
+            dispatch(
+                setVolumeTypeOperation({
+                    type: type,
+                    mode: 'manualTCONumberOfVolumes',
+                    value: volumeSearch
+                })
+            );
+        } else {
+            dispatch(
+                setSecondaryVolumeTypeOperation({
+                    type: type,
+                    mode: 'manualTCONumberOfVolumes',
+                    value: volumeSearch
+                })
+            );
+        }
+    }, [volumeSearch]);
+
+    //use effect for volume details
+    useEffect(() => {
+        setStorageAmountSearch(storageAmountValue);
+    }, [storageAmountValue]);
+
+    useEffect(() => {
+        if (from === 'primary') {
+            dispatch(
+                setVolumeTypeOperation({
+                    type: type,
+                    mode: 'manualTCOStorageAmount',
+                    value: storageAmountSearch
+                })
+            );
+        } else {
+            dispatch(
+                setSecondaryVolumeTypeOperation({
+                    type: type,
+                    mode: 'manualTCOStorageAmount',
+                    value: storageAmountSearch
+                })
+            );
+        }
+    }, [storageAmountSearch]);
+
+    //iops debounce details
+    useEffect(() => {
+        setIOPSSearch(iopsValue);
+    }, [iopsValue]);
+
+    useEffect(() => {
+        if (from === 'primary') {
+            dispatch(
+                setVolumeTypeOperation({
+                    type: type,
+                    mode: 'manualTCOProvisionedIOPS',
+                    value: iopsSearch
+                })
+            );
+        } else {
+            dispatch(
+                setSecondaryVolumeTypeOperation({
+                    type: type,
+                    mode: 'manualTCOProvisionedIOPS',
+                    value: iopsSearch
+                })
+            );
+        }
+    }, [iopsSearch]);
+
+    //throughput debounce details
+    useEffect(() => {
+        setThroughputSearch(throughputValue);
+    }, [throughputValue]);
+
+    useEffect(() => {
+        if (from === 'primary') {
+            dispatch(
+                setVolumeTypeOperation({
+                    type: type,
+                    mode: 'manualTCOThroughput',
+                    value: throughputSearch
+                })
+            );
+        } else {
+            dispatch(
+                setSecondaryVolumeTypeOperation({
+                    type: type,
+                    mode: 'manualTCOThroughput',
+                    value: throughputSearch
+                })
+            );
+        }
+    }, [throughputSearch]);
+
     const handleIOPSError = () => {
-        if (type === 'gp3') {
-            const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS;
-            const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS;
-            if (
-                (primaryVol > 0 && (primaryVol < 3000 || primaryVol > 16000)) ||
-                (secondaryVol > 0 && (secondaryVol < 3000 || secondaryVol > 16000))
-            ) {
-                return 'IOPS must be between 3000 and 16000.';
+        if (from === 'primary') {
+            if (type === 'gp3') {
+                const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS;
+
+                if (primaryVol > 0 && (primaryVol < 5000 || primaryVol > 16000)) {
+                    return 'IOPS must be between 3000 and 16000.';
+                }
+            }
+
+            if (type === 'io1') {
+                const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS;
+
+                if (primaryVol > 0 && (primaryVol < 100 || primaryVol > 64000)) {
+                    return 'IOPS must be between 100 and 64000.';
+                }
+            }
+
+            if (type === 'io2') {
+                const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS;
+
+                if (primaryVol > 0 && (primaryVol < 100 || primaryVol > 256000)) {
+                    return 'IOPS must be between 100 and 256000.';
+                }
             }
         }
 
-        if (type === 'io1') {
-            const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS;
-            const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS;
-            if (
-                (primaryVol > 0 && (primaryVol < 100 || primaryVol > 64000)) ||
-                (secondaryVol > 0 && (secondaryVol < 100 || secondaryVol > 64000))
-            ) {
-                return 'IOPS must be between 100 and 64000.';
+        if (from !== 'primary') {
+            if (type === 'gp3') {
+                const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS;
+                if (secondaryVol > 0 && (secondaryVol < 3000 || secondaryVol > 16000)) {
+                    return 'IOPS must be between 3000 and 16000.';
+                }
+            }
+
+            if (type === 'io1') {
+                const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS;
+                if (secondaryVol > 0 && (secondaryVol < 100 || secondaryVol > 64000)) {
+                    return 'IOPS must be between 100 and 64000.';
+                }
+            }
+
+            if (type === 'io2') {
+                const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS;
+                if (secondaryVol > 0 && (secondaryVol < 100 || secondaryVol > 256000)) {
+                    return 'IOPS must be between 100 and 256000.';
+                }
             }
         }
 
-        if (type === 'io2') {
-            const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS;
-            const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS;
-            if (
-                (primaryVol > 0 && (primaryVol < 100 || primaryVol > 256000)) ||
-                (secondaryVol > 0 && (secondaryVol < 100 || secondaryVol > 256000))
-            ) {
-                return 'IOPS must be between 100 and 256000.';
-            }
-        }
         return '';
     };
 
     const handleThroughputError = () => {
-        if (type === 'gp3') {
-            const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOThroughput;
-            const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOThroughput;
-            if (
-                (primaryVol > 0 && (primaryVol < 125 || primaryVol > 1000)) ||
-                (secondaryVol > 0 && (secondaryVol < 125 || secondaryVol > 1000))
-            ) {
-                return 'Throughput must be between 125 and 1000.';
+        const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOThroughput;
+        const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOThroughput;
+        if (from === 'primary') {
+            if (type === 'gp3') {
+                if (primaryVol > 0 && (primaryVol < 125 || primaryVol > 1000)) {
+                    return 'Throughput must be between 125 and 1000.';
+                }
+            }
+        }
+        if (from !== 'primary') {
+            if (type === 'gp3') {
+                if (secondaryVol > 0 && (secondaryVol < 125 || secondaryVol > 1000)) {
+                    return 'Throughput must be between 125 and 1000.';
+                }
             }
         }
 
         return '';
+    };
+
+    const handleVolumeError = () => {
+        const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCONumberOfVolumes;
+        const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCONumberOfVolumes;
+        if (from === 'primary') {
+            if (primaryVol > 0 && primaryVol > 1000000000) {
+                return 'Maximum value is 1000000000';
+            }
+        }
+
+        if (from !== 'primary') {
+            if (secondaryVol > 0 && secondaryVol > 1000000000) {
+                return 'Maximum value is 1000000000';
+            }
+        }
+
+        return;
     };
 
     const handleStorageCapacityLimit = () => {
         const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount;
         const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount;
-        if (type === 'io2') {
-            if ((primaryVol > 0 && primaryVol > 65536) || (secondaryVol > 0 && secondaryVol > 65536)) {
-                return 'Maximum capacity allowed: 64 TiB.';
+        if (from === 'primary') {
+            if (type === 'io2') {
+                if (primaryVol > 0 && primaryVol > 65536) {
+                    return 'Maximum capacity allowed: 64 TiB.';
+                }
+            }
+            if (type !== 'io2') {
+                if (primaryVol > 0 && primaryVol > 16384) {
+                    return 'Maximum capacity allowed: 16 TiB.';
+                }
             }
         }
-        if (type !== 'io2') {
-            if ((primaryVol > 0 && primaryVol > 16384) || (secondaryVol > 0 && secondaryVol > 16384)) {
-                return 'Maximum capacity allowed: 16 TiB.';
+        if (from !== 'primary') {
+            if (type === 'io2') {
+                if (secondaryVol > 0 && secondaryVol > 65536) {
+                    return 'Maximum capacity allowed: 64 TiB.';
+                }
+            }
+            if (type !== 'io2') {
+                if (secondaryVol > 0 && secondaryVol > 16384) {
+                    return 'Maximum capacity allowed: 16 TiB.';
+                }
             }
         }
 
         return '';
     };
+
     return (
         <div className={styles.mainSection}>
             <div className={styles.row}>
@@ -93,59 +282,20 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                     label={'Number of volumes'}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        if (from === 'primary') {
-                            dispatch(
-                                setVolumeTypeOperation({
-                                    type: type,
-                                    mode: 'manualTCONumberOfVolumes',
-                                    value: numVal
-                                })
-                            );
-                        } else {
-                            dispatch(
-                                setSecondaryVolumeTypeOperation({
-                                    type: type,
-                                    mode: 'manualTCONumberOfVolumes',
-                                    value: numVal
-                                })
-                            );
-                        }
+                        setVolumeValue(numVal);
                     }}
-                    value={
-                        from === 'primary'
-                            ? manualTCOVolumeTypes?.[type]?.manualTCONumberOfVolumes
-                            : manualTCOVolumeTypes2?.[type]?.manualTCONumberOfVolumes
-                    }
+                    value={volumeValue}
                     className={styles.deploymentModelWidth}
+                    error={handleVolumeError()}
                 />
 
                 <TextField
                     label={'Storage amount per volume (GiB)'}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        if (from === 'primary') {
-                            dispatch(
-                                setVolumeTypeOperation({
-                                    type: type,
-                                    mode: 'manualTCOStorageAmount',
-                                    value: numVal
-                                })
-                            );
-                        } else {
-                            dispatch(
-                                setSecondaryVolumeTypeOperation({
-                                    type: type,
-                                    mode: 'manualTCOStorageAmount',
-                                    value: numVal
-                                })
-                            );
-                        }
+                        setStorageAmountValue(numVal);
                     }}
-                    value={
-                        from === 'primary'
-                            ? manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount
-                            : manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount
-                    }
+                    value={storageAmountValue}
                     className={styles.deploymentModelWidth}
                     info={type === 'io2' ? 'Maximum capacity allowed: 64 TiB.' : 'Maximum capacity allowed: 16 TiB.'}
                     error={handleStorageCapacityLimit()}
@@ -153,100 +303,31 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
             </div>
 
             {/* Second Row */}
+            {/* removing tooltip to test */}
             <div className={styles.row}>
-                {IOPSDisable ? (
-                    <Popover
-                        popoverClass={styles['copy-popover']}
-                        children={GENERAL.IOPS_DISABLE_TOOLTIP}
-                        trigger="hover"
-                        container={
-                            <TextField
-                                label={'Provisioned IOPS per volume'}
-                                isDisabled={true}
-                                className={styles.deploymentModelWidth}
-                            />
-                        }
-                    />
-                ) : (
-                    <TextField
-                        label={'Provisioned IOPS per volume'}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            if (from === 'primary') {
-                                dispatch(
-                                    setVolumeTypeOperation({
-                                        type: type,
-                                        mode: 'manualTCOProvisionedIOPS',
-                                        value: numVal
-                                    })
-                                );
-                            } else {
-                                dispatch(
-                                    setSecondaryVolumeTypeOperation({
-                                        type: type,
-                                        mode: 'manualTCOProvisionedIOPS',
-                                        value: numVal
-                                    })
-                                );
-                            }
-                        }}
-                        isDisabled={IOPSDisable}
-                        value={
-                            from === 'primary'
-                                ? manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS
-                                : manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS
-                        }
-                        className={styles.deploymentModelWidth}
-                        error={handleIOPSError()}
-                    />
-                )}
+                <TextField
+                    label={'Provisioned IOPS per volume'}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                        setIOPSValue(numVal);
+                    }}
+                    isDisabled={IOPSDisable}
+                    value={iopsValue}
+                    className={styles.deploymentModelWidth}
+                    error={handleIOPSError()}
+                />
 
-                {throughPutDisable ? (
-                    <Popover
-                        popoverClass={styles['copy-popover']}
-                        children={GENERAL.THROUGHPUT_DISABLE_TOOLTIP}
-                        trigger="hover"
-                        container={
-                            <TextField
-                                label={'Throughput MB/s-default'}
-                                isDisabled={true}
-                                className={styles.deploymentModelWidth}
-                            />
-                        }
-                    />
-                ) : (
-                    <TextField
-                        label={'Throughput MB/s-default'}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            if (from === 'primary') {
-                                dispatch(
-                                    setVolumeTypeOperation({
-                                        type: type,
-                                        mode: 'manualTCOThroughput',
-                                        value: numVal
-                                    })
-                                );
-                            } else {
-                                dispatch(
-                                    setSecondaryVolumeTypeOperation({
-                                        type: type,
-                                        mode: 'manualTCOThroughput',
-                                        value: numVal
-                                    })
-                                );
-                            }
-                        }}
-                        isDisabled={throughPutDisable}
-                        value={
-                            from === 'primary'
-                                ? manualTCOVolumeTypes?.[type]?.manualTCOThroughput
-                                : manualTCOVolumeTypes2?.[type]?.manualTCOThroughput
-                        }
-                        className={styles.deploymentModelWidth}
-                        error={handleThroughputError()}
-                    />
-                )}
+                <TextField
+                    label={'Throughput MB/s-default'}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                        setThroughputValue(numVal);
+                    }}
+                    isDisabled={throughPutDisable}
+                    value={throughputValue}
+                    className={styles.deploymentModelWidth}
+                    error={handleThroughputError()}
+                />
             </div>
         </div>
     );

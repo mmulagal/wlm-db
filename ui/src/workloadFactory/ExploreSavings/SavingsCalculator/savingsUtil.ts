@@ -837,7 +837,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Amount changed in GiB per snapshot',
                 value: `${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`,
-                text: `(Monthly change rate% / 100)/total snapshots x Storage amount of EBS primary dbs volumes= (${viewCalculation.monthlyChangeRate}%/100)/${viewCalculation.ebsSnapshotCalculation.totalSnapshots} x${viewCalculation.ebsSnapshotCalculation.storageAmountPerMonth}= ${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`
+                text: `(Monthly change rate % / total snapshots) x Storage amount of EBS primary dbs volumes= (${viewCalculation.monthlyChangeRate}%/${viewCalculation.ebsSnapshotCalculation.totalSnapshots}) x${viewCalculation.ebsSnapshotCalculation.storageAmountPerMonth}= ${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`
             },
             {
                 label: 'Initial snapshot cost',
@@ -879,12 +879,12 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'EBS iops cost for clone',
                 value: `$${viewCalculation.ebsCloneCalculation.iops}`,
-                text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
+                text: `EBS iops cost of primary dbs volumes not including replica dbs volumes`
             },
             {
                 label: 'EBS throughput cost for clone',
                 value: `$${viewCalculation.ebsCloneCalculation.throughput}`,
-                text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
+                text: `EBS throughput cost of primary dbs volumes not including replica dbs volumes`
             },
             {
                 label: 'Clones total monthly cost',
@@ -1325,7 +1325,8 @@ const byteConversion = (gib: number) => {
 export const checkForIO1Valid = (data: any) => {
     const volIops = Number(data?.manualTCOProvisionedIOPS);
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    if (volIops < 100 || volIops > 64000 || volStorageSaving > 16384) {
+    const volData = Number(data?.manualTCONumberOfVolumes);
+    if (volIops < 100 || volIops > 64000 || volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;
@@ -1334,7 +1335,8 @@ export const checkForIO1Valid = (data: any) => {
 export const checkForIO2Valid = (data: any) => {
     const volIops = Number(data?.manualTCOProvisionedIOPS);
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    if (volIops < 100 || volIops > 256000 || volStorageSaving > 16384) {
+    const volData = Number(data?.manualTCONumberOfVolumes);
+    if (volIops < 100 || volIops > 256000 || volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;
@@ -1342,7 +1344,8 @@ export const checkForIO2Valid = (data: any) => {
 
 export const gp2Valid = (data: any) => {
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    if (volStorageSaving > 16384) {
+    const volData = Number(data?.manualTCONumberOfVolumes);
+    if (volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;
@@ -1351,16 +1354,25 @@ export const gp2Valid = (data: any) => {
 export const checkForGp3Valid = (data: any) => {
     const volIops = Number(data?.manualTCOProvisionedIOPS);
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    const volThroughput = data?.manualTCOThroughput;
-    if (volIops < 3000 || volIops > 16000 || volStorageSaving > 16384 || volThroughput < 125 || volThroughput > 1000) {
+    const volThroughput = Number(data?.manualTCOThroughput);
+    const volData = Number(data?.manualTCONumberOfVolumes);
+    if (
+        volIops < 3000 ||
+        volIops > 16000 ||
+        volStorageSaving > 16384 ||
+        volThroughput < 125 ||
+        volThroughput > 1000 ||
+        volData > 1000000000
+    ) {
         return false;
     }
     return true;
 };
 
 export const checkForSt1Valid = (data: any) => {
+    const volData = Number(data?.manualTCONumberOfVolumes);
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    if (volStorageSaving > 16384) {
+    if (volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;
@@ -1373,7 +1385,11 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
         manualTCOStorageAmount: manualTCOVolumeTypes?.io1?.manualTCOStorageAmount,
         manualTCOProvisionedIOPS: manualTCOVolumeTypes?.io1?.manualTCOProvisionedIOPS
     });
-    const io2Complete = allPropertiesHaveValues(manualTCOVolumeTypes?.io2);
+    const io2Complete = allPropertiesHaveValues({
+        manualTCONumberOfVolumes: manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes,
+        manualTCOStorageAmount: manualTCOVolumeTypes?.io2?.manualTCOStorageAmount,
+        manualTCOProvisionedIOPS: manualTCOVolumeTypes?.io2?.manualTCOProvisionedIOPS
+    });
     const gp2Complete = allPropertiesHaveValues({
         manualTCONumberOfVolumes: manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes,
         manualTCOStorageAmount: manualTCOVolumeTypes?.gp2?.manualTCOStorageAmount
@@ -1411,8 +1427,7 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
             volumeType: 'io2',
             volumeNumber: +manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes,
             storageAmount: byteConversion(+manualTCOVolumeTypes?.io2?.manualTCOStorageAmount),
-            volumeIops: +manualTCOVolumeTypes?.io2?.manualTCOProvisionedIOPS,
-            throughput: +manualTCOVolumeTypes?.io2?.manualTCOThroughput
+            volumeIops: +manualTCOVolumeTypes?.io2?.manualTCOProvisionedIOPS
         });
     }
     if (io1Complete && checkForIO1Valid(manualTCOVolumeTypes?.io1)) {
