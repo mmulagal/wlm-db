@@ -252,10 +252,13 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         if (from === 'primary') {
             if (type === 'io2') {
                 if (primaryVol > 0) {
-                    if (primaryVol > 65536) return 'Maximum capacity allowed: 64 TiB.';
-                }
-                if (primaryVol < 4) {
-                    return 'Minimum capacity allowed: 4 GiB.';
+                    if (primaryVol > 65536) {
+                        return 'Maximum capacity allowed: 64 TiB.';
+                    }
+
+                    if (primaryVol < 4) {
+                        return 'Minimum capacity allowed: 4 GiB.';
+                    }
                 }
             }
             if (type === 'st1') {
