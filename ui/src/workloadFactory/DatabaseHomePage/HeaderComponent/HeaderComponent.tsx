@@ -307,69 +307,6 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <Typography variant="Regular_24" className={styles.heading}>
                             {GENERAL.DATABASES}
                         </Typography>
-
-                        <div className={styles.rightPart}>
-                            <div className={styles.firstSelect} title={headerSelectedCred?.label}>
-                                <SelectField
-                                    isLoading={credentialLoading}
-                                    isClearable={false}
-                                    value={headerSelectedCred ? [headerSelectedCred] : [generateAWSAccounts[0]]}
-                                    onChange={(selectedOptions: any): void => {
-                                        if (localStorage.getItem('selectedCred')) {
-                                            localStorage.removeItem('selectedCred');
-                                        }
-                                        localStorage.setItem('selectedCred', JSON.stringify(selectedOptions));
-                                        dispatch(updateRefreshBlocked(false));
-                                        dispatch(setHeaderSelectedCred(selectedOptions));
-                                    }}
-                                    placeholder="Select a Credential"
-                                    isSearchable={generateAWSAccounts.length > 5}
-                                    options={generateAWSAccounts}
-                                    variant="two-lines"
-                                    isReadOnly={
-                                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
-                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                                    }
-                                />
-                            </div>
-
-                            <div className={styles.secondSelect}>
-                                <SelectField
-                                    isLoading={regionsLoading}
-                                    isClearable={false}
-                                    value={headerSelectedRegion ? [headerSelectedRegion] : [generateRegionsData[0]]}
-                                    onChange={(selectedOptions: any): void => {
-                                        if (localStorage.getItem('selectedRegion')) {
-                                            localStorage.removeItem('selectedRegion');
-                                        }
-                                        localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
-                                        dispatch(updateRefreshBlocked(false));
-                                        dispatch(setHeaderSelectedRegion(selectedOptions));
-                                    }}
-                                    placeholder="Select a Region"
-                                    isSearchable={generateRegionsData.length > 5}
-                                    options={generateRegionsData}
-                                    variant="two-lines"
-                                    isReadOnly={
-                                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
-                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                                    }
-                                />
-                            </div>
-
-                            <div className={styles.separator} />
-
-                            <div className={styles.refresh}>
-                                <div className={styles.refreshIcon} onClick={refreshPage}>
-                                    <RefreshIcon />
-                                </div>
-                                <Typography className={styles.date} variant="Regular_14">
-                                    {refreshTime}
-                                </Typography>
-                            </div>
-                        </div>
                     </div>
 
                     <div className={styles.secondRow}>
