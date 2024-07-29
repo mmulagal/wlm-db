@@ -489,9 +489,7 @@ const DatabaseHostInstanceDetailsResponse = Type.Object({
     isManaged: Type.Optional(
         Type.Boolean({ description: 'Boolean to indicate if SQL server instance is managed by WFDB.', default: false })
     ),
-    instanceState: Type.Optional(
-        Type.String({ description: 'State of SQL server instance.', enum: [[ServerState.UP, ServerState.DOWN]] })
-    ), // Fix the syntax error
+    instanceState: Type.Optional(Type.String({ description: 'State of SQL server instance.', enum: [['Up', 'Down']] })),
     isDefault: Type.Optional(
         Type.Boolean({ description: 'Boolean to indicate if SQL server instance is default or not.', default: true })
     )
