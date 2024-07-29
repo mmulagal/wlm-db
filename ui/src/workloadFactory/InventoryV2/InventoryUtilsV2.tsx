@@ -960,6 +960,14 @@ export const updateInventoryDatawithInstancesRes = (
                 : inventoryRow?.serverInstallationMode,
             sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow)
         };
+        if (instanceRow) {
+            const allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data]);
+            result = {
+                ...result,
+                allocatedCapacity: allocatedCapacity,
+                allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
+            };
+        };
     } else if (!instanceRow?.isManagedHost) {
         let partnerInstanceId = '';
         let partnerInstanceData: any = null;

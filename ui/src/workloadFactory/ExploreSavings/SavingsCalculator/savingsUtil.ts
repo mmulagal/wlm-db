@@ -571,19 +571,14 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 label: 'Unit conversions'
             },
             {
-                label: 'Clone frequency',
-                value: `${viewCalculation.fsxCloneCalculation.cloneRefreshFrequency}`,
-                text: ``
-            },
-            {
-                label: 'Change rate between clones (%)',
-                value: `${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}%`,
-                text: `Monthly change rate (${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}%) / Number of periods (${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
+                label: 'Monthly change rate',
+                value: `${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}%`,
+                text: `Based on user input`
             },
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxCloneCalculation.desiredStorageCapacity}`,
-                text: `Number of cloned copies x (%Change rate x Total FSx for ONTAP capacity x Number of clones in a month)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}% x ${viewCalculation.fsxCloneCalculation.totalFsxnCapacity} x${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
+                text: `Number of cloned copies x (Monthly change rate x Total FSx for ONTAP capacity)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}% x ${viewCalculation.fsxCloneCalculation.totalFsxnCapacity})`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -609,7 +604,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: `Desired storage capacity  - Storage savings from compression & deduplication = ${viewCalculation.fsxCloneCalculation.desiredStorageCapacity} - ${viewCalculation.fsxCloneCalculation.storageSavingsFromCompressionAndDeduplication}`
             },
             {
-                label: 'SSD storage GiB per month',
+                label: 'SSD storage per month',
                 value: `${viewCalculation.fsxCloneCalculation.ssdStoragePerMonth}`,
                 text: `Effective storage capacity for FSx for ONTAP x Percentage of data on SSD storage = ${viewCalculation.fsxCloneCalculation.effectiveFsxnStorageCapacity} x ${viewCalculation.fsxCloneCalculation.percentageOfDataOnSsdStorage}%`
             },
