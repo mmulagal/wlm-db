@@ -295,6 +295,29 @@ const HeaderComponent = ({ tab }: Tab) => {
         );
     };
 
+    const TopBarComponent = () => {
+        return (
+            <div className={styles.spaceArea}>
+                <div className={styles.contentArea}>
+                    {selectComponents()}
+                    <div className={styles.content}>
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                dispatch(setDatabaseHostEntryPoint('database'));
+                                navigate(WLF_TO_FORM_NAVIGATE);
+                            }}
+                            id={'deploy-button'}
+                        >
+                            <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
+                        </Button>
+                        {refreshComponent()}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return statusLoading || !statusChk ? (
         <div className={styles.loader}>
             <ComponentLoader style={{ margin: '0 auto' }} />
@@ -393,26 +416,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
-                            <div className={styles.spaceArea}>
-                                <div className={styles.contentArea}>
-                                    {selectComponents()}
-                                    <div className={styles.content}>
-                                        <Button
-                                            variant="primary"
-                                            onClick={() => {
-                                                dispatch(setDatabaseHostEntryPoint('database'));
-                                                navigate(WLF_TO_FORM_NAVIGATE);
-                                            }}
-                                            id={'deploy-button'}
-                                        >
-                                            <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
-                                        </Button>
-                                        {refreshComponent()}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <DatabaseHomePage />
+                            <DatabaseHomePage TopBarComponent={TopBarComponent} />
                         </div>
                     )}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
@@ -429,16 +433,12 @@ const HeaderComponent = ({ tab }: Tab) => {
                     )}
                     {selectedHeaderTab === WLF_TABS.JOB_MONITORING && (
                         <>
-                            <div className={styles.jobMonitoringSection}>
-                                <div className={styles.contentArea}>
-                                    {selectComponents()}
-                                    <div className={styles.content}>{refreshComponent()}</div>
-                                </div>
-                            </div>
-                            <JobMonitoring />
+                            <JobMonitoring SelectComponent={selectComponents} RefreshComponent={refreshComponent} />
                         </>
                     )}
-                    {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && <DatabaseHostOverviewV2 />}
+                    {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && (
+                        <DatabaseHostOverviewV2 refreshTime={refreshTime} refreshPage={refreshPage} />
+                    )}
                     {selectedHeaderTab === WLF_TABS.OVERVIEW && !isInventoryV2 && <DatabaseHostOverview />}
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>
