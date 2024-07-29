@@ -1336,7 +1336,7 @@ export const checkForIO2Valid = (data: any) => {
     const volIops = Number(data?.manualTCOProvisionedIOPS);
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
     const volData = Number(data?.manualTCONumberOfVolumes);
-    if (volIops < 100 || volIops > 256000 || volStorageSaving > 16384 || volData > 1000000000) {
+    if (volIops < 100 || volIops > 256000 || volStorageSaving < 4 || volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;
@@ -1372,7 +1372,7 @@ export const checkForGp3Valid = (data: any) => {
 export const checkForSt1Valid = (data: any) => {
     const volData = Number(data?.manualTCONumberOfVolumes);
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
-    if (volStorageSaving > 16384 || volData > 1000000000) {
+    if (volStorageSaving < 125 || volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;

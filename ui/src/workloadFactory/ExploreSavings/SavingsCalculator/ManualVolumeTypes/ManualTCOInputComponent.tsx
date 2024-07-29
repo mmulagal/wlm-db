@@ -251,14 +251,26 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         const secondaryVol = manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount;
         if (from === 'primary') {
             if (type === 'io2') {
-                if (primaryVol > 0 && primaryVol > 65536) {
-                    return 'Maximum capacity allowed: 64 TiB.';
+                if (primaryVol > 0) {
+                    if (primaryVol > 65536) return 'Maximum capacity allowed: 64 TiB.';
+                }
+                if (primaryVol < 4) {
+                    return 'Minimum capacity allowed: 4 GiB.';
                 }
             }
-            if (type !== 'io2') {
-                if (primaryVol > 0 && primaryVol > 16384) {
-                    return 'Maximum capacity allowed: 16 TiB.';
+            if (type === 'st1') {
+                if (primaryVol > 0) {
+                    if (primaryVol < 125) {
+                        return 'Minimum capacity allowed: 125 GiB.';
+                    }
+                    if (primaryVol > 16384) {
+                        return 'Maximum capacity allowed: 16 TiB.';
+                    }
                 }
+            }
+
+            if (primaryVol > 0 && primaryVol > 16384) {
+                return 'Maximum capacity allowed: 16 TiB.';
             }
         }
         if (from !== 'primary') {
