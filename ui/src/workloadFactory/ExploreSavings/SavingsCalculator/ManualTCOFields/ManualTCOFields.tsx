@@ -1,6 +1,6 @@
 import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './ManualTCOFields.module.scss';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { generateOptionType, regionsSort } from '../../../../utils/utilityFunctions';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -81,7 +81,7 @@ const ManualTCOFields = () => {
 
     //Function to generate the options for Select Field
     const generateDeploymentModelList = useMemo<optionType[]>((): optionType[] => {
-        const deploymentModel = ['Standalone', 'Always on availability group'];
+        const deploymentModel = [GENERAL.STANDALONE, GENERAL.AOAG];
         const options: optionType[] = [];
         deploymentModel?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '', val);

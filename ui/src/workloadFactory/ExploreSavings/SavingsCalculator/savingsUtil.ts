@@ -16,6 +16,7 @@ import {
     DB_VERSIONS,
     GIB_IN_BYTE,
     OS_VERSIONS_LIST,
+    SAVINGS_CALC_MODE,
     SQL_DEPLOYMENT_MODE,
     THROUGHPUT_LIST
 } from '../../../utils/consts';
@@ -218,9 +219,14 @@ export const MSSQLServerInstance = (sqlData: any) => {
 };
 
 export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: string) => {
+    const state = store.getState();
+    const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    }
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -286,7 +292,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'EC2 machines total cost',
-                          value: `${viewCalculation.totalFsxEc2MachineCost}`,
+                          value: `$${viewCalculation.totalFsxEc2MachineCost}`,
                           text: ''
                       }
                   ]
@@ -660,9 +666,14 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
 };
 
 export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentModel: string) => {
+    const state = store.getState();
+    const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    }
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -728,7 +739,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Total EC2 machines cost',
-                          value: `${viewCalculation.totalEBSEc2MachineCost}`,
+                          value: `$${viewCalculation.totalEBSEc2MachineCost}`,
                           text: ''
                       }
                   ]
