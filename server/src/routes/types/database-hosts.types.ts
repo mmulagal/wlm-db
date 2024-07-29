@@ -382,7 +382,7 @@ const CreateSandboxBody = Type.Object({
     destination: Type.Object({
         host: Type.String(), // ec2 instance
         instance: Type.String(), // sql server - ideally only one would be there
-        database: Type.String({ maxLength: 27, pattern: '^[a-zA-Z_@#][a-zA-Z0-9_@#$]*$' }) // database
+        database: Type.String({ maxLength: 27, pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$' }) // database
     }),
     mountPoints: Type.Object({
         dataDrive: Type.String({ maxLength: 1, pattern: '^[D-Z]$' }),
