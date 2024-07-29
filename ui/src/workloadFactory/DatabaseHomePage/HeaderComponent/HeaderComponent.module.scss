@@ -26,47 +26,11 @@
                 display: flex;
                 gap: 24px;
                 align-items: center;
-                .firstSelect {
-                    width: 240px;
-                    --menu-max-height: 200px;
-
-                    [class*='design-system-select__single-value'] {
-                        max-width: 200px !important;
-                    }
-                }
-                .secondSelect {
-                    width: 240px;
-                    --menu-max-height: 200px;
-
-                    [class*='design-system-select__single-value'] {
-                        max-width: 200px !important;
-                    }
-                }
 
                 .separator {
                     background: var(--text-disabled);
                     width: 1px;
                     height: 28px;
-                }
-
-                .refresh {
-                    display: flex;
-                    gap: 16px;
-
-                    .refreshIcon {
-                        cursor: pointer;
-                        svg {
-                            --icon-primary-color: var(--button-secondary);
-                            width: 20px;
-                            height: 20px;
-                            margin-top: 5px;
-                        }
-                    }
-
-                    .date {
-                        position: relative;
-                        top: 2px;
-                    }
                 }
 
                 [class*='Select-module_base'] {
@@ -164,10 +128,299 @@
             }
         }
     }
+
+    .refresh {
+        display: flex;
+        gap: 16px;
+
+        .refreshIcon {
+            cursor: pointer;
+            svg {
+                --icon-primary-color: var(--button-secondary);
+                width: 20px;
+                height: 20px;
+                margin-top: 5px;
+            }
+        }
+
+        .date {
+            position: relative;
+            top: 2px;
+        }
+    }
+
+    .firstSelect {
+        width: 240px;
+        --menu-max-height: 200px;
+
+        [class*='design-system-select__single-value'] {
+            max-width: 200px !important;
+        }
+    }
+    .secondSelect {
+        width: 240px;
+        --menu-max-height: 200px;
+
+        [class*='design-system-select__single-value'] {
+            max-width: 200px !important;
+        }
+    }
+
+    .selectedTabSection {
+        .dashboardSection {
+            width: 67vw;
+            background-color: var(--main-background);
+
+            .spaceArea {
+                display: flex;
+                padding: 40px 0;
+                justify-content: center;
+                width: 100%;
+            }
+
+            .contentArea {
+                display: flex;
+                justify-content: space-between;
+                width: 86%;
+                align-items: center;
+                [class*='Select-module_base'] {
+                    div {
+                        div {
+                            outline: none !important;
+                        }
+                    }
+                }
+
+                [class*='Select-module_base'] {
+                    margin-bottom: 0 !important;
+                    div {
+                        div:hover {
+                            outline: none !important;
+                        }
+                    }
+                }
+            }
+        }
+
+        .jobMonitoringSection {
+            display: flex;
+            padding: 40px 0;
+            justify-content: center;
+            width: 100%;
+            background-color: var(--main-background);
+
+            .contentArea {
+                display: flex;
+                justify-content: space-between;
+                width: 83.95%;
+                max-width: 1607px;
+                align-items: center;
+                [class*='Select-module_base'] {
+                    div {
+                        div {
+                            outline: none !important;
+                        }
+                    }
+                }
+
+                [class*='Select-module_base'] {
+                    margin-bottom: 0 !important;
+                    div {
+                        div:hover {
+                            outline: none !important;
+                        }
+                    }
+                }
+            }
+        }
+
+        .exploreSavingSection {
+            display: flex;
+            padding: 40px 0;
+            justify-content: center;
+            width: 100%;
+            background-color: var(--main-background);
+
+            .contentArea {
+                display: flex;
+                justify-content: space-between;
+                width: 83.75%;
+                max-width: 1607px;
+                align-items: center;
+                [class*='Select-module_base'] {
+                    div {
+                        div {
+                            outline: none !important;
+                        }
+                    }
+                }
+
+                [class*='Select-module_base'] {
+                    margin-bottom: 0 !important;
+                    div {
+                        div:hover {
+                            outline: none !important;
+                        }
+                    }
+                }
+            }
+        }
+
+        .sandboxSection {
+            display: flex;
+            padding: 40px 0;
+            justify-content: center;
+            width: 100%;
+            background-color: var(--main-background);
+
+            .contentArea {
+                display: flex;
+                justify-content: space-between;
+                width: 87%;
+                max-width: 1607px;
+                align-items: center;
+                [class*='Select-module_base'] {
+                    div {
+                        div {
+                            outline: none !important;
+                        }
+                    }
+                }
+
+                [class*='Select-module_base'] {
+                    margin-bottom: 0 !important;
+                    div {
+                        div:hover {
+                            outline: none !important;
+                        }
+                    }
+                }
+            }
+        }
+
+        .inventoryHeaderSection {
+            display: flex;
+            padding: 40px 0;
+            justify-content: center;
+            width: 100%;
+            background-color: var(--main-background);
+
+            .contentArea {
+                display: flex;
+                justify-content: space-between;
+                width: 87%;
+                max-width: 1607px;
+                align-items: center;
+                [class*='Select-module_base'] {
+                    div {
+                        div {
+                            outline: none !important;
+                        }
+                    }
+                }
+
+                [class*='Select-module_base'] {
+                    margin-bottom: 0 !important;
+                    div {
+                        div:hover {
+                            outline: none !important;
+                        }
+                    }
+                }
+            }
+        }
+
+        .content {
+            display: flex;
+            gap: 24px;
+
+            button {
+                --button-min-width: 160px;
+                --button-height: 32px;
+                span {
+                    text-transform: none !important;
+                }
+                .buttonStyle {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+            }
+
+            [class*='design-system-select__control'] {
+                border: none !important;
+                border-bottom: 1px solid var(--field-border) !important;
+                border-radius: 0 !important;
+                height: 30px !important;
+                background-color: var(--main-background) !important;
+            }
+            [class*='design-system-select__value-container'] {
+                padding: 2px 0 !important;
+            }
+
+            [class*='design-system-select__control--menu-is-open'] {
+                outline: none !important;
+            }
+
+            [class*='design-system-select__control']:hover {
+                outline: none !important;
+            }
+
+            [class*='design-system-select__menu'] {
+                z-index: 11 !important;
+                width: 336px;
+            }
+
+            [class*='Select-module_base'] {
+                margin-bottom: 0 !important;
+                div {
+                    div:hover {
+                        outline: none !important;
+                    }
+                }
+            }
+        }
+    }
 }
 
 .loader {
     text-align: center;
     padding-top: 40vh;
     height: 100vh;
+}
+
+@media screen and (min-width: 1429px) and (max-width: 1818px) {
+    .headerComponent {
+        .dashboardSection {
+            .contentArea {
+                width: 81.4% !important;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 1428px) {
+    .headerComponent {
+        .dashboardSection {
+            .contentArea {
+                width: 744px !important;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .headerComponent {
+        .inventoryHeaderSection {
+            .contentArea {
+                width: 1128px !important;
+            }
+        }
+
+        .jobMonitoringSection {
+            .contentArea {
+                width: 1124px !important;
+            }
+        }
+    }
 }

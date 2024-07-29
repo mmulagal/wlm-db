@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './HeaderComponent.module.scss';
 import DatabaseHomePage from '../DatabaseHomePage';
-import { SelectField, Typography } from '@netapp/design-system';
+import { Button, Popover, SelectField, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
@@ -34,7 +34,7 @@ import {
 } from '../../../utils/apiService';
 import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
-import { WLF_TABS } from '../../../utils/consts';
+import { WLF_TABS, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
 import InventoryApis from '../../Inventory/InventoryApis';
@@ -53,12 +53,15 @@ import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFac
 import { updateRefreshBlocked } from '../../../store/authSlice';
 import RedirectComponent from '../../ExploreSavings/SavingsCalculator/RedirectComponent';
 import SavingsCalculatorManualApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorManualAPI';
+import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice';
+import { useNavigate } from 'react-router-dom';
 
 type Tab = {
     tab: string;
 };
 
 const HeaderComponent = ({ tab }: Tab) => {
+    const navigate = useNavigate();
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
 
@@ -219,6 +222,79 @@ const HeaderComponent = ({ tab }: Tab) => {
         }
     };
 
+    const refreshComponent = () => {
+        return (
+            <div className={styles.refresh}>
+                <Popover
+                    popoverClass={styles['copy-popover']}
+                    children={`Last update: ${refreshTime}`}
+                    trigger="hover"
+                    container={
+                        <div className={styles.refreshIcon} onClick={refreshPage}>
+                            <RefreshIcon />
+                        </div>
+                    }
+                />
+            </div>
+        );
+    };
+
+    const selectComponents = () => {
+        return (
+            <div className={styles.content}>
+                <div className={styles.firstSelect} title={headerSelectedCred?.label}>
+                    <SelectField
+                        isLoading={credentialLoading}
+                        isClearable={false}
+                        value={headerSelectedCred ? [headerSelectedCred] : [generateAWSAccounts[0]]}
+                        onChange={(selectedOptions: any): void => {
+                            if (localStorage.getItem('selectedCred')) {
+                                localStorage.removeItem('selectedCred');
+                            }
+                            localStorage.setItem('selectedCred', JSON.stringify(selectedOptions));
+                            dispatch(updateRefreshBlocked(false));
+                            dispatch(setHeaderSelectedCred(selectedOptions));
+                        }}
+                        placeholder="Select a Credential"
+                        isSearchable={generateAWSAccounts.length > 5}
+                        options={generateAWSAccounts}
+                        variant="two-lines"
+                        isReadOnly={
+                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                        }
+                    />
+                </div>
+
+                <div className={styles.secondSelect}>
+                    <SelectField
+                        isLoading={regionsLoading}
+                        isClearable={false}
+                        value={headerSelectedRegion ? [headerSelectedRegion] : [generateRegionsData[0]]}
+                        onChange={(selectedOptions: any): void => {
+                            if (localStorage.getItem('selectedRegion')) {
+                                localStorage.removeItem('selectedRegion');
+                            }
+                            localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
+                            dispatch(updateRefreshBlocked(false));
+                            dispatch(setHeaderSelectedRegion(selectedOptions));
+                        }}
+                        placeholder="Select a Region"
+                        isSearchable={generateRegionsData.length > 5}
+                        options={generateRegionsData}
+                        variant="two-lines"
+                        isReadOnly={
+                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                        }
+                    />
+                </div>
+            </div>
+        );
+    };
+
     return statusLoading || !statusChk ? (
         <div className={styles.loader}>
             <ComponentLoader style={{ margin: '0 auto' }} />
@@ -377,17 +453,82 @@ const HeaderComponent = ({ tab }: Tab) => {
                     </div>
                 </div>
                 <div className={styles.extraSpace} />
-                {selectedHeaderTab === WLF_TABS.DASHBOARD && <DatabaseHomePage />}
-                {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
-                {selectedHeaderTab === WLF_TABS.INVENTORY && isInventoryV2 && <InventoryV2 />}
-                {selectedHeaderTab === WLF_TABS.JOB_MONITORING && <JobMonitoring />}
-                {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && <DatabaseHostOverviewV2 />}
-                {selectedHeaderTab === WLF_TABS.OVERVIEW && !isInventoryV2 && <DatabaseHostOverview />}
-                {selectedHeaderTab === WLF_TABS.SANDBOXES && <Sandbox />}
-                {selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS && <ExploreSavings />}
-                {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
-                {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
-                {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
+                <div className={styles.selectedTabSection}>
+                    {selectedHeaderTab === WLF_TABS.DASHBOARD && (
+                        <div className={styles.dashboardSection} style={{ width: '67vw' }}>
+                            <div className={styles.spaceArea}>
+                                <div className={styles.contentArea}>
+                                    {selectComponents()}
+                                    <div className={styles.content}>
+                                        <Button
+                                            variant="primary"
+                                            onClick={() => {
+                                                dispatch(setDatabaseHostEntryPoint('database'));
+                                                navigate(WLF_TO_FORM_NAVIGATE);
+                                            }}
+                                            id={'deploy-button'}
+                                        >
+                                            <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
+                                        </Button>
+                                        {refreshComponent()}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <DatabaseHomePage />
+                        </div>
+                    )}
+                    {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
+                    {selectedHeaderTab === WLF_TABS.INVENTORY && isInventoryV2 && (
+                        <>
+                            <div className={styles.inventoryHeaderSection}>
+                                <div className={styles.contentArea}>
+                                    {selectComponents()}
+                                    <div className={styles.content}>{refreshComponent()}</div>
+                                </div>
+                            </div>
+                            <InventoryV2 />
+                        </>
+                    )}
+                    {selectedHeaderTab === WLF_TABS.JOB_MONITORING && (
+                        <>
+                            <div className={styles.jobMonitoringSection}>
+                                <div className={styles.contentArea}>
+                                    {selectComponents()}
+                                    <div className={styles.content}>{refreshComponent()}</div>
+                                </div>
+                            </div>
+                            <JobMonitoring />
+                        </>
+                    )}
+                    {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && <DatabaseHostOverviewV2 />}
+                    {selectedHeaderTab === WLF_TABS.OVERVIEW && !isInventoryV2 && <DatabaseHostOverview />}
+                    {selectedHeaderTab === WLF_TABS.SANDBOXES && (
+                        <>
+                            <div className={styles.sandboxSection}>
+                                <div className={styles.contentArea}>
+                                    {selectComponents()}
+                                    <div className={styles.content}>{refreshComponent()}</div>
+                                </div>
+                            </div>
+                            <Sandbox />
+                        </>
+                    )}
+                    {selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS && (
+                        <>
+                            <div className={styles.exploreSavingSection}>
+                                <div className={styles.contentArea}>
+                                    {selectComponents()}
+                                    <div className={styles.content}>{refreshComponent()}</div>
+                                </div>
+                            </div>
+                            <ExploreSavings />
+                        </>
+                    )}
+                    {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
+                    {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
+                    {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
+                </div>
             </div>
         )
     );

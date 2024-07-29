@@ -34,10 +34,6 @@ const DatabaseHomePage = () => {
     return (
         <div className={styles.databaseHome}>
             <div className={styles.leftSide}>
-                <div className={styles.buttonsContainer}>
-                    <TopBarButton />
-                </div>
-
                 <div className={styles.secondLevelContainer}>
                     <DashboardSummary />
                 </div>
