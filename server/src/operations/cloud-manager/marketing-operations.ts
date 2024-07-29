@@ -81,7 +81,7 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
                 volumeType,
                 volumeNumber,
                 storageAmount: {
-                    size: sizeInGigaBytes(storageAmount, 'B') * volumeNumber,
+                    size: sizeInGigaBytes(storageAmount, 'B'),
                     unit: 'GiB'
                 },
                 volumeIops: volumeIops && volumeIops > 0 ? volumeIops * volumeNumber : 0,
@@ -149,11 +149,23 @@ async function invokeMarketingApi(
         const { clonedCopiesCount, monthlyChangeRatePercentage } = params;
         region = STORAGE_SERVICE_DEFAULT_REGION;
         let volumes = [
-            { volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 2, volumeIops: 40000, throughput: 128 }
+            {
+                volumeType: 'io2',
+                volumeNumber: 2,
+                storageAmount: convertToBytes(1024 * 2, 'GiB') || 0,
+                volumeIops: 40000,
+                throughput: 128
+            }
         ];
         if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
             volumes = [
-                { volumeType: 'io2', volumeNumber: 2, storageAmount: 1024 * 10, volumeIops: 40000, throughput: 128 }
+                {
+                    volumeType: 'io2',
+                    volumeNumber: 2,
+                    storageAmount: convertToBytes(1024 * 10, 'GiB') || 0,
+                    volumeIops: 40000,
+                    throughput: 128
+                }
             ];
         }
 
