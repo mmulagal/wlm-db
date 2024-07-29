@@ -513,14 +513,14 @@ const createVolumeClone = (
         Function New-VolumeClone {
             $parentsvm = $sourceSvm
 
-            $volProcessed = @()
+
+            $cloneVolCreated = @()
+            $volSnapshotCreated = @()
             @($dataVolumes, $logVolumes) | ForEach-Object {
                 $volume = $_
                 if ($volProcessed -contains $volume.name) {
                     return
-                }
-
-                $volProcessed += $volume.name
+                }                
 
                 Write-Information "$logPrefix Volume: $($volume | convertto-json)"
                 $snapshot = $volume.snapshot
@@ -528,9 +528,12 @@ const createVolumeClone = (
                     # Create snapshot
 
                     foreach ($volName in $volume.volumes) {
-                        $job = New-Snapshot -volumeName $volName
-                        if ($job.state -ne 'success') {
-                            throw "Could not create snapshot for $($volume.name). Ontap error: $($job.error.message)"
+                        if ($volSnapshotCreated -notcontains $volName) {
+                            $volSnapshotCreated += $volName
+                            $job = New-Snapshot -volumeName $volName
+                            if ($job.state -ne 'success') {
+                                throw "Could not create snapshot for $($volume.name). Ontap error: $($job.error.message)"
+                            }  
                         }
                     }
 
@@ -540,27 +543,31 @@ const createVolumeClone = (
                 $ApiEndpoint = "/storage/volumes"
 
                 foreach ($volName in $volume.volumes) {
-                    $body = @{
-                        "name" = $volName + '_clone_' + $epoch
-                        "svm.name" = $targetSvm
-                        "clone" = @{
-                            "is_flexclone" = $True
-                            "parent_volume" = @{
-                                "name" = $volName
+                    if ($cloneVolCreated -notcontains $volName) {
+                        $cloneVolCreated += $volName
+
+                        $body = @{
+                            "name" = $volName + '_clone_' + $epoch
+                            "svm.name" = $targetSvm
+                            "clone" = @{
+                                "is_flexclone" = $True
+                                "parent_volume" = @{
+                                    "name" = $volName
+                                }
+                                "parent_svm" = @{
+                                    "name" = $parentsvm
+                                }
+                                "parent_snapshot" = @{
+                                    "name" = $snapshot
+                                }
                             }
-                            "parent_svm" = @{
-                                "name" = $parentsvm
-                            }
-                            "parent_snapshot" = @{
-                                "name" = $snapshot
-                            }
+                        } | ConvertTo-Json
+            
+                        $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "POST"
+                        $job = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
+                        if ($job.state -ne 'success') {
+                            throw "Could not create clone for $($volume.name). Ontap error: $($job.error.message)"
                         }
-                    } | ConvertTo-Json
-        
-                    $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "POST"
-                    $job = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
-                    if ($job.state -ne 'success') {
-                        throw "Could not create snapshot for $($volume.name). Ontap error: $($job.error.message)"
                     }
                 }
             }
