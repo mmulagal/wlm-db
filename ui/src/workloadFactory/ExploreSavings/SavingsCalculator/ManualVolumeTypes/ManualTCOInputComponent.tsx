@@ -307,29 +307,46 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
             {/* Second Row */}
             {/* removing tooltip to test */}
             <div className={styles.row}>
-                <TextField
-                    label={'Provisioned IOPS per volume'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setIOPSValue(numVal);
-                    }}
-                    isDisabled={IOPSDisable}
-                    value={iopsValue === null ? defaultIOPSValue : iopsValue}
-                    className={styles.deploymentModelWidth}
-                    error={handleIOPSError()}
-                />
-
-                <TextField
-                    label={'Throughput MB/s-default'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setThroughputValue(numVal);
-                    }}
-                    isDisabled={throughPutDisable}
-                    value={throughputValue === null ? defaultThroughputValue : throughputValue}
-                    className={styles.deploymentModelWidth}
-                    error={handleThroughputError()}
-                />
+                {IOPSDisable ? (
+                    <DsTextField
+                        title="Provisioned IOPS per volume"
+                        disabledReason={GENERAL.IOPS_DISABLE_TOOLTIP}
+                        isDisabled
+                        className={styles.deploymentModelWidth}
+                    />
+                ) : (
+                    <TextField
+                        label={'Provisioned IOPS per volume'}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setIOPSValue(numVal);
+                        }}
+                        isDisabled={IOPSDisable}
+                        value={iopsValue === null ? defaultIOPSValue : iopsValue}
+                        className={styles.deploymentModelWidth}
+                        error={handleIOPSError()}
+                    />
+                )}
+                {throughPutDisable ? (
+                    <DsTextField
+                        title="Throughput MB/s-default"
+                        disabledReason={GENERAL.THROUGHPUT_DISABLE_TOOLTIP}
+                        isDisabled
+                        className={styles.deploymentModelWidth}
+                    />
+                ) : (
+                    <TextField
+                        label={'Throughput MB/s-default'}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setThroughputValue(numVal);
+                        }}
+                        isDisabled={throughPutDisable}
+                        value={throughputValue === null ? defaultThroughputValue : throughputValue}
+                        className={styles.deploymentModelWidth}
+                        error={handleThroughputError()}
+                    />
+                )}
             </div>
         </div>
     );

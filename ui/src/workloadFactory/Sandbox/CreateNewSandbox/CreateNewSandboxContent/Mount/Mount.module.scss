@@ -88,6 +88,11 @@
 
 @media screen and (max-width: 1500px) {
     .Mount {
+        .autoAssignContent {
+            .pathSection {
+                width: 397px;
+            }
+        }
         .defineMountPointContent {
             .defineMountPointRow {
                 flex-direction: column;

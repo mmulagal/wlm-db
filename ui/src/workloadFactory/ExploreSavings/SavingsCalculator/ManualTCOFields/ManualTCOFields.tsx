@@ -133,6 +133,18 @@ const ManualTCOFields = () => {
 
         return [list[foundRegion]];
     };
+
+    const setManualRegionSelected = (list: any) => {
+        if (selectedManualRegion) {
+            if (selectedManualRegion?.data?.regionCode === headerSelectedRegion?.data?.regionCode) {
+                return selectedManualRegion;
+            } else {
+                return setRegionDefaultValue(list);
+            }
+        } else {
+            return setRegionDefaultValue(list);
+        }
+    };
     return (
         <div className={styles.manualTCOFields}>
             <DsTypography variant="Regular_14">
@@ -145,9 +157,7 @@ const ManualTCOFields = () => {
                     <SelectField
                         label={GENERAL.REGION}
                         isClearable={false}
-                        defaultValue={
-                            selectedManualRegion ? selectedManualRegion : setRegionDefaultValue(generateRegionList)
-                        }
+                        defaultValue={setManualRegionSelected(generateRegionList)}
                         onChange={(selectedOptions: any): void => {
                             dispatch(setSelectedRegionFromManualTCO(selectedOptions));
                         }}
