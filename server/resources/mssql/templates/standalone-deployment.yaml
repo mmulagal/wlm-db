@@ -472,7 +472,7 @@ Resources:
                         e-verify-DSC-signature:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\DSC.zip -SignatureFilePath C:\cfn\signig_files\DSC.sig 
+                                - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\DSC.zip -SignatureFilePath C:\cfn\signig_files\DSC.sig 
                                     -PubFilePath C:\cfn\signig_files\DSC.pub -ResourceID SqlNode -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
@@ -538,7 +538,7 @@ Resources:
                         s-verify-dependentpackages-signature:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dependent-packages.zip -SignatureFilePath C:\cfn\signig_files\dependent-packages.sig 
+                                - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\Installer\dependent-packages.zip -SignatureFilePath C:\cfn\signig_files\dependent-packages.sig 
                                     -PubFilePath C:\cfn\signig_files\dependent-packages.pub -ResourceID SqlNode -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'

@@ -14,9 +14,12 @@ import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
 
 const SecondaryManualEC2 = () => {
     const dispatch = useDispatch();
-    const { manualSecondaryMachineDescription, selectedSecondaryManualInstanceType } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const {
+        manualSecondaryMachineDescription,
+        selectedSecondaryManualInstanceType,
+        selectedManualInstanceType,
+        manualMonthlyDescription
+    } = useAppSelector(state => state.exploreSavings);
     //Getting the Data from state
     const { instanceTypeData, instanceTypeLoading } = useAppSelector(
         state => state.exploreSavings.getManualInstanceTypeList
@@ -57,8 +60,22 @@ const SecondaryManualEC2 = () => {
     }, [instanceTypeData]);
 
     useEffect(() => {
-        dispatch(setSelectedSecondaryManualInstanceType(generateInstances[0]));
+        if (!selectedSecondaryManualInstanceType) {
+            if (selectedManualInstanceType) {
+                dispatch(setSelectedSecondaryManualInstanceType(selectedManualInstanceType));
+            } else {
+                dispatch(setSelectedSecondaryManualInstanceType(generateInstances[0]));
+            }
+        }
     }, [generateInstances]);
+
+    const setDefaultInstanceValue = (list: any) => {
+        if (selectedManualInstanceType) {
+            return [selectedManualInstanceType];
+        } else {
+            return [list[0]];
+        }
+    };
     return (
         <div className={styles.manualEc2}>
             <div className={styles.firstRow}>
@@ -67,7 +84,11 @@ const SecondaryManualEC2 = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         dispatch(setSecondarySelectedMachineDescription(e.target.value));
                     }}
-                    value={manualSecondaryMachineDescription}
+                    value={
+                        manualSecondaryMachineDescription === ''
+                            ? manualMonthlyDescription
+                            : manualSecondaryMachineDescription
+                    }
                     className={styles.setWidth}
                     isOptional
                 />
@@ -79,7 +100,7 @@ const SecondaryManualEC2 = () => {
                     defaultValue={
                         selectedSecondaryManualInstanceType
                             ? selectedSecondaryManualInstanceType
-                            : [generateInstances[0]]
+                            : setDefaultInstanceValue(generateInstances)
                     }
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedSecondaryManualInstanceType(selectedOptions));

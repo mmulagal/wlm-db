@@ -682,6 +682,8 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
     const existingSqlServerEditionLowerCase = sqlServerEdition?.toLowerCase();
 
     let awsInstanceLicenseMonthlyPrice;
+
+    let existingLicenseType = 'NA';
     if (
         existingSqlServerEditionLowerCase &&
         ((existingSqlServerEditionLowerCase.includes('enterprise') &&
@@ -689,7 +691,7 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
             existingSqlServerEditionLowerCase.includes('web') ||
             existingSqlServerEditionLowerCase.includes('standard'))
     ) {
-        const existingLicenseType = existingSqlServerEditionLowerCase?.includes('enterprise')
+        existingLicenseType = existingSqlServerEditionLowerCase?.includes('enterprise')
             ? 'SQL Ent'
             : existingSqlServerEditionLowerCase?.includes('web')
             ? 'SQL Web'
@@ -711,6 +713,9 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
         existingLicensePrice = 0;
     }
 
+    const licenseIncluded =
+        monthlySqlByolCost && monthlySqlByolCost > 0 ? false : !!(existingLicensePrice && existingLicensePrice > 0);
+
     const computeDetails = {
         instanceType: instanceTypes.join(', '),
         finding: undefined,
@@ -721,7 +726,27 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
             ? getMonthlyPriceFromHourlyPrice(existingInstanceHourlyPrice)
             : undefined,
         hoursInMonth: HOURS_IN_MONTH,
-        message: undefined
+        message: undefined,
+        machineDetails: instanceTypes.map(instanceType => {
+            const pricingDetails = existingInstanceTypesPricingDetails.get(instanceType);
+            const { pricePerUnit: priceWithoutLicense } = pricingDetails?.pricingDetails.NA || {};
+            const { pricePerUnit: priceWithLicense } = pricingDetails?.pricingDetails[existingLicenseType] || {};
+            const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(priceWithoutLicense);
+            const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(priceWithLicense);
+            return {
+                instanceType,
+                price: priceWithLicense,
+                basePrice: priceWithoutLicense,
+                computeMonthlyPrice,
+                instanceMonthlyPrice,
+                licenseMonthlyPrice:
+                    instanceMonthlyPrice !== undefined && computeMonthlyPrice !== undefined
+                        ? instanceMonthlyPrice - computeMonthlyPrice
+                        : undefined,
+                hoursInMonth: HOURS_IN_MONTH,
+                licenseIncluded
+            };
+        })
     };
 
     const licenseDetails = {
@@ -730,8 +755,7 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
                 ? FINDING.NOT_OPTIMIZED
                 : undefined,
         licenseHourlyPrice: existingLicensePrice,
-        licenseIncluded:
-            monthlySqlByolCost && monthlySqlByolCost > 0 ? false : !!(existingLicensePrice && existingLicensePrice > 0),
+        licenseIncluded,
         licenseMonthlyPrice:
             existingLicensePrice && existingLicensePrice >= 0
                 ? existingLicensePrice * HOURS_IN_MONTH

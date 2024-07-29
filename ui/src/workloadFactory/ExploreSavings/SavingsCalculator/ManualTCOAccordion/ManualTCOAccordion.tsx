@@ -2,8 +2,49 @@ import { DsAccordion } from '@netapp/design-system';
 import styles from './ManualTCOAccordion.module.scss';
 import SecondaryManualEC2 from '../ManualEC2/SecondaryManualEC2';
 import SecondaryManualVolType from '../ManualVolumeTypes/SecondaryManualVolType';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { setSecondaryVolDetails } from '../../../../store/workloadFactory/exploreSavingsSlice';
 
 const ManualTCOAccordion = () => {
+    const { manualTCOVolumeTypes } = useAppSelector(state => state.exploreSavings);
+    const dispatch = useDispatch();
+    useEffect(() => {
+        const obj = {
+            io2: {
+                manualTCONumberOfVolumes: manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes,
+                manualTCOStorageAmount: manualTCOVolumeTypes?.io2.manualTCOStorageAmount,
+                manualTCOProvisionedIOPS: manualTCOVolumeTypes?.io2.manualTCOProvisionedIOPS,
+                manualTCOThroughput: manualTCOVolumeTypes?.io2.manualTCOThroughput
+            },
+            io1: {
+                manualTCONumberOfVolumes: manualTCOVolumeTypes?.io1?.manualTCONumberOfVolumes,
+                manualTCOStorageAmount: manualTCOVolumeTypes?.io1?.manualTCOStorageAmount,
+                manualTCOProvisionedIOPS: manualTCOVolumeTypes?.io1?.manualTCOProvisionedIOPS,
+                manualTCOThroughput: manualTCOVolumeTypes?.io1?.manualTCOThroughput
+            },
+            gp2: {
+                manualTCONumberOfVolumes: manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes,
+                manualTCOStorageAmount: manualTCOVolumeTypes?.gp2?.manualTCOStorageAmount,
+                manualTCOProvisionedIOPS: manualTCOVolumeTypes?.gp2?.manualTCOProvisionedIOPS,
+                manualTCOThroughput: manualTCOVolumeTypes?.gp2?.manualTCOThroughput
+            },
+            gp3: {
+                manualTCONumberOfVolumes: manualTCOVolumeTypes?.gp3?.manualTCONumberOfVolumes,
+                manualTCOStorageAmount: manualTCOVolumeTypes?.gp3?.manualTCOStorageAmount,
+                manualTCOProvisionedIOPS: manualTCOVolumeTypes?.gp3?.manualTCOProvisionedIOPS,
+                manualTCOThroughput: manualTCOVolumeTypes?.gp3?.manualTCOThroughput
+            },
+            st1: {
+                manualTCONumberOfVolumes: manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes,
+                manualTCOStorageAmount: manualTCOVolumeTypes?.st1?.manualTCOStorageAmount,
+                manualTCOProvisionedIOPS: manualTCOVolumeTypes?.st1?.manualTCOProvisionedIOPS,
+                manualTCOThroughput: manualTCOVolumeTypes?.st1?.manualTCOThroughput
+            }
+        };
+        dispatch(setSecondaryVolDetails(obj));
+    }, []);
     return (
         <div className={styles.manualAccordion}>
             <DsAccordion
