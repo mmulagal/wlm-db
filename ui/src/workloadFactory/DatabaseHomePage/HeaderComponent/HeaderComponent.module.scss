@@ -175,14 +175,13 @@
 
     .selectedTabSection {
         .dashboardSection {
-            width: 67vw;
             background-color: var(--main-background);
 
             .spaceArea {
                 display: flex;
                 padding: 40px 0;
                 justify-content: center;
-                width: 100%;
+                width: 67vw;
             }
 
             .contentArea {

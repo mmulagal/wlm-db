@@ -392,7 +392,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.extraSpace} />
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
-                        <div className={styles.dashboardSection} style={{ width: '67vw' }}>
+                        <div className={styles.dashboardSection}>
                             <div className={styles.spaceArea}>
                                 <div className={styles.contentArea}>
                                     {selectComponents()}
