@@ -513,8 +513,15 @@ const createVolumeClone = (
         Function New-VolumeClone {
             $parentsvm = $sourceSvm
 
+            $volProcessed = @()
             @($dataVolumes, $logVolumes) | ForEach-Object {
                 $volume = $_
+                if ($volProcessed -contains $volume.name) {
+                    return
+                }
+
+                $volProcessed += $volume.name
+
                 Write-Information "$logPrefix Volume: $($volume | convertto-json)"
                 $snapshot = $volume.snapshot
                 if ([string]::IsNullOrEmpty($snapshot)) {
