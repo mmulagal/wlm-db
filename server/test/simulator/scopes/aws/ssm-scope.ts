@@ -78,10 +78,10 @@ const cpuParams = {
     ]
 };
 const memeoryParams = {
-    commands: [sqlQueryExecution('$env:computername', `${MEMORY_UTILISATION}`)]
+    commands: [sqlQueryExecution('$env:computername', `${MEMORY_UTILISATION}`, false)]
 };
 const dbCountParams = {
-    commands: [sqlQueryExecution('$env:computername', `${DATABASES_COUNT_V2}`)]
+    commands: [sqlQueryExecution('$env:computername', `${DATABASES_COUNT_V2}`, false)]
 };
 
 const dbCountParamasV2 = {
@@ -91,19 +91,19 @@ const dbCountParamasV2 = {
 };
 
 const dbSummaryParams1 = {
-    commands: [sqlQueryExecution('$env:computername', `${DATABASES(0, 75)}`)]
+    commands: [sqlQueryExecution('$env:computername', `${DATABASES(0, 75)}`, false)]
 };
 
 const dbSummaryParams2 = {
-    commands: [sqlQueryExecution('$env:computername', `${DATABASES(75, 75)}`)]
+    commands: [sqlQueryExecution('$env:computername', `${DATABASES(75, 75)}`, false)]
 };
 
 const dbSummaryParams3 = {
-    commands: [sqlQueryExecution('$env:computername', `${DATABASES(150, 75)}`)]
+    commands: [sqlQueryExecution('$env:computername', `${DATABASES(150, 75)}`, false)]
 };
 
 const dbSummaryParams4 = {
-    commands: [sqlQueryExecution('$env:computername', `${DATABASES(225, 75)}`)]
+    commands: [sqlQueryExecution('$env:computername', `${DATABASES(225, 75)}`, false)]
 };
 
 const noOfConnParams = {
@@ -151,14 +151,14 @@ const tablesListParams = {
     ]
 };
 const diskSizeParams = {
-    commands: [sqlQueryExecution('$env:computername', `${DB_SIZE}`)]
+    commands: [sqlQueryExecution('$env:computername', `${DB_SIZE}`, false)]
 };
 
 const diskDataParams = {
-    commands: [sqlQueryExecution('$env:computername', `${DISK_UTILISATION}`)]
+    commands: [sqlQueryExecution('$env:computername', `${DISK_UTILISATION}`, false)]
 };
 const serGUIDParams = {
-    commands: [sqlQueryExecution('$env:computername', `${INSTANCE_GUID}`)]
+    commands: [sqlQueryExecution('$env:computername', `${INSTANCE_GUID}`, false)]
 };
 const serNameParams = {
     commands: [
@@ -173,11 +173,11 @@ const serverIOLatencyParams = {
 };
 
 const nativeSqlBackupParams = {
-    commands: [sqlQueryExecution('$env:computername', `${NATIVE_SQL_BACKUPS}`)]
+    commands: [sqlQueryExecution('$env:computername', `${NATIVE_SQL_BACKUPS}`, false)]
 };
 
 const nativeSqlBackupDatabasesParams = {
-    commands: [sqlQueryExecution(`$env:computername`, `${SQL_BACKUPS}`)]
+    commands: [sqlQueryExecution(`$env:computername`, `${SQL_BACKUPS}`, false)]
 };
 
 const getOntapSnapshotCountParams = {
@@ -282,7 +282,7 @@ const checkDBExists = {
 };
 
 const serverDetails = {
-    commands: [sqlQueryExecution(`$env:computername`, `${SERVER_DETAILS}`)]
+    commands: [sqlQueryExecution(`$env:computername`, `${SERVER_DETAILS}`, false)]
 };
 
 const clusterNetwokIpInfo = {
@@ -369,7 +369,7 @@ const cleanUpOntapResourcesCommand = {
 
 const mountPointQueryCommand = { commands: [mountPointQuery('$env:computername', 'test-database')] };
 
-const getInstanceGuidCommand = { commands: [sqlQueryExecution('$env:computername', `${INSTANCE_GUID}`)] };
+const getInstanceGuidCommand = { commands: [sqlQueryExecution('$env:computername', `${INSTANCE_GUID}`, false)] };
 
 const detachDbAndRemoveAccessPathCommand = {
     commands: [
