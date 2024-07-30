@@ -930,29 +930,32 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
     }
 `;
 
-const sqlQueryExecution = (instance: string, query: string) =>
+const sqlQueryExecution = (instance: string, query: string, sqlAuthEnabled: boolean) =>
     `
     $serverInstanceName = "${instance}"
     $query = "${query}"
-
-    $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
-    $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
-    $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
-    $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
     
-    if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
-        try {
-          $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
-          $sqlCredentials = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json)
-        } catch {
-            $sqlCredentials = $null
+    if($sqlAuthEnabled -eq $True) {
+        $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+        $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
+        $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
+        $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
+        
+        if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
+            try {
+            $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
+            $sqlCredentials = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json)
+            } catch {
+                $sqlCredentials = $null
+            }
         }
-    }
 
-    if(-Not [string]::IsNullOrEmpty($sqlCredentials)) {
-        $sqlCredential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq $instance})[0] 
-        if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-            $responseObject = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstanceName -Q "$query" -y 0
+        if(-Not [string]::IsNullOrEmpty($sqlCredentials)) {
+            $sqlCredential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq $instance})[0] 
+            if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
+                $responseObject = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstanceName -Q "$query" -y 0
+            }
         }
     }
     

@@ -515,7 +515,8 @@ async function getProtectionStatus(
     instanceName: string,
     resourceDetail?: ResourceDetails,
     databaseInstanceDetails?: DatabaseInstance,
-    version?: string
+    version?: string,
+    sqlAuthEnabled: boolean = false
 ): Promise<ProtectionPerStorageTypeResponseType | undefined> {
     logger.info('Get protection status', { resourceDetail });
 
@@ -548,7 +549,7 @@ async function getProtectionStatus(
 
     try {
         const [nativeSqlProtection, protectionResponse, fsxwBackup, ebsBackup] = await Promise.all([
-            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName),
+            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName, sqlAuthEnabled),
             fsxnId
                 ? getProtectionDetails(credentialsId, region, fsxnId, true, activeNodeInstanceId)
                 : Promise.resolve(),
@@ -1594,7 +1595,15 @@ async function getDatabaseInstanceSummary(
         ] = await Promise.all(
             [
                 ...(shouldQueryServerDetails
-                    ? [getServerDetails(credentialsId, region, activeNodeInstanceId, databaseInstanceName)]
+                    ? [
+                          getServerDetails(
+                              credentialsId,
+                              region,
+                              activeNodeInstanceId,
+                              databaseInstanceName,
+                              databaseInstances.sqlAuthEnabled
+                          )
+                      ]
                     : [Promise.resolve()]), // Fetch server metadata
                 ...(shouldQueryDatabaseTopology
                     ? [
@@ -1608,7 +1617,15 @@ async function getDatabaseInstanceSummary(
                       ]
                     : [Promise.resolve()]),
                 ...(getPerformance
-                    ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId, databaseInstanceName)]
+                    ? [
+                          getPerformanceMetrics(
+                              credentialsId,
+                              region,
+                              activeNodeInstanceId,
+                              databaseInstanceName,
+                              databaseInstances.sqlAuthEnabled
+                          )
+                      ]
                     : [Promise.resolve()]), // Fetch io latency data
                 ...(getStorageSavings
                     ? [getStorageData(undefined, databaseInstances, VERSION_2_0)]
@@ -1620,7 +1637,8 @@ async function getDatabaseInstanceSummary(
                               databaseInstanceName,
                               undefined,
                               databaseInstances,
-                              VERSION_2_0
+                              VERSION_2_0,
+                              databaseInstances.sqlAuthEnabled
                           )
                       ]
                     : [Promise.resolve()]), // Fetch protection status
@@ -1635,7 +1653,15 @@ async function getDatabaseInstanceSummary(
                       ]
                     : [Promise.resolve()]),
                 ...(getDbCount
-                    ? [getDatabasesCount(credentialsId, region, activeNodeInstanceId, databaseInstanceName)]
+                    ? [
+                          getDatabasesCount(
+                              credentialsId,
+                              region,
+                              activeNodeInstanceId,
+                              databaseInstanceName,
+                              databaseInstances.sqlAuthEnabled
+                          )
+                      ]
                     : [Promise.resolve()]),
                 ...(shouldQueryNodeTopology && resourceDetails
                     ? [getNodeTopology(accountId, region, databaseInstanceId, resourceDetails, activeNodeInstanceId)]
@@ -1722,7 +1748,7 @@ async function getDatabaseInstancesDetails(
     }));
 
     const updatedInstanceDetails = instanceDetails
-        ? instanceDetails.map(({ instanceName, instanceState, isDefault }) => {
+        ? instanceDetails.map(({ instanceName, instanceState, isDefault, sqlAuthEnabled }) => {
               const managedInstance = managedInstancesName.find(
                   ({ instanceName: managedInstanceName }) => managedInstanceName === instanceName
               );
@@ -1737,7 +1763,8 @@ async function getDatabaseInstancesDetails(
                   instanceState: updatedInstanceState,
                   isManaged,
                   isDefault,
-                  databaseInstanceId
+                  databaseInstanceId,
+                  sqlAuthEnabled
               };
           })
         : managedInstancesName;
@@ -1907,6 +1934,10 @@ async function getDatabaseHostSummaryV2(
                 }
                 if (runningDatabaseInstances.length > 0) {
                     const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
+                        const instanceDetail = databaseInstancesDetail?.filter(
+                            (e: InstanceDetails) => e.instanceName === instance.database_instance_name
+                        );
+                        instance.sqlAuthEnabled = instanceDetail[0].sqlAuthEnabled;
                         const instanceResult = await getDatabaseInstanceSummary(
                             accountId,
                             credentialsId,

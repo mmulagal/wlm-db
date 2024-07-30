@@ -185,12 +185,14 @@ interface DatabaseInstance {
     region: string;
     databaseType?: string;
     storage_type?: string;
+    sqlAuthEnabled?: boolean;
 }
 
 interface InstanceDetails {
     instanceName: string;
     instanceState: string;
     isDefault?: boolean;
+    sqlAuthEnabled?: boolean;
 }
 
 export {
