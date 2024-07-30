@@ -616,6 +616,7 @@ async function startSandboxCreation(
         logger.error(e);
         errorMsg = e.message || 'Internal Server Error';
         status = JOBSTATUS.FAILED;
+
         await startCleanup(
             accountId,
             credentialsId,
@@ -1050,13 +1051,18 @@ async function invokeVirtualMount(
             //     }' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
             // ];
 
+            const clonedDataLuns = clonedVolumes.data.map(vol => vol.lunSerialNumber);
+            const clonedLogLuns = clonedVolumes.log
+                .map(vol => vol.lunSerialNumber)
+                .filter(lun => clonedDataLuns.indexOf(lun) === -1);
+
             let command = [
                 invokeVirtualMountScript(
                     destDetails.database,
                     JSON.stringify(dataFilePaths),
                     JSON.stringify(logFilePaths),
-                    JSON.stringify(clonedVolumes.data.map(vol => vol.lunSerialNumber)),
-                    JSON.stringify(clonedVolumes.log.map(vol => vol.lunSerialNumber)),
+                    JSON.stringify(clonedDataLuns),
+                    JSON.stringify(clonedLogLuns),
                     destDetails.databaseInstanceName!,
                     isDefaultSqlServerInstance,
                     `Sandbox:${destDetails.database}:`
