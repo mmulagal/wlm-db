@@ -1,6 +1,6 @@
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { compact, groupBy, isEmpty, uniqBy } from 'lodash-es';
+import { compact, groupBy, isEmpty, uniq, uniqBy } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
@@ -625,9 +625,9 @@ async function startSandboxCreation(
             srcDetails,
             destDetails,
             clonedVolumes
-                ? [...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)]
+                ? uniq([...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)])
                 : [],
-            compact([...(mountPaths ? mountPaths.dataPath : []), ...(mountPaths ? mountPaths?.logPath : [])])
+            uniq(compact([...(mountPaths ? mountPaths.dataPath : []), ...(mountPaths ? mountPaths?.logPath : [])]))
         );
     } finally {
         // clearning all the ssm command cache so that we will get the fresh data once the sandbox is created
@@ -1742,8 +1742,8 @@ async function performSandboxDeletion(
             parentJobId,
             resDetails,
             resDetails,
-            [...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)],
-            [...mappings.data.map(map => map.fileName), ...mappings.log.map(map => map.fileName)]
+            uniq([...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)]),
+            uniq([...mappings.data.map(map => map.fileName), ...mappings.log.map(map => map.fileName)])
         );
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
@@ -2087,7 +2087,7 @@ async function performLifecycleUpdate(
             parentJobId,
             resourceDetails,
             resourceDetails,
-            [...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)],
+            uniq([...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)]),
             []
         );
 
@@ -2107,7 +2107,10 @@ async function performLifecycleUpdate(
                 resourceDetails,
                 resourceDetails,
                 clonedVolumes
-                    ? [...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)]
+                    ? uniq([
+                          ...clonedVolumes.data.map(vol => vol.volumeId),
+                          ...clonedVolumes.log.map(vol => vol.volumeId)
+                      ])
                     : [],
                 []
             );
