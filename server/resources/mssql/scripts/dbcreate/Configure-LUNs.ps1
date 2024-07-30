@@ -358,6 +358,40 @@ https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($vo
         exit 1
     }
     Start-Sleep 5
+    
+    # Enable volume snaphot autodelete
+    $URI=@"
+https://$($MgmtDNS)/api/$($volumeSnapshotAutodeletePart)?vserver=$($SQLVMName)&volume=$($vol)
+"@
+    $Body = @{
+    "enabled" = "true"
+    }
+    $JsonBody = $Body | ConvertTo-Json  
+
+    $Params = @{
+        "URI"     = "$URI"
+        "Method"  = "PATCH"
+        "Headers" = @{"Authorization" = "Basic $base64"}
+        "Body" =  "$JsonBody"
+        "ContentType" = "application/json"
+    }
+    try {
+        if ($isprivatesubnet -eq $False) {
+            $modifyvol = (Invoke-RestMethod @Params -Certificate $restcert)
+        }
+        else {
+            $modifyvol = (Invoke-RestMethod @Params -SkipCertificateCheck)
+        }
+    }
+    catch {
+        $result.Add('Status', 'Failed')
+        $result.Add('Message', 'Failed to enable snapshot autodelete on the volume')
+        $result.Add('Exception', $_)
+        $resultjson = ($result | ConvertTo-Json) 
+        $resultjson  
+        exit 1
+    }
+    Start-Sleep 5
 }
 
 

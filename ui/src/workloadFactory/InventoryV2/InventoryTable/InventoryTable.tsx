@@ -81,6 +81,7 @@ const InventoryTable = () => {
     const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
+    const { isDemoMode } = useAppSelector(state => state.auth);
 
     const [loading, setLoading] = useState(false);
 
@@ -166,7 +167,7 @@ const InventoryTable = () => {
             ec2InstanceId: rowData?.ec2InstanceId,
             databaseInstanceNames: instances
         };
-        if (rowData?.resourceId) {
+        if (rowData?.resourceId && isDemoMode) {
             payload.databaseHostId = rowData.resourceId;
         }
         manageInstanceApi({

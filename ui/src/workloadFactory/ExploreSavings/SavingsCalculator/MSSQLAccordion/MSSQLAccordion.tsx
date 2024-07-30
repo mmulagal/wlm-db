@@ -4,7 +4,7 @@ import { ExploreSaveConfiguration, MSSQLServerInstance, calculatedFSXData, setRe
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useNavigate } from 'react-router-dom';
 import { Text } from '../../../../ui-components/Typography';
-import { FROM_DIALOG, WLF_TO_FORM_NAVIGATE } from '../../../../utils/consts';
+import { FROM_DIALOG, SAVINGS_CALC_MODE, WLF_TO_FORM_NAVIGATE } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
@@ -37,8 +37,14 @@ const TableLayout = ({ data }: any) => {
 const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const dispatch = useDispatch();
     const [saveConfigData] = useSaveConfigDataMutation();
-    const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails, viewCalculationsLoading } =
-        useAppSelector(state => state.exploreSavings);
+    const {
+        storageSavingsLoading,
+        storageSavingsResponse,
+        selectedHostDetails,
+        viewCalculationsLoading,
+        selectedManualDeploymentModel,
+        savingsCalculatorFrom
+    } = useAppSelector(state => state.exploreSavings);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
@@ -83,8 +89,17 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             instanceType: instanceType,
             windowsServer: windowsServer
         };
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL && selectedManualDeploymentModel) {
+            mssqlInstanceData = {
+                ...mssqlInstanceData,
+                serverInstallationMode:
+                    selectedManualDeploymentModel?.value === GENERAL.AOAG
+                        ? GENERAL.FAILOVER_CLUSTER_INSTANCES
+                        : selectedManualDeploymentModel?.value
+            };
+        }
         setMsSqlInstance(mssqlInstanceData);
-    }, [selectedHostDetails, storageSavingsResponse]);
+    }, [selectedHostDetails, storageSavingsResponse, selectedManualDeploymentModel]);
 
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(
