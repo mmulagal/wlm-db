@@ -237,7 +237,7 @@ const ManualTCOFields = () => {
                         className={styles.deploymentModelWidth}
                         error={errorForClonedCopiesCount()}
                     />
-                    <TextField
+                    {/* <TextField
                         label={'Monthly SQL BYOL costs($)'}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             dispatch(setSelectedMonthlyBYOLCost(e.target.value));
@@ -245,7 +245,7 @@ const ManualTCOFields = () => {
                         isOptional={true}
                         value={monthlyBYOLCost}
                         className={styles.deploymentModelWidth}
-                    />
+                    /> */}
                 </div>
             </div>
         </div>
