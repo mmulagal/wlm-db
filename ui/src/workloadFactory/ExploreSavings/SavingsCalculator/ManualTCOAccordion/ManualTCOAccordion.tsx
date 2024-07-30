@@ -3,12 +3,13 @@ import styles from './ManualTCOAccordion.module.scss';
 import SecondaryManualEC2 from '../ManualEC2/SecondaryManualEC2';
 import SecondaryManualVolType from '../ManualVolumeTypes/SecondaryManualVolType';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setSecondaryVolDetails } from '../../../../store/workloadFactory/exploreSavingsSlice';
 
 const ManualTCOAccordion = () => {
     const { manualTCOVolumeTypes } = useAppSelector(state => state.exploreSavings);
+    const [openAccordion, setOpenAccordion] = useState(false);
     const dispatch = useDispatch();
     useEffect(() => {
         const obj = {
@@ -44,7 +45,7 @@ const ManualTCOAccordion = () => {
             }
         };
         dispatch(setSecondaryVolDetails(obj));
-    }, []);
+    }, [openAccordion]);
     return (
         <div className={styles.manualAccordion}>
             <DsAccordion
@@ -58,6 +59,7 @@ const ManualTCOAccordion = () => {
                         <SecondaryManualVolType />
                     </div>
                 }
+                onClick={() => setOpenAccordion(prev => !prev)}
             />
         </div>
     );
