@@ -16,6 +16,7 @@ import {
     DB_VERSIONS,
     GIB_IN_BYTE,
     OS_VERSIONS_LIST,
+    SAVINGS_CALC_MODE,
     SQL_DEPLOYMENT_MODE,
     THROUGHPUT_LIST
 } from '../../../utils/consts';
@@ -218,9 +219,14 @@ export const MSSQLServerInstance = (sqlData: any) => {
 };
 
 export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: string) => {
+    const state = store.getState();
+    const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    }
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -286,7 +292,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'EC2 machines total cost',
-                          value: `${viewCalculation.totalFsxEc2MachineCost}`,
+                          value: `$${viewCalculation.totalFsxEc2MachineCost}`,
                           text: ''
                       }
                   ]
@@ -488,7 +494,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity}`,
-                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x FSXn storage capacity (${viewCalculation.fsxOntapCalculation.desiredStorageCapacity})`
+                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x FSx for ONTAP storage capacity (${viewCalculation.fsxOntapCalculation.desiredStorageCapacity})`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -565,19 +571,14 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 label: 'Unit conversions'
             },
             {
-                label: 'Clone frequency',
-                value: `${viewCalculation.fsxCloneCalculation.cloneRefreshFrequency}`,
-                text: ``
-            },
-            {
-                label: 'Change rate between clones (%)',
-                value: `${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}%`,
-                text: `Monthly change rate (${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}%) / Number of periods (${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
+                label: 'Monthly change rate',
+                value: `${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}%`,
+                text: `Based on user input`
             },
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxCloneCalculation.desiredStorageCapacity}`,
-                text: `Number of cloned copies x (%Change rate x Total FSx for ONTAP capacity x Number of clones in a month)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}% x ${viewCalculation.fsxCloneCalculation.totalFsxnCapacity} x${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
+                text: `Number of cloned copies x (Monthly change rate x Total FSx for ONTAP capacity)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}% x ${viewCalculation.fsxCloneCalculation.totalFsxnCapacity})`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -603,7 +604,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: `Desired storage capacity  - Storage savings from compression & deduplication = ${viewCalculation.fsxCloneCalculation.desiredStorageCapacity} - ${viewCalculation.fsxCloneCalculation.storageSavingsFromCompressionAndDeduplication}`
             },
             {
-                label: 'SSD storage GiB per month',
+                label: 'SSD storage per month',
                 value: `${viewCalculation.fsxCloneCalculation.ssdStoragePerMonth}`,
                 text: `Effective storage capacity for FSx for ONTAP x Percentage of data on SSD storage = ${viewCalculation.fsxCloneCalculation.effectiveFsxnStorageCapacity} x ${viewCalculation.fsxCloneCalculation.percentageOfDataOnSsdStorage}%`
             },
@@ -628,17 +629,17 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Total monthly storage cost',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge}`,
-                text: `Total all FSXn storage costs`
+                text: `Total all FSx for ONTAP storage costs`
             },
             {
                 label: 'Total monthly iops cost',
                 value: `$${viewCalculation.fsxOntapCalculation.additionalBilledCostForSsdIops}`,
-                text: `Total all FSXn iops costs`
+                text: `Total all FSx for ONTAP iops costs`
             },
             {
                 label: 'Total monthly throughput cost',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyFsxnThroughputCapacityCost}`,
-                text: `Total all FSXn througput costs`
+                text: `Total all FSx for ONTAP througput costs`
             },
             {
                 label: 'Total monthly snapshots cost',
@@ -660,9 +661,14 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
 };
 
 export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentModel: string) => {
+    const state = store.getState();
+    const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    }
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -728,7 +734,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Total EC2 machines cost',
-                          value: `${viewCalculation.totalEBSEc2MachineCost}`,
+                          value: `$${viewCalculation.totalEBSEc2MachineCost}`,
                           text: ''
                       }
                   ]
@@ -1502,9 +1508,9 @@ export const generateManualStorageSavingsPayload = () => {
     payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
     payloadObj.snapshotFrequency = selectedSnapshotFrequency?.value;
     payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
-    if (monthlyBYOLCost) {
-        payloadObj.monthlySqlByolCost = Number(monthlyBYOLCost);
-    }
+    // if (monthlyBYOLCost) {
+    //     payloadObj.monthlySqlByolCost = Number(monthlyBYOLCost);
+    // }
     payloadObj.sqlServerEdition = setSQLServerEdition(selectedManualServerEdition?.value);
     payloadObj.ec2Instances = createInstances(state);
     return payloadObj;
