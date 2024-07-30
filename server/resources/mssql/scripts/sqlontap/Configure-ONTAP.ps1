@@ -356,6 +356,43 @@ try{
 }
 }
 Start-Sleep 5
+
+# Enable volume snaphot autodelete
+$volumes = @($FSxDataVolumeName, $FSxLogVolumeName, $FSxTempDBVolumeName)
+if ($FSxQuorumVolumeName -ne "") {
+    $volumes.Add($FSxQuorumVolumeName)
+}
+$volumeSnapshotAutodeletePart='private/cli/volume/snapshot/autodelete'
+$Body = @{
+    "enabled" = "true"
+}
+$JsonBody = $Body | ConvertTo-Json
+foreach ($volume in $volumes) {
+
+    $URI=@"
+https://$($MgmtDNS)/api/$($volumeSnapshotAutodeletePart)?vserver=$($SQLVMName)&volume=$($volume)
+"@
+
+    $Params = @{
+        "URI"     = "$URI"
+        "Method"  = "PATCH"
+        "Headers" = @{"Authorization" = "Basic $base64"}
+        "Body" =  "$JsonBody"
+        "ContentType" = "application/json"
+    }
+
+    try{
+        if ($isprivatesubnet -eq $False) {
+                Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+                Invoke-RestMethod @Params -SkipCertificateCheck
+        }
+    }catch{
+        Write-Output "Enabling volume snapshot autodelete failed." $_
+    }
+    Start-Sleep 5
+}
+
 ##create igroup
 
 $IGUriDynamicPart='protocols/san/igroups'
