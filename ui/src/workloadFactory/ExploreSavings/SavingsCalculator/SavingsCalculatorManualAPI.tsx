@@ -33,6 +33,7 @@ const SavingsCalculatorManualApi = () => {
         selectedManualDeploymentModel,
         selectedManualRegion,
         selectedManualServerEdition,
+        selectedSecondaryManualInstanceType,
         selectedManualInstanceType,
         monthlyBYOLCost,
         manualMonthlyDescription,
@@ -139,6 +140,7 @@ const SavingsCalculatorManualApi = () => {
         monthlyBYOLCost,
         manualMonthlyDescription,
         manualSecondaryMachineDescription,
+        selectedSecondaryManualInstanceType,
         manualTCOVolumeTypes,
         volumeFilledStatus,
         manualTCOVolumeTypes2

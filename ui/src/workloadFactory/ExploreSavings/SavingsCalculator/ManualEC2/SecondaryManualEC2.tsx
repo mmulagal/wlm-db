@@ -110,7 +110,7 @@ const SecondaryManualEC2 = () => {
                     label={'Instance type'}
                     isClearable={false}
                     variant="two-lines"
-                    defaultValue={
+                    value={
                         selectedSecondaryManualInstanceType
                             ? selectedSecondaryManualInstanceType
                             : setDefaultInstanceValue(generateInstances)
