@@ -64,11 +64,10 @@ const SavingsSelectedHost = () => {
 
                 {/* <div className={styles.separator} /> */}
 
-                <div className={`${styles.container} ${styles.secondContainer}`}>
+                <div className={`${styles.container} ${styles.numberContainer}`}>
                     {!selectedHostDetails?.loading && (
                         <DsTypography
                             variant="Semibold_14"
-                            style={{ display: 'flex', justifyContent: 'center' }}
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
                             {noOfInstances || GENERAL.NOT_AVAILABLE}
@@ -81,7 +80,7 @@ const SavingsSelectedHost = () => {
                     )}
                     <DsTypography
                         variant="Regular_14"
-                        className={isDisabled ? `${styles.heading} ${styles.disabledContent}` : styles.heading}
+                        className={isDisabled ? `${styles.heading2} ${styles.disabledContent}` : styles.heading2}
                     >
                         {GENERAL.ES_NUMBER_OF_INSTANCE}{' '}
                     </DsTypography>
@@ -89,11 +88,10 @@ const SavingsSelectedHost = () => {
 
                 {/* <div className={styles.separator} /> */}
 
-                <div className={styles.container}>
+                <div className={`${styles.container} ${styles.numberContainer}`}>
                     {!selectedHostDetails?.loading && !getPartnerHostDetailsLoading && (
                         <DsTypography
                             variant="Semibold_14"
-                            style={{ display: 'flex', justifyContent: 'center' }}
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
                             {totalVolume || GENERAL.NOT_AVAILABLE}

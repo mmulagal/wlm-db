@@ -556,9 +556,7 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
 
     Object.keys(viewCalculationsResponse?.ebsCloneCalculation || {}).map((key: string) => {
         ebsCloneCalculation = {
-            clonedCopiesCount:
-                ebsCloneCalculation.clonedCopiesCount +
-                viewCalculationsResponse?.ebsCloneCalculation?.[key]?.clonedCopiesCount,
+            clonedCopiesCount: viewCalculationsResponse?.ebsCloneCalculation?.[key]?.clonedCopiesCount,
             capacity: ebsCloneCalculation.capacity + viewCalculationsResponse?.ebsCloneCalculation?.[key]?.capacity,
             iops: ebsCloneCalculation.iops + viewCalculationsResponse?.ebsCloneCalculation?.[key]?.iops,
             throughput:
