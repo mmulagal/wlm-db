@@ -329,7 +329,7 @@ https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($vo
         "snapshot-policy"              = "none"
         "autosize-mode"                = "grow"
         "min-readahead"                = "true"
-        "space.snapshot.autodelete_enabled" = "true"
+        "space"= @{"snapshot"=@{"autodelete_enabled" = "true"}}
     }
 
     $JsonBody = $Body | ConvertTo-Json

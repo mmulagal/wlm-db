@@ -259,7 +259,7 @@ $Body = @{
     "tiering-minimum-cooling-days" = "7"
     "autosize-mode" = "grow"
     "tiering-object-tags" = @( "wlmDeploymentId=" + $($Stackname.split('-')[0..2] -join "_") )
-    "space.snapshot.autodelete_enabled" = "true"
+    "space"= @{"snapshot"=@{"autodelete_enabled" = "true"}}
 }
 
 if ($SnapshotPolicy -eq "none") {
