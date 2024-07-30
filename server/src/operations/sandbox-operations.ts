@@ -157,7 +157,7 @@ async function getSandboxDetails(
 
     await Promise.all(
         instances.map(async instance => {
-            const command = [
+            let command = [
                 GET_SANDBOX_DETAILS([
                     `"${getDatabaseInstanceName(
                         instance.instanceName,
@@ -165,6 +165,11 @@ async function getSandboxDetails(
                     )}"`
                 ])
             ];
+
+            if (isDemoFlow) {
+                command = [GET_SANDBOX_DETAILS([DEFAULT_MSSQL_INSTANCE_NAME])];
+            }
+
             const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
 
             if (response) {
@@ -671,7 +676,7 @@ async function validateSelectedDrives(
         throw createError(412, `Selected drive letter ${selectedDrive} does not exist`);
     }
     if (!matchedExistingDrive.isNetappDrive) {
-        throw createError(412, `Selected drive ${selectedDrive} is not a NetApp drive`);
+        throw createError(412, `Selected drive ${selectedDrive} is not a NetApp iSCSI drive`);
     }
     if (isClustered === 'true' && !matchedExistingDrive.isClusteredWithSelectedInstance) {
         throw createError(
