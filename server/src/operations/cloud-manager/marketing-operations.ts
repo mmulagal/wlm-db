@@ -1,5 +1,10 @@
 import { isEmpty } from 'lodash-es';
-import { SqlServerDeploymentModel, HOURS_IN_MONTH, STORAGE_SERVICE_DEFAULT_REGION, DEMO_STANADLONE_INSTANCE_ID } from '../../utils/consts';
+import {
+    SqlServerDeploymentModel,
+    HOURS_IN_MONTH,
+    STORAGE_SERVICE_DEFAULT_REGION,
+    DEMO_STANADLONE_INSTANCE_ID
+} from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import {
     StorageSummary,
@@ -158,7 +163,10 @@ async function invokeMarketingApi(
                 throughput: 128
             }
         ];
-        if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT && instanceId === DEMO_STANADLONE_INSTANCE_ID) {
+        if (
+            sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
+            instanceId === DEMO_STANADLONE_INSTANCE_ID
+        ) {
             volumes = [
                 {
                     volumeType: 'io2',
@@ -556,7 +564,15 @@ async function formatStorageSavingsCalculationMetrics(
         ebs,
         single,
         multi
-    } = await invokeMarketingApi(accountId, credentialsId, region, sqlServerDeploymentType, ebsVolumeIds, params, instanceId);
+    } = await invokeMarketingApi(
+        accountId,
+        credentialsId,
+        region,
+        sqlServerDeploymentType,
+        ebsVolumeIds,
+        params,
+        instanceId
+    );
 
     const ebsCalculationBreakdown = {
         ...(gp2 && {
