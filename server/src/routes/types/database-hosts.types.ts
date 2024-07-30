@@ -321,7 +321,7 @@ type DatabasesListResponseType = Static<typeof DatabasesListResponse>;
 // Cloud formation template creation Request and Response
 
 const FileConfig = Type.Object({
-    fileName: Type.String({ minLength: 5 }),
+    fileName: Type.String({ minLength: 5, maxLength: 128 }),
     volumeSize: Type.Number({ minimum: 1 }),
     drive: Type.String({ maxLength: 1 }),
     isExisting: Type.Boolean(),
@@ -329,10 +329,10 @@ const FileConfig = Type.Object({
 });
 
 const CreateDatabseRequestBody = Type.Object({
-    databaseName: Type.String({ minLength: 1, maxLength: 123 }),
+    databaseName: Type.String({ minLength: 1, maxLength: 123, pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$' }),
     dataFileConfig: FileConfig,
     logFileConfig: FileConfig,
-    collation: Type.String(),
+    collation: Type.String({ minLength: 1, maxLength: 128, pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$' }),
     databaseInstanceId: Type.Optional(Type.String())
 });
 
@@ -377,7 +377,7 @@ const CreateSandboxBody = Type.Object({
     source: Type.Object({
         host: Type.String(), // ec2 instance
         instance: Type.String(), // sql server instance - ideally only one would be there
-        database: Type.String() // database inside sql server instance
+        database: Type.String({ maxLength: 27, pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$' }) // database inside sql server instance
     }),
     destination: Type.Object({
         host: Type.String(), // ec2 instance
@@ -451,7 +451,7 @@ type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBo
 const SandboxParams = Type.Composite([
     DatabaseHostSummaryParams,
     Type.Object({
-        sandboxName: Type.String(),
+        sandboxName: Type.String({ maxLength: 27, pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$' }),
         databaseInstanceId: Type.String({ description: 'SQL Server instance id' })
     })
 ]);

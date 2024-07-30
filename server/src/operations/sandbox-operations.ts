@@ -627,7 +627,7 @@ async function startSandboxCreation(
             clonedVolumes
                 ? uniq([...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)])
                 : [],
-            uniq(compact([...(mountPaths ? mountPaths.dataPath : []), ...(mountPaths ? mountPaths?.logPath : [])]))
+            uniq(compact([...(mountPaths ? mountPaths.dataPath : []), ...(mountPaths ? mountPaths.logPath : [])]))
         );
     } finally {
         // clearning all the ssm command cache so that we will get the fresh data once the sandbox is created
