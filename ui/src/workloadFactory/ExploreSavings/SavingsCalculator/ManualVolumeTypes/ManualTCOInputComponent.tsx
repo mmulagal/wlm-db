@@ -159,7 +159,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
             if (type === 'gp3') {
                 const primaryVol = manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS;
 
-                if (primaryVol > 0 && (primaryVol < 5000 || primaryVol > 16000)) {
+                if (primaryVol > 0 && (primaryVol < 3000 || primaryVol > 16000)) {
                     return 'IOPS must be between 3000 and 16000.';
                 }
             }
