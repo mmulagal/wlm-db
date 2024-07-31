@@ -230,7 +230,6 @@ async function getDriveInfoFromSSM(
     if (
         isSSMConnected === undefined ||
         !activeNodeInstanceId ||
-        !standbyNodeInstanceId ||
         !instanceName ||
         !instancesDetails ||
         !instancesDetails?.length
