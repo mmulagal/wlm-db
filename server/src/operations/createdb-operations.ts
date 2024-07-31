@@ -116,14 +116,14 @@ async function getDriveInfoFromNodes(
     const existingDriveStandbyNodePromise =
         sqlDeploymentType === 'FCI' && !forSandbox
             ? callSsmExecution(
-                  credentialsId,
-                  region,
-                  standbyNodeDriveListCommand,
-                  standbyNodeInstanceId!,
-                  undefined,
-                  false,
-                  executionTimeout
-              )
+                credentialsId,
+                region,
+                standbyNodeDriveListCommand,
+                standbyNodeInstanceId!,
+                undefined,
+                false,
+                executionTimeout
+            )
             : Promise.resolve();
 
     const [existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] = await Promise.all([
@@ -163,13 +163,13 @@ async function getDriveInfoFromNodes(
             .filter(Boolean),
         ...(standbyNodeExistingDrives !== undefined && sqlDeploymentType === 'FCI' && !forSandbox
             ? standbyNodeExistingDrives
-                  .filter((item: any) => !activeNodeExistingDrives.some(obj => obj.LogicalDisk === item))
-                  .map((item: string) => ({
-                      driveLetter: item?.charAt(0),
-                      availableSize: 0,
-                      isNetappDrive: false,
-                      ...(sqlDeploymentType === 'FCI' && { isClusteredWithSelectedInstance: false })
-                  }))
+                .filter((item: any) => !activeNodeExistingDrives.some(obj => obj.LogicalDisk === item))
+                .map((item: string) => ({
+                    driveLetter: item?.charAt(0),
+                    availableSize: 0,
+                    isNetappDrive: false,
+                    ...(sqlDeploymentType === 'FCI' && { isClusteredWithSelectedInstance: false })
+                }))
             : [])
     ];
 
@@ -177,8 +177,8 @@ async function getDriveInfoFromNodes(
 
     const availableDriveLetters = !forSandbox
         ? Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).filter(
-              letter => letter >= 'D' && !updatedExitingDrives.some(obj => obj.driveLetter === letter)
-          )
+            letter => letter >= 'D' && !updatedExitingDrives.some(obj => obj.driveLetter === letter)
+        )
         : [];
 
     logger.debug('Existing drives info', { updatedExitingDrives, availableDriveLetters });
@@ -283,12 +283,12 @@ async function getDriveInfoFromSSM(
             forSandbox
                 ? Promise.resolve()
                 : getDefaultDrives(
-                      credentialsId,
-                      region,
-                      activeNodeInstanceId as string,
-                      instanceName,
-                      executionTimeout
-                  )
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId as string,
+                    instanceName,
+                    executionTimeout
+                )
         ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information ${error}.`;
@@ -371,12 +371,12 @@ async function getDriveInfo(
         ...(storage && { fsxStorageCapacity: storage * 1024 * 1024 * 1024 }),
         ...(!forSandbox &&
             getDefaultDrivesResponse?.currentDataDrive && {
-                defaultDataDrive: getDefaultDrivesResponse.currentDataDrive
-            }),
+            defaultDataDrive: getDefaultDrivesResponse.currentDataDrive
+        }),
         ...(!forSandbox &&
             getDefaultDrivesResponse?.currentLogDrive && {
-                defaultLogDrive: getDefaultDrivesResponse.currentLogDrive
-            })
+            defaultLogDrive: getDefaultDrivesResponse.currentLogDrive
+        })
     };
 
     return response;
@@ -473,7 +473,7 @@ async function deployDatabase(
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName,
-        name: `Creating user database ${databaseName} on the SQL Server host ${serverNameWithHostName}`,
+        name: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`,
         startTime: Date.now(),
         description: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`
     });
