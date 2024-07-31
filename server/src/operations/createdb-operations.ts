@@ -230,7 +230,6 @@ async function getDriveInfoFromSSM(
     if (
         isSSMConnected === undefined ||
         !activeNodeInstanceId ||
-        !standbyNodeInstanceId ||
         !instanceName ||
         !instancesDetails ||
         !instancesDetails?.length
@@ -246,7 +245,7 @@ async function getDriveInfoFromSSM(
         throw createError(errorMessage);
     }
 
-    if (!activeNodeInstance && instanceDetail && instancesDetails) {
+    if (!activeNodeInstance && instanceDetail && instancesDetails && standbyNodeInstanceId) {
         const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
         const isInstanceRunning = instancesDetails.some(
