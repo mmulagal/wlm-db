@@ -147,7 +147,7 @@ const SandboxStorageSaving = () => {
 
             {windowSize.width <= 1428 && (
                 <div className={styles.smallContainer}>
-                    <div className={styles.firstSegment} style={{ paddingRight: '0', width: '294px' }}>
+                    <div className={styles.firstSegment} style={{ paddingRight: '0', width: '250px' }}>
                         <div className={styles.leftSection}>
                             <Savings />
                         </div>
