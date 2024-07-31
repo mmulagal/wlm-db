@@ -259,7 +259,6 @@ $Body = @{
     "tiering-minimum-cooling-days" = "7"
     "autosize-mode" = "grow"
     "tiering-object-tags" = @( "wlmDeploymentId=" + $($Stackname.split('-')[0..2] -join "_") )
-    "space"= @{"snapshot"=@{"autodelete_enabled" = "true"}}
 }
 
 if ($SnapshotPolicy -eq "none") {
@@ -357,6 +356,42 @@ try{
 }
 }
 Start-Sleep 5
+
+# Enable volume snaphot autodelete
+$volumes = @($FSxDataVolumeName, $FSxLogVolumeName, $FSxTempDBVolumeName)
+if ($FSxQuorumVolumeName -ne "") {
+    $volumes += ($FSxQuorumVolumeName)
+}
+$volumeSnapshotAutodeletePart='private/cli/volume/snapshot/autodelete'
+$Body = @{
+    "enabled" = "true"
+}
+$JsonBody = $Body | ConvertTo-Json
+foreach ($volume in $volumes) {
+
+    $URI=@"
+https://$($MgmtDNS)/api/$($volumeSnapshotAutodeletePart)?vserver=$($SQLVMName)&volume=$($volume)
+"@
+
+$Params = @{
+    "URI"     = "$URI"
+    "Method"  = "PATCH"
+    "Headers" = @{"Authorization" = "Basic $base64"}
+    "Body" =  "$JsonBody"
+    "ContentType" = "application/json"
+}
+
+try{
+    if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+    }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+    }
+}catch{
+    Write-Output "Volume modification failed." $_
+}
+Start-Sleep 5
+}
 
 ##create igroup
 
