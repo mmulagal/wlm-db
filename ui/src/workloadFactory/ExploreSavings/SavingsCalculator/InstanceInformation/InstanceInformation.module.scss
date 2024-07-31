@@ -9,6 +9,12 @@
             position: relative !important;
         }
 
+        [class*='Table-module_row']:hover {
+            [class*='Table-module_cell'] {
+                background-color: var(--main-background) !important;
+            }
+        }
+
         .tooltips {
             display: flex;
             align-items: center;

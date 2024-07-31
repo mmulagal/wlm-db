@@ -5,10 +5,13 @@ import SecondaryManualVolType from '../ManualVolumeTypes/SecondaryManualVolType'
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { setSecondaryVolDetails } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setSecondaryVolDetails,
+    setSelectedSecondaryManualInstanceType
+} from '../../../../store/workloadFactory/exploreSavingsSlice';
 
 const ManualTCOAccordion = () => {
-    const { manualTCOVolumeTypes } = useAppSelector(state => state.exploreSavings);
+    const { manualTCOVolumeTypes, selectedManualInstanceType } = useAppSelector(state => state.exploreSavings);
     const [openAccordion, setOpenAccordion] = useState(false);
     const dispatch = useDispatch();
     useEffect(() => {
@@ -45,6 +48,7 @@ const ManualTCOAccordion = () => {
             }
         };
         dispatch(setSecondaryVolDetails(obj));
+        dispatch(setSelectedSecondaryManualInstanceType(selectedManualInstanceType));
     }, [openAccordion]);
     return (
         <div className={styles.manualAccordion}>

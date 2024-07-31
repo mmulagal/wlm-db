@@ -19,6 +19,10 @@ $notification-width: 800px;
     z-index: 999;
     word-break: break-word;
 
+    [class*='Button-module_content'] {
+        max-width: 102px !important;
+    }
+
     &::-webkit-scrollbar {
         height: 4px;
         width: 4px;

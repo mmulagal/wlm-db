@@ -7,10 +7,11 @@ import {
     setSelectedSecondaryManualInstanceType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
+import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 
 const SecondaryManualEC2 = () => {
     const dispatch = useDispatch();
@@ -24,6 +25,18 @@ const SecondaryManualEC2 = () => {
     const { instanceTypeData, instanceTypeLoading } = useAppSelector(
         state => state.exploreSavings.getManualInstanceTypeList
     );
+    const [textSearch, setTextSearch] = useSearchDebounce(500);
+
+    const [machineDesc, setMachineDesc] = useState('');
+
+    //Use effect for machine description
+    useEffect(() => {
+        setTextSearch(machineDesc);
+    }, [machineDesc]);
+
+    useEffect(() => {
+        dispatch(setSecondarySelectedMachineDescription(textSearch));
+    }, [textSearch]);
 
     //Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
@@ -82,7 +95,7 @@ const SecondaryManualEC2 = () => {
                 <TextField
                     label={'Machine description'}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        dispatch(setSecondarySelectedMachineDescription(e.target.value));
+                        setMachineDesc(e.target.value);
                     }}
                     value={
                         manualSecondaryMachineDescription === ''
@@ -97,7 +110,7 @@ const SecondaryManualEC2 = () => {
                     label={'Instance type'}
                     isClearable={false}
                     variant="two-lines"
-                    defaultValue={
+                    value={
                         selectedSecondaryManualInstanceType
                             ? selectedSecondaryManualInstanceType
                             : setDefaultInstanceValue(generateInstances)

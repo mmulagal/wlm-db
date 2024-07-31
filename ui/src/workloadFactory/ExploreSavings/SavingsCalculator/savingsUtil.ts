@@ -22,6 +22,8 @@ import {
 } from '../../../utils/consts';
 
 export const comparisonData = (calculatedResponse: any) => {
+    const state = store.getState();
+    const { recommendedTargetInstance } = state.exploreSavings;
     return [
         {
             type: 'Capacity',
@@ -70,6 +72,7 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'Compute',
+            isTooltip: recommendedTargetInstance ? GENERAL.COMPUTE_RECOMMENDED_TOOLTIP : '',
             fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)
@@ -494,7 +497,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity}`,
-                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x FSXn storage capacity (${viewCalculation.fsxOntapCalculation.desiredStorageCapacity})`
+                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x FSx for ONTAP storage capacity (${viewCalculation.fsxOntapCalculation.desiredStorageCapacity})`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -629,17 +632,17 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Total monthly storage cost',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge}`,
-                text: `Total all FSXn storage costs`
+                text: `Total all FSx for ONTAP storage costs`
             },
             {
                 label: 'Total monthly iops cost',
                 value: `$${viewCalculation.fsxOntapCalculation.additionalBilledCostForSsdIops}`,
-                text: `Total all FSXn iops costs`
+                text: `Total all FSx for ONTAP iops costs`
             },
             {
                 label: 'Total monthly throughput cost',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyFsxnThroughputCapacityCost}`,
-                text: `Total all FSXn througput costs`
+                text: `Total all FSx for ONTAP througput costs`
             },
             {
                 label: 'Total monthly snapshots cost',
@@ -1508,9 +1511,9 @@ export const generateManualStorageSavingsPayload = () => {
     payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
     payloadObj.snapshotFrequency = selectedSnapshotFrequency?.value;
     payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
-    if (monthlyBYOLCost) {
-        payloadObj.monthlySqlByolCost = Number(monthlyBYOLCost);
-    }
+    // if (monthlyBYOLCost) {
+    //     payloadObj.monthlySqlByolCost = Number(monthlyBYOLCost);
+    // }
     payloadObj.sqlServerEdition = setSQLServerEdition(selectedManualServerEdition?.value);
     payloadObj.ec2Instances = createInstances(state);
     return payloadObj;

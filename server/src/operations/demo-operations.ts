@@ -488,39 +488,42 @@ async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string
         volumeSize = 2048;
         iops = 40000;
     }
-    const volumes = volumeIds.map(
-        (volumeId, index) => {
-            let volType = VolumeType; // default VolumeType
+    const volumes = volumeIds.map((volumeId, index) => {
+        let volType = VolumeType; // default VolumeType
 
-            if (sqlDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT && databaseInstanceDetails.length && databaseInstanceDetails[0].database_instance_id === DEMO_STANADLONE_SQL_SERVER_ID) {
-                // Change VolumeType based on the index
-                volType = index % 2 === 0 ? 'io1' : 'io2';
-            }
+        if (
+            sqlDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
+            databaseInstanceDetails.length &&
+            databaseInstanceDetails[0].database_instance_id === DEMO_STANADLONE_SQL_SERVER_ID
+        ) {
+            // Change VolumeType based on the index
+            volType = index % 2 === 0 ? 'io1' : 'io2';
+        }
 
-            return {
-                VolumeId: volumeId,
-                AvailabilityZone: 'us-east-1a',
-                Attachments: [
-                    {
-                        AttachTime: '2013-12-18T22:35:00.000Z',
-                        InstanceId: 'i-1234567890abcdef0',
-                        VolumeId: 'vol-049df61146c4d7901',
-                        State: 'attached',
-                        DeleteOnTermination: true,
-                        Device: '/dev/sda1'
-                    }
-                ],
-                Encrypted: true,
-                KmsKeyId: 'arn:aws:kms:us-east-2a:123456789012:key/8c5b2c63-b9bc-45a3-a87a-5513eEXAMPLE',
-                VolumeType: volType,
-                State: 'in-use',
-                Iops: iops,
-                SnapshotId: 'snap-1234567890abcdef0',
-                CreateTime: '2019-12-18T22:35:00.084Z',
-                Size: volumeSize,
-                Throughput: 128
-            } as unknown as Volume;
-        });
+        return {
+            VolumeId: volumeId,
+            AvailabilityZone: 'us-east-1a',
+            Attachments: [
+                {
+                    AttachTime: '2013-12-18T22:35:00.000Z',
+                    InstanceId: 'i-1234567890abcdef0',
+                    VolumeId: 'vol-049df61146c4d7901',
+                    State: 'attached',
+                    DeleteOnTermination: true,
+                    Device: '/dev/sda1'
+                }
+            ],
+            Encrypted: true,
+            KmsKeyId: 'arn:aws:kms:us-east-2a:123456789012:key/8c5b2c63-b9bc-45a3-a87a-5513eEXAMPLE',
+            VolumeType: volType,
+            State: 'in-use',
+            Iops: iops,
+            SnapshotId: 'snap-1234567890abcdef0',
+            CreateTime: '2019-12-18T22:35:00.084Z',
+            Size: volumeSize,
+            Throughput: 128
+        } as unknown as Volume;
+    });
     return {
         Volumes: volumes
     };

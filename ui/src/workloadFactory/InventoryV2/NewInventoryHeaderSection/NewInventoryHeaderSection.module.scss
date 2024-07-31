@@ -97,6 +97,11 @@
 
 @media screen and (min-width: 1501px) and (max-width: 1770px) {
     .chartSection {
+        height: 239px;
         gap: 92px;
+
+        .secondPart {
+            margin-top: 25px;
+        }
     }
 }

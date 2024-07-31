@@ -449,7 +449,15 @@ async function performStorageSavingsCalculations(
 
     const [{ sqlServerDeploymentType, nodeIps }] = ec2HostDetails?.sqlServerInstances || [];
     if (nodeIps && !isEmpty(nodeIps) && sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
-        return aoagStorageSavingsCalculations(accountId, credentialsId, region, ebsVolumeIds, params, ec2HostDetails, instanceId);
+        return aoagStorageSavingsCalculations(
+            accountId,
+            credentialsId,
+            region,
+            ebsVolumeIds,
+            params,
+            ec2HostDetails,
+            instanceId
+        );
     }
 
     const recommendationPromise = retrieveComputeAndLicenseCost(accountId, credentialsId, region, ec2HostDetails);
@@ -705,8 +713,8 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
         existingLicenseType = existingSqlServerEditionLowerCase?.includes('enterprise')
             ? 'SQL Ent'
             : existingSqlServerEditionLowerCase?.includes('web')
-                ? 'SQL Web'
-                : 'SQL Std';
+            ? 'SQL Web'
+            : 'SQL Std';
 
         existingInstanceHourlyPrice = getPricingByLicenseType(existingLicenseType, existingInstanceTypesPricingDetails);
 

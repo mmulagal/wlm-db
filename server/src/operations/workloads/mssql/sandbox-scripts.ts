@@ -622,7 +622,6 @@ const createVolumeClone = (
                 }
             }
 
-            $jobStatus = @()
             $response.records | ForEach-Object {
                 $volumeid = $_.location.volume.uuid
                 $body = @"
@@ -632,9 +631,25 @@ const createVolumeClone = (
 "@
                 $ApiEndpoint = '/storage/volumes/' + $volumeid
                 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "PATCH"
-                $jobStatus += Get-OntapJobStatus -jobId $ontapResponse.job.uuid
+                $jobStatus = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
                 if ($jobStatus.state -ne 'success') {
                     throw "Could not add tags to the cloned volumes. Ontap error: $($jobStatus.error.message)"
+                }
+            }
+
+            Write-Information "$logPrefix Configuring the snapshot to autodelete for cloned volumes."
+            $response.records | ForEach-Object {
+                $volumeid = $_.location.volume.uuid
+                $body = @"
+                {
+                    "space.snapshot.autodelete_enabled": true
+                }
+"@
+                $ApiEndpoint = '/storage/volumes/' + $volumeid
+                $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "PATCH"
+                $jobStatus = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
+                if ($jobStatus.state -ne 'success') {
+                    Write-Information "Could not enable snapshot autodelete in cloned volumes. Ontap error: $($jobStatus.error.message)"
                 }
             }
         }

@@ -988,7 +988,7 @@ export const GENERAL = {
     MS_SQL_TWO_INSTANCES: 'Microsoft SQL Server EC2 instance - 2 instances',
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
     SAVINGS_HEADER: 'Microsoft SQL server on Amazon Elastic Block Store (EBS) configuration.',
-    ES_NUMBER_OF_INSTANCE: 'Number of instances',
+    ES_NUMBER_OF_INSTANCE: 'Number of SQL instances',
     ES_HOST_NAME: 'Host name',
     ES_NUMBER_OF_VOLS: 'Number of volumes',
     SUMMARY_TEXT: 'Summary of the selected volumes by volume type:',
@@ -1108,7 +1108,9 @@ export const GENERAL = {
     ES_SQL_EDITION_MULTI_TOOLTIP:
         'The value is determined by the highest SQL Server edition found in all SQL Server instances on the host.',
     ES_MULTI_FSX_DISABLE_MSG:
-        'Deployment of Microsoft SQL Server over multiple FSx for ONTAP is currently not supported.'
+        'Deployment of Microsoft SQL Server over multiple FSx for ONTAP is currently not supported.',
+    COMPUTE_RECOMMENDED_TOOLTIP:
+        'The cost for compute of SQL over EBS is based on current instance type vs. cost of compute of SQL server over fSxN based on your selected instance type.'
 };
 
 export const CODE_VIEWER = {

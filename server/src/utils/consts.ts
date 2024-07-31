@@ -189,13 +189,13 @@ const SECRETS: Record<string, string | undefined> = {
     CLIENT_ID: process.env.CLIENT_ID
         ? process.env.CLIENT_ID
         : config.has('service-token.client_id')
-            ? config.get('service-token.client_id')
-            : undefined,
+        ? config.get('service-token.client_id')
+        : undefined,
     CLIENT_SECRET: process.env.CLIENT_SECRET
         ? process.env.CLIENT_SECRET
         : config.has('service-token.client_secret')
-            ? config.get('service-token.client_secret')
-            : undefined,
+        ? config.get('service-token.client_secret')
+        : undefined,
     DATABASE_URL: process.env.DATABASE_URL
 };
 
