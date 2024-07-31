@@ -93,7 +93,7 @@ Write-Output @{ status= "Completed"; reason= "Done." } | ConvertTo-Json -Compres
 Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
 }catch{
     $Failed = $true
-    $FailureReason = '"{0}"' -f "Unable to reach storage. Check credentials and accessibility from the subnet. Exception: $_"
+    $FailureReason = '"{0}"' -f "Unable to reach storage. 1. Check storage credentials are valid 2. Check if routing table allows connection from the subnet 3. Check if storage security group allows HTTPS(443) and iSCSI(3260) tcp ports.   Exception: $_"
     Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
