@@ -97,11 +97,7 @@ const SecondaryManualEC2 = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setMachineDesc(e.target.value);
                     }}
-                    value={
-                        manualSecondaryMachineDescription === ''
-                            ? manualMonthlyDescription
-                            : manualSecondaryMachineDescription
-                    }
+                    value={manualSecondaryMachineDescription === '' ? manualMonthlyDescription : machineDesc}
                     className={styles.setWidth}
                     isOptional
                 />
