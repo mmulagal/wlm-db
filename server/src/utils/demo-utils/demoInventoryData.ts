@@ -721,7 +721,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerEdition: 'Standard Edition (64-bit)',
                         sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2019,
-                        sqlServerInstance: 'MSSQLSERVER',
+                        sqlServerInstance: 'PROD-DB',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9c6l',
                         isDefaultInstance: false,
                         sqlServerState: 'Running',

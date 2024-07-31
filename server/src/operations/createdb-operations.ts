@@ -480,7 +480,7 @@ async function deployDatabase(
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName,
-        name: `Creating user database ${databaseName} on the SQL Server host ${serverNameWithHostName}`,
+        name: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`,
         startTime: Date.now(),
         description: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`
     });
