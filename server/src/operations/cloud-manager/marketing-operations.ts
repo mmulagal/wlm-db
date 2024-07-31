@@ -1,5 +1,10 @@
 import { isEmpty } from 'lodash-es';
-import { SqlServerDeploymentModel, HOURS_IN_MONTH, STORAGE_SERVICE_DEFAULT_REGION } from '../../utils/consts';
+import {
+    SqlServerDeploymentModel,
+    HOURS_IN_MONTH,
+    STORAGE_SERVICE_DEFAULT_REGION,
+    DEMO_STANADLONE_INSTANCE_ID
+} from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import {
     StorageSummary,
@@ -140,7 +145,8 @@ async function invokeMarketingApi(
     region: string,
     sqlServerDeploymentType: string,
     ebsVolumeIds: string[],
-    params: StorageSavingsRequestBodyType
+    params: StorageSavingsRequestBodyType,
+    instanceId?: string
 ) {
     // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -157,6 +163,28 @@ async function invokeMarketingApi(
                 throughput: 128
             }
         ];
+        if (
+            sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
+            instanceId === DEMO_STANADLONE_INSTANCE_ID
+        ) {
+            volumes = [
+                {
+                    volumeType: 'io2',
+                    volumeNumber: 1,
+                    storageAmount: convertToBytes(1024 * 2, 'GiB') || 0,
+                    volumeIops: 40000,
+                    throughput: 128
+                },
+                {
+                    volumeType: 'io1',
+                    volumeNumber: 1,
+                    storageAmount: convertToBytes(1024 * 2, 'GiB') || 0,
+                    volumeIops: 40000,
+                    throughput: 128
+                }
+            ];
+        }
+
         if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
             volumes = [
                 {
@@ -519,14 +547,16 @@ async function formatStorageSavingsCalculationMetrics(
     region: string,
     ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
-    sqlServerDeploymentType: string
+    sqlServerDeploymentType: string,
+    instanceId?: string
 ) {
     logger.debug('Formatting storage savings calculation metrics', {
         accountId,
         credentialsId,
         region,
         ebsVolumeIds,
-        params
+        params,
+        instanceId
     });
 
     const {
@@ -534,7 +564,15 @@ async function formatStorageSavingsCalculationMetrics(
         ebs,
         single,
         multi
-    } = await invokeMarketingApi(accountId, credentialsId, region, sqlServerDeploymentType, ebsVolumeIds, params);
+    } = await invokeMarketingApi(
+        accountId,
+        credentialsId,
+        region,
+        sqlServerDeploymentType,
+        ebsVolumeIds,
+        params,
+        instanceId
+    );
 
     const ebsCalculationBreakdown = {
         ...(gp2 && {

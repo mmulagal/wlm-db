@@ -860,7 +860,11 @@ async function getEbsResourceInfo(
             sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ||
             sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT
         ) {
-            volumes = (await getEBSVolumesForDemo(sqlServerDeploymentType, ebsVolumeIds)) as DescribeVolumesResult;
+            volumes = (await getEBSVolumesForDemo(
+                sqlServerDeploymentType,
+                ebsVolumeIds,
+                databaseInstanceDetails
+            )) as DescribeVolumesResult;
         } else {
             volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
         }

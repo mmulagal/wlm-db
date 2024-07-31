@@ -674,6 +674,84 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ]
             },
             {
+                ec2InstanceId: 'i-c5x3z1a7s9d2f3g',
+                ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
+                ssmState: 'connected',
+                ec2InstanceName: 'app-server-18',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2019,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9c4l',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLserver-Finance-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            },
+                            {
+                                type: 'EBS',
+                                id: 'vol-0a1b2c3d4e5f6i7h'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-3']
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2019,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9c6l',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLserver-Finance-03',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            },
+                            {
+                                type: 'EBS',
+                                id: 'vol-0a1b2c3d4e5f6i7h'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-3']
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
                 ec2InstanceId: 'i-e7r9t1y2u4i6o8p',
                 ec2InstanceType: 'm5.large',
                 ec2UsageOperation: 'RunInstances:0102',
