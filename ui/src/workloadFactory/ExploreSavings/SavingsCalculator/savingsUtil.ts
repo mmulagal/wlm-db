@@ -22,6 +22,8 @@ import {
 } from '../../../utils/consts';
 
 export const comparisonData = (calculatedResponse: any) => {
+    const state = store.getState();
+    const { recommendedTargetInstance } = state.exploreSavings;
     return [
         {
             type: 'Capacity',
@@ -70,6 +72,7 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'Compute',
+            isTooltip: recommendedTargetInstance ? GENERAL.COMPUTE_RECOMMENDED_TOOLTIP : '',
             fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)
