@@ -81,7 +81,7 @@ const ManualEC2 = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setMachineDesc(e.target.value);
                     }}
-                    value={manualMonthlyDescription}
+                    value={machineDesc}
                     className={styles.setWidth}
                     isOptional
                 />
