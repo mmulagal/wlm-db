@@ -116,14 +116,16 @@ async function aoagStorageSavingsCalculations(
     region: string,
     nodeEbsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
-    nodeDetails: DiscoverResponseInfoType
+    nodeDetails: DiscoverResponseInfoType,
+    instanceId?: string
 ) {
     logger.info('Performing AOAG storage savings calculations', {
         accountId,
         credentialsId,
         region,
         nodeEbsVolumeIds,
-        params
+        params,
+        instanceId
     });
 
     const { ec2InstanceId: nodeInstanceId, sqlServerInstances } = nodeDetails;
@@ -163,7 +165,8 @@ async function aoagStorageSavingsCalculations(
                 region,
                 SqlServerDeploymentModel.SQL_AOAG_SHORT,
                 allEbsVolumeIds, // Consider all EBS volumes for storage, iops and throughput calculation
-                params
+                params,
+                instanceId
             ),
             invokeMarketingApi(
                 accountId,
@@ -171,7 +174,8 @@ async function aoagStorageSavingsCalculations(
                 region,
                 SqlServerDeploymentModel.SQL_AOAG_SHORT,
                 uniqueHostVolumeIds, // Consider only volumes associated with unique database in primary and partner node for snapshot calculation and to draw a storage savings comparison with FSXn
-                params
+                params,
+                instanceId
             )
         ]);
 
@@ -253,7 +257,8 @@ async function aoagStorageSavingsMetrics(
     params: StorageSavingsRequestBodyType,
     nodeDetails: DiscoverResponseInfoType,
     currentNodeComputeLicenseDetails: ComputeLicenseCostType,
-    partnerNodeDetails: DiscoverResponseInfoType[]
+    partnerNodeDetails: DiscoverResponseInfoType[],
+    instanceId?: string
 ) {
     logger.info('Performing AOAG storage savings metrics calculation ', {
         accountId,
@@ -261,7 +266,8 @@ async function aoagStorageSavingsMetrics(
         region,
         nodeEbsVolumeIds,
         params,
-        nodeDetails
+        nodeDetails,
+        instanceId
     });
     const { ec2InstanceId: nodeInstanceId, sqlServerInstances } = nodeDetails;
     const [{ nodeIps }] = sqlServerInstances || [];
@@ -289,7 +295,8 @@ async function aoagStorageSavingsMetrics(
             region,
             allEbsVolumeIds,
             params,
-            SqlServerDeploymentModel.SQL_AOAG_SHORT
+            SqlServerDeploymentModel.SQL_AOAG_SHORT,
+            instanceId
         );
         // Consider only volumes associated with unique database in primary and partner nodes for snapshot calculation and to draw a storage savings comparison with FSXn
         const {
@@ -303,7 +310,8 @@ async function aoagStorageSavingsMetrics(
             region,
             uniqueHostVolumeIds,
             params,
-            SqlServerDeploymentModel.SQL_AOAG_SHORT
+            SqlServerDeploymentModel.SQL_AOAG_SHORT,
+            instanceId
         );
 
         return {
@@ -441,7 +449,15 @@ async function performStorageSavingsCalculations(
 
     const [{ sqlServerDeploymentType, nodeIps }] = ec2HostDetails?.sqlServerInstances || [];
     if (nodeIps && !isEmpty(nodeIps) && sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
-        return aoagStorageSavingsCalculations(accountId, credentialsId, region, ebsVolumeIds, params, ec2HostDetails);
+        return aoagStorageSavingsCalculations(
+            accountId,
+            credentialsId,
+            region,
+            ebsVolumeIds,
+            params,
+            ec2HostDetails,
+            instanceId
+        );
     }
 
     const recommendationPromise = retrieveComputeAndLicenseCost(accountId, credentialsId, region, ec2HostDetails);
@@ -451,7 +467,8 @@ async function performStorageSavingsCalculations(
         region,
         sqlServerDeploymentType!,
         ebsVolumeIds,
-        params
+        params,
+        instanceId
     );
 
     const [{ compute, license }, { ebs, fsx, single, multi }] = await Promise.all([
@@ -548,7 +565,8 @@ async function getStorageSavingsCalculationMetrics(
             params,
             ec2HostDetails,
             currentNodeComputeLicenseDetails,
-            partnerNodeDetails
+            partnerNodeDetails,
+            instanceId
         );
     }
 
@@ -570,7 +588,8 @@ async function getStorageSavingsCalculationMetrics(
             region,
             ebsVolumeIds,
             params,
-            sqlServerDeploymentType!
+            sqlServerDeploymentType!,
+            instanceId
         );
 
     return {

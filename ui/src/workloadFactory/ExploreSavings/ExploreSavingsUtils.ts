@@ -698,7 +698,7 @@ export const generateLabel2ForInstanceType = (options: any, option: any, existin
                           (100 * (existingComputePrice - selectedOption?.computeMonthlyPrice)) / existingComputePrice
                       )
                     : 0;
-            const label2 = computeCostSavingPercent ? `Saves upto ${computeCostSavingPercent}% in compute costs` : '';
+            const label2 = computeCostSavingPercent ? `Saves up to ${computeCostSavingPercent}% in compute costs` : '';
             return label2;
         }
         return '';

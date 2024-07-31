@@ -860,7 +860,11 @@ async function getEbsResourceInfo(
             sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ||
             sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT
         ) {
-            volumes = (await getEBSVolumesForDemo(sqlServerDeploymentType, ebsVolumeIds)) as DescribeVolumesResult;
+            volumes = (await getEBSVolumesForDemo(
+                sqlServerDeploymentType,
+                ebsVolumeIds,
+                databaseInstanceDetails
+            )) as DescribeVolumesResult;
         } else {
             volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
         }
@@ -1721,27 +1725,27 @@ async function getDatabaseInstancesDetails(
         databaseInstanceId: item.database_instance_id
     }));
 
-    const updatedInstanceDetails = instanceDetails
-        ? instanceDetails.map(({ instanceName, instanceState, isDefault }) => {
-              const managedInstance = managedInstancesName.find(
-                  ({ instanceName: managedInstanceName }) => managedInstanceName === instanceName
-              );
+    const existingInstanceNames = new Set(instanceDetails?.map(({ instanceName }) => instanceName));
+    const updatedInstanceDetails = [
+        ...(instanceDetails ?? []).map(({ instanceName, instanceState, isDefault }) => {
+            const managedInstance = managedInstancesName.find(
+                ({ instanceName: managedInstanceName }) => managedInstanceName === instanceName
+            );
+            const isManaged = Boolean(managedInstance);
+            const updatedInstanceState =
+                instanceState === SQL_SERVICE_STATE.RUNNING ? ServerState.UP : ServerState.DOWN;
+            const databaseInstanceId = managedInstance?.databaseInstanceId;
 
-              const isManaged = Boolean(managedInstance);
-              const updatedInstanceState =
-                  instanceState === SQL_SERVICE_STATE.RUNNING ? ServerState.UP : ServerState.DOWN;
-              const databaseInstanceId = managedInstance?.databaseInstanceId;
-
-              return {
-                  instanceName,
-                  instanceState: updatedInstanceState,
-                  isManaged,
-                  isDefault,
-                  databaseInstanceId
-              };
-          })
-        : managedInstancesName;
-
+            return {
+                instanceName,
+                instanceState: updatedInstanceState,
+                isManaged,
+                isDefault,
+                databaseInstanceId
+            };
+        }),
+        ...managedInstancesName.filter(({ instanceName }) => !existingInstanceNames.has(instanceName))
+    ];
     logger.debug('Database instances details', updatedInstanceDetails);
     return updatedInstanceDetails;
 }

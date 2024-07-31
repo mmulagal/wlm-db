@@ -1108,7 +1108,9 @@ export const GENERAL = {
     ES_SQL_EDITION_MULTI_TOOLTIP:
         'The value is determined by the highest SQL Server edition found in all SQL Server instances on the host.',
     ES_MULTI_FSX_DISABLE_MSG:
-        'Deployment of Microsoft SQL Server over multiple FSx for ONTAP is currently not supported.'
+        'Deployment of Microsoft SQL Server over multiple FSx for ONTAP is currently not supported.',
+    COMPUTE_RECOMMENDED_TOOLTIP:
+        'The cost for compute of SQL over EBS is based on current instance type vs. cost of compute of SQL server over fSxN based on your selected instance type.'
 };
 
 export const CODE_VIEWER = {

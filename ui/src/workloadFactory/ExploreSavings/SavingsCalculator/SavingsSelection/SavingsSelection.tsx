@@ -112,7 +112,9 @@ const SavingsSelection = ({ printState }: any) => {
             options.push(
                 generateOptionType(
                     option?.instanceType,
-                    `${option?.instanceType} (for all instances)`,
+                    <div>
+                        ${option?.instanceType} <span className={styles.greyedOutText}>(for all instances)</span>
+                    </div>,
                     generateLabel2ForInstanceType(
                         instanceTypeData.options,
                         option?.instanceType,
