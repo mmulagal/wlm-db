@@ -89,8 +89,8 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
                     size: sizeInGigaBytes(storageAmount, 'B'),
                     unit: 'GiB'
                 },
-                volumeIops: volumeIops && volumeIops > 0 ? volumeIops * volumeNumber : 0,
-                throughput: throughput && throughput > 0 ? throughput * volumeNumber : 0
+                volumeIops: volumeIops && volumeIops > 0 ? volumeIops : 0,
+                throughput: throughput && throughput > 0 ? throughput : 0
             };
         });
 
