@@ -49,22 +49,42 @@
                     color: var(--text-button-primary);
                     font-weight: 500;
                     cursor: pointer;
+                    display: block;
                 }
             }
         }
     }
 }
 
-@media screen and (max-width: 1560px) {
+@media screen and (min-width: 1429px) and (max-width: 1715px) {
     .exploreSavingsHeader {
-        height: 328px;
+        height: 276px;
 
         .topPart {
-            .svgContainer {
-                height: 328px;
+            .contentSection {
+                padding: 32px 64px;
+            }
+        }
+    }
+}
 
-                svg {
-                    height: 100%;
+@media screen and (max-width: 1428px) {
+    .exploreSavingsHeader {
+        height: 384px;
+        width: 1128px;
+
+        .topPart {
+            .contentSection {
+                padding: 32px 64px;
+                gap: 24px;
+                flex-direction: column;
+
+                .leftSide {
+                    width: 465px;
+                }
+
+                .rightSide {
+                    width: 465px;
                 }
             }
         }
