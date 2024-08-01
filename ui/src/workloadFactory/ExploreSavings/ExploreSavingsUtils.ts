@@ -36,6 +36,12 @@ export const handleManualTCO = (dispatch: any) => {
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
+export const handleManualTCOFSX = (dispatch: any) => {
+    dispatch(setSavingsCalculatorFrom('Manual_FSX'));
+    dispatch(setDisableState(false));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+};
+
 export const setESInstanceData = (data: any, dispatch: any) => {
     let serverInstallationMode = data?.serverInstallationMode;
     if (data?.serverInstallationMode === GENERAL.AOAG) {

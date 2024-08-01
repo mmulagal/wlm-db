@@ -15,7 +15,7 @@ import {
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
+import { SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 
 const ManualTCOFields = () => {
     const dispatch = useDispatch();
@@ -26,7 +26,8 @@ const ManualTCOFields = () => {
         numberOfClonedCopies,
         monthlyChangeRate,
         selectedManualServerEdition,
-        selectedSnapshotFrequency
+        selectedSnapshotFrequency,
+        savingsCalculatorFrom
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedRegion } = useAppSelector(state => state.headers);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
@@ -82,7 +83,10 @@ const ManualTCOFields = () => {
 
     //Function to generate the options for Select Field
     const generateDeploymentModelList = useMemo<optionType[]>((): optionType[] => {
-        const deploymentModel = [GENERAL.STANDALONE, GENERAL.AOAG];
+        const deploymentModel =
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL
+                ? [GENERAL.STANDALONE, GENERAL.AOAG]
+                : [GENERAL.STANDALONE, GENERAL.FCI];
         const options: optionType[] = [];
         deploymentModel?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '', val);
@@ -149,8 +153,9 @@ const ManualTCOFields = () => {
     return (
         <div className={styles.manualTCOFields}>
             <DsTypography variant="Regular_14">
-                Select a Microsoft SQL server on Amazon EC2 with EBS configuration so that we can compare your costs
-                when using Microsoft SQL server on FSx for ONTAP instead
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL
+                    ? GENERAL.SAVINGS_MANUAL_TEXT
+                    : GENERAL.SAVINGS_MANUAL_FSX_TEXT}
             </DsTypography>
 
             <div className={styles.firstContainer}>
