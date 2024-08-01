@@ -254,7 +254,7 @@ async function createDeploymentMockDataInDB(
         fsxnIds: fsxId,
         isDefault: true,
         source: RESOURCE_SOURCE.DEPLOY,
-        sqlDeploymentType: 'FCI',
+        sqlDeploymentType: sqlDeploymentMode,
         fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
         numberofUserDbsCreated: 1,
         sandboxCreated: true,
