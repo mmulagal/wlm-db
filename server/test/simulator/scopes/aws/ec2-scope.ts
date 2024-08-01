@@ -182,6 +182,7 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
             const dummyInstanceId = sample(instancesWithEbs).ec2InstanceId;
             instancesWithEbs = instancesWithEbs.filter(instance => instance.ec2InstanceId !== dummyInstanceId);
             dummyInstanceDetails.InstanceId = dummyInstanceId;
+            dummyInstanceDetails.InstanceType = 'm5.xlarge';
             instances?.push(dummyInstanceDetails);
             dummyResevation.Instances = instances;
             reservations?.push(dummyResevation);
