@@ -30,6 +30,7 @@ const ManualTCOFields = () => {
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedRegion } = useAppSelector(state => state.headers);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     //Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
@@ -237,15 +238,18 @@ const ManualTCOFields = () => {
                         className={styles.deploymentModelWidth}
                         error={errorForClonedCopiesCount()}
                     />
-                    {/* <TextField
-                        label={'Monthly SQL BYOL costs($)'}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            dispatch(setSelectedMonthlyBYOLCost(e.target.value));
-                        }}
-                        isOptional={true}
-                        value={monthlyBYOLCost}
-                        className={styles.deploymentModelWidth}
-                    /> */}
+                    {isDemoMode && 
+                        <TextField
+                            label={'Monthly SQL BYOL costs($)'}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                dispatch(setSelectedMonthlyBYOLCost(e.target.value));
+                            }}
+                            isOptional={true}
+                            value={monthlyBYOLCost}
+                            className={styles.deploymentModelWidth}
+                        />
+                    }
+                    
                 </div>
             </div>
         </div>
