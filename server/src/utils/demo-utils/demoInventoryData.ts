@@ -144,7 +144,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
-                        sqlServerDeploymentType: 'AOAG',
+                        sqlServerDeploymentType: 'FCI',
                         storage: [
                             {
                                 type: 'FSXN',
