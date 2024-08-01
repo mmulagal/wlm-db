@@ -1511,9 +1511,9 @@ export const generateManualStorageSavingsPayload = () => {
     payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
     payloadObj.snapshotFrequency = selectedSnapshotFrequency?.value;
     payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
-    // if (monthlyBYOLCost) {
-    //     payloadObj.monthlySqlByolCost = Number(monthlyBYOLCost);
-    // }
+    if (monthlyBYOLCost) {
+        payloadObj.monthlySqlByolCost = Number(monthlyBYOLCost);
+    }
     payloadObj.sqlServerEdition = setSQLServerEdition(selectedManualServerEdition?.value);
     payloadObj.ec2Instances = createInstances(state);
     return payloadObj;
