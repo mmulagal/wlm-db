@@ -432,7 +432,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: stop
+            InstanceInitiatedShutdownBehavior: terminate
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -686,7 +686,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: stop
+            InstanceInitiatedShutdownBehavior: terminate
             UserData: !Base64
                 Fn::Join:
                     - ''
