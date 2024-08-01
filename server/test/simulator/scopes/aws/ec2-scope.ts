@@ -179,10 +179,11 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
             const dummyInstanceDetails = cloneDeep(describeInstanceResponse.Reservations[0].Instances[0]);
             const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
             dummyInstanceDetails.PrivateIpAddress = privateIp;
-            const dummyInstanceId = sample(instancesWithEbs).ec2InstanceId;
-            instancesWithEbs = instancesWithEbs.filter(instance => instance.ec2InstanceId !== dummyInstanceId);
+            const dummyInstanceRef = sample(instancesWithEbs);
+            const dummyInstanceId = dummyInstanceRef.ec2InstanceId;
             dummyInstanceDetails.InstanceId = dummyInstanceId;
-            dummyInstanceDetails.InstanceType = 'm5.xlarge';
+            dummyInstanceDetails.InstanceType = dummyInstanceRef?.ec2InstanceType;
+            instancesWithEbs = instancesWithEbs.filter(instance => instance.ec2InstanceId !== dummyInstanceId);
             instances?.push(dummyInstanceDetails);
             dummyResevation.Instances = instances;
             reservations?.push(dummyResevation);
