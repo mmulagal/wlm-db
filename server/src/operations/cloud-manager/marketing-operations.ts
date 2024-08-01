@@ -201,7 +201,7 @@ async function invokeMarketingApi(
             clonedCopiesCount,
             sqlServerDeploymentType,
             monthlyChangeRatePercentage,
-            snapshotFrequency: 'daily',
+            snapshotFrequency: 'Daily',
             sqlServerEdition: 'Enterprise',
             ec2Instances: [
                 {
