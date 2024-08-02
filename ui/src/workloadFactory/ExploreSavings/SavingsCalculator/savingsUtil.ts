@@ -1303,7 +1303,7 @@ export const mergeAoagVolumesList = (listA: any[], listB: any[]) => {
 
 export const allPropertiesHaveValues = (obj: any) => {
     for (let key in obj) {
-        if (obj[key] === null || obj[key] === undefined || obj[key] === '' || obj[key] === '0') {
+        if (obj[key] === null || obj[key] === undefined || obj[key] === '' || parseInt(obj[key]) === 0) {
             return 0;
         }
     }
