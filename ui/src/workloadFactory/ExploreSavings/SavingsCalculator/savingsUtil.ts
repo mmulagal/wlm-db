@@ -1303,7 +1303,7 @@ export const mergeAoagVolumesList = (listA: any[], listB: any[]) => {
 
 export const allPropertiesHaveValues = (obj: any) => {
     for (let key in obj) {
-        if (obj[key] === null || obj[key] === undefined || obj[key] === '') {
+        if (obj[key] === null || obj[key] === undefined || obj[key] === '' || obj[key] === '0') {
             return 0;
         }
     }
@@ -1354,7 +1354,7 @@ export const checkForIO2Valid = (data: any) => {
 export const gp2Valid = (data: any) => {
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
     const volData = Number(data?.manualTCONumberOfVolumes);
-    if (volStorageSaving > 16384 || volData > 1000000000) {
+    if (volStorageSaving === 0 || volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;
