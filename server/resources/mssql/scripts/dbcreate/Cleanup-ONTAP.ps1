@@ -1,4 +1,3 @@
-#Requires -Version 7.0
 #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
@@ -107,7 +106,7 @@ if ($IsClustered -ne "false") {
 
     $sqlgroup = Get-ClusterResource | Where-Object Name -eq $ClusterResourceName
 
-    $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+    $sqlserver = Get-WmiObject -namespace root\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
     $resourcegroup = $sqlserver.GetRelated() | Where-Object Type -eq 'Physical Disk'
 
     $clusterdisksToRemove = @()
@@ -116,7 +115,7 @@ if ($IsClustered -ne "false") {
         $disks = $resource.GetRelated("MSCluster_Disk")
         foreach ($disk in $disks) {
             $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
-            $clusterdisk = ($resource.name).replace('\\r\\n','')
+            $clusterdisk = ($resource.name).replace('\r\n','')
             $diskvolume = $diskpart.VolumeGuid
             write-debug "Cluster Disk $diskvolume"
             if ($windowsVolumeIds -contains $diskpart.VolumeGuid) {
@@ -275,6 +274,19 @@ catch {
     $resultjson 
     exit 1
 }
+
+
+if ($FilePaths.count -ne 0) {
+    $virtualDrives = $filePaths | ForEach-Object {
+        $splits = $_.Split('\')
+        $splits[0] + '\' + $splits[1]
+    }
+
+    $virtualDrives | ForEach-Object {
+        $null = (Remove-Item -Path $_ -Force -Recurse -ErrorAction SilentlyContinue)
+    }
+}
+
 $result.Add('Status', 'Complete')
 $result.Add('Message', 'Cleaning up resources complete')
 $resultjson = ($result | ConvertTo-Json) 
