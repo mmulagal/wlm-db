@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@netapp/design-system';
+import { Button, Popover } from '@netapp/design-system';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useAppSelector } from '../../../store/storeHooks';
 import DatabaseListTable from '../DatabaseListTable/DatabaseListTable';
@@ -18,12 +18,13 @@ import {
     setInstanceId,
     setInstanceName
 } from '../../../store/workloadFactory/createNewDBSlice';
+import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import CustomContentInfo from '../../../common/CustomContentInfo/CustomContentInfo';
 import DatabaseHostOverviewApiV2 from './DatabaseHostOverviewApiV2';
 import { updateResourceId } from '../../../store/authSlice';
 
-const DatabaseHostOverviewV2 = () => {
+const DatabaseHostOverviewV2 = ({ refreshTime, refreshPage }: any) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
@@ -42,47 +43,73 @@ const DatabaseHostOverviewV2 = () => {
     return (
         <div className={styles.resourcePage}>
             <div className={styles.breadCrumb}>
-                <BreadCrumbs
-                    items={[
-                        {
-                            title: 'Inventory',
-                            onClick: () => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                <>
+                    <BreadCrumbs
+                        items={[
+                            {
+                                title: 'Inventory',
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                                }
+                            },
+                            {
+                                title: selectedHostname + ' \\ ' + selectedDatabaseInstanceName
                             }
-                        },
-                        {
-                            title: selectedHostname + ' \\ ' + selectedDatabaseInstanceName
-                        }
-                    ]}
-                />
-                {isSmbProtocol(stateResourceDetails?.storage?.fsxn?.protocol) ? (
-                    <CustomContentInfo
-                        tooltipText={GENERAL.SMB_PROTOCOL_DISABLED}
-                        CustomContent={
-                            <Button variant="primary" onClick={() => {}} id={'create-new-user-button'} disabled={true}>
-                                {GENERAL.CREATE_USER_DB_TITLE}
-                            </Button>
-                        }
+                        ]}
                     />
-                ) : (
-                    <Button
-                        variant="primary"
-                        onClick={() => {
-                            if (!resourceLoadingState) {
-                                dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                dispatch(setDBHostName(selectedHostname));
-                                dispatch(updateResourceId(selectedResourceId));
-                                dispatch(setInstanceId(selectedDatabaseInstance));
-                                dispatch(setInstanceName(selectedDatabaseInstanceName));
-                                navigate('../create-new-user');
-                            }
-                        }}
-                        id={'create-new-user-button'}
-                        disabled={resourceLoadingState}
-                    >
-                        {GENERAL.CREATE_USER_DB_TITLE}
-                    </Button>
-                )}
+                </>
+
+                <>
+                    <div className={styles.rightSection}>
+                        {isSmbProtocol(stateResourceDetails?.storage?.fsxn?.protocol) ? (
+                            <CustomContentInfo
+                                tooltipText={GENERAL.SMB_PROTOCOL_DISABLED}
+                                CustomContent={
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => {}}
+                                        id={'create-new-user-button'}
+                                        disabled={true}
+                                    >
+                                        {GENERAL.CREATE_USER_DB_TITLE}
+                                    </Button>
+                                }
+                            />
+                        ) : (
+                            <>
+                                <Button
+                                    variant="primary"
+                                    onClick={() => {
+                                        if (!resourceLoadingState) {
+                                            dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                            dispatch(setDBHostName(selectedHostname));
+                                            dispatch(updateResourceId(selectedResourceId));
+                                            dispatch(setInstanceId(selectedDatabaseInstance));
+                                            dispatch(setInstanceName(selectedDatabaseInstanceName));
+                                            navigate('../create-new-user');
+                                        }
+                                    }}
+                                    id={'create-new-user-button'}
+                                    disabled={resourceLoadingState}
+                                >
+                                    {GENERAL.CREATE_USER_DB_TITLE}
+                                </Button>
+                            </>
+                        )}
+                        <div className={styles.refresh}>
+                            <Popover
+                                popoverClass={styles['copy-popover']}
+                                children={`Last update: ${refreshTime}`}
+                                trigger="hover"
+                                container={
+                                    <div className={styles.refreshIcon} onClick={refreshPage}>
+                                        <RefreshIcon />
+                                    </div>
+                                }
+                            />
+                        </div>
+                    </div>
+                </>
             </div>
 
             <div className={styles.hostTitle}>
