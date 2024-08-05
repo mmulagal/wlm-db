@@ -30,7 +30,7 @@ param(
     [string]$IsDefaultInstance,
 
     [Parameter(Mandatory = $true)]
-    [string]$LunSerialNumString
+    [string]$FilePathString
 
 )
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append)
@@ -39,7 +39,7 @@ $ErrorActionPreference = "Stop"
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$LunSerialNums = $LunSerialNumString.Split(',')
+$FilePaths = $FilePathString.Split(',')
 $FSxCredStore = "/netapp/wlmdb/$FileSystemId"
 $credobject = (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
 
@@ -69,6 +69,28 @@ else {
     $loglabel = $DBName + "-Log"
 }
 
+Function Get-VolumeIdFromPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$absolutePath
+    )
+
+    $fullPath = [string](Resolve-Path $absolutePath)
+    $bestMatch = ''
+    $bestMatchObj = $null
+    gwmi Win32_MountPoint | % {
+        $_.Directory -match '="(.*)"' | Out-Null
+        $mountDir = $matches[1].Replace('\\\\', '\\')
+        If (!$mountDir.EndsWith('\\')) { $mountDir = $mountDir + '\\' }
+        If ($fullPath.StartsWith($mountDir, 'InvariantCultureIgnoreCase') -and $bestMatch.Length -lt $mountDir.Length) { 
+            $bestMatch = $mountDir
+            $bestMatchObj = $_
+        }
+    }
+    $bestMatchObj.Volume -match '{(.+?)}' | Out-Null
+    return $matches[1]
+}
+
 if ($IsClustered -ne "false") {
     
     #Check if disks are in dependency list before cleaning up
@@ -79,13 +101,8 @@ if ($IsClustered -ne "false") {
         $ClusterResourceName = "SQL Server ($InstanceName)"
     }
 
-    $windowsVolumeIds = @() 
-    $LunSerialNums | ForEach-Object {
-         # get volume id from lun serial number
-        $volId = Get-Disk | Where-Object SerialNumber -eq $_ | Get-Partition | Get-Volume | Select-Object -ExpandProperty UniqueId
-        # Extract the voluem id from the string \\?\Volume{6450ca8a-4562-4f65-b272-a8f162578f04}\
-        $windowsVolumeIds += $volId -replace '\\\\\?\\Volume{(.*)}\\', '$1'
-
+    $windowsVolumeIds = $FilePaths | ForEach-Object {
+        Get-VolumeIdFromPath -absolutePath $_
     }
 
     $sqlgroup = Get-ClusterResource | Where-Object Name -eq $ClusterResourceName

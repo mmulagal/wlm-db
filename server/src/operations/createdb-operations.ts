@@ -581,8 +581,6 @@ async function invokeSSMForDatabaseDeployment(
     let sqlInstanceName;
     let instancesDetails;
     let databaseInstanceId;
-    let dataSerialNum;
-    let logSerialNum;
     try {
         ({
             isSSMConnected,
@@ -750,9 +748,6 @@ async function invokeSSMForDatabaseDeployment(
                 standbyIqn
             );
 
-            dataSerialNum = dataSerial;
-            logSerialNum = LogSerial;
-
             let isVirtualMountSelected = 'false';
             if (isLogVirtualMount || isDataVirtualMount) {
                 isVirtualMountSelected = 'true';
@@ -859,7 +854,7 @@ async function invokeSSMForDatabaseDeployment(
                 serverNameWithHostName,
                 instanceNameForScript,
                 isDefaultInstance,
-                `${dataSerialNum},${logSerialNum}`
+                `${dataDrivePath},${logDrivePath}`
             );
         }
 
@@ -1232,7 +1227,7 @@ async function cleanUpDatabaseDeployment(
     serverNameWithHostName: string,
     instanceNameForScript: string,
     isDefaultInstance: string,
-    lunSerialNums?: string
+    filePaths?: string
 ) {
     logger.info('Cleaning up the database deployment', {
         accountId,
@@ -1274,7 +1269,7 @@ async function cleanUpDatabaseDeployment(
             ];
         } else {
             cleaupCommand = [
-                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered} -InstanceName ${instanceNameForScript} -IsDefaultInstance ${isDefaultInstance} -LunSerialNumString ${lunSerialNums}}`
+                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered} -InstanceName ${instanceNameForScript} -IsDefaultInstance ${isDefaultInstance}} -FilePathString ${filePaths}`
             ];
         }
 
