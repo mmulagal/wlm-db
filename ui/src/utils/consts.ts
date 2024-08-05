@@ -549,7 +549,8 @@ export const FSX_AZ_TYPE = {
 
 export const SAVINGS_CALC_MODE = {
     MANUAL: 'Manual',
-    AUTO: 'Auto'
+    AUTO: 'Auto',
+    MANUAL_FSX: 'Manual_FSX'
 };
 
 export const PARTNER_NODE = 'partner node';

@@ -977,7 +977,8 @@ export const GENERAL = {
         'Automatically explore savings by selecting a Microsoft SQL Server host and then click "Explore savings". We\'ll calculate your potential savings with FSx for ONTAP storage for your database workloads.',
     ES_SAVINGS: 'Explore savings',
     MANUAL_EXLORE_SAVINGS: 'Manual explore savings',
-    EXPLORE_SAVING_MANUALLY: 'Explore savings Manually',
+    EXPLORE_SAVING_MANUALLY: 'Explore savings Manually with EBS',
+    EXPLORE_SAVING_MANUALLY_FSX: 'Explore savings Manually with Amazon FSx for Windows',
     MANUAL_EXPLORE_SAVINGS_CONTENT:
         'Alternatively, select "Explore savings manually". You\'ll  provide Microsoft SQL Server configuration details to get an accurate cost estimate comparison.',
     INSTANCE_INFORMATION: 'Instance information:',
@@ -988,6 +989,11 @@ export const GENERAL = {
     MS_SQL_TWO_INSTANCES: 'Microsoft SQL Server EC2 instance - 2 instances',
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
     SAVINGS_HEADER: 'Microsoft SQL server on Amazon Elastic Block Store (EBS) configuration.',
+    SAVINGS_HEADER_FSX: 'Microsoft SQL server on FSx for Windows configuration',
+    SAVINGS_MANUAL_TEXT:
+        ' Select a Microsoft SQL server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL server on FSx for ONTAP instead',
+    SAVINGS_MANUAL_FSX_TEXT:
+        'Select Microsoft SQL server, Amazon Ec2 and on Amazon FSx for Windows File Server configuration to compare your costs when using Microsoft SQL server on FSx for ONTAP instead.',
     ES_NUMBER_OF_INSTANCE: 'Number of SQL instances',
     ES_HOST_NAME: 'Host name',
     ES_NUMBER_OF_VOLS: 'Number of volumes',

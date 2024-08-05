@@ -53,7 +53,10 @@ const SavingsCalculatorManualApi = () => {
     const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX
+        ) {
             dispatch(setInstanceLoading(true));
             getInstanceTypes({
                 credentialId: headerSelectedCred?.data?.credentialsId,
