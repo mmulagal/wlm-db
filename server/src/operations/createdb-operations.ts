@@ -847,7 +847,8 @@ async function invokeSSMForDatabaseDeployment(
                 isClustered,
                 serverNameWithHostName,
                 instanceNameForScript,
-                isDefaultInstance
+                isDefaultInstance,
+                `${dataDrivePath},${logDrivePath}`
             );
         }
 
@@ -1219,7 +1220,8 @@ async function cleanUpDatabaseDeployment(
     isClustered: string,
     serverNameWithHostName: string,
     instanceNameForScript: string,
-    isDefaultInstance: string
+    isDefaultInstance: string,
+    filePaths?: string
 ) {
     logger.info('Cleaning up the database deployment', {
         accountId,
@@ -1261,7 +1263,7 @@ async function cleanUpDatabaseDeployment(
             ];
         } else {
             cleaupCommand = [
-                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered} -InstanceName ${instanceNameForScript} -IsDefaultInstance ${isDefaultInstance}}`
+                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered} -InstanceName ${instanceNameForScript} -IsDefaultInstance ${isDefaultInstance}} -FilePathString ${filePaths}`
             ];
         }
 

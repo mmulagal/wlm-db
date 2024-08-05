@@ -21,13 +21,16 @@ param(
     [string]$DBName,
 
     [Parameter(Mandatory = $true)]
-    [string]$IsClustered ,   
+    [string]$IsClustered,   
     
     [Parameter(Mandatory = $true)]
     [string]$InstanceName,
 
     [Parameter(Mandatory = $true)]
-    [string]$IsDefaultInstance
+    [string]$IsDefaultInstance,
+
+    [Parameter(Mandatory = $true)]
+    [string]$FilePathString
 
 )
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append)
@@ -36,6 +39,7 @@ $ErrorActionPreference = "Stop"
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+$FilePaths = $FilePathString.Split(',')
 $FSxCredStore = "/netapp/wlmdb/$FileSystemId"
 $credobject = (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
 
@@ -65,7 +69,30 @@ else {
     $loglabel = $DBName + "-Log"
 }
 
+Function Get-VolumeIdFromPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$absolutePath
+    )
+
+    $fullPath = [string](Resolve-Path $absolutePath)
+    $bestMatch = ''
+    $bestMatchObj = $null
+    gwmi Win32_MountPoint | % {
+        $_.Directory -match '="(.*)"' | Out-Null
+        $mountDir = $matches[1].Replace('\\\\', '\\')
+        If (!$mountDir.EndsWith('\\')) { $mountDir = $mountDir + '\\' }
+        If ($fullPath.StartsWith($mountDir, 'InvariantCultureIgnoreCase') -and $bestMatch.Length -lt $mountDir.Length) { 
+            $bestMatch = $mountDir
+            $bestMatchObj = $_
+        }
+    }
+    $bestMatchObj.Volume -match '{(.+?)}' | Out-Null
+    return $matches[1]
+}
+
 if ($IsClustered -ne "false") {
+    
     #Check if disks are in dependency list before cleaning up
     if ($IsDefaultInstance -eq "true"){
         $ClusterResourceName = "SQL Server"
@@ -74,19 +101,42 @@ if ($IsClustered -ne "false") {
         $ClusterResourceName = "SQL Server ($InstanceName)"
     }
 
-    $dependencylist = (Get-ClusterResourceDependency -Resource $ClusterResourceName).DependencyExpression
-    $logpattern = '\(\[' + $loglabel + '\]\)'
-    $datapattern = '\(\[' + $datalabel + '\]\)'
-    $logfound = $dependencylist -match $logpattern
-    $datafound = $dependencylist -match $datapattern
-    if ($datafound) {
-        $silencedependency = (Remove-ClusterResourceDependency -Resource $ClusterResourceName -Provider $datalabel)
-        Remove-ClusterResource -Name $datalabel -Force
-    } 
-    if ($logfound) {
-        $silencedependency = (Remove-ClusterResourceDependency -Resource $ClusterResourceName -Provider $loglabel)
-        Remove-ClusterResource -Name $loglabel -Force
-    }     
+    $windowsVolumeIds = $FilePaths | ForEach-Object {
+        Get-VolumeIdFromPath -absolutePath $_
+    }
+
+    $sqlgroup = Get-ClusterResource | Where-Object Name -eq $ClusterResourceName
+
+    $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+    $resourcegroup = $sqlserver.GetRelated() | Where-Object Type -eq 'Physical Disk'
+
+    $clusterdisksToRemove = @()
+
+    foreach ($resource in $resourcegroup) {
+        $disks = $resource.GetRelated("MSCluster_Disk")
+        foreach ($disk in $disks) {
+            $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
+            $clusterdisk = ($resource.name).replace('\\r\\n','')
+            $diskvolume = $diskpart.VolumeGuid
+            write-debug "Cluster Disk $diskvolume"
+            if ($windowsVolumeIds -contains $diskpart.VolumeGuid) {
+                $clusterdisksToRemove += $clusterdisk
+            }
+        }
+    }
+
+    write-Information "$logPrefix Cluster Disks to remove $clusterdisksToRemove"
+
+    if ($clusterdisksToRemove.count -ne 0) {
+        $clusterdisksToRemove | ForEach-Object {
+            $diskToRemove = $_
+            $diskToRemove = $diskToRemove.ToString()
+            write-Information "$logPrefix Removing disk $diskToRemove"
+            $null = (Remove-ClusterResourceDependency -Resource $ClusterResourceName -Provider $diskToRemove)
+            $null = (Remove-ClusterSharedVolume -Name $diskToRemove -ErrorAction SilentlyContinue)
+            $null = (Remove-ClusterResource -Name $diskToRemove -Force -ErrorAction SilentlyContinue)
+        }
+    }
 }
 
 # Get FSx certificate
