@@ -44,7 +44,7 @@ const ISActiveDirectory = ({ handleToggle, openKey }: accordionType) => {
         );
     };
     return (
-        <div className={''}>
+        <div className={''} style={{ marginBottom: '40px' }}>
             <DbAccordion
                 heading="Active Directory"
                 toggle={handleToggle}
