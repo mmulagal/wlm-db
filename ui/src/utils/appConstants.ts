@@ -977,7 +977,7 @@ export const GENERAL = {
         'Automatically explore savings by selecting a Microsoft SQL Server host and then click "Explore savings". We\'ll calculate your potential savings with FSx for ONTAP storage for your database workloads.',
     ES_SAVINGS: 'Explore savings',
     MANUAL_EXLORE_SAVINGS: 'Manual explore savings',
-    EXPLORE_SAVING_MANUALLY: 'Explore savings Manually',
+    EXPLORE_SAVING_MANUALLY: 'Explore savings Manually with EBS',
     EXPLORE_SAVING_MANUALLY_FSX: 'Explore savings Manually with Amazon FSx for Windows',
     MANUAL_EXPLORE_SAVINGS_CONTENT:
         'Alternatively, select "Explore savings manually". You\'ll  provide Microsoft SQL Server configuration details to get an accurate cost estimate comparison.',

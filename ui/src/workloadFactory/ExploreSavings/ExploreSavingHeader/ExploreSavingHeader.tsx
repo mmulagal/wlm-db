@@ -49,7 +49,12 @@ const ExploreSavingHeader = () => {
                                     <span className={styles.link} onClick={() => handleManualTCO(dispatch)}>
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
-                                    <span className={styles.link} onClick={() => handleManualTCOFSX(dispatch)}>
+                                    <span
+                                        className={styles.link}
+                                        onClick={() => {}}
+                                        style={{ color: 'var(--text-disabled)' }}
+                                        // onClick={() => handleManualTCOFSX(dispatch)}
+                                    >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
                                 </span>
@@ -91,7 +96,12 @@ const ExploreSavingHeader = () => {
                                     <span className={styles.link} onClick={() => handleManualTCO(dispatch)}>
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
-                                    <span className={styles.link} onClick={() => handleManualTCOFSX(dispatch)}>
+                                    <span
+                                        className={styles.link}
+                                        onClick={() => {}}
+                                        style={{ color: 'var(--text-disabled)' }}
+                                        // onClick={() => handleManualTCOFSX(dispatch)}
+                                    >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
                                 </span>
@@ -133,7 +143,12 @@ const ExploreSavingHeader = () => {
                                     <span className={styles.link} onClick={() => handleManualTCO(dispatch)}>
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
-                                    <span className={styles.link} onClick={() => handleManualTCOFSX(dispatch)}>
+                                    <span
+                                        className={styles.link}
+                                        onClick={() => {}}
+                                        style={{ color: 'var(--text-disabled)' }}
+                                        // onClick={() => handleManualTCOFSX(dispatch)}
+                                    >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
                                 </span>
