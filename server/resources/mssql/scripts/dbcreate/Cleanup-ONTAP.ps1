@@ -32,6 +32,7 @@ param(
     [string]$FilePathString
 
 )
+$WarningPreference = 'SilentlyContinue';
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append)
 
 $ErrorActionPreference = "Stop"
