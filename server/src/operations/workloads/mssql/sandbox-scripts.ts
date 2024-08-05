@@ -622,7 +622,6 @@ const createVolumeClone = (
                 }
             }
 
-            $jobStatus = @()
             $response.records | ForEach-Object {
                 $volumeid = $_.location.volume.uuid
                 $body = @"
@@ -632,7 +631,7 @@ const createVolumeClone = (
 "@
                 $ApiEndpoint = '/storage/volumes/' + $volumeid
                 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "PATCH"
-                $jobStatus += Get-OntapJobStatus -jobId $ontapResponse.job.uuid
+                $jobStatus = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
                 if ($jobStatus.state -ne 'success') {
                     throw "Could not add tags to the cloned volumes. Ontap error: $($jobStatus.error.message)"
                 }
@@ -1100,7 +1099,7 @@ const detachDbAndRemoveAccessPath = (
     try {
         $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$dbname' GROUP BY dbid FOR JSON PATH"
 
-        $sqlres = sqlcmd -Q $query -y 0
+        $sqlres = Sqlcmd -S $executableInstance -Q $query -y 0
         
         if ($sqlres -ne $null) {
             Write-Information "$logPrefix Database $dbname is in use"

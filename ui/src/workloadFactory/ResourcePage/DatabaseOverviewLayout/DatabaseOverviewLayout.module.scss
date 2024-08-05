@@ -6,11 +6,16 @@
     .leftSidePart {
         width: 66.33%;
         max-width: 1064px;
+        max-height: 832px;
+        overflow-y: auto;
     }
 
     .rightSidePart {
         width: 32.41%;
         max-width: 520px;
+        max-height: 680px;
+        overflow-y: auto;
+        margin-bottom: 40px;
     }
 
     .secondLevel {
@@ -48,7 +53,6 @@
     .diagramContainer {
         margin-top: 24px;
         width: 100%;
-        margin-bottom: 40px;
     }
 
     ::-webkit-scrollbar {

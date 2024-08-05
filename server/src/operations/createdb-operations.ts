@@ -47,6 +47,8 @@ import { updateResourceMetaData } from '../lib/database/db';
 
 const logger = getLogger();
 
+const isDemoFlow = isDemo();
+
 async function getDefaultDrives(
     credentialsId: string,
     region: string,
@@ -153,9 +155,14 @@ async function getDriveInfoFromNodes(
                         driveLetter: item.LogicalDisk?.charAt(0),
                         availableSize: item.FileSystem,
                         isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
-                        ...(sqlDeploymentType === 'FCI' && {
-                            isClusteredWithSelectedInstance: item.Owner === `SQL Server (${instanceName})` ?? false
-                        })
+                        ...(sqlDeploymentType === 'FCI' &&
+                            !isDemoFlow && {
+                                isClusteredWithSelectedInstance: item.Owner === `SQL Server (${instanceName})` ?? false
+                            }),
+                        ...(sqlDeploymentType === 'FCI' &&
+                            isDemoFlow && {
+                                isClusteredWithSelectedInstance: item.Owner?.includes('SQL Server ') ?? false
+                            })
                     };
                 }
                 return null;
@@ -223,7 +230,6 @@ async function getDriveInfoFromSSM(
     if (
         isSSMConnected === undefined ||
         !activeNodeInstanceId ||
-        !standbyNodeInstanceId ||
         !instanceName ||
         !instancesDetails ||
         !instancesDetails?.length
@@ -473,7 +479,7 @@ async function deployDatabase(
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName,
-        name: `Creating user database ${databaseName} on the SQL Server host ${serverNameWithHostName}`,
+        name: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`,
         startTime: Date.now(),
         description: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`
     });
@@ -678,7 +684,7 @@ async function invokeSSMForDatabaseDeployment(
                 error: undefined
             });
 
-            if (isDemo()) {
+            if (isDemoFlow) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
                 if (instanceDetail) {
@@ -800,7 +806,7 @@ async function invokeSSMForDatabaseDeployment(
 
             await updateCreateDbMetrics(accountId, resourceId, metaData as Metadata);
 
-            if (isDemo()) {
+            if (isDemoFlow) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
 
@@ -905,7 +911,7 @@ async function createDatabase(
     });
 
     let createDatabaseCommand;
-    if (isDemo()) {
+    if (isDemoFlow) {
         createDatabaseCommand = [
             `${CREATEDBSCRIPT} -SQLServer Draculla  -DBName tempdb9  -DataPath J:\\MSSQL\\data\\tempdb9_data.mdf  -LogPath K:\\MSSQL\\data\\tempdb9_log.ldf`
         ];
@@ -1007,7 +1013,7 @@ async function configureLuns(
     });
 
     let configureLuncommands;
-    if (isDemo()) {
+    if (isDemoFlow) {
         configureLuncommands = [
             `${CONFIGURELUNSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataLunSize 1074  -FSxLogLunSize 1074 -LogNew false -DataNew false`
         ];
@@ -1128,7 +1134,7 @@ async function newDBInitialization(
         customSSMTimeoutValue
     });
     let dbInitializecommands;
-    if (isDemo()) {
+    if (isDemoFlow) {
         dbInitializecommands = [
             `${INITIALIZEDBSCRIPT} -DBName tempdb9  -IsClustered false  -DataDrive J  -LogDrive K -LogNew true -DataNew true`
         ];
@@ -1257,7 +1263,7 @@ async function cleanUpDatabaseDeployment(
     let errMsg;
     try {
         let cleaupCommand;
-        if (isDemo()) {
+        if (isDemoFlow) {
             cleaupCommand = [
                 `${CLEANUPSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataVolumeName wlmdb_sqldata_1708948249  -FSxLogVolumeName wlmdb_sqllog_1708948249 -IGROUP wlmdb_sqligroup_1708791218786`
             ];
@@ -1533,7 +1539,7 @@ async function checkDriveExists(
             throw createError(412, `Selected ${driveType} drive letter ${selectedDrive} does not exist`);
         }
         if (!matchedExistingDrive.isNetappDrive) {
-            throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a NetApp drive`);
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a NetApp iSCSI drive`);
         }
         if (isClustered === 'true' && !matchedExistingDrive.isClusteredWithSelectedInstance) {
             throw createError(

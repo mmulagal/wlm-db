@@ -28,6 +28,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
     }, [storageSavingsResponse, storageSavingsLoading]);
 
     const ComparisonTableLayout = ({ data, calculatedResponse }: any) => {
+        const checkForComputeTooltip = data.isTooltip && data.type === 'Compute';
         return (
             <div
                 className={
@@ -50,7 +51,9 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                         >
                             {data?.isTooltip ? (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    {checkForTooltip && <TooltipInfo>{data?.isTooltip}</TooltipInfo>}
+                                    {(checkForTooltip || checkForComputeTooltip) && (
+                                        <TooltipInfo>{data?.isTooltip}</TooltipInfo>
+                                    )}
                                     <div>{data?.type}</div>
                                 </div>
                             ) : (

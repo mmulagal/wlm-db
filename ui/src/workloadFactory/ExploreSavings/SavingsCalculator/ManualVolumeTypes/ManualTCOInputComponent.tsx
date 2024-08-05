@@ -65,7 +65,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 setVolumeTypeOperation({
                     type: type,
                     mode: 'manualTCONumberOfVolumes',
-                    value: volumeSearch
+                    value: volumeSearch === null ? manualTCOVolumeTypes?.[type]?.manualTCONumberOfVolumes : volumeSearch
                 })
             );
         } else {
@@ -73,7 +73,8 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 setSecondaryVolumeTypeOperation({
                     type: type,
                     mode: 'manualTCONumberOfVolumes',
-                    value: volumeSearch
+                    value:
+                        volumeSearch === null ? manualTCOVolumeTypes2?.[type]?.manualTCONumberOfVolumes : volumeSearch
                 })
             );
         }
@@ -90,7 +91,10 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 setVolumeTypeOperation({
                     type: type,
                     mode: 'manualTCOStorageAmount',
-                    value: storageAmountSearch
+                    value:
+                        storageAmountSearch === null
+                            ? manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount
+                            : storageAmountSearch
                 })
             );
         } else {
@@ -98,7 +102,10 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 setSecondaryVolumeTypeOperation({
                     type: type,
                     mode: 'manualTCOStorageAmount',
-                    value: storageAmountSearch
+                    value:
+                        storageAmountSearch === null
+                            ? manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount
+                            : storageAmountSearch
                 })
             );
         }
@@ -115,7 +122,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 setVolumeTypeOperation({
                     type: type,
                     mode: 'manualTCOProvisionedIOPS',
-                    value: iopsSearch
+                    value: iopsSearch === null ? manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS : iopsSearch
                 })
             );
         } else {
@@ -123,7 +130,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 setSecondaryVolumeTypeOperation({
                     type: type,
                     mode: 'manualTCOProvisionedIOPS',
-                    value: iopsSearch
+                    value: iopsSearch === null ? manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS : iopsSearch
                 })
             );
         }
@@ -140,7 +147,8 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 setVolumeTypeOperation({
                     type: type,
                     mode: 'manualTCOThroughput',
-                    value: throughputSearch
+                    value:
+                        throughputSearch === null ? manualTCOVolumeTypes?.[type]?.manualTCOThroughput : throughputSearch
                 })
             );
         } else {
@@ -148,7 +156,10 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 setSecondaryVolumeTypeOperation({
                     type: type,
                     mode: 'manualTCOThroughput',
-                    value: throughputSearch
+                    value:
+                        throughputSearch === null
+                            ? manualTCOVolumeTypes2?.[type]?.manualTCOThroughput
+                            : throughputSearch
                 })
             );
         }

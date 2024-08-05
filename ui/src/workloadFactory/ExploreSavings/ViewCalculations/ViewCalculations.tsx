@@ -38,7 +38,8 @@ const ViewCalculations = () => {
                         },
                         {
                             title:
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL ||
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX
                                     ? 'Explore savings manually'
                                     : selectedServerName,
                             onClick: () => {

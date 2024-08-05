@@ -36,6 +36,12 @@ export const handleManualTCO = (dispatch: any) => {
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
+export const handleManualTCOFSX = (dispatch: any) => {
+    dispatch(setSavingsCalculatorFrom('Manual_FSX'));
+    dispatch(setDisableState(false));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+};
+
 export const setESInstanceData = (data: any, dispatch: any) => {
     let serverInstallationMode = data?.serverInstallationMode;
     if (data?.serverInstallationMode === GENERAL.AOAG) {
@@ -556,9 +562,7 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
 
     Object.keys(viewCalculationsResponse?.ebsCloneCalculation || {}).map((key: string) => {
         ebsCloneCalculation = {
-            clonedCopiesCount:
-                ebsCloneCalculation.clonedCopiesCount +
-                viewCalculationsResponse?.ebsCloneCalculation?.[key]?.clonedCopiesCount,
+            clonedCopiesCount: viewCalculationsResponse?.ebsCloneCalculation?.[key]?.clonedCopiesCount,
             capacity: ebsCloneCalculation.capacity + viewCalculationsResponse?.ebsCloneCalculation?.[key]?.capacity,
             iops: ebsCloneCalculation.iops + viewCalculationsResponse?.ebsCloneCalculation?.[key]?.iops,
             throughput:
@@ -700,7 +704,7 @@ export const generateLabel2ForInstanceType = (options: any, option: any, existin
                           (100 * (existingComputePrice - selectedOption?.computeMonthlyPrice)) / existingComputePrice
                       )
                     : 0;
-            const label2 = computeCostSavingPercent ? `Saves upto ${computeCostSavingPercent}% in compute costs` : '';
+            const label2 = computeCostSavingPercent ? `Saves up to ${computeCostSavingPercent}% in compute costs` : '';
             return label2;
         }
         return '';

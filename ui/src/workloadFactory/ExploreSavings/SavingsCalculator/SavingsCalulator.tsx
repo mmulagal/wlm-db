@@ -34,6 +34,8 @@ import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
 import { useGetManualStorageSavingsMutation, useGetManualViewCalculationsMutation } from '../../../utils/apiService';
 
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
+import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
+import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
@@ -110,7 +112,8 @@ const SavingsCalculator = () => {
                                 },
                                 {
                                     title:
-                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL
+                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL ||
+                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX
                                             ? 'Explore savings manually'
                                             : selectedServerName
                                 }
@@ -125,7 +128,13 @@ const SavingsCalculator = () => {
 
                     <div className={styles.contentArea}>
                         {/* Left side code here */}
-                        <div className={styles.firstContainer}>
+                        <div
+                            className={
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX
+                                    ? `${styles.firstContainer} ${styles.classForManualFsx}`
+                                    : styles.firstContainer
+                            }
+                        >
                             {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO && (
                                 <>
                                     <SavingsHeader />
@@ -145,6 +154,17 @@ const SavingsCalculator = () => {
                                         {selectedManualDeploymentModel?.label === 'Always on availability group' && (
                                             <ManualTCOAccordion />
                                         )}
+                                    </div>
+                                </>
+                            )}
+
+                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX && (
+                                <>
+                                    <SavingsHeader />
+                                    <div style={{ padding: '40px' }}>
+                                        <ManualTCOFields />
+                                        <ManualTCOFSXFields />
+                                        <ManualFSXEC2 />
                                     </div>
                                 </>
                             )}
