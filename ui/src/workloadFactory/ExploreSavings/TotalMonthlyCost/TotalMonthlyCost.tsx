@@ -26,11 +26,7 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                 {storageSavingsLoading && <DsFlashingDotsLoader />}
             </div>
 
-            <div
-                className={`${!noData && !storageSavingsLoading && !costZeroCase ? styles.adjustChart : ''} ${
-                    styles.mainSection
-                }`}
-            >
+            <div className={styles.mainSection}>
                 {storageSavingsLoading && (
                     <>
                         <div
