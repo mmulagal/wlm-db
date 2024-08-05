@@ -219,6 +219,7 @@ Resources:
                     config:
                         - ConfigureCWLogs
                         - FetchResources
+                        - ScriptSignatureVerificationandExtract
                         - LaunchWizardCFNSetup
                         - Prep
                         - Finalize               
@@ -334,7 +335,7 @@ Resources:
                             waitAfterCompletion: 0
                         d-unpack-validation-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
-                                C:\cfn\scripts\validation.zip -Destination C:\cfn\scripts\validation
+                                C:\cfn\scripts\validation.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: 0
                 LaunchWizardCFNSetup:
                     commands:
@@ -357,7 +358,7 @@ Resources:
                         a-validate-vpc:
                             command: !Join
                                 - ''
-                                - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-VPC.ps1 -subnet '
+                                - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-VPCConnectivity.ps1 -subnet '
                                   - !Ref 'SubnetID'
                                   - ' -region '
                                   - !Ref 'AWS::Region'
@@ -448,7 +449,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: terminate
+            InstanceInitiatedShutdownBehavior: stop
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -552,6 +553,7 @@ Resources:
                     config:
                         - ConfigureCWLogs
                         - FetchResources
+                        - ScriptSignatureVerificationandExtract
                         - LaunchWizardCFNSetup
                         - Finalize
                 ConfigureCWLogs:
@@ -665,7 +667,7 @@ Resources:
                             waitAfterCompletion: 0
                         d-unpack-validation-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
-                                C:\cfn\scripts\validation.zip -Destination C:\cfn\scripts\validation
+                                C:\cfn\scripts\validation.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: 0
                 LaunchWizardCFNSetup:
                     commands:
@@ -678,7 +680,7 @@ Resources:
                         a-validate-vpc:
                             command: !Join
                                 - ''
-                                - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-VPC.ps1 -subnet '
+                                - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-VPCConnectivity.ps1 -subnet '
                                   - !Ref 'SubnetID'
                                   - ' -region '
                                   - !Ref 'AWS::Region'
@@ -728,7 +730,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: terminate
+            InstanceInitiatedShutdownBehavior: stop
             UserData: !Base64
                 Fn::Join:
                     - ''
