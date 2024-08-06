@@ -15,6 +15,7 @@ import {
 } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import { ReactComponent as BlueXPDatabase } from '../../../assets/blueXPDatabase.svg';
 import Inventory from '../../Inventory/Inventory';
 import { useDispatch } from 'react-redux';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
@@ -64,6 +65,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
+
+    const isBlueXP = false;
 
     const { statusData, statusLoading } = useAppSelector(state => state.headers.getStatus);
 
@@ -327,9 +330,23 @@ const HeaderComponent = ({ tab }: Tab) => {
             <div className={styles.headerComponent}>
                 <div className={styles.firstSection}>
                     <div className={styles.firstRow}>
-                        <Typography variant="Regular_24" className={styles.heading}>
-                            {GENERAL.DATABASES}
-                        </Typography>
+                        {isBlueXP && (
+                            <>
+                                <BlueXPDatabase />
+                                <Typography
+                                    variant="Regular_24"
+                                    className={styles.heading}
+                                    style={{ color: 'var(--text-button-primary)' }}
+                                >
+                                    {GENERAL.DATABASES}
+                                </Typography>
+                            </>
+                        )}
+                        {!isBlueXP && (
+                            <Typography variant="Regular_24" className={styles.heading}>
+                                {GENERAL.DATABASES}
+                            </Typography>
+                        )}
                     </div>
 
                     <div className={styles.secondRow}>
@@ -341,6 +358,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                                         ? `${styles.headerPart1} ${styles.active}`
                                         : `${styles.headerPart1}`
                                 }
+                                style={{
+                                    color: isBlueXP ? 'var(--text-button-primary)' : '',
+                                    fontWeight: isBlueXP ? 400 : ''
+                                }}
                                 onClick={() => {
                                     handleClick(WLF_TABS.DASHBOARD);
                                 }}
@@ -358,6 +379,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 onClick={() => {
                                     handleClick(WLF_TABS.INVENTORY);
                                 }}
+                                style={{
+                                    color: isBlueXP ? 'var(--text-button-primary)' : '',
+                                    fontWeight: isBlueXP ? 400 : ''
+                                }}
                                 id="inventory"
                             >
                                 {GENERAL.TAB_INVENTORY}
@@ -370,6 +395,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                                         ? `${styles.headerPart4} ${styles.active}`
                                         : `${styles.headerPart4}`
                                 }
+                                style={{
+                                    color: isBlueXP ? 'var(--text-button-primary)' : '',
+                                    fontWeight: isBlueXP ? 400 : ''
+                                }}
                                 onClick={() => {
                                     handleClick(WLF_TABS.SANDBOXES);
                                 }}
@@ -390,6 +419,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 onClick={() => {
                                     handleClick(WLF_TABS.EXPLORE_SAVINGS);
                                 }}
+                                style={{
+                                    color: isBlueXP ? 'var(--text-button-primary)' : '',
+                                    fontWeight: isBlueXP ? 400 : ''
+                                }}
                                 id="explore-savings"
                             >
                                 Explore savings
@@ -404,6 +437,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.JOB_MONITORING);
+                                }}
+                                style={{
+                                    color: isBlueXP ? 'var(--text-button-primary)' : '',
+                                    fontWeight: isBlueXP ? 400 : ''
                                 }}
                                 id="job-monitoring"
                             >
