@@ -35,7 +35,7 @@ const ManualTCOFields = () => {
 
     const [textSearch, setTextSearch] = useSearchDebounce(500);
 
-    const [machineDesc, setMachineDesc] = useState('');
+    const [machineDesc, setMachineDesc] = useState(monthlyBYOLCost ? monthlyBYOLCost : '');
 
     //Use effect for machine description
     useEffect(() => {
