@@ -676,7 +676,10 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
         } else {
             result = {
                 ...data,
-                recommendedInstance: data?.compute?.recommended?.machineDetails?.[0],
+                recommendedInstance: {
+                    ...data?.compute?.recommended?.machineDetails?.[0],
+                    licenseMonthlyPrice: data?.license?.recommended?.licenseMonthlyPrice
+                },
                 totalSummary: {
                     ...data?.totalSummary,
                     recommendedTotal: data?.totalSummary?.recommended
