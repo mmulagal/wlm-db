@@ -31,7 +31,7 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
 };
 
 export const handleManualTCO = (dispatch: any) => {
-    dispatch(setSavingsCalculatorFrom('Manual'));
+    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
