@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { compact, groupBy } from 'lodash-es';
+import { cloneDeep, compact, groupBy } from 'lodash-es';
 import { _InstanceType } from '@aws-sdk/client-ec2';
 import { STORAGE_TYPE } from '@prisma/client';
 import {
@@ -24,6 +24,11 @@ import { NodeDetails } from '../utils/common-types';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getDatabaseInstanceName, getMonthlyPriceFromHourlyPrice } from '../utils/utils';
 import { getEnrollmentStatus } from '../lib/aws/compute-optimizer';
+import {
+    ComputeDetailsType,
+    LicenseDetailsType,
+    ManualStorageSavingsRequestBodyType
+} from '../routes/types/storage-savings.types';
 
 const logger = getLogger();
 
@@ -384,7 +389,217 @@ async function checkComputeOptimizerEnrollmentStatus(accountId: string, credenti
     }
 }
 
-export default async function getSqlInstanceLicenseRecommendations(
+async function manualModeComputeLicenseDetails(region: string, params: ManualStorageSavingsRequestBodyType) {
+    logger.info('Getting manual mode compute and license details ', { region, params });
+
+    const { sqlServerDeploymentType, sqlServerEdition, monthlySqlByolCost, ec2Instances } = params;
+
+    const instanceTypes = ec2Instances.map((instance: { ec2InstanceType: any }) => instance.ec2InstanceType);
+
+    const existingInstanceTypesPricingDetails = await deriveInstanceCountPricingDetails(instanceTypes, region);
+
+    const existingInstanceHourlyPriceWithoutLicense = getPricingByLicenseType(
+        'NA',
+        existingInstanceTypesPricingDetails
+    );
+
+    const existingComputePrice = existingInstanceHourlyPriceWithoutLicense;
+
+    let existingInstanceHourlyPrice = existingInstanceHourlyPriceWithoutLicense;
+    let existingLicensePrice: number | undefined;
+
+    const existingSqlServerEditionLowerCase = sqlServerEdition?.toLowerCase();
+
+    let awsInstanceLicenseMonthlyPrice;
+
+    let existingLicenseType = 'NA';
+    if (
+        existingSqlServerEditionLowerCase &&
+        ((existingSqlServerEditionLowerCase.includes('enterprise') &&
+            !existingSqlServerEditionLowerCase.includes('evaluation')) ||
+            existingSqlServerEditionLowerCase.includes('web') ||
+            existingSqlServerEditionLowerCase.includes('standard'))
+    ) {
+        existingLicenseType = existingSqlServerEditionLowerCase?.includes('enterprise')
+            ? 'SQL Ent'
+            : existingSqlServerEditionLowerCase?.includes('web')
+            ? 'SQL Web'
+            : 'SQL Std';
+
+        existingInstanceHourlyPrice = getPricingByLicenseType(existingLicenseType, existingInstanceTypesPricingDetails);
+
+        awsInstanceLicenseMonthlyPrice =
+            existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
+                ? (existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense) * HOURS_IN_MONTH
+                : undefined;
+        ({ licensePrice: existingLicensePrice } = getByolOrLicenseIncludedDetails(
+            monthlySqlByolCost,
+            awsInstanceLicenseMonthlyPrice
+        ));
+    }
+
+    const { licenseIncluded, licenseFinding } = getByolOrLicenseIncludedDetails(
+        monthlySqlByolCost,
+        existingLicensePrice
+    );
+    const computeDetails = {
+        instanceType: instanceTypes.join(', '),
+        finding: undefined,
+        windowsOsVersion: undefined,
+        computeHourlyPrice: existingComputePrice,
+        computeMonthlyPrice: existingComputePrice ? getMonthlyPriceFromHourlyPrice(existingComputePrice) : undefined,
+        instanceMonthlyPrice: existingInstanceHourlyPrice
+            ? getMonthlyPriceFromHourlyPrice(existingInstanceHourlyPrice)
+            : undefined,
+        hoursInMonth: HOURS_IN_MONTH,
+        message: undefined,
+        machineDetails: instanceTypes.map((instanceType: string) => {
+            const pricingDetails = existingInstanceTypesPricingDetails.get(instanceType);
+            const { pricePerUnit: priceWithoutLicense } = pricingDetails?.pricingDetails.NA || {};
+            const { pricePerUnit: priceWithLicense } = pricingDetails?.pricingDetails[existingLicenseType] || {};
+            const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(priceWithoutLicense);
+            const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(priceWithLicense);
+            return {
+                instanceType,
+                price: priceWithLicense,
+                basePrice: priceWithoutLicense,
+                computeMonthlyPrice,
+                instanceMonthlyPrice,
+                licenseMonthlyPrice: getMonthlyPriceFromHourlyPrice(existingLicensePrice),
+                hoursInMonth: HOURS_IN_MONTH,
+                licenseIncluded
+            };
+        })
+    };
+
+    const licenseDetails = {
+        finding: licenseFinding,
+        licenseHourlyPrice: existingLicensePrice,
+        licenseIncluded,
+        licenseMonthlyPrice:
+            existingLicensePrice && existingLicensePrice >= 0
+                ? existingLicensePrice * HOURS_IN_MONTH
+                : existingLicensePrice,
+        hoursInMonth: HOURS_IN_MONTH,
+        sqlServerEdition
+    };
+
+    const { recommendedComputeDetails, recommendedLicenseDetails } = handleManualModeRecommendations(
+        sqlServerDeploymentType!,
+        sqlServerEdition!,
+        monthlySqlByolCost!,
+        computeDetails,
+        licenseDetails,
+        existingInstanceTypesPricingDetails,
+        awsInstanceLicenseMonthlyPrice!
+    );
+
+    return {
+        compute: {
+            existing: computeDetails,
+            recommended: recommendedComputeDetails
+        },
+        license: {
+            existing: licenseDetails,
+            recommended: recommendedLicenseDetails
+        }
+    };
+}
+
+function handleManualModeRecommendations(
+    sqlServerDeploymentType: string,
+    sqlServerEdition: string,
+    monthlySqlByolCost: number,
+    existingComputeDetails: ComputeDetailsType,
+    existingLicenseDetails: LicenseDetailsType,
+    existingInstanceTypePricingDetails: Map<
+        string,
+        { count: number; pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } }
+    >,
+    awsInstanceLicenseMonthlyPrice?: number
+) {
+    logger.info('Handling manual mode recommendations ', {
+        sqlServerDeploymentType,
+        sqlServerEdition,
+        monthlySqlByolCost,
+        existingComputeDetails,
+        existingLicenseDetails,
+        existingInstanceTypePricingDetails,
+        awsInstanceLicenseMonthlyPrice
+    });
+    const existingInstanceHourlyPriceWithoutLicense = getPricingByLicenseType('NA', existingInstanceTypePricingDetails);
+
+    const recommendedLicenseDetails = cloneDeep(existingLicenseDetails);
+    recommendedLicenseDetails.finding = undefined;
+
+    const recommendedComputeDetails = cloneDeep(existingComputeDetails);
+    recommendedComputeDetails.finding = undefined;
+    if (
+        SqlServerDeploymentModel.SQL_AOAG_SHORT === sqlServerDeploymentType &&
+        sqlServerEdition?.toLowerCase().includes('enterprise')
+    ) {
+        // As per requirement DBS-2753: Downgrade Enterprise to Standard could be suggested in case of AOAG config.
+        const instanceHourlyPrice = getPricingByLicenseType('SQL Std', existingInstanceTypePricingDetails);
+        awsInstanceLicenseMonthlyPrice =
+            instanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
+                ? (instanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense) * HOURS_IN_MONTH
+                : undefined;
+        recommendedComputeDetails.instanceHourlyPrice = instanceHourlyPrice;
+        recommendedComputeDetails.instanceMonthlyPrice = instanceHourlyPrice
+            ? getMonthlyPriceFromHourlyPrice(instanceHourlyPrice)
+            : undefined;
+
+        const licenseHourlyPrice =
+            instanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
+                ? instanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense
+                : undefined;
+        recommendedLicenseDetails.licenseHourlyPrice = licenseHourlyPrice;
+        recommendedLicenseDetails.licenseMonthlyPrice = licenseHourlyPrice
+            ? getMonthlyPriceFromHourlyPrice(licenseHourlyPrice)
+            : undefined;
+        recommendedLicenseDetails.licenseIncluded = true;
+        recommendedLicenseDetails.sqlServerEdition = 'Standard Edition';
+        recommendedLicenseDetails.message =
+            'Downgrade Enterprise Edition to Standard Edition if you are not using any of the enterprise features';
+    }
+
+    // As per requirement DBS-2753 : In case of BYOL License, please suggest the equivalent license included cost, in case it's cheaper than the BYOL cost mentioned. otherwise, do not compare SQL License costs and mention N/A in the cost breakdown.
+    if (monthlySqlByolCost && monthlySqlByolCost > 0) {
+        if (awsInstanceLicenseMonthlyPrice && monthlySqlByolCost > awsInstanceLicenseMonthlyPrice) {
+            recommendedLicenseDetails.licenseHourlyPrice = awsInstanceLicenseMonthlyPrice / HOURS_IN_MONTH;
+            recommendedLicenseDetails.licenseMonthlyPrice = awsInstanceLicenseMonthlyPrice;
+            recommendedLicenseDetails.licenseIncluded = true;
+            recommendedLicenseDetails.message = 'License included cost from AWS is cheaper than the BYOL cost';
+        } else {
+            recommendedLicenseDetails.licenseHourlyPrice = undefined;
+            recommendedLicenseDetails.licenseIncluded = false;
+            recommendedLicenseDetails.message = 'We could not find a cheaper license included cost';
+        }
+    }
+
+    return { recommendedComputeDetails, recommendedLicenseDetails };
+}
+
+function getByolOrLicenseIncludedDetails(monthlySqlByolCost?: number, awsInstanceLicenseMonthlyPrice?: number) {
+    const licensePrice =
+        monthlySqlByolCost && monthlySqlByolCost > 0
+            ? monthlySqlByolCost / HOURS_IN_MONTH
+            : awsInstanceLicenseMonthlyPrice
+            ? awsInstanceLicenseMonthlyPrice / HOURS_IN_MONTH
+            : undefined;
+    const licenseIncluded =
+        monthlySqlByolCost && monthlySqlByolCost > 0
+            ? false
+            : !!(awsInstanceLicenseMonthlyPrice && awsInstanceLicenseMonthlyPrice > 0);
+    const licenseFinding =
+        monthlySqlByolCost && awsInstanceLicenseMonthlyPrice && monthlySqlByolCost > awsInstanceLicenseMonthlyPrice
+            ? FINDING.NOT_OPTIMIZED
+            : undefined;
+
+    return { licensePrice, licenseIncluded, licenseFinding };
+}
+
+async function getSqlInstanceLicenseRecommendations(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -696,3 +911,5 @@ export default async function getSqlInstanceLicenseRecommendations(
     }
     throw createError('No SQL Server instances found for the provided EC2 instance.');
 }
+
+export { manualModeComputeLicenseDetails, getSqlInstanceLicenseRecommendations };
