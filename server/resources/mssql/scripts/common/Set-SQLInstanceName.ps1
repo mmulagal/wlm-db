@@ -23,7 +23,15 @@ try
     #$DomainAdminSecurePassword = ConvertTo-SecureString $DomainAdminPassword -AsPlainText -Force
     #$DomainAdminCreds = New-Object System.Management.Automation.PSCredential($DomainAdminFullUser, $DomainAdminSecurePassword)
     $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    try{
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting..."
+            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        }
+    }
     $DomainPassword = $SsmParameter.domain.password
     $pass = ConvertTo-SecureString $DomainPassword -AsPlainText -Force
     $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,$pass))

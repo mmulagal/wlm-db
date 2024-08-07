@@ -15,7 +15,15 @@ $ErrorActionPreference = "Stop"
 Start-Transcript -Path C:\cfn\log\$($MyInvocation.MyCommand.Name).log -Append
 
 # Getting Password from SSM parameter store for AD Admin User
-$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+try {
+    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+} catch {
+    Write-Output $_.Exception.Message
+    if($_.Exception.Message -match "Rate Limit exceeded") {
+        Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting..."
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    }
+}
 $ADAdminPassword = $SsmParameter.domain.password
 # Creating Credential Object for Administrator
 $AdminUserName = $DomainNetBIOSName+"\"+$DomainAdminUser

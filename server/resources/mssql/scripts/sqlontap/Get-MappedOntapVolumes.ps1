@@ -23,7 +23,15 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Read fsxadmin password from secrets and encode the username:password with base64String
-$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+try{
+    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+} catch {
+    Write-Output $_.Exception.Message
+    if($_.Exception.Message -match "Rate Limit exceeded") {
+        Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting..."
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    }
+}  
 $FSxUserName = $SsmParameter.fsx.username
 $FSxPassword = $SsmParameter.fsx.password
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${FSxUserName}:${FSxPassword}"))

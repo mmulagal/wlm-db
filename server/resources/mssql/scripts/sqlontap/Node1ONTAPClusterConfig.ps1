@@ -37,7 +37,15 @@ $ErrorActionPreference = "Stop"
 $DscCertThumbprint = (get-childitem -path cert:\LocalMachine\My | where { $_.subject -eq "CN=AWSLWDscEncryptCert" }).Thumbprint
 # Getting Password from Secrets Manager for AD Admin User
 $DomainNetBIOSName = $env:USERDOMAIN
-$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+try {
+    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+} catch {
+    Write-Output $_.Exception.Message
+    if($_.Exception.Message -match "Rate Limit exceeded") {
+        Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting..."
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    }
+}
 $AdminPassword = $SsmParameter.domain.password
 $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
 # Creating Credential Object for Administrator

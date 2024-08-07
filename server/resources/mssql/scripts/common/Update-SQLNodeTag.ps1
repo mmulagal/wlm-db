@@ -11,7 +11,15 @@ try {
     $DeploymentCompletionTag =  New-Object Amazon.EC2.Model.Tag
     $DeploymentCompletionTag.Key = "CF-WLMDB-StackName"
     $DeploymentCompletionTag.Value = $StackName 
-    New-EC2Tag -Resource $instanceID -Tag $DeploymentCompletionTag
+    try {
+        New-EC2Tag -Resource $instanceID -Tag $DeploymentCompletionTag
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while tagging EC2. Reattempting..."
+            New-EC2Tag -Resource $instanceID -Tag $DeploymentCompletionTag
+        }
+    }
 }
 catch {
     $_ | Write-AWSLaunchWizardException

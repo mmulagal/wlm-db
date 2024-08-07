@@ -42,7 +42,15 @@ $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token }
 try {
     #Function to find Subnet mask
     function Get-SubnetMask($subnetid) {
-        $subnet = get-ec2subnet -SubnetId $subnetid
+        try {
+            $subnet = get-ec2subnet -SubnetId $subnetid
+        } catch {
+            Write-Output $_.Exception.Message
+            if($_.Exception.Message -match "Rate Limit exceeded") {
+                Write-Output "Encountered Rate Limit exceeded while fetching EC2 subnets. Reattempting..."
+                $subnet = get-ec2subnet -SubnetId $subnetid
+            }
+        }
         $cidr = $subnet.CidrBlock
         $cidr_mask = $cidr.split('/')[1]
         $A = 0
@@ -75,7 +83,15 @@ try {
     $DomainNetBIOSName = $env:USERDOMAIN
     $AdminGroup = 'BUILTIN\Administrators'
     # Creating Credential Object for Administrator
-    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    try{
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting..."
+            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        }
+    }
     $AdminPassword = $SsmParameter.domain.password
     $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
     $Credentials = (New-Object PSCredential($ClusterAdminUser, (ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
@@ -118,16 +134,56 @@ try {
 
     $mediaExtractPath = 'C:\SQLServerSetup'
     #$fileshare = $fsList.DNSName
-    $datavol = (Get-Volume -FileSystemLabel 'SQL-Data').DriveLetter
-    $logvol = (Get-Volume -FileSystemLabel 'SQL-Log').DriveLetter
-    $tempdbvol = (Get-Volume -FileSystemLabel 'SQL-TempDb').DriveLetter
+    try {
+        $datavol = (Get-Volume -FileSystemLabel 'SQL-Data').DriveLetter
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting..."
+            $datavol = (Get-Volume -FileSystemLabel 'SQL-Data').DriveLetter
+        }
+    }
+    try {
+        $logvol = (Get-Volume -FileSystemLabel 'SQL-Log').DriveLetter
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting..."
+            $logvol = (Get-Volume -FileSystemLabel 'SQL-Log').DriveLetter
+        }
+    }
+    try {
+        $tempdbvol = (Get-Volume -FileSystemLabel 'SQL-TempDb').DriveLetter
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting..."
+            $tempdbvol = (Get-Volume -FileSystemLabel 'SQL-TempDb').DriveLetter
+        }
+    }
     $sqlRootPath = "$($datavol):\mssql\system"
     $sqlDataPath = "$($datavol):\mssql\data"
     $sqlLogPath = "$($logvol):\mssql\log"
     $sqlTempPath = "$($tempdbvol):\mssql\data"
     $sqlPath = "$($logvol):\mssql\log"
-    $Node1SubnetMask = Get-SubnetMask $Node1SubnetId
-    $Node2SubnetMask = Get-SubnetMask $Node2SubnetId
+    try {
+        $Node1SubnetMask = Get-SubnetMask $Node1SubnetId
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while fetching subnet mask details. Reattempting..."
+            $Node1SubnetMask = Get-SubnetMask $Node1SubnetId
+        }
+    }
+    try {
+        $Node2SubnetMask = Get-SubnetMask $Node2SubnetId
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while fetching subnet mask details. Reattempting..."
+            $Node2SubnetMask = Get-SubnetMask $Node2SubnetId
+        }
+    }
 
     $arguments = '/QUIET /ACTION=CompleteFailoverCluster /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION={10} /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath, $SqlCollation
     Invoke-Command -scriptblock {

@@ -18,7 +18,15 @@ param(
         $count = 0
         while ($count -le 15)
         {
-        $result = Get-EC2Tag -Filter @{Name="tag:CF-WLMDB-StackName";Values=$StackName}
+            try {
+                $result = Get-EC2Tag -Filter @{Name="tag:CF-WLMDB-StackName";Values=$StackName}
+            } catch {
+                Write-Output $_.Exception.Message
+                if($_.Exception.Message -match "Rate Limit exceeded") {
+                    Write-Output "Encountered Rate Limit exceeded while fetching EC2 tags . Reattempting..."
+                    $result = Get-EC2Tag -Filter @{Name="tag:CF-WLMDB-StackName";Values=$StackName}
+                }
+            }
         Write-Output $result.count
         $nodenumber = [int]$numberOfNodes
         if ($result.count -lt $nodenumber)

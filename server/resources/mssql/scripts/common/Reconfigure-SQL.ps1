@@ -40,7 +40,15 @@ try {
     Write-Host $paths
     $params = "-d$dataPath\master.mdf;-e$sqlpath\ERRORLOG;-l$logPath\mastlog.ldf"
     $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    try{
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting..."
+            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        }
+    }
     $DomainAdminPassword = $SsmParameter.domain.password
     $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser, (ConvertTo-SecureString $DomainAdminPassword -AsPlainText -Force)))
     $SQLServiceAccountPassword = $SsmParameter.sql[0].password

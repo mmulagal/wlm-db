@@ -19,7 +19,15 @@ Foreach ($address in $local_addresses) {
     $ipPermissions.FromPort = -1
     $ipPermissions.ToPort = -1
     $ipPermissions.IpRanges = $cidrBlocks
-    Grant-EC2SecurityGroupIngress -GroupID $SGID -IpPermissions $ipPermissions
+    try {
+      Grant-EC2SecurityGroupIngress -GroupID $SGID -IpPermissions $ipPermissions
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while creating security group ingress rule. Reattempting..."
+            Grant-EC2SecurityGroupIngress -GroupID $SGID -IpPermissions $ipPermissions
+        }
+    }
     Start-Sleep 2
 }
 }
