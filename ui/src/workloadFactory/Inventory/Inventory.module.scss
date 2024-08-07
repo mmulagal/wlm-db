@@ -1,5 +1,6 @@
 .inventory {
     width: 100vw;
+    height: calc(100% - 120px);
     background-color: var(--main-background);
     overflow-y: auto;
     display: flex;

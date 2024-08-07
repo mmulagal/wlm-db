@@ -1,6 +1,6 @@
 import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './ManualTCOFields.module.scss';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { generateOptionType, regionsSort } from '../../../../utils/utilityFunctions';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -16,6 +16,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
+import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 
 const ManualTCOFields = () => {
     const dispatch = useDispatch();
@@ -31,6 +32,19 @@ const ManualTCOFields = () => {
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedRegion } = useAppSelector(state => state.headers);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
+
+    const [textSearch, setTextSearch] = useSearchDebounce(500);
+
+    const [machineDesc, setMachineDesc] = useState('');
+
+    //Use effect for machine description
+    useEffect(() => {
+        setTextSearch(machineDesc);
+    }, [machineDesc]);
+
+    useEffect(() => {
+        dispatch(setSelectedMonthlyBYOLCost(textSearch));
+    }, [textSearch]);
 
     //Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
@@ -246,10 +260,11 @@ const ManualTCOFields = () => {
                     <TextField
                         label={'Monthly SQL BYOL costs($)'}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            dispatch(setSelectedMonthlyBYOLCost(e.target.value));
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setMachineDesc(numVal);
                         }}
                         isOptional={true}
-                        value={monthlyBYOLCost}
+                        value={machineDesc}
                         className={styles.deploymentModelWidth}
                     />
                 </div>
