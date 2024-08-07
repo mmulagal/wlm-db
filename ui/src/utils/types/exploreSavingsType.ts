@@ -152,6 +152,7 @@ export interface RecommendedLicense {
     sqlServerEdition?: string;
     licenseHourlyPrice?: number;
     licenseIncluded?: boolean;
+    licenseMonthlyPrice?: number;
 }
 
 export interface ViewCalculationsInterface {
