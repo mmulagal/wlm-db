@@ -16,7 +16,8 @@ try {
     } catch {
         Write-Output $_.Exception.Message
         if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while tagging EC2. Reattempting..."
+            Write-Output "Encountered Rate Limit exceeded while tagging EC2. Reattempting after 5 seconds..."
+            Start-Sleep 5
             New-EC2Tag -Resource $instanceID -Tag $DeploymentCompletionTag
         }
     }

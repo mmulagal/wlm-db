@@ -23,7 +23,8 @@ param(
             } catch {
                 Write-Output $_.Exception.Message
                 if($_.Exception.Message -match "Rate Limit exceeded") {
-                    Write-Output "Encountered Rate Limit exceeded while fetching EC2 tags . Reattempting..."
+                    Write-Output "Encountered Rate Limit exceeded while fetching EC2 tags . Reattempting after 5 seconds..."
+                    Start-Sleep 5
                     $result = Get-EC2Tag -Filter @{Name="tag:CF-WLMDB-StackName";Values=$StackName}
                 }
             }

@@ -47,7 +47,8 @@ try {
         } catch {
             Write-Output $_.Exception.Message
             if($_.Exception.Message -match "Rate Limit exceeded") {
-                Write-Output "Encountered Rate Limit exceeded while fetching EC2 subnets. Reattempting..."
+                Write-Output "Encountered Rate Limit exceeded while fetching EC2 subnets. Reattempting after 5 seconds..."
+                Start-Sleep 5
                 $subnet = get-ec2subnet -SubnetId $subnetid
             }
         }
@@ -88,7 +89,8 @@ try {
     } catch {
         Write-Output $_.Exception.Message
         if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting..."
+            Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting after 5 seconds..."
+            Start-Sleep 5
             $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         }
     }
@@ -139,7 +141,8 @@ try {
     } catch {
         Write-Output $_.Exception.Message
         if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting..."
+            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting after 5 seconds..."
+            Start-Sleep 5
             $datavol = (Get-Volume -FileSystemLabel 'SQL-Data').DriveLetter
         }
     }
@@ -148,7 +151,8 @@ try {
     } catch {
         Write-Output $_.Exception.Message
         if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting..."
+            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting after 5 seconds..."
+            Start-Sleep 5
             $logvol = (Get-Volume -FileSystemLabel 'SQL-Log').DriveLetter
         }
     }
@@ -157,7 +161,8 @@ try {
     } catch {
         Write-Output $_.Exception.Message
         if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting..."
+            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting after 5 seconds..."
+            Start-Sleep 5
             $tempdbvol = (Get-Volume -FileSystemLabel 'SQL-TempDb').DriveLetter
         }
     }
@@ -171,7 +176,8 @@ try {
     } catch {
         Write-Output $_.Exception.Message
         if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching subnet mask details. Reattempting..."
+            Write-Output "Encountered Rate Limit exceeded while fetching subnet mask details. Reattempting after 5 seconds..."
+            Start-Sleep 5
             $Node1SubnetMask = Get-SubnetMask $Node1SubnetId
         }
     }
@@ -180,7 +186,8 @@ try {
     } catch {
         Write-Output $_.Exception.Message
         if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching subnet mask details. Reattempting..."
+            Write-Output "Encountered Rate Limit exceeded while fetching subnet mask details. Reattempting after 5 seconds..."
+            Start-Sleep 5
             $Node2SubnetMask = Get-SubnetMask $Node2SubnetId
         }
     }

@@ -24,7 +24,8 @@ Foreach ($address in $local_addresses) {
     } catch {
         Write-Output $_.Exception.Message
         if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while creating security group ingress rule. Reattempting..."
+            Write-Output "Encountered Rate Limit exceeded while creating security group ingress rule. Reattempting after 5 seconds..."
+            Start-Sleep 5
             Grant-EC2SecurityGroupIngress -GroupID $SGID -IpPermissions $ipPermissions
         }
     }

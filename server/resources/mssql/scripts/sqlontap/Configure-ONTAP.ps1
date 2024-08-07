@@ -48,7 +48,8 @@ try {
 } catch {
     Write-Output $_.Exception.Message
     if($_.Exception.Message -match "Rate Limit exceeded") {
-        Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting..."
+        Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting after 5 seconds..."
+        Start-Sleep 5
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
     }
 }
@@ -60,7 +61,8 @@ try{
 } catch {
     Write-Output $_.Exception.Message
     if($_.Exception.Message -match "Rate Limit exceeded") {
-        Write-Output "Encountered Rate Limit exceeded while fetching FSx details. Reattempting..."
+        Write-Output "Encountered Rate Limit exceeded while fetching FSx details. Reattempting after 5 seconds..."
+        Start-Sleep 5
         $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
     }
 }

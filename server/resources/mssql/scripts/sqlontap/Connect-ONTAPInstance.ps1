@@ -26,7 +26,8 @@ try{
     }catch {
         Write-Output $_.Exception.Message
         if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching FSx details. Reattempting..."
+            Write-Output "Encountered Rate Limit exceeded while fetching FSx details. Reattempting after 5 seconds..."
+            Start-Sleep 5
             $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
         }
     }
@@ -36,7 +37,8 @@ try {
 } catch {
     Write-Output $_.Exception.Message
     if($_.Exception.Message -match "Rate Limit exceeded") {
-        Write-Output "Encountered Rate Limit exceeded while fetching FSx SVM details. Reattempting..."
+        Write-Output "Encountered Rate Limit exceeded while fetching FSx SVM details. Reattempting after 5 seconds..."
+        Start-Sleep 5
         $TargetPortalAddresses = (Get-FSXStorageVirtualMachine|?{$_.FileSystemId -eq $fslist.FileSystemId -And $_.Name -eq $SQLVMName }).Endpoints.Iscsi.IpAddresses
     }
 }
