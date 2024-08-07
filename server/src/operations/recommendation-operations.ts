@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { cloneDeep, compact, groupBy } from 'lodash-es';
+import { cloneDeep, compact, groupBy, isEmpty } from 'lodash-es';
 import { _InstanceType } from '@aws-sdk/client-ec2';
 import { STORAGE_TYPE } from '@prisma/client';
 import {
@@ -411,7 +411,6 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
     const existingSqlServerEditionLowerCase = sqlServerEdition?.toLowerCase();
 
     let awsInstanceLicenseMonthlyPrice;
-
     let existingLicenseType = 'NA';
     if (
         existingSqlServerEditionLowerCase &&
@@ -428,13 +427,15 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
 
         existingInstanceHourlyPrice = getPricingByLicenseType(existingLicenseType, existingInstanceTypesPricingDetails);
 
-        awsInstanceLicenseMonthlyPrice =
+        const awsInstanceLicenseHourlyPrice =
             existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
-                ? (existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense) * HOURS_IN_MONTH
+                ? existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense
                 : undefined;
-        ({ licensePrice: existingLicensePrice } = getByolOrLicenseIncludedDetails(
+
+        awsInstanceLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(awsInstanceLicenseHourlyPrice);
+        ({ licenseHourlyPrice: existingLicensePrice } = getByolOrLicenseIncludedDetails(
             monthlySqlByolCost,
-            awsInstanceLicenseMonthlyPrice
+            awsInstanceLicenseHourlyPrice
         ));
     }
 
@@ -506,6 +507,16 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
     };
 }
 
+function updateRecommendedComputeMachineDetails(recommendedComputeDetails: any, licenseMonthlyPrice?: number) {
+    const recommendedMachineDetails = cloneDeep(recommendedComputeDetails?.machineDetails);
+    if (!isEmpty(recommendedMachineDetails)) {
+        recommendedMachineDetails.forEach((machineDetail: any) => {
+            machineDetail.licenseMonthlyPrice = licenseMonthlyPrice;
+        });
+        return recommendedMachineDetails;
+    }
+}
+
 function handleManualModeRecommendations(
     sqlServerDeploymentType: string,
     sqlServerEdition: string,
@@ -554,9 +565,14 @@ function handleManualModeRecommendations(
                 ? instanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense
                 : undefined;
         recommendedLicenseDetails.licenseHourlyPrice = licenseHourlyPrice;
-        recommendedLicenseDetails.licenseMonthlyPrice = licenseHourlyPrice
-            ? getMonthlyPriceFromHourlyPrice(licenseHourlyPrice)
-            : undefined;
+
+        const licenseMonthlyPrice = licenseHourlyPrice ? getMonthlyPriceFromHourlyPrice(licenseHourlyPrice) : undefined;
+        const recommendedMachineDetails = updateRecommendedComputeMachineDetails(
+            recommendedComputeDetails,
+            licenseMonthlyPrice
+        );
+        recommendedComputeDetails.machineDetails = recommendedMachineDetails;
+        recommendedLicenseDetails.licenseMonthlyPrice = licenseMonthlyPrice;
         recommendedLicenseDetails.licenseIncluded = true;
         recommendedLicenseDetails.sqlServerEdition = 'Standard Edition';
         recommendedLicenseDetails.message =
@@ -568,6 +584,11 @@ function handleManualModeRecommendations(
         if (awsInstanceLicenseMonthlyPrice && monthlySqlByolCost > awsInstanceLicenseMonthlyPrice) {
             recommendedLicenseDetails.licenseHourlyPrice = awsInstanceLicenseMonthlyPrice / HOURS_IN_MONTH;
             recommendedLicenseDetails.licenseMonthlyPrice = awsInstanceLicenseMonthlyPrice;
+            const recommendedMachineDetails = updateRecommendedComputeMachineDetails(
+                recommendedComputeDetails,
+                awsInstanceLicenseMonthlyPrice
+            );
+            recommendedComputeDetails.machineDetails = recommendedMachineDetails;
             recommendedLicenseDetails.licenseIncluded = true;
             recommendedLicenseDetails.message = 'License included cost from AWS is cheaper than the BYOL cost';
         } else {
@@ -580,23 +601,23 @@ function handleManualModeRecommendations(
     return { recommendedComputeDetails, recommendedLicenseDetails };
 }
 
-function getByolOrLicenseIncludedDetails(monthlySqlByolCost?: number, awsInstanceLicenseMonthlyPrice?: number) {
-    const licensePrice =
+function getByolOrLicenseIncludedDetails(monthlySqlByolCost?: number, awsInstanceLicenseHourlyPrice?: number) {
+    const licenseHourlyPrice =
         monthlySqlByolCost && monthlySqlByolCost > 0
             ? monthlySqlByolCost / HOURS_IN_MONTH
-            : awsInstanceLicenseMonthlyPrice
-            ? awsInstanceLicenseMonthlyPrice / HOURS_IN_MONTH
-            : undefined;
+            : awsInstanceLicenseHourlyPrice;
     const licenseIncluded =
         monthlySqlByolCost && monthlySqlByolCost > 0
             ? false
-            : !!(awsInstanceLicenseMonthlyPrice && awsInstanceLicenseMonthlyPrice > 0);
+            : !!(awsInstanceLicenseHourlyPrice && awsInstanceLicenseHourlyPrice > 0);
     const licenseFinding =
-        monthlySqlByolCost && awsInstanceLicenseMonthlyPrice && monthlySqlByolCost > awsInstanceLicenseMonthlyPrice
+        monthlySqlByolCost &&
+        awsInstanceLicenseHourlyPrice &&
+        monthlySqlByolCost > awsInstanceLicenseHourlyPrice * HOURS_IN_MONTH
             ? FINDING.NOT_OPTIMIZED
             : undefined;
 
-    return { licensePrice, licenseIncluded, licenseFinding };
+    return { licenseHourlyPrice, licenseIncluded, licenseFinding };
 }
 
 async function getSqlInstanceLicenseRecommendations(
