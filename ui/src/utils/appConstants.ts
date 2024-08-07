@@ -476,6 +476,7 @@ export const GENERAL = {
     PROTECTED_DB_DISTRIBUTION: 'Protected database distribution',
     SIDEBAR_LOAD_WIZARD: 'Load Wizard',
     PROTECTION_DATABASES: 'Hosts',
+    PROTECTION_CHART: 'Protection',
     PROTECTION: 'protection',
     NUMBER_OF_EXECUTION: 'Number of Execution',
     TERRAFORM: 'Terraform',
