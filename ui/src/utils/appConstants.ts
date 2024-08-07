@@ -992,7 +992,7 @@ export const GENERAL = {
     SAVINGS_HEADER_FSX: 'Microsoft SQL server on FSx for Windows configuration',
     SAVINGS_MANUAL_TEXT:
         ' Select a Microsoft SQL server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL server on FSx for ONTAP instead',
-    SAVINGS_MANUAL_FSX_TEXT:
+    SAVINGS_MANUAL_FSXW_TEXT:
         'Select Microsoft SQL server, Amazon Ec2 and on Amazon FSx for Windows File Server configuration to compare your costs when using Microsoft SQL server on FSx for ONTAP instead.',
     ES_NUMBER_OF_INSTANCE: 'Number of SQL instances',
     ES_HOST_NAME: 'Host name',
@@ -1092,8 +1092,10 @@ export const GENERAL = {
         "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use.",
     // Explore savings view calculations related consts
     MS_EBS_CALCULATION: 'Microsoft SQL server on EBS calculation',
+    MS_FSXW_CALCULATION: 'Microsoft SQL on FSx for Windows File Server calculation',
     MS_ONTAP_CALCULATION: 'Microsoft SQL EC2 on FSx for ONTAP calculation',
     ES_CLONES: 'Clones',
+    ES_SHADOW_COPY: 'Shadow copy',
     ES_EBS: 'Elastic Block Storage',
     ES_GP3_VOLUME_TYPE: 'GP3 volume type',
     ES_IO2_VOLUME_TYPE: 'io2 volume type',
@@ -1108,6 +1110,7 @@ export const GENERAL = {
     ES_TOTAL_MONTHLY_COST: 'Total monthly cost',
     ES_FSXN_MULTI: 'FSx for ONTAP - multi availability zone',
     ES_FSXN_SINGLE: 'FSx for ONTAP - single availability zone',
+    ES_FSXW_SINGLE: 'Single Availability Zone',
     ES_FSXN_AZ_DESC:
         'FSx for ONTAP costs are based on primary database volumes only because these volumes and their replicas share a file system.',
     ES_EBS_DESC: 'Costs for EBS are based on all EC2 instances.',

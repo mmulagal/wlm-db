@@ -112,8 +112,8 @@ const SavingsCalculator = () => {
                                 },
                                 {
                                     title:
-                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL ||
-                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX
+                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
                                             ? 'Explore savings manually'
                                             : selectedServerName
                                 }
@@ -130,7 +130,7 @@ const SavingsCalculator = () => {
                         {/* Left side code here */}
                         <div
                             className={
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
                                     ? `${styles.firstContainer} ${styles.classForManualFsx}`
                                     : styles.firstContainer
                             }
@@ -144,7 +144,7 @@ const SavingsCalculator = () => {
                                     <SelectedVolumeSummary />
                                 </>
                             )}
-                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL && (
+                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (
                                 <>
                                     <SavingsHeader />
                                     <div style={{ padding: '40px' }}>
@@ -158,7 +158,7 @@ const SavingsCalculator = () => {
                                 </>
                             )}
 
-                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX && (
+                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW && (
                                 <>
                                     <SavingsHeader />
                                     <div style={{ padding: '40px' }}>
