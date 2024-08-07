@@ -97,7 +97,7 @@ const ManualTCOFields = () => {
     //Function to generate the options for Select Field
     const generateDeploymentModelList = useMemo<optionType[]>((): optionType[] => {
         const deploymentModel =
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
                 ? [GENERAL.STANDALONE, GENERAL.AOAG]
                 : [GENERAL.STANDALONE, GENERAL.FCI];
         const options: optionType[] = [];
@@ -166,9 +166,9 @@ const ManualTCOFields = () => {
     return (
         <div className={styles.manualTCOFields}>
             <DsTypography variant="Regular_14">
-                {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
                     ? GENERAL.SAVINGS_MANUAL_TEXT
-                    : GENERAL.SAVINGS_MANUAL_FSX_TEXT}
+                    : GENERAL.SAVINGS_MANUAL_FSXW_TEXT}
             </DsTypography>
 
             <div className={styles.firstContainer}>

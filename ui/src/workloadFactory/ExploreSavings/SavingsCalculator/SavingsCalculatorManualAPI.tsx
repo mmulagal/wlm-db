@@ -54,8 +54,8 @@ const SavingsCalculatorManualApi = () => {
 
     useEffect(() => {
         if (
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
         ) {
             dispatch(setInstanceLoading(true));
             getInstanceTypes({
@@ -114,7 +114,7 @@ const SavingsCalculatorManualApi = () => {
     };
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
             const payload = generateManualStorageSavingsPayload();
             const comparedPayloadValues = _.isEqual(payload, requestedPayload);
 

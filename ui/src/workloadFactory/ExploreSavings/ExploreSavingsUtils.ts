@@ -9,7 +9,7 @@ import {
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { GENERAL } from '../../utils/appConstants';
-import { FSX_AZ_TYPE, GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
+import { FSX_AZ_TYPE, GIB_IN_BYTE, SAVINGS_CALC_MODE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import {
     EBSCalculation,
     StorageSavingsInterface,
@@ -37,7 +37,7 @@ export const handleManualTCO = (dispatch: any) => {
 };
 
 export const handleManualTCOFSX = (dispatch: any) => {
-    dispatch(setSavingsCalculatorFrom('Manual_FSX'));
+    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
     dispatch(setDisableState(false));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
