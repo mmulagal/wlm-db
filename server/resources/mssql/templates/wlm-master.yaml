@@ -189,7 +189,7 @@ Metadata:
       SSMMessagesEndpointExists:
         default: Does AWS SSMMessages endpoint exist?
       S3EndpointRouteTables:
-        default: Route table ids attached to S3 gateway endpoint
+        default: Subnet routetables id/s
 Parameters: 
   UniqueID:
     Description: Automation execution unique ID.
