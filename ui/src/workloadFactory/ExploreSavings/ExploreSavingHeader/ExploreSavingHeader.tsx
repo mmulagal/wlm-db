@@ -99,7 +99,7 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         onClick={() => {}}
-                                        style={{ color: 'var(--text-disabled)' }}
+                                        style={{ color: 'var(--text-disabled)', whiteSpace: 'unset' }}
                                         // onClick={() => handleManualTCOFSX(dispatch)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
