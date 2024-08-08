@@ -47,16 +47,7 @@ $SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parent
 $username = $SsmParameter.fsx.username
 $password = $SsmParameter.fsx.password
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
-try{
-    $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
-} catch {
-    Write-Output $_.Exception.Message
-    if($_.Exception.Message -match "Rate Limit exceeded") {
-        Write-Output "Encountered Rate Limit exceeded while fetching FSx details. Reattempting after 5 seconds..."
-        Start-Sleep 5
-        $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
-    }
-}
+$fslist = C:\cfn\scripts\common\FetchFsxDetails.ps1 -FsxFileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token} -ErrorAction Stop -UseBasicParsing).Content

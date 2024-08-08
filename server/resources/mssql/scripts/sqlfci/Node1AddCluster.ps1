@@ -27,16 +27,8 @@ $AdminPassword = $SsmParameter.domain.password
 $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
 # Creating Credential Object for Administrator
 $Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
-try {
-    $fsList = Get-FSXFileSystem -FileSystemId $FileSystemId
-} catch {
-    Write-Output $_.Exception.Message
-    if($_.Exception.Message -match "Rate Limit exceeded") {
-        Write-Output "Encountered Rate Limit exceeded while fetching FSx details. Reattempting after 5 seconds..."
-        Start-Sleep 5
-        $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
-    }
-}
+$fsList = C:\cfn\scripts\common\FetchFsxDetails.ps1 -FsxFileSystemId $FileSystemId
+
 if ($fsList.DNSName) {
     $ShareName = "\\" + $fsList.DNSName + "\SqlWitnessShare"
 }

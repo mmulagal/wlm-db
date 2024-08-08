@@ -21,16 +21,7 @@ $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} 
 
 $ErrorActionPreference = "Stop"
 try{
-    try{
-        $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
-    }catch {
-        Write-Output $_.Exception.Message
-        if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching FSx details. Reattempting after 5 seconds..."
-            Start-Sleep 5
-            $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
-        }
-    }
+$fslist = C:\cfn\scripts\common\FetchFsxDetails.ps1 -FsxFileSystemId $FileSystemId 
 #Fetch iSCSI interface addresses from the target SVM
 try {
     $TargetPortalAddresses = (Get-FSXStorageVirtualMachine|?{$_.FileSystemId -eq $fslist.FileSystemId -And $_.Name -eq $SQLVMName }).Endpoints.Iscsi.IpAddresses

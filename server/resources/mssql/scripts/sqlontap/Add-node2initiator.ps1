@@ -31,16 +31,7 @@ $SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parent
 $username = $SsmParameter.fsx.username
 $password = $SsmParameter.fsx.password
 $fsxadmincreds = (New-Object PSCredential($username,(ConvertTo-SecureString $password -AsPlainText -Force)))
-try{
-$fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
-}catch{
-    Write-Output $_.Exception.Message
-    if($_.Exception.Message -match "Rate Limit exceeded") {
-        Write-Output "Encountered Rate Limit exceeded while fetching FSx details. Reattempting after 5 seconds..."
-        Start-Sleep 5
-        $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
-    }
-}
+$fslist = C:\cfn\scripts\common\FetchFsxDetails.ps1 -FsxFileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
 $nodeiqn = (Get-InitiatorPort).NodeAddress
 
