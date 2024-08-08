@@ -11,10 +11,13 @@
         width: 276px;
     }
 
+    .infoCenter {
+        align-items: center;
+    }
+
     .secondRow {
         display: flex;
         gap: 24px;
-        align-items: center;
 
         .mockInput {
             display: flex;
