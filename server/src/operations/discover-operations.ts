@@ -945,7 +945,8 @@ async function fetchUnmanagedHostsInformationV2(
                 clusterNodeDetails,
                 databaseInstanceDetails: [],
                 co_relation_id: null,
-                ebsVolumeIds: []
+                ebsVolumeIds: [],
+                ec2UsageOperation: ec2Instance.ec2UsageOperation
             };
             if (ec2Instance?.sqlServerInstances && ec2Instance?.sqlServerInstances.length > 0) {
                 ec2Instance?.sqlServerInstances?.forEach(sqlServerInstance => {
