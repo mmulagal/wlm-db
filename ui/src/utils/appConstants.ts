@@ -1120,7 +1120,8 @@ export const GENERAL = {
     ES_MULTI_FSX_DISABLE_MSG:
         'Deployment of Microsoft SQL Server over multiple FSx for ONTAP is currently not supported.',
     COMPUTE_RECOMMENDED_TOOLTIP:
-        'The cost for compute of SQL over EBS is based on current instance type vs. cost of compute of SQL server over FSxN based on your selected instance type.'
+        'The cost for compute of SQL over EBS is based on current instance type vs. cost of compute of SQL server over FSxN based on your selected instance type.',
+    BYOL_TEXT: 'Monthly SQL BYOL costs($)'
 };
 
 export const CODE_VIEWER = {

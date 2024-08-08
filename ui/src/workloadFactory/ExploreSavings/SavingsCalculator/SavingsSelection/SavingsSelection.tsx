@@ -47,14 +47,14 @@ const SavingsSelection = ({ printState }: any) => {
     const [clonedText, setClonedText] = useSearchDebounce(1000);
     const [changeRateText, setChangeRateText] = useSearchDebounce(1000);
     const [textSearch, setTextSearch] = useSearchDebounce(500);
-    const [machineDesc, setMachineDesc] = useState(monthlyBYOLCost ? monthlyBYOLCost : '');
+    const [byolValue, setByolValue] = useState(monthlyBYOLCost ? monthlyBYOLCost : '');
 
     const { setDialog, closeDialog } = useDialog();
 
     //Use effect for machine description
     useEffect(() => {
-        setTextSearch(machineDesc);
-    }, [machineDesc]);
+        setTextSearch(byolValue);
+    }, [byolValue]);
 
     useEffect(() => {
         if (textSearch || monthlyBYOLCost) {
@@ -284,13 +284,13 @@ const SavingsSelection = ({ printState }: any) => {
             </div>
             <div className={styles.secondRow}>
                 <TextField
-                    label={'Monthly SQL BYOL costs($)'}
+                    label={GENERAL.BYOL_TEXT}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setMachineDesc(numVal);
+                        setByolValue(numVal);
                     }}
                     isOptional={true}
-                    value={machineDesc}
+                    value={byolValue}
                     className={styles.deploymentModelWidth}
                 />
                 <div className={styles.instanceTypeContainer}>
