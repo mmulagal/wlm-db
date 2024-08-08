@@ -58,27 +58,18 @@
         }
         else {
             try {
-                try {
-                    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-                } catch {
-                    Write-Output $_.Exception.Message
-                    if($_.Exception.Message -match "Rate Limit exceeded") {
-                        Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting after 5 seconds..."
-                        Start-Sleep 5
-                        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-                    }
+                $SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parentstackname
+                $secure = $SsmParameter.domain.password
+                # $secure = (Get-SSMParameterValue -Names $DomainAdminSecretName -WithDecryption $True).Parameters[0].Value
                 }
-            $secure = $SsmParameter.domain.password
-            # $secure = (Get-SSMParameterValue -Names $DomainAdminSecretName -WithDecryption $True).Parameters[0].Value
-            }
-             catch {
-                $Failed = $true
-                $FailureReason = '"{0}"' -f "Unable to fetch SSM parameter, /netapp/wlmdb/$Parentstackname and access to SSM parameter store"
-                Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
-                Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
-                Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-                exit(1)
-            }
+                catch {
+                    $Failed = $true
+                    $FailureReason = '"{0}"' -f "Unable to fetch SSM parameter, /netapp/wlmdb/$Parentstackname and access to SSM parameter store"
+                    Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+                    Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
+                    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
+                    exit(1)
+                }
         }
         $pass = ConvertTo-SecureString $secure -AsPlainText -Force
         $cred = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $pass

@@ -23,7 +23,7 @@ param(
         $DomainNetBIOSName = $env:USERDOMAIN
         $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
         $ServiceAccountFullUser = $DomainNetBIOSName + '\' + $ServiceAccountUser
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        $SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parentstackname
         $DomainAdminSecurePassword = $SsmParameter.domain.password
         $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminSecurePassword -AsPlainText -Force)))
         $ServiceAccountPassword = $SsmParameter.sql[0].password

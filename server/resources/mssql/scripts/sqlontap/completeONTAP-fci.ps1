@@ -84,16 +84,7 @@ try {
     $DomainNetBIOSName = $env:USERDOMAIN
     $AdminGroup = 'BUILTIN\Administrators'
     # Creating Credential Object for Administrator
-    try{
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-    } catch {
-        Write-Output $_.Exception.Message
-        if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting after 5 seconds..."
-            Start-Sleep 5
-            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-        }
-    }
+    $SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parentstackname
     $AdminPassword = $SsmParameter.domain.password
     $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
     $Credentials = (New-Object PSCredential($ClusterAdminUser, (ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))

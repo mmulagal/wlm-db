@@ -10,16 +10,7 @@ try {
     $IsPartOfDomain = (Get-CimInstance win32_computersystem).PartOfDomain  
     Write-Host "Hostname $Hostname. User domain  $DomainNetBIOSName. IsPartOfDomain $IsPartOfDomain."  
     if($IsPartOfDomain -eq $True) {
-        try {
-            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-        } catch {
-            Write-Output $_.Exception.Message
-            if($_.Exception.Message -match "Rate Limit exceeded") {
-                Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting after 5 seconds..."
-                Start-Sleep 5
-                $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-            }
-        }
+        $SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parentstackname
         $AdminUsername = $SsmParameter.domain.username
         $AdminPassword = $SsmParameter.domain.password
         $pass = ConvertTo-SecureString $AdminPassword -AsPlainText -Force

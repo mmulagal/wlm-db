@@ -43,16 +43,7 @@ Start-Transcript -Path C:\cfn\log\configureontap.ps1.txt -Append
 
 $ErrorActionPreference = "Stop"
 
-try {
-    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-} catch {
-    Write-Output $_.Exception.Message
-    if($_.Exception.Message -match "Rate Limit exceeded") {
-        Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting after 5 seconds..."
-        Start-Sleep 5
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-    }
-}
+$SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parentstackname
 $username = $SsmParameter.fsx.username
 $password = $SsmParameter.fsx.password
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
