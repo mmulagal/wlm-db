@@ -27,6 +27,10 @@
             margin-left: 100px;
         }
     }
+
+    .adjustChart {
+        margin-top: 260px;
+    }
 }
 
 @media screen and (max-width: 1500px) {
@@ -45,6 +49,13 @@
                 span {
                     height: 69px;
                 }
+            }
+
+            .calculate-notice {
+                margin-left: 80px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
         }
     }

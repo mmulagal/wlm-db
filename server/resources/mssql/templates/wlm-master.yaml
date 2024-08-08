@@ -863,8 +863,6 @@ Resources:
           Ref: RouteTable2Id
         PrivateSubnet2ID:
           Ref: PrivateSubnet2ID
-        FSxDataLunSize:
-          Ref: FSxDataLunSize
         MSSQLMediaBucketName:
           Ref: MSSQLMediaBucketName
         MSSQLMediaPathKey:
@@ -971,8 +969,6 @@ Resources:
           Ref: PrivateSubnet1ID
         RouteTableId:
           Ref: RouteTable1Id
-        FSxDataLunSize:
-          Ref: FSxDataLunSize
         MSSQLMediaBucketName:
           Ref: MSSQLMediaBucketName
         MSSQLMediaPathKey:

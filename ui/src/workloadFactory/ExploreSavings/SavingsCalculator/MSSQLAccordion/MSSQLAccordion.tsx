@@ -89,7 +89,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             instanceType: instanceType,
             windowsServer: windowsServer
         };
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL && selectedManualDeploymentModel) {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && selectedManualDeploymentModel) {
             mssqlInstanceData = {
                 ...mssqlInstanceData,
                 serverInstallationMode:

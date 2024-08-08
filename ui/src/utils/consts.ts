@@ -548,8 +548,9 @@ export const FSX_AZ_TYPE = {
 };
 
 export const SAVINGS_CALC_MODE = {
-    MANUAL: 'Manual',
-    AUTO: 'Auto'
+    MANUAL_EBS: 'Manual_EBS',
+    AUTO: 'Auto',
+    MANUAL_FSXW: 'Manual_FSXW'
 };
 
 export const PARTNER_NODE = 'partner node';

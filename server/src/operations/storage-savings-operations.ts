@@ -696,7 +696,7 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
     const existingComputePrice = existingInstanceHourlyPriceWithoutLicense;
 
     let existingInstanceHourlyPrice = existingInstanceHourlyPriceWithoutLicense;
-    let existingLicensePrice;
+    let existingLicensePrice: number | undefined;
 
     const existingSqlServerEditionLowerCase = sqlServerEdition?.toLowerCase();
 
@@ -723,13 +723,11 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
                 ? (existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense) * HOURS_IN_MONTH
                 : undefined;
         existingLicensePrice =
-            existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
+            monthlySqlByolCost && monthlySqlByolCost > 0
+                ? monthlySqlByolCost / HOURS_IN_MONTH
+                : existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
                 ? existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense
                 : undefined;
-    } else if (monthlySqlByolCost && monthlySqlByolCost > 0) {
-        existingLicensePrice = monthlySqlByolCost / HOURS_IN_MONTH;
-    } else {
-        existingLicensePrice = 0;
     }
 
     const licenseIncluded =
@@ -758,10 +756,7 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
                 basePrice: priceWithoutLicense,
                 computeMonthlyPrice,
                 instanceMonthlyPrice,
-                licenseMonthlyPrice:
-                    instanceMonthlyPrice !== undefined && computeMonthlyPrice !== undefined
-                        ? instanceMonthlyPrice - computeMonthlyPrice
-                        : undefined,
+                licenseMonthlyPrice: getMonthlyPriceFromHourlyPrice(existingLicensePrice),
                 hoursInMonth: HOURS_IN_MONTH,
                 licenseIncluded
             };

@@ -9,6 +9,12 @@ export interface InstanceType {
 export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
+    selectedManualFSXThroughput: number;
+    selectedManualFSXIOPS: number;
+    selectedManualStorageCapacityUnit: any;
+    manualStorageCapacity: number | string;
+    selectedManualStorageType: any;
+    selectedManualDeploymentType: any;
     disableState: boolean;
     requestedPayload: any;
     selectedSnapshotFrequency: any;
@@ -146,6 +152,7 @@ export interface RecommendedLicense {
     sqlServerEdition?: string;
     licenseHourlyPrice?: number;
     licenseIncluded?: boolean;
+    licenseMonthlyPrice?: number;
 }
 
 export interface ViewCalculationsInterface {
