@@ -4,6 +4,8 @@ param(
 [string]$ResourceName
 )
 
+Start-Transcript -Path C:\cfn\log\FetchCredFromSSM.ps1.txt -Append 
+
 $credentials = $null
 try
 {     
