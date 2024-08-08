@@ -50,7 +50,16 @@ $InstanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} 
 
 $ErrorActionPreference = "Stop"
 try {
-$SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parentstackname
+    try{
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    } catch {
+        Write-Output $_.Exception.Message
+        if($_.Exception.Message -match "Rate Limit exceeded") {
+            Write-Output "Encountered Rate Limit exceeded while fetching SSM parameter. Reattempting after 5 seconds..."
+            Start-Sleep 5
+            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        }
+    }
 $Username = $SsmParameter.fsx.username
 $Password = $SsmParameter.fsx.password
 }catch{
