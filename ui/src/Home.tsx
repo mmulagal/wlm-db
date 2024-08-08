@@ -48,6 +48,14 @@ const Home = () => {
                         </Route>
                         <Route path={'databases'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
                         <Route path={'databases/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
+                        <Route
+                            path={'databases/exploreSavingsEBS'}
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                        />
+                        <Route
+                            path={'databases/exploreSavingsFsxW'}
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
+                        />
                         <Route path={'create-new-user'} element={<WizardComponent />} />
                         <Route path={'job-monitor'} element={<JobMonitoring />} />
                         <Route path={'create-new-sandbox'} element={<CreateNewSandbox />} />
