@@ -222,20 +222,51 @@ $jsonString = $jsonObject | ConvertTo-Json
 $jsonString
 `;
 
-const GET_DEFAULT_COLLATION = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `
-#Get default collation of SQL server
-$defaultSqlCollation = sqlcmd -S "${instanceName}" -Q @"
-    SET NOCOUNT ON;
-    SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));
-"@ -y 0
+const GET_DEFAULT_COLLATION = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME, resourceId: string = '') => `
+$resourceId = '${resourceId}'
+$sqlInstanceName = '${instanceName}'
+if ($resourceId) 
+{ 
+    $sqlCreds = "/netapp/wlmdb/$resourceID"
+    $credobject =  (Get-SSMParameter -Name $sqlCreds -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
+    $sqlList = $credobject.sql
+    $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+    if ($sqlCredentials -eq $null) {
+        $errorMessage = "No SQL instance found with the name $sqlinstancename"
+        throw $errorMessage
+    }
+    $username = $sqlCredentials.username
+    $password = $sqlCredentials.password
 
-#Get default version of SQL server
-$sqlVersion = sqlcmd -S "${instanceName}" -Q @"
-    SET NOCOUNT ON;
-    SELECT @@VERSION;
-"@ -y 0
+    #Get default collation of SQL server
+    $defaultSqlCollation = sqlcmd -S "${instanceName}" -U $username -P $password -Q @"
+        SET NOCOUNT ON;
+        SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));
+    "@ -y 0
 
-Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
+    #Get default version of SQL server
+    $sqlVersion = sqlcmd -S "${instanceName}" -U $username -P $password -Q @"
+        SET NOCOUNT ON;
+        SELECT @@VERSION;
+    "@ -y 0
+
+    Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
+    }
+else {
+    #Get default collation of SQL server
+    $defaultSqlCollation = sqlcmd -S "${instanceName}" -Q @"
+        SET NOCOUNT ON;
+        SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));
+    "@ -y 0
+
+    #Get default version of SQL server
+    $sqlVersion = sqlcmd -S "${instanceName}" -Q @"
+        SET NOCOUNT ON;
+        SELECT @@VERSION;
+    "@ -y 0
+
+    Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
+}
 `;
 
 const validateSQLInstanceConnectivity = (
@@ -930,6 +961,44 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
     }
 `;
 
+const readSsmParameter = (instance: string) =>
+    `
+        $responseObject = @{}
+        $serverInstanceName = "${instance}"
+        $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+        $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
+        $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
+        $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
+        
+        if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
+            try {
+            $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
+            $sqlCredentials = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json)
+            } catch {
+                $sqlCredentials = $null
+            }
+        }
+        
+        $sqlCredential = $null
+        if(-Not [string]::IsNullOrEmpty($sqlCredentials)) {
+            $sqlCredential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq $instance})[0] 
+            if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
+                $responseObject.add('useSqlAuth', $True)
+                $responseObject.add('username', $sqlCredential.username)
+                $responseObject.add('password', $sqlCredential.password)
+            }
+            else {
+                $responseObject.add('useSqlAuth', $False)
+            }
+        }
+        else {
+            $responseObject.add('useSqlAuth', $False)
+        }
+        
+        $responseObject
+           
+    `;
+
 const sqlQueryExecution = (instance: string, query: string, sqlAuthEnabled: boolean) =>
     `
     $serverInstanceName = "${instance}"
@@ -980,5 +1049,6 @@ export {
     restGetUtilForOntap,
     INSTANCE_DETAILS,
     copyPowerShellModule,
-    sqlQueryExecution
+    sqlQueryExecution,
+    readSsmParameter
 };
