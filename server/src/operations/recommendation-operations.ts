@@ -283,14 +283,10 @@ async function handleInstanceRecommendation(
             let recommendedInstanceHourlyPriceWithoutLicense: number | undefined;
             if (isAwsLicenseIncluded) {
                 // if the existing instance is using AWS license included, then get the AWS license included price for the recommended instance type
-                recommendedInstanceHourlyPrice = recommendedInstancePricingDetails?.[recommendedSqlLicenseType]
-                    ?.pricePerUnit
-                    ? recommendedInstancePricingDetails[recommendedSqlLicenseType].pricePerUnit
-                    : undefined;
+                recommendedInstanceHourlyPrice =
+                    recommendedInstancePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit;
 
-                recommendedInstanceHourlyPriceWithoutLicense = recommendedInstancePricingDetails?.NA?.pricePerUnit
-                    ? recommendedInstancePricingDetails.NA.pricePerUnit
-                    : undefined;
+                recommendedInstanceHourlyPriceWithoutLicense = recommendedInstancePricingDetails?.NA?.pricePerUnit;
             } else {
                 // if the existing instance is using BYOL, then use the BYOL price for the recommended instance type; assumption: BYOL price is the same for recommended ec2 instance types
                 recommendedInstanceHourlyPrice = existingInstanceHourlyPrice;
@@ -456,15 +452,12 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
     );
     const computeDetails = {
         instanceType: instanceTypes.join(', '),
-        finding: undefined,
-        windowsOsVersion: undefined,
         computeHourlyPrice: existingComputePrice,
         computeMonthlyPrice: existingComputePrice ? getMonthlyPriceFromHourlyPrice(existingComputePrice) : undefined,
         instanceMonthlyPrice: existingInstanceHourlyPrice
             ? getMonthlyPriceFromHourlyPrice(existingInstanceHourlyPrice)
             : undefined,
         hoursInMonth: HOURS_IN_MONTH,
-        message: undefined,
         machineDetails: instanceTypes.map((instanceType: string) => {
             const pricingDetails = existingInstanceTypesPricingDetails.get(instanceType);
             const { pricePerUnit: priceWithoutLicense } = pricingDetails?.pricingDetails.NA || {};
