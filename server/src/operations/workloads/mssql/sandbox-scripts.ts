@@ -773,8 +773,10 @@ const createVolumeClone = (
 const createClonedDb = (
     dbName: string,
     instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    fileList: string[] = [],
-    logPrefix: string = ''
+    dataFileList: string[] = [],
+    logFileList: string[] = [],
+    logPrefix: string = '',
+    epoch = Date.now()
 ) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
@@ -793,13 +795,47 @@ const createClonedDb = (
             Write-Error "$logPrefix Database $dbname already exists and is in $($selectresult[0].state_desc) state. Exiting..."
         }
 
-        # SQL script to attach a database
-        $attachQuery = @"
-            CREATE DATABASE $dbname ON  
-            ${fileList.map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
-            FOR ATTACH;
+        $createQuery = @"
+            CREATE DATABASE $dbname ON PRIMARY
+            ${dataFileList
+                .map(file => {
+                    const newFilePath = file.replace(/(\.mdf|\.ndf|\.ldf)/, `-${epoch}$1`);
+                    const fileName = newFilePath.split('\\').pop();
+                    return `(NAME = '${fileName}', FILENAME = '${newFilePath}')`;
+                })
+                .join(',\n')}
+            LOG ON
+            ${logFileList
+                .map(file => {
+                    const newFilePath = file.replace(/(\.mdf|\.ndf|\.ldf)/, `-${epoch}$1`);
+                    const fileName = newFilePath.split('\\').pop();
+                    return `(NAME = '${fileName}', FILENAME = '${newFilePath}')`;
+                })
+                .join(',\n')}
 "@
-        sqlcmd -S "${instanceName}"  -Q $attachQuery
+
+        sqlcmd -S "${instanceName}"  -Q $createQuery
+
+        sqlcmd -S "${instanceName}"  -Q "ALTER DATABASE $dbname SET OFFLINE"
+        
+        ${[...dataFileList, ...logFileList]
+            .map(file => {
+                // replace mdf, ndf, ldf with epoch.mdf etc
+                const newFileName = file.replace(/(\.mdf|\.ndf|\.ldf)/, `-${epoch}$1`);
+                return `Remove-Item -Path "${newFileName}" -Force`;
+            })
+            .join('\n')}
+
+        # Rename the actual files to the new name
+        ${[...dataFileList, ...logFileList]
+            .map(file => {
+                // replace mdf, ndf, ldf with epoch.mdf etc
+                const newFileName = file.replace(/(\.mdf|\.ndf|\.ldf)/, `-${epoch}$1`);
+                return `Rename-Item -Path "${file}" -NewName "${newFileName}"`;
+            })
+            .join('\n')}
+
+        sqlcmd -S "${instanceName}"  -Q "ALTER DATABASE $dbname SET ONLINE"
     } catch {
         Write-Error "$logPrefix $($_.Exception.Message)"
     }

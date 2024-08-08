@@ -1164,7 +1164,8 @@ async function createCloneDb(
             createCloneDbScript(
                 destDetails.database,
                 destDetails.instanceName,
-                [...mountPaths.dataPath, ...mountPaths.logPath],
+                mountPaths.dataPath,
+                mountPaths.logPath,
                 `Sandbox:${destDetails.database}:`
             )
         ];
