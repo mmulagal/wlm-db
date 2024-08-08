@@ -149,7 +149,7 @@ describe('Create database operations', () => {
             reqData.dataDrivePath,
             reqData.logDrivePath,
             'SQL_Latin1_General_CP1_CI_AS',
-            DEFAULT_MSSQL_INSTANCE_NAME,
+            { name: DEFAULT_MSSQL_INSTANCE_NAME, sqlAuthEnabled: false },
             reqData.serverNameWithHostName
         );
 

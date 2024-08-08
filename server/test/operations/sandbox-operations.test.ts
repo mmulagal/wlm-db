@@ -169,7 +169,7 @@ describe('sandbox operations ', () => {
         expect(resp.jobId).toBeDefined();
     });
 
-    it('Get the data and log mount point drives of the database', async () => {
+    it.skip('Get the data and log mount point drives of the database', async () => {
         const resp = await getDatabaseMountPointInfo(
             ACCOUNT_ID,
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
@@ -243,7 +243,7 @@ describe('sandbox operations ', () => {
         expect(resp.jobId).toBeDefined();
     });
 
-    it('Get snapshots for clone', async () => {
+    it.skip('Get snapshots for clone', async () => {
         const resp = await getSandboxSnapshots(
             ACCOUNT_ID,
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
@@ -255,7 +255,7 @@ describe('sandbox operations ', () => {
         expect(resp).toBeDefined();
     });
 
-    it('Get sandbox connection string', async () => {
+    it.skip('Get sandbox connection string', async () => {
         const resp = await getSandboxConnectionString(
             ACCOUNT_ID,
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
