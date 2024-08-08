@@ -141,6 +141,7 @@ async function aoagStorageSavingsCalculations(
             credentialsId,
             region,
             nodeDetails,
+            params.monthlySqlByolCost,
             partnerNodeDetails
         ); // retrieves compute and license cost for all nodes in the AOAG cluster
 
@@ -334,6 +335,7 @@ async function retrieveComputeAndLicenseCost(
     credentialsId: string,
     region: string,
     ec2HostDetails: DiscoverResponseInfoType,
+    monthlySqlByolCost?: number,
     partnerNodeDetails?: DiscoverResponseInfoType[]
 ): Promise<ComputeLicenseCostType> {
     logger.info('Retrieving compute and license cost', { accountId, credentialsId, region, ec2HostDetails });
@@ -344,6 +346,7 @@ async function retrieveComputeAndLicenseCost(
         credentialsId,
         region,
         ec2HostDetails,
+        monthlySqlByolCost,
         partnerNodeDetails
     );
     const {
@@ -457,7 +460,13 @@ async function performStorageSavingsCalculations(
         );
     }
 
-    const recommendationPromise = retrieveComputeAndLicenseCost(accountId, credentialsId, region, ec2HostDetails);
+    const recommendationPromise = retrieveComputeAndLicenseCost(
+        accountId,
+        credentialsId,
+        region,
+        ec2HostDetails,
+        params.monthlySqlByolCost
+    );
     const marketingPromise = invokeMarketingApi(
         accountId,
         credentialsId,
@@ -552,6 +561,7 @@ async function getStorageSavingsCalculationMetrics(
             credentialsId,
             region,
             ec2HostDetails,
+            params.monthlySqlByolCost,
             partnerNodeDetails
         );
         return aoagStorageSavingsMetrics(
@@ -571,7 +581,8 @@ async function getStorageSavingsCalculationMetrics(
         accountId,
         credentialsId,
         region,
-        ec2HostDetails
+        ec2HostDetails,
+        params.monthlySqlByolCost
     );
 
     const {
