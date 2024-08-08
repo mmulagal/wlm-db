@@ -236,7 +236,7 @@ async function handleInstanceRecommendation(
     totalNodesCount: number,
     existingInstanceHourlyPrice?: number,
     existingInstanceHourlyPriceWithoutLicense?: number,
-    shouldAwsLicenseIncluded: boolean = true
+    isAwsLicenseIncluded: boolean = true
 ) {
     logger.info('Handling instance recommendations', {
         accountId,
@@ -250,7 +250,7 @@ async function handleInstanceRecommendation(
         existingInstanceHourlyPrice,
         existingInstanceHourlyPriceWithoutLicense,
         totalNodesCount,
-        shouldAwsLicenseIncluded
+        isAwsLicenseIncluded
     });
 
     let recommendedCompute;
@@ -281,7 +281,7 @@ async function handleInstanceRecommendation(
 
             let recommendedInstanceHourlyPrice: number | undefined;
             let recommendedInstanceHourlyPriceWithoutLicense: number | undefined;
-            if (shouldAwsLicenseIncluded) {
+            if (isAwsLicenseIncluded) {
                 // if the existing instance is using AWS license included, then get the AWS license included price for the recommended instance type
                 recommendedInstanceHourlyPrice = recommendedInstancePricingDetails?.[recommendedSqlLicenseType]
                     ?.pricePerUnit
@@ -323,7 +323,7 @@ async function handleInstanceRecommendation(
                             ? rinstanceMonthlyPrice - rcomputeMonthlyPrice
                             : undefined,
                     hoursInMonth: HOURS_IN_MONTH,
-                    licenseIncluded: shouldAwsLicenseIncluded
+                    licenseIncluded: isAwsLicenseIncluded
                 })),
                 recommendationOptions: instanceRecommendations?.map(({ instanceType, pricingDetails }) => {
                     const basePrice = pricingDetails?.NA?.pricePerUnit;
@@ -431,10 +431,10 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
             existingSqlServerEditionLowerCase.includes('standard'))
     ) {
         existingLicenseType = existingSqlServerEditionLowerCase?.includes('enterprise')
-            ? 'SQL Ent'
+            ? SQL_ENT
             : existingSqlServerEditionLowerCase?.includes('web')
-            ? 'SQL Web'
-            : 'SQL Std';
+            ? SQL_WEB
+            : SQL_STD;
 
         existingInstanceHourlyPrice = getPricingByLicenseType(existingLicenseType, existingInstanceTypesPricingDetails);
 
