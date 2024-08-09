@@ -349,12 +349,13 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['sqlServerState'] = $sqlService.State
       $responseObject['windowsOsVersion'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
       
+      $sqlNodes = $null
       if ($clusterDetails['isClustered']) {
         $responseObject['windowsClusterName'] = $clusterDetails['name']
         $responseObject['windowsClusterNodes'] = $clusterDetails['windowsClusterNodes']
+        $sqlNodes = (Get-ClusterResource -ErrorAction SilentlyContinue -Name "SQL Server" | ? { $_.OwnerGroup -eq "SQL Server ($instanceName)" } | Get-ClusterOwnerNode).OwnerNodes.Name
       }
-
-      $sqlNodes = (Get-ClusterResource -ErrorAction SilentlyContinue -Name "SQL Server" | ? { $_.OwnerGroup -eq "SQL Server ($instanceName)" } | Get-ClusterOwnerNode).OwnerNodes.Name
+        
       if ([string]::IsNullOrEmpty($sqlNodes)) {
         $responseObject['sqlServerNodes'] = hostname
         $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
