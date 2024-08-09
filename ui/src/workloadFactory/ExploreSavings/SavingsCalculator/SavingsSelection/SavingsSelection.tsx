@@ -32,9 +32,11 @@ const SavingsSelection = ({ printState }: any) => {
         storageSavingsResponse,
         storageSavingsLoading,
         recommendedTargetInstance,
-        monthlyBYOLCost
+        monthlyBYOLCost,
+        selectedHostDetails
     } = useAppSelector(state => state.exploreSavings);
 
+    const [isSqlLicense, setIsSqlLicense] = useState<any>(false);
     const [noOfClonedCopies, setNoOfClonedCopies] = useState<any>(numberOfClonedCopies);
     const [monthlyChangeRateNo, setMonthlyChangeRateNo] = useState<any>(monthlyChangeRate);
     const [instanceTypeData, setInstanceTypeData] = useState<any>({
@@ -50,6 +52,10 @@ const SavingsSelection = ({ printState }: any) => {
     const [byolValue, setByolValue] = useState(monthlyBYOLCost ? monthlyBYOLCost : '');
 
     const { setDialog, closeDialog } = useDialog();
+
+    useEffect(() => {
+        setIsSqlLicense(selectedHostDetails?.sqlLicenseIncluded);
+    }, [selectedHostDetails]);
 
     //Use effect for machine description
     useEffect(() => {
@@ -283,16 +289,18 @@ const SavingsSelection = ({ printState }: any) => {
                 </div>
             </div>
             <div className={styles.secondRow}>
-                <TextField
-                    label={GENERAL.BYOL_TEXT}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setByolValue(numVal);
-                    }}
-                    isOptional={true}
-                    value={byolValue}
-                    className={styles.deploymentModelWidth}
-                />
+                {isSqlLicense && (
+                    <TextField
+                        label={GENERAL.BYOL_TEXT}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setByolValue(numVal);
+                        }}
+                        isOptional={true}
+                        value={byolValue}
+                        className={styles.deploymentModelWidth}
+                    />
+                )}
                 <div className={styles.instanceTypeContainer}>
                     <SelectField
                         label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
