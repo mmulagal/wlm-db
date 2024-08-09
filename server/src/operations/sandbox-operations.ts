@@ -1294,12 +1294,19 @@ async function createExtendedProperties(
 
             const updatedMetadata: Metadata = await updateSandboxDBIntoResourceData(
                 accountId,
+                credentialsId,
                 srcDetails.host,
                 props,
                 srcDetails.metadata
             );
 
-            await updateUserDBIntoResourceData(accountId, srcDetails.host, destDetails.database, updatedMetadata);
+            await updateUserDBIntoResourceData(
+                accountId,
+                credentialsId,
+                srcDetails.host,
+                destDetails.database,
+                updatedMetadata
+            );
         }
 
         status = JOBSTATUS.COMPLETED;
@@ -1438,7 +1445,7 @@ async function updateMetadataForSanbox(
     const newMetadata = metadata as unknown as Metadata;
     newMetadata.sandboxCreated = true;
     try {
-        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
     } catch (err) {
         const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${err}`;
@@ -1470,7 +1477,7 @@ async function updateMetadataForSanboxTesting(
     newMetadata.sandboxCreated = true;
     newMetadata.updatedManually = true;
     try {
-        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
         return 'metadata updated succesfully';
     } catch (err) {
         return err;
@@ -1500,7 +1507,7 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
             try {
                 delete newMetadata.sandboxCreated;
                 delete newMetadata.updatedManually;
-                await updateResourceMetaData(accountId, resourceId, newMetadata);
+                await updateResourceMetaData(accountId, credentialsId, resourceId, newMetadata);
             } catch (err) {
                 logger.error('Failed to update meatadata', resourceId, err);
             }
@@ -1552,7 +1559,7 @@ async function updateMetadataForSanboxDeletion(
     }
 
     try {
-        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
         await updateInstanceMetadata(accountId, databaseInstanceId, newInstanceMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
     } catch (err) {

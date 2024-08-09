@@ -430,7 +430,7 @@ function isActiveInstance() {
 // To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
 // So while saving & retrieving we have to maintain the same in demo mode
 function checkAccount(accountId: string) {
-    logger.info('checking account id', accountId);
+    logger.debug('checking account id', accountId);
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         const userId = getSubjectFromBearerToken();
         return userId ? `${accountId}_${userId}` : accountId;
