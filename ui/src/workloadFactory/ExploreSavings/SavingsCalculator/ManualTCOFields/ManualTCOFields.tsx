@@ -258,7 +258,7 @@ const ManualTCOFields = () => {
                     />
 
                     <TextField
-                        label={'Monthly SQL BYOL costs($)'}
+                        label={GENERAL.BYOL_TEXT}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setMachineDesc(numVal);
