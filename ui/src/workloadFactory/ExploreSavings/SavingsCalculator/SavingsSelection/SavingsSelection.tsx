@@ -36,7 +36,7 @@ const SavingsSelection = ({ printState }: any) => {
         selectedHostDetails
     } = useAppSelector(state => state.exploreSavings);
 
-    const [isSqlLicense, setIsSqlLicense] = useState<any>(false);
+    const [isSqlLicense, setIsSqlLicense] = useState<boolean>(true);
     const [noOfClonedCopies, setNoOfClonedCopies] = useState<any>(numberOfClonedCopies);
     const [monthlyChangeRateNo, setMonthlyChangeRateNo] = useState<any>(monthlyChangeRate);
     const [instanceTypeData, setInstanceTypeData] = useState<any>({
@@ -289,7 +289,7 @@ const SavingsSelection = ({ printState }: any) => {
                 </div>
             </div>
             <div className={styles.secondRow}>
-                {isSqlLicense && (
+                {!isSqlLicense && (
                     <TextField
                         label={GENERAL.BYOL_TEXT}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
