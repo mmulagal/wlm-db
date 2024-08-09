@@ -810,7 +810,7 @@ async function invokeSSMForDatabaseDeployment(
                 error: undefined
             });
 
-            await updateCreateDbMetrics(accountId, resourceId, credentialsId, metaData as Metadata);
+            await updateCreateDbMetrics(accountId, credentialsId, resourceId, metaData as Metadata);
 
             if (isDemoFlow) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
@@ -877,7 +877,7 @@ async function invokeSSMForDatabaseDeployment(
     }
 }
 
-async function updateCreateDbMetrics(accountId: string, resourceId: string, credentialsId: string, metaData: Metadata) {
+async function updateCreateDbMetrics(accountId: string, credentialsId: string, resourceId: string, metaData: Metadata) {
     logger.debug('Update create database metrics for resource', resourceId);
     metaData.createDbMetrics = metaData.createDbMetrics || { numberofUserDbsCreated: 0 };
     metaData.createDbMetrics.numberofUserDbsCreated += 1;
