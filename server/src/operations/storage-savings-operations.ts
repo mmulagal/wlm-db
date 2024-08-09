@@ -497,7 +497,7 @@ async function performStorageSavingsCalculations(
         ebs,
         fsx,
         totalSummary: {
-            existing: ebs.total || 0 + existingComputeLicensePrice,
+            existing: Number(ebs.total || 0) + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
         },
         ...(singleFsxCalculationData && {
