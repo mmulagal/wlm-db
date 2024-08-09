@@ -577,7 +577,8 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
             })
         )
     ),
-    errors: Type.Optional(Type.String())
+    errors: Type.Optional(Type.String()),
+    sqlLicenseIncluded: Type.Optional(Type.Boolean())
 });
 
 const DatabaseHostSummaryForMultiInstanceListResponse = Type.Object({
