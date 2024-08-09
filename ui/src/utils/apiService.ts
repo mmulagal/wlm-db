@@ -6,6 +6,7 @@ import {
     FetchBaseQueryError,
     retry
 } from '@reduxjs/toolkit/query/react';
+//@ts-ignore
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import store, { RootState } from '../store/store';
 import { API_ERRORS, API_MAX_RETRIES, PRODUCTION, WLMDB_POLICIES_PROD_LINK, WLMDB_POLICIES_STAGE_LINK } from './consts';
