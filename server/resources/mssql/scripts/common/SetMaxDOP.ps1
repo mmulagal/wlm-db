@@ -26,7 +26,10 @@ try {
     #$DomainAdminSecurePassword = ConvertTo-SecureString $DomainAdminPassword -AsPlainText -Force
     #$DomainAdminCreds = New-Object System.Management.Automation.PSCredential($DomainAdminFullUser, $DomainAdminSecurePassword)
     $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parentstackname
+    . ..\InvokeRetryCommand.ps1
+    $SsmParameter = Invoke-WithRetry -Command {
+        (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    }
     $DomainPassword = $SsmParameter.domain.password
     $pass = ConvertTo-SecureString $DomainPassword -AsPlainText -Force
     $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,$pass))

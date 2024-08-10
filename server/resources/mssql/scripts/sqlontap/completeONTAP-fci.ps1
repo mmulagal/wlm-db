@@ -41,17 +41,12 @@ $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token }
 
 try {
     #Function to find Subnet mask
+
+    . ..\common\InvokeRetryCommand.ps1
     function Get-SubnetMask($subnetid) {
-        try {
-            $subnet = get-ec2subnet -SubnetId $subnetid
-        } catch {
-            Write-Output $_.Exception.Message
-            if($_.Exception.Message -match "Rate Limit exceeded") {
-                Write-Output "Encountered Rate Limit exceeded while fetching EC2 subnets. Reattempting after 5 seconds..."
-                Start-Sleep 5
-                $subnet = get-ec2subnet -SubnetId $subnetid
-            }
-        }
+
+        $subnet = Invoke-WithRetry -Command { get-ec2subnet -SubnetId $subnetid }
+        
         $cidr = $subnet.CidrBlock
         $cidr_mask = $cidr.split('/')[1]
         $A = 0
@@ -84,7 +79,7 @@ try {
     $DomainNetBIOSName = $env:USERDOMAIN
     $AdminGroup = 'BUILTIN\Administrators'
     # Creating Credential Object for Administrator
-    $SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parentstackname
+    $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
     $AdminPassword = $SsmParameter.domain.password
     $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
     $Credentials = (New-Object PSCredential($ClusterAdminUser, (ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
@@ -97,28 +92,26 @@ try {
     
     Invoke-Command -scriptblock { Test-Cluster } -Credential $Credentials -ComputerName $HostName -Authentication credssp > C:\cfn\log\test-cluster1.txt 2>&1 
     $AccessDenied = Select-String -Path C:\cfn\log\test-cluster1.txt -Pattern "Access is denied."
-    if (-not ([string]::IsNullOrEmpty($AccessDenied)) ) 
-        {
-            Write-Output "Encountered access denied. Re-attempting Test-Cluster after 5 seconds."
-            Start-sleep -s 5
-            Invoke-Command -scriptblock { Test-Cluster } -Credential $Credentials -ComputerName $HostName -Authentication credssp > C:\cfn\log\test-cluster2.txt 2>&1 
-        } 
+    if (-not ([string]::IsNullOrEmpty($AccessDenied)) ) {
+        Write-Output "Encountered access denied. Re-attempting Test-Cluster after 5 seconds."
+        Start-sleep -s 5
+        Invoke-Command -scriptblock { Test-Cluster } -Credential $Credentials -ComputerName $HostName -Authentication credssp > C:\cfn\log\test-cluster2.txt 2>&1 
+    } 
    
     # Find path to SQL Installer media, if not found then pick installer hosted in S3.
-    If(Test-Path -path "C:\SQLServerSetup\setup.exe") {
-       $SQLMediaPath = "C:\SQLServerSetup\setup.exe"
+    If (Test-Path -path "C:\SQLServerSetup\setup.exe") {
+        $SQLMediaPath = "C:\SQLServerSetup\setup.exe"
     }
     else {
         Write-Output "Base Windows ami: Attemting complete failover fci from available or s3 downloaded sql installer."
         $SQLMediaPath = 'C:\cfn\Installer\SQLServerSetup\setup.exe'
         If (Test-Path -path "C:\SQL*") {
-            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname | Sort-Object -Property Length
-            If($SQLInstallerPaths -is 'string')
-            {
-            $SQLMediaPath = $SQLInstallerPaths
+            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where { $_.name -eq "setup.exe" } ).fullname | Sort-Object -Property Length
+            If ($SQLInstallerPaths -is 'string') {
+                $SQLMediaPath = $SQLInstallerPaths
             }
             Else {
-            $SQLMediaPath = $SQLInstallerPaths[0]
+                $SQLMediaPath = $SQLInstallerPaths[0]
             }
         } 
     }
@@ -127,61 +120,24 @@ try {
 
     $mediaExtractPath = 'C:\SQLServerSetup'
     #$fileshare = $fsList.DNSName
-    try {
-        $datavol = (Get-Volume -FileSystemLabel 'SQL-Data').DriveLetter
-    } catch {
-        Write-Output $_.Exception.Message
-        if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting after 5 seconds..."
-            Start-Sleep 5
-            $datavol = (Get-Volume -FileSystemLabel 'SQL-Data').DriveLetter
-        }
-    }
-    try {
-        $logvol = (Get-Volume -FileSystemLabel 'SQL-Log').DriveLetter
-    } catch {
-        Write-Output $_.Exception.Message
-        if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting after 5 seconds..."
-            Start-Sleep 5
-            $logvol = (Get-Volume -FileSystemLabel 'SQL-Log').DriveLetter
-        }
-    }
-    try {
-        $tempdbvol = (Get-Volume -FileSystemLabel 'SQL-TempDb').DriveLetter
-    } catch {
-        Write-Output $_.Exception.Message
-        if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching FSx volume details. Reattempting after 5 seconds..."
-            Start-Sleep 5
-            $tempdbvol = (Get-Volume -FileSystemLabel 'SQL-TempDb').DriveLetter
-        }
-    }
+
+    $datavol = Invoke-WithRetry -Command { (Get-Volume -FileSystemLabel 'SQL-Data').DriveLetter }
+   
+
+    $logvol = Invoke-WithRetry -Command { (Get-Volume -FileSystemLabel 'SQL-Log').DriveLetter }
+
+    $tempdbvol = Invoke-WithRetry -Command { (Get-Volume -FileSystemLabel 'SQL-TempDb').DriveLetter }
+   
     $sqlRootPath = "$($datavol):\mssql\system"
     $sqlDataPath = "$($datavol):\mssql\data"
     $sqlLogPath = "$($logvol):\mssql\log"
     $sqlTempPath = "$($tempdbvol):\mssql\data"
     $sqlPath = "$($logvol):\mssql\log"
-    try {
-        $Node1SubnetMask = Get-SubnetMask $Node1SubnetId
-    } catch {
-        Write-Output $_.Exception.Message
-        if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching subnet mask details. Reattempting after 5 seconds..."
-            Start-Sleep 5
-            $Node1SubnetMask = Get-SubnetMask $Node1SubnetId
-        }
-    }
-    try {
-        $Node2SubnetMask = Get-SubnetMask $Node2SubnetId
-    } catch {
-        Write-Output $_.Exception.Message
-        if($_.Exception.Message -match "Rate Limit exceeded") {
-            Write-Output "Encountered Rate Limit exceeded while fetching subnet mask details. Reattempting after 5 seconds..."
-            Start-Sleep 5
-            $Node2SubnetMask = Get-SubnetMask $Node2SubnetId
-        }
-    }
+    $Node1SubnetMask = Invoke-WithRetry -Command { Get-SubnetMask $Node1SubnetId }
+    
+
+    $Node2SubnetMask = Invoke-WithRetry -Command { Get-SubnetMask $Node2SubnetId }
+   
 
     $arguments = '/QUIET /ACTION=CompleteFailoverCluster /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION={10} /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath, $SqlCollation
     Invoke-Command -scriptblock {
@@ -193,17 +149,16 @@ try {
     Start-Sleep -Seconds 30
     # Check if collation set, if not run CompleteFailoverCluster with default collation
     $SettingCollationFailed = Select-String -Path C:\cfn\log\completefci_output.txt -Pattern "The collation $SqlCollation was not found."
-    if ($SettingCollationFailed -ne $null)
-        { 
-            Write-Host "Setting collation $SqlCollation failed with 'The collation $SqlCollation was not found.'. Configuring with default collation 'SQL_Latin1_General_CP1_CI_AS'."
+    if ($SettingCollationFailed -ne $null) { 
+        Write-Host "Setting collation $SqlCollation failed with 'The collation $SqlCollation was not found.'. Configuring with default collation 'SQL_Latin1_General_CP1_CI_AS'."
 
-            $SqlCollation = "SQL_Latin1_General_CP1_CI_AS"
-            $arguments = '/QUIET /ACTION=CompleteFailoverCluster /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION={10} /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath, $SqlCollation
-            Invoke-Command -scriptblock {
-                Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output1.txt -RedirectStandardError C:\cfn\log\completefci_error1.txt 
+        $SqlCollation = "SQL_Latin1_General_CP1_CI_AS"
+        $arguments = '/QUIET /ACTION=CompleteFailoverCluster /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION={10} /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath, $SqlCollation
+        Invoke-Command -scriptblock {
+            Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output1.txt -RedirectStandardError C:\cfn\log\completefci_error1.txt 
 
-            } -Credential $Credentials -ComputerName $HostName -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
-        }
+        } -Credential $Credentials -ComputerName $HostName -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
+    }
 
     ##Re-attempt once if previous step failed to install due to synchronization with second node prepare-fci and reboot
     Start-Sleep -Seconds 30

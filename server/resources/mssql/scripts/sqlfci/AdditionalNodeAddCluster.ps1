@@ -28,7 +28,8 @@ $ErrorActionPreference = "Stop"
 $DscCertThumbprint = (get-childitem -path cert:\LocalMachine\My | where { $_.subject -eq "CN=AWSLWDscEncryptCert" }).Thumbprint
 $DomainNetBIOSName = $env:USERDOMAIN
 # Getting Password from Secrets Manager for AD Admin User
-$SsmParameter = C:\cfn\scripts\common\FetchCredFromSSM.ps1 -ResourceName $Parentstackname
+. ..\common\InvokeRetryCommand.ps1
+$SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
 $AdminPassword = $SsmParameter.domain.password
 $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
 # Creating Credential Object for Administrator
