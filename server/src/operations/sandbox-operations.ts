@@ -830,7 +830,14 @@ async function getMappings(
         const { fsxId, database } = srcDetails;
 
         let command = [
-            getDbMappedOntapVolumes(fsxId, region, database, srcDetails.instanceName, `Sandbox:${sandboxName}:`)
+            getDbMappedOntapVolumes(
+                fsxId,
+                region,
+                database,
+                srcDetails.instanceName,
+                `Sandbox:${sandboxName}:`,
+                srcDetails.sqlAuthEnabled
+            )
         ];
 
         if (isDemoFlow) {
@@ -1675,6 +1682,10 @@ async function getDatabaseMountPointInfo(
         const command = [
             sqlQueryExecution(srcDetails.instanceName, mountPointQuery(databaseName), srcDetails.sqlAuthEnabled)
         ];
+
+        logger.info('@@@@@@@@@@@@@@@@');
+
+        logger.info(command);
 
         const mountPoints = await callSsmExecution(credentialsId, region, command, srcDetails.activeNodeInstanceId);
         if (!mountPoints) {

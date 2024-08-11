@@ -1645,31 +1645,27 @@ async function getCollationDetails(
         }
 
         let sqlInstanceName = instanceName;
-        let isSqlAuthEnabled = false;
+        let sqlAuthEnabled = false;
         if (instanceDetail && instancesDetails) {
-            const {
-                database_instance_name: selectedInstanceName,
-                is_default: isDefault,
-                sqlAuthEnabled
-            } = instanceDetail;
+            const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
-            const isInstanceRunning = instancesDetails.some(
+            const runningInstance = instancesDetails.filter(
                 instance =>
                     instance.instanceName === instanceDetail.database_instance_name &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 
-            if (!isInstanceRunning && selectedInstanceName) {
+            if (isEmpty(runningInstance) && selectedInstanceName) {
                 const errorMessage = `Unable to access drive details in account ${accountId} for instance ${sqlInstanceName} is not running.`;
                 logger.error(errorMessage);
                 throw createError(errorMessage);
             }
+            sqlAuthEnabled = runningInstance[0].sqlAuthEnabled;
             sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
-            isSqlAuthEnabled = sqlAuthEnabled;
         }
         return getCollationForInstance(credentialsId, region, activeNodeInstanceId as string, {
             name: sqlInstanceName,
-            sqlAuthEnabled: isSqlAuthEnabled
+            sqlAuthEnabled
         });
     } catch (error: any) {
         const errorMessage = `Unable to get collation information. ${error?.message}.`;
@@ -1687,10 +1683,7 @@ async function getDefaultCollationAndVersion(
 ) {
     logger.info('Getting MSSQL default collation', { credentialsId, region, activeNodeInstanceId });
     const { name: instanceName, sqlAuthEnabled } = sqlInstance;
-    let defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName)];
-    if (sqlAuthEnabled) {
-        defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, activeNodeInstanceId)];
-    }
+    const defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, sqlAuthEnabled)];
 
     const defaultCollationResponse = await callSsmExecution(
         credentialsId,

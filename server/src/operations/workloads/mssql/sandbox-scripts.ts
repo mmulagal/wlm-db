@@ -1,7 +1,7 @@
 // instances input instances = ['"computername\\instanceName"', '"DEFAULT_MSSQL_INSTANCE_NAME"']; "DEFAULT_MSSQL_INSTANCE_NAME" represents the default instance
 
 import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
-import { readSsmParameter, sqlQueryExecution } from './ssm-script-utils';
+import { readSsmParameter, sqlQueryExecutionTemplate } from './ssm-script-utils';
 
 // ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
 const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
@@ -405,19 +405,19 @@ const getDbMappedOntapVolumes = (
             }
             return $responseObject
         }
-        
-        $responseObject = ${sqlQueryExecution(instanceName, dbSizeQuery(dbName), sqlAuthEnabled)}
+       
+        ${sqlQueryExecutionTemplate(instanceName, dbSizeQuery(dbName), sqlAuthEnabled)}
         #$responseObject =  sqlcmd -S $instanceName -Q $sqlquery -y 0;
-        Write-Information "$logPrefix SQL response: $responseObject"
-        if ([string]::IsNullOrEmpty($responseObject)) {
-            if ($responseObject -eq $null) {
-                $responseObject = @{}
+        Write-Information "$logPrefix SQL response: $queryResponse"
+        if ([string]::IsNullOrEmpty($queryResponse)) {
+            if ($queryResponse -eq $null) {
+                $queryResponse = @{}
             }
-            $responseObject['error'] = "SqlServerError: Could not get volumes of database $dbname"
-            return $responseObject | ConvertTo-Json -Depth 5
+            $queryResponse['error'] = "SqlServerError: Could not get volumes of database $dbname"
+            return $queryResponse | ConvertTo-Json -Depth 5
         }
     
-        $responseObject = Get-SerialNumberOfWinVolumes $responseObject
+        $responseObject = Get-SerialNumberOfWinVolumes $queryResponse
         Write-Information "$logPrefix Serial numbers: $($responseObject | ConvertTo-Json)"
         if ($responseObject.data.Count -eq 0 -or $responseObject.log.Count -eq 0) {
             $responseObject['error'] = "Could not get windows volume serial numbers"
@@ -773,7 +773,7 @@ const createClonedDb = (
     try {
         $sqlCredential = @{'useSqlAuth' = $False}
         if($sqlAuthEnabled) {
-            $sqlCredential = ${readSsmParameter(instanceName)}
+            ${readSsmParameter(instanceName)}
         }
         $sqlresponse = $null
         $selectquery = "SET NOCOUNT ON; SELECT name, state_desc FROM sys.databases where name = '$dbname' FOR JSON PATH;"
@@ -830,7 +830,7 @@ Start-Transcript -Path "C:\\cfn\\log\\add_extended_properties_$dbname.log.txt" -
 
 $sqlCredential = @{'useSqlAuth' = $False}
 if($sqlAuthEnabled) {
-    $sqlCredential = ${readSsmParameter(instanceName)}
+    ${readSsmParameter(instanceName)}
 }
 
 Write-Information "Sandbox:$($dbname): Adding extended properties $extProps"
@@ -889,7 +889,7 @@ const cleanUpOntapResources = (
 
     $sqlCredential = @{'useSqlAuth' = $False}
     if($sqlAuthEnabled) {
-        $sqlCredential = ${readSsmParameter(instanceName)}
+        ${readSsmParameter(instanceName)}
     }
 
     $WarningPreference = 'SilentlyContinue';
@@ -1022,7 +1022,7 @@ const cleanUpOntapResources = (
 `;
 
 const mountPointQuery = (databaseName: string) =>
-    ` "SET NOCOUNT ON;
+    ` SET NOCOUNT ON;
     SELECT 
         CASE WHEN mf.type != 0 THEN 'Log' ELSE 'Data' END AS filetype,
         vs.logical_volume_name AS volumename,
@@ -1031,7 +1031,7 @@ const mountPointQuery = (databaseName: string) =>
     JOIN sys.databases AS db ON db.database_id = mf.database_id
     CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
     WHERE db.name = '${databaseName}'
-    FOR JSON PATH;"`;
+    FOR JSON PATH;`;
 
 const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, clonedBy: string) => `
     $WarningPreference = 'SilentlyContinue';
@@ -1139,7 +1139,7 @@ const detachDbAndRemoveAccessPath = (
 
     $sqlCredential = @{'useSqlAuth' = $False}
     if($sqlAuthEnabled) {
-        $sqlCredential = ${readSsmParameter(instanceName)}
+        ${readSsmParameter(instanceName)}
     }
 
     if ($null -eq $responseObject) {
@@ -1151,10 +1151,10 @@ const detachDbAndRemoveAccessPath = (
 
         $sqlres = $null
         if ($sqlCredential.useSqlAuth -eq $True) {
-            $sqlres = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "${executableInstance}"  -Q $query -m 1
+            $sqlres = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "${executableInstance}"  -Q $query -y 0
         }
-        if ([string]::IsNullOrEmpty($response)) {
-            $sqlres = sqlcmd -S "${executableInstance}"  -Q $query -m 1
+        if ([string]::IsNullOrEmpty($sqlres)) {
+            $sqlres = sqlcmd -S "${executableInstance}"  -Q $query -y 0
         }
         
         if ($sqlres -ne $null) {
@@ -1562,7 +1562,7 @@ const addAccessPathAndAttachDb = (
 
         $sqlCredential = @{'useSqlAuth' = $False}
         if($sqlAuthEnabled) {
-            $sqlCredential = ${readSsmParameter(instanceName)}
+            ${readSsmParameter(instanceName)}
         }
 
         $attachQuery = @"
@@ -1690,7 +1690,7 @@ Start-Transcript -Path "C:\\cfn\\log\\delete_extended_properties_$dbname.log.txt
 
 $sqlCredential = @{'useSqlAuth' = $False}
 if($sqlAuthEnabled) {
-    $sqlCredential = ${readSsmParameter(instanceName)}
+    ${readSsmParameter(instanceName)}
 }
 
 Write-Information "Sandbox:$($dbname): Deleting extended properties $extProps"
@@ -1734,7 +1734,7 @@ Start-Transcript -Path "C:\\cfn\\log\\check_integrity_for_$dbname.log.txt" -Appe
 
 $sqlCredential = @{'useSqlAuth' = $False}
 if($sqlAuthEnabled) {
-    $sqlCredential = ${readSsmParameter(instanceName)}
+    ${readSsmParameter(instanceName)}
 }
 
 Write-Information "$logPrefix Checking database integrity"
@@ -1764,7 +1764,7 @@ const readExtendedPropertiesOfSandbox = (
 
     $sqlCredential = @{'useSqlAuth' = $False}
     if($sqlAuthEnabled) {
-        $sqlCredential = ${readSsmParameter(instanceName)}
+        ${readSsmParameter(instanceName)}
     }
 
     $responseObject = @{}
@@ -1882,7 +1882,7 @@ const getConnectionInfo = (instanceName: string, sqlAuthEnabled: boolean) => `
 $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 $sqlCredential = @{'useSqlAuth' = $False}
 if($sqlAuthEnabled) {
-    $sqlCredential = ${readSsmParameter(instanceName)}
+    ${readSsmParameter(instanceName)}
 }
 $responseObject = @{}
 

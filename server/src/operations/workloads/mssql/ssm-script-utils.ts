@@ -1,4 +1,4 @@
-import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
+import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
 
 /* eslint-disable no-useless-escape */
 
@@ -222,51 +222,37 @@ $jsonString = $jsonObject | ConvertTo-Json
 $jsonString
 `;
 
-const GET_DEFAULT_COLLATION = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME, resourceId: string = '') => `
-$resourceId = '${resourceId}'
-$sqlInstanceName = '${instanceName}'
-if ($resourceId) 
-{ 
-    $sqlCreds = "/netapp/wlmdb/$resourceID"
-    $credobject =  (Get-SSMParameter -Name $sqlCreds -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
-    $sqlList = $credobject.sql
-    $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
-    if ($sqlCredentials -eq $null) {
-        $errorMessage = "No SQL instance found with the name $sqlinstancename"
-        throw $errorMessage
-    }
-    $username = $sqlCredentials.username
-    $password = $sqlCredentials.password
-
-    #Get default collation of SQL server
-    $defaultSqlCollation = sqlcmd -S "${instanceName}" -U $username -P $password -Q @"
-        SET NOCOUNT ON;
-        SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));
-    "@ -y 0
-
-    #Get default version of SQL server
-    $sqlVersion = sqlcmd -S "${instanceName}" -U $username -P $password -Q @"
-        SET NOCOUNT ON;
-        SELECT @@VERSION;
-    "@ -y 0
-
-    Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
-    }
-else {
-    #Get default collation of SQL server
-    $defaultSqlCollation = sqlcmd -S "${instanceName}" -Q @"
-        SET NOCOUNT ON;
-        SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));
-    "@ -y 0
-
-    #Get default version of SQL server
-    $sqlVersion = sqlcmd -S "${instanceName}" -Q @"
-        SET NOCOUNT ON;
-        SELECT @@VERSION;
-    "@ -y 0
-
-    Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
+const GET_DEFAULT_COLLATION = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME, sqlAuthEnabled: boolean = false) => `
+$sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+$sqlInstanceName = "${instanceName}"
+$instanceName = "${DEFAULT_INSTANCE_NAME}"
+if($sqlInstanceName -ne "${DEFAULT_MSSQL_INSTANCE_NAME}") {
+    $instanceName = $sqlInstanceName.Split('\\')[1]
 }
+$queryCollation = "SET NOCOUNT ON;SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));"
+$queryVersion = "SET NOCOUNT ON;SELECT @@VERSION;"
+
+$sqlCredential = @{'useSqlAuth' = $False}
+if($sqlAuthEnabled) {
+    ${readSsmParameter(instanceName)}
+}
+
+#Get default collation and default version of SQL server
+if ($sqlCredential.useSqlAuth -eq $True) {
+    $defaultSqlCollation =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $sqlInstanceName -Q $queryCollation -y 0;
+    $sqlVersion = sqlcmd -S $sqlInstanceName -U $username -P $password -Q $queryVersion -y 0
+}
+
+if ([string]::IsNullOrEmpty($defaultSqlCollation)) {
+    $defaultSqlCollation =  sqlcmd -S $sqlInstanceName -Q $queryCollation -y 0;
+}
+
+if ([string]::IsNullOrEmpty($sqlVersion)) {
+    $sqlVersion = sqlcmd -S $sqlInstanceName  -Q $queryVersion -y 0
+}
+
+Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
+
 `;
 
 const validateSQLInstanceConnectivity = (
@@ -963,8 +949,9 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
 
 const readSsmParameter = (instance: string) =>
     `
-        $responseObject = @{}
+        $sqlCredential = @{}
         $serverInstanceName = "${instance}"
+
         $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
         $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
         $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
@@ -979,60 +966,68 @@ const readSsmParameter = (instance: string) =>
             }
         }
         
-        $sqlCredential = $null
+        $credential = $null
         if(-Not [string]::IsNullOrEmpty($sqlCredentials)) {
-            $sqlCredential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq $instance})[0] 
-            if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                $responseObject.add('useSqlAuth', $True)
-                $responseObject.add('username', $sqlCredential.username)
-                $responseObject.add('password', $sqlCredential.password)
+            $credential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq $serverInstanceName})[0] 
+            if (-Not [string]::IsNullOrEmpty($credential) -And -Not [string]::IsNullOrEmpty($credential.username) -And -Not [string]::IsNullOrEmpty($credential.password)) {
+                $sqlCredential.add('useSqlAuth', $True)
+                $sqlCredential.add('username', $credential.username)
+                $sqlCredential.add('password', $credential.password)
             }
             else {
-                $responseObject.add('useSqlAuth', $False)
+                $sqlCredential.add('useSqlAuth', $False)
             }
         }
         else {
-            $responseObject.add('useSqlAuth', $False)
+            $sqlCredential.add('useSqlAuth', $False)
         }
-        
-        $responseObject
            
     `;
 
+const sqlQueryExecutionTemplate = (instance: string, query: string, sqlAuthEnabled: boolean) =>
+    `
+$serverInstanceName = "${instance}"
+$query = "${query}"
+$instanceName = "${DEFAULT_INSTANCE_NAME}"
+if($serverInstanceName -ne "${DEFAULT_MSSQL_INSTANCE_NAME}") {
+    $instanceName = $serverInstanceName.Split('\\')[1]
+}
+$sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+
+if($sqlAuthEnabled -eq $True) {
+    $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+    $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
+    $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
+    $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
+    
+    if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
+        try {
+        $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
+        $sqlCredentials = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json)
+        } catch {
+            $sqlCredentials = $null
+        }
+    }
+    
+    $queryResponse = $null
+    if(-Not [string]::IsNullOrEmpty($sqlCredentials)) {
+        $sqlCredential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq "$instanceName"})[0] 
+        if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
+            $queryResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstanceName -Q $query -y 0
+        }
+    }
+}
+
+if ([string]::IsNullOrEmpty($queryResponse)) {
+    $queryResponse =  sqlcmd -S $serverInstanceName -Q $query -y 0
+}
+`;
+
 const sqlQueryExecution = (instance: string, query: string, sqlAuthEnabled: boolean) =>
     `
-    $serverInstanceName = "${instance}"
-    $query = "${query}"
-    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
-    
-    if($sqlAuthEnabled -eq $True) {
-        $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
-        $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
-        $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
-        $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
-        
-        if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
-            try {
-            $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
-            $sqlCredentials = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json)
-            } catch {
-                $sqlCredentials = $null
-            }
-        }
+    ${sqlQueryExecutionTemplate(instance, query, sqlAuthEnabled)}
 
-        if(-Not [string]::IsNullOrEmpty($sqlCredentials)) {
-            $sqlCredential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq $instance})[0] 
-            if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                $responseObject = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstanceName -Q "$query" -y 0
-            }
-        }
-    }
-    
-    if ([string]::IsNullOrEmpty($responseObject)) {
-        $responseObject =  sqlcmd -S $serverInstanceName -Q $query -y 0
-    }
-
-    $responseObject 
+    $queryResponse 
 
 `;
 
@@ -1050,5 +1045,6 @@ export {
     INSTANCE_DETAILS,
     copyPowerShellModule,
     sqlQueryExecution,
-    readSsmParameter
+    readSsmParameter,
+    sqlQueryExecutionTemplate
 };

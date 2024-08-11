@@ -995,7 +995,7 @@ async function checkDatabaseExists(
         return userDatabase?.some(db => db.name === databaseName) ?? false;
     }
 
-    const command = [sqlQueryExecution(`${instanceName}`, `${DATABASE_NAME_EXISTS(databaseName)}`, sqlAuthEnabled)];
+    const command = [sqlQueryExecution(instanceName, DATABASE_NAME_EXISTS(databaseName), sqlAuthEnabled)];
 
     try {
         const checkDatabaseExistsResponse = await callSsmExecution(
@@ -1032,7 +1032,7 @@ async function getSqlServerVersion(
     sqlAuthEnabled: boolean = false
 ) {
     logger.info('Get SQL server version:', { credentialsId, region, activeNodeInstanceId, instanceName });
-    const command = [sqlQueryExecution(`${instanceName}`, 'SELECT @@VERSION', sqlAuthEnabled)];
+    const command = [sqlQueryExecution(instanceName, 'SELECT @@VERSION', sqlAuthEnabled)];
     const sqlServerVersionResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
     const serverInfo = sqlServerVersionResponse ? sqlServerVersionResponse?.replaceAll('\r\n', '').split('\t') : ''; // const sqlServerVersion: parsedSqlSeverVersionResponse[0].substring(0, serverInfo[0].indexOf('(')).trim(),
     const sqlServerVersion = serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim();
