@@ -1683,10 +1683,6 @@ async function getDatabaseMountPointInfo(
             sqlQueryExecution(srcDetails.instanceName, mountPointQuery(databaseName), srcDetails.sqlAuthEnabled)
         ];
 
-        logger.info('@@@@@@@@@@@@@@@@');
-
-        logger.info(command);
-
         const mountPoints = await callSsmExecution(credentialsId, region, command, srcDetails.activeNodeInstanceId);
         if (!mountPoints) {
             throw createError('No mount points found.');

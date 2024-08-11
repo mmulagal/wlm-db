@@ -421,7 +421,7 @@ const enterpriseFeatureUsageCheck = {
 };
 
 const checkDatabaseIntegirty = {
-    commands: [checkDatabaseIntegrityScript('test-db', '.')]
+    commands: [checkDatabaseIntegrityScript('test-db', '.', '', false)]
 };
 
 const getSnapshotsToCloneCommand = {
