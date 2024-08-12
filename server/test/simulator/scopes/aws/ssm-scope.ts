@@ -69,6 +69,7 @@ import {
     getConnectionInfo
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
+import { DEFAULT_INSTANCE_NAME } from '../../../../src/utils/consts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -344,11 +345,17 @@ const createCloneDbCommand = {
 
 const addExtendedPropertiesCommand = {
     commands: [
-        addExtendedProperties('testdb', '$env:computername', {
-            tag: 'demo',
-            cloned_by: 'netapp_wf',
-            source: 'resource|instance|testdb'
-        })
+        addExtendedProperties(
+            'testdb',
+            DEFAULT_INSTANCE_NAME,
+            '$env:computername',
+            {
+                tag: 'demo',
+                cloned_by: 'netapp_wf',
+                source: 'resource|instance|testdb'
+            },
+            true
+        )
     ]
 };
 
@@ -386,7 +393,7 @@ const detachDbAndRemoveAccessPathCommand = {
 
 const deleteExtendedPropertiesCommand = {
     commands: [
-        deleteExtendedPropertiesScript('test-db', '$env:computername', [
+        deleteExtendedPropertiesScript('test-db', DEFAULT_INSTANCE_NAME, '$env:computername', [
             'cloned_by',
             'source',
             'createdAt',
@@ -421,7 +428,7 @@ const enterpriseFeatureUsageCheck = {
 };
 
 const checkDatabaseIntegirty = {
-    commands: [checkDatabaseIntegrityScript('test-db', '.', '', false)]
+    commands: [checkDatabaseIntegrityScript('test-db', DEFAULT_INSTANCE_NAME, '.', '', false)]
 };
 
 const getSnapshotsToCloneCommand = {
