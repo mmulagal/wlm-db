@@ -6,6 +6,8 @@ import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
 import FullStoryComp from './common/FullStoryComp';
 import ComponentLoader from './common/ComponentLoader/ComponentLoader';
+import { useEffect } from 'react';
+import { postMessageToCM } from './utils/bxputils';
 
 function App() {
     const { loading, accountId } = useAppSelector(state => state.auth);
@@ -14,6 +16,16 @@ function App() {
 
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+
+    useEffect(() => {
+        postMessageToCM({
+            type: 'SERVICE:READY',
+            payload: 'iframev2'
+        });
+        postMessageToCM({
+            type: 'READY'
+        });
+    }, []);
 
     return (
         <>
