@@ -37,7 +37,8 @@ const SavingsCalculatorApi = () => {
         selectedInstanceId,
         savingsCalculatorRefresh,
         selectedDeploymentModel,
-        selectedPartnerInstanceId
+        selectedPartnerInstanceId,
+        monthlyBYOLCost
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
@@ -78,12 +79,18 @@ const SavingsCalculatorApi = () => {
     }, [unManagedHostFormatedList, selectedInstanceId]);
 
     const getStorageSavingsData = async () => {
-        const payload = {
+        let payload: any = {
             snapshotFrequency: selectedSnapshotFrequency?.value,
             clonedCopiesCount: numberOfClonedCopies,
             cloneRefreshFrequency: selectedCloneRefresh?.value,
             monthlyChangeRatePercentage: monthlyChangeRate
         };
+        if (monthlyBYOLCost) {
+            payload = {
+                ...payload,
+                monthlySqlByolCost: Number(monthlyBYOLCost)
+            };
+        }
         try {
             const result: any = await getStorageSavingsApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
@@ -104,12 +111,18 @@ const SavingsCalculatorApi = () => {
     };
 
     const getViewCalculationsData = async () => {
-        const payload = {
+        let payload: any = {
             snapshotFrequency: selectedSnapshotFrequency?.value,
             clonedCopiesCount: numberOfClonedCopies,
             cloneRefreshFrequency: selectedCloneRefresh?.value,
             monthlyChangeRatePercentage: monthlyChangeRate
         };
+        if (monthlyBYOLCost) {
+            payload = {
+                ...payload,
+                monthlySqlByolCost: Number(monthlyBYOLCost)
+            };
+        }
         try {
             const result: any = await getViewCalculationsApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
@@ -151,7 +164,14 @@ const SavingsCalculatorApi = () => {
 
     useEffect(() => {
         triggerRefreshApi();
-    }, [selectedSnapshotFrequency, numberOfClonedCopies, selectedCloneRefresh, monthlyChangeRate, selectedInstanceId]);
+    }, [
+        selectedSnapshotFrequency,
+        numberOfClonedCopies,
+        selectedCloneRefresh,
+        monthlyChangeRate,
+        selectedInstanceId,
+        monthlyBYOLCost
+    ]);
 
     useEffect(() => {
         if (savingsCalculatorRefresh) {

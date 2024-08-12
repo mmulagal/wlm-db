@@ -1121,6 +1121,7 @@ export const GENERAL = {
         'Deployment of Microsoft SQL Server over multiple FSx for ONTAP is currently not supported.',
     COMPUTE_RECOMMENDED_TOOLTIP:
         'The cost for compute of SQL over EBS is based on current instance type vs. cost of compute of SQL server over FSxN based on your selected instance type.',
+    BYOL_TEXT: 'Monthly SQL BYOL costs($)',
     CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI: 'Source database is not hosted on a NetApp iSCSI drive'
 };
 

@@ -768,32 +768,8 @@ const SQL_RESOURCE_ASSETS = [
         url: `${WLMDB}/scripts/dbcreate.zip`
     },
     {
-        name: 'ScriptVpcCheck',
-        url: `${WLMDB}/validation/Validate-VPCConnectivity.ps1`
-    },
-    {
-        name: 'ScriptUpdateDnsServers',
-        url: `${WLMDB}/validation/Update-DNSServers.ps1`
-    },
-    {
-        name: 'ScriptRenameComputer',
-        url: `${WLMDB}/validation/Rename-Computer.ps1`
-    },
-    {
-        name: 'ScriptRestartComputer',
-        url: `${WLMDB}/validation/Restart-Computer.ps1`
-    },
-    {
-        name: 'ScriptAdValidation',
-        url: `${WLMDB}/validation/Validate-Credentials.ps1`
-    },
-    {
-        name: 'ScriptFSxValidation',
-        url: `${WLMDB}/validation/Validate-FsxConnectivity.ps1`
-    },
-    {
-        name: 'ScriptAmiValidation',
-        url: `${WLMDB}/validation/Validate-Ami.ps1`
+        name: 'ScriptValidation',
+        url: `${WLMDB}/scripts/validation.zip`
     },
     {
         name: 'DependentPackages',

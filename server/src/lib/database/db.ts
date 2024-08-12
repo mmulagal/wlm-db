@@ -529,15 +529,16 @@ async function deleteDeploymentJobById(accountId: string, jobId: string) {
     });
 }
 
-async function updateResourceMetaData(accountId: string, resourceId: string, metaData: any) {
-    logger.info('Updating resource metadata', { accountId, resourceId });
+async function updateResourceMetaData(accountId: string, credentialsId: string, resourceId: string, metaData: any) {
+    logger.info('Updating resource metadata', { accountId, resourceId, credentialsId });
 
     accountId = checkAccount(accountId);
 
     return prisma.client.resource.updateMany({
         where: {
             account_id: accountId,
-            resource_id: resourceId
+            resource_id: resourceId,
+            credentials_id: credentialsId
         },
         data: {
             ...(!isEmpty(metaData) && { metadata: metaData })

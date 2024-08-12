@@ -35,7 +35,7 @@ import {
 } from '../../../utils/apiService';
 import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
-import { WLF_TABS, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import { SAVINGS_CALC_MODE, WLF_TABS, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
 import InventoryApis from '../../Inventory/InventoryApis';
@@ -45,7 +45,10 @@ import ExploreSavings from '../../ExploreSavings/ExploreSavings';
 import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCalulator';
 import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculations';
 import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorApi';
-import { setSavingsCalculatorRefresh } from '../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setSavingsCalculatorFrom,
+    setSavingsCalculatorRefresh
+} from '../../../store/workloadFactory/exploreSavingsSlice';
 import SandboxApis from '../../Sandbox/SandboxApis';
 import InventoryV2 from '../../InventoryV2/InventoryV2';
 import InventoryApisV2 from '../../InventoryV2/InventoryApisV2';
@@ -97,6 +100,12 @@ const HeaderComponent = ({ tab }: Tab) => {
         let tabValue = '';
         if (tab === WLF_TABS.INVENTORY) {
             tabValue = WLF_TABS.INVENTORY;
+        } else if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+            tabValue = WLF_TABS.SAVINGS_CALCULATOR;
+            dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
+        } else if (tab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+            tabValue = WLF_TABS.SAVINGS_CALCULATOR;
+            dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
         } else {
             tabValue = selectedHeaderTab;
         }
