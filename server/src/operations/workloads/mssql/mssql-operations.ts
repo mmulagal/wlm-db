@@ -90,7 +90,7 @@ async function getDatabasesCount(
 ) {
     logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId);
 
-    const commands = [sqlQueryExecution(`${instanceName}`, `${DATABASES_COUNT_V2}`, sqlAuthEnabled)];
+    const commands = [sqlQueryExecution(instanceName, DATABASES_COUNT_V2, sqlAuthEnabled)];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
     logger.debug('Fetching databases count response', response);
     return response ? sqlResponseParsing(response)[0] : undefined;
@@ -129,9 +129,7 @@ async function getDataBasesSummary(
         const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
         const batchQueries: string[] = [];
         for (let i = 0, offset = 0; i < rowscount; i++) {
-            batchQueries.push(
-                sqlQueryExecution(`${instanceName}`, `${DATABASES(offset, DB_ROWS_COUNT)}`, sqlAuthEnabled)
-            );
+            batchQueries.push(sqlQueryExecution(instanceName, DATABASES(offset, DB_ROWS_COUNT), sqlAuthEnabled));
             offset += DB_ROWS_COUNT;
         }
 
@@ -280,12 +278,12 @@ async function getResourceUtilisationDetails(
 
     let commands: string[] = [];
     const metricQuery = resourceUtilisationQuery(metricType);
-    commands = [sqlQueryExecution(`${instanceName}`, `${metricQuery}`, sqlAuthEnabled)];
+    commands = [sqlQueryExecution(instanceName, metricQuery, sqlAuthEnabled)];
 
     if (metricType === DATABASE_METRIC_TYPE.DISK) {
-        const dbSizecommand = [sqlQueryExecution(`${instanceName}`, `${DB_SIZE}`, sqlAuthEnabled)];
+        const dbSizecommand = [sqlQueryExecution(instanceName, DB_SIZE, sqlAuthEnabled)];
 
-        const diskUtilizationCommand = [sqlQueryExecution(`${instanceName}`, `${DISK_UTILISATION}`, sqlAuthEnabled)];
+        const diskUtilizationCommand = [sqlQueryExecution(instanceName, DISK_UTILISATION, sqlAuthEnabled)];
 
         const [diskdata, size] = await Promise.all([
             callSsmExecution(credentialsId, region, diskUtilizationCommand, activeNodeInstanceId, undefined, false),
@@ -726,7 +724,7 @@ async function getNativeSQLProtection(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
 
-        const command = [sqlQueryExecution(`${instanceName}`, `${NATIVE_SQL_BACKUPS}`, sqlAuthEnabled)];
+        const command = [sqlQueryExecution(instanceName, NATIVE_SQL_BACKUPS, sqlAuthEnabled)];
         const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
 
         const cleanedResponse = response?.replaceAll('\r\n', '');
@@ -756,7 +754,7 @@ async function getPerformanceMetrics(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
     }
 
-    const commands = [sqlQueryExecution(`${instanceName}`, `${PERFORMANCE_METRICS_WITH_LATENCY}`, sqlAuthEnabled)];
+    const commands = [sqlQueryExecution(instanceName, PERFORMANCE_METRICS_WITH_LATENCY, sqlAuthEnabled)];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId, undefined, false);
 
     logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
@@ -792,7 +790,7 @@ async function getNativeSQLBackedupDatabases(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
 
-        const command = [sqlQueryExecution(`${instanceName}`, `${SQL_BACKUPS}`, sqlAuthEnabled)];
+        const command = [sqlQueryExecution(instanceName!, SQL_BACKUPS, sqlAuthEnabled)];
 
         const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
 
@@ -1048,7 +1046,7 @@ async function getMssqlInstanceGuid(
     sqlAuthEnabled: boolean = false
 ) {
     logger.info('Fetching mssql instance id', nodeIds, instanceName);
-    const commands = [sqlQueryExecution(`${instanceName}`, `${INSTANCE_GUID}`, sqlAuthEnabled)];
+    const commands = [sqlQueryExecution(instanceName, INSTANCE_GUID, sqlAuthEnabled)];
     let response;
     try {
         let sqlInstanceGuid;
