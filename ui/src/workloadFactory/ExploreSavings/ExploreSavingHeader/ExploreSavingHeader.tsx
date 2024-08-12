@@ -7,7 +7,7 @@ import ExploreSavingsTable from '../ExploreSavingsTable/ExploreSavingsTable';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import ExploreSavingsTableV2 from '../ExploreSavingsTableV2/ExploreSavingsTableV2';
-import { handleManualTCO, handleManualTCOFSX } from '../ExploreSavingsUtils';
+import { handleManualTCOEBS, handleManualTCOFSXW } from '../ExploreSavingsUtils';
 import { useDispatch } from 'react-redux';
 import useResize from '../../../common/hooks/useResize';
 
@@ -46,14 +46,14 @@ const ExploreSavingHeader = () => {
 
                                 <span className={styles.subText}>
                                     <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
-                                    <span className={styles.link} onClick={() => handleManualTCO(dispatch)}>
+                                    <span className={styles.link} onClick={() => handleManualTCOEBS(dispatch)}>
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
                                     <span
                                         className={styles.link}
-                                        onClick={() => {}}
-                                        style={{ color: 'var(--text-disabled)' }}
-                                        // onClick={() => handleManualTCOFSX(dispatch)}
+                                        // onClick={() => {}}
+                                        // style={{ color: 'var(--text-disabled)' }}
+                                        onClick={() => handleManualTCOFSXW(dispatch)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
@@ -93,14 +93,14 @@ const ExploreSavingHeader = () => {
 
                                 <span className={styles.subText}>
                                     <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
-                                    <span className={styles.link} onClick={() => handleManualTCO(dispatch)}>
+                                    <span className={styles.link} onClick={() => handleManualTCOEBS(dispatch)}>
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
                                     <span
                                         className={styles.link}
-                                        onClick={() => {}}
-                                        style={{ color: 'var(--text-disabled)', whiteSpace: 'unset' }}
-                                        // onClick={() => handleManualTCOFSX(dispatch)}
+                                        // onClick={() => {}}
+                                        // style={{ color: 'var(--text-disabled)', whiteSpace: 'unset' }}
+                                        onClick={() => handleManualTCOFSXW(dispatch)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
@@ -140,14 +140,14 @@ const ExploreSavingHeader = () => {
 
                                 <span className={styles.subText}>
                                     <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
-                                    <span className={styles.link} onClick={() => handleManualTCO(dispatch)}>
+                                    <span className={styles.link} onClick={() => handleManualTCOEBS(dispatch)}>
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
                                     <span
                                         className={styles.link}
-                                        onClick={() => {}}
-                                        style={{ color: 'var(--text-disabled)' }}
-                                        // onClick={() => handleManualTCOFSX(dispatch)}
+                                        // onClick={() => {}}
+                                        // style={{ color: 'var(--text-disabled)' }}
+                                        onClick={() => handleManualTCOFSXW(dispatch)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>

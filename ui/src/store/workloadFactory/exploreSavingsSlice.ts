@@ -356,6 +356,13 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualInstanceType = null;
             state.selectedSecondaryManualInstanceType = null;
             state.monthlyBYOLCost = '';
+            state.selectedManualDeploymentType = null;
+            state.selectedManualStorageType = null;
+            state.manualStorageCapacity = 2;
+            state.selectedManualStorageCapacityUnit = null;
+            state.selectedManualFSXIOPS = 6000;
+            state.selectedManualFSXThroughput = 128;
+            state.requestedPayload = {};
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
