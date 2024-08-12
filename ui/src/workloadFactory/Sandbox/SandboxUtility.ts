@@ -1,3 +1,4 @@
+import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import { GENERAL } from '../../utils/appConstants';
 import { CreateSandboxPayloadEntities, SandboxListEntities } from '../../utils/types/sandBoxTypes';
 import { formatDateWithTime, formatSize, getTimeDifferenceInDays } from '../../utils/utilityFunctions';
@@ -104,11 +105,24 @@ export const getDefaultDriveLetters = (
     source: any,
     target: any,
     selectedMount: any,
-    driveInfoData: any
+    driveInfoData: any,
+    dispatch: any
 ) => {
     const { databaseDataPath, databaseLogPath } = dbMountPointsData || {};
     const dataPathDrive = databaseDataPath?.[0]?.[0];
     const logPathDrive = databaseLogPath?.[0]?.[0];
+    if ((dataPathDrive && !dataPathDrive?.match(/[D-Z]/i)) || (logPathDrive && !logPathDrive?.match(/[D-Z]/i))) {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.ERROR,
+                message: GENERAL.CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI
+            })
+        );
+        return {
+            dataDrive: dataPathDrive === '\\' ? databaseDataPath?.[0]?.split('\\')?.[2] : dataPathDrive,
+            logDrive: logPathDrive === '\\' ? databaseLogPath?.[0]?.split('\\')?.[2] : logPathDrive
+        };
+    }
     let defaultDataDriveLetter: any, defaultLogDriveLetter: any;
     if (
         selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT &&
@@ -116,7 +130,29 @@ export const getDefaultDriveLetters = (
         source?.selectedDatabaseInstance?.value === target?.selectedDatabaseInstance?.value
     ) {
         defaultDataDriveLetter = dataPathDrive;
+        const recommendedDataDrive = driveInfoData?.existingDriveInfo?.find(
+            (drive: any) => drive.driveLetter === dataPathDrive
+        );
+        if (recommendedDataDrive?.hasOwnProperty('isNetappDrive') && !recommendedDataDrive.isNetappDrive) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: GENERAL.CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI
+                })
+            );
+        }
         defaultLogDriveLetter = logPathDrive;
+        const recommendedLogDrive = driveInfoData?.existingDriveInfo?.find(
+            (drive: any) => drive.driveLetter === logPathDrive
+        );
+        if (recommendedLogDrive?.hasOwnProperty('isNetappDrive') && !recommendedLogDrive.isNetappDrive) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: GENERAL.CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI
+                })
+            );
+        }
     } else {
         const recommendedDataDrive = driveInfoData?.existingDriveInfo?.find(
             (drive: any) => drive.driveLetter === dataPathDrive
