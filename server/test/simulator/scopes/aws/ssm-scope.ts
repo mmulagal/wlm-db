@@ -368,7 +368,7 @@ const cleanUpOntapResourcesCommand = {
 };
 
 const mountPointQueryCommand = {
-    commands: [sqlQueryExecution('$env:computername', mountPointQuery('test-database'), false)]
+    commands: [sqlQueryExecution('$env:computername', mountPointQuery('test-database'), true)]
 };
 
 const getInstanceGuidCommand = { commands: [sqlQueryExecution('$env:computername', `${INSTANCE_GUID}`, false)] };
