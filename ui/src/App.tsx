@@ -18,13 +18,27 @@ function App() {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     useEffect(() => {
-        window.addEventListener('message', e => {
-            console.log(e);
-        });
         postMessageToCM({
             type: 'SERVICE:READY',
             payload: 'iframev2'
         });
+    }, []);
+
+    useEffect(() => {
+        const handleParentMessage = (e: any) => {
+            if (e?.data?.type === 'SERVICE:ON-READY') {
+                postMessageToCM({
+                    type: 'SERVICE:READY',
+                    payload: 'iframev2'
+                });
+            }
+        };
+
+        window.addEventListener('message', handleParentMessage);
+
+        return () => {
+            window.removeEventListener('message', handleParentMessage);
+        };
     }, []);
 
     return (
