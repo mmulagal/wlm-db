@@ -18,12 +18,12 @@ function App() {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     useEffect(() => {
+        window.addEventListener('message', e => {
+            console.log(e);
+        });
         postMessageToCM({
             type: 'SERVICE:READY',
             payload: 'iframev2'
-        });
-        postMessageToCM({
-            type: 'READY'
         });
     }, []);
 
