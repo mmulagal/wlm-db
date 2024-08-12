@@ -16,11 +16,14 @@ import {
     DB_VERSIONS,
     GIB_IN_BYTE,
     OS_VERSIONS_LIST,
+    SAVINGS_CALC_MODE,
     SQL_DEPLOYMENT_MODE,
     THROUGHPUT_LIST
 } from '../../../utils/consts';
 
 export const comparisonData = (calculatedResponse: any) => {
+    const state = store.getState();
+    const { recommendedTargetInstance } = state.exploreSavings;
     return [
         {
             type: 'Capacity',
@@ -69,6 +72,7 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'Compute',
+            isTooltip: recommendedTargetInstance ? GENERAL.COMPUTE_RECOMMENDED_TOOLTIP : '',
             fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)
@@ -218,9 +222,14 @@ export const MSSQLServerInstance = (sqlData: any) => {
 };
 
 export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: string) => {
+    const state = store.getState();
+    const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    }
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -286,7 +295,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'EC2 machines total cost',
-                          value: `${viewCalculation.totalFsxEc2MachineCost}`,
+                          value: `$${viewCalculation.totalFsxEc2MachineCost}`,
                           text: ''
                       }
                   ]
@@ -488,7 +497,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity}`,
-                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x FSXn storage capacity (${viewCalculation.fsxOntapCalculation.desiredStorageCapacity})`
+                text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x FSx for ONTAP storage capacity (${viewCalculation.fsxOntapCalculation.desiredStorageCapacity})`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -565,19 +574,14 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 label: 'Unit conversions'
             },
             {
-                label: 'Clone frequency',
-                value: `${viewCalculation.fsxCloneCalculation.cloneRefreshFrequency}`,
-                text: ``
-            },
-            {
-                label: 'Change rate between clones (%)',
-                value: `${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}%`,
-                text: `Monthly change rate (${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}%) / Number of periods (${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
+                label: 'Monthly change rate',
+                value: `${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}%`,
+                text: `Based on user input`
             },
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxCloneCalculation.desiredStorageCapacity}`,
-                text: `Number of cloned copies x (%Change rate x Total FSx for ONTAP capacity x Number of clones in a month)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}% x ${viewCalculation.fsxCloneCalculation.totalFsxnCapacity} x${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
+                text: `Number of cloned copies x (Monthly change rate x Total FSx for ONTAP capacity)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}% x ${viewCalculation.fsxCloneCalculation.totalFsxnCapacity})`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -603,7 +607,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: `Desired storage capacity  - Storage savings from compression & deduplication = ${viewCalculation.fsxCloneCalculation.desiredStorageCapacity} - ${viewCalculation.fsxCloneCalculation.storageSavingsFromCompressionAndDeduplication}`
             },
             {
-                label: 'SSD storage GiB per month',
+                label: 'SSD storage per month',
                 value: `${viewCalculation.fsxCloneCalculation.ssdStoragePerMonth}`,
                 text: `Effective storage capacity for FSx for ONTAP x Percentage of data on SSD storage = ${viewCalculation.fsxCloneCalculation.effectiveFsxnStorageCapacity} x ${viewCalculation.fsxCloneCalculation.percentageOfDataOnSsdStorage}%`
             },
@@ -628,17 +632,17 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Total monthly storage cost',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge}`,
-                text: `Total all FSXn storage costs`
+                text: `Total all FSx for ONTAP storage costs`
             },
             {
                 label: 'Total monthly iops cost',
                 value: `$${viewCalculation.fsxOntapCalculation.additionalBilledCostForSsdIops}`,
-                text: `Total all FSXn iops costs`
+                text: `Total all FSx for ONTAP iops costs`
             },
             {
                 label: 'Total monthly throughput cost',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyFsxnThroughputCapacityCost}`,
-                text: `Total all FSXn througput costs`
+                text: `Total all FSx for ONTAP througput costs`
             },
             {
                 label: 'Total monthly snapshots cost',
@@ -660,9 +664,14 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
 };
 
 export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentModel: string) => {
+    const state = store.getState();
+    const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    }
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -728,7 +737,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Total EC2 machines cost',
-                          value: `${viewCalculation.totalEBSEc2MachineCost}`,
+                          value: `$${viewCalculation.totalEBSEc2MachineCost}`,
                           text: ''
                       }
                   ]
@@ -1099,6 +1108,310 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
     };
 };
 
+export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentModel: string) => {
+    const state = store.getState();
+    const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    }
+    return {
+        Ec2InstanceCalculation:
+            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                ? [
+                      {
+                          label: 'Machine 1 specification'
+                      },
+                      {
+                          label: 'Instance type',
+                          value: `m5.xlarge`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL edition',
+                          value: `Standard Edition`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL license included',
+                          value: `Yes`,
+                          text: ''
+                      },
+                      {
+                          label: 'Machine 1 pricing calculations'
+                      },
+                      {
+                          label: 'Instance hourly price',
+                          value: `$0.856`,
+                          text: 'Instance hourly pricing with SQL license included'
+                      },
+                      {
+                          label: 'EC2 machine1 cost',
+                          value: `$274.48`,
+                          text: `Instance hourly price x number of hours in a month = $0.856 x 730`
+                      },
+                      {
+                          label: 'Machine 2 specification'
+                      },
+                      {
+                          label: 'Instance type',
+                          value: `m5.xlarge`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL edition',
+                          value: `Standard Edition`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL license included',
+                          value: `Yes`,
+                          text: ''
+                      },
+                      {
+                          label: 'Machine 2 pricing calculations'
+                      },
+                      {
+                          label: 'Instance hourly price',
+                          value: `$0.856`,
+                          text: 'Instance hourly pricing with SQL license included'
+                      },
+                      {
+                          label: 'EC2 machine2 cost',
+                          value: `$274.48`,
+                          text: `Instance hourly price x number of hours in a month = $0.856 x 730`
+                      },
+                      {
+                          label: 'Total EC2 machines cost',
+                          value: `$548.80`,
+                          text: ''
+                      }
+                  ]
+                : [
+                      {
+                          label: 'Machine 1 specification'
+                      },
+                      {
+                          label: 'Instance type',
+                          value: `m5.xlarge`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL edition',
+                          value: `Standard Edition`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL license included',
+                          value: `Yes`,
+                          text: ''
+                      },
+                      {
+                          label: 'Machine 1 pricing calculations'
+                      },
+                      {
+                          label: 'Instance hourly price',
+                          value: `$0.856`,
+                          text: ''
+                      },
+                      {
+                          label: 'EC2 machine total cost',
+                          value: `$274.48`,
+                          text: `Instance hourly price x number of hours in a month = $0.856 x 730`
+                      }
+                  ],
+        FSxWCalculation: [
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Desired storage capacity',
+                value: `5,120 GiB`,
+                text: `Desired storage capacity x 1,024 =  5 TiB x 1,024`
+            },
+            {
+                label: 'Deduplication savings',
+                value: `0%`,
+                text: ''
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'Storage savings',
+                value: `0 GiB`,
+                text: `Desired storage capacity x Deduplication savings = 5,120 GiB x 0%`
+            },
+            {
+                label: 'Effective provisioned storage capacity',
+                value: `5,120 GiB`,
+                text: `Desired storage capacity - Storage savings =  5,120 GiB - 0 GiB`
+            },
+            {
+                label: 'Monthly cost for storage capacity',
+                value: `$665.60`,
+                text: `Effective provisioned storage capacity for FSx for Windows File Server x FSx for Windows File Server SSD Price = 5,120 GiB x $0.13`
+            },
+            {
+                label: 'Total default provisioned IOPS',
+                value: `15,360 IOPS`,
+                text: ``
+            },
+            {
+                label: 'Additional user-provisioned IOPS',
+                value: `9,360 IOPS`,
+                text: ``
+            },
+            {
+                label: 'Billed IOPS',
+                value: `0 IOPS`,
+                text: ''
+            },
+            {
+                label: 'Total monthly cost for provisioned SSD IOPS',
+                value: `$0`,
+                text: `Billed x FSx for Windows File Server IOPS price = 0 IOPS x $0.01`
+            },
+            {
+                label: 'Number of file systems required for storage capacity',
+                value: `0.08 file system(s)`,
+                text: `Effective provisioned storage capacity for FSx for Windows File Server  ÷ FSx for Windows File Server maximum capacity  = 5,120 GiB ÷ 65,536 GiB`
+            },
+            {
+                label: 'Number of file systems required for throughput capacity',
+                value: `0 file system(s)`,
+                text: `FSx for Windows File Server throughput ÷ FSx for Windows File Server max throughput = 32 MB/s ÷ 12,288 MB/s`
+            },
+            {
+                label: 'Required fractional number of file systems',
+                value: `0.08 file system(s)`,
+                text: ``
+            },
+            {
+                label: 'Required whole number of file systems',
+                value: `1 file system(s)`,
+                text: ` `
+            },
+            {
+                label: 'Minimum throughput capacity required',
+                value: `8 MB/s`,
+                text: `Calculating the minimum throughput capacity needed to provision file systems x FSx for Windows File Server minimum throughput = 1 file systems x 8 MB/s`
+            },
+            {
+                label: 'Provisioned throughput capacity',
+                value: `32 MB/s`,
+                text: `Calculated as the greater of desired aggregate throughput and the minimum throughput capacity required`
+            },
+            {
+                label: 'Total monthly cost for throughput capacity',
+                value: `$70.40`,
+                text: `Provisioned throughput capacity, calculated as the greater of desired aggregate throughput and the minimum throughput capacity required x FSx for Windows File Server throughput price = 32 MB/s x $2.2`
+            },
+            {
+                label: `Single Availability Zone total monthly cost`,
+                value: `$736`,
+                text: `Total monthly cost for FSx for Windows File Server storage capacity  + Total monthly cost for FSx for Windows File Server Provisioned SSD IOPS + Total monthly cost for FSx for Windows File Server throughput capacity = $665.6 + $0 + $70.4`
+            }
+        ],
+        ShadowCopyCalculation: [
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Desired shadow copy storage capacity',
+                value: `1,536 GiB`,
+                text: ``
+            },
+            {
+                label: 'Deduplication savings',
+                value: `0%`,
+                text: ``
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'Storage saving',
+                value: `0 GiB`,
+                text: `Desired shadow copy storage capacity x Deduplication savings = 1,536 GiB x 0%`
+            },
+            {
+                label: 'Effective provisioned storage capacity for FSx for Windows File Server',
+                value: `1,536 GiB`,
+                text: `Desired shadow copy storage capacity - Storage saving = 1,536 GiB - 0 GiB`
+            },
+            {
+                label: 'Shadow copies total monthly cost',
+                value: `$199.68`,
+                text: `Effective provisioned storage capacity for FSx for Windows File Server  x FSx for Windows File Server SSD price = 1,536 GiB x $0.13`
+            }
+        ],
+        cloneCalculation: [
+            {
+                label: 'Number of Cloned copies',
+                value: `1`,
+                text: ``
+            },
+            {
+                label: 'FSxW storage cost for clone',
+                value: `$4.4`,
+                text: `FSxW storage cost of primary dbs volumes not including replica dbs volumes`
+            },
+            {
+                label: 'FSxW iops cost for clone',
+                value: `$0`,
+                text: `FSxW iops cost of primary dbs volumes not including replica dbs volumes`
+            },
+            {
+                label: 'FSxW throughput cost for clone',
+                value: `$0`,
+                text: `FSxW throughput cost of primary dbs volumes not including replica dbs volumes`
+            },
+            {
+                label: 'Clones total monthly cost',
+                value: `$4.4`,
+                text: `Number of Cloned copies (1) x (primary FSxW storage cost ($4.4) + primary FSxW iops cost ($0) + primary FSxW throughput cost ($0))`
+            }
+        ],
+        totalMonthlyCost: [
+            {
+                label: 'Total monthly EC2 machine cost',
+                value: `$274.48`,
+                text: ``
+            },
+            {
+                label: 'Total monthly storage cost',
+                value: `$4.4`,
+                text: `Total storage cost across all volume disc types`
+            },
+            {
+                label: 'Total monthly iops cost',
+                value: `$0`,
+                text: `Total iops cost across all volume disc types`
+            },
+            {
+                label: 'Total monthly throughput cost',
+                value: `$0`,
+                text: `Total throughput cost across all volume disc types`
+            },
+            {
+                label: 'Total monthly snapshots cost',
+                value: `$1.144`,
+                text: ''
+            },
+            {
+                label: 'Total monthly clones cost',
+                value: `$4.4`,
+                text: ''
+            },
+            {
+                label: 'Total monthly cost',
+                value: `$285.57`,
+                text: `Total EC2 cost ($274.48) + Total storage cost ($4.4) + Total throughput cost ($0) + Total IOPS cost ($0) + Total snapshots cost ($1.144) + Total Clone cost ($4.4)`
+            }
+        ]
+    };
+};
+
 export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
     const state = store.getState();
     const initialStateForm = state.mssqlForm;
@@ -1294,7 +1607,7 @@ export const mergeAoagVolumesList = (listA: any[], listB: any[]) => {
 
 export const allPropertiesHaveValues = (obj: any) => {
     for (let key in obj) {
-        if (obj[key] === null || obj[key] === undefined || obj[key] === '') {
+        if (obj[key] === null || obj[key] === undefined || obj[key] === '' || parseInt(obj[key]) === 0) {
             return 0;
         }
     }
@@ -1345,7 +1658,7 @@ export const checkForIO2Valid = (data: any) => {
 export const gp2Valid = (data: any) => {
     const volStorageSaving = Number(data?.manualTCOStorageAmount);
     const volData = Number(data?.manualTCONumberOfVolumes);
-    if (volStorageSaving > 16384 || volData > 1000000000) {
+    if (volStorageSaving === 0 || volStorageSaving > 16384 || volData > 1000000000) {
         return false;
     }
     return true;

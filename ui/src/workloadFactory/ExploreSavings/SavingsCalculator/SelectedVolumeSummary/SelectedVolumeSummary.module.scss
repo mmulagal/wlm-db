@@ -3,11 +3,17 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin-bottom: 40px;
 
     .instanceTable {
         [class*='Table-module_header-row'] {
             position: relative !important;
             top: 0 !important;
+        }
+        [class*='Table-module_row']:hover {
+            [class*='Table-module_cell'] {
+                background-color: var(--main-background) !important;
+            }
         }
 
         [class*='Table-module_horizontal-scroll'] {

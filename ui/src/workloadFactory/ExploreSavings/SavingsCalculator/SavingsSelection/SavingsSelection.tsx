@@ -9,6 +9,7 @@ import {
     setNumberOfClonedCopies,
     setRecommendedTargetInstance,
     setSelectedCloneRefresh,
+    setSelectedMonthlyBYOLCost,
     setSelectedSnapshotFrequency
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
@@ -30,9 +31,12 @@ const SavingsSelection = ({ printState }: any) => {
         loading,
         storageSavingsResponse,
         storageSavingsLoading,
-        recommendedTargetInstance
+        recommendedTargetInstance,
+        monthlyBYOLCost,
+        selectedHostDetails
     } = useAppSelector(state => state.exploreSavings);
 
+    const [isSqlLicense, setIsSqlLicense] = useState<boolean>(true);
     const [noOfClonedCopies, setNoOfClonedCopies] = useState<any>(numberOfClonedCopies);
     const [monthlyChangeRateNo, setMonthlyChangeRateNo] = useState<any>(monthlyChangeRate);
     const [instanceTypeData, setInstanceTypeData] = useState<any>({
@@ -44,8 +48,25 @@ const SavingsSelection = ({ printState }: any) => {
     // Debounce variable
     const [clonedText, setClonedText] = useSearchDebounce(1000);
     const [changeRateText, setChangeRateText] = useSearchDebounce(1000);
+    const [textSearch, setTextSearch] = useSearchDebounce(500);
+    const [byolValue, setByolValue] = useState(monthlyBYOLCost ? monthlyBYOLCost : '');
 
     const { setDialog, closeDialog } = useDialog();
+
+    useEffect(() => {
+        setIsSqlLicense(selectedHostDetails?.sqlLicenseIncluded);
+    }, [selectedHostDetails]);
+
+    //Use effect for machine description
+    useEffect(() => {
+        setTextSearch(byolValue);
+    }, [byolValue]);
+
+    useEffect(() => {
+        if (textSearch || monthlyBYOLCost) {
+            dispatch(setSelectedMonthlyBYOLCost(textSearch));
+        }
+    }, [textSearch]);
 
     useEffect(() => {
         setInstanceTypeData({
@@ -112,7 +133,9 @@ const SavingsSelection = ({ printState }: any) => {
             options.push(
                 generateOptionType(
                     option?.instanceType,
-                    `${option?.instanceType} (for all instances)`,
+                    <div>
+                        {option?.instanceType} <span className={styles.greyedOutText}>(for all instances)</span>
+                    </div>,
                     generateLabel2ForInstanceType(
                         instanceTypeData.options,
                         option?.instanceType,
@@ -233,7 +256,7 @@ const SavingsSelection = ({ printState }: any) => {
                 />
             </div>
 
-            <div className={styles.secondRow}>
+            <div className={`${styles.secondRow} ${styles.infoCenter}`}>
                 {printState && (
                     <div className={styles.mockInput}>
                         <DsTypography variant="Regular_14" className={styles.mockLabel}>
@@ -266,6 +289,18 @@ const SavingsSelection = ({ printState }: any) => {
                 </div>
             </div>
             <div className={styles.secondRow}>
+                {!isSqlLicense && (
+                    <TextField
+                        label={GENERAL.BYOL_TEXT}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setByolValue(numVal);
+                        }}
+                        isOptional={true}
+                        value={byolValue}
+                        className={styles.deploymentModelWidth}
+                    />
+                )}
                 <div className={styles.instanceTypeContainer}>
                     <SelectField
                         label={GENERAL.RECOMMENDED_INSTANCE_TYPE}

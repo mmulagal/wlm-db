@@ -1,6 +1,6 @@
 .jobMonitoring {
-    height: calc(100vh - 128px);
     width: 100%;
+    height: inherit;
     background-color: var(--main-background);
     overflow-y: auto;
     display: flex;
@@ -22,9 +22,31 @@
         width: 83.95%;
         max-width: 1612px;
         justify-content: space-between;
-        margin-top: 24px;
+        margin-top: 40px;
 
-        margin-right: 40px;
+        .jobMonitoringSelectBox {
+            position: relative;
+            top: -10px;
+            [class*='content'] {
+                [class*='Select-module_base'] {
+                    div {
+                        div {
+                            outline: none !important;
+                        }
+                    }
+                }
+
+                [class*='Select-module_base'] {
+                    margin-bottom: 0 !important;
+                    div {
+                        div:hover {
+                            outline: none !important;
+                        }
+                    }
+                }
+            }
+        }
+
         .heading {
             line-height: unset;
         }
@@ -32,6 +54,11 @@
         .selectContainer {
             width: 168px;
             --menu-max-height: 280px;
+        }
+
+        .rightSegment {
+            display: flex;
+            gap: 24px;
         }
     }
 
@@ -72,6 +99,7 @@
 
     .tableSection {
         margin-top: 40px;
+        margin-bottom: 96px;
         width: 87%;
         display: flex;
         justify-content: center;

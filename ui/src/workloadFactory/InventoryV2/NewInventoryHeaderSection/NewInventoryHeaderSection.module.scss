@@ -1,7 +1,7 @@
 .chartSection {
     background-color: var(--content-background);
     height: 276px;
-    margin-top: 24px;
+
     margin-bottom: 24px;
     box-shadow: 2px 2px 6px 0px #e0e0e0;
     padding: 40px 40px 40px 56px;
@@ -97,6 +97,11 @@
 
 @media screen and (min-width: 1501px) and (max-width: 1770px) {
     .chartSection {
+        height: 239px;
         gap: 92px;
+
+        .secondPart {
+            margin-top: 25px;
+        }
     }
 }

@@ -6,6 +6,7 @@ import {
     FetchBaseQueryError,
     retry
 } from '@reduxjs/toolkit/query/react';
+//@ts-ignore
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import store, { RootState } from '../store/store';
 import { API_ERRORS, API_MAX_RETRIES, PRODUCTION, WLMDB_POLICIES_PROD_LINK, WLMDB_POLICIES_STAGE_LINK } from './consts';
@@ -83,9 +84,9 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         const adjustedArgs = typeof args === 'string' ? adjustedUrl : { ...args, url: adjustedUrl };
         // provide the amended url and other params to the raw base query
         const result: any = await rawBaseQuery(adjustedArgs, api, extraOptions);
-        // For deploy API if it gets rate exceeded than retry that API
+        // For deploy API and discover API if it gets rate exceeded than retry that API
         if (
-            api.endpoint === 'deploySqlTemplate' &&
+            (api.endpoint === 'deploySqlTemplate' || api.endpoint === 'discoverHosts') &&
             result.error?.data &&
             result.error.data?.message.toLowerCase().includes(API_ERRORS.RATE_EXCEEDED)
         ) {

@@ -107,13 +107,37 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     },
     recommendedTargetInstance: '',
     requestedPayload: {},
-    disableState: false
+    disableState: false,
+    selectedManualDeploymentType: null,
+    selectedManualStorageType: null,
+    manualStorageCapacity: 2,
+    selectedManualStorageCapacityUnit: null,
+    selectedManualFSXIOPS: 6000,
+    selectedManualFSXThroughput: 128
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setSelectedManualFSXThroughput: (state, action: PayloadAction<any>) => {
+            state.selectedManualFSXThroughput = action.payload;
+        },
+        setSelectedManualFSXIOPS: (state, action: PayloadAction<any>) => {
+            state.selectedManualFSXIOPS = action.payload;
+        },
+        setSelectedManualStorageCapacityUnit: (state, action: PayloadAction<any>) => {
+            state.selectedManualStorageCapacityUnit = action.payload;
+        },
+        setSelectedManualStorageCapacity: (state, action: PayloadAction<any>) => {
+            state.manualStorageCapacity = action.payload;
+        },
+        setSelectedManualStorageType: (state, action: PayloadAction<any>) => {
+            state.selectedManualStorageType = action.payload;
+        },
+        setSelectedManualDeploymentType: (state, action: PayloadAction<any>) => {
+            state.selectedManualDeploymentType = action.payload;
+        },
         setDisableState: (state, action: PayloadAction<any>) => {
             state.disableState = action.payload;
         },
@@ -331,6 +355,7 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualServerEdition = null;
             state.selectedManualInstanceType = null;
             state.selectedSecondaryManualInstanceType = null;
+            state.monthlyBYOLCost = '';
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
@@ -351,6 +376,12 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setSelectedManualFSXIOPS,
+    setSelectedManualFSXThroughput,
+    setSelectedManualStorageCapacityUnit,
+    setSelectedManualStorageCapacity,
+    setSelectedManualStorageType,
+    setSelectedManualDeploymentType,
     setSecondaryVolDetails,
     setDisableState,
     setInstanceLoading,

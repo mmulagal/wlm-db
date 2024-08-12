@@ -63,7 +63,7 @@ const MultiRingDoughnut = ({
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                     {formatFractionalNumber(hostData?.protectedPercent)}%
                 </Typography>
-                <Typography variant="Regular_14">{GENERAL.PROTECTION}</Typography>
+                <Typography variant="Regular_14">{GENERAL.PROTECTION_CHART}</Typography>
             </div>
             {(!hostData || (hostData?.protectedPercent === 0 && hostData?.unprotectedPercent === 0)) && (
                 <div className={styles.emptyCircle}></div>

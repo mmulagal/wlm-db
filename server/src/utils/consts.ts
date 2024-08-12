@@ -768,32 +768,8 @@ const SQL_RESOURCE_ASSETS = [
         url: `${WLMDB}/scripts/dbcreate.zip`
     },
     {
-        name: 'ScriptVpcCheck',
-        url: `${WLMDB}/validation/Validate-VPCConnectivity.ps1`
-    },
-    {
-        name: 'ScriptUpdateDnsServers',
-        url: `${WLMDB}/validation/Update-DNSServers.ps1`
-    },
-    {
-        name: 'ScriptRenameComputer',
-        url: `${WLMDB}/validation/Rename-Computer.ps1`
-    },
-    {
-        name: 'ScriptRestartComputer',
-        url: `${WLMDB}/validation/Restart-Computer.ps1`
-    },
-    {
-        name: 'ScriptAdValidation',
-        url: `${WLMDB}/validation/Validate-Credentials.ps1`
-    },
-    {
-        name: 'ScriptFSxValidation',
-        url: `${WLMDB}/validation/Validate-FsxConnectivity.ps1`
-    },
-    {
-        name: 'ScriptAmiValidation',
-        url: `${WLMDB}/validation/Validate-Ami.ps1`
+        name: 'ScriptValidation',
+        url: `${WLMDB}/scripts/validation.zip`
     },
     {
         name: 'DependentPackages',
@@ -1209,6 +1185,10 @@ const SQL_SERVICE_STATE = {
 
 const WIN_SQL_EC2_USAGE_OPERATION = ['RunInstances:0102', 'RunInstances:0006', 'RunInstances:0202'];
 
+const DEMO_STANADLONE_SQL_SERVER_ID = 'f4b7c5d3-e1f6-4g2a-9c4l';
+
+const DEMO_STANADLONE_INSTANCE_ID = 'i-c5x3z1a7s9d2f3g';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1493,5 +1473,7 @@ export {
     SQL_SERVICE_STATE,
     TEMPLATE_PRIVATESUBNET1_CIDRBLOCK,
     TEMPLATE_PRIVATESUBNET2_CIDRBLOCK,
-    WIN_SQL_EC2_USAGE_OPERATION
+    WIN_SQL_EC2_USAGE_OPERATION,
+    DEMO_STANADLONE_INSTANCE_ID,
+    DEMO_STANADLONE_SQL_SERVER_ID
 };

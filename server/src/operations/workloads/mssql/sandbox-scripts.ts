@@ -527,17 +527,26 @@ const createVolumeClone = (
         Function New-VolumeClone {
             $parentsvm = $sourceSvm
 
+
+            $cloneVolCreated = @()
+            $volSnapshotCreated = @()
             @($dataVolumes, $logVolumes) | ForEach-Object {
+
+                Write-Information "$logPrefix $cloneVolCreated, $volSnapshotCreated"
                 $volume = $_
+
                 Write-Information "$logPrefix Volume: $($volume | convertto-json)"
                 $snapshot = $volume.snapshot
                 if ([string]::IsNullOrEmpty($snapshot)) {
                     # Create snapshot
 
                     foreach ($volName in $volume.volumes) {
-                        $job = New-Snapshot -volumeName $volName
-                        if ($job.state -ne 'success') {
-                            throw "Could not create snapshot for $($volume.name). Ontap error: $($job.error.message)"
+                        if ($volSnapshotCreated -notcontains $volName) {
+                            $volSnapshotCreated += $volName
+                            $job = New-Snapshot -volumeName $volName
+                            if ($job.state -ne 'success') {
+                                throw "Could not create snapshot for $($volume.name). Ontap error: $($job.error.message)"
+                            }  
                         }
                     }
 
@@ -547,27 +556,31 @@ const createVolumeClone = (
                 $ApiEndpoint = "/storage/volumes"
 
                 foreach ($volName in $volume.volumes) {
-                    $body = @{
-                        "name" = $volName + '_clone_' + $epoch
-                        "svm.name" = $targetSvm
-                        "clone" = @{
-                            "is_flexclone" = $True
-                            "parent_volume" = @{
-                                "name" = $volName
+                    if ($cloneVolCreated -notcontains $volName) {
+                        $cloneVolCreated += $volName
+
+                        $body = @{
+                            "name" = $volName + '_clone_' + $epoch
+                            "svm.name" = $targetSvm
+                            "clone" = @{
+                                "is_flexclone" = $True
+                                "parent_volume" = @{
+                                    "name" = $volName
+                                }
+                                "parent_svm" = @{
+                                    "name" = $parentsvm
+                                }
+                                "parent_snapshot" = @{
+                                    "name" = $snapshot
+                                }
                             }
-                            "parent_svm" = @{
-                                "name" = $parentsvm
-                            }
-                            "parent_snapshot" = @{
-                                "name" = $snapshot
-                            }
+                        } | ConvertTo-Json
+            
+                        $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "POST"
+                        $job = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
+                        if ($job.state -ne 'success') {
+                            throw "Could not create clone for $($volume.name). Ontap error: $($job.error.message)"
                         }
-                    } | ConvertTo-Json
-        
-                    $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "POST"
-                    $job = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
-                    if ($job.state -ne 'success') {
-                        throw "Could not create snapshot for $($volume.name). Ontap error: $($job.error.message)"
                     }
                 }
             }
@@ -577,12 +590,15 @@ const createVolumeClone = (
 
         Function Add-ObjectTagsToVolume {
             Write-Information "$logPrefix Adding tags to the cloned volumes."
+            $volumeProcessed = @()
             $ApiQueryFilter = 'location.volume.name='
             @($dataVolumes, $logVolumes) | ForEach-Object {
                 foreach ($volName in $_.volumes) {
-                    $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($volName) + '_clone_' + $epoch + '|'
+                    if ($volumeProcessed -notcontains $volName) {
+                        $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($volName) + '_clone_' + $epoch + '|'
+                        $volumeProcessed += $volName
+                    }
                 }
-                # $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($_.name) + '_clone_' + $epoch + '|'
             }
     
             $ApiQueryFilter = $ApiQueryFilter.TrimEnd('|')
@@ -620,7 +636,6 @@ const createVolumeClone = (
                 }
             }
 
-            $jobStatus = @()
             $response.records | ForEach-Object {
                 $volumeid = $_.location.volume.uuid
                 $body = @"
@@ -630,7 +645,7 @@ const createVolumeClone = (
 "@
                 $ApiEndpoint = '/storage/volumes/' + $volumeid
                 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "PATCH"
-                $jobStatus += Get-OntapJobStatus -jobId $ontapResponse.job.uuid
+                $jobStatus = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
                 if ($jobStatus.state -ne 'success') {
                     throw "Could not add tags to the cloned volumes. Ontap error: $($jobStatus.error.message)"
                 }
@@ -663,13 +678,19 @@ const createVolumeClone = (
                 
                 $ClonedLuns = $CloneDataLuns + $CloneLogLuns
 
+                $lunPathProcessed = @()
+
                 $message
                 $ClonedLuns | ForEach-Object {
                     $lunPath = $_
 
-                    $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
-                    if (-not $?) {
-                        $message += "Could not change LUN signature for $lunClonePath."
+                    if ($lunPathProcessed -notcontains $lunPath) {
+                        $lunPathProcessed += $lunPath
+
+                        $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
+                        if (-not $?) {
+                            $message += "Could not change LUN signature for $lunClonePath."
+                        }
                     }
                 }
 
@@ -699,11 +720,18 @@ const createVolumeClone = (
 
 
             $records = @()
+
+            $recordsAdded = @()
+
             $lunPaths | ForEach-Object {
-                $records += @{
-                    "svm.name" = $targetSvm
-                    "lun.name" = $_
-                    "igroup.name" = $igroup
+                if ($recordsAdded -notcontains $_) {
+                    $recordsAdded += $_
+
+                    $records += @{
+                        "svm.name" = $targetSvm
+                        "lun.name" = $_
+                        "igroup.name" = $igroup
+                    }
                 }
             }
     
@@ -1149,6 +1177,7 @@ const detachDbAndRemoveAccessPath = (
     try {
         $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$dbname' GROUP BY dbid FOR JSON PATH"
 
+<<<<<<< HEAD
         $sqlres = $null
         if ($sqlCredential.useSqlAuth -eq $True) {
             $sqlres = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "${executableInstance}"  -Q $query -y 0
@@ -1156,6 +1185,9 @@ const detachDbAndRemoveAccessPath = (
         if ([string]::IsNullOrEmpty($sqlres)) {
             $sqlres = sqlcmd -S "${executableInstance}"  -Q $query -y 0
         }
+=======
+        $sqlres = Sqlcmd -S $executableInstance -Q $query -y 0
+>>>>>>> master
         
         if ($sqlres -ne $null) {
             Write-Information "$logPrefix Database $dbname is in use"
@@ -1933,9 +1965,9 @@ Write-Information "$LogPrefix DataFilePath: $DataFilePath LogFilePath: $LogFileP
 try {
     $responseObject = [ordered]@{}
 
-    if ($DataFilePath.Count -eq 0 -or $LogFilePath.Count -eq 0 -or $DataSerial.Count -eq 0 -or $LogSerial.Count -eq 0) {
+    if ($DataFilePath.Count -eq 0 -or $LogFilePath.Count -eq 0 -or $DataSerial.Count -eq 0) {
         Write-Information "$LogPrefix DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
-        throw "DataFilePath or LogFilePath or DataSerial or LogSerial is null"
+        throw "DataFilePath or LogFilePath or DataSerial is null"
     }
 
     $null = (echo "RESCAN" | diskpart )

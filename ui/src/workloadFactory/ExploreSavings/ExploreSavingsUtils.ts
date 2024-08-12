@@ -9,7 +9,7 @@ import {
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { GENERAL } from '../../utils/appConstants';
-import { FSX_AZ_TYPE, GIB_IN_BYTE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
+import { FSX_AZ_TYPE, GIB_IN_BYTE, SAVINGS_CALC_MODE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import {
     EBSCalculation,
     StorageSavingsInterface,
@@ -31,8 +31,14 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
 };
 
 export const handleManualTCO = (dispatch: any) => {
-    dispatch(setSavingsCalculatorFrom('Manual'));
+    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
     dispatch(setDisableState(true));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+};
+
+export const handleManualTCOFSX = (dispatch: any) => {
+    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
+    dispatch(setDisableState(false));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
@@ -556,9 +562,7 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
 
     Object.keys(viewCalculationsResponse?.ebsCloneCalculation || {}).map((key: string) => {
         ebsCloneCalculation = {
-            clonedCopiesCount:
-                ebsCloneCalculation.clonedCopiesCount +
-                viewCalculationsResponse?.ebsCloneCalculation?.[key]?.clonedCopiesCount,
+            clonedCopiesCount: viewCalculationsResponse?.ebsCloneCalculation?.[key]?.clonedCopiesCount,
             capacity: ebsCloneCalculation.capacity + viewCalculationsResponse?.ebsCloneCalculation?.[key]?.capacity,
             iops: ebsCloneCalculation.iops + viewCalculationsResponse?.ebsCloneCalculation?.[key]?.iops,
             throughput:
@@ -672,7 +676,10 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
         } else {
             result = {
                 ...data,
-                recommendedInstance: data?.compute?.recommended?.machineDetails?.[0],
+                recommendedInstance: {
+                    ...data?.compute?.recommended?.machineDetails?.[0],
+                    licenseMonthlyPrice: data?.license?.recommended?.licenseMonthlyPrice
+                },
                 totalSummary: {
                     ...data?.totalSummary,
                     recommendedTotal: data?.totalSummary?.recommended
@@ -700,7 +707,7 @@ export const generateLabel2ForInstanceType = (options: any, option: any, existin
                           (100 * (existingComputePrice - selectedOption?.computeMonthlyPrice)) / existingComputePrice
                       )
                     : 0;
-            const label2 = computeCostSavingPercent ? `Saves upto ${computeCostSavingPercent}% in compute costs` : '';
+            const label2 = computeCostSavingPercent ? `Saves up to ${computeCostSavingPercent}% in compute costs` : '';
             return label2;
         }
         return '';

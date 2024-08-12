@@ -1,11 +1,9 @@
 import createError from 'http-errors';
-import { cloneDeep, compact, isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import { getHostAndSqlServerInfo } from './discover-operations';
-import { FINDING, FileSystemTypes, HOURS_IN_MONTH, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
+import { FileSystemTypes, HOURS_IN_MONTH, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
 import {
-    ComputeDetailsType,
     ComputeLicenseCostType,
-    LicenseDetailsType,
     ManualStorageSavingsRequestBodyType,
     StorageSavingsMetricsCalculationsResponseType,
     StorageSavingsRequestBodyType,
@@ -22,9 +20,8 @@ import getLogger from '../utils/logger';
 import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice } from '../utils/utils';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
-import getSqlInstanceLicenseRecommendations from './recommendation-operations';
+import { getSqlInstanceLicenseRecommendations, manualModeComputeLicenseDetails } from './recommendation-operations';
 import { ManualModeMarketingRequestBody, getManualModeStorageSavings } from '../lib/cloud-manager/marketing';
-import { deriveInstanceCountPricingDetails, getPricingByLicenseType } from './aws/pricing-operations';
 
 const logger = getLogger();
 
@@ -116,14 +113,16 @@ async function aoagStorageSavingsCalculations(
     region: string,
     nodeEbsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
-    nodeDetails: DiscoverResponseInfoType
+    nodeDetails: DiscoverResponseInfoType,
+    instanceId?: string
 ) {
     logger.info('Performing AOAG storage savings calculations', {
         accountId,
         credentialsId,
         region,
         nodeEbsVolumeIds,
-        params
+        params,
+        instanceId
     });
 
     const { ec2InstanceId: nodeInstanceId, sqlServerInstances } = nodeDetails;
@@ -142,6 +141,7 @@ async function aoagStorageSavingsCalculations(
             credentialsId,
             region,
             nodeDetails,
+            params.monthlySqlByolCost,
             partnerNodeDetails
         ); // retrieves compute and license cost for all nodes in the AOAG cluster
 
@@ -163,7 +163,8 @@ async function aoagStorageSavingsCalculations(
                 region,
                 SqlServerDeploymentModel.SQL_AOAG_SHORT,
                 allEbsVolumeIds, // Consider all EBS volumes for storage, iops and throughput calculation
-                params
+                params,
+                instanceId
             ),
             invokeMarketingApi(
                 accountId,
@@ -171,7 +172,8 @@ async function aoagStorageSavingsCalculations(
                 region,
                 SqlServerDeploymentModel.SQL_AOAG_SHORT,
                 uniqueHostVolumeIds, // Consider only volumes associated with unique database in primary and partner node for snapshot calculation and to draw a storage savings comparison with FSXn
-                params
+                params,
+                instanceId
             )
         ]);
 
@@ -253,7 +255,8 @@ async function aoagStorageSavingsMetrics(
     params: StorageSavingsRequestBodyType,
     nodeDetails: DiscoverResponseInfoType,
     currentNodeComputeLicenseDetails: ComputeLicenseCostType,
-    partnerNodeDetails: DiscoverResponseInfoType[]
+    partnerNodeDetails: DiscoverResponseInfoType[],
+    instanceId?: string
 ) {
     logger.info('Performing AOAG storage savings metrics calculation ', {
         accountId,
@@ -261,7 +264,8 @@ async function aoagStorageSavingsMetrics(
         region,
         nodeEbsVolumeIds,
         params,
-        nodeDetails
+        nodeDetails,
+        instanceId
     });
     const { ec2InstanceId: nodeInstanceId, sqlServerInstances } = nodeDetails;
     const [{ nodeIps }] = sqlServerInstances || [];
@@ -289,7 +293,8 @@ async function aoagStorageSavingsMetrics(
             region,
             allEbsVolumeIds,
             params,
-            SqlServerDeploymentModel.SQL_AOAG_SHORT
+            SqlServerDeploymentModel.SQL_AOAG_SHORT,
+            instanceId
         );
         // Consider only volumes associated with unique database in primary and partner nodes for snapshot calculation and to draw a storage savings comparison with FSXn
         const {
@@ -303,7 +308,8 @@ async function aoagStorageSavingsMetrics(
             region,
             uniqueHostVolumeIds,
             params,
-            SqlServerDeploymentModel.SQL_AOAG_SHORT
+            SqlServerDeploymentModel.SQL_AOAG_SHORT,
+            instanceId
         );
 
         return {
@@ -329,6 +335,7 @@ async function retrieveComputeAndLicenseCost(
     credentialsId: string,
     region: string,
     ec2HostDetails: DiscoverResponseInfoType,
+    monthlySqlByolCost?: number,
     partnerNodeDetails?: DiscoverResponseInfoType[]
 ): Promise<ComputeLicenseCostType> {
     logger.info('Retrieving compute and license cost', { accountId, credentialsId, region, ec2HostDetails });
@@ -339,6 +346,7 @@ async function retrieveComputeAndLicenseCost(
         credentialsId,
         region,
         ec2HostDetails,
+        monthlySqlByolCost,
         partnerNodeDetails
     );
     const {
@@ -441,17 +449,32 @@ async function performStorageSavingsCalculations(
 
     const [{ sqlServerDeploymentType, nodeIps }] = ec2HostDetails?.sqlServerInstances || [];
     if (nodeIps && !isEmpty(nodeIps) && sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
-        return aoagStorageSavingsCalculations(accountId, credentialsId, region, ebsVolumeIds, params, ec2HostDetails);
+        return aoagStorageSavingsCalculations(
+            accountId,
+            credentialsId,
+            region,
+            ebsVolumeIds,
+            params,
+            ec2HostDetails,
+            instanceId
+        );
     }
 
-    const recommendationPromise = retrieveComputeAndLicenseCost(accountId, credentialsId, region, ec2HostDetails);
+    const recommendationPromise = retrieveComputeAndLicenseCost(
+        accountId,
+        credentialsId,
+        region,
+        ec2HostDetails,
+        params.monthlySqlByolCost
+    );
     const marketingPromise = invokeMarketingApi(
         accountId,
         credentialsId,
         region,
         sqlServerDeploymentType!,
         ebsVolumeIds,
-        params
+        params,
+        instanceId
     );
 
     const [{ compute, license }, { ebs, fsx, single, multi }] = await Promise.all([
@@ -474,7 +497,7 @@ async function performStorageSavingsCalculations(
         ebs,
         fsx,
         totalSummary: {
-            existing: ebs.total || 0 + existingComputeLicensePrice,
+            existing: Number(ebs.total || 0) + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
         },
         ...(singleFsxCalculationData && {
@@ -538,6 +561,7 @@ async function getStorageSavingsCalculationMetrics(
             credentialsId,
             region,
             ec2HostDetails,
+            params.monthlySqlByolCost,
             partnerNodeDetails
         );
         return aoagStorageSavingsMetrics(
@@ -548,7 +572,8 @@ async function getStorageSavingsCalculationMetrics(
             params,
             ec2HostDetails,
             currentNodeComputeLicenseDetails,
-            partnerNodeDetails
+            partnerNodeDetails,
+            instanceId
         );
     }
 
@@ -556,7 +581,8 @@ async function getStorageSavingsCalculationMetrics(
         accountId,
         credentialsId,
         region,
-        ec2HostDetails
+        ec2HostDetails,
+        params.monthlySqlByolCost
     );
 
     const {
@@ -570,7 +596,8 @@ async function getStorageSavingsCalculationMetrics(
             region,
             ebsVolumeIds,
             params,
-            sqlServerDeploymentType!
+            sqlServerDeploymentType!,
+            instanceId
         );
 
     return {
@@ -583,206 +610,6 @@ async function getStorageSavingsCalculationMetrics(
         ebsSnapshotCalculation,
         single,
         multi
-    };
-}
-
-function handleManualModeRecommendations(
-    sqlServerDeploymentType: string,
-    sqlServerEdition: string,
-    monthlySqlByolCost: number,
-    existingComputeDetails: ComputeDetailsType,
-    existingLicenseDetails: LicenseDetailsType,
-    existingInstanceTypePricingDetails: Map<
-        string,
-        { count: number; pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } }
-    >,
-    awsInstanceLicenseMonthlyPrice?: number
-) {
-    logger.info('Handling manual mode recommendations ', {
-        sqlServerDeploymentType,
-        sqlServerEdition,
-        monthlySqlByolCost,
-        existingComputeDetails,
-        existingLicenseDetails,
-        existingInstanceTypePricingDetails,
-        awsInstanceLicenseMonthlyPrice
-    });
-    const existingInstanceHourlyPriceWithoutLicense = getPricingByLicenseType('NA', existingInstanceTypePricingDetails);
-
-    const recommendedLicenseDetails = cloneDeep(existingLicenseDetails);
-    recommendedLicenseDetails.finding = undefined;
-
-    const recommendedComputeDetails = cloneDeep(existingComputeDetails);
-    recommendedComputeDetails.finding = undefined;
-    if (
-        SqlServerDeploymentModel.SQL_AOAG_SHORT === sqlServerDeploymentType &&
-        sqlServerEdition?.toLowerCase().includes('enterprise')
-    ) {
-        // As per requirement DBS-2753: Downgrade Enterprise to Standard could be suggested in case of AOAG config.
-        const instanceHourlyPrice = getPricingByLicenseType('SQL Std', existingInstanceTypePricingDetails);
-        awsInstanceLicenseMonthlyPrice =
-            instanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
-                ? (instanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense) * HOURS_IN_MONTH
-                : undefined;
-        recommendedComputeDetails.instanceHourlyPrice = instanceHourlyPrice;
-        recommendedComputeDetails.instanceMonthlyPrice = instanceHourlyPrice
-            ? getMonthlyPriceFromHourlyPrice(instanceHourlyPrice)
-            : undefined;
-
-        const licenseHourlyPrice =
-            instanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
-                ? instanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense
-                : undefined;
-        recommendedLicenseDetails.licenseHourlyPrice = licenseHourlyPrice;
-        recommendedLicenseDetails.licenseMonthlyPrice = licenseHourlyPrice
-            ? getMonthlyPriceFromHourlyPrice(licenseHourlyPrice)
-            : undefined;
-        recommendedLicenseDetails.licenseIncluded = true;
-        recommendedLicenseDetails.sqlServerEdition = 'Standard Edition';
-        recommendedLicenseDetails.message =
-            'Downgrade Enterprise Edition to Standard Edition if you are not using any of the enterprise features';
-    }
-
-    // As per requirement DBS-2753 : In case of BYOL License, please suggest the equivalent license included cost, in case it's cheaper than the BYOL cost mentioned. otherwise, do not compare SQL License costs and mention N/A in the cost breakdown.
-    if (monthlySqlByolCost && monthlySqlByolCost > 0) {
-        if (awsInstanceLicenseMonthlyPrice && monthlySqlByolCost > awsInstanceLicenseMonthlyPrice) {
-            recommendedLicenseDetails.licenseHourlyPrice = awsInstanceLicenseMonthlyPrice / HOURS_IN_MONTH;
-            recommendedLicenseDetails.licenseMonthlyPrice = awsInstanceLicenseMonthlyPrice;
-            recommendedLicenseDetails.licenseIncluded = true;
-            recommendedLicenseDetails.message = 'License included cost from AWS is cheaper than the BYOL cost';
-        } else {
-            recommendedLicenseDetails.licenseHourlyPrice = undefined;
-            recommendedLicenseDetails.licenseIncluded = false;
-            recommendedLicenseDetails.message = 'We could not find a cheaper license included cost';
-        }
-    }
-
-    return { recommendedComputeDetails, recommendedLicenseDetails };
-}
-
-async function manualModeComputeLicenseDetails(region: string, params: ManualStorageSavingsRequestBodyType) {
-    logger.info('Getting manual mode compute and license details ', { region, params });
-
-    const { sqlServerDeploymentType, sqlServerEdition, monthlySqlByolCost, ec2Instances } = params;
-
-    const instanceTypes = ec2Instances.map(instance => instance.ec2InstanceType);
-
-    const existingInstanceTypesPricingDetails = await deriveInstanceCountPricingDetails(instanceTypes, region);
-
-    const existingInstanceHourlyPriceWithoutLicense = getPricingByLicenseType(
-        'NA',
-        existingInstanceTypesPricingDetails
-    );
-
-    const existingComputePrice = existingInstanceHourlyPriceWithoutLicense;
-
-    let existingInstanceHourlyPrice = existingInstanceHourlyPriceWithoutLicense;
-    let existingLicensePrice;
-
-    const existingSqlServerEditionLowerCase = sqlServerEdition?.toLowerCase();
-
-    let awsInstanceLicenseMonthlyPrice;
-
-    let existingLicenseType = 'NA';
-    if (
-        existingSqlServerEditionLowerCase &&
-        ((existingSqlServerEditionLowerCase.includes('enterprise') &&
-            !existingSqlServerEditionLowerCase.includes('evaluation')) ||
-            existingSqlServerEditionLowerCase.includes('web') ||
-            existingSqlServerEditionLowerCase.includes('standard'))
-    ) {
-        existingLicenseType = existingSqlServerEditionLowerCase?.includes('enterprise')
-            ? 'SQL Ent'
-            : existingSqlServerEditionLowerCase?.includes('web')
-            ? 'SQL Web'
-            : 'SQL Std';
-
-        existingInstanceHourlyPrice = getPricingByLicenseType(existingLicenseType, existingInstanceTypesPricingDetails);
-
-        awsInstanceLicenseMonthlyPrice =
-            existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
-                ? (existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense) * HOURS_IN_MONTH
-                : undefined;
-        existingLicensePrice =
-            existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
-                ? existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense
-                : undefined;
-    } else if (monthlySqlByolCost && monthlySqlByolCost > 0) {
-        existingLicensePrice = monthlySqlByolCost / HOURS_IN_MONTH;
-    } else {
-        existingLicensePrice = 0;
-    }
-
-    const licenseIncluded =
-        monthlySqlByolCost && monthlySqlByolCost > 0 ? false : !!(existingLicensePrice && existingLicensePrice > 0);
-
-    const computeDetails = {
-        instanceType: instanceTypes.join(', '),
-        finding: undefined,
-        windowsOsVersion: undefined,
-        computeHourlyPrice: existingComputePrice,
-        computeMonthlyPrice: existingComputePrice ? getMonthlyPriceFromHourlyPrice(existingComputePrice) : undefined,
-        instanceMonthlyPrice: existingInstanceHourlyPrice
-            ? getMonthlyPriceFromHourlyPrice(existingInstanceHourlyPrice)
-            : undefined,
-        hoursInMonth: HOURS_IN_MONTH,
-        message: undefined,
-        machineDetails: instanceTypes.map(instanceType => {
-            const pricingDetails = existingInstanceTypesPricingDetails.get(instanceType);
-            const { pricePerUnit: priceWithoutLicense } = pricingDetails?.pricingDetails.NA || {};
-            const { pricePerUnit: priceWithLicense } = pricingDetails?.pricingDetails[existingLicenseType] || {};
-            const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(priceWithoutLicense);
-            const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(priceWithLicense);
-            return {
-                instanceType,
-                price: priceWithLicense,
-                basePrice: priceWithoutLicense,
-                computeMonthlyPrice,
-                instanceMonthlyPrice,
-                licenseMonthlyPrice:
-                    instanceMonthlyPrice !== undefined && computeMonthlyPrice !== undefined
-                        ? instanceMonthlyPrice - computeMonthlyPrice
-                        : undefined,
-                hoursInMonth: HOURS_IN_MONTH,
-                licenseIncluded
-            };
-        })
-    };
-
-    const licenseDetails = {
-        finding:
-            monthlySqlByolCost && awsInstanceLicenseMonthlyPrice && monthlySqlByolCost > awsInstanceLicenseMonthlyPrice
-                ? FINDING.NOT_OPTIMIZED
-                : undefined,
-        licenseHourlyPrice: existingLicensePrice,
-        licenseIncluded,
-        licenseMonthlyPrice:
-            existingLicensePrice && existingLicensePrice >= 0
-                ? existingLicensePrice * HOURS_IN_MONTH
-                : existingLicensePrice,
-        hoursInMonth: HOURS_IN_MONTH,
-        sqlServerEdition
-    };
-
-    const { recommendedComputeDetails, recommendedLicenseDetails } = handleManualModeRecommendations(
-        sqlServerDeploymentType!,
-        sqlServerEdition!,
-        monthlySqlByolCost!,
-        computeDetails,
-        licenseDetails,
-        existingInstanceTypesPricingDetails,
-        awsInstanceLicenseMonthlyPrice!
-    );
-
-    return {
-        compute: {
-            existing: computeDetails,
-            recommended: recommendedComputeDetails
-        },
-        license: {
-            existing: licenseDetails,
-            recommended: recommendedLicenseDetails
-        }
     };
 }
 

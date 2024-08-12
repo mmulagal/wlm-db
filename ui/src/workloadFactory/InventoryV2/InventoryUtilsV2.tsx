@@ -955,11 +955,20 @@ export const updateInventoryDatawithInstancesRes = (
             hasInstanceData: true,
             estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
             totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
+            sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
             serverInstallationMode: !inventoryRow?.serverInstallationMode
                 ? getInstallationMode(instanceRow?.data)
                 : inventoryRow?.serverInstallationMode,
             sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow)
         };
+        if (instanceRow) {
+            const allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data]);
+            result = {
+                ...result,
+                allocatedCapacity: allocatedCapacity,
+                allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
+            };
+        }
     } else if (!instanceRow?.isManagedHost) {
         let partnerInstanceId = '';
         let partnerInstanceData: any = null;
@@ -992,6 +1001,7 @@ export const updateInventoryDatawithInstancesRes = (
                 allocatedCapacity: allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 hasInstanceData: true,
+                sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
                 sqlServerInstances: updateSqlServerInstancesForBothNodes(
                     instanceRow?.data,
                     partnerInstanceData?.data,
@@ -1015,6 +1025,7 @@ export const updateInventoryDatawithInstancesRes = (
                 allocatedCapacity: allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 hasInstanceData: false,
+                sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
                 sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow),
                 //For explore savings
                 ebsResourceInfo: instanceRow?.data?.ebsResourceInfo,

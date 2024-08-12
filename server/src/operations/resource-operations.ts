@@ -24,14 +24,14 @@ async function getFileSystemCredentialsStatus(accountId: string, fsxId: string) 
         fsxObject.isRegistered = !isEmpty(credentials);
 
         return fsxObject;
-    } catch (error) {
+    } catch (error: any) {
         const { statusCode } = error as unknown as { [key: string]: string };
 
         if (Number(statusCode) === 404) {
             return fsxObject;
         }
 
-        const errorMessage = 'Error getting file system credentials status';
+        const errorMessage = `Error getting file system credentials status : ${error.message}`;
         logger.error(errorMessage);
         throw createError(Number(statusCode) || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }

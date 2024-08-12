@@ -28,7 +28,7 @@ async function getEnrollmentStatus(region: string, credentialsId: string, accoun
     const computeOptimizer = await getComputeOptimizerClient(region, credentialsId, accountId);
 
     const resp = await computeOptimizer.send(new GetEnrollmentStatusCommand({}));
-    logger.debug('getEnrollmentStatus response:', resp);
+    logger.info('getEnrollmentStatus response:', resp);
 
     return resp;
 }

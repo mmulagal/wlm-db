@@ -11,17 +11,13 @@
             "accountId": "464262061435",
             "currentInstanceType": "m5.large",
             "effectiveRecommendationPreferences": {
-                "cpuVendorArchitectures": [
-                    "CURRENT"
-                ],
+                "cpuVendorArchitectures": ["CURRENT"],
                 "enhancedInfrastructureMetrics": "Inactive",
                 "inferredWorkloadTypes": "Active",
                 "lookBackPeriod": "DAYS_14",
                 "preferredResources": [
                     {
-                        "includeList": [
-                            "*"
-                        ],
+                        "includeList": ["*"],
                         "name": "Ec2InstanceTypes"
                     }
                 ],
@@ -57,9 +53,7 @@
                 "NetworkPPSOverprovisioned"
             ],
             "idle": "False",
-            "inferredWorkloadTypes": [
-                "SQLServer"
-            ],
+            "inferredWorkloadTypes": ["SQLServer"],
             "instanceArn": "arn:aws:ec2:ap-southeast-1:464262061435:instance/i-07a29eb681ba37679",
             "instanceName": "AD_WLM_COM",
             "instanceState": "running",
@@ -67,7 +61,7 @@
             "lookBackPeriodInDays": 14,
             "recommendationOptions": [
                 {
-                    "instanceType": "m2.xlarge",
+                    "instanceType": "m6a.large",
                     "migrationEffort": "VeryLow",
                     "performanceRisk": 3,
                     "platformDifferences": [],
@@ -107,6 +101,34 @@
                         }
                     ],
                     "rank": 2,
+                    "savingsOpportunity": {
+                        "estimatedMonthlySavings": {
+                            "currency": "USD",
+                            "value": 3.576
+                        },
+                        "savingsOpportunityPercentage": 2.311
+                    },
+                    "savingsOpportunityAfterDiscounts": {
+                        "estimatedMonthlySavings": {
+                            "currency": "USD",
+                            "value": 1.831
+                        },
+                        "savingsOpportunityPercentage": 2.224
+                    }
+                },
+                {
+                    "instanceType": "m5a.large",
+                    "migrationEffort": "VeryLow",
+                    "performanceRisk": 1,
+                    "platformDifferences": [],
+                    "projectedUtilizationMetrics": [
+                        {
+                            "name": "CPU",
+                            "statistic": "MAXIMUM",
+                            "value": 36.07995495495495
+                        }
+                    ],
+                    "rank": 3,
                     "savingsOpportunity": {
                         "estimatedMonthlySavings": {
                             "currency": "USD",

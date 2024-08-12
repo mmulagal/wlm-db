@@ -33,6 +33,7 @@ const SavingsCalculatorManualApi = () => {
         selectedManualDeploymentModel,
         selectedManualRegion,
         selectedManualServerEdition,
+        selectedSecondaryManualInstanceType,
         selectedManualInstanceType,
         monthlyBYOLCost,
         manualMonthlyDescription,
@@ -52,7 +53,10 @@ const SavingsCalculatorManualApi = () => {
     const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+        ) {
             dispatch(setInstanceLoading(true));
             getInstanceTypes({
                 credentialId: headerSelectedCred?.data?.credentialsId,
@@ -110,7 +114,7 @@ const SavingsCalculatorManualApi = () => {
     };
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
             const payload = generateManualStorageSavingsPayload();
             const comparedPayloadValues = _.isEqual(payload, requestedPayload);
 
@@ -139,6 +143,7 @@ const SavingsCalculatorManualApi = () => {
         monthlyBYOLCost,
         manualMonthlyDescription,
         manualSecondaryMachineDescription,
+        selectedSecondaryManualInstanceType,
         manualTCOVolumeTypes,
         volumeFilledStatus,
         manualTCOVolumeTypes2

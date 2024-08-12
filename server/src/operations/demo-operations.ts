@@ -10,7 +10,9 @@ import {
     ONLINE,
     DEFAULT_INSTANCE_NAME,
     RESOURCE_SOURCE,
-    DatabaseTypes
+    DatabaseTypes,
+    SqlServerDeploymentModel,
+    DEMO_STANADLONE_SQL_SERVER_ID
 } from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
 import {
@@ -161,7 +163,7 @@ async function createDeploymentMockDataInDB(
     const instanceId = randomUUID();
 
     resourceId = resourceId || randomUUID();
-    const fsxId = `fs-${randomize('A0', 17)}`;
+    const fsxId = `fs-${randomize('0', 8)}`;
 
     const metadata: Metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
@@ -252,7 +254,7 @@ async function createDeploymentMockDataInDB(
         fsxnIds: fsxId,
         isDefault: true,
         source: RESOURCE_SOURCE.DEPLOY,
-        sqlDeploymentType: 'FCI',
+        sqlDeploymentType: sqlDeploymentMode,
         fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
         numberofUserDbsCreated: 1,
         sandboxCreated: true,
@@ -328,11 +330,12 @@ async function createFileSystemForDemo(
 
 async function updateUserDBIntoResourceData(
     accountId: string,
+    credentialsId: string,
     resourceId: string,
     databaseName: string,
     metaData: Metadata
 ) {
-    logger.info('updating user db into resource meta data', accountId, resourceId, databaseName);
+    logger.info('updating user db into resource meta data', accountId, resourceId, credentialsId, databaseName);
 
     const existingDatabases = metaData.userDatabase || [];
     const hasExistingDatabase = existingDatabases.some(db => db.name === databaseName);
@@ -356,7 +359,7 @@ async function updateUserDBIntoResourceData(
         };
         metaData.userDatabase = [...existingDatabases, databaseDetails];
 
-        await updateResourceMetaData(accountId, resourceId, metaData);
+        await updateResourceMetaData(accountId, credentialsId, resourceId, metaData);
     }
 }
 
@@ -396,11 +399,12 @@ async function updateUserDBIntoInstanceTable(
 
 async function updateSandboxDBIntoResourceData(
     accountId: string,
+    credentialsId: string,
     resourceId: string,
     sandboxDetails: Sandbox,
     metaData: Metadata
 ) {
-    logger.info('updating sandbox db into resource meta data', accountId, resourceId, sandboxDetails);
+    logger.info('updating sandbox db into resource meta data', accountId, credentialsId, resourceId, sandboxDetails);
 
     // this is used to retreive the newly created user databases in database list for demo using meta data
     if (metaData.sandboxes) {
@@ -408,7 +412,7 @@ async function updateSandboxDBIntoResourceData(
     }
     metaData.sandboxes = [...(metaData.sandboxes || []), sandboxDetails];
 
-    await updateResourceMetaData(accountId, resourceId, metaData);
+    await updateResourceMetaData(accountId, credentialsId, resourceId, metaData);
     return metaData;
 }
 
@@ -472,7 +476,7 @@ async function getVolumeIdsFromStorage(accountId: string, credentialsId: string,
     return volumeIds;
 }
 
-async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string[]) {
+async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string[], databaseInstanceDetails?: any) {
     let VolumeType = 'gp2';
     let volumeSize = 8;
     let iops = 100;
@@ -481,37 +485,47 @@ async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string
         VolumeType = 'io2';
         volumeSize = 5120;
         iops = 40000;
-    } else if (sqlDeploymentType === 'Standalone') {
+    } else if (sqlDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
         VolumeType = 'io2';
         volumeSize = 2048;
         iops = 40000;
     }
-    const volumes = volumeIds.map(
-        volumeId =>
-            ({
-                VolumeId: volumeId,
-                AvailabilityZone: 'us-east-1a',
-                Attachments: [
-                    {
-                        AttachTime: '2013-12-18T22:35:00.000Z',
-                        InstanceId: 'i-1234567890abcdef0',
-                        VolumeId: 'vol-049df61146c4d7901',
-                        State: 'attached',
-                        DeleteOnTermination: true,
-                        Device: '/dev/sda1'
-                    }
-                ],
-                Encrypted: true,
-                KmsKeyId: 'arn:aws:kms:us-east-2a:123456789012:key/8c5b2c63-b9bc-45a3-a87a-5513eEXAMPLE',
-                VolumeType,
-                State: 'in-use',
-                Iops: iops,
-                SnapshotId: 'snap-1234567890abcdef0',
-                CreateTime: '2019-12-18T22:35:00.084Z',
-                Size: volumeSize,
-                Throughput: 128
-            } as unknown as Volume)
-    );
+    const volumes = volumeIds.map((volumeId, index) => {
+        let volType = VolumeType; // default VolumeType
+
+        if (
+            sqlDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
+            databaseInstanceDetails.length &&
+            databaseInstanceDetails[0].database_instance_id === DEMO_STANADLONE_SQL_SERVER_ID
+        ) {
+            // Change VolumeType based on the index
+            volType = index % 2 === 0 ? 'io1' : 'io2';
+        }
+
+        return {
+            VolumeId: volumeId,
+            AvailabilityZone: 'us-east-1a',
+            Attachments: [
+                {
+                    AttachTime: '2013-12-18T22:35:00.000Z',
+                    InstanceId: 'i-1234567890abcdef0',
+                    VolumeId: 'vol-049df61146c4d7901',
+                    State: 'attached',
+                    DeleteOnTermination: true,
+                    Device: '/dev/sda1'
+                }
+            ],
+            Encrypted: true,
+            KmsKeyId: 'arn:aws:kms:us-east-2a:123456789012:key/8c5b2c63-b9bc-45a3-a87a-5513eEXAMPLE',
+            VolumeType: volType,
+            State: 'in-use',
+            Iops: iops,
+            SnapshotId: 'snap-1234567890abcdef0',
+            CreateTime: '2019-12-18T22:35:00.084Z',
+            Size: volumeSize,
+            Throughput: 128
+        } as unknown as Volume;
+    });
     return {
         Volumes: volumes
     };

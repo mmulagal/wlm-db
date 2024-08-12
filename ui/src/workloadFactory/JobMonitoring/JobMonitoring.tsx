@@ -10,7 +10,7 @@ import { generateOptionType } from '../../utils/utilityFunctions';
 import { setFromTime, setTimeInterval, setToTime } from '../../store/workloadFactory/jobMonitoringSlice';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 
-const JobMonitoring = () => {
+const JobMonitoring = ({ SelectComponent, RefreshComponent }: any) => {
     const dispatch = useAppDispatch();
 
     const timelineData = useAppSelector(state => state.jobMonitoring.jobsSummaryTimeline);
@@ -58,41 +58,26 @@ const JobMonitoring = () => {
 
     return (
         <div className={styles.jobMonitoring}>
-            {/* <div className={styles.breadCrumb}>
-                <BreadCrumbs
-                    items={[
-                        {
-                            title: GENERAL.DATABASES,
-                            onClick: () => {
-                                resetDBHomePageState(dispatch);
-                                navigate('../databases');
-                            }
-                        },
-                        {
-                            title: GENERAL.JOB_MONITORING
-                        }
-                    ]}
-                />
-            </div> */}
-
             <div className={styles.headingContainer}>
-                {/* <Typography variant="Regular_24" className={styles.heading}>
-                    {GENERAL.JOB_MONITORING}
-                </Typography> */}
-                <div />
+                <div className={styles.jobMonitoringSelectBox}>
+                    <SelectComponent />
+                </div>
 
-                <div className={styles.selectContainer}>
-                    <SelectField
-                        isClearable={false}
-                        onChange={(selectedOptions: any): void => {
-                            setDropdownValue(selectedOptions);
-                            setTimeRange(selectedOptions?.value);
-                        }}
-                        isSearchable={false}
-                        variant="underline"
-                        options={generateSelectFieldOptions}
-                        value={dropDownValue ? [dropDownValue] : [generateSelectFieldOptions[0]]}
-                    />
+                <div className={styles.rightSegment}>
+                    <div className={styles.selectContainer}>
+                        <SelectField
+                            isClearable={false}
+                            onChange={(selectedOptions: any): void => {
+                                setDropdownValue(selectedOptions);
+                                setTimeRange(selectedOptions?.value);
+                            }}
+                            isSearchable={false}
+                            variant="underline"
+                            options={generateSelectFieldOptions}
+                            value={dropDownValue ? [dropDownValue] : [generateSelectFieldOptions[0]]}
+                        />
+                    </div>
+                    <RefreshComponent />
                 </div>
             </div>
 

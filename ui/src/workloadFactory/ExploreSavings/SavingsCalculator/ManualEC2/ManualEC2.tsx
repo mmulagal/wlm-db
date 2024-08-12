@@ -7,10 +7,11 @@ import {
     setSelectedManualInstanceType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
+import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 
 const ManualEC2 = () => {
     const dispatch = useDispatch();
@@ -19,6 +20,19 @@ const ManualEC2 = () => {
     const { instanceTypeData, instanceTypeLoading } = useAppSelector(
         state => state.exploreSavings.getManualInstanceTypeList
     );
+
+    const [textSearch, setTextSearch] = useSearchDebounce(500);
+
+    const [machineDesc, setMachineDesc] = useState('');
+
+    //Use effect for machine description
+    useEffect(() => {
+        setTextSearch(machineDesc);
+    }, [machineDesc]);
+
+    useEffect(() => {
+        dispatch(setSelectedMachineDescription(textSearch));
+    }, [textSearch]);
 
     //Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
@@ -65,9 +79,9 @@ const ManualEC2 = () => {
                 <TextField
                     label={'Machine description'}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        dispatch(setSelectedMachineDescription(e.target.value));
+                        setMachineDesc(e.target.value);
                     }}
-                    value={manualMonthlyDescription}
+                    value={machineDesc}
                     className={styles.setWidth}
                     isOptional
                 />

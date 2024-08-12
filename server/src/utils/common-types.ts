@@ -77,6 +77,7 @@ interface ResourceDetails {
     sqlServerDeploymentType?: string;
     clusterNodeDetails?: NodeDetails[];
     databaseInstanceDetails?: DatabaseInstance[];
+    ec2UsageOperation?: string; // internal field used to store the ec2 usage operation for the unmanaged MSSQL resource
 }
 
 interface DeploymentDetails {

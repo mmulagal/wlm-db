@@ -15,6 +15,8 @@ import {
     setDbMountPointsState,
     setDriveInfoState
 } from '../../../../store/workloadFactory/createSandboxSlice';
+import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const CreateSandboxApis = () => {
     const dispatch = useAppDispatch();
@@ -202,6 +204,15 @@ const CreateSandboxApis = () => {
 
     useEffect(() => {
         if (!dbMountPointsLoading) {
+            const { databaseDataPath, databaseLogPath } = dbMountPointsData || {};
+            if (!databaseDataPath?.[0].match(/[D-Z]/i) || !databaseLogPath?.[0].match(/[D-Z]/i)) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: GENERAL.CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI
+                    })
+                );
+            }
             dispatch(setDbMountPointsState({ dbMountPointsData, dbMountPointsLoading: false }));
         } else {
             dispatch(setDbMountPointsState({ dbMountPointsData: null, dbMountPointsLoading: true }));

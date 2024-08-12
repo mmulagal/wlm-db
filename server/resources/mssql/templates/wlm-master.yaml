@@ -491,10 +491,6 @@ Resources:
                   - ec2:CreateTags
                   - ec2:AuthorizeSecurityGroupIngress
                 Resource: '*'
-                Condition:
-                  StringLike:
-                    aws:ResourceTag/aws:cloudformation:stack-name:
-                      - WLMDB*
               - Sid: SSMGetPutParameter
                 Effect: Allow
                 Action:
@@ -863,8 +859,6 @@ Resources:
           Ref: RouteTable2Id
         PrivateSubnet2ID:
           Ref: PrivateSubnet2ID
-        FSxDataLunSize:
-          Ref: FSxDataLunSize
         MSSQLMediaBucketName:
           Ref: MSSQLMediaBucketName
         MSSQLMediaPathKey:
@@ -971,8 +965,6 @@ Resources:
           Ref: PrivateSubnet1ID
         RouteTableId:
           Ref: RouteTable1Id
-        FSxDataLunSize:
-          Ref: FSxDataLunSize
         MSSQLMediaBucketName:
           Ref: MSSQLMediaBucketName
         MSSQLMediaPathKey:

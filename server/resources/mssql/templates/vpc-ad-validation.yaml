@@ -219,6 +219,7 @@ Resources:
                     config:
                         - ConfigureCWLogs
                         - FetchResources
+                        - ScriptSignatureVerificationandExtract
                         - LaunchWizardCFNSetup
                         - Prep
                         - Finalize               
@@ -302,24 +303,40 @@ Resources:
                             waitAfterCompletion: '30'
                 FetchResources:
                     files:
+                        C:\cfn\scripts\Verify-Signature.ps1:
+                            source: {{{ ScriptVerifySignature }}}
                         C:\cfn\scripts\Unzip-Archive.ps1:
                             source: {{{ ScriptUnzipArchive }}}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
                             source: {{{ AmazonLaunchWizardForCFN }}}
-                        C:\cfn\scripts\Validate-VPC.ps1:
-                            source: {{{ ScriptVpcCheck }}}
-                        C:\cfn\scripts\Update-DNSServers.ps1:
-                            source: {{{ ScriptUpdateDnsServers }}}
-                        C:\cfn\scripts\Rename-Computer.ps1:
-                            source: {{{ ScriptRenameComputer }}}
-                        C:\cfn\scripts\Restart-Computer.ps1:
-                            source: {{{ ScriptRestartComputer }}}
-                        C:\cfn\scripts\Validate-Credentials.ps1:
-                            source: {{{ ScriptAdValidation }}}
-                        C:\cfn\scripts\Validate-FsxConnectivity.ps1:
-                            source: {{{ ScriptFSxValidation }}}
-                        C:\cfn\scripts\Validate-Ami.ps1:
-                            source: {{{ ScriptAmiValidation }}}
+                        C:\cfn\scripts\validation.zip:
+                            source: {{{ ScriptValidation }}}
+                        C:\cfn\signig_files.zip:
+                            source: {{{ ArtifactsSignatures }}}
+                        C:\cfn\OpenSSL-Win64.zip:
+                            source: {{{ OpenSSL }}}
+                ScriptSignatureVerificationandExtract:
+                    commands:
+                        a-unpack-signatures:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\signig_files.zip -Destination C:\cfn
+                            waitAfterCompletion: 0
+                        b-unpack-openssl:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\OpenSSL-Win64.zip -Destination C:\cfn
+                            waitAfterCompletion: 0
+                        c-verify-validation-signature:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\validation.zip -SignatureFilePath C:\cfn\signig_files\validation.sig 
+                                    -PubFilePath C:\cfn\signig_files\validation.pub -ResourceID ValidationNode1 -Stackname '"
+                                  - !Ref 'AWS::StackName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        d-unpack-validation-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\validation.zip -Destination C:\cfn\scripts
+                            waitAfterCompletion: 0
                 LaunchWizardCFNSetup:
                     commands:
                         b-unpack-launchwizard-module:
@@ -331,7 +348,7 @@ Resources:
                         a-update-DNS:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\Update-DNSServers.ps1
+                                - - powershell.exe -Command "C:\cfn\scripts\validation\Update-DNSServers.ps1
                                     -DNSIpAddresses '
                                   - !Ref 'DNSIpAddresses'
                                   - '''"'
@@ -341,7 +358,7 @@ Resources:
                         a-validate-vpc:
                             command: !Join
                                 - ''
-                                - - 'powershell.exe -Command "C:\cfn\scripts\Validate-VPC.ps1 -subnet '
+                                - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-VPCConnectivity.ps1 -subnet '
                                   - !Ref 'SubnetID'
                                   - ' -region '
                                   - !Ref 'AWS::Region'
@@ -357,7 +374,7 @@ Resources:
                         b-validate-ad:
                             command: !Join
                                 - ''
-                                - - 'powershell.exe -Command "C:\cfn\scripts\Validate-Credentials.ps1 -DomainName '
+                                - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-Credentials.ps1 -DomainName '
                                   - !Ref 'DomainDNSName'
                                   - ' -UserName '
                                   - !Ref 'DomainAdminUser'
@@ -376,7 +393,7 @@ Resources:
                         c-validate-fsx:
                             command: !Join
                                   - ''
-                                  - - 'powershell.exe -Command "C:\cfn\scripts\Validate-FsxConnectivity.ps1 -PerformFSxCheck '
+                                  - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-FsxConnectivity.ps1 -PerformFSxCheck '
                                     - !Ref 'PerformFSxCheck'
                                     - ' -FSxFileSystemId '
                                     - !Ref 'FSxFileSystemId'
@@ -396,7 +413,7 @@ Resources:
                         d-validate-ami:
                             command: !Join
                                   - ''
-                                  - - 'powershell.exe -Command "C:\cfn\scripts\Validate-Ami.ps1 -IsCustomAmi '
+                                  - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-Ami.ps1 -IsCustomAmi '
                                     - !Ref 'IsCustomAmi'
                                     - ' -Region '
                                     - !Ref 'AWS::Region'
@@ -432,7 +449,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: stop
+            InstanceInitiatedShutdownBehavior: terminate
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -536,6 +553,7 @@ Resources:
                     config:
                         - ConfigureCWLogs
                         - FetchResources
+                        - ScriptSignatureVerificationandExtract
                         - LaunchWizardCFNSetup
                         - Finalize
                 ConfigureCWLogs:
@@ -617,14 +635,40 @@ Resources:
                             waitAfterCompletion: '30'
                 FetchResources:
                     files:
+                        C:\cfn\scripts\Verify-Signature.ps1:
+                            source: {{{ ScriptVerifySignature }}}
                         C:\cfn\scripts\Unzip-Archive.ps1:
                             source: {{{ ScriptUnzipArchive }}}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
                             source: {{{ AmazonLaunchWizardForCFN }}}
-                        C:\cfn\scripts\Validate-VPC.ps1:
-                            source: {{{ ScriptVpcCheck }}}
-                        C:\cfn\scripts\Validate-FsxConnectivity.ps1:
-                            source: {{{ ScriptFSxValidation }}}
+                        C:\cfn\scripts\validation.zip:
+                            source: {{{ ScriptValidation }}}
+                        C:\cfn\signig_files.zip:
+                            source: {{{ ArtifactsSignatures }}}
+                        C:\cfn\OpenSSL-Win64.zip:
+                            source: {{{ OpenSSL }}}
+                ScriptSignatureVerificationandExtract:
+                    commands:
+                        a-unpack-signatures:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\signig_files.zip -Destination C:\cfn
+                            waitAfterCompletion: 0
+                        b-unpack-openssl:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\OpenSSL-Win64.zip -Destination C:\cfn
+                            waitAfterCompletion: 0
+                        c-verify-validation-signature:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\validation.zip -SignatureFilePath C:\cfn\signig_files\validation.sig 
+                                    -PubFilePath C:\cfn\signig_files\validation.pub -ResourceID ValidationNode2 -Stackname '"
+                                  - !Ref 'AWS::StackName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        d-unpack-validation-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\validation.zip -Destination C:\cfn\scripts
+                            waitAfterCompletion: 0
                 LaunchWizardCFNSetup:
                     commands:
                         b-unpack-launchwizard-module:
@@ -636,7 +680,7 @@ Resources:
                         a-validate-vpc:
                             command: !Join
                                 - ''
-                                - - 'powershell.exe -Command "C:\cfn\scripts\Validate-VPC.ps1 -subnet '
+                                - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-VPCConnectivity.ps1 -subnet '
                                   - !Ref 'SubnetID'
                                   - ' -region '
                                   - !Ref 'AWS::Region'
@@ -652,7 +696,7 @@ Resources:
                         b-validate-fsx:
                             command: !Join
                                   - ''
-                                  - - 'powershell.exe -Command "C:\cfn\scripts\Validate-FsxConnectivity.ps1 -PerformFSxCheck '
+                                  - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-FsxConnectivity.ps1 -PerformFSxCheck '
                                     - !Ref 'PerformFSxCheck'
                                     - ' -FSxFileSystemId '
                                     - !Ref 'FSxFileSystemId'
@@ -686,7 +730,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: stop
+            InstanceInitiatedShutdownBehavior: terminate
             UserData: !Base64
                 Fn::Join:
                     - ''

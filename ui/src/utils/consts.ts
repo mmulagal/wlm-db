@@ -286,6 +286,8 @@ export const WLF_TABS = {
     OVERVIEW: 'Overview',
     SANDBOXES: 'Sandboxes',
     EXPLORE_SAVINGS: 'Explore savings',
+    EXPLORE_SAVINGS_EBS: 'Explore savings EBS',
+    EXPLORE_SAVINGS_FsxW: 'Explore savings FsxW',
     SAVINGS_CALCULATOR: 'Savings Calculator',
     VIEW_THE_CALCULATIONS: 'View the calculations',
     JOB_MONITORING: 'Job monitoring',
@@ -548,8 +550,9 @@ export const FSX_AZ_TYPE = {
 };
 
 export const SAVINGS_CALC_MODE = {
-    MANUAL: 'Manual',
-    AUTO: 'Auto'
+    MANUAL_EBS: 'Manual_EBS',
+    AUTO: 'Auto',
+    MANUAL_FSXW: 'Manual_FSXW'
 };
 
 export const PARTNER_NODE = 'partner node';

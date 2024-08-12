@@ -13,7 +13,7 @@ import DashboardSummary from './DashboardSummary/DashboardSummary';
 import DashboardRibbon from './DashboardRibbon/DashboardRibbon';
 import DashboardSandbox from './DashboardSandbox/DashboardSandbox';
 
-const DatabaseHomePage = () => {
+const DatabaseHomePage = ({ TopBarComponent }: any) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const hostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
@@ -34,10 +34,7 @@ const DatabaseHomePage = () => {
     return (
         <div className={styles.databaseHome}>
             <div className={styles.leftSide}>
-                <div className={styles.buttonsContainer}>
-                    <TopBarButton />
-                </div>
-
+                <TopBarComponent />
                 <div className={styles.secondLevelContainer}>
                     <DashboardSummary />
                 </div>

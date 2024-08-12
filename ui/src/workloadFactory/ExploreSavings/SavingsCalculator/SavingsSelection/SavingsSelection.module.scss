@@ -11,10 +11,13 @@
         width: 276px;
     }
 
+    .infoCenter {
+        align-items: center;
+    }
+
     .secondRow {
         display: flex;
         gap: 24px;
-        align-items: center;
 
         .mockInput {
             display: flex;
@@ -59,6 +62,15 @@
                         fill: var(--icon-primary);
                     }
                 }
+            }
+
+            .greyedOutText {
+                color: var(--text-disabled);
+                font-weight: 400;
+            }
+
+            [class*='Popover-module_base'] {
+                width: 300px;
             }
         }
     }

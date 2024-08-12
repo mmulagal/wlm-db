@@ -1,5 +1,5 @@
 .resourcePage {
-    height: 90vh;
+    height: 97vh;
     width: 100%;
     background-color: var(--main-background);
     overflow-y: auto;
@@ -22,6 +22,32 @@
         button {
             height: 32px !important;
         }
+    }
+
+    .refresh {
+        display: flex;
+        gap: 16px;
+
+        .refreshIcon {
+            cursor: pointer;
+            svg {
+                --icon-primary-color: var(--button-secondary);
+                width: 20px;
+                height: 20px;
+                margin-top: 5px;
+            }
+        }
+
+        .date {
+            position: relative;
+            top: 2px;
+        }
+    }
+
+    .rightSection {
+        display: flex;
+        gap: 24px;
+        margin-right: 32px;
     }
 
     .hostTitle {

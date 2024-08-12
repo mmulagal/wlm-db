@@ -1,6 +1,6 @@
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { compact, groupBy, isEmpty, uniqBy } from 'lodash-es';
+import { compact, groupBy, isEmpty, uniq, uniqBy } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
@@ -157,7 +157,7 @@ async function getSandboxDetails(
 
     await Promise.all(
         instances.map(async instance => {
-            const command = [
+            let command = [
                 GET_SANDBOX_DETAILS([
                     `"${getDatabaseInstanceName(
                         instance.instanceName,
@@ -165,6 +165,11 @@ async function getSandboxDetails(
                     )}"`
                 ])
             ];
+
+            if (isDemoFlow) {
+                command = [GET_SANDBOX_DETAILS([DEFAULT_MSSQL_INSTANCE_NAME])];
+            }
+
             const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
 
             if (response) {
@@ -617,6 +622,7 @@ async function startSandboxCreation(
         logger.error(e);
         errorMsg = e.message || 'Internal Server Error';
         status = JOBSTATUS.FAILED;
+
         await startCleanup(
             accountId,
             credentialsId,
@@ -625,12 +631,9 @@ async function startSandboxCreation(
             srcDetails,
             destDetails,
             clonedVolumes
-                ? [...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)]
+                ? uniq([...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)])
                 : [],
-            compact([
-                ...(mountPaths && mountPaths.dataPath ? mountPaths.dataPath : []),
-                ...(mountPaths && mountPaths.logPath ? mountPaths.logPath : [])
-            ])
+            uniq(compact([...(mountPaths ? mountPaths.dataPath : []), ...(mountPaths ? mountPaths.logPath : [])]))
         );
     } finally {
         // clearning all the ssm command cache so that we will get the fresh data once the sandbox is created
@@ -674,7 +677,7 @@ async function validateSelectedDrives(
         throw createError(412, `Selected drive letter ${selectedDrive} does not exist`);
     }
     if (!matchedExistingDrive.isNetappDrive) {
-        throw createError(412, `Selected drive ${selectedDrive} is not a NetApp drive`);
+        throw createError(412, `Selected drive ${selectedDrive} is not a NetApp iSCSI drive`);
     }
     if (isClustered === 'true' && !matchedExistingDrive.isClusteredWithSelectedInstance) {
         throw createError(
@@ -1061,13 +1064,18 @@ async function invokeVirtualMount(
             //     }' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
             // ];
 
+            const clonedDataLuns = clonedVolumes.data.map(vol => vol.lunSerialNumber);
+            const clonedLogLuns = clonedVolumes.log
+                .map(vol => vol.lunSerialNumber)
+                .filter(lun => clonedDataLuns.indexOf(lun) === -1);
+
             let command = [
                 invokeVirtualMountScript(
                     destDetails.database,
                     JSON.stringify(dataFilePaths),
                     JSON.stringify(logFilePaths),
-                    JSON.stringify(clonedVolumes.data.map(vol => vol.lunSerialNumber)),
-                    JSON.stringify(clonedVolumes.log.map(vol => vol.lunSerialNumber)),
+                    JSON.stringify(clonedDataLuns),
+                    JSON.stringify(clonedLogLuns),
                     destDetails.databaseInstanceName!,
                     isDefaultSqlServerInstance,
                     `Sandbox:${destDetails.database}:`
@@ -1313,12 +1321,19 @@ async function createExtendedProperties(
 
             const updatedMetadata: Metadata = await updateSandboxDBIntoResourceData(
                 accountId,
+                credentialsId,
                 srcDetails.host,
                 props,
                 srcDetails.metadata
             );
 
-            await updateUserDBIntoResourceData(accountId, srcDetails.host, destDetails.database, updatedMetadata);
+            await updateUserDBIntoResourceData(
+                accountId,
+                credentialsId,
+                srcDetails.host,
+                destDetails.database,
+                updatedMetadata
+            );
         }
 
         status = JOBSTATUS.COMPLETED;
@@ -1462,7 +1477,7 @@ async function updateMetadataForSanbox(
     const newMetadata = metadata as unknown as Metadata;
     newMetadata.sandboxCreated = true;
     try {
-        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
     } catch (err) {
         const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${err}`;
@@ -1494,7 +1509,7 @@ async function updateMetadataForSanboxTesting(
     newMetadata.sandboxCreated = true;
     newMetadata.updatedManually = true;
     try {
-        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
         return 'metadata updated succesfully';
     } catch (err) {
         return err;
@@ -1524,7 +1539,7 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
             try {
                 delete newMetadata.sandboxCreated;
                 delete newMetadata.updatedManually;
-                await updateResourceMetaData(accountId, resourceId, newMetadata);
+                await updateResourceMetaData(accountId, credentialsId, resourceId, newMetadata);
             } catch (err) {
                 logger.error('Failed to update meatadata', resourceId, err);
             }
@@ -1576,7 +1591,7 @@ async function updateMetadataForSanboxDeletion(
     }
 
     try {
-        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
         await updateInstanceMetadata(accountId, databaseInstanceId, newInstanceMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
     } catch (err) {
@@ -1778,8 +1793,8 @@ async function performSandboxDeletion(
             parentJobId,
             resDetails,
             resDetails,
-            [...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)],
-            [...mappings.data.map(map => map.fileName), ...mappings.log.map(map => map.fileName)]
+            uniq([...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)]),
+            uniq([...mappings.data.map(map => map.fileName), ...mappings.log.map(map => map.fileName)])
         );
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
@@ -2123,7 +2138,7 @@ async function performLifecycleUpdate(
             parentJobId,
             resourceDetails,
             resourceDetails,
-            [...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)],
+            uniq([...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)]),
             []
         );
 
@@ -2143,7 +2158,10 @@ async function performLifecycleUpdate(
                 resourceDetails,
                 resourceDetails,
                 clonedVolumes
-                    ? [...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)]
+                    ? uniq([
+                          ...clonedVolumes.data.map(vol => vol.volumeId),
+                          ...clonedVolumes.log.map(vol => vol.volumeId)
+                      ])
                     : [],
                 []
             );
