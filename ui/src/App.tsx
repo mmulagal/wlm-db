@@ -6,11 +6,12 @@ import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
 import FullStoryComp from './common/FullStoryComp';
 import ComponentLoader from './common/ComponentLoader/ComponentLoader';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { postMessageToCM } from './utils/bxputils';
 
 function App() {
     const { loading, accountId } = useAppSelector(state => state.auth);
+    const postMsgRef = useRef(false);
 
     useInitialize();
 
@@ -26,7 +27,8 @@ function App() {
 
     useEffect(() => {
         const handleParentMessage = (e: any) => {
-            if (e?.data?.type === 'SERVICE:ON-READY') {
+            if (e?.data?.type === 'SERVICE:ON-READY' && !postMsgRef.current) {
+                postMsgRef.current = true;
                 postMessageToCM({
                     type: 'SERVICE:READY',
                     payload: 'iframev2'
