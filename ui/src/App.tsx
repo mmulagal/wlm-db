@@ -33,6 +33,10 @@ function App() {
                     type: 'SERVICE:READY',
                     payload: 'iframev2'
                 });
+
+                setTimeout(() => {
+                    window.parent.postMessage({ type: 'SERVICE:READY', payload: 'iframev2' }, '*');
+                }, 1000);
             }
         };
 
