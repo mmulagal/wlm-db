@@ -1177,7 +1177,6 @@ const detachDbAndRemoveAccessPath = (
     try {
         $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$dbname' GROUP BY dbid FOR JSON PATH"
 
-<<<<<<< HEAD
         $sqlres = $null
         if ($sqlCredential.useSqlAuth -eq $True) {
             $sqlres = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "${executableInstance}"  -Q $query -y 0
@@ -1185,9 +1184,6 @@ const detachDbAndRemoveAccessPath = (
         if ([string]::IsNullOrEmpty($sqlres)) {
             $sqlres = sqlcmd -S "${executableInstance}"  -Q $query -y 0
         }
-=======
-        $sqlres = Sqlcmd -S $executableInstance -Q $query -y 0
->>>>>>> master
         
         if ($sqlres -ne $null) {
             Write-Information "$logPrefix Database $dbname is in use"
