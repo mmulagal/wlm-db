@@ -12,8 +12,9 @@ import {
     renderUnmanagedAZ
 } from '../../Inventory/InventoryUtils';
 import { onClickESHost } from '../ExploreSavingsUtils';
-import { INVENTORY_STATUS } from '../../../utils/consts';
+import { INVENTORY_ACTIONS, INVENTORY_STATUS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -61,8 +62,22 @@ const ExploreSavingsTableV2 = () => {
             isSticky: true,
             width: '181px',
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
+                //Check for all Explore Savings FSXW rows
+                if (
+                    rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+                    rowData?.storageType === GENERAL.FSX_FOR_WINDOWS
+                ) {
+                    return (
+                        <TooltipComponent title={GENERAL.COMING_SOON} placement="bottom" width="110px" height="32px">
+                            <div className={styles.detectManageDisable}>
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {GENERAL.ES_SAVINGS}
+                                </Typography>
+                            </div>
+                        </TooltipComponent>
+                    );
+                } else {
+                    return (
                         <div
                             className={styles.detectManage}
                             onClick={() => {
@@ -73,8 +88,8 @@ const ExploreSavingsTableV2 = () => {
                                 {GENERAL.ES_SAVINGS}
                             </Typography>
                         </div>
-                    </>
-                );
+                    );
+                }
             }
         };
     };

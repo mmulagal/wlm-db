@@ -1386,7 +1386,7 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
         if (removeSecNodeDiscoveredList.includes(key)) {
             return;
         }
-        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && !item?.actionDisable) {
+        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
             nonFsxnStorageList.push(item);
         }
     });

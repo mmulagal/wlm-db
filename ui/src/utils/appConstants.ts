@@ -912,8 +912,9 @@ export const GENERAL = {
     ES_TABLE_TITLE: 'Microsoft SQL server host',
     ES_SERVER_NAME: 'Server name',
     ES_TYPE: 'Type',
-    ES_MSSQL_SERVER: 'MsSQL server on FSx for ONTAP',
-    ES_MSSQL_EBS: 'MsSQL server on EBS',
+    ES_MSSQL_SERVER: 'Microsoft SQL Server on FSx for ONTAP',
+    ES_MSSQL_EBS: 'Microsoft SQL Server on EBS',
+    ES_MSSQL_FSXW: 'Microsoft SQL Server on FSx for Windows',
     ES_COST_BREAKDOWN: 'Cost breakdown - Monthly charge',
     ES_SAVINGS_SELECTION_TEXT: 'Provide clone and snapshot values to calculate the cost savings.',
     NUMBER_OF_CLONED_COPIES: 'Number of cloned copies',
@@ -979,7 +980,7 @@ export const GENERAL = {
     ES_SAVINGS: 'Explore savings',
     MANUAL_EXLORE_SAVINGS: 'Manual explore savings',
     EXPLORE_SAVING_MANUALLY: 'Explore savings Manually with EBS',
-    EXPLORE_SAVING_MANUALLY_FSX: 'Explore savings Manually with Amazon FSx for Windows',
+    EXPLORE_SAVING_MANUALLY_FSX: 'Explore savings manually with FSx for Windows File Server',
     MANUAL_EXPLORE_SAVINGS_CONTENT:
         'Alternatively, select "Explore savings manually". You\'ll  provide Microsoft SQL Server configuration details to get an accurate cost estimate comparison.',
     INSTANCE_INFORMATION: 'Instance information:',
@@ -994,7 +995,7 @@ export const GENERAL = {
     SAVINGS_MANUAL_TEXT:
         ' Select a Microsoft SQL server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL server on FSx for ONTAP instead',
     SAVINGS_MANUAL_FSXW_TEXT:
-        'Select Microsoft SQL server, Amazon Ec2 and on Amazon FSx for Windows File Server configuration to compare your costs when using Microsoft SQL server on FSx for ONTAP instead.',
+        'Select Microsoft SQL Server, Amazon EC2, and Amazon FSx for Windows File Server settings to compare the cost of using Microsoft SQL server on FSx for ONTAP instead.',
     ES_NUMBER_OF_INSTANCE: 'Number of SQL instances',
     ES_HOST_NAME: 'Host name',
     ES_NUMBER_OF_VOLS: 'Number of volumes',
@@ -1007,6 +1008,7 @@ export const GENERAL = {
     TO_VIEW_STORAGE: 'To view storage cost savings, enter your configuration.',
     CATEGORY_POINT_ONE: 'Microsoft SQL server on FSx for ONTAP',
     CATEGORY_POINT_TWO: 'Microsoft SQL server on Amazon Elastic Block Store (EBS)',
+    FSXW_CATEGORY: 'Microsoft SQL Server on FSx for Windows File Server',
     VIEW_CALC_TEXT:
         'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
@@ -1122,7 +1124,8 @@ export const GENERAL = {
     COMPUTE_RECOMMENDED_TOOLTIP:
         'The cost for compute of SQL over EBS is based on current instance type vs. cost of compute of SQL server over FSxN based on your selected instance type.',
     BYOL_TEXT: 'Monthly SQL BYOL costs($)',
-    CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI: 'Source database is not hosted on a NetApp iSCSI drive'
+    CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI: 'Source database is not hosted on a NetApp iSCSI drive',
+    COMING_SOON: 'Coming soon'
 };
 
 export const CODE_VIEWER = {
