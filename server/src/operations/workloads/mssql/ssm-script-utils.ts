@@ -232,24 +232,16 @@ if($sqlInstanceName -ne "${DEFAULT_MSSQL_INSTANCE_NAME}") {
 $queryCollation = "SET NOCOUNT ON;SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));"
 $queryVersion = "SET NOCOUNT ON;SELECT @@VERSION;"
 
+${slqcmdExecutionTemplate}
+
 $sqlCredential = @{'useSqlAuth' = $False}
 if($sqlAuthEnabled) {
     ${readSsmParameter(instanceName)}
 }
 
 #Get default collation and default version of SQL server
-if ($sqlCredential.useSqlAuth -eq $True) {
-    $defaultSqlCollation =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $sqlInstanceName -Q $queryCollation -y 0;
-    $sqlVersion = sqlcmd -S $sqlInstanceName -U $username -P $password -Q $queryVersion -y 0
-}
-
-if ([string]::IsNullOrEmpty($defaultSqlCollation)) {
-    $defaultSqlCollation =  sqlcmd -S $sqlInstanceName -Q $queryCollation -y 0;
-}
-
-if ([string]::IsNullOrEmpty($sqlVersion)) {
-    $sqlVersion = sqlcmd -S $sqlInstanceName  -Q $queryVersion -y 0
-}
+$defaultSqlCollation = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryCollation" -InstanceName "$sqlInstanceName" -ExtraArguments -y0
+$sqlVersion = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryVersion" -InstanceName "$sqlInstanceName" -ExtraArguments -y0
 
 Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 
@@ -1031,6 +1023,43 @@ const sqlQueryExecution = (instance: string, query: string, sqlAuthEnabled: bool
 
 `;
 
+const slqcmdExecutionTemplate = `
+Function Call-SqlCmd {
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$SqlCredential,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Query,
+
+        [Parameter(Mandatory = $true)]
+        [string]$InstanceName,
+
+        [Parameter(Mandatory = $false)]
+        [string]$ExtraArguments
+
+    )
+    $sqlresponse = $null
+    if ($sqlCredential.useSqlAuth -eq $True) {
+        if ([string]::IsNullOrEmpty($ExtraArguments)) {
+            $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query";
+        }
+        else {
+            $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" $ExtraArguments;
+        }
+    }
+    if ([string]::IsNullOrEmpty($sqlresponse)) {
+        if ([string]::IsNullOrEmpty($ExtraArguments)) {
+            $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query";
+        }
+        else {
+            $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" $ExtraArguments;
+        }
+    }
+    return $sqlresponse
+}
+`;
+
 export {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
@@ -1046,5 +1075,6 @@ export {
     copyPowerShellModule,
     sqlQueryExecution,
     readSsmParameter,
-    sqlQueryExecutionTemplate
+    sqlQueryExecutionTemplate,
+    slqcmdExecutionTemplate
 };

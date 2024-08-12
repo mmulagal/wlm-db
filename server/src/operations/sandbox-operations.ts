@@ -1171,6 +1171,7 @@ async function createCloneDb(
             // The instance name fix is temporary fix where the instance name is retrieved from the getActiveNode method since we are supporting only single instance. The instance value passed by the user in the body of API will ot be used. Once we support multiple instances this needs to be updated as well.
             createCloneDbScript(
                 destDetails.database,
+                destDetails.databaseInstanceName,
                 destDetails.instanceName,
                 [...mountPaths.dataPath, ...mountPaths.logPath],
                 `Sandbox:${destDetails.database}:`,
@@ -1182,6 +1183,7 @@ async function createCloneDb(
             command = [
                 createCloneDbScript(
                     'testdb',
+                    DEFAULT_INSTANCE_NAME,
                     DEFAULT_MSSQL_INSTANCE_NAME,
                     [
                         'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
@@ -1264,6 +1266,7 @@ async function createExtendedProperties(
         let command = [
             addExtendedProperties(
                 destDetails.database,
+                destDetails.databaseInstanceName,
                 destDetails.instanceName,
                 extendedProps,
                 destDetails.sqlAuthEnabled || false
@@ -1274,6 +1277,7 @@ async function createExtendedProperties(
             command = [
                 addExtendedProperties(
                     'testdb',
+                    DEFAULT_INSTANCE_NAME,
                     DEFAULT_MSSQL_INSTANCE_NAME,
                     {
                         tag: 'demo',
@@ -2660,6 +2664,7 @@ async function deleteExtendedProperties(
         let command = [
             deleteExtendedPropertiesScript(
                 resourceDetail.database,
+                resourceDetail.databaseInstanceName,
                 resourceDetail.instanceName,
                 ['cloned_by', 'source', 'createdAt', 'updatedAt', 'tag', 'accountId'],
                 resourceDetail.sqlAuthEnabled || false
@@ -2670,6 +2675,7 @@ async function deleteExtendedProperties(
             command = [
                 deleteExtendedPropertiesScript(
                     'test-db',
+                    DEFAULT_INSTANCE_NAME,
                     DEFAULT_MSSQL_INSTANCE_NAME,
                     ['cloned_by', 'source', 'createdAt', 'updatedAt', 'tag', 'accountId'],
                     false
@@ -2754,6 +2760,7 @@ async function checkDatabaseIntegrity(
         region,
         checkDataIntegrityJob.id,
         databaseName,
+        srcDetails.databaseInstanceName,
         srcDetails.instanceName,
         srcDetails.activeNodeInstanceId,
         srcDetails.sqlAuthEnabled
@@ -2769,6 +2776,7 @@ async function performIntegrityCheck(
     parentJobId: string,
     databaseName: string,
     instanceName: string,
+    executableInstanceName: string,
     activeNodeInstanceId: string,
     sqlAuthEnabled: boolean
 ) {
@@ -2776,11 +2784,17 @@ async function performIntegrityCheck(
     let errorMsg;
     try {
         let command = [
-            checkDatabaseIntegrityScript(databaseName, instanceName, `SandBox:${databaseName}:`, sqlAuthEnabled)
+            checkDatabaseIntegrityScript(
+                databaseName,
+                instanceName,
+                executableInstanceName,
+                `SandBox:${databaseName}:`,
+                sqlAuthEnabled
+            )
         ];
 
         if (isDemoFlow) {
-            command = [checkDatabaseIntegrityScript('test-db', '.', '', false)];
+            command = [checkDatabaseIntegrityScript('test-db', DEFAULT_INSTANCE_NAME, '.', '', false)];
         }
 
         const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
