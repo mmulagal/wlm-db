@@ -143,6 +143,8 @@ export const API_ERRORS = {
     POWERSHELL_7: 'PowerShell 7 is required for managing the resource'
 };
 
+export const WLF_TO_PROTECT_NAVIGATE = '../add-working-environment/database-services/mssql/postgress';
+
 export const STATUS_CONST = {
     UP: 'Up',
     DOWN: 'Down',
