@@ -16,6 +16,7 @@ import { useAppSelector } from '../../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import {
     setCreateSandboxPressed,
+    setDbMountPointsState,
     setSourceDatabase,
     setSourceDbHost,
     setSourceDbInstance
@@ -187,6 +188,12 @@ const SelectSource = () => {
                                         dispatch(setSourceDbHost(selectedOptions));
                                         dispatch(setSourceDbInstance(null));
                                         dispatch(setSourceDatabase(null));
+                                        dispatch(
+                                            setDbMountPointsState({
+                                                dbMountPointsData: null,
+                                                dbMountPointsLoading: true
+                                            })
+                                        );
                                     }}
                                     value={selectedDatabaseHost}
                                     isSearchable={true}
@@ -203,6 +210,12 @@ const SelectSource = () => {
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSourceDbInstance(selectedOptions));
                                         dispatch(setSourceDatabase(null));
+                                        dispatch(
+                                            setDbMountPointsState({
+                                                dbMountPointsData: null,
+                                                dbMountPointsLoading: true
+                                            })
+                                        );
                                     }}
                                     isLoading={databaseHostsLoading}
                                     isSearchable={true}
@@ -218,6 +231,12 @@ const SelectSource = () => {
                                         defaultValue={selectedDatabase ? selectedDatabase : [generateSourceDatabase[0]]}
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setSourceDatabase(selectedOptions));
+                                            dispatch(
+                                                setDbMountPointsState({
+                                                    dbMountPointsData: null,
+                                                    dbMountPointsLoading: true
+                                                })
+                                            );
                                         }}
                                         value={selectedDatabase}
                                         isSearchable={true}
@@ -237,6 +256,12 @@ const SelectSource = () => {
                                         defaultValue={selectedDatabase ? selectedDatabase : [generateSourceDatabase[0]]}
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setSourceDatabase(selectedOptions));
+                                            dispatch(
+                                                setDbMountPointsState({
+                                                    dbMountPointsData: null,
+                                                    dbMountPointsLoading: true
+                                                })
+                                            );
                                         }}
                                         value={selectedDatabase}
                                         isSearchable={true}
