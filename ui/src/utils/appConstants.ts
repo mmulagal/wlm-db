@@ -46,6 +46,7 @@ export const GENERAL = {
     LICENSE: 'License',
     SQL_SERVER_INSTALL_TYPE: 'SQL Server install type',
     DATABASE_NAME: 'Database name',
+    DATABASE_SERVER_NAME: 'Database Server name',
     DATABASE_CREDENTIALS: 'Database credentials',
     CONNECTIVITY: 'Connectivity',
     KEY_PAIR: 'Key pair',
@@ -73,6 +74,7 @@ export const GENERAL = {
     DEPLOYMENT_MODEL: 'Deployment model',
     ACCESS_PROTOCOL: 'Access protocol:',
     AWS_SETTINGS: 'AWS settings',
+    LANDING_ZONE: 'Landing zone',
     VIEW_API_REQUEST: 'View API request',
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
     LOAD_CONFIG_CONTENT:
