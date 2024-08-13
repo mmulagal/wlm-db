@@ -23,7 +23,6 @@ terraform {
       version = "2.5.1"
     }
   }
-
 }
 
 provider "aws" {
@@ -66,4 +65,27 @@ resource "aws_dynamodb_table" "terraform_locks" {
     name = "LockID"
     type = "S"
   }
+}
+
+module "vpc-endpoints-validation" {
+  source = "./modules/vpc-endpoints-validation"
+  
+  endpoints_vpc_id = var.vpc_id
+  endpoints_aws_location = var.aws_location
+  preferred_subnet_id = var.private_subnet1_id
+  preferred_subnet_cidrblock = var.private_subnet1_cidr_block
+
+  standby_subnet_id = var.private_subnet2_id
+  standby_subnet_cidrblock = var.private_subnet2_cidr_block
+  s3_endpoint_route_tables = var.s3_gateway_endpoint_route_tables
+
+  s3_endpoint_exists = var.is_s3_endpoint_created
+  cloudformation_endpoint_exists = var.is_cloudformation_endpoint_created
+  ssm_endpoint_exists = var.is_ssm_endpoint_created
+  sqs_endpoint_exists = var.is_sqs_endpoint_created
+  cloudwatch_logs_endpoint_exists = var.is_cloudwatch_logs_endpoint_created
+  fsx_endpoint_exists = var.is_fsx_endpoint_created
+  ec2_endpoint_exists = var.is_ec2_endpoint_created
+  ec2_messages_endpoint_exists = var.is_ec2_messages_endpoint_created
+  ssm_messages_endpoint_exists = var.is_ssm_messages_endpoint_created
 }
