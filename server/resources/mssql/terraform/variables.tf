@@ -25,26 +25,26 @@ variable "bucket_for_state" {
 }
 
 variable "terraform_state_locking" {
-    description = "Value of the terraform state locking"
-    type        = string
+  description = "Value of the terraform state locking"
+  type        = string
 }
 
 variable "s3_template_url" {
-    description = "Value of the S3 Template URL"
-    type        = string
+  description = "Value of the S3 Template URL"
+  type        = string
 }
 
 variable "deployement_name" {
-    description = "Value of the Deployment Name"
-    type        = string
-    default     = "wlmdb-poc"
-} 
+  description = "Value of the Deployment Name"
+  type        = string
+  default     = "wlmdb-poc"
+}
 # Networking configuration variables
 variable "vpc_id" {
   description = "ID of the VPC"
   type        = string
-  default = "vpc-046f7e26255458373"
-} 
+  default     = "vpc-046f7e26255458373"
+}
 
 variable "vpc_cidr" {
   description = "CIDR block of the vpc"
@@ -54,191 +54,191 @@ variable "vpc_cidr" {
 variable "private_subnet1_id" {
   description = "ID of the private subnet 1"
   type        = string
-  default = "subnet-03302cffd47acd237"
+  default     = "subnet-03302cffd47acd237"
 }
 
 variable "private_subnet2_id" {
   description = "ID of the private subnet 2"
   type        = string
-  default = "subnet-0fcd4374d52d4faf0"
+  default     = "subnet-0fcd4374d52d4faf0"
 }
 
 variable "route_table1_id" {
   description = "ID of the routable table 1"
   type        = string
-  default = "rtb-09a5394f5cee60073"
+  default     = "rtb-09a5394f5cee60073"
 }
 
 variable "route_table2_id" {
   description = "ID of the routable table 2"
   type        = string
-  default = "rtb-044539dfce91103ab"
+  default     = "rtb-044539dfce91103ab"
 }
 
 variable "availability_zone1" {
   description = "Availability Zone 1"
   type        = string
-  default = "ap-southeast-1a"
+  default     = "ap-southeast-1a"
 }
 
 variable "availability_zone2" {
   description = "Availability Zone 2"
   type        = string
-  default = "ap-southeast-1c"
-} 
+  default     = "ap-southeast-1c"
+}
 variable "security_group_id" {
   description = "ID of the Security Group"
   type        = string
-  default = "sg-06989f7dcc767bcdf"
+  default     = "sg-06989f7dcc767bcdf"
 }
 
 variable "default_security_group_id" {
   description = "ID of the Default Security Group"
   type        = string
-  default = "sg-05f4939d6670b405f"
+  default     = "sg-05f4939d6670b405f"
 }
 
 # Ec2 configuration variables
 variable "ec2_instance_type" {
   description = "Value of the instance type"
   type        = string
-  default = "m5.large"
+  default     = "m5.large"
 }
 variable "ec2_instance_keypair" {
   description = "Value of the instance key pair"
   type        = string
-  default = "occm_qa"
+  default     = "occm_qa"
 }
 
 # AD configuration variables
 variable "ad_type" {
-    description   = "Value of the ad type"
-    type          = string
-    default       = "AWS_MANAGED_AD"
-    validation {
-        condition     = contains(["USER_MANAGED_AD", "AWS_MANAGED_AD"], var.ad_type)
-        error_message = "The ad_type must be either USER_MANAGED_AD or AWS_MANAGED_AD."
-    }
+  description = "Value of the ad type"
+  type        = string
+  default     = "AWS_MANAGED_AD"
+  validation {
+    condition     = contains(["USER_MANAGED_AD", "AWS_MANAGED_AD"], var.ad_type)
+    error_message = "The ad_type must be either USER_MANAGED_AD or AWS_MANAGED_AD."
+  }
 }
 
-variable "domain_user_name" {
-    description = "Value of the domain user name"
-    type        = string
-    default = "admin"
+variable "domain_admin_user_name" {
+  description = "Value of the domain admin user name"
+  type        = string
+  default     = "admin"
 }
 
-variable "domain_password" {
-    description = "Value of the domain password"
-    type        = string
-    sensitive   = true
+variable "domain_admin_password" {
+  description = "Value of the domain admin password"
+  type        = string
+  sensitive   = true
 }
 
 variable "domain_dns_name" {
-    description = "Value of the domain dns name"
-    type        = string
-    default = "wlmqa2.com"
+  description = "Value of the domain dns name"
+  type        = string
+  default     = "wlmqa2.com"
 }
 
 variable "ad_security_group_id" {
-    description = "Value of the domain security group id"
-    type        = string
-    default = "sg-06989f7dcc767bcdf"
+  description = "Value of the domain security group id"
+  type        = string
+  default     = "sg-06989f7dcc767bcdf"
 }
 
 variable "dns_ip_addresses" {
-    description = "Value of the dns ip addresses"
-    type        = list(string)
-    default     = ["10.0.140.140","10.0.29.45"]
+  description = "Value of the dns ip addresses"
+  type        = list(string)
+  default     = ["10.0.140.140", "10.0.29.45"]
 }
 
 variable "node_net_bios_names" {
-    description = "Value of the node net bios name"
-    type        = string
-    default     = "sqlnode-34602"
+  description = "Value of the node net bios name"
+  type        = string
+  default     = "sqlnode-34602"
 }
 
 #FSx configuration variables
 variable "fsx_deployment_mode" {
-    description = "Value of the FSx deployment mode"
-    type        = string
-    default     = "SINGLE_AZ_1"
+  description = "Value of the FSx deployment mode"
+  type        = string
+  default     = "SINGLE_AZ_1"
 
-     validation {
-        condition     = contains(["SINGLE_AZ_1", "MULTI_AZ_1"], var.fsx_deployment_mode)
-        error_message = "The fsx deployment mode must be either SINGLE_AZ_1 or MULTI_AZ_1."
-    }
+  validation {
+    condition     = contains(["SINGLE_AZ_1", "MULTI_AZ_1"], var.fsx_deployment_mode)
+    error_message = "The fsx deployment mode must be either SINGLE_AZ_1 or MULTI_AZ_1."
+  }
 }
 
 variable "fsx_file_system_id" {
-    description = "Value of the FSx file system id"
-    type        = string
+  description = "Value of the FSx file system id"
+  type        = string
 }
 
 variable "fsx_file_system_name" {
-    description = "Value of the FSx file system name"
-    type        = string
+  description = "Value of the FSx file system name"
+  type        = string
 }
 
 variable "fsx_data_volume_name" {
-    description = "Value of the FSx data volume name"
-    type        = string
+  description = "Value of the FSx data volume name"
+  type        = string
 }
 
 variable "fsx_log_volume_name" {
-    description = "Value of the FSx log volume name"
-    type        = string
+  description = "Value of the FSx log volume name"
+  type        = string
 }
 
 variable "fsx_data_volume_size" {
-    description = "Value of the FSx data volume size"
-    type        = string
-    default     = 1153434
+  description = "Value of the FSx data volume size"
+  type        = string
+  default     = 1153434
 }
 
 variable "fsx_log_volume_size" {
-    description = "Value of the FSx log volume size"
-    type        = string
-    default     = 288359
+  description = "Value of the FSx log volume size"
+  type        = string
+  default     = 288359
 }
 
 variable "fsx_temp_db_volume_name" {
-    description = "Value of the FSx temp db volume name"
-    type        = string
+  description = "Value of the FSx temp db volume name"
+  type        = string
 }
 
 variable "fsx_temp_db_volume_size" {
-    description = "Value of the FSx temp db volume size"
-    type        = string
-    default     = 115344
+  description = "Value of the FSx temp db volume size"
+  type        = string
+  default     = 115344
 }
 
 variable "fsx_storage_capacity" {
-    description = "Value of the FSx storage capacity"
-    type        = string
-    default     = 1826
+  description = "Value of the FSx storage capacity"
+  type        = string
+  default     = 1826
 }
 
 variable "fsx_data_lun_size" {
-    description = "Value of the FSx data lun size"
-    type        = string
-    default     = 1048576
+  description = "Value of the FSx data lun size"
+  type        = string
+  default     = 1048576
 }
 
 variable "fsx_svm_name" {
-    description = "Value of the FSx SVM name"
-    type        = string
-    default     = "svm1"
+  description = "Value of the FSx SVM name"
+  type        = string
+  default     = "svm1"
 }
 variable "fsx_user_name" {
-    description = "Value of the FSx user name"
-    type        = string
-    default     = "fsxadmin"
+  description = "Value of the FSx user name"
+  type        = string
+  default     = "fsxadmin"
 }
 
 variable "fsx_password" {
-    description = "Value of the Encrypted FSx password"
-    type        = string
-    sensitive   = true
+  description = "Value of the Encrypted FSx password"
+  type        = string
+  sensitive   = true
 }
 
 variable "database_size" {
@@ -288,16 +288,16 @@ variable "sql_ami_id" {
   default     = "ami-0017fb94c6269ce73"
 }
 
-variable "service_account_name" {
-  description = "The name of the service account"
+variable "sql_service_account_name" {
+  description = "The name of the sql service account"
   type        = string
   default     = "sqladminapsm7"
 }
 
-variable "service_account_password" {
-  description = "The password of the service account"
+variable "sql_service_account_password" {
+  description = "The password of the sql service account"
   type        = string
-  sensitive = true
+  sensitive   = true
 }
 
 variable "sql_collation" {
@@ -319,64 +319,64 @@ variable "sql_ami_name" {
 }
 
 variable "sql_svm_name" {
-    description = "The SVM name for SQL"
-    type        = string
-    default     = "sqlsvm1"
+  description = "The SVM name for SQL"
+  type        = string
+  default     = "sqlsvm1"
 }
 
 variable "sql_igroup_name" {
-    description = "The igroup name for SQL"
-    type        = string
-    default     = "sqligroup1"
+  description = "The igroup name for SQL"
+  type        = string
+  default     = "sqligroup1"
 }
 
 #extra params added from backend
 variable "deploy_role_name" {
   description = "Value of the IAM Role"
   type        = string
-  default = "wlm-operate-permissions-role"
+  default     = "wlm-operate-permissions-role"
 }
 
 variable "validation_ami_id" {
-    description = "Value of the AMI ID"
-    type        = string
-    default = "ami-0dc86cd5724f1007c"
+  description = "Value of the AMI ID"
+  type        = string
+  default     = "ami-0dc86cd5724f1007c"
 }
 
 variable "validation_instance_type" {
-    description = "Value of the instance type"
-    type        = string
-    default = "t2.micro"
+  description = "Value of the instance type"
+  type        = string
+  default     = "t2.micro"
 }
 
 variable "account_id" {
-    description = "Value of the account ID"
-    type        = string
-    default = "account-aHP3esT5"
+  description = "Value of the account ID"
+  type        = string
+  default     = "account-aHP3esT5"
 }
 
 variable "cloud-provider-account-id" {
-    description = "Value of the cloud provider account ID"
-    type        = string
-    default = "464262061435"
+  description = "Value of the cloud provider account ID"
+  type        = string
+  default     = "464262061435"
 }
 
 variable "role_credentials_id" {
-    description = "Value of the role credentials ID"
-    type        = string
-    default = "0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8"
+  description = "Value of the role credentials ID"
+  type        = string
+  default     = "0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8"
 }
 
 variable "wlmdb_aws_account_id" {
-    description = "Value of the AWS account ID"
-    type        = string
-    default = "718273455463"
+  description = "Value of the AWS account ID"
+  type        = string
+  default     = "718273455463"
 }
 
 variable "jwt_token" {
-    description = "Value of the JWT Token"
-    type        = string
-    sensitive = true
+  description = "Value of the JWT Token"
+  type        = string
+  sensitive   = true
 }
 
 # vpc end points configuration variables
@@ -439,18 +439,22 @@ variable "s3_gateway_endpoint_route_tables" {
   type        = string
 }
 
-variable "private_subnet1_cidr_block" { 
-    description = "CIDR block for Private Subnet 1"
-    type        = string
-    default     = "10.0.128.0/20"
+variable "private_subnet1_cidr_block" {
+  description = "CIDR block for Private Subnet 1"
+  type        = string
+  default     = "10.0.128.0/20"
 }
 
 variable "private_subnet2_cidr_block" {
-    description = "CIDR block for Private Subnet 2"
-    type        = string
-    default     = "10.0.128.0/20"
+  description = "CIDR block for Private Subnet 2"
+  type        = string
+  default     = "10.0.128.0/20"
 }
 
+variable "notification_arn" {
+  description = "Value of the Notification ARN"
+  type        = string
+}
 # variable "ec2_instance_type" {
 #   description = "Value of the instance type"
 #   type        = string

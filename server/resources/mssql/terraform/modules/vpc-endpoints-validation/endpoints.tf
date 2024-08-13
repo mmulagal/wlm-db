@@ -4,16 +4,16 @@ locals {
   single_zone = var.standby_subnet_id == "subnet-123456"
   multi_zone  = var.standby_subnet_id != "subnet-123456"
 
-  create_cloudformation_endpoint = var.cloudformation_endpoint_exists == false
-  create_ssm_endpoint            = var.ssm_endpoint_exists == false
-  create_sqs_endpoint            = var.sqs_endpoint_exists == false
-  create_s3_endpoint             = var.s3_endpoint_exists == false
+  create_cloudformation_endpoint  = var.cloudformation_endpoint_exists == false
+  create_ssm_endpoint             = var.ssm_endpoint_exists == false
+  create_sqs_endpoint             = var.sqs_endpoint_exists == false
+  create_s3_endpoint              = var.s3_endpoint_exists == false
   create_cloudwatch_logs_endpoint = var.cloudwatch_logs_endpoint_exists == false
-  create_fsx_endpoint            = var.fsx_endpoint_exists == false
-  create_ec2_endpoint            = var.ec2_endpoint_exists == false
-  create_ec2_messages_endpoint   = var.ec2_messages_endpoint_exists == false
-  create_ssm_messages_endpoint   = var.ssm_messages_endpoint_exists == false
-  
+  create_fsx_endpoint             = var.fsx_endpoint_exists == false
+  create_ec2_endpoint             = var.ec2_endpoint_exists == false
+  create_ec2_messages_endpoint    = var.ec2_messages_endpoint_exists == false
+  create_ssm_messages_endpoint    = var.ssm_messages_endpoint_exists == false
+
   create_sg = local.create_cloudformation_endpoint || local.create_ssm_endpoint || local.create_sqs_endpoint || local.create_s3_endpoint || local.create_cloudwatch_logs_endpoint || local.create_fsx_endpoint || local.create_ec2_endpoint || local.create_ec2_messages_endpoint || local.create_ssm_messages_endpoint
 
   create_single_zone_sg = local.single_zone && local.create_sg
