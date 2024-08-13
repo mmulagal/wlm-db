@@ -14,6 +14,7 @@ import {
     getMarketingApiRequestBody,
     getMarketingApiManualModeRequestBody
 } from '../../../src/operations/cloud-manager/marketing-operations';
+import { ManualModeEbsComparisonResponse } from '../../../src/routes/types/marketing.types';
 
 describe('Marketing lib', () => {
     it('Getting storage savings', async () => {
@@ -56,7 +57,7 @@ describe('Marketing lib', () => {
             ]
         }) as ManualModeMarketingRequestBody;
 
-        const response = await getManualModeStorageSavings(ACCOUNT_ID, requestBody);
+        const response = await getManualModeStorageSavings<ManualModeEbsComparisonResponse>(ACCOUNT_ID, requestBody);
         expect(response.ebsTotal).toBeDefined();
         expect(response.fsx).toBeDefined();
         expect(response.multi.fsx_calculation).toBeDefined();

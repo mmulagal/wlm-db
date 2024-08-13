@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import {
     SqlServerDeploymentModel,
     HOURS_IN_MONTH,
@@ -7,14 +7,9 @@ import {
 } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import {
-    StorageSummary,
-    EbsCostCalculation,
     ManualModeMarketingRequestBody,
     getManualModeStorageSavings,
-    getStorageSavings,
-    FsxCostCalculations,
-    FsxCalculation,
-    InstanceEbsData
+    getStorageSavings
 } from '../../lib/cloud-manager/marketing';
 import {
     EbsCloneCalculationType,
@@ -24,6 +19,14 @@ import {
     StorageSavingsRequestBodyType
 } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes, sizeInGigaBytes } from '../../utils/utils';
+import {
+    EbsCostCalculation,
+    FsxCalculation,
+    FsxCostCalculations,
+    InstanceEbsData,
+    ManualModeEbsComparisonResponse,
+    StorageSummary
+} from '../../routes/types/marketing.types';
 
 const logger = getLogger();
 
@@ -73,33 +76,68 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
     const { snapshotFrequency, sqlServerDeploymentType, clonedCopiesCount, monthlyChangeRatePercentage, ec2Instances } =
         params || {};
 
-    const instancesObject = ec2Instances.map(instance => {
-        const { ec2InstanceDescription, isPrimary, volumes } = instance;
+    const instancesObject = compact(
+        ec2Instances?.map(instance => {
+            const { ec2InstanceDescription, isPrimary, volumes } = instance;
 
-        if (hasDuplicateVolumeType(volumes)) {
-            throw new Error('Duplicate volume types are not allowed');
-        }
+            if (volumes) {
+                if (hasDuplicateVolumeType(volumes)) {
+                    throw new Error('Duplicate volume types are not allowed');
+                }
 
-        const volumeArray = volumes.map(volume => {
-            const { volumeType, volumeNumber, storageAmount, volumeIops, throughput } = volume;
-            return {
-                volumeType,
-                volumeNumber,
-                storageAmount: {
-                    size: sizeInGigaBytes(storageAmount, 'B'),
-                    unit: 'GiB'
-                },
-                volumeIops: volumeIops && volumeIops > 0 ? volumeIops : 0,
-                throughput: throughput && throughput > 0 ? throughput : 0
-            };
-        });
+                const volumeArray = volumes.map(volume => {
+                    const { volumeType, volumeNumber, storageAmount, volumeIops, throughput } = volume;
+                    return {
+                        volumeType,
+                        volumeNumber,
+                        storageAmount: {
+                            size: sizeInGigaBytes(storageAmount, 'B'),
+                            unit: 'GiB'
+                        },
+                        volumeIops: volumeIops && volumeIops > 0 ? volumeIops : 0,
+                        throughput: throughput && throughput > 0 ? throughput : 0
+                    };
+                });
 
-        return {
-            instanceName: ec2InstanceDescription,
-            isPrimary,
-            volumes: volumeArray
-        };
-    });
+                return {
+                    instanceName: ec2InstanceDescription,
+                    isPrimary,
+                    volumes: volumeArray
+                };
+            }
+            return null;
+        })
+    );
+
+    const fsxObject = compact(
+        ec2Instances?.map(instance => {
+            const { fsxw } = instance;
+            if (fsxw) {
+                const { storageAmount, deploymentType, volumeIops, throughput, storageVolumeType } = fsxw;
+                return {
+                    useCase: 'Low-latency',
+                    region,
+                    deploymentType: deploymentType === 'Single' ? 'Single' : 'Multi',
+                    storageAmount: {
+                        size: sizeInGigaBytes(storageAmount, 'B'),
+                        unit: 'GiB'
+                    },
+                    iops: volumeIops,
+                    throughput,
+                    storageVolumeType,
+                    snapshotFreq: snapshotFrequency,
+                    deduplicationSavings: 100,
+                    cloneEnvs: clonedCopiesCount,
+                    monthlyChangeRate: monthlyChangeRatePercentage
+                };
+            }
+            return null;
+        })
+    );
+
+    if (fsxObject) {
+        return fsxObject[0];
+    }
 
     return {
         useCase: 'Low-latency',
@@ -213,10 +251,8 @@ async function invokeMarketingApi(
             ]
         }) as ManualModeMarketingRequestBody;
 
-        const { ebsTotal, instanceEbs, fsx, single, multi } = await getManualModeStorageSavings(
-            accountId,
-            marketingRequestBody
-        );
+        const { ebsTotal, instanceEbs, fsx, single, multi } =
+            await getManualModeStorageSavings<ManualModeEbsComparisonResponse>(accountId, marketingRequestBody);
 
         return {
             ebs: ebsTotal,
@@ -796,7 +832,10 @@ async function formatManualStorageSavingsCalculationMetrics(
 
     const marketingRequestBody = getMarketingApiManualModeRequestBody(region, params) as ManualModeMarketingRequestBody;
 
-    const { instanceEbs, single, multi, ebsTotal } = await getManualModeStorageSavings(accountId, marketingRequestBody);
+    const { instanceEbs, single, multi, ebsTotal } = await getManualModeStorageSavings<ManualModeEbsComparisonResponse>(
+        accountId,
+        marketingRequestBody
+    );
 
     const { ebsSnapshotCalculation, ebsCloneCalculation } = await derivePrimaryInstanceEbsCostCalculation(
         instanceEbs,

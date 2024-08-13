@@ -33,28 +33,48 @@ const ManualModeInstances = Type.Array(
         ec2InstanceDescription: Type.String(),
         ec2InstanceType: Type.String(),
         isPrimary: Type.Boolean(),
-        volumes: Type.Array(
+        volumes: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    volumeType: Type.String(Type.String({ enum: ['gp2', 'gp3', 'io1', 'io2', 'st1'] })),
+                    volumeNumber: Type.Number({
+                        minimum: 1
+                    }),
+                    storageAmount: Type.Number({
+                        minimum: 1024 * 1024 * 1024, // 1 GB
+                        maximum: 16 * 1024 * 1024 * 1024 * 1024 // 16 TB
+                    }),
+                    volumeIops: Type.Optional(
+                        Type.Number({
+                            minimum: 100,
+                            maximum: 256000 // io2 supportes upto 256000 IOPS
+                        })
+                    ),
+                    throughput: Type.Optional(
+                        Type.Number({
+                            minimum: 125,
+                            maximum: 1000
+                        })
+                    )
+                })
+            )
+        ),
+        fsxw: Type.Optional(
             Type.Object({
-                volumeType: Type.String(Type.String({ enum: ['gp2', 'gp3', 'io1', 'io2', 'st1'] })),
-                volumeNumber: Type.Number({
-                    minimum: 1
-                }),
+                deploymentType: Type.String({ enum: ['Single', 'Multi'] }),
+                storageVolumeType: Type.String({ enum: ['SSD', 'HDD'] }),
                 storageAmount: Type.Number({
                     minimum: 1024 * 1024 * 1024, // 1 GB
-                    maximum: 16 * 1024 * 1024 * 1024 * 1024 // 16 TB
+                    maximum: 64 * 1024 * 1024 * 1024 * 1024 // 64 TB
                 }),
-                volumeIops: Type.Optional(
-                    Type.Number({
-                        minimum: 100,
-                        maximum: 256000 // io2 supportes upto 256000 IOPS
-                    })
-                ),
-                throughput: Type.Optional(
-                    Type.Number({
-                        minimum: 125,
-                        maximum: 1000
-                    })
-                )
+                volumeIops: Type.Number({
+                    minimum: 96,
+                    maximum: 400000
+                }),
+                throughput: Type.Number({
+                    minimum: 8,
+                    maximum: 12288
+                })
             })
         )
     })
@@ -153,7 +173,8 @@ const fsxCalculationData = Type.Object({
 const StorageSavingsResponse = Type.Object({
     compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
     license: Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense }),
-    ebs: StorageMetrics,
+    ebs: Type.Optional(StorageMetrics),
+    fsxw: Type.Optional(StorageMetrics),
     fsx: StorageMetrics,
     totalSummary: Type.Object({
         existing: Type.Number(),
