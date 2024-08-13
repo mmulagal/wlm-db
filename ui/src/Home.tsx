@@ -18,13 +18,20 @@ import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/Wizar
 import CreateNewSandbox from './workloadFactory/Sandbox/CreateNewSandbox/CreateNewSandbox';
 import { WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
+import { useAppSelector } from './store/storeHooks';
+import { setSelectedHeaderTab } from './store/workloadFactory/inventorySlice';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const dispatch = useDispatch();
     const location = useLocation();
 
-    console.log(location?.pathname);
+    useEffect(() => {
+        if (!isWorkloadFactory) {
+            console.log('control comes here', location?.pathname);
+        }
+    }, [isWorkloadFactory, location?.pathname]);
 
     //@ts-ignore
     const showNotifications = useMemo(() => {
@@ -34,42 +41,88 @@ const Home = () => {
     return (
         <div className={styles['app-layout']}>
             <div style={{ height: '100%' }}>
-                <Suspense fallback={<MainComponent />}>
-                    <Routes>
-                        <Route
-                            path={`add-working-environment/database-services/:storage/create`}
-                            element={<MainComponent />}
-                        />
-                        <Route
-                            path={`add-working-environment/database-services/:storage/postgress`}
-                            element={<PostgressMainComponent />}
-                        />
-                        <Route
-                            path={`add-working-environment/database-services/:storage/discover`}
-                            element={<DiscoverPage />}
-                        />
+                {isWorkloadFactory && (
+                    <Suspense fallback={<MainComponent />}>
+                        <Routes>
+                            <Route
+                                path={`add-working-environment/database-services/:storage/create`}
+                                element={<MainComponent />}
+                            />
+                            <Route
+                                path={`add-working-environment/database-services/:storage/postgress`}
+                                element={<PostgressMainComponent />}
+                            />
+                            <Route
+                                path={`add-working-environment/database-services/:storage/discover`}
+                                element={<DiscoverPage />}
+                            />
 
-                        <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
-                            <Route path={'overview'} element={<MsSqlOverview />} />
-                            <Route path={'databases'} element={<Databases />} />
-                            <Route path={'tables'} element={<Tables />} />
-                        </Route>
-                        <Route path={'databases'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
-                        <Route path={'databases/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
-                        <Route
-                            path={'databases/exploreSavingsEBS'}
-                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
-                        />
-                        <Route
-                            path={'databases/exploreSavingsFsxW'}
-                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
-                        />
-                        <Route path={'create-new-user'} element={<WizardComponent />} />
-                        <Route path={'job-monitor'} element={<JobMonitoring />} />
-                        <Route path={'create-new-sandbox'} element={<CreateNewSandbox />} />
-                        <Route path="*" element={<MainComponent />} />
-                    </Routes>
-                </Suspense>
+                            <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
+                                <Route path={'overview'} element={<MsSqlOverview />} />
+                                <Route path={'databases'} element={<Databases />} />
+                                <Route path={'tables'} element={<Tables />} />
+                            </Route>
+                            <Route path={'databases'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
+                            <Route
+                                path={'databases/inventory'}
+                                element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
+                            />
+                            <Route
+                                path={'databases/exploreSavingsEBS'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                            />
+                            <Route
+                                path={'databases/exploreSavingsFsxW'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
+                            />
+                            <Route path={'create-new-user'} element={<WizardComponent />} />
+                            <Route path={'job-monitor'} element={<JobMonitoring />} />
+                            <Route path={'create-new-sandbox'} element={<CreateNewSandbox />} />
+                            <Route path="*" element={<MainComponent />} />
+                        </Routes>
+                    </Suspense>
+                )}
+                {!isWorkloadFactory && (
+                    <Suspense fallback={<MainComponent />}>
+                        <Routes>
+                            <Route
+                                path={`add-working-environment/database-services/:storage/create`}
+                                element={<MainComponent />}
+                            />
+                            <Route
+                                path={`add-working-environment/database-services/:storage/postgress`}
+                                element={<PostgressMainComponent />}
+                            />
+                            <Route
+                                path={`add-working-environment/database-services/:storage/discover`}
+                                element={<DiscoverPage />}
+                            />
+
+                            <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
+                                <Route path={'overview'} element={<MsSqlOverview />} />
+                                <Route path={'databases'} element={<Databases />} />
+                                <Route path={'tables'} element={<Tables />} />
+                            </Route>
+                            <Route path={'fsxdb'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
+                            <Route
+                                path={'databases/inventory'}
+                                element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
+                            />
+                            <Route
+                                path={'databases/exploreSavingsEBS'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                            />
+                            <Route
+                                path={'databases/exploreSavingsFsxW'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
+                            />
+                            <Route path={'create-new-user'} element={<WizardComponent />} />
+                            <Route path={'job-monitor'} element={<JobMonitoring />} />
+                            <Route path={'create-new-sandbox'} element={<CreateNewSandbox />} />
+                            <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
+                        </Routes>
+                    </Suspense>
+                )}
             </div>
 
             {/* To Display the notification */}
