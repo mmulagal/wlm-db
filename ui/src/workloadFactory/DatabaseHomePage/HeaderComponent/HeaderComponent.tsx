@@ -69,7 +69,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
 
-    const isBlueXP = false;
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const { statusData, statusLoading } = useAppSelector(state => state.headers.getStatus);
 
@@ -353,7 +353,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             <div className={styles.headerComponent}>
                 <div className={styles.firstSection}>
                     <div className={styles.firstRow}>
-                        {isBlueXP && (
+                        {!isWorkloadFactory && (
                             <>
                                 <BlueXPDatabase />
                                 <Typography
@@ -365,7 +365,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 </Typography>
                             </>
                         )}
-                        {!isBlueXP && (
+                        {isWorkloadFactory && (
                             <Typography variant="Regular_24" className={styles.heading}>
                                 {GENERAL.DATABASES}
                             </Typography>
@@ -382,8 +382,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                         : `${styles.headerPart1}`
                                 }
                                 style={{
-                                    color: isBlueXP ? 'var(--text-button-primary)' : '',
-                                    fontWeight: isBlueXP ? 400 : ''
+                                    color: !isWorkloadFactory ? 'var(--text-button-primary)' : '',
+                                    fontWeight: !isWorkloadFactory ? 400 : ''
                                 }}
                                 onClick={() => {
                                     handleClick(WLF_TABS.DASHBOARD);
@@ -403,8 +403,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     handleClick(WLF_TABS.INVENTORY);
                                 }}
                                 style={{
-                                    color: isBlueXP ? 'var(--text-button-primary)' : '',
-                                    fontWeight: isBlueXP ? 400 : ''
+                                    color: !isWorkloadFactory ? 'var(--text-button-primary)' : '',
+                                    fontWeight: !isWorkloadFactory ? 400 : ''
                                 }}
                                 id="inventory"
                             >
@@ -419,8 +419,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                         : `${styles.headerPart4}`
                                 }
                                 style={{
-                                    color: isBlueXP ? 'var(--text-button-primary)' : '',
-                                    fontWeight: isBlueXP ? 400 : ''
+                                    color: !isWorkloadFactory ? 'var(--text-button-primary)' : '',
+                                    fontWeight: !isWorkloadFactory ? 400 : ''
                                 }}
                                 onClick={() => {
                                     handleClick(WLF_TABS.SANDBOXES);
@@ -443,8 +443,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     handleClick(WLF_TABS.EXPLORE_SAVINGS);
                                 }}
                                 style={{
-                                    color: isBlueXP ? 'var(--text-button-primary)' : '',
-                                    fontWeight: isBlueXP ? 400 : ''
+                                    color: !isWorkloadFactory ? 'var(--text-button-primary)' : '',
+                                    fontWeight: !isWorkloadFactory ? 400 : ''
                                 }}
                                 id="explore-savings"
                             >
@@ -462,8 +462,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     handleClick(WLF_TABS.JOB_MONITORING);
                                 }}
                                 style={{
-                                    color: isBlueXP ? 'var(--text-button-primary)' : '',
-                                    fontWeight: isBlueXP ? 400 : ''
+                                    color: !isWorkloadFactory ? 'var(--text-button-primary)' : '',
+                                    fontWeight: !isWorkloadFactory ? 400 : ''
                                 }}
                                 id="job-monitoring"
                             >
