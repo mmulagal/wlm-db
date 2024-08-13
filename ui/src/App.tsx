@@ -11,41 +11,41 @@ import { postMessageToCM } from './utils/bxputils';
 
 function App() {
     const { loading, accountId } = useAppSelector(state => state.auth);
-    const postMsgRef = useRef(false);
+    //const postMsgRef = useRef(false);
 
     useInitialize();
 
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
-    useEffect(() => {
-        postMessageToCM({
-            type: 'SERVICE:READY',
-            payload: 'iframev2'
-        });
-    }, []);
+    // useEffect(() => {
+    //     postMessageToCM({
+    //         type: 'SERVICE:READY',
+    //         payload: 'iframev2'
+    //     });
+    // }, []);
 
-    useEffect(() => {
-        const handleParentMessage = (e: any) => {
-            if (e?.data?.type === 'SERVICE:ON-READY' && !postMsgRef.current) {
-                postMsgRef.current = true;
-                postMessageToCM({
-                    type: 'SERVICE:READY',
-                    payload: 'iframev2'
-                });
+    // useEffect(() => {
+    //     const handleParentMessage = (e: any) => {
+    //         if (e?.data?.type === 'SERVICE:ON-READY' && !postMsgRef.current) {
+    //             postMsgRef.current = true;
+    //             postMessageToCM({
+    //                 type: 'SERVICE:READY',
+    //                 payload: 'iframev2'
+    //             });
 
-                setTimeout(() => {
-                    window.parent.postMessage({ type: 'SERVICE:READY', payload: 'iframev2' }, '*');
-                }, 1000);
-            }
-        };
+    //             setTimeout(() => {
+    //                 window.parent.postMessage({ type: 'SERVICE:READY', payload: 'iframev2' }, '*');
+    //             }, 1000);
+    //         }
+    //     };
 
-        window.addEventListener('message', handleParentMessage);
+    //     window.addEventListener('message', handleParentMessage);
 
-        return () => {
-            window.removeEventListener('message', handleParentMessage);
-        };
-    }, []);
+    //     return () => {
+    //         window.removeEventListener('message', handleParentMessage);
+    //     };
+    // }, []);
 
     return (
         <>

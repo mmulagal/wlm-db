@@ -94,6 +94,9 @@ const useInitialize = () => {
             } else {
                 navigate(`${initialData?.pathname}`, { replace: true });
             }
+            postBlueXPMessage({
+                type: BlueXPListeners.ready
+            });
         },
         onConnectorChange: function (connectorId: string): void {},
         onWorkspaceChange: function (workspaceId: string): void {
