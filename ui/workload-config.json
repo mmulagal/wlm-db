@@ -24,7 +24,7 @@
         "secondaryCtaLabel": "Go to Databases inventory",
         "secondaryCtaTo": "/databases/inventory",
         "primaryCtaDropdownLabel": "Explore savings",
-        "primaryCtaDropdownTo ": [
+        "primaryCtaDropdownTo": [
             {
                 "label": "Microsoft SQL Server on EBS",
                 "to": "/databases/exploreSavingsEBS"
