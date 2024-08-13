@@ -569,7 +569,7 @@ async function startSandboxCreation(
 
     let clonedVolumes;
     let mountPaths;
-    const fileSuffix = `-${Date.now()}`;
+    const fileSuffix = '-sandbox';
 
     try {
         await validateCloneParams(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, mountPoints);
@@ -2033,11 +2033,12 @@ async function performLifecycleUpdate(
 ) {
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
-    let mappings;
+    let mappings: undefined | VolumeLunMapping;
     let clonedVolumes;
     let mountPaths;
     let sandboxUpdated = false;
     let sandboxDetached = false;
+    const fileSuffix = '-sandbox';
     try {
         await validateLifeCycleParams(accountId, credentialsId, region, parentJobId, resourceDetails, action);
 
@@ -2092,7 +2093,15 @@ async function performLifecycleUpdate(
             parentJobId,
             resourceDetails,
             resourceDetails,
-            mappings,
+            // Changing the file name to match parent file names
+            {
+                ...mappings,
+                data: mappings.data.map(vol => ({
+                    ...vol,
+                    fileName: vol.fileName.replace(`${fileSuffix}.mdf`, '.mdf').replace(`${fileSuffix}.ndf`, '.ndf')
+                })),
+                log: mappings.log.map(vol => ({ ...vol, fileName: vol.fileName.replace(`${fileSuffix}.ldf`, '.ldf') }))
+            },
             clonedVolumes,
             {
                 dataDrive: mappings.data[0].fileName.split(':')[0],
@@ -2100,7 +2109,43 @@ async function performLifecycleUpdate(
             }
         )) as { dataPath: Array<string>; logPath: Array<string> };
 
-        await createCloneDb(accountId, credentialsId, region, parentJobId, resourceDetails, mountPaths);
+        const dataPathArr = mountPaths.dataPath.map(path => ({
+            filePath: path,
+            fileId:
+                mappings?.data.find(vol => {
+                    const oldFileName = vol.fileName
+                        .split('\\')
+                        .pop()
+                        ?.replace(`${fileSuffix}.mdf`, '.mdf')
+                        .replace(`${fileSuffix}.ndf`, '.ndf');
+                    const newFileName = path.split('\\').pop();
+                    return oldFileName === newFileName;
+                })?.fileId || 0
+        }));
+
+        const logPathArr = mountPaths.logPath.map(path => ({
+            filePath: path,
+            fileId:
+                mappings?.log.find(vol => {
+                    const oldFileName = vol.fileName.split('\\').pop()?.replace(`${fileSuffix}.ldf`, '.ldf');
+                    const newFileName = path.split('\\').pop();
+                    return oldFileName === newFileName;
+                })?.fileId || 0
+        }));
+
+        await createCloneDb(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resourceDetails,
+            {
+                dataPath: dataPathArr.sort((a, b) => Number(a.fileId) - Number(b.fileId)).map(path => path.filePath),
+                logPath: logPathArr.sort((a, b) => Number(a.fileId) - Number(b.fileId)).map(path => path.filePath)
+            },
+            undefined,
+            fileSuffix
+        );
 
         if (isDemoFlow) {
             const existingProps = resourceDetails.metadata.sandboxes?.find(
