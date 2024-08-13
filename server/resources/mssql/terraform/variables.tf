@@ -164,7 +164,7 @@ variable "fsx_deployment_mode" {
     default     = "SINGLE_AZ_1"
 
      validation {
-        condition     = contains(["SINGLE_AZ_1", "MULTI_AZ_1"], var.adc_type)
+        condition     = contains(["SINGLE_AZ_1", "MULTI_AZ_1"], var.fsx_deployment_mode)
         error_message = "The fsx deployment mode must be either SINGLE_AZ_1 or MULTI_AZ_1."
     }
 }
@@ -379,13 +379,6 @@ variable "jwt_token" {
     sensitive = true
 }
 
-variable "private_subnet1_cidr" {
-    description = "CIDR block for Private Subnet 1"
-    type        = string
-    default     = "10.0.128.20"
-}
-
-
 # vpc end points configuration variables
 variable "is_s3_endpoint_created" {
   description = "Determines if S3 endpoint is created"
@@ -449,13 +442,13 @@ variable "s3_gateway_endpoint_route_tables" {
 variable "private_subnet1_cidr_block" { 
     description = "CIDR block for Private Subnet 1"
     type        = string
-    default     = ""
+    default     = "10.0.128.0/20"
 }
 
 variable "private_subnet2_cidr_block" {
     description = "CIDR block for Private Subnet 2"
     type        = string
-    default     = ""
+    default     = "10.0.128.0/20"
 }
 
 # variable "ec2_instance_type" {
