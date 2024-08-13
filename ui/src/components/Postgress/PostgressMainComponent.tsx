@@ -4,8 +4,10 @@ import styles from './PostgressMainComponent.module.scss';
 import PostgressHeader from './PostgressHeader/PostgressHeader';
 import PostgressFooter from './PostgressFooter/PostgressFooter';
 import PostgressLayout from './PostgressLayout/PostgressLayout';
+import MssqlApis from '../CreateMsSql/MSSqlServer/MssqlApis';
 
 const PostgressMainComponent = () => {
+    MssqlApis();
     return (
         <div className={styles.protectComponent}>
             <div>

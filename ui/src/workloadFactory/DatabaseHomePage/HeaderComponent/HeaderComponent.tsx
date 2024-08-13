@@ -308,6 +308,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     };
 
     const TopBarComponent = () => {
+        const toShowPostgress = localStorage.getItem('postgress');
         return (
             <div className={styles.spaceArea}>
                 <div className={styles.contentArea}>
@@ -324,15 +325,18 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
                         </Button>
 
-                        <Button
-                            variant="primary"
-                            onClick={() => {
-                                navigate(WLF_TO_PROTECT_NAVIGATE);
-                            }}
-                            id={'deploy-button'}
-                        >
-                            <div className={styles.buttonStyle}>{'Deploy Postgress'}</div>
-                        </Button>
+                        {toShowPostgress && (
+                            <Button
+                                variant="primary"
+                                onClick={() => {
+                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                }}
+                                id={'deploy-button'}
+                            >
+                                <div className={styles.buttonStyle}>{'Deploy Postgress'}</div>
+                            </Button>
+                        )}
+
                         {refreshComponent()}
                     </div>
                 </div>
