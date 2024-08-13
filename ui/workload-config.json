@@ -23,6 +23,17 @@
         "primaryCtaTo": "/databases/add-working-environment/database-services/mssql/create",
         "secondaryCtaLabel": "Go to Databases inventory",
         "secondaryCtaTo": "/databases/inventory",
+        "primaryCtaDropdownLabel": "Explore savings",
+        "primaryCtaDropdownTo ": [
+            {
+                "label": "Microsoft SQL Server on EBS",
+                "to": "/databases/exploreSavingsEBS"
+            },
+            {
+                "label": "Microsoft SQL Server on FSx for Windows",
+                "to": "/databases/exploreSavingsFsxW"
+            }
+        ],
         "isComingSoon": false,
         "dataUrl": "/wlmdb/v1/status"
     },
