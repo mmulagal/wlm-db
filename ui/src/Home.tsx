@@ -17,6 +17,7 @@ import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/
 import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/WizardComponent';
 import CreateNewSandbox from './workloadFactory/Sandbox/CreateNewSandbox/CreateNewSandbox';
 import { WLF_TABS } from './utils/consts';
+import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -35,6 +36,10 @@ const Home = () => {
                         <Route
                             path={`add-working-environment/database-services/:storage/create`}
                             element={<MainComponent />}
+                        />
+                        <Route
+                            path={`add-working-environment/database-services/:storage/postgress`}
+                            element={<PostgressMainComponent />}
                         />
                         <Route
                             path={`add-working-environment/database-services/:storage/discover`}

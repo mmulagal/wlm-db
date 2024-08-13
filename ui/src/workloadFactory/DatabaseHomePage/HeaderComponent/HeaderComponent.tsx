@@ -35,7 +35,7 @@ import {
 } from '../../../utils/apiService';
 import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
-import { SAVINGS_CALC_MODE, WLF_TABS, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import { SAVINGS_CALC_MODE, WLF_TABS, WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
 import InventoryApis from '../../Inventory/InventoryApis';
@@ -308,6 +308,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     };
 
     const TopBarComponent = () => {
+        const toShowPostgress = localStorage.getItem('postgress');
         return (
             <div className={styles.spaceArea}>
                 <div className={styles.contentArea}>
@@ -323,6 +324,19 @@ const HeaderComponent = ({ tab }: Tab) => {
                         >
                             <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
                         </Button>
+
+                        {toShowPostgress && (
+                            <Button
+                                variant="primary"
+                                onClick={() => {
+                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                }}
+                                id={'deploy-button'}
+                            >
+                                <div className={styles.buttonStyle}>{'Deploy Postgress'}</div>
+                            </Button>
+                        )}
+
                         {refreshComponent()}
                     </div>
                 </div>
