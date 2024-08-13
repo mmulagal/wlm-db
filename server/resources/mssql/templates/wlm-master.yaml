@@ -180,23 +180,23 @@ Metadata:
       SQLDeploymentMode:
         default: SQL server deployment mode
       S3EndpointExists:
-        default: Does AWS S3 gateway endpoint exist in the vpc?
+        default: Does AWS S3 gateway endpoint exist in the VPC?
       CloudformationEndpointExists:
-        default: Does AWS CloudFormation endpoint exist in the vpc?
+        default: Does AWS CloudFormation endpoint exist in the VPC?
       SsmEndpointExists:
-        default: Does AWS SSM endpoint exist in the vpc?
+        default: Does AWS SSM endpoint exist in the VPC?
       SSMMessagesEndpointExists:
-        default: Does AWS SSMMessages endpoint exist in the vpc?
+        default: Does AWS SSMMessages endpoint exist in the VPC?
       Ec2MessagesEndpointExists:
-        default: Does AWS EC2Messages endpoint exist in the vpc?
+        default: Does AWS EC2Messages endpoint exist in the VPC?
       SqsEndpointExists:
-        default: Does AWS SQS endpoint exist in the vpc?
+        default: Does AWS SQS endpoint exist in the VPC?
       CloudwatchLogsEndpointExists:
-        default: Does AWS Cloudwatch Logs endpoint exist in the vpc?
+        default: Does AWS Cloudwatch Logs endpoint exist in the VPC?
       FsxEndpointExists:
-        default: Does AWS FSx endpoint exist in the vpc?
+        default: Does AWS FSx endpoint exist in the VPC?
       Ec2EndpointExists:
-        default: Does AWS EC2 endpoint exist in the vpc?
+        default: Does AWS EC2 endpoint exist in the VPC?
       
 Parameters: 
   UniqueID:
