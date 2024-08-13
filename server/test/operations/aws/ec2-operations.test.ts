@@ -56,7 +56,7 @@ describe('EC2 Operations', () => {
     });
 
     it('should return a lsist EC2 instance types forn specific region', async () => {
-        const resp = await getInstanceTypes(credentialsId, 'us-east-1');
+        const resp = await getInstanceTypes('us-east-1', credentialsId);
         expect(resp.instanceTypes).toBeDefined();
     });
 

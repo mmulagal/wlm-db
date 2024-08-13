@@ -23,9 +23,12 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-async function getSSMClient(credentialsId: string, region: string, accountId?: string) {
-    logger.debug('Getting SSM client:', credentialsId, region, accountId);
+async function getSSMClient(region: string, credentialsId?: string, accountId?: string) {
+    logger.debug('Getting SSM client:', region, credentialsId, accountId);
 
+    if (!credentialsId) {
+        return new SSMClient({ region });
+    }
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialsDetails(credentialsId, accountId);
@@ -42,7 +45,7 @@ async function sendSSMCommand(
 ) {
     logger.info('Send SSM Command', params);
 
-    const ssmClient = await getSSMClient(credentialsId, region, accountId);
+    const ssmClient = await getSSMClient(region, credentialsId, accountId);
     const sendCommand = new SendCommandCommand(params);
     const response = await ssmClient.send(sendCommand);
 
@@ -53,16 +56,39 @@ async function sendSSMCommand(
 async function getCommandInvocation(credentialsId: string, region: string, params: GetCommandInvocationCommandInput) {
     logger.info('Getting command invocation details for command', params);
 
-    const ssmClient = await getSSMClient(credentialsId, region);
+    const ssmClient = await getSSMClient(region, credentialsId);
     const response: GetCommandInvocationCommandOutput = await ssmClient.send(new GetCommandInvocationCommand(params));
     logger.debug('SSM Command response', response);
     return response;
 }
 
+async function describeGenericFSxOntapRegions() {
+    logger.info('Describe Generic AWS regions');
+
+    const ssmClient = await getSSMClient(DEFAULT_AWS_REGION);
+
+    const parametersInput: GetParametersByPathCommandInput = {
+        Path: '/aws/service/global-infrastructure/services/fsx-ontap/regions',
+        Recursive: false,
+        WithDecryption: true
+    };
+
+    const paginator = paginateGetParametersByPath({ client: ssmClient }, parametersInput);
+    const fsxRegionParameters = [];
+    for await (const page of paginator) {
+        if (page.Parameters?.length) {
+            fsxRegionParameters.push(...page.Parameters);
+        }
+    }
+    logger.debug('Describe generic AWS FSx regions response:', fsxRegionParameters);
+
+    return fsxRegionParameters;
+}
+
 async function describeFSxOntapRegions(credentialsId: string) {
     logger.info('Describe AWS regions:', { credentialsId });
 
-    const ssmClient = await getSSMClient(credentialsId, DEFAULT_AWS_REGION);
+    const ssmClient = await getSSMClient(DEFAULT_AWS_REGION, credentialsId);
 
     const parametersInput: GetParametersByPathCommandInput = {
         Path: '/aws/service/global-infrastructure/services/fsx-ontap/regions',
@@ -85,7 +111,7 @@ async function describeFSxOntapRegions(credentialsId: string) {
 async function getConnectionStatus(credentialsId: string, region: string, params: GetConnectionStatusCommandInput) {
     logger.info('Getting command invocation details for command', params);
 
-    const ssmClient = await getSSMClient(credentialsId, region);
+    const ssmClient = await getSSMClient(region, credentialsId);
     const response: GetConnectionStatusCommandOutput = await ssmClient.send(new GetConnectionStatusCommand(params));
     logger.info('SSM Command response', response);
     return response;
@@ -94,7 +120,7 @@ async function getConnectionStatus(credentialsId: string, region: string, params
 async function putParameter(credentialsId: string, region: string, params: PutParameterCommandInput) {
     logger.info('Put SSM Parameter');
 
-    const ssmClient = await getSSMClient(credentialsId, region);
+    const ssmClient = await getSSMClient(region, credentialsId);
     const response = await ssmClient.send(new PutParameterCommand(params));
 
     logger.debug('SSM PutParameter response', response);
@@ -110,7 +136,7 @@ async function getParameter(credentialsId: string, region: string, ssmParameterN
     };
 
     try {
-        const ssmClient = await getSSMClient(credentialsId, region);
+        const ssmClient = await getSSMClient(region, credentialsId);
         const response: GetParameterCommandOutput = await ssmClient.send(new GetParameterCommand(input));
         return response?.Parameter?.Value;
     } catch (error: any) {
@@ -125,7 +151,7 @@ async function getParameter(credentialsId: string, region: string, ssmParameterN
 async function deleteParameters(credentialsId: string, region: string, ssmParameterNames: string[]) {
     logger.info('Delete SSM paramters', { credentialsId, region, ssmParameterNames });
 
-    const ssmClient = await getSSMClient(credentialsId, region);
+    const ssmClient = await getSSMClient(region, credentialsId);
     return ssmClient.send(new DeleteParametersCommand({ Names: ssmParameterNames }));
 }
 
@@ -133,6 +159,7 @@ export {
     getSSMClient,
     sendSSMCommand,
     getCommandInvocation,
+    describeGenericFSxOntapRegions,
     describeFSxOntapRegions,
     getConnectionStatus,
     putParameter,
