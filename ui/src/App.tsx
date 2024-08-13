@@ -1,7 +1,7 @@
 import { useAppSelector } from './store/storeHooks';
 import './App.css';
 import Home from './Home';
-import { ThemeProvider } from '@netapp/design-system';
+import { BlueXPListeners, ThemeProvider, postBlueXPMessage } from '@netapp/design-system';
 import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
 import FullStoryComp from './common/FullStoryComp';
@@ -10,42 +10,22 @@ import { useEffect, useRef } from 'react';
 import { postMessageToCM } from './utils/bxputils';
 
 function App() {
-    const { loading, accountId } = useAppSelector(state => state.auth);
-    //const postMsgRef = useRef(false);
+    const { loading, accountId, accessToken } = useAppSelector(state => state.auth);
+    const readyNotifiedRef = useRef(false);
 
     useInitialize();
 
+    useEffect(() => {
+        if (!readyNotifiedRef.current && accessToken) {
+            postBlueXPMessage({
+                type: BlueXPListeners.ready
+            });
+            readyNotifiedRef.current = true;
+        }
+    }, [accessToken]);
+
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-
-    // useEffect(() => {
-    //     postMessageToCM({
-    //         type: 'SERVICE:READY',
-    //         payload: 'iframev2'
-    //     });
-    // }, []);
-
-    // useEffect(() => {
-    //     const handleParentMessage = (e: any) => {
-    //         if (e?.data?.type === 'SERVICE:ON-READY' && !postMsgRef.current) {
-    //             postMsgRef.current = true;
-    //             postMessageToCM({
-    //                 type: 'SERVICE:READY',
-    //                 payload: 'iframev2'
-    //             });
-
-    //             setTimeout(() => {
-    //                 window.parent.postMessage({ type: 'SERVICE:READY', payload: 'iframev2' }, '*');
-    //             }, 1000);
-    //         }
-    //     };
-
-    //     window.addEventListener('message', handleParentMessage);
-
-    //     return () => {
-    //         window.removeEventListener('message', handleParentMessage);
-    //     };
-    // }, []);
 
     return (
         <>
