@@ -85,23 +85,17 @@ async function getDatabasesCount(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    sqlAuthEnabled: boolean = false
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId);
 
-    const commands = [sqlQueryExecution(instanceName, DATABASES_COUNT_V2, sqlAuthEnabled)];
+    const commands = [`sqlcmd -S "${instanceName}" -Q "${DATABASES_COUNT_V2}" -y 0`];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
     logger.debug('Fetching databases count response', response);
     return response ? sqlResponseParsing(response)[0] : undefined;
 }
 
-async function getDataBasesSummary(
-    resourceId: string,
-    activeNodeInstanceId?: string,
-    instanceName?: string,
-    sqlAuthEnabled: boolean = false
-) {
+async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: string, instanceName?: string) {
     logger.info('Get databases summary for resource:', resourceId);
 
     const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
@@ -129,7 +123,7 @@ async function getDataBasesSummary(
         const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
         const batchQueries: string[] = [];
         for (let i = 0, offset = 0; i < rowscount; i++) {
-            batchQueries.push(sqlQueryExecution(instanceName, DATABASES(offset, DB_ROWS_COUNT), sqlAuthEnabled));
+            batchQueries.push(`sqlcmd -S "${instanceName}" -Q "${DATABASES(offset, DB_ROWS_COUNT)}" -y 0`);
             offset += DB_ROWS_COUNT;
         }
 
@@ -261,8 +255,7 @@ async function getResourceUtilisationDetails(
     region: string,
     metricType: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    sqlAuthEnabled: boolean = false
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info(`Get ${metricType} resource utilization for resource: `, {
         credentialsId,
@@ -278,12 +271,11 @@ async function getResourceUtilisationDetails(
 
     let commands: string[] = [];
     const metricQuery = resourceUtilisationQuery(metricType);
-    commands = [sqlQueryExecution(instanceName, metricQuery, sqlAuthEnabled)];
+    commands = [`sqlcmd -S "${instanceName}" -Q "${metricQuery}" -y 0`];
 
     if (metricType === DATABASE_METRIC_TYPE.DISK) {
-        const dbSizecommand = [sqlQueryExecution(instanceName, DB_SIZE, sqlAuthEnabled)];
-
-        const diskUtilizationCommand = [sqlQueryExecution(instanceName, DISK_UTILISATION, sqlAuthEnabled)];
+        const dbSizecommand = [`sqlcmd -S "${instanceName}" -Q "${DB_SIZE}" -y 0`];
+        const diskUtilizationCommand = [`sqlcmd -S "${instanceName}" -Q "${DISK_UTILISATION}" -y 0`];
 
         const [diskdata, size] = await Promise.all([
             callSsmExecution(credentialsId, region, diskUtilizationCommand, activeNodeInstanceId, undefined, false),
@@ -413,8 +405,7 @@ async function getServerDetails(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    sqlAuthEnabled: boolean = false
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Get details of SQL Server database:', { credentialsId, region, activeNodeInstanceId });
 
@@ -422,8 +413,7 @@ async function getServerDetails(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
 
-    const command = [sqlQueryExecution(instanceName, SERVER_DETAILS, sqlAuthEnabled)];
-
+    const command = [`sqlcmd -S "${instanceName}" -Q "${SERVER_DETAILS}" -y 0`];
     const serverAllDetails = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
 
     let [
@@ -714,8 +704,7 @@ async function getNativeSQLProtection(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    sqlAuthEnabled: boolean = false
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Fetch SQL native protection status', { credentialsId, region, activeNodeInstanceId });
 
@@ -723,9 +712,12 @@ async function getNativeSQLProtection(
         if (!credentialsId || !region || !activeNodeInstanceId) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
-
-        const command = [sqlQueryExecution(instanceName, NATIVE_SQL_BACKUPS, sqlAuthEnabled)];
-        const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [`sqlcmd -S "${instanceName}" -Q "${NATIVE_SQL_BACKUPS}" -y 0`],
+            activeNodeInstanceId
+        );
 
         const cleanedResponse = response?.replaceAll('\r\n', '');
         const parsedResponse = attempt(JSON.parse, cleanedResponse);
@@ -741,8 +733,7 @@ async function getPerformanceMetrics(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    sqlAuthEnabled: boolean = false
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Fetch SQL server performance metrics (assessment, latency, IOPS, throughput) for resource', {
         credentialsId,
@@ -754,7 +745,7 @@ async function getPerformanceMetrics(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
     }
 
-    const commands = [sqlQueryExecution(instanceName, PERFORMANCE_METRICS_WITH_LATENCY, sqlAuthEnabled)];
+    const commands = [`sqlcmd -S "${instanceName}" -Q "${PERFORMANCE_METRICS_WITH_LATENCY}" -y 0`];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId, undefined, false);
 
     logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
@@ -775,12 +766,7 @@ async function getPerformanceMetrics(
     }
 }
 
-async function getNativeSQLBackedupDatabases(
-    resourceId: string,
-    activeNodeInstanceId?: string,
-    instanceName?: string,
-    sqlAuthEnabled: boolean = false
-) {
+async function getNativeSQLBackedupDatabases(resourceId: string, activeNodeInstanceId?: string, instanceName?: string) {
     logger.info('Fetch SQL native protection status', { resourceId });
 
     try {
@@ -790,9 +776,12 @@ async function getNativeSQLBackedupDatabases(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
 
-        const command = [sqlQueryExecution(instanceName!, SQL_BACKUPS, sqlAuthEnabled)];
-
-        const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [`sqlcmd -S "${instanceName}" -Q "${SQL_BACKUPS}" -y 0`],
+            activeNodeInstanceId
+        );
 
         const cleanedResponse = response?.replaceAll('\r\n', '');
         const parsedResponse = attempt(JSON.parse, cleanedResponse);
@@ -1026,11 +1015,10 @@ async function getSqlServerVersion(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    sqlAuthEnabled: boolean = false
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Get SQL server version:', { credentialsId, region, activeNodeInstanceId, instanceName });
-    const command = [sqlQueryExecution(instanceName, 'SELECT @@VERSION', sqlAuthEnabled)];
+    const command = [`sqlcmd -S "${instanceName}"-Q "SELECT @@VERSION" -y 0`];
     const sqlServerVersionResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
     const serverInfo = sqlServerVersionResponse ? sqlServerVersionResponse?.replaceAll('\r\n', '').split('\t') : ''; // const sqlServerVersion: parsedSqlSeverVersionResponse[0].substring(0, serverInfo[0].indexOf('(')).trim(),
     const sqlServerVersion = serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim();
@@ -1038,15 +1026,9 @@ async function getSqlServerVersion(
     return sqlServerVersion;
 }
 
-async function getMssqlInstanceGuid(
-    credentialsId: string,
-    region: string,
-    instanceName: string,
-    nodeIds: string[],
-    sqlAuthEnabled: boolean = false
-) {
+async function getMssqlInstanceGuid(credentialsId: string, region: string, instanceName: string, nodeIds: string[]) {
     logger.info('Fetching mssql instance id', nodeIds, instanceName);
-    const commands = [sqlQueryExecution(instanceName, INSTANCE_GUID, sqlAuthEnabled)];
+    const commands = [`sqlcmd -S "${instanceName}" -Q "${INSTANCE_GUID}" -y 0`];
     let response;
     try {
         let sqlInstanceGuid;

@@ -44,13 +44,7 @@ import {
     PERFORMANCE_METRICS_WITH_LATENCY,
     INSTANCE_GUID,
     ENTERPRISE_CHECK_QUERY,
-    DATABASES_COUNT_V2,
-    NATIVE_SQL_BACKUPS,
-    SQL_BACKUPS,
-    DATABASES,
-    DB_SIZE,
-    DISK_UTILISATION,
-    MEMORY_UTILISATION
+    DATABASES_COUNT_V2
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
     GET_SANDBOX_DETAILS,
@@ -79,10 +73,14 @@ const cpuParams = {
     ]
 };
 const memeoryParams = {
-    commands: [sqlQueryExecution('$env:computername', `${MEMORY_UTILISATION}`, false)]
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT\n                                    (processmem.physical_memory_in_use_kb * 1024) AS used,\n                                    (sysmem.total_physical_memory_kb * 1024) AS total,\n                                    ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,\n                                    ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed\n                                    FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem FOR JSON PATH" -y 0'
+    ]
 };
 const dbCountParams = {
-    commands: [sqlQueryExecution('$env:computername', `${DATABASES_COUNT_V2}`, false)]
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id FOR JSON PATH" -y 0'
+    ]
 };
 
 const dbCountParamasV2 = {
@@ -92,19 +90,27 @@ const dbCountParamasV2 = {
 };
 
 const dbSummaryParams1 = {
-    commands: [sqlQueryExecution('$env:computername', `${DATABASES(0, 75)}`, false)]
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 0 rows fetch next 75 rows only FOR JSON PATH" -y 0'
+    ]
 };
 
 const dbSummaryParams2 = {
-    commands: [sqlQueryExecution('$env:computername', `${DATABASES(75, 75)}`, false)]
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 75 rows fetch next 75 rows only FOR JSON PATH" -y 0'
+    ]
 };
 
 const dbSummaryParams3 = {
-    commands: [sqlQueryExecution('$env:computername', `${DATABASES(150, 75)}`, false)]
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 150 rows fetch next 75 rows only FOR JSON PATH" -y 0'
+    ]
 };
 
 const dbSummaryParams4 = {
-    commands: [sqlQueryExecution('$env:computername', `${DATABASES(225, 75)}`, false)]
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize,\n            collationName = d.collation_name\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 225 rows fetch next 75 rows only FOR JSON PATH" -y 0'
+    ]
 };
 
 const noOfConnParams = {
@@ -152,14 +158,20 @@ const tablesListParams = {
     ]
 };
 const diskSizeParams = {
-    commands: [sqlQueryExecution('$env:computername', `${DB_SIZE}`, false)]
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH" -y 0'
+    ]
 };
 
 const diskDataParams = {
-    commands: [sqlQueryExecution('$env:computername', `${DISK_UTILISATION}`, false)]
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.physical_name,3) AS Volume, ROW_NUMBER() OVER (PARTITION BY LEFT(mf1.physical_name,3) ORDER BY mf1.database_id) AS RowNum\n                                FROM sys.master_files mf1)\n                                ,roundtwo AS (SELECT DISTINCT pr.database_id, pr.FILE_ID\n                                FROM presel pr\n                                WHERE pr.RowNum = 1)\n                                SELECT ovs.total_bytes AS total, ovs.available_bytes AS remaining\n                                FROM roundtwo mf\n                                CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs FOR JSON PATH" -y 0'
+    ]
 };
 const serGUIDParams = {
-    commands: [sqlQueryExecution('$env:computername', `${INSTANCE_GUID}`, false)]
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = \'msdb\' FOR JSON PATH"'
+    ]
 };
 const serNameParams = {
     commands: [
@@ -174,11 +186,15 @@ const serverIOLatencyParams = {
 };
 
 const nativeSqlBackupParams = {
-    commands: [sqlQueryExecution('$env:computername', `${NATIVE_SQL_BACKUPS}`, false)]
+    commands: [
+        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\' FOR JSON PATH\n" -y 0'
+    ]
 };
 
 const nativeSqlBackupDatabasesParams = {
-    commands: [sqlQueryExecution(`$env:computername`, `${SQL_BACKUPS}`, false)]
+    commands: [
+        'sqlcmd -Q "SET NOCOUNT ON; SELECT\n    DISTINCT backupset.database_name as backedupDatabases\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\' FOR JSON PATH\n" -y 0'
+    ]
 };
 
 const getOntapSnapshotCountParams = {
@@ -283,7 +299,7 @@ const checkDBExists = {
 };
 
 const serverDetails = {
-    commands: [sqlQueryExecution(`$env:computername`, `${SERVER_DETAILS}`, false)]
+    commands: [`sqlcmd -S "$env:computername" -Q "${SERVER_DETAILS}" -y 0`]
 };
 
 const clusterNetwokIpInfo = {
@@ -378,7 +394,7 @@ const mountPointQueryCommand = {
     commands: [sqlQueryExecution('$env:computername', mountPointQuery('test-database'), true)]
 };
 
-const getInstanceGuidCommand = { commands: [sqlQueryExecution('$env:computername', `${INSTANCE_GUID}`, false)] };
+const getInstanceGuidCommand = { commands: [`sqlcmd -S "$env:computername" -Q "${INSTANCE_GUID}" -y 0`] };
 
 const detachDbAndRemoveAccessPathCommand = {
     commands: [
