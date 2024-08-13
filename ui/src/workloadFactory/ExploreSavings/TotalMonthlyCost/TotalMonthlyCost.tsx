@@ -4,12 +4,15 @@ import styles from './TotalMonthlyCost.module.scss';
 import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
+import { SAVINGS_CALC_MODE } from '../../../utils/consts';
 
 type TMC = {
     disableState?: boolean;
 };
 const TotalMonthlyCost = ({ disableState = false }: TMC) => {
-    const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom } = useAppSelector(
+        state => state.exploreSavings
+    );
     const noData = disableState;
     const costZeroCase = false;
 
@@ -38,7 +41,12 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                                 yTickFormatter={yValue => '$' + 0}
                                 height={120}
                                 colors={['chart-9', 'chart-6']}
-                                categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
+                                categories={[
+                                    GENERAL.CATEGORY_POINT_ONE,
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                                        ? GENERAL.CATEGORY_POINT_TWO
+                                        : GENERAL.FSXW_CATEGORY
+                                ]}
                             />
                         </div>
                     </>
@@ -50,7 +58,12 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                             yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
                             height={370}
                             colors={storageSavingsResponse && ['chart-9', 'chart-6']}
-                            categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
+                            categories={[
+                                GENERAL.CATEGORY_POINT_ONE,
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                                    ? GENERAL.CATEGORY_POINT_TWO
+                                    : GENERAL.FSXW_CATEGORY
+                            ]}
                         />
                     </>
                 )}
@@ -65,7 +78,12 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                         <ComparisonChart
                             data={[0, 0]}
                             height={75}
-                            categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
+                            categories={[
+                                GENERAL.CATEGORY_POINT_ONE,
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                                    ? GENERAL.CATEGORY_POINT_TWO
+                                    : GENERAL.FSXW_CATEGORY
+                            ]}
                         />
                     </>
                 )}
@@ -83,7 +101,12 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                             yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
                             height={370}
                             colors={storageSavingsResponse && ['chart-9', 'chart-6']}
-                            categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
+                            categories={[
+                                GENERAL.CATEGORY_POINT_ONE,
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                                    ? GENERAL.CATEGORY_POINT_TWO
+                                    : GENERAL.FSXW_CATEGORY
+                            ]}
                         />
                     </>
                 )}

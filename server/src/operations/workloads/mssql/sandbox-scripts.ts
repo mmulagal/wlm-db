@@ -259,7 +259,7 @@ const getDbMappedOntapVolumes = (
     try {
         $sqlquery = @"
             SET NOCOUNT ON;
-            SELECT DISTINCT vs.volume_id as volumeid, mf.physical_name as filename, mf.type FROM sys.master_files AS mf
+            SELECT DISTINCT vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid FROM sys.master_files AS mf
             join sys.databases db
             on db.database_id = mf.database_id
             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
@@ -294,6 +294,7 @@ const getDbMappedOntapVolumes = (
                 $object = @{
                     "fileName" = $winvolume.filename
                     "lunSerialNumber" = $vol.serialnumber
+                    "fileId" = $winvolume.fileid
                 }
                 $type = 'data'
                 if ($winvolume.type -ne 0) {
@@ -788,8 +789,10 @@ const createClonedDb = (
     dbName: string,
     instanceName: string = DEFAULT_INSTANCE_NAME,
     executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    fileList: string[] = [],
+    dataFileList: string[] = [],
+    logFileList: string[] = [],
     logPrefix: string = '',
+    fileSuffix = '',
     sqlAuthEnabled: boolean
 ) => `
     $WarningPreference = 'SilentlyContinue';
@@ -819,14 +822,48 @@ const createClonedDb = (
             Write-Error "$logPrefix Database $dbname already exists and is in $($selectresult[0].state_desc) state. Exiting..."
         }
 
-        # SQL script to attach a database
-        $attachQuery = @"
-            CREATE DATABASE $dbname ON  
-            ${fileList.map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
-            FOR ATTACH;
+        $createQuery = @"
+            CREATE DATABASE $dbname ON
+            ${dataFileList
+                .map(file => {
+                    const newFilePath = file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`);
+                    const fileName = newFilePath.split('\\').pop();
+                    return `(NAME = '${fileName}', FILENAME = '${newFilePath}')`;
+                })
+                .join(',\n')}
+            LOG ON
+            ${logFileList
+                .map(file => {
+                    const newFilePath = file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`);
+                    const fileName = newFilePath.split('\\').pop();
+                    return `(NAME = '${fileName}', FILENAME = '${newFilePath}')`;
+                })
+                .join(',\n')}
 "@
-        $response = $null
-        $response = Call-SqlCmd -SqlCredential $sqlCredential -Query "$attachQuery" -InstanceName "${executableInstanceName}" 
+        $null
+        Call-SqlCmd -SqlCredential $sqlCredential -Query "$createQuery" -InstanceName "${executableInstanceName}" -ExtraArguments -y0
+        Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET OFFLINE" -InstanceName "${executableInstanceName}" -y0 
+        
+        # Remove the actual files
+        ${[...dataFileList, ...logFileList]
+            .map(file => {
+                // replace mdf, ndf, ldf with epoch.mdf etc
+                const newFileName = file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`);
+                return `Remove-Item -Path "${newFileName}" -Force`;
+            })
+            .join('\n')}
+
+        # Rename the actual files to the new name
+        ${[...dataFileList, ...logFileList]
+            .map(file => {
+                // replace mdf, ndf, ldf with epoch.mdf etc
+                const newFileName = file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`);
+                return `$newFiles += '${newFileName}'
+                Rename-Item -Path "${file}" -NewName "${newFileName}"`;
+            })
+            .join('\n')}
+        
+        Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET ONLINE" -InstanceName "${executableInstanceName}" -y0 
     } catch {
         Write-Error "$logPrefix $($_.Exception.Message)"
     }

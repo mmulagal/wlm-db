@@ -564,3 +564,8 @@ export const FINDINGS = {
     UNDER_PROVISIONED: 'UNDER_PROVISIONED',
     INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS'
 };
+
+export const TCO_MANUAL_DEPLOYMENT_TYPE = {
+    SINGLE: 'Single availability zone',
+    MULTI: 'Multi availability zone'
+};

@@ -789,11 +789,11 @@
                     "sqlServerAuthentication": false,
                     "storage": [
                         {
-                            "type": "EBS",
+                            "type": "FSXW",
                             "id": "vol-058229dab6d33d374"
                         },
                         {
-                            "type": "EBS",
+                            "type": "FSXW",
                             "id": "vol-0f1ae0046501426a3"
                         }
                     ],
@@ -820,7 +820,7 @@
                     "sqlServerAuthentication": false,
                     "storage": [
                         {
-                            "type": "EBS",
+                            "type": "FSXW",
                             "id": "vol-058229dab6d33d374"
                         }
                     ],

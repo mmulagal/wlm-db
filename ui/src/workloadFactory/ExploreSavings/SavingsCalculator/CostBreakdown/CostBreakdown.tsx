@@ -7,13 +7,16 @@ import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
+import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 type CB = {
     disableState: boolean;
 };
 
 const CostBreakdown = ({ disableState = false }: CB) => {
-    const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom } = useAppSelector(
+        state => state.exploreSavings
+    );
 
     const [calculatedResponse, setCalculatedResponse] = useState({});
     const [loading, setLoading] = useState(false);
@@ -128,7 +131,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
                                     style={{
-                                        width: '121px',
+                                        width: '150px',
                                         fontWeight: '500',
                                         color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                     }}
@@ -149,13 +152,15 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
                                     style={{
-                                        width: '121px',
+                                        width: '150px',
                                         fontWeight: '500',
                                         color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                     }}
                                 >
                                     {' '}
-                                    {GENERAL.ES_MSSQL_EBS}
+                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                                        ? GENERAL.ES_MSSQL_EBS
+                                        : GENERAL.ES_MSSQL_FSXW}
                                 </Text>
                             </div>
                         </CardTableContent>

@@ -18,7 +18,9 @@ import {
     OS_VERSIONS_LIST,
     SAVINGS_CALC_MODE,
     SQL_DEPLOYMENT_MODE,
-    THROUGHPUT_LIST
+    TCO_MANUAL_DEPLOYMENT_TYPE,
+    THROUGHPUT_LIST,
+    TIB_IN_BYTE
 } from '../../../utils/consts';
 
 export const comparisonData = (calculatedResponse: any) => {
@@ -113,7 +115,7 @@ export const comparisonData = (calculatedResponse: any) => {
     ];
 };
 
-export const calculatedFSXData = (fsxData: any) => {
+export const calculatedFSXData = (fsxData: any, storageType: string) => {
     return [
         {
             label: 'Region',
@@ -128,14 +130,14 @@ export const calculatedFSXData = (fsxData: any) => {
                     : fsxData?.deploymentType === 'Multi'
                     ? 'Multi Availability Zone'
                     : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
-            text: `${fsxData?.deploymentType} Availability Zones are the equivalent availability for Amazon EBS.`
+            text: `${fsxData?.deploymentType} Availability Zones are the equivalent availability for Amazon ${storageType}.`
         },
         {
             label: 'Total storage capacity',
             value: fsxData?.totalStorageCapacity
                 ? formatSizeTwoPrecision(fsxData?.totalStorageCapacity)
                 : GENERAL.NOT_AVAILABLE,
-            text: 'According to EBS total capacity of primary database volumes.'
+            text: `According to ${storageType} total capacity of primary database volumes.`
         },
 
         {
@@ -179,7 +181,7 @@ export const calculatedFSXData = (fsxData: any) => {
         {
             label: 'Throughput capacity',
             value: fsxData?.throughputCapacity ? `${fsxData?.throughputCapacity} MBps` : GENERAL.NOT_AVAILABLE,
-            text: `Supported FSx for ONTAP throughput according to the consolidated EBS throughput required (${
+            text: `Supported FSx for ONTAP throughput according to the consolidated ${storageType} throughput required (${
                 fsxData?.numberOfVolumes * fsxData?.throughput
             } Mbps).`
         },
@@ -193,15 +195,15 @@ export const calculatedFSXData = (fsxData: any) => {
     ];
 };
 
-export const MSSQLServerInstance = (sqlData: any) => {
+export const MSSQLServerInstance = (sqlData: any, storageType: string) => {
     return [
         {
             label: 'Database deployment mode',
             value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
             text:
                 sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                    ? 'The equivalent deployment mode of Always on availability group in EBS is failover cluster instance in FSx for ONTAP'
-                    : 'Database deployment mode selected based on the current EBS database deployment mode'
+                    ? `The equivalent deployment mode of Always on availability group in ${storageType} is failover cluster instance in FSx for ONTAP`
+                    : `Database deployment mode selected based on the current ${storageType} database deployment mode`
         },
         {
             label: 'Database edition',
@@ -211,7 +213,7 @@ export const MSSQLServerInstance = (sqlData: any) => {
         {
             label: 'Database version',
             value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
-            text: 'Database version selected based on your current EBS SQL server version'
+            text: `Database version selected based on your current ${storageType} SQL server version`
         },
         {
             label: 'Database instance type',
@@ -224,8 +226,12 @@ export const MSSQLServerInstance = (sqlData: any) => {
 export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: string) => {
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
+    let storageType = '';
     if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
         selectedDeploymentModel = selectedManualDeploymentModel?.value;
+        storageType = GENERAL.EBS;
+    } else {
+        storageType = GENERAL.FSX_FOR_WINDOWS;
     }
     return {
         Ec2InstanceCalculation:
@@ -344,7 +350,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxOntapCalculation.desiredStorageCapacity}`,
-                text: `Total required capacity according to EBS storage capacity`
+                text: `Total required capacity according to ${storageType} storage capacity`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -1754,11 +1760,43 @@ const generateVolumesData = (manualTCOVolumeTypes: any) => {
     return arr;
 };
 
+const generateFsxwData = (state: any) => {
+    const {
+        selectedManualDeploymentType,
+        selectedManualStorageType,
+        manualStorageCapacity,
+        selectedManualStorageCapacityUnit,
+        selectedManualFSXIOPS,
+        selectedManualFSXThroughput
+    } = state.exploreSavings;
+
+    let deploymentType = '';
+    if (selectedManualDeploymentType?.value === TCO_MANUAL_DEPLOYMENT_TYPE.SINGLE) {
+        deploymentType = 'Single';
+    } else if (selectedManualDeploymentType?.value === TCO_MANUAL_DEPLOYMENT_TYPE.MULTI) {
+        deploymentType = 'Multi';
+    }
+    let storageCapacity = manualStorageCapacity;
+    if (selectedManualStorageCapacityUnit?.value === 'GiB') {
+        storageCapacity = manualStorageCapacity * GIB_IN_BYTE;
+    } else if (selectedManualStorageCapacityUnit?.value === 'TiB') {
+        storageCapacity = manualStorageCapacity * TIB_IN_BYTE;
+    }
+
+    let result = {
+        deploymentType: deploymentType,
+        storageVolumeType: selectedManualStorageType?.value,
+        storageAmount: storageCapacity,
+        volumeIops: selectedManualFSXIOPS,
+        throughput: selectedManualFSXThroughput
+    };
+    return result;
+};
+
 const createInstances = (state: any) => {
     const instanceArr = [];
     const {
         selectedManualDeploymentModel,
-
         selectedManualServerEdition,
         selectedManualInstanceType,
         selectedSecondaryManualInstanceType,
@@ -1766,15 +1804,34 @@ const createInstances = (state: any) => {
         manualSecondaryMachineDescription,
         manualTCOVolumeTypes,
         secondaryVolumeFilledStatus,
-        manualTCOVolumeTypes2
+        manualTCOVolumeTypes2,
+        savingsCalculatorFrom
     } = state.exploreSavings;
-    instanceArr.push({
+
+    let firstInstance: any = {
         ec2InstanceDescription: manualMonthlyDescription,
         ec2InstanceType: selectedManualInstanceType?.value,
-        isPrimary: true,
-        volumes: generateVolumesData(manualTCOVolumeTypes)
-    });
-    if (selectedManualDeploymentModel?.label !== 'Standalone' && secondaryVolumeFilledStatus) {
+        isPrimary: true
+    };
+
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+        firstInstance = {
+            ...firstInstance,
+            volumes: generateVolumesData(manualTCOVolumeTypes)
+        };
+    } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+        firstInstance = {
+            ...firstInstance,
+            fsxw: generateFsxwData(state)
+        };
+    }
+    instanceArr.push(firstInstance);
+
+    if (
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS &&
+        selectedManualDeploymentModel?.label !== 'Standalone' &&
+        secondaryVolumeFilledStatus
+    ) {
         instanceArr.push({
             ec2InstanceDescription: manualSecondaryMachineDescription,
             ec2InstanceType: selectedSecondaryManualInstanceType?.value,
