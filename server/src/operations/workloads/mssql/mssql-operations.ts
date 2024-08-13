@@ -85,9 +85,10 @@ async function getDatabasesCount(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
 ) {
-    logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId);
+    logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId, sqlAuthEnabled);
 
     const commands = [`sqlcmd -S "${instanceName}" -Q "${DATABASES_COUNT_V2}" -y 0`];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
@@ -405,9 +406,10 @@ async function getServerDetails(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
 ) {
-    logger.info('Get details of SQL Server database:', { credentialsId, region, activeNodeInstanceId });
+    logger.info('Get details of SQL Server database:', { credentialsId, region, activeNodeInstanceId, sqlAuthEnabled });
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
@@ -704,9 +706,10 @@ async function getNativeSQLProtection(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
 ) {
-    logger.info('Fetch SQL native protection status', { credentialsId, region, activeNodeInstanceId });
+    logger.info('Fetch SQL native protection status', { credentialsId, region, activeNodeInstanceId, sqlAuthEnabled });
 
     try {
         if (!credentialsId || !region || !activeNodeInstanceId) {
@@ -733,12 +736,14 @@ async function getPerformanceMetrics(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
 ) {
     logger.info('Fetch SQL server performance metrics (assessment, latency, IOPS, throughput) for resource', {
         credentialsId,
         region,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        sqlAuthEnabled
     });
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
