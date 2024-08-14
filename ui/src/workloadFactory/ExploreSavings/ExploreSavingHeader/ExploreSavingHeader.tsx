@@ -51,7 +51,6 @@ const ExploreSavingHeader = () => {
                                     </span>
                                     <span
                                         className={styles.link}
-                                        // onClick={() => {}}
                                         // style={{ color: 'var(--text-disabled)' }}
                                         onClick={() => handleManualTCOFSXW(dispatch)}
                                     >
@@ -98,8 +97,7 @@ const ExploreSavingHeader = () => {
                                     </span>
                                     <span
                                         className={styles.link}
-                                        // onClick={() => {}}
-                                        // style={{ color: 'var(--text-disabled)', whiteSpace: 'unset' }}
+                                        style={{ whiteSpace: 'unset' }}
                                         onClick={() => handleManualTCOFSXW(dispatch)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
@@ -143,12 +141,7 @@ const ExploreSavingHeader = () => {
                                     <span className={styles.link} onClick={() => handleManualTCOEBS(dispatch)}>
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
-                                    <span
-                                        className={styles.link}
-                                        // onClick={() => {}}
-                                        // style={{ color: 'var(--text-disabled)' }}
-                                        onClick={() => handleManualTCOFSXW(dispatch)}
-                                    >
+                                    <span className={styles.link} onClick={() => handleManualTCOFSXW(dispatch)}>
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
                                 </span>
