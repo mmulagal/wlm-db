@@ -55,6 +55,24 @@ const SqlServerInstanceInfo = Type.Object({
             })
         )
     ),
+    windowsClusterNodes: Type.Optional(
+        Type.Array(
+            Type.Object({
+                Address: Type.Optional(
+                    Type.String({
+                        description: 'Windows Cluster node IP address.'
+                    })
+                ),
+                Node: Type.Optional(
+                    Type.String({
+                        description: 'Windows cluster node name.'
+                    })
+                )
+            })
+        )
+    ),
+
+    windowsClusterName: Type.Optional(Type.String({ description: 'Name of Windows cluster.' })),
     nodeIps: Type.Optional(Type.Array(Type.String({ description: 'IP addresses of the SQL Server nodes, if any.' }))),
     sqlServerDeploymentType: Type.Optional(
         Type.String({

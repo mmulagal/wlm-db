@@ -14,6 +14,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
+import { TCO_MANUAL_DEPLOYMENT_TYPE } from '../../../../utils/consts';
 
 const ManualTCOFSXFields = () => {
     const dispatch = useDispatch();
@@ -72,7 +73,7 @@ const ManualTCOFSXFields = () => {
 
     //to generate deployment type
     const generateDeploymentTypeList = useMemo<optionType[]>((): optionType[] => {
-        const deploymentModel = ['Single availability zone', 'Multi availability zone'];
+        const deploymentModel = [TCO_MANUAL_DEPLOYMENT_TYPE.SINGLE, TCO_MANUAL_DEPLOYMENT_TYPE.MULTI];
 
         const options: optionType[] = [];
         deploymentModel?.map((val, idx: number) => {
@@ -105,9 +106,14 @@ const ManualTCOFSXFields = () => {
             const option = generateOptionType(val, val, '', false, '', val);
             options.push(option);
         });
-
         return options;
     }, []);
+
+    useEffect(() => {
+        if (!selectedManualStorageType) {
+            dispatch(setSelectedManualStorageType(generateStorageTypeList[0]));
+        }
+    }, [generateStorageTypeList]);
 
     //to generate Storage unit
     const generateStorageCapacityUnitList = useMemo<optionType[]>((): optionType[] => {

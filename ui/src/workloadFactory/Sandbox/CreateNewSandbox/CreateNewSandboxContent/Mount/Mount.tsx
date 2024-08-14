@@ -55,7 +55,8 @@ const Mount = () => {
             source,
             target,
             selectedMount,
-            driveInfoData
+            driveInfoData,
+            dispatch
         );
         dispatch(setDataDriveMountPoint(dataDrive));
         dispatch(setLogDriveMountPoint(logDrive));
@@ -183,7 +184,6 @@ const Mount = () => {
                                         isClearable={false}
                                         placeholder={GENERAL.SELECT_DRIVE_LETTER}
                                         onChange={(selectedOptions: any): void => {
-                                            console.log(selectedOptions);
                                             dispatch(setDataDriveMountPoint(selectedOptions?.value));
                                         }}
                                         value={

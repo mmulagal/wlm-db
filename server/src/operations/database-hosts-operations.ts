@@ -47,7 +47,8 @@ import {
     ONLINE,
     OFFLINE,
     SQL_SERVICE_STATE,
-    UNKNOWN
+    UNKNOWN,
+    WIN_SQL_EC2_USAGE_OPERATION
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1774,7 +1775,8 @@ async function getDatabaseHostSummaryV2(
         resource_name: resourceName,
         region,
         credentials_id: credentialsId,
-        metadata
+        metadata,
+        ec2UsageOperation
     } = resourceDetail;
 
     let fieldsValues: Array<string> = [];
@@ -2002,6 +2004,7 @@ async function getDatabaseHostSummaryV2(
             `Error while fetching database hosts details ${accountId}, ${error}`
         );
     }
+    databaseHostDetails.sqlLicenseIncluded = WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation!) || false;
     return databaseHostDetails;
 }
 

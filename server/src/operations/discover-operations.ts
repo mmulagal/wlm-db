@@ -561,7 +561,9 @@ async function getHostAndSqlInfoFromPsOutput(
                         databaseCount,
                         failureInfo,
                         sqlServerDeploymentType,
-                        windowsOsVersion
+                        windowsOsVersion,
+                        windowsClusterName,
+                        windowsClusterNodes
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -598,7 +600,9 @@ async function getHostAndSqlInfoFromPsOutput(
                         deploymentTypes: compact(
                             uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
                         ),
-                        ...(databaseCount && { databaseCount })
+                        ...(databaseCount && { databaseCount }),
+                        ...(windowsClusterName && { windowsClusterName }),
+                        ...(windowsClusterNodes && { windowsClusterNodes })
                     });
                 }
             }
@@ -941,7 +945,8 @@ async function fetchUnmanagedHostsInformationV2(
                 clusterNodeDetails,
                 databaseInstanceDetails: [],
                 co_relation_id: null,
-                ebsVolumeIds: []
+                ebsVolumeIds: [],
+                ec2UsageOperation: ec2Instance.ec2UsageOperation
             };
             if (ec2Instance?.sqlServerInstances && ec2Instance?.sqlServerInstances.length > 0) {
                 ec2Instance?.sqlServerInstances?.forEach(sqlServerInstance => {

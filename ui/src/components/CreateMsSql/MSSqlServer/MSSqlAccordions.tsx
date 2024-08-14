@@ -104,7 +104,7 @@ const MSSqlAccordions = () => {
                         variant="Semibold_16"
                         className={selectedConfig === SELECT_CONFIG.STANDARD_CREATE ? styles.adjustMargin : ''}
                     >
-                        {GENERAL.AWS_SETTINGS}
+                        {GENERAL.LANDING_ZONE}
                     </Typography>
                     {/* View API request added here in case of easy create otherwise added as part of Deployment Model */}
                     {selectedConfig === SELECT_CONFIG.EASY_CREATE && !isWorkloadFactory && (

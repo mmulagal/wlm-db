@@ -42,7 +42,14 @@ const SavingsCalculatorManualApi = () => {
         volumeFilledStatus,
         manualTCOVolumeTypes2,
         savingsCalculatorFrom,
-        requestedPayload
+        requestedPayload,
+        selectedSnapshotFrequency,
+        selectedManualDeploymentType,
+        selectedManualStorageType,
+        manualStorageCapacity,
+        selectedManualFSXIOPS,
+        selectedManualFSXThroughput,
+        selectedManualStorageCapacityUnit
     } = useAppSelector(state => state.exploreSavings);
 
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
@@ -54,8 +61,8 @@ const SavingsCalculatorManualApi = () => {
 
     useEffect(() => {
         if (
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
         ) {
             dispatch(setInstanceLoading(true));
             getInstanceTypes({
@@ -114,7 +121,7 @@ const SavingsCalculatorManualApi = () => {
     };
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
             const payload = generateManualStorageSavingsPayload();
             const comparedPayloadValues = _.isEqual(payload, requestedPayload);
 
@@ -147,6 +154,44 @@ const SavingsCalculatorManualApi = () => {
         manualTCOVolumeTypes,
         volumeFilledStatus,
         manualTCOVolumeTypes2
+    ]);
+
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+            const payload = generateManualStorageSavingsPayload();
+            const comparedPayloadValues = _.isEqual(payload, requestedPayload);
+
+            if (
+                !comparedPayloadValues &&
+                selectedManualRegion &&
+                numberOfClonedCopies &&
+                monthlyChangeRate &&
+                selectedManualInstanceType &&
+                manualStorageCapacity &&
+                selectedManualFSXIOPS &&
+                selectedManualFSXThroughput
+            ) {
+                dispatch(setDisableState(false));
+                dispatch(setRequestedPayload(payload));
+                triggerManualStorageAPI();
+            }
+        }
+    }, [
+        savingsCalculatorFrom,
+        numberOfClonedCopies,
+        monthlyChangeRate,
+        selectedManualDeploymentModel,
+        selectedManualRegion,
+        selectedManualServerEdition,
+        selectedManualInstanceType,
+        monthlyBYOLCost,
+        selectedSnapshotFrequency,
+        selectedManualDeploymentType,
+        selectedManualStorageType,
+        manualStorageCapacity,
+        selectedManualFSXIOPS,
+        selectedManualFSXThroughput,
+        selectedManualStorageCapacityUnit
     ]);
 
     return <></>;
