@@ -16,11 +16,12 @@ import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
 import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
 import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/WizardComponent';
 import CreateNewSandbox from './workloadFactory/Sandbox/CreateNewSandbox/CreateNewSandbox';
-import { WLF_TABS } from './utils/consts';
+import { BXP_MESSAGES, WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 import { useAppSelector } from './store/storeHooks';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventorySlice';
 import { useRunOnce } from './common/hooks/useRunOnce';
+import { setTabInfoFOrBXP } from './utils/utilityFunctions';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -30,8 +31,9 @@ const Home = () => {
     useRunOnce(() => {
         if (!isWorkloadFactory) {
             window.onmessage = (msg: any) => {
-                if (msg && msg?.data && msg?.data?.type === 'LOCATION-CHANGE') {
-                    console.log(msg);
+                if (msg && msg?.data && msg?.data?.type === BXP_MESSAGES.SERVICE_LOCATION_CHANGE) {
+                    const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
+                    dispatch(setSelectedHeaderTab(tabInfo));
                 }
             };
         }
