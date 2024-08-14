@@ -932,7 +932,7 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
     }
 `;
 
-const SCRIPT_UPDATE_FILE_COMMAND = `
+const READ_SCRIPT_VERSION = `
 $file = "${SCRIPT_VERSON_FILE}"
 if (Test-Path $file -PathType Leaf) {
     # File exists
@@ -953,5 +953,5 @@ export {
     restGetUtilForOntap,
     INSTANCE_DETAILS,
     copyPowerShellModule,
-    SCRIPT_UPDATE_FILE_COMMAND
+    READ_SCRIPT_VERSION
 };

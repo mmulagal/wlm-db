@@ -17,7 +17,7 @@ import { COPY_SCIRPTS_TO_MANAGE_RESOURCE } from './workloads/mssql/discover-cons
 import { getArtifactsRegionBucketName, sqlResponseParsing } from '../utils/utils';
 import { preSignedUrl } from '../lib/aws/s3';
 import { callSsmExecution } from './aws/ssm-operations';
-import { SCRIPT_UPDATE_FILE_COMMAND } from './workloads/mssql/ssm-script-utils';
+import { READ_SCRIPT_VERSION } from './workloads/mssql/ssm-script-utils';
 
 const logger = getLogger();
 
@@ -103,14 +103,7 @@ async function getManagedResources(
 async function checkScriptNeedsUpdate(accountId: string, credentialsId: string, region: string, nodeId: string) {
     logger.info('Check script version at database host', { accountId, credentialsId, region, nodeId });
     try {
-        const resp = await callSsmExecution(
-            credentialsId,
-            region,
-            [SCRIPT_UPDATE_FILE_COMMAND],
-            nodeId,
-            accountId,
-            false
-        );
+        const resp = await callSsmExecution(credentialsId, region, [READ_SCRIPT_VERSION], nodeId, accountId, false);
         if (resp) {
             const newresp = sqlResponseParsing(resp);
             if (newresp.scriptVersion === CURRENT_SCRIPT_VERSION) {
@@ -130,20 +123,24 @@ async function copyScriptsToHost(accountId: string, credentialsId: string, regio
     const bucketname = getArtifactsRegionBucketName(region);
     const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
 
-    // Copy scripts to the EC2 instance
-    const ssmScriptsCopyResponse = await callSsmExecution(
-        credentialsId,
-        region,
-        COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-        ec2InstanceId,
-        accountId,
-        false,
-        (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
-    );
+    try {
+        // Copy scripts to the EC2 instance
+        const ssmScriptsCopyResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
+            ec2InstanceId,
+            accountId,
+            false,
+            (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
+        );
 
-    logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);
+        logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);
 
-    return ssmScriptsCopyResponse;
+        return ssmScriptsCopyResponse;
+    } catch (error) {
+        throw createError(`Error copying scripts to host: ${error}`);
+    }
 }
 
 export {

@@ -1461,22 +1461,30 @@ async function validateParams(
                 'log'
             )
         ]);
-
-        const scriptsNeedUpdate = await checkScriptNeedsUpdate(accountId, credentialsId, region, activeNodeInstanceId);
-        if (scriptsNeedUpdate) {
-            logger.info('Scripts need to be updated:', activeNodeInstanceId);
-            const scriptUpdateResponse = await copyScriptsToHost(
+        try {
+            const scriptsNeedUpdate = await checkScriptNeedsUpdate(
                 accountId,
                 credentialsId,
                 region,
                 activeNodeInstanceId
             );
-            if (scriptUpdateResponse?.includes('failureInfo')) {
-                const errorMessage = `Failed to update scripts at node '${activeNodeInstanceId}'. Reason: failed to copy database operation artifacts. Error: ${scriptUpdateResponse}`;
-                logger.error(errorMessage);
-                throw createError(errorMessage);
+            if (scriptsNeedUpdate) {
+                logger.info('Scripts need to be updated:', activeNodeInstanceId);
+                const scriptUpdateResponse = await copyScriptsToHost(
+                    accountId,
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId
+                );
+                if (scriptUpdateResponse?.includes('failureInfo')) {
+                    const errorMessage = `Failed to update scripts at node '${activeNodeInstanceId}'. Reason: failed to copy database operation artifacts. Error: ${scriptUpdateResponse}`;
+                    logger.error(errorMessage);
+                    throw createError(errorMessage);
+                }
+                logger.info('Scripts are updated successfully:', activeNodeInstanceId);
             }
-            logger.info('Scripts are updated successfully:', activeNodeInstanceId);
+        } catch (error) {
+            logger.error(error);
         }
         status = JOBSTATUS.COMPLETED;
     } catch (error: any) {

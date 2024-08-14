@@ -37,7 +37,7 @@ import {
     RESOURCE_UTILIZATION,
     GET_DEFAULT_COLLATION,
     GET_DEFAULT_DRIVES,
-    SCRIPT_UPDATE_FILE_COMMAND
+    READ_SCRIPT_VERSION
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 import {
     SERVER_DETAILS,
@@ -459,7 +459,7 @@ const getConnectionInforCommand = {
 };
 
 const checkScriptUpdate = {
-    commands: [SCRIPT_UPDATE_FILE_COMMAND]
+    commands: [READ_SCRIPT_VERSION]
 };
 
 ssmMock
