@@ -32,7 +32,8 @@ $ErrorActionPreference = "Stop"
 
 $FSxCredStore = "/netapp/wlmdb/$FileSystemId"
 
-$credobject = (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
+. ..\common\InvokeRetryCommand.ps1
+$credobject = Invoke-WithRetry -Command { (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json }
 
 $username = $credobject.fsx.username
 $password = $credobject.fsx.password
@@ -304,7 +305,7 @@ $result.Add('Resources', $resources)
 
 ##modify volumes
 $VolUriDynamicPart = 'private/cli/volume'
-$volumeSnapshotAutodeletePart='private/cli/volume/snapshot/autodelete'
+$volumeSnapshotAutodeletePart = 'private/cli/volume/snapshot/autodelete'
 if (($LogNew -ne "false") -And ($DataNew -ne "false")) {
     $vollist = @($FSxDataVolumeName, $FSxLogVolumeName) 
 }
@@ -359,19 +360,19 @@ https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($vo
     Start-Sleep 5
     
     # Enable volume snaphot autodelete
-    $URI=@"
+    $URI = @"
 https://$($MgmtDNS)/api/$($volumeSnapshotAutodeletePart)?vserver=$($SQLVMName)&volume=$($vol)
 "@
     $Body = @{
-    "enabled" = "true"
+        "enabled" = "true"
     }
     $JsonBody = $Body | ConvertTo-Json  
 
     $Params = @{
-        "URI"     = "$URI"
-        "Method"  = "PATCH"
-        "Headers" = @{"Authorization" = "Basic $base64"}
-        "Body" =  "$JsonBody"
+        "URI"         = "$URI"
+        "Method"      = "PATCH"
+        "Headers"     = @{"Authorization" = "Basic $base64" }
+        "Body"        = "$JsonBody"
         "ContentType" = "application/json"
     }
     try {

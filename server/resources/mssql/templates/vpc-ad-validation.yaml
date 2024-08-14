@@ -311,6 +311,8 @@ Resources:
                             source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\scripts\validation.zip:
                             source: {{{ ScriptValidation }}}
+                        C:\cfn\scripts\common.zip:
+                            source: {{{ ScriptCommon }}}
                         C:\cfn\signig_files.zip:
                             source: {{{ ArtifactsSignatures }}}
                         C:\cfn\OpenSSL-Win64.zip:
@@ -336,6 +338,18 @@ Resources:
                         d-unpack-validation-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\validation.zip -Destination C:\cfn\scripts
+                            waitAfterCompletion: 0
+                        e-verify-common-signature:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\common.zip -SignatureFilePath C:\cfn\signig_files\common.sig 
+                                    -PubFilePath C:\cfn\signig_files\common.pub -ResourceID SqlNode -Stackname '"
+                                  - !Ref 'AWS::StackName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        f-unpack-common-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\common.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: 0
                 LaunchWizardCFNSetup:
                     commands:
@@ -643,6 +657,8 @@ Resources:
                             source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\scripts\validation.zip:
                             source: {{{ ScriptValidation }}}
+                        C:\cfn\scripts\common.zip:
+                            source: {{{ ScriptCommon }}}
                         C:\cfn\signig_files.zip:
                             source: {{{ ArtifactsSignatures }}}
                         C:\cfn\OpenSSL-Win64.zip:
@@ -668,6 +684,18 @@ Resources:
                         d-unpack-validation-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\validation.zip -Destination C:\cfn\scripts
+                            waitAfterCompletion: 0
+                        e-verify-common-signature:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\common.zip -SignatureFilePath C:\cfn\signig_files\common.sig 
+                                    -PubFilePath C:\cfn\signig_files\common.pub -ResourceID SqlNode -Stackname '"
+                                  - !Ref 'AWS::StackName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        f-unpack-common-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\common.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: 0
                 LaunchWizardCFNSetup:
                     commands:
