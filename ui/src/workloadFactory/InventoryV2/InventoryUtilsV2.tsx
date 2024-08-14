@@ -337,7 +337,8 @@ export const getPrimaryClusterNode = (
                         perHost.nodesList.includes(val)
                     );
                 });
-                if (isSameCluster && isSameCluster.length > 0) {
+                // checking same vpc or not
+                if (isSameCluster && isSameCluster.length > 0 && perHost?.vpc?.id === host?.vpc?.id) {
                     return perHost;
                 } else {
                     return;
