@@ -21,7 +21,7 @@ describe('Compute optimizer operations', () => {
             DEFAULT_AWS_REGION,
             CREDENTIALS_ID,
             ACCOUNT_ID,
-            'i-1234567890abcdef0',
+            ['i-1234567890abcdef0', 'i-9234567890abcdef1'],
             ['t3.micro'],
             '464262061435'
         );
@@ -36,6 +36,22 @@ describe('Compute optimizer operations', () => {
             CREDENTIALS_ID,
             ACCOUNT_ID,
             'i-1234567890abcdef0',
+            [
+                {
+                    ec2InstanceId: 'i-1234567890abcdef0',
+                    ec2InstanceType: 't2.micro',
+                    ec2InstancePrivateIpAddress: '10.0.0.1',
+                    ec2InstanceName: 'aoag-node-1',
+                    ec2UsageOperation: 'RunInstances:0102'
+                },
+                {
+                    ec2InstanceId: 'i-9234567890abcdef1',
+                    ec2InstanceType: 't2.micro',
+                    ec2InstancePrivateIpAddress: '10.0.0.2',
+                    ec2InstanceName: 'aoag-node-2',
+                    ec2UsageOperation: 'RunInstances:0102'
+                }
+            ],
             ['ebs-01234567890'],
             'Standalone'
         );

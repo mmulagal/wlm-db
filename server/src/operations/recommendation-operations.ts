@@ -229,6 +229,7 @@ async function handleInstanceRecommendation(
     credentialsId: string,
     region: string,
     instanceIdToUseForRecommendations: string,
+    nodeInstances: NodeDetails[],
     ebsVolumeIds: string[],
     sqlServerDeploymentType: string,
     recommendedSqlLicenseType: any,
@@ -243,6 +244,7 @@ async function handleInstanceRecommendation(
         credentialsId,
         region,
         instanceIdToUseForRecommendations,
+        nodeInstances,
         ebsVolumeIds,
         sqlServerDeploymentType,
         recommendedSqlLicenseType,
@@ -266,6 +268,7 @@ async function handleInstanceRecommendation(
             credentialsId,
             accountId,
             instanceIdToUseForRecommendations,
+            nodeInstances,
             ebsVolumeIds,
             sqlServerDeploymentType
         );
@@ -681,7 +684,9 @@ async function getSqlInstanceLicenseRecommendations(
         const { sqlServerEngineEdition, sqlServerEdition, sqlServerVersion, sqlServerDeploymentType, nodeIps } =
             fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
         if (ec2UsageOperation && sqlServerEngineEdition && sqlServerEdition && sqlServerDeploymentType) {
-            let nodeInstances = [{ ec2InstanceType, ec2InstanceId: instanceId, ec2UsageOperation }];
+            let nodeInstances = [
+                { ec2InstanceType, ec2InstanceId: instanceId, ec2UsageOperation, ec2InstancePrivateIpAddress: '' }
+            ];
 
             if (!ebsVolumeIds.length) {
                 throw createError(
@@ -699,9 +704,10 @@ async function getSqlInstanceLicenseRecommendations(
                 const clusterNodeDetails: NodeDetails[] =
                     (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
                 nodeInstances = clusterNodeDetails.map(node => ({
-                    ec2InstanceType: node.ec2InstanceType,
                     ec2InstanceId: node.ec2InstanceId,
-                    ec2UsageOperation: node.ec2UsageOperation!
+                    ec2InstanceType: node.ec2InstanceType,
+                    ec2UsageOperation: node.ec2UsageOperation!,
+                    ec2InstancePrivateIpAddress: node.ec2InstancePrivateIpAddress
                 }));
 
                 nodeInstanceTypes = clusterNodeDetails.map(node => node.ec2InstanceType);
@@ -896,6 +902,7 @@ async function getSqlInstanceLicenseRecommendations(
                     credentialsId,
                     region,
                     instanceIdToUseForRecommendations,
+                    nodeInstances,
                     ebsVolumeIds,
                     sqlServerDeploymentType,
                     recommendedSqlLicenseType,
@@ -956,6 +963,7 @@ async function getSqlInstanceLicenseRecommendations(
                     credentialsId,
                     region,
                     instanceIdToUseForRecommendations,
+                    nodeInstances,
                     ebsVolumeIds,
                     sqlServerDeploymentType,
                     'NA',
@@ -993,4 +1001,4 @@ async function getSqlInstanceLicenseRecommendations(
     throw createError('No SQL Server instances found for the provided EC2 instance.');
 }
 
-export { manualModeComputeLicenseDetails, getSqlInstanceLicenseRecommendations };
+export { fetchSqlServerInstanceConfiguration, manualModeComputeLicenseDetails, getSqlInstanceLicenseRecommendations };

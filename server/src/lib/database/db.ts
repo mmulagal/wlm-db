@@ -688,6 +688,55 @@ async function deleteDatabaseInstance(
     });
 }
 
+interface TrackedEc2Record {
+    account_id: string;
+    region: string;
+    credentials_id: string;
+    instance_id: string;
+    feature: string;
+    cloud_provider_account_id: string;
+}
+async function createTrackedEc2Records(records: TrackedEc2Record[]) {
+    logger.info('Creating tracked EC2 instances', { records });
+
+    return prisma.client.tracked_ec2.createMany({
+        data: records
+    });
+}
+
+async function listTrackedEc2(
+    feature: string = 'TCO',
+    accountId?: string,
+    region?: string,
+    credentialsId?: string,
+    instanceId?: string
+) {
+    logger.info('Listing tracked EC2 instances', { feature, accountId, region, credentialsId, instanceId });
+
+    return prisma.client.tracked_ec2.findMany({
+        where: {
+            feature,
+            ...(accountId && { account_id: accountId }),
+            ...(region && { region }),
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(instanceId && { resource_id: instanceId })
+        }
+    });
+}
+
+async function removeTrackedEc2Record(accountId: string, region: string, credentialsId: string, instanceId: string) {
+    logger.info('Removing tracked EC2 instance', { accountId, region, credentialsId, instanceId });
+
+    return prisma.client.tracked_ec2.deleteMany({
+        where: {
+            account_id: accountId,
+            region,
+            credentials_id: credentialsId,
+            instance_id: instanceId
+        }
+    });
+}
+
 export {
     Resource,
     listDeployments,
@@ -715,5 +764,8 @@ export {
     updateDatabaseInstanceMetadata,
     deleteDatabaseInstance,
     DatabaseInstanceRecord,
-    updateInstanceMetadata
+    updateInstanceMetadata,
+    createTrackedEc2Records,
+    listTrackedEc2,
+    removeTrackedEc2Record
 };

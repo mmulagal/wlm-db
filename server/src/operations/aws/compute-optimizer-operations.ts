@@ -18,6 +18,8 @@ import { getCredentialsDetails } from '../cloud-manager/credentials-operations';
 import { getInstanceTypesFromInstanceRequirements } from './ec2-operations';
 import { getSqlInstancePricingDetails } from './pricing-operations';
 import { FINDING } from '../../utils/consts';
+import { createTrackedEc2Records } from '../../lib/database/db';
+import { NodeDetails } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -25,7 +27,7 @@ async function createRecommendationForResource(
     region: string,
     credentialsId: string,
     accountId: string,
-    instanceId: string,
+    instanceIds: string[],
     instanceTypes: string[] = [],
     awsAccountId: string
 ) {
@@ -33,28 +35,32 @@ async function createRecommendationForResource(
         region,
         credentialsId,
         accountId,
-        instanceId,
+        instanceIds,
         instanceTypes
     });
-    const instanceArn = getEc2Arn(awsAccountId, region, instanceId);
+    await Promise.all(
+        instanceIds.map(async instanceId => {
+            const instanceArn = getEc2Arn(awsAccountId, region, instanceId);
 
-    const putRecParams = {
-        resourceType: ResourceType.EC2_INSTANCE,
-        lookBackPeriod: LookBackPeriodPreference.DAYS_14,
-        scope: {
-            name: ScopeName.RESOURCE_ARN,
-            value: instanceArn
-        },
-        preferredResources: [
-            {
-                name: PreferredResourceName.EC2_INSTANCE_TYPES,
-                includeList: instanceTypes,
-                excludeList: ['t*']
-            }
-        ]
-    };
+            const putRecParams = {
+                resourceType: ResourceType.EC2_INSTANCE,
+                lookBackPeriod: LookBackPeriodPreference.DAYS_14,
+                scope: {
+                    name: ScopeName.RESOURCE_ARN,
+                    value: instanceArn
+                },
+                preferredResources: [
+                    {
+                        name: PreferredResourceName.EC2_INSTANCE_TYPES,
+                        includeList: instanceTypes,
+                        excludeList: ['t*']
+                    }
+                ]
+            };
 
-    await putRecommendationPreferences(region, credentialsId, accountId, putRecParams);
+            await putRecommendationPreferences(region, credentialsId, accountId, putRecParams);
+        })
+    );
 }
 
 async function identifyComputeOptimizerRecommendationOptions(
@@ -95,14 +101,14 @@ async function manageInstanceRecommendationPreReqs(
     credentialsId: string,
     resourceArn: string,
     accountId: string,
-    instanceId: string,
+    instanceIds: string[],
     ebsVolumeIds: string[],
     sqlServerDeploymentType: string
 ) {
     const instanceTypes = await getInstanceTypesFromInstanceRequirements(
         credentialsId,
         region,
-        [instanceId],
+        instanceIds,
         ebsVolumeIds,
         sqlServerDeploymentType
     );
@@ -128,16 +134,36 @@ async function manageInstanceRecommendationPreReqs(
             region,
             credentialsId,
             accountId,
-            instanceId,
+            instanceIds,
             instanceTypes,
             awsAccountId
         );
+
+        await addEc2InstancesToTrackedList(accountId, region, credentialsId, awsAccountId, instanceIds);
         throw new Error(
             'Recommendation preference created for the instance; it takes about 24hours for compute optimizer to recommend an instance; skipping recommendations'
         );
     }
 
     return instanceTypes;
+}
+
+async function addEc2InstancesToTrackedList(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    awsAccountId: string,
+    instanceIds: string[]
+) {
+    const records = instanceIds.map(instanceId => ({
+        account_id: accountId,
+        region,
+        credentials_id: credentialsId,
+        instance_id: instanceId,
+        feature: 'TCO',
+        cloud_provider_account_id: awsAccountId
+    }));
+    await createTrackedEc2Records(records);
 }
 
 function getFindingMapping(finding: string) {
@@ -164,6 +190,7 @@ async function getInstanceRecommendations(
     credentialsId: string,
     accountId: string,
     instanceId: string,
+    nodeInstances: NodeDetails[],
     ebsVolumeIds: string[],
     sqlServerDeploymentType: string
 ) {
@@ -181,6 +208,7 @@ async function getInstanceRecommendations(
     const { awsAccountId } = derivePropertiesFromARN(arn!) || {};
     if (awsAccountId) {
         const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
+        const instanceIds = nodeInstances.map(({ ec2InstanceId }) => ec2InstanceId);
         let message: string | undefined;
         const instanceTypes: string[] =
             (await manageInstanceRecommendationPreReqs(
@@ -189,7 +217,7 @@ async function getInstanceRecommendations(
                 credentialsId,
                 resourceArn,
                 accountId,
-                instanceId,
+                instanceIds,
                 ebsVolumeIds,
                 sqlServerDeploymentType
             )) || [];
@@ -275,4 +303,4 @@ async function getInstanceRecommendations(
     throw new Error('AWS Account ID details associated with the Database host not found');
 }
 
-export { createRecommendationForResource, getInstanceRecommendations };
+export { createRecommendationForResource, getInstanceRecommendations, manageInstanceRecommendationPreReqs };

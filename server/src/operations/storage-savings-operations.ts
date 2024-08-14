@@ -702,6 +702,7 @@ async function getManualModeStorageSavingsCalculationMetrics(
 }
 
 export {
+    getAoagPartnerNodesDetails,
     performStorageSavingsCalculations,
     getStorageSavingsCalculationMetrics,
     performManualModeStorageSavingsCalculations,
