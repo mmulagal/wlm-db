@@ -16,8 +16,7 @@ import {
     describeFSxOntapRegions,
     getConnectionStatus,
     putParameter,
-    getParameter,
-    describeGenericFSxOntapRegions
+    getParameter
 } from '../../lib/aws/ssm';
 import { generateHash, sleep } from '../../utils/utils';
 import { AWS_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
@@ -169,7 +168,7 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
     logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP');
 
     try {
-        const fsxRegionResponse = await describeGenericFSxOntapRegions();
+        const fsxRegionResponse = await describeFSxOntapRegions();
 
         const fsxRegionsList: Array<FSxAvailableRegionType> = [];
         const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];

@@ -62,31 +62,8 @@ async function getCommandInvocation(credentialsId: string, region: string, param
     return response;
 }
 
-async function describeGenericFSxOntapRegions() {
-    logger.info('Describe Generic AWS regions');
-
-    const ssmClient = await getSSMClient(DEFAULT_AWS_REGION);
-
-    const parametersInput: GetParametersByPathCommandInput = {
-        Path: '/aws/service/global-infrastructure/services/fsx-ontap/regions',
-        Recursive: false,
-        WithDecryption: true
-    };
-
-    const paginator = paginateGetParametersByPath({ client: ssmClient }, parametersInput);
-    const fsxRegionParameters = [];
-    for await (const page of paginator) {
-        if (page.Parameters?.length) {
-            fsxRegionParameters.push(...page.Parameters);
-        }
-    }
-    logger.debug('Describe generic AWS FSx regions response:', fsxRegionParameters);
-
-    return fsxRegionParameters;
-}
-
-async function describeFSxOntapRegions(credentialsId: string) {
-    logger.info('Describe AWS regions:', { credentialsId });
+async function describeFSxOntapRegions(credentialsId?: string) {
+    logger.info('Describe AWS FSX Ontap regions:', { credentialsId });
 
     const ssmClient = await getSSMClient(DEFAULT_AWS_REGION, credentialsId);
 
@@ -159,7 +136,6 @@ export {
     getSSMClient,
     sendSSMCommand,
     getCommandInvocation,
-    describeGenericFSxOntapRegions,
     describeFSxOntapRegions,
     getConnectionStatus,
     putParameter,
