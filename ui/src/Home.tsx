@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
@@ -20,18 +20,22 @@ import { WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 import { useAppSelector } from './store/storeHooks';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventorySlice';
+import { useRunOnce } from './common/hooks/useRunOnce';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const dispatch = useDispatch();
-    const location = useLocation();
 
-    useEffect(() => {
+    useRunOnce(() => {
         if (!isWorkloadFactory) {
-            console.log('control comes here', location?.pathname);
+            window.onmessage = (msg: any) => {
+                if (msg && msg?.data && msg?.data?.type === 'LOCATION-CHANGE') {
+                    console.log(msg);
+                }
+            };
         }
-    }, [isWorkloadFactory, location?.pathname]);
+    });
 
     //@ts-ignore
     const showNotifications = useMemo(() => {
