@@ -36,7 +36,8 @@ import {
     INSTANCE_DETAILS,
     RESOURCE_UTILIZATION,
     GET_DEFAULT_COLLATION,
-    GET_DEFAULT_DRIVES
+    GET_DEFAULT_DRIVES,
+    SCRIPT_UPDATE_FILE_COMMAND
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 import {
     SERVER_DETAILS,
@@ -457,6 +458,10 @@ const getConnectionInforCommand = {
     commands: [getConnectionInfo('MSSQLSERVER')]
 };
 
+const checkScriptUpdate = {
+    commands: [SCRIPT_UPDATE_FILE_COMMAND]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -587,7 +592,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: readExtendedPropertiesCommand })
     .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand)
     .on(SendCommandCommand, { Parameters: getConnectionInforCommand })
-    .resolves(listSendCommandCommandResponse.getConnectionInfoCommand);
+    .resolves(listSendCommandCommandResponse.getConnectionInfoCommand)
+    .on(SendCommandCommand, { Parameters: checkScriptUpdate })
+    .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -721,7 +728,11 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getConnectionInfoCommand'
     })
-    .resolves(getCommandInvocationResponse.getConnectionInfoResp);
+    .resolves(getCommandInvocationResponse.getConnectionInfoResp)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkSrciptUpdateCommand'
+    })
+    .resolves(getCommandInvocationResponse.checkScriptUpdateResp);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

@@ -1,8 +1,10 @@
-import { ACCOUNT_ID } from '../utils/consts';
+import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../simulator/scopes/cloud-manager/fsx-core-scope';
+import '../simulator/scopes/aws/ssm-scope';
 import {
+    checkScriptNeedsUpdate,
     getFileSystemCredentialsStatus,
     getFileSystemsCredentialsStatus,
     getManagedResources
@@ -75,5 +77,15 @@ describe('Resource operations', () => {
         const resp = await getManagedResources(ACCOUNT_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286', 'ap-southeast-1');
 
         expect(resp).toEqual(expected);
+    });
+
+    it('Check if scripts need update', async () => {
+        const response = await checkScriptNeedsUpdate(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            'i-07e76a4b916548dc0'
+        );
+        expect(response).toBe(false);
     });
 });
