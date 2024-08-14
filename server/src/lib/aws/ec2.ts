@@ -170,8 +170,8 @@ async function describeRegions(
     return response;
 }
 
-async function describeInstanceTypes(credentialsId: string, region: string) {
-    logger.info('Describe AWS instance types:', { credentialsId, region });
+async function describeInstanceTypes(region: string, credentialsId?: string) {
+    logger.info('Describe AWS instance types:', { region, credentialsId });
 
     const client = await getEC2Client(region, credentialsId);
 
