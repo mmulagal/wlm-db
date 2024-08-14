@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
@@ -27,12 +27,14 @@ const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     useRunOnce(() => {
         if (!isWorkloadFactory) {
             window.onmessage = (msg: any) => {
                 if (msg && msg?.data && msg?.data?.type === BXP_MESSAGES.SERVICE_LOCATION_CHANGE) {
                     const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
+                    navigate('../fsxdb');
                     dispatch(setSelectedHeaderTab(tabInfo));
                 }
             };
