@@ -55,6 +55,11 @@ export interface ExploreSavingsSliceEntities {
         instanceTypeLoading: false;
         instanceTypeError: null;
     };
+    getManualRegionsList: {
+        manualRegionsData: null;
+        manualRegionsLoading: false;
+        manualRegionsError: null;
+    };
     manualTCOVolumeTypes: any;
     volumeFilledStatus: boolean;
     recommendedTargetInstance: string;
