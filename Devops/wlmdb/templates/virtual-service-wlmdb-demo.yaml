@@ -1,4 +1,4 @@
-{{if and ( .Values.global.demoEnv) ( .Values.global.istioEnabled) }}
+{{ if and ( .Values.global.demoEnv) ( .Values.global.istioEnabled) }}
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
