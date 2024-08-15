@@ -4,6 +4,7 @@ import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
 import { databaseInstanceMetadata } from '../../utils/common-types';
+import { TCO_FEATURE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -695,6 +696,7 @@ interface TrackedEc2Record {
     instance_id: string;
     feature: string;
     cloud_provider_account_id: string;
+    last_updated?: Date;
 }
 async function createTrackedEc2Records(records: TrackedEc2Record[]) {
     logger.info('Creating tracked EC2 instances', { records });
@@ -705,7 +707,7 @@ async function createTrackedEc2Records(records: TrackedEc2Record[]) {
 }
 
 async function listTrackedEc2(
-    feature: string = 'TCO',
+    feature: string = TCO_FEATURE,
     accountId?: string,
     region?: string,
     credentialsId?: string,
@@ -719,24 +721,60 @@ async function listTrackedEc2(
             ...(accountId && { account_id: accountId }),
             ...(region && { region }),
             ...(credentialsId && { credentials_id: credentialsId }),
-            ...(instanceId && { resource_id: instanceId })
+            ...(instanceId && { instance_id: instanceId })
         }
     });
 }
 
-async function removeTrackedEc2Record(accountId: string, region: string, credentialsId: string, instanceId: string) {
-    logger.info('Removing tracked EC2 instance', { accountId, region, credentialsId, instanceId });
+async function removeTrackedEc2Record(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    instanceId: string,
+    feature: string
+) {
+    logger.info('Removing tracked EC2 instance', { accountId, region, credentialsId, instanceId, feature });
 
     return prisma.client.tracked_ec2.deleteMany({
         where: {
             account_id: accountId,
             region,
             credentials_id: credentialsId,
-            instance_id: instanceId
+            instance_id: instanceId,
+            feature
         }
     });
 }
 
+async function updateTrackedEc2Record(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    instanceId: string,
+    feature: string,
+    data: {
+        account_id?: string;
+        region?: string;
+        credentials_id?: string;
+        instance_id?: string;
+        feature?: string;
+        cloud_provider_account_id?: string;
+        last_updated?: Date;
+    }
+) {
+    logger.info('Updating tracked EC2 instance', { accountId, region, credentialsId, feature, instanceId, data });
+
+    return prisma.client.tracked_ec2.updateMany({
+        where: {
+            account_id: accountId,
+            region,
+            credentials_id: credentialsId,
+            feature,
+            instance_id: instanceId
+        },
+        data
+    });
+}
 export {
     Resource,
     listDeployments,
@@ -767,5 +805,6 @@ export {
     updateInstanceMetadata,
     createTrackedEc2Records,
     listTrackedEc2,
-    removeTrackedEc2Record
+    removeTrackedEc2Record,
+    updateTrackedEc2Record
 };

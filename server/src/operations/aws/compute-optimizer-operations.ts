@@ -17,8 +17,8 @@ import getLogger from '../../utils/logger';
 import { getCredentialsDetails } from '../cloud-manager/credentials-operations';
 import { getInstanceTypesFromInstanceRequirements } from './ec2-operations';
 import { getSqlInstancePricingDetails } from './pricing-operations';
-import { FINDING } from '../../utils/consts';
-import { createTrackedEc2Records } from '../../lib/database/db';
+import { FINDING, TCO_FEATURE } from '../../utils/consts';
+import { createTrackedEc2Records, updateTrackedEc2Record } from '../../lib/database/db';
 import { NodeDetails } from '../../utils/common-types';
 
 const logger = getLogger();
@@ -105,6 +105,17 @@ async function manageInstanceRecommendationPreReqs(
     ebsVolumeIds: string[],
     sqlServerDeploymentType: string
 ) {
+    logger.info('Managing instance recommendation prerequisites', {
+        awsAccountId,
+        region,
+        credentialsId,
+        resourceArn,
+        accountId,
+        instanceIds,
+        ebsVolumeIds,
+        sqlServerDeploymentType
+    });
+
     const instanceTypes = await getInstanceTypesFromInstanceRequirements(
         credentialsId,
         region,
@@ -129,16 +140,18 @@ async function manageInstanceRecommendationPreReqs(
     );
 
     const isRecommendationPreferenceExists = includeList && includeList?.length > 1 && includeList?.[0] !== '*'; // includeList includes a list of ec2 instance types ; by default it is * so the length is 1; if its more than 1, that means we have added recommendation preferences
-    if (!isRecommendationPreferenceExists) {
-        await createRecommendationForResource(
-            region,
-            credentialsId,
-            accountId,
-            instanceIds,
-            instanceTypes,
-            awsAccountId
+    await createRecommendationForResource(region, credentialsId, accountId, instanceIds, instanceTypes, awsAccountId);
+    if (isRecommendationPreferenceExists) {
+        logger.info('Recommendation preference already exists for the instance, updating the last updated time');
+        await Promise.all(
+            instanceIds.map(async instanceId => {
+                await updateTrackedEc2Record(accountId, region, credentialsId, instanceId, TCO_FEATURE, {
+                    last_updated: new Date()
+                });
+            })
         );
-
+    } else {
+        logger.info('Recommendation preference created for the instance, adding the instance to the tracked list');
         await addEc2InstancesToTrackedList(accountId, region, credentialsId, awsAccountId, instanceIds);
         throw new Error(
             'Recommendation preference created for the instance; it takes about 24hours for compute optimizer to recommend an instance; skipping recommendations'
@@ -160,7 +173,7 @@ async function addEc2InstancesToTrackedList(
         region,
         credentials_id: credentialsId,
         instance_id: instanceId,
-        feature: 'TCO',
+        feature: TCO_FEATURE,
         cloud_provider_account_id: awsAccountId
     }));
     await createTrackedEc2Records(records);

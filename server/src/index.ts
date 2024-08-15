@@ -60,7 +60,8 @@ import chatbotRoutes from './routes/chatbot';
 import {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
-    failLongRunningResourcePrepareJobs
+    failLongRunningResourcePrepareJobs,
+    updateInstanceRecommendationPreferences
 } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
 import { resetCache } from './utils/cache';
@@ -345,6 +346,7 @@ try {
         purgeOlderJobs();
         failLongRunningDeploymentJobs();
         failLongRunningResourcePrepareJobs();
+        updateInstanceRecommendationPreferences();
     }
 } catch (error) {
     logger.error('Failed to initialize cron jobs', error);

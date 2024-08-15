@@ -16,7 +16,11 @@ import {
     DatabaseInstanceRecord,
     upsertDatabaseInstance,
     listDatabaseInstances,
-    deleteDatabaseInstance
+    deleteDatabaseInstance,
+    createTrackedEc2Records,
+    listTrackedEc2,
+    removeTrackedEc2Record,
+    updateTrackedEc2Record
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -214,5 +218,76 @@ describe('Database instance operations', () => {
         ]);
         response = await listDatabaseInstances(ACCOUNT_ID, {});
         expect(response.length).toEqual(0);
+    });
+});
+
+describe('Tracked EC2 operations', () => {
+    it('should create tracked EC2 records', async () => {
+        const trackedEc2Records = [
+            {
+                cloud_provider_account_id: '464262061435',
+                instance_id: 'i-1234567890abcdef0',
+                account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: 'us-east-1',
+                feature: 'TCO'
+            },
+            {
+                cloud_provider_account_id: '464262061435',
+                instance_id: 'i-9876543210qwerty0',
+                account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: 'us-east-1',
+                feature: 'TCO'
+            }
+        ];
+        const resp = await createTrackedEc2Records(trackedEc2Records);
+        expect(resp.count).toEqual(2);
+        await removeTrackedEc2Record(ACCOUNT_ID, 'us-east-1', DEFAULT_AWS_CREDENTIALS_ID, 'i-1234567890abcdef0', 'TCO');
+        await removeTrackedEc2Record(ACCOUNT_ID, 'us-east-1', DEFAULT_AWS_CREDENTIALS_ID, 'i-9876543210qwerty0', 'TCO');
+    });
+
+    it('should list tracked EC2 records', async () => {
+        const trackedEc2Records = [
+            {
+                cloud_provider_account_id: '464262061435',
+                instance_id: 'i-1234567890abcdef0',
+                account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: 'us-east-1',
+                feature: 'TCO'
+            }
+        ];
+        await createTrackedEc2Records(trackedEc2Records);
+        const resp = await listTrackedEc2('TCO');
+        expect(resp.length).toEqual(1);
+        await removeTrackedEc2Record(ACCOUNT_ID, 'us-east-1', DEFAULT_AWS_CREDENTIALS_ID, 'i-1234567890abcdef0', 'TCO');
+    });
+
+    it('should update tracked EC2 records', async () => {
+        const trackedEc2Records = [
+            {
+                cloud_provider_account_id: '464262061435',
+                instance_id: 'i-1234567890abcdef0',
+                account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: 'us-east-1',
+                feature: 'TCO'
+            }
+        ];
+        await createTrackedEc2Records(trackedEc2Records);
+        const newTime = new Date();
+        const resp = await updateTrackedEc2Record(
+            ACCOUNT_ID,
+            'us-east-1',
+            DEFAULT_AWS_CREDENTIALS_ID,
+            'i-1234567890abcdef0',
+            'TCO',
+            { last_updated: newTime }
+        );
+        expect(resp.count).toEqual(1);
+        const [instanceRecord] = await listTrackedEc2('TCO', undefined, undefined, undefined, 'i-1234567890abcdef0');
+        expect(instanceRecord.last_updated).toEqual(newTime);
+        await removeTrackedEc2Record(ACCOUNT_ID, 'us-east-1', DEFAULT_AWS_CREDENTIALS_ID, 'i-1234567890abcdef0', 'TCO');
     });
 });
