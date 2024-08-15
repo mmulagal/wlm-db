@@ -34,7 +34,7 @@ variable "s3_template_url" {
   type        = string
 }
 
-variable "deployement_name" {
+variable "deployment_name" {
   description = "Value of the Deployment Name"
   type        = string
   default     = "wlmdb-poc"
@@ -147,8 +147,8 @@ variable "ad_security_group_id" {
 
 variable "dns_ip_addresses" {
   description = "Value of the dns ip addresses"
-  type        = list(string)
-  default     = ["10.0.140.140", "10.0.29.45"]
+  type        = string
+  default     = "10.0.140.140, 10.0.29.45"
 }
 
 variable "node_net_bios_names" {
@@ -455,6 +455,23 @@ variable "notification_arn" {
   description = "Value of the Notification ARN"
   type        = string
 }
+
+variable "s3_artifacts_url" {
+  description = "Value of the S3 Artifacts URL"
+  type        = string
+}
+
+variable "enable_cloud_watch_log" {
+  description = "Flag to enable CloudWatch log"
+  type        = bool
+  default     = true
+}
+
+variable "unique_id" {
+  description = "Value of the Unique ID"
+  type        = number
+}
+
 # variable "ec2_instance_type" {
 #   description = "Value of the instance type"
 #   type        = string

@@ -26,7 +26,7 @@ domain_admin_user_name = "admin"
 domain_admin_password  = "Collector@123" # replace with your actual password
 domain_dns_name        = "wlmqa2.com"
 ad_security_group_id   = "sg-06989f7dcc767bcdf"
-dns_ip_addresses       = ["10.0.140.140", "10.0.29.45"]
+dns_ip_addresses       = "10.0.140.140, 10.0.29.45"
 
 #fsx configuration variables
 fsx_deployment_mode     = "SINGLE_AZ_1"
@@ -75,7 +75,7 @@ is_ssm_messages_endpoint_created    = true
 
 #variables for provisioning the ec2 instance
 s3_template_url           = "https://s3.amazonaws.com/aws-quickstart/quickstart-netapp-ontap/templates/netapp-ontap-aws-master.template"
-deployement_name          = "wlmdb-poc-terraform-SqlStandalone-deployment"
+deployment_name           = "wlmdb-poc-terraform-SqlStandalone-deployment"
 node_net_bios_names       = "sqlnode-12345"
 deploy_role_name          = "wlm-operate-permissions-role"
 validation_ami_id         = "ami-0dc86cd5724f1007c"
@@ -87,5 +87,6 @@ wlmdb_aws_account_id      = "718273455463"
 jwt_token                 = "eyJhbG"
 notification_arn          = ""
 
-
-
+s3_artifacts_url       = "https://wlfdb-artifacts.s3.ap-southeast-1.amazonaws.com/wlmdb/"
+enable_cloud_watch_log = true
+unique_id              = 124324324

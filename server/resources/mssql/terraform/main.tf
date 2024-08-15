@@ -48,7 +48,8 @@ provider "aws" {
 
 # These resources used to setup the s3 and dynamo table for state locking and versioning in remote backend instead of local
 resource "aws_s3_bucket" "terraform_state" {
-  bucket        = var.bucket_for_state # REPLACE WITH YOUR BUCKET NAME
+  bucket = var.bucket_for_state # REPLACE WITH YOUR BUCKET NAME
+
   force_destroy = true
 }
 
@@ -99,4 +100,29 @@ module "vpc-endpoints-validation" {
   ec2_endpoint_exists             = var.is_ec2_endpoint_created
   ec2_messages_endpoint_exists    = var.is_ec2_messages_endpoint_created
   ssm_messages_endpoint_exists    = var.is_ssm_messages_endpoint_created
+}
+
+module "validation-node" {
+  source = "./modules/validation-node"
+
+  validation_node_vpc_id                = var.vpc_id
+  validation_node_aws_location          = var.aws_location
+  validation_node_subnet_id             = var.private_subnet1_id
+  validation_node_dns_ip_addresses      = var.dns_ip_addresses
+  validation_node_ec2_role_name         = var.deployment_name
+  validation_node_is_custom_ami         = false
+  validation_node_key_pair_name         = var.ec2_instance_keypair
+  validation_node_perform_ad_check      = true
+  validation_node_domain_dns_name       = var.domain_dns_name
+  validation_node_domain_admin_user     = var.domain_admin_user_name
+  validation_node_perform_fsx_check     = true
+  validation_node_fsx_file_system_id    = var.fsx_file_system_id
+  validation_node_enable_cloudwatch_log = var.enable_cloud_watch_log
+  validation_node_ami                   = var.validation_ami_id
+  validation_node_instance_type         = var.validation_instance_type
+  validation_node_deployment_name       = var.deployment_name
+  validation_node_sql_deployment_mode   = var.sql_deployment_mode
+  validation_node_unique_id             = var.unique_id
+  validation_node_s3_artifacts_url      = var.s3_artifacts_url
+  validation_node1_wait_handler         = ""
 }
