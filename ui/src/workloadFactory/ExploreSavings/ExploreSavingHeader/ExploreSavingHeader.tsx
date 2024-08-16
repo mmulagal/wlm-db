@@ -46,12 +46,16 @@ const ExploreSavingHeader = () => {
 
                                 <span className={styles.subText}>
                                     <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
-                                    <span className={styles.link} onClick={() => handleManualTCOEBS(dispatch)}>
+                                    <span
+                                        className={styles.link}
+                                        id="explore-savings-manually-ebs"
+                                        onClick={() => handleManualTCOEBS(dispatch)}
+                                    >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
                                     <span
                                         className={styles.link}
-                                        // style={{ color: 'var(--text-disabled)' }}
+                                        id="explore-savings-manually-fsxW"
                                         onClick={() => handleManualTCOFSXW(dispatch)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
@@ -92,11 +96,16 @@ const ExploreSavingHeader = () => {
 
                                 <span className={styles.subText}>
                                     <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
-                                    <span className={styles.link} onClick={() => handleManualTCOEBS(dispatch)}>
+                                    <span
+                                        className={styles.link}
+                                        id="explore-savings-manually-ebs"
+                                        onClick={() => handleManualTCOEBS(dispatch)}
+                                    >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
                                     <span
                                         className={styles.link}
+                                        id="explore-savings-manually-fsxW"
                                         style={{ whiteSpace: 'unset' }}
                                         onClick={() => handleManualTCOFSXW(dispatch)}
                                     >
@@ -138,10 +147,18 @@ const ExploreSavingHeader = () => {
 
                                 <span className={styles.subText}>
                                     <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
-                                    <span className={styles.link} onClick={() => handleManualTCOEBS(dispatch)}>
+                                    <span
+                                        className={styles.link}
+                                        id="explore-savings-manually-ebs"
+                                        onClick={() => handleManualTCOEBS(dispatch)}
+                                    >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
-                                    <span className={styles.link} onClick={() => handleManualTCOFSXW(dispatch)}>
+                                    <span
+                                        className={styles.link}
+                                        id="explore-savings-manually-fsxW"
+                                        onClick={() => handleManualTCOFSXW(dispatch)}
+                                    >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
                                 </span>
