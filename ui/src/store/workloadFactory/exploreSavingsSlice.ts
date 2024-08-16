@@ -38,6 +38,11 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
         instanceTypeLoading: false,
         instanceTypeError: null
     },
+    getManualRegionsList: {
+        manualRegionsData: null,
+        manualRegionsLoading: false,
+        manualRegionsError: null
+    },
     volumeFilledStatus: false,
     secondaryVolumeFilledStatus: false,
     manualTCOVolumeTypes: {
@@ -155,6 +160,12 @@ const exploreSavingsSlice = createSlice({
         },
         setInstanceLoading: (state, action: PayloadAction<any>) => {
             state.getManualInstanceTypeList.instanceTypeLoading = action.payload;
+        },
+        addManualRegionsList: (state, action: PayloadAction<any>) => {
+            state.getManualRegionsList.manualRegionsData = action.payload;
+        },
+        setManualRegionsLoading: (state, action: PayloadAction<any>) => {
+            state.getManualRegionsList.manualRegionsLoading = action.payload;
         },
         setVolumeTypeOperation(state, action: PayloadAction<any>) {
             state.manualTCOVolumeTypes[action.payload.type][action.payload.mode] = action.payload.value;
@@ -383,6 +394,8 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    addManualRegionsList,
+    setManualRegionsLoading,
     setSelectedManualFSXIOPS,
     setSelectedManualFSXThroughput,
     setSelectedManualStorageCapacityUnit,

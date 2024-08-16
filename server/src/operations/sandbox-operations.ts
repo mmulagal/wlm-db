@@ -464,6 +464,7 @@ interface DbInfo {
 interface VolumeLunMap {
     fileName: string;
     fileId: string | number;
+    fileType: string | number;
     volumeName: string;
     lunPath: string;
     lunSerialNumber: string;
@@ -606,27 +607,22 @@ async function startSandboxCreation(
             mappings,
             clonedVolumes,
             mountPoints
-        )) as { dataPath: Array<string>; logPath: Array<string> };
+        )) as { files: Array<string> };
 
-        const dataPathArr = mountPaths.dataPath.map(path => ({
-            filePath: path,
-            fileId:
-                mappings.data.find(vol => {
-                    const oldFileName = vol.fileName.split('\\').pop();
-                    const newFileName = path.split('\\').pop();
-                    return oldFileName === newFileName;
-                })?.fileId || 0
-        }));
+        const mappingData = [...mappings.data, ...mappings.log];
 
-        const logPathArr = mountPaths.logPath.map(path => ({
-            filePath: path,
-            fileId:
-                mappings.log.find(vol => {
-                    const oldFileName = vol.fileName.split('\\').pop();
-                    const newFileName = path.split('\\').pop();
-                    return oldFileName === newFileName;
-                })?.fileId || 0
-        }));
+        const fileDataArr = mountPaths.files.map(path => {
+            const fileData = mappingData.find(vol => {
+                const oldFileName = vol.fileName.split('\\').pop();
+                const newFileName = path.split('\\').pop();
+                return oldFileName === newFileName;
+            });
+            return {
+                filePath: path,
+                fileId: fileData?.fileId || 0,
+                fileType: fileData?.fileType || 0
+            };
+        });
 
         await createCloneDb(
             accountId,
@@ -635,10 +631,14 @@ async function startSandboxCreation(
             parentJobId,
             destDetails,
             {
-                dataPath: dataPathArr
+                dataPath: fileDataArr
+                    .filter(file => Number(file.fileType) === 0)
                     .sort((a, b) => Number(a.fileId) - Number(b.fileId))
                     .map(pathObj => pathObj.filePath),
-                logPath: logPathArr.sort((a, b) => Number(a.fileId) - Number(b.fileId)).map(pathObj => pathObj.filePath)
+                logPath: fileDataArr
+                    .filter(file => Number(file.fileType) === 1)
+                    .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+                    .map(pathObj => pathObj.filePath)
             },
             mappings.collation,
             fileSuffix
@@ -669,8 +669,8 @@ async function startSandboxCreation(
             clonedVolumes
                 ? uniq([...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)])
                 : [],
-            uniq(compact([...(mountPaths ? mountPaths.dataPath : []), ...(mountPaths ? mountPaths.logPath : [])])).map(
-                file => file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`)
+            uniq(compact(mountPaths ? mountPaths.files : [])).map(file =>
+                file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`)
             )
         );
     } finally {
@@ -875,6 +875,7 @@ async function getMappings(
                 fsxId,
                 region,
                 database,
+                srcDetails.databaseInstanceName,
                 srcDetails.instanceName,
                 `Sandbox:${sandboxName}:`,
                 srcDetails.sqlAuthEnabled
@@ -2156,31 +2157,25 @@ async function performLifecycleUpdate(
                 dataDrive: mappings.data[0].fileName.split(':')[0],
                 logDrive: mappings.log[0].fileName.split(':')[0]
             }
-        )) as { dataPath: Array<string>; logPath: Array<string> };
+        )) as { files: Array<string> };
 
-        const dataPathArr = mountPaths.dataPath.map(path => ({
-            filePath: path,
-            fileId:
-                mappings?.data.find(vol => {
-                    const oldFileName = vol.fileName
-                        .split('\\')
-                        .pop()
-                        ?.replace(`${fileSuffix}.mdf`, '.mdf')
-                        .replace(`${fileSuffix}.ndf`, '.ndf');
-                    const newFileName = path.split('\\').pop();
-                    return oldFileName === newFileName;
-                })?.fileId || 0
-        }));
-
-        const logPathArr = mountPaths.logPath.map(path => ({
-            filePath: path,
-            fileId:
-                mappings?.log.find(vol => {
-                    const oldFileName = vol.fileName.split('\\').pop()?.replace(`${fileSuffix}.ldf`, '.ldf');
-                    const newFileName = path.split('\\').pop();
-                    return oldFileName === newFileName;
-                })?.fileId || 0
-        }));
+        const fileDataArr = mountPaths.files.map(path => {
+            const fileData = mappingData.find(vol => {
+                const oldFileName = vol.fileName
+                    .split('\\')
+                    .pop()
+                    ?.replace(`${fileSuffix}.mdf`, '.mdf')
+                    .replace(`${fileSuffix}.ndf`, '.ndf')
+                    .replace(`${fileSuffix}.ldf`, '.ldf');
+                const newFileName = path.split('\\').pop();
+                return oldFileName === newFileName;
+            });
+            return {
+                filePath: path,
+                fileId: fileData?.fileId || 0,
+                fileType: fileData?.fileType || 0
+            };
+        });
 
         await createCloneDb(
             accountId,
@@ -2189,8 +2184,14 @@ async function performLifecycleUpdate(
             parentJobId,
             resourceDetails,
             {
-                dataPath: dataPathArr.sort((a, b) => Number(a.fileId) - Number(b.fileId)).map(path => path.filePath),
-                logPath: logPathArr.sort((a, b) => Number(a.fileId) - Number(b.fileId)).map(path => path.filePath)
+                dataPath: fileDataArr
+                    .filter(file => Number(file.fileType) === 0)
+                    .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+                    .map(pathObj => pathObj.filePath),
+                logPath: fileDataArr
+                    .filter(file => Number(file.fileType) === 1)
+                    .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+                    .map(pathObj => pathObj.filePath)
             },
             undefined,
             fileSuffix

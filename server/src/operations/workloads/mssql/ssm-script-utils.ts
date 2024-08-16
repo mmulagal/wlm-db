@@ -2,6 +2,8 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../uti
 
 /* eslint-disable no-useless-escape */
 
+import { SCRIPT_VERSON_FILE } from './const';
+
 const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string) => ` 
 Function GetSMBMappedDrivesWithPath() {
     $DriveLetterPath = @{}
@@ -1060,6 +1062,14 @@ Function Call-SqlCmd {
 }
 `;
 
+const READ_SCRIPT_VERSION = `
+$file = "${SCRIPT_VERSON_FILE}"
+if (Test-Path $file -PathType Leaf) {
+    # File exists
+    Get-Content $file
+} 
+`;
+
 export {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
@@ -1076,5 +1086,6 @@ export {
     sqlQueryExecution,
     readSsmParameter,
     sqlQueryExecutionTemplate,
-    slqcmdExecutionTemplate
+    slqcmdExecutionTemplate,
+    READ_SCRIPT_VERSION
 };

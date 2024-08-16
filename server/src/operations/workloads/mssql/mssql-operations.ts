@@ -39,7 +39,8 @@ import {
     DATABASE_METRIC_TYPE,
     DEFAULT_MSSQL_INSTANCE_NAME,
     SQL_SERVICE_STATE,
-    SSM_PARAM_PREFIX
+    SSM_PARAM_PREFIX,
+    AWS_SSM_PARAMETER
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import {
@@ -56,6 +57,7 @@ import { getResources } from '../../database/database-operations';
 import { DatabaseInstance, Metadata, ResourceDetails, InstanceDetails } from '../../../utils/common-types';
 import { INSTANCE_DETAILS, RESOURCE_UTILIZATION, sqlQueryExecution } from './ssm-script-utils';
 import { getParameter } from '../../../lib/aws/ssm';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 
 const logger = getLogger();
 
@@ -625,7 +627,16 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
 
                 // Check if instance has SSM parameter store
-                const ssmParameter = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${nodeId}`);
+                const parameterKey = `${SSM_PARAM_PREFIX}${nodeId}`;
+                let ssmParameter;
+                if (hasCache(AWS_SSM_PARAMETER, parameterKey)) {
+                    ssmParameter = readFromCacheByKey(AWS_SSM_PARAMETER, parameterKey) as string;
+                } else {
+                    ssmParameter = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${nodeId}`);
+                    if (ssmParameter) {
+                        writeToCache(AWS_SSM_PARAMETER, parameterKey, ssmParameter, '60s');
+                    }
+                }
                 const { sql } = ssmParameter ? JSON.parse(ssmParameter) : { sql: {} };
 
                 instancesDetails.forEach(obj => {

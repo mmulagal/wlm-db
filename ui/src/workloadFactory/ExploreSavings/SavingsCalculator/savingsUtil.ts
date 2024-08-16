@@ -115,6 +115,98 @@ export const comparisonData = (calculatedResponse: any) => {
     ];
 };
 
+export const comparisonDataFsxw = (calculatedResponse: any) => {
+    const state = store.getState();
+    const { recommendedTargetInstance } = state.exploreSavings;
+    return [
+        {
+            type: 'Capacity',
+            fsx: calculatedResponse?.fsx?.capacity
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.fsxw?.capacity
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.capacity, 2)).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'IOPS',
+            fsx: calculatedResponse?.fsx?.iops
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.fsxw?.iops
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.iops, 2)).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'Throughput',
+            fsx: calculatedResponse?.fsx?.throughput
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.fsxw?.throughput
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.throughput, 2)).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'Snapshots',
+            fsx: calculatedResponse?.fsx?.snapshots
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.fsxw?.snapshots
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.snapshots, 2)).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'Clones',
+            fsx: calculatedResponse?.fsx?.clones
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.clones, 2)).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.fsxw?.clones
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.clones, 2)).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'Compute',
+            isTooltip: recommendedTargetInstance ? GENERAL.COMPUTE_RECOMMENDED_TOOLTIP : '',
+            fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)
+                  ).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.compute?.existing?.computeMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)
+                  ).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'SQL license',
+            isTooltip:
+                'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
+            fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)
+                  ).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.license?.existing?.licenseMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)
+                  ).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'Total summary',
+            fsx: calculatedResponse?.totalSummary?.recommendedTotal
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.totalSummary?.recommendedTotal, 2)
+                  ).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.totalSummary?.existing
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.totalSummary?.existing, 2)).toLocaleString()}`
+                : '$0'
+        }
+    ];
+};
+
 export const calculatedFSXData = (fsxData: any, storageType: string) => {
     return [
         {

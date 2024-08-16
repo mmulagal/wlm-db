@@ -1,25 +1,25 @@
- [CmdletBinding()]
+[CmdletBinding()]
 
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$PerformFSxCheck,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$FSxFileSystemId,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$FSxRegion,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Stackname,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Parentstackname,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$ResourceID,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$WaitHandler 
 )
 
@@ -39,24 +39,27 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
 [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
 if (${PerformFSxCheck} -ne 'true' ) {
-    Write-Output @{ status= "Skipped"; reason= "Deployment creates new FSx." } | ConvertTo-Json -Compress
+    Write-Output @{ status = "Skipped"; reason = "Deployment creates new FSx." } | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
     exit(0)
 }
 
 #get Instance ID
-$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
-$InstanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$InstanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
 $ErrorActionPreference = "Stop"
 try {
-$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-$Username = $SsmParameter.fsx.username
-$Password = $SsmParameter.fsx.password
-}catch{
+    . ..\common\InvokeRetryCommand.ps1
+    $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
+
+    $Username = $SsmParameter.fsx.username
+    $Password = $SsmParameter.fsx.password
+}
+catch {
     $Failed = $true
     $FailureReason = '"{0}"' -f "Unable to fetch SSM parameter, /netapp/wlmdb/$Parentstackname and access to SSM parameter store"
-    Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+    Write-Output @{status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)
@@ -68,13 +71,13 @@ $FSxHostName = "management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com"
 $isprivatesubnet = $False
 $FSxCertificateificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-${FSxRegion}.pem"
 try {
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
-        $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
-        $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-    }
+    Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
+    $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
+    $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+}
 catch {
-        $isprivatesubnet = $True      
-    }
+    $isprivatesubnet = $True      
+}
 
 $Params = @{
     "URI"         = "https://management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com/api/cluster?fields=version"
@@ -84,17 +87,19 @@ $Params = @{
 }
 
 try {
-    if($isprivatesubnet -eq $False) {
+    if ($isprivatesubnet -eq $False) {
         Invoke-RestMethod @Params -Certificate $regionCertificateificate
-    }else {
+    }
+    else {
         Invoke-RestMethod @Params 
     }
-Write-Output @{ status= "Completed"; reason= "Done." } | ConvertTo-Json -Compress
-Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
-}catch{
+    Write-Output @{ status = "Completed"; reason = "Done." } | ConvertTo-Json -Compress
+    Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
+}
+catch {
     $Failed = $true
     $FailureReason = '"{0}"' -f "Unable to reach storage. 1. Check storage credentials are valid 2. Check if routing table allows connection from the subnet 3. Check if storage security group allows HTTPS(443) and iSCSI(3260) tcp ports.   Exception: $_"
-    Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+    Write-Output @{status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)

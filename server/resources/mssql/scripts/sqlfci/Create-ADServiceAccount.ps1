@@ -23,7 +23,8 @@ param(
         $DomainNetBIOSName = $env:USERDOMAIN
         $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
         $ServiceAccountFullUser = $DomainNetBIOSName + '\' + $ServiceAccountUser
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        . ..\common\InvokeRetryCommand.ps1
+        $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
         $DomainAdminSecurePassword = $SsmParameter.domain.password
         $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminSecurePassword -AsPlainText -Force)))
         $ServiceAccountPassword = $SsmParameter.sql[0].password

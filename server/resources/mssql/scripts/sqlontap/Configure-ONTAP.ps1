@@ -42,12 +42,12 @@ param(
 Start-Transcript -Path C:\cfn\log\configureontap.ps1.txt -Append
 
 $ErrorActionPreference = "Stop"
-
-$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+. ..\common\InvokeRetryCommand.ps1
+$SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
 $username = $SsmParameter.fsx.username
 $password = $SsmParameter.fsx.password
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
-$fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
+$fslist = Invoke-WithRetry -Command { Get-FSXFileSystem -FileSystemId $FileSystemId }
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token} -ErrorAction Stop -UseBasicParsing).Content

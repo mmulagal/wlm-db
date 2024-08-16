@@ -35,6 +35,7 @@ import createNewUserSlice from './workloadFactory/createNewDBSlice';
 import sandboxSlice from './workloadFactory/sandboxSlice';
 import exploreSavingsSlice from './workloadFactory/exploreSavingsSlice';
 import createSandboxSlice from './workloadFactory/createSandboxSlice';
+// import postgressSlice from './mssql/postgressSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -69,6 +70,7 @@ const rootReducer = combineReducers({
     [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,
     [createSandboxSlice.reducerPath]: createSandboxSlice.reducer,
     [exploreSavingsApi.reducerPath]: exploreSavingsApi.reducer
+    // [postgressSlice.name]: postgressSlice.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {

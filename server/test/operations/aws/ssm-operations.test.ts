@@ -3,7 +3,8 @@ import {
     executeSSMDocument,
     getFSxOntapRegionsList,
     ssmPutParameters,
-    getEc2SqlParameters
+    getEc2SqlParameters,
+    getGenericFSxOntapRegionsList
 } from '../../../src/operations/aws/ssm-operations';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
@@ -191,5 +192,10 @@ describe('executeSsmDocument', () => {
         const response2 = JSON.parse(getParameterResponse.Parameter.Value);
 
         expect(response1).toEqual(response2.sql);
+    });
+
+    it('Get generic Amazon FSx for NetApp ONTAP regions', async () => {
+        const response = await getGenericFSxOntapRegionsList();
+        expect(response).toBeDefined();
     });
 });

@@ -1,7 +1,7 @@
 // instances input instances = ['"computername\\instanceName"', '"DEFAULT_MSSQL_INSTANCE_NAME"']; "DEFAULT_MSSQL_INSTANCE_NAME" represents the default instance
 
 import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
-import { readSsmParameter, slqcmdExecutionTemplate, sqlQueryExecutionTemplate } from './ssm-script-utils';
+import { readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 // ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
 const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
@@ -224,21 +224,12 @@ const getVolumeIdFromPath = `
         }
 `;
 
-const dbSizeQuery = (databaseName: string) =>
-    `SET NOCOUNT ON;
-SELECT DISTINCT vs.volume_id as volumeid, mf.physical_name as filename, mf.type FROM sys.master_files AS mf
-join sys.databases db
-on db.database_id = mf.database_id
-CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
-where db.name = '${databaseName}'
-FOR JSON PATH;
-`;
-
 const getDbMappedOntapVolumes = (
     fsxid: string,
     fsxregion: string,
     dbName: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     logPrefix: string = '',
     sqlAuthEnabled: boolean = false
 ) => `
@@ -246,7 +237,7 @@ const getDbMappedOntapVolumes = (
     $FSxID = '${fsxid}'
     $FSxRegion = '${fsxregion}'
     $dbname = '${dbName}'
-    $instanceName = "${instanceName}"
+    $executableInstanceName = "${executableInstanceName}"
     $logPrefix = '${logPrefix}'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 
@@ -295,6 +286,7 @@ const getDbMappedOntapVolumes = (
                     "fileName" = $winvolume.filename
                     "lunSerialNumber" = $vol.serialnumber
                     "fileId" = $winvolume.fileid
+                    "fileType" = $winvolume.type
                 }
                 $type = 'data'
                 if ($winvolume.type -ne 0) {
@@ -406,9 +398,13 @@ const getDbMappedOntapVolumes = (
             }
             return $responseObject
         }
-       
-        ${sqlQueryExecutionTemplate(instanceName, dbSizeQuery(dbName), sqlAuthEnabled)}
-        #$responseObject =  sqlcmd -S $instanceName -Q $sqlquery -y 0;
+
+        $sqlCredential = @{'useSqlAuth' = $False}
+        if($sqlAuthEnabled) {
+            ${readSsmParameter(instanceName)}
+        }
+        $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "${executableInstanceName}" -ExtraArguments -y0
+
         Write-Information "$logPrefix SQL response: $queryResponse"
         if ([string]::IsNullOrEmpty($queryResponse)) {
             if ($queryResponse -eq $null) {
@@ -840,7 +836,7 @@ const createClonedDb = (
                 })
                 .join(',\n')}
 "@
-        $null
+        
         Call-SqlCmd -SqlCredential $sqlCredential -Query "$createQuery" -InstanceName "${executableInstanceName}" -ExtraArguments -y0
         Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET OFFLINE" -InstanceName "${executableInstanceName}" -y0 
         
@@ -2212,23 +2208,18 @@ try {
 }
 
 try {
-    $responseObject['dataPath'] = @()
-    $responseObject['logPath'] = @()
-
+    $responseObject['files'] = @()
     ($DataFilePath + $LogFilePath) | ForEach-Object {
         $path = $_
         $fileLeaf = Split-Path -Path $path -Leaf
-        $pathType = ''
         if ($path.Contains('\\data\\')) {
             $newFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $fileLeaf).FullName
-            $pathType = 'dataPath'
         } else {
             $newFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $fileLeaf).FullName
-            $pathType = 'logPath'
         }
 
         if (Test-Path $newFilePath) {
-            $responseObject[$pathType] += $newFilePath
+            $responseObject['files'] += $newFilePath
         } else {
             throw
         }
