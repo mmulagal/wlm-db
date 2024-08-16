@@ -31,7 +31,7 @@ const ManualTCOFields = () => {
         savingsCalculatorFrom
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedRegion } = useAppSelector(state => state.headers);
-    const { regionsData } = useAppSelector(state => state.headers.getRegions);
+    const { getManualRegionsList } = useAppSelector(state => state.exploreSavings);
 
     const [textSearch, setTextSearch] = useSearchDebounce(500);
 
@@ -49,14 +49,16 @@ const ManualTCOFields = () => {
     //Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        const sortedRegionsData = regionsSort(regionsData?.regions || []);
+        console.log(getManualRegionsList?.manualRegionsData);
+        //@ts-ignore
+        const sortedRegionsData = regionsSort(getManualRegionsList?.manualRegionsData?.regions || []);
         sortedRegionsData?.map((val, idx: number) => {
             const regionValue = val.regionCode + ' | ' + val.regionName;
             const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
         });
         return options;
-    }, [regionsData]);
+    }, [getManualRegionsList]);
 
     useEffect(() => {
         if (!selectedManualRegion) {
@@ -143,26 +145,6 @@ const ManualTCOFields = () => {
         }
     };
 
-    const setRegionDefaultValue = (list: any) => {
-        //@ts-ignore
-        const simplifiedRegions = generateRegionList.map(item => item?.data?.regionCode);
-
-        const foundRegion = simplifiedRegions.indexOf(headerSelectedRegion?.data?.regionCode);
-
-        return [list[foundRegion]];
-    };
-
-    const setManualRegionSelected = (list: any) => {
-        if (selectedManualRegion) {
-            if (selectedManualRegion?.data?.regionCode === headerSelectedRegion?.data?.regionCode) {
-                return selectedManualRegion;
-            } else {
-                return setRegionDefaultValue(list);
-            }
-        } else {
-            return setRegionDefaultValue(list);
-        }
-    };
     return (
         <div className={styles.manualTCOFields}>
             <DsTypography variant="Regular_14">
@@ -176,7 +158,7 @@ const ManualTCOFields = () => {
                     <SelectField
                         label={GENERAL.REGION}
                         isClearable={false}
-                        defaultValue={setManualRegionSelected(generateRegionList)}
+                        value={selectedManualRegion}
                         onChange={(selectedOptions: any): void => {
                             dispatch(setSelectedRegionFromManualTCO(selectedOptions));
                         }}
@@ -258,7 +240,7 @@ const ManualTCOFields = () => {
                     />
 
                     <TextField
-                        label={'Monthly SQL BYOL costs($)'}
+                        label={GENERAL.BYOL_TEXT}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setMachineDesc(numVal);

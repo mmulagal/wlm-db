@@ -19,12 +19,15 @@ Metadata:
           - RouteTable2Id
           - PrivateSubnet2Cidrblock
           - S3EndpointExists
+          - S3EndpointRouteTables
           - CloudformationEndpointExists
-          - SsmEndpointExists
           - SqsEndpointExists
+          - SsmEndpointExists
           - Ec2MessagesEndpointExists
           - SSMMessagesEndpointExists
-          - S3EndpointRouteTables
+          - FsxEndpointExists
+          - CloudwatchLogsEndpointExists
+          - Ec2EndpointExists
       - Label:
           default: Amazon EC2 Configuration
         Parameters:
@@ -135,7 +138,7 @@ Metadata:
       SqlCollation:
         default: SQL Server Collation
       IsCustomAmi:
-        default: Boolean to indicate if AMI includes SQL license or BYOL license
+        default: Is AMI with BYOL license?
       EBSVolumeSize:
         default: Size of the EBS Volume.
       VPCName:
@@ -177,13 +180,24 @@ Metadata:
       SQLDeploymentMode:
         default: SQL server deployment mode
       S3EndpointExists:
-        default: Boolean to check if an S3 endpoint exists in the vpc.
+        default: Does AWS S3 gateway endpoint exist in the VPC?
       CloudformationEndpointExists:
-        default: Boolean to check if a Cloudformation endpoint exists in the vpc.
+        default: Does AWS CloudFormation endpoint exist in the VPC?
       SsmEndpointExists:
-        default: Boolean to check if a SSM endpoint exists in the vpc.
+        default: Does AWS SSM endpoint exist in the VPC?
+      SSMMessagesEndpointExists:
+        default: Does AWS SSMMessages endpoint exist in the VPC?
+      Ec2MessagesEndpointExists:
+        default: Does AWS EC2Messages endpoint exist in the VPC?
       SqsEndpointExists:
-        default: Boolean to check if a SQS endpoint exists in the vpc.
+        default: Does AWS SQS endpoint exist in the VPC?
+      CloudwatchLogsEndpointExists:
+        default: Does AWS Cloudwatch Logs endpoint exist in the VPC?
+      FsxEndpointExists:
+        default: Does AWS FSx endpoint exist in the VPC?
+      Ec2EndpointExists:
+        default: Does AWS EC2 endpoint exist in the VPC?
+      
 Parameters: 
   UniqueID:
     Description: Automation execution unique ID.
@@ -491,10 +505,6 @@ Resources:
                   - ec2:CreateTags
                   - ec2:AuthorizeSecurityGroupIngress
                 Resource: '*'
-                Condition:
-                  StringLike:
-                    aws:ResourceTag/aws:cloudformation:stack-name:
-                      - WLMDB*
               - Sid: SSMGetPutParameter
                 Effect: Allow
                 Action:

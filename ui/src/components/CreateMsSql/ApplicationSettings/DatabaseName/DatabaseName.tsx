@@ -72,7 +72,7 @@ const DatabaseName = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="10"
-                title={<div className={CommonStyles.title}>{GENERAL.DATABASE_NAME}</div>}
+                title={<div className={CommonStyles.title}>{GENERAL.DATABASE_SERVER_NAME}</div>}
             >
                 <AccordionCardContent>
                     <Typography>

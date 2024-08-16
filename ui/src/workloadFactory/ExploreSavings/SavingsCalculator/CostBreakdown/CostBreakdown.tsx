@@ -2,18 +2,21 @@ import { DsTypography, DsFlashingDotsLoader, TooltipInfo } from '@netapp/design-
 import styles from './CostBreakdown.module.scss';
 import { Card, CardContent, CardTableContent } from '../../../../ui-components/Cards/Card';
 import { Text } from '../../../../ui-components/Typography';
-import { comparisonData } from '../savingsUtil';
+import { comparisonData, comparisonDataFsxw } from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
+import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 type CB = {
     disableState: boolean;
 };
 
 const CostBreakdown = ({ disableState = false }: CB) => {
-    const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom } = useAppSelector(
+        state => state.exploreSavings
+    );
 
     const [calculatedResponse, setCalculatedResponse] = useState({});
     const [loading, setLoading] = useState(false);
@@ -27,7 +30,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
         setLoading(storageSavingsLoading);
     }, [storageSavingsResponse, storageSavingsLoading]);
 
-    const ComparisonTableLayout = ({ data, calculatedResponse }: any) => {
+    const ComparisonTableLayout = ({ data, calculatedResponse, existingType }: any) => {
         const checkForComputeTooltip = data.isTooltip && data.type === 'Compute';
         return (
             <div
@@ -73,7 +76,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                     </GridItem>
                     <GridItem lg="4">
                         <Text style={{ paddingLeft: 10 }}>
-                            {!disableState && !loading && calculatedResponse && data?.ebs}
+                            {!disableState && !loading && calculatedResponse && data?.[existingType]}
                             {!disableState && loading && (
                                 <div style={{ position: 'relative', top: '5px' }}>
                                     <DsFlashingDotsLoader />
@@ -128,7 +131,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
                                     style={{
-                                        width: '121px',
+                                        width: '150px',
                                         fontWeight: '500',
                                         color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                     }}
@@ -149,20 +152,36 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
                                     style={{
-                                        width: '121px',
+                                        width: '150px',
                                         fontWeight: '500',
                                         color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                     }}
                                 >
                                     {' '}
-                                    {GENERAL.ES_MSSQL_EBS}
+                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                                        ? GENERAL.ES_MSSQL_EBS
+                                        : GENERAL.ES_MSSQL_FSXW}
                                 </Text>
                             </div>
                         </CardTableContent>
 
-                        {comparisonData(calculatedResponse).map((data: any, index: number) => (
-                            <ComparisonTableLayout key={index} data={data} calculatedResponse={calculatedResponse} />
-                        ))}
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+                            ? comparisonDataFsxw(calculatedResponse).map((data: any, index: number) => (
+                                  <ComparisonTableLayout
+                                      key={index}
+                                      data={data}
+                                      calculatedResponse={calculatedResponse}
+                                      existingType={'fsxw'}
+                                  />
+                              ))
+                            : comparisonData(calculatedResponse).map((data: any, index: number) => (
+                                  <ComparisonTableLayout
+                                      key={index}
+                                      data={data}
+                                      calculatedResponse={calculatedResponse}
+                                      existingType={'ebs'}
+                                  />
+                              ))}
                     </CardContent>
                 </Card>
             </div>

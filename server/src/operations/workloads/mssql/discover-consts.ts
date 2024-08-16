@@ -18,7 +18,8 @@ const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
   'C:\\SSM\\Configure-LUNs.ps1',
   'C:\\SSM\\Create-Database.ps1',
   'C:\\SSM\\Invoke-virtualmount.ps1',
-  'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1'
+  'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1',
+  'C:\\SSM\\Script-Version.txt'
 `;
 
 const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
@@ -349,12 +350,13 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['sqlServerState'] = $sqlService.State
       $responseObject['windowsOsVersion'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
       
+      $sqlNodes = $null
       if ($clusterDetails['isClustered']) {
         $responseObject['windowsClusterName'] = $clusterDetails['name']
         $responseObject['windowsClusterNodes'] = $clusterDetails['windowsClusterNodes']
+        $sqlNodes = (Get-ClusterResource -ErrorAction SilentlyContinue -Name "SQL Server" | ? { $_.OwnerGroup -eq "SQL Server ($instanceName)" } | Get-ClusterOwnerNode).OwnerNodes.Name
       }
-
-      $sqlNodes = (Get-ClusterResource -ErrorAction SilentlyContinue -Name "SQL Server" | ? { $_.OwnerGroup -eq "SQL Server ($instanceName)" } | Get-ClusterOwnerNode).OwnerNodes.Name
+        
       if ([string]::IsNullOrEmpty($sqlNodes)) {
         $responseObject['sqlServerNodes'] = hostname
         $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'

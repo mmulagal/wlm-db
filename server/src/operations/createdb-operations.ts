@@ -44,6 +44,7 @@ import { updateUserDBIntoInstanceTable, updateUserDBIntoResourceData } from './d
 import { resetCache } from '../utils/cache';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 import { updateResourceMetaData } from '../lib/database/db';
+import { checkScriptNeedsUpdate, copyScriptsToHost } from './resource-operations';
 
 const logger = getLogger();
 
@@ -686,7 +687,13 @@ async function invokeSSMForDatabaseDeployment(
 
             if (isDemoFlow) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
-                await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
+                await updateUserDBIntoResourceData(
+                    accountId,
+                    credentialsId,
+                    resourceId,
+                    databaseName,
+                    metaData as Metadata
+                );
                 if (instanceDetail) {
                     const { metadata: instanceMetadata, database_instance_id: instanceId } = instanceDetail!;
 
@@ -804,11 +811,17 @@ async function invokeSSMForDatabaseDeployment(
                 error: undefined
             });
 
-            await updateCreateDbMetrics(accountId, resourceId, metaData as Metadata);
+            await updateCreateDbMetrics(accountId, credentialsId, resourceId, metaData as Metadata);
 
             if (isDemoFlow) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
-                await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
+                await updateUserDBIntoResourceData(
+                    accountId,
+                    credentialsId,
+                    resourceId,
+                    databaseName,
+                    metaData as Metadata
+                );
 
                 if (instanceDetail) {
                     const { metadata: instanceMetadata, database_instance_id: instanceId } = instanceDetail!;
@@ -865,11 +878,11 @@ async function invokeSSMForDatabaseDeployment(
     }
 }
 
-async function updateCreateDbMetrics(accountId: string, resourceId: string, metaData: Metadata) {
+async function updateCreateDbMetrics(accountId: string, credentialsId: string, resourceId: string, metaData: Metadata) {
     logger.debug('Update create database metrics for resource', resourceId);
     metaData.createDbMetrics = metaData.createDbMetrics || { numberofUserDbsCreated: 0 };
     metaData.createDbMetrics.numberofUserDbsCreated += 1;
-    await updateResourceMetaData(accountId, resourceId, metaData);
+    await updateResourceMetaData(accountId, credentialsId, resourceId, metaData);
 }
 
 async function createDatabase(
@@ -1448,6 +1461,31 @@ async function validateParams(
                 'log'
             )
         ]);
+        try {
+            const scriptsNeedUpdate = await checkScriptNeedsUpdate(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId
+            );
+            if (scriptsNeedUpdate) {
+                logger.info('Scripts need to be updated:', activeNodeInstanceId);
+                const scriptUpdateResponse = await copyScriptsToHost(
+                    accountId,
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId
+                );
+                if (scriptUpdateResponse?.includes('failureInfo')) {
+                    const errorMessage = `Failed to update scripts at node '${activeNodeInstanceId}'. Reason: failed to copy database operation artifacts. Error: ${scriptUpdateResponse}`;
+                    logger.error(errorMessage);
+                    throw createError(errorMessage);
+                }
+                logger.info('Scripts are updated successfully:', activeNodeInstanceId);
+            }
+        } catch (error) {
+            logger.error(error);
+        }
         status = JOBSTATUS.COMPLETED;
     } catch (error: any) {
         const errorMsg = `Error while validating parameters in database ${databaseName} in host ${databaseHostId} in account ${accountId}.`;

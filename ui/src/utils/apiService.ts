@@ -6,6 +6,7 @@ import {
     FetchBaseQueryError,
     retry
 } from '@reduxjs/toolkit/query/react';
+//@ts-ignore
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import store, { RootState } from '../store/store';
 import { API_ERRORS, API_MAX_RETRIES, PRODUCTION, WLMDB_POLICIES_PROD_LINK, WLMDB_POLICIES_STAGE_LINK } from './consts';
@@ -172,6 +173,9 @@ export const awsApi = createApi({
             getRegions: builder.query({
                 query: ({ credentialId }) => ({ url: `v1/credentials/${credentialId}/fsx/regions` })
             }),
+            getRegionsWithoutCred: builder.query({
+                query: () => ({ url: `v1/fsx/regions` })
+            }),
             getVPCList: builder.query({
                 query: ({ credentialId, region, fields }) => ({
                     url: `v1/credentials/${credentialId}/regions/${region}/vpcs?fields=${fields}`
@@ -226,6 +230,11 @@ export const awsApi = createApi({
             getInstanceTypes: builder.query({
                 query: ({ credentialId, region }) => ({
                     url: `v1/credentials/${credentialId}/regions/${region}/instance-types`
+                })
+            }),
+            getInstanceTypesWithoutCred: builder.query({
+                query: ({ region }) => ({
+                    url: `v1/regions/${region}/instance-types`
                 })
             }),
             getFsxnList: builder.query({
@@ -958,6 +967,7 @@ export const exploreSavingsApi = createApi({
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
+    useLazyGetRegionsWithoutCredQuery,
     useGetThroughputRegionListQuery,
     useGetVPCListQuery,
     useGetSGListQuery,
@@ -969,6 +979,7 @@ export const {
     useGetKeyPairsQuery,
     useGetInstanceTypesQuery,
     useLazyGetInstanceTypesQuery,
+    useLazyGetInstanceTypesWithoutCredQuery,
     useGetFsxnListQuery,
     useCreateSqlTemplateMutation,
     useDeploySqlTemplateMutation,

@@ -143,6 +143,8 @@ export const API_ERRORS = {
     POWERSHELL_7: 'PowerShell 7 is required for managing the resource'
 };
 
+export const WLF_TO_PROTECT_NAVIGATE = '../add-working-environment/database-services/mssql/postgress';
+
 export const STATUS_CONST = {
     UP: 'Up',
     DOWN: 'Down',
@@ -563,4 +565,18 @@ export const FINDINGS = {
     INSUFFICIENT_DATA: 'INSUFFICIENT_DATA',
     UNDER_PROVISIONED: 'UNDER_PROVISIONED',
     INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS'
+};
+
+export const TCO_MANUAL_DEPLOYMENT_TYPE = {
+    SINGLE: 'Single availability zone',
+    MULTI: 'Multi availability zone'
+};
+
+export const BXP_MESSAGES = {
+    SERVICE_READY: 'SERVICE:READY',
+    SERVICE_NAVIGATE: 'SERVICE:NAVIGATE',
+    SERVICE_SHOW_WIZARD: 'SERVICE:OPEN-WIZARD',
+    SERVICE_HIDE_WIZARD: 'SERVICE:CLOSE-WIZARD',
+    SERVICE_CONNECTOR_CHANGE: 'SERVICE:CONNECTOR-CHANGE',
+    SERVICE_LOCATION_CHANGE: 'SERVICE:LOCATION-CHANGE'
 };

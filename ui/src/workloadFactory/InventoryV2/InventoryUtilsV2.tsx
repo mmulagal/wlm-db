@@ -337,7 +337,8 @@ export const getPrimaryClusterNode = (
                         perHost.nodesList.includes(val)
                     );
                 });
-                if (isSameCluster && isSameCluster.length > 0) {
+                // checking same vpc or not
+                if (isSameCluster && isSameCluster.length > 0 && perHost?.vpc?.id === host?.vpc?.id) {
                     return perHost;
                 } else {
                     return;
@@ -955,6 +956,7 @@ export const updateInventoryDatawithInstancesRes = (
             hasInstanceData: true,
             estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
             totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
+            sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
             serverInstallationMode: !inventoryRow?.serverInstallationMode
                 ? getInstallationMode(instanceRow?.data)
                 : inventoryRow?.serverInstallationMode,
@@ -967,7 +969,7 @@ export const updateInventoryDatawithInstancesRes = (
                 allocatedCapacity: allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
             };
-        };
+        }
     } else if (!instanceRow?.isManagedHost) {
         let partnerInstanceId = '';
         let partnerInstanceData: any = null;
@@ -1000,6 +1002,7 @@ export const updateInventoryDatawithInstancesRes = (
                 allocatedCapacity: allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 hasInstanceData: true,
+                sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
                 sqlServerInstances: updateSqlServerInstancesForBothNodes(
                     instanceRow?.data,
                     partnerInstanceData?.data,
@@ -1023,6 +1026,7 @@ export const updateInventoryDatawithInstancesRes = (
                 allocatedCapacity: allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 hasInstanceData: false,
+                sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
                 sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow),
                 //For explore savings
                 ebsResourceInfo: instanceRow?.data?.ebsResourceInfo,
@@ -1383,7 +1387,7 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
         if (removeSecNodeDiscoveredList.includes(key)) {
             return;
         }
-        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && !item?.actionDisable) {
+        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
             nonFsxnStorageList.push(item);
         }
     });

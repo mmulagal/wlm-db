@@ -14,7 +14,7 @@ import MssqlApis from '../MSSqlServer/MssqlApis';
 
 const MainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
-    const showChatbot = useAppSelector(state => state.auth?.isWorkloadFactory);
+    const showChatbot = true;
     const [selectedTab, setSelectedTab] = useState<'wizard' | 'chatbot'>('wizard');
 
     MssqlApis();
