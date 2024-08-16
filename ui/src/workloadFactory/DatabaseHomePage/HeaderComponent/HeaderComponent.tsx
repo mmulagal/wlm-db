@@ -116,10 +116,17 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            window.parent.postMessage(
-                { type: 'SERVICE:NAVIGATE', payload: { pathname: './marketing', replace: true } },
-                '*'
-            );
+            if (!isWorkloadFactory) {
+                window.parent.postMessage(
+                    { type: 'SERVICE:NAVIGATE', payload: { pathname: './fsxdb/marketing', replace: true } },
+                    '*'
+                );
+            } else {
+                window.parent.postMessage(
+                    { type: 'SERVICE:NAVIGATE', payload: { pathname: './marketing', replace: true } },
+                    '*'
+                );
+            }
         } else {
             setStatusChk(false);
         }

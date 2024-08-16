@@ -69,7 +69,7 @@ const ExploreSavingsTableV2 = () => {
                 ) {
                     return (
                         <TooltipComponent title={GENERAL.COMING_SOON} placement="bottom" width="110px" height="32px">
-                            <div className={styles.detectManageDisable}>
+                            <div className={styles.detectManageDisable} id="explore-savings-table-button">
                                 <Typography variant="Regular_14" className={styles.textStyle}>
                                     {GENERAL.ES_SAVINGS}
                                 </Typography>
@@ -83,6 +83,7 @@ const ExploreSavingsTableV2 = () => {
                             onClick={() => {
                                 onClickESHost(dispatch, rowData);
                             }}
+                            id="explore-savings-table-button"
                         >
                             <Typography variant="Regular_14" className={styles.textStyle}>
                                 {GENERAL.ES_SAVINGS}
