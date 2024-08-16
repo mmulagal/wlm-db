@@ -282,6 +282,7 @@ const getDbMappedOntapVolumes = (
                     "fileName" = $winvolume.filename
                     "lunSerialNumber" = $vol.serialnumber
                     "fileId" = $winvolume.fileid
+                    "fileType" = $winvolume.type
                 }
                 $type = 'data'
                 if ($winvolume.type -ne 0) {
@@ -2087,23 +2088,18 @@ try {
 }
 
 try {
-    $responseObject['dataPath'] = @()
-    $responseObject['logPath'] = @()
-
+    $responseObject['files'] = @()
     ($DataFilePath + $LogFilePath) | ForEach-Object {
         $path = $_
         $fileLeaf = Split-Path -Path $path -Leaf
-        $pathType = ''
         if ($path.Contains('\\data\\')) {
             $newFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $fileLeaf).FullName
-            $pathType = 'dataPath'
         } else {
             $newFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $fileLeaf).FullName
-            $pathType = 'logPath'
         }
 
         if (Test-Path $newFilePath) {
-            $responseObject[$pathType] += $newFilePath
+            $responseObject['files'] += $newFilePath
         } else {
             throw
         }
