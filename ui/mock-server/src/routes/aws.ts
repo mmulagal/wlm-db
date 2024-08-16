@@ -34,6 +34,12 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/fsx/regions`, async (req: 
     generateResponse(res, 200, retData);
 });
 
+//Get regions mock response
+router.get(`${BASE_URL}/v1/fsx/regions`, async (req: {}, res: RegionRes) => {
+    const retData = regionsData;
+    generateResponse(res, 200, retData);
+});
+
 // Get VPC mock response
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/vpcs`, async (req: {}, res: VpcRes) => {
     const retData = vpcsData;
@@ -59,7 +65,7 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/amis`, asy
     const retData = amisData;
     setTimeout(() => {
         generateResponse(res, 200, retData);
-    }, 2000);  
+    }, 2000);
 });
 
 // Get SNS mock response
@@ -92,6 +98,12 @@ router.get(
     }
 );
 
+// Get Instance Type without cred mock response
+router.get(`${BASE_URL}/v1/regions/:region/instance-types`, async (req: {}, res: InstanceTypeRes) => {
+    const retData = instanceTypeData;
+    generateResponse(res, 200, retData);
+});
+
 // Get FSxN mock response
 router.get(
     `${BASE_URL}/v1/credentials/:credentialsId/fsx/regions/:region/vpcs/:vpcId/file-systems`,
@@ -112,15 +124,14 @@ router.post(`${BASE_URL}/v1/pricing`, async (req: {}, res: any) => {
     const retData = pricingData;
     setTimeout(() => {
         generateResponse(res, 200, retData);
-    }, 5000); 
-    
+    }, 5000);
 });
 
 // Get collation list for MSSQL
 router.get(`${BASE_URL}/v1/collations`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, collationList);
-    }, 2000);  
+    }, 2000);
 });
 
 export default router;

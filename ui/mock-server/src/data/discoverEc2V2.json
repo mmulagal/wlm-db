@@ -405,8 +405,8 @@
             "ec2InstanceName": "sqlnode2-85618",
             "ec2UsageOperation": "RunInstances:0006",
             "vpc": {
-                "id": "vpc-046f7e26255458373",
-                "name": "kanika-vpc",
+                "id": "vpc-046f7e262554583731",
+                "name": "kanika-vpc1",
                 "cidrBlock": "10.0.0.0/16"
             },
             "sqlServerInstances": [

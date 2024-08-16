@@ -23,6 +23,7 @@ import FsxwSazCalculation from './FSxWCalculation/FsxwSazCalculation/FsxwSazCalc
 import ClonesFsxwCalculation from './FSxWCalculation/ClonesFsxwCalculation/ClonesFsxwCalculation';
 import TotalMonthlyCostFsxwCalculation from './FSxWCalculation/TotalMonthlyCostFsxwCalculation/TotalMonthlyCostFsxwCalculation';
 import ShadowCopyFsxwCalculation from './FSxWCalculation/ShadowCopyFsxwCalculation/ShadowCopyFsxwCalculation';
+import FsxwMazCalculation from './FSxWCalculation/FsxwMazCalculation/FsxwMazCalculation';
 
 const ViewCalculations = () => {
     const dispatch = useDispatch();
@@ -109,7 +110,11 @@ const ViewCalculations = () => {
                                     {GENERAL.MS_FSXW_CALCULATION}
                                 </DsTypography>
                                 <InstancesFsxwCalculation />
-                                <FsxwSazCalculation />
+                                {viewCalculationsResponse?.azType === FSX_AZ_TYPE.SINGLE ? (
+                                    <FsxwSazCalculation />
+                                ) : (
+                                    <FsxwMazCalculation />
+                                )}
                                 <ShadowCopyFsxwCalculation />
                                 <ClonesFsxwCalculation />
                                 <TotalMonthlyCostFsxwCalculation />

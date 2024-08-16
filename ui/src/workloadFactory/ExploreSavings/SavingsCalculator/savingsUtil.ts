@@ -115,6 +115,98 @@ export const comparisonData = (calculatedResponse: any) => {
     ];
 };
 
+export const comparisonDataFsxw = (calculatedResponse: any) => {
+    const state = store.getState();
+    const { recommendedTargetInstance } = state.exploreSavings;
+    return [
+        {
+            type: 'Capacity',
+            fsx: calculatedResponse?.fsx?.capacity
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.fsxw?.capacity
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.capacity, 2)).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'IOPS',
+            fsx: calculatedResponse?.fsx?.iops
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.fsxw?.iops
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.iops, 2)).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'Throughput',
+            fsx: calculatedResponse?.fsx?.throughput
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.fsxw?.throughput
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.throughput, 2)).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'Snapshots',
+            fsx: calculatedResponse?.fsx?.snapshots
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.fsxw?.snapshots
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.snapshots, 2)).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'Clones',
+            fsx: calculatedResponse?.fsx?.clones
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.clones, 2)).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.fsxw?.clones
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.clones, 2)).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'Compute',
+            isTooltip: recommendedTargetInstance ? GENERAL.COMPUTE_RECOMMENDED_TOOLTIP : '',
+            fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)
+                  ).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.compute?.existing?.computeMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)
+                  ).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'SQL license',
+            isTooltip:
+                'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
+            fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)
+                  ).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.license?.existing?.licenseMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)
+                  ).toLocaleString()}`
+                : '$0'
+        },
+        {
+            type: 'Total summary',
+            fsx: calculatedResponse?.totalSummary?.recommendedTotal
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.totalSummary?.recommendedTotal, 2)
+                  ).toLocaleString()}`
+                : '$0',
+            fsxw: calculatedResponse?.totalSummary?.existing
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.totalSummary?.existing, 2)).toLocaleString()}`
+                : '$0'
+        }
+    ];
+};
+
 export const calculatedFSXData = (fsxData: any, storageType: string) => {
     return [
         {
@@ -1129,17 +1221,17 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
                       },
                       {
                           label: 'Instance type',
-                          value: `m5.xlarge`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.instanceType}`,
                           text: ''
                       },
                       {
                           label: 'SQL edition',
-                          value: `Standard Edition`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.sqlEdition}`,
                           text: ''
                       },
                       {
                           label: 'SQL license included',
-                          value: `Yes`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.sqlLicense}`,
                           text: ''
                       },
                       {
@@ -1147,30 +1239,30 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$0.856`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.computeHourlyPrice}`,
                           text: 'Instance hourly pricing with SQL license included'
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `$274.48`,
-                          text: `Instance hourly price x number of hours in a month = $0.856 x 730`
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.computeMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxwInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.fsxwInstanceCalculation?.[0]?.hoursInAMonth}`
                       },
                       {
                           label: 'Machine 2 specification'
                       },
                       {
                           label: 'Instance type',
-                          value: `m5.xlarge`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[1]?.instanceType}`,
                           text: ''
                       },
                       {
                           label: 'SQL edition',
-                          value: `Standard Edition`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[1]?.sqlEdition}`,
                           text: ''
                       },
                       {
                           label: 'SQL license included',
-                          value: `Yes`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[1]?.sqlLicense}`,
                           text: ''
                       },
                       {
@@ -1178,17 +1270,17 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$0.856`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[1]?.computeHourlyPrice}`,
                           text: 'Instance hourly pricing with SQL license included'
                       },
                       {
                           label: 'EC2 machine2 cost',
-                          value: `$274.48`,
-                          text: `Instance hourly price x number of hours in a month = $0.856 x 730`
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[1]?.computeMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxwInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.fsxwInstanceCalculation?.[1]?.hoursInAMonth}`
                       },
                       {
                           label: 'Total EC2 machines cost',
-                          value: `$548.80`,
+                          value: `$${viewCalculation.totalFsxwEc2MachineCost}`,
                           text: ''
                       }
                   ]
@@ -1198,17 +1290,17 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
                       },
                       {
                           label: 'Instance type',
-                          value: `m5.xlarge`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.instanceType}`,
                           text: ''
                       },
                       {
                           label: 'SQL edition',
-                          value: `Standard Edition`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.sqlEdition}`,
                           text: ''
                       },
                       {
                           label: 'SQL license included',
-                          value: `Yes`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.sqlLicense}`,
                           text: ''
                       },
                       {
@@ -1216,13 +1308,13 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$0.856`,
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.computeHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine total cost',
-                          value: `$274.48`,
-                          text: `Instance hourly price x number of hours in a month = $0.856 x 730`
+                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.computeMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxwInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.fsxwInstanceCalculation?.[0]?.hoursInAMonth}`
                       }
                   ],
         FSxWCalculation: [
@@ -1231,12 +1323,12 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             },
             {
                 label: 'Desired storage capacity',
-                value: `5,120 GiB`,
-                text: `Desired storage capacity x 1,024 =  5 TiB x 1,024`
+                value: `${viewCalculation.fsxwCalculation.desiredStorageCapacity}`,
+                text: ``
             },
             {
                 label: 'Deduplication savings',
-                value: `0%`,
+                value: `${viewCalculation.fsxwCalculation.deduplicationSavings}%`,
                 text: ''
             },
             {
@@ -1244,78 +1336,78 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             },
             {
                 label: 'Storage savings',
-                value: `0 GiB`,
-                text: `Desired storage capacity x Deduplication savings = 5,120 GiB x 0%`
+                value: `${viewCalculation.fsxwCalculation.storageSavings}`,
+                text: `Desired storage capacity x Deduplication savings = ${viewCalculation.fsxwCalculation.desiredStorageCapacity} x ${viewCalculation.fsxwCalculation.deduplicationSavings}%`
             },
             {
                 label: 'Effective provisioned storage capacity',
-                value: `5,120 GiB`,
-                text: `Desired storage capacity - Storage savings =  5,120 GiB - 0 GiB`
+                value: `${viewCalculation.fsxwCalculation.provisionedStorageCapacity}`,
+                text: `Desired storage capacity - Storage savings =  ${viewCalculation.fsxwCalculation.desiredStorageCapacity} - ${viewCalculation.fsxwCalculation.storageSavings}`
             },
             {
                 label: 'Monthly cost for storage capacity',
-                value: `$665.60`,
-                text: `Effective provisioned storage capacity for FSx for Windows File Server x FSx for Windows File Server SSD Price = 5,120 GiB x $0.13`
+                value: `$${viewCalculation.fsxwCalculation.monthlyCostForStorageCapacity}`,
+                text: `Effective provisioned storage capacity for FSx for Windows File Server x FSx for Windows File Server SSD Price = ${viewCalculation.fsxwCalculation.provisionedStorageCapacity} x $${viewCalculation.fsxwCalculation.fsxwSsdPrice}`
             },
             {
                 label: 'Total default provisioned IOPS',
-                value: `15,360 IOPS`,
+                value: `${viewCalculation.fsxwCalculation.totalDefaultProvisionedIops} IOPS`,
                 text: ``
             },
             {
                 label: 'Additional user-provisioned IOPS',
-                value: `9,360 IOPS`,
+                value: `${viewCalculation.fsxwCalculation.additionalUserProvisionedIops} IOPS`,
                 text: ``
             },
             {
                 label: 'Billed IOPS',
-                value: `0 IOPS`,
+                value: `${viewCalculation.fsxwCalculation.billedIops} IOPS`,
                 text: ''
             },
             {
                 label: 'Total monthly cost for provisioned SSD IOPS',
-                value: `$0`,
-                text: `Billed x FSx for Windows File Server IOPS price = 0 IOPS x $0.01`
+                value: `$${viewCalculation.fsxwCalculation.totalMonthlyCostForProvisionedSsdIops}`,
+                text: `Billed x FSx for Windows File Server IOPS price = ${viewCalculation.fsxwCalculation.billedIops} IOPS x $${viewCalculation.fsxwCalculation.fsxwIopsPrice}`
             },
             {
                 label: 'Number of file systems required for storage capacity',
-                value: `0.08 file system(s)`,
-                text: `Effective provisioned storage capacity for FSx for Windows File Server  ÷ FSx for Windows File Server maximum capacity  = 5,120 GiB ÷ 65,536 GiB`
+                value: `${viewCalculation.fsxwCalculation.numberOfFileSystemsRequiredForStorageCapacity} file system(s)`,
+                text: `Effective provisioned storage capacity for FSx for Windows File Server  ÷ FSx for Windows File Server maximum capacity  = ${viewCalculation.fsxwCalculation.provisionedStorageCapacity} ÷ ${viewCalculation.fsxwCalculation.fsxwMaxCapacity}`
             },
             {
                 label: 'Number of file systems required for throughput capacity',
-                value: `0 file system(s)`,
-                text: `FSx for Windows File Server throughput ÷ FSx for Windows File Server max throughput = 32 MB/s ÷ 12,288 MB/s`
+                value: `${viewCalculation.fsxwCalculation.numberOfFileSystemsRequiredForThroughputCapacity} file system(s)`,
+                text: `FSx for Windows File Server throughput ÷ FSx for Windows File Server max throughput = ${viewCalculation.fsxwCalculation.throughput} MB/s ÷ ${viewCalculation.fsxwCalculation.fsxwMaxThroughput} MB/s`
             },
             {
                 label: 'Required fractional number of file systems',
-                value: `0.08 file system(s)`,
+                value: `${viewCalculation.fsxwCalculation.requiredFractionalFileSystems} file system(s)`,
                 text: ``
             },
             {
                 label: 'Required whole number of file systems',
-                value: `1 file system(s)`,
+                value: `${viewCalculation.fsxwCalculation.requiredFileSystems} file system(s)`,
                 text: ` `
             },
             {
                 label: 'Minimum throughput capacity required',
-                value: `8 MB/s`,
-                text: `Calculating the minimum throughput capacity needed to provision file systems x FSx for Windows File Server minimum throughput = 1 file systems x 8 MB/s`
+                value: `${viewCalculation.fsxwCalculation.minThroughputCapacityRequired} MB/s`,
+                text: `Calculating the minimum throughput capacity needed to provision file systems x FSx for Windows File Server minimum throughput = ${viewCalculation.fsxwCalculation.requiredFileSystems} file systems x ${viewCalculation.fsxwCalculation.fsxwMinThroughput} MB/s`
             },
             {
                 label: 'Provisioned throughput capacity',
-                value: `32 MB/s`,
+                value: `${viewCalculation.fsxwCalculation.provisionedThroughputCapacity} MB/s`,
                 text: `Calculated as the greater of desired aggregate throughput and the minimum throughput capacity required`
             },
             {
                 label: 'Total monthly cost for throughput capacity',
-                value: `$70.40`,
-                text: `Provisioned throughput capacity, calculated as the greater of desired aggregate throughput and the minimum throughput capacity required x FSx for Windows File Server throughput price = 32 MB/s x $2.2`
+                value: `$${viewCalculation.fsxwCalculation.totalMonthlyCostForThroughputCapacity}`,
+                text: `Provisioned throughput capacity, calculated as the greater of desired aggregate throughput and the minimum throughput capacity required x FSx for Windows File Server throughput price = ${viewCalculation.fsxwCalculation.provisionedThroughputCapacity} MB/s x $${viewCalculation.fsxwCalculation.fsxwThroughputPrice}`
             },
             {
-                label: `Single Availability Zone total monthly cost`,
-                value: `$736`,
-                text: `Total monthly cost for FSx for Windows File Server storage capacity  + Total monthly cost for FSx for Windows File Server Provisioned SSD IOPS + Total monthly cost for FSx for Windows File Server throughput capacity = $665.6 + $0 + $70.4`
+                label: `${viewCalculation.type} Availability Zone total monthly cost`,
+                value: `$${viewCalculation.fsxwCalculation.totalMonthlyCost}`,
+                text: `Total monthly cost for FSx for Windows File Server storage capacity  + Total monthly cost for FSx for Windows File Server Provisioned SSD IOPS + Total monthly cost for FSx for Windows File Server throughput capacity = $${viewCalculation.fsxwCalculation.monthlyCostForStorageCapacity} + $${viewCalculation.fsxwCalculation.totalMonthlyCostForProvisionedSsdIops} + $${viewCalculation.fsxwCalculation.totalMonthlyCostForThroughputCapacity}`
             }
         ],
         ShadowCopyCalculation: [
@@ -1324,12 +1416,12 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             },
             {
                 label: 'Desired shadow copy storage capacity',
-                value: `1,536 GiB`,
+                value: `${viewCalculation.fsxwSnapshotCalculation.desiredSnapshotStorageCapacity}`,
                 text: ``
             },
             {
                 label: 'Deduplication savings',
-                value: `0%`,
+                value: `${viewCalculation.fsxwCalculation.deduplicationSavings}%`,
                 text: ``
             },
             {
@@ -1337,82 +1429,82 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             },
             {
                 label: 'Storage saving',
-                value: `0 GiB`,
-                text: `Desired shadow copy storage capacity x Deduplication savings = 1,536 GiB x 0%`
+                value: `${viewCalculation.fsxwSnapshotCalculation.storageSavingSnapshot}`,
+                text: `Desired shadow copy storage capacity x Deduplication savings = ${viewCalculation.fsxwSnapshotCalculation.desiredSnapshotStorageCapacity} x ${viewCalculation.fsxwCalculation.deduplicationSavings}%`
             },
             {
                 label: 'Effective provisioned storage capacity for FSx for Windows File Server',
-                value: `1,536 GiB`,
-                text: `Desired shadow copy storage capacity - Storage saving = 1,536 GiB - 0 GiB`
+                value: `${viewCalculation.fsxwSnapshotCalculation.provisionedStorageCapacityForFsxwSnapshot}`,
+                text: `Desired shadow copy storage capacity - Storage saving = ${viewCalculation.fsxwSnapshotCalculation.desiredSnapshotStorageCapacity} - ${viewCalculation.fsxwSnapshotCalculation.storageSavingSnapshot}`
             },
             {
                 label: 'Shadow copies total monthly cost',
-                value: `$199.68`,
-                text: `Effective provisioned storage capacity for FSx for Windows File Server  x FSx for Windows File Server SSD price = 1,536 GiB x $0.13`
+                value: `$${viewCalculation.fsxwSnapshotCalculation.totalMonthlyCostForFsxwSnapshotStorageCapacity}`,
+                text: `Effective provisioned storage capacity for FSx for Windows File Server  x FSx for Windows File Server SSD price = ${viewCalculation.fsxwSnapshotCalculation.provisionedStorageCapacityForFsxwSnapshot} x $${viewCalculation.fsxwCalculation.fsxwSsdPrice}`
             }
         ],
         cloneCalculation: [
             {
                 label: 'Number of Cloned copies',
-                value: `1`,
+                value: `${viewCalculation.fsxwCloneCalculation.clonedCopiesCount}`,
                 text: ``
             },
             {
-                label: 'FSxW storage cost for clone',
-                value: `$4.4`,
-                text: `FSxW storage cost of primary dbs volumes not including replica dbs volumes`
+                label: 'FSx for windows storage cost for clone',
+                value: `$${viewCalculation.fsxwCloneCalculation.capacity}`,
+                text: `FSx for windows storage cost of primary dbs volumes not including replica dbs volumes`
             },
             {
-                label: 'FSxW iops cost for clone',
-                value: `$0`,
-                text: `FSxW iops cost of primary dbs volumes not including replica dbs volumes`
+                label: 'FSx for windows iops cost for clone',
+                value: `$${viewCalculation.fsxwCloneCalculation.iops}`,
+                text: `FSx for windows iops cost of primary dbs volumes not including replica dbs volumes`
             },
             {
-                label: 'FSxW throughput cost for clone',
-                value: `$0`,
-                text: `FSxW throughput cost of primary dbs volumes not including replica dbs volumes`
+                label: 'FSx for windows throughput cost for clone',
+                value: `$${viewCalculation.fsxwCloneCalculation.throughput}`,
+                text: `FSx for windows throughput cost of primary dbs volumes not including replica dbs volumes`
             },
             {
                 label: 'Clones total monthly cost',
-                value: `$4.4`,
-                text: `Number of Cloned copies (1) x (primary FSxW storage cost ($4.4) + primary FSxW iops cost ($0) + primary FSxW throughput cost ($0))`
+                value: `$${viewCalculation.fsxwCloneCalculation.totalCloneMonthlyCost}`,
+                text: `Number of Cloned copies (${viewCalculation.fsxwCloneCalculation.clonedCopiesCount}) x (primary FSx for windows storage cost ($${viewCalculation.fsxwCloneCalculation.capacity}) + primary FSx for windows iops cost ($${viewCalculation.fsxwCloneCalculation.iops}) + primary FSx for windows throughput cost ($${viewCalculation.fsxwCloneCalculation.throughput}))`
             }
         ],
         totalMonthlyCost: [
             {
                 label: 'Total monthly EC2 machine cost',
-                value: `$274.48`,
+                value: `$${viewCalculation.totalFsxwEc2MachineCost}`,
                 text: ``
             },
             {
                 label: 'Total monthly storage cost',
-                value: `$4.4`,
-                text: `Total storage cost across all volume disc types`
+                value: `$${viewCalculation.fsxwCalculation.monthlyCostForStorageCapacity}`,
+                text: ``
             },
             {
-                label: 'Total monthly iops cost',
-                value: `$0`,
-                text: `Total iops cost across all volume disc types`
+                label: 'Total monthly IOPS cost',
+                value: `$${viewCalculation.fsxwCalculation.totalMonthlyCostForProvisionedSsdIops}`,
+                text: ``
             },
             {
                 label: 'Total monthly throughput cost',
-                value: `$0`,
-                text: `Total throughput cost across all volume disc types`
+                value: `$${viewCalculation.fsxwCalculation.totalMonthlyCostForThroughputCapacity}`,
+                text: ``
             },
             {
-                label: 'Total monthly snapshots cost',
-                value: `$1.144`,
-                text: ''
+                label: 'Total monthly shadow cost',
+                value: `$${viewCalculation.fsxwSnapshotCalculation.totalMonthlyCostForFsxwSnapshotStorageCapacity}`,
+                text: ``
             },
             {
                 label: 'Total monthly clones cost',
-                value: `$4.4`,
+                value: `$${viewCalculation.fsxwCloneCalculation.totalCloneMonthlyCost}`,
                 text: ''
             },
             {
                 label: 'Total monthly cost',
-                value: `$285.57`,
-                text: `Total EC2 cost ($274.48) + Total storage cost ($4.4) + Total throughput cost ($0) + Total IOPS cost ($0) + Total snapshots cost ($1.144) + Total Clone cost ($4.4)`
+                value: `$${viewCalculation.fsxwTotalCost}`,
+                text: `Total EC2 cost ($${viewCalculation.totalFsxwEc2MachineCost}) + Total storage cost ($${viewCalculation.fsxwCalculation.monthlyCostForStorageCapacity}) + Total IOPS cost ($${viewCalculation.fsxwCalculation.totalMonthlyCostForProvisionedSsdIops}) + Total throughput cost ($${viewCalculation.fsxwCalculation.totalMonthlyCostForThroughputCapacity}) + Total shadow cost ($${viewCalculation.fsxwSnapshotCalculation.totalMonthlyCostForFsxwSnapshotStorageCapacity}) + Total clones cost ($${viewCalculation.fsxwCloneCalculation.totalCloneMonthlyCost})`
             }
         ]
     };

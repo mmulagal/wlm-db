@@ -23,7 +23,11 @@ const FsxwSazCalculation = () => {
                 </DsTypography>
             );
         }
-        return <DsTypography variant="Regular_14">${viewCalculationsResponse?.totalAzCost}</DsTypography>;
+        return (
+            <DsTypography variant="Regular_14">
+                ${viewCalculationsResponse?.fsxwCalculation?.totalMonthlyCost || 0}
+            </DsTypography>
+        );
     };
 
     return (

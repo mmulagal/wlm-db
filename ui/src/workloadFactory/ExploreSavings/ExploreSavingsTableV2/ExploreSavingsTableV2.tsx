@@ -69,7 +69,7 @@ const ExploreSavingsTableV2 = () => {
                 ) {
                     return (
                         <TooltipComponent title={GENERAL.COMING_SOON} placement="bottom" width="110px" height="32px">
-                            <div className={styles.detectManageDisable}>
+                            <div className={styles.detectManageDisable} id="explore-savings-table-button">
                                 <Typography variant="Regular_14" className={styles.textStyle}>
                                     {GENERAL.ES_SAVINGS}
                                 </Typography>
@@ -83,6 +83,7 @@ const ExploreSavingsTableV2 = () => {
                             onClick={() => {
                                 onClickESHost(dispatch, rowData);
                             }}
+                            id="explore-savings-table-button"
                         >
                             <Typography variant="Regular_14" className={styles.textStyle}>
                                 {GENERAL.ES_SAVINGS}
@@ -107,22 +108,6 @@ const ExploreSavingsTableV2 = () => {
                 return (
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
-                        <div className={styles.firstColText}>
-                            {rowData?.status === INVENTORY_STATUS.ONLINE && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
-                            )}
-                            {rowData?.status === INVENTORY_STATUS.OFFLINE && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
-                            )}
-                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
-                            )}
-                            <Typography variant="Regular_13">
-                                {rowData?.status}
-                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && 'Unknown'}
-                            </Typography>
-                        </div>
                     </div>
                 );
             }

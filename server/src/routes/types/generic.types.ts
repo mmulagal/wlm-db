@@ -10,6 +10,11 @@ const AccountIdParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
 });
 
+const AccountIdRegionParams = Type.Object({
+    accountId: Type.String({ description: 'Workload Factory account ID.', minLength: 1 }),
+    region: Type.String({ description: 'AWS region hosting EC2 instances', minLength: 1 })
+});
+
 const AccountIdCredentialsIdParams = Type.Object({
     accountId: Type.String({ description: 'Workload Factory account ID.', minLength: 1 }),
     credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1 })
@@ -31,6 +36,7 @@ export {
     GenericHeaders,
     GenericHeadersType,
     AccountIdParams,
+    AccountIdRegionParams,
     AccountIdCredentialsIdParams,
     AccountIdParamsType,
     CredentialsIdParams,

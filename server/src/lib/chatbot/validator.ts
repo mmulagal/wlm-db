@@ -423,7 +423,7 @@ function validateAdScenarioType(type: string, key: string) {
 
 async function validateInstanceType(credentialsId: string, region: string, workloadInstanceType: string, key: string) {
     logger.debug('Validate Instance Type', { credentialsId, region, workloadInstanceType });
-    const { instanceTypes } = await getInstanceTypes(credentialsId, region);
+    const { instanceTypes } = await getInstanceTypes(region, credentialsId);
 
     const errorObj = {
         key,

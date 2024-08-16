@@ -26,7 +26,8 @@ import {
     REGIONS_CODE_LIST,
     SQL_DATABASE,
     SQL_DEPLOYMENT_MODE,
-    STATUS_CONST
+    STATUS_CONST,
+    WLF_TABS
 } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
@@ -1575,4 +1576,21 @@ export const isSmbProtocol = (protocolList: Array<string> | undefined) => {
 
 export const isClusteredWithSelectedInstance = (val: any) => {
     return 'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
+};
+
+export const setTabInfoFOrBXP = (tab: string) => {
+    switch (tab) {
+        case '/fsxdb/dashboard':
+            return WLF_TABS.DASHBOARD;
+        case '/fsxdb/inventory':
+            return WLF_TABS.INVENTORY;
+        case '/fsxdb/sandbox':
+            return WLF_TABS.SANDBOXES;
+        case '/fsxdb/exploreSaving':
+            return WLF_TABS.EXPLORE_SAVINGS;
+        case '/fsxdb/jobMonitoring':
+            return WLF_TABS.JOB_MONITORING;
+        default:
+            return WLF_TABS.DASHBOARD;
+    }
 };

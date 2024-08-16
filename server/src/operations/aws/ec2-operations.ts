@@ -385,10 +385,10 @@ async function getAmiList(
     return { amis: response };
 }
 
-async function getInstanceTypes(credentialsId: string, region: string) {
-    logger.info('List Ec2 Instance Types in region', { credentialsId, region });
+async function getInstanceTypes(region: string, credentialsId?: string) {
+    logger.info('List Ec2 Instance Types in region', { region, credentialsId });
 
-    const response = await describeInstanceTypes(credentialsId, region);
+    const response = await describeInstanceTypes(region, credentialsId);
     /*
         SDK returns all the instance types which cannot be used to create the instance for SQL deployment.
         Still trying to figure out on what basis the instances are listed in fro creation. As temp solution
