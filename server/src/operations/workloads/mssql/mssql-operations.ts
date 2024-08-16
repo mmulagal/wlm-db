@@ -40,7 +40,8 @@ import {
     DEFAULT_MSSQL_INSTANCE_NAME,
     SQL_SERVICE_STATE,
     SSM_PARAM_PREFIX,
-    AWS_SSM_PARAMETER
+    AWS_SSM_PARAMETER,
+    DEFAULT_INSTANCE_NAME
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import {
@@ -970,7 +971,8 @@ async function checkDatabaseExists(
     databaseHostId: string,
     databaseName: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     sqlInstanceId?: string,
     sqlAuthEnabled: boolean = false
 ) {
@@ -998,7 +1000,9 @@ async function checkDatabaseExists(
         return userDatabase?.some(db => db.name === databaseName) ?? false;
     }
 
-    const command = [sqlQueryExecution(instanceName, DATABASE_NAME_EXISTS(databaseName), sqlAuthEnabled)];
+    const command = [
+        sqlQueryExecution(instanceName, executableInstanceName, DATABASE_NAME_EXISTS(databaseName), sqlAuthEnabled)
+    ];
 
     try {
         const checkDatabaseExistsResponse = await callSsmExecution(

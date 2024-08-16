@@ -1741,7 +1741,12 @@ async function getDatabaseMountPointInfo(
         }
 
         const command = [
-            sqlQueryExecution(srcDetails.instanceName, mountPointQuery(databaseName), srcDetails.sqlAuthEnabled)
+            sqlQueryExecution(
+                srcDetails.databaseInstanceName,
+                srcDetails.instanceName,
+                mountPointQuery(databaseName),
+                srcDetails.sqlAuthEnabled
+            )
         ];
 
         const mountPoints = await callSsmExecution(credentialsId, region, command, srcDetails.activeNodeInstanceId);

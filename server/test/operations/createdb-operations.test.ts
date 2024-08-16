@@ -14,7 +14,7 @@ import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
-import { ACCOUNT_ID, DEFAULT_MSSQL_INSTANCE_NAME } from '../../src/utils/consts';
+import { ACCOUNT_ID, DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../src/utils/consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import createDbResponse from '../simulator/responses/workload/createdb-response.json';
 
@@ -149,7 +149,7 @@ describe('Create database operations', () => {
             reqData.dataDrivePath,
             reqData.logDrivePath,
             'SQL_Latin1_General_CP1_CI_AS',
-            { name: DEFAULT_MSSQL_INSTANCE_NAME, sqlAuthEnabled: false },
+            { name: DEFAULT_INSTANCE_NAME, executableName: DEFAULT_MSSQL_INSTANCE_NAME, sqlAuthEnabled: false },
             reqData.serverNameWithHostName
         );
 

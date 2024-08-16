@@ -26,7 +26,8 @@ import {
     HttpErrorCodes,
     RESOURCESTYPE,
     SQL_SERVICE_STATE,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    DEFAULT_MSSQL_INSTANCE_NAME
 } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
@@ -50,6 +51,7 @@ const logger = getLogger();
 
 interface SqlInstance {
     name: string;
+    executableName: string;
     sqlAuthEnabled: boolean;
 }
 const isDemoFlow = isDemo();
@@ -654,7 +656,7 @@ async function invokeSSMForDatabaseDeployment(
             parentJobId,
             activeNodeInstanceId as string,
             collation,
-            { name: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
+            { name: instanceNameForScript, executableName: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
             serverNameWithHostName,
             activeNodeDetails as ActiveSqlNodeDetails,
             databaseInstanceId
@@ -686,7 +688,7 @@ async function invokeSSMForDatabaseDeployment(
                 dataDrivePath,
                 logDrivePath,
                 collation,
-                { name: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
+                { name: instanceNameForScript, executableName: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
                 serverNameWithHostName
             );
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
@@ -808,7 +810,7 @@ async function invokeSSMForDatabaseDeployment(
                 dataDrivePath,
                 logDrivePath,
                 collation,
-                { name: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
+                { name: instanceNameForScript, executableName: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
                 serverNameWithHostName,
                 iGroup,
                 fsxDataVolumeName,
@@ -933,7 +935,7 @@ async function createDatabase(
     });
 
     let createDatabaseCommand;
-    const { name: sqlInstanceName, sqlAuthEnabled } = sqlInstance;
+    const { name: instanceName, executableName: instanceExecutableName, sqlAuthEnabled } = sqlInstance;
 
     if (isDemoFlow) {
         createDatabaseCommand = [
@@ -941,11 +943,11 @@ async function createDatabase(
         ];
     } else if (sqlAuthEnabled) {
         createDatabaseCommand = [
-            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation} -SqlInstanceName ${sqlInstanceName} -InstanceName ${sqlInstanceName} -ResourceID ${activeNodeInstanceId}`
+            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation} -SqlInstanceName ${instanceExecutableName} -InstanceName ${instanceName} -ResourceID ${activeNodeInstanceId}`
         ];
     } else {
         createDatabaseCommand = [
-            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation} -SqlInstanceName ${sqlInstanceName} -InstanceName ${sqlInstanceName}`
+            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation} -SqlInstanceName ${instanceExecutableName} -InstanceName ${instanceName}`
         ];
     }
 
@@ -1381,7 +1383,7 @@ async function validateParams(
 
     const dataGibIntoBytes = convertGiBToBytes(dataVolumeSize);
     const logGibIntoBytes = convertGiBToBytes(logVolumeSize);
-    const { name: instanceName, sqlAuthEnabled } = sqlInstance;
+    const { name: instanceName, executableName, sqlAuthEnabled } = sqlInstance;
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
@@ -1411,6 +1413,7 @@ async function validateParams(
             databaseName,
             activeNodeInstanceId,
             instanceName,
+            executableName,
             databaseInstanceId,
             sqlAuthEnabled
         );
@@ -1430,7 +1433,7 @@ async function validateParams(
             region,
             undefined,
             activeNodeInstanceId,
-            { name: instanceName, sqlAuthEnabled }
+            { name: instanceName, executableName, sqlAuthEnabled }
         );
 
         const collationExists = collationList?.some(item => item?.name?.toLowerCase() === collation.toLowerCase());
@@ -1688,6 +1691,7 @@ async function getCollationDetails(
         }
 
         let sqlInstanceName = instanceName;
+        let executableName = DEFAULT_MSSQL_INSTANCE_NAME;
         let sqlAuthEnabled = false;
         if (instanceDetail && instancesDetails) {
             const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
@@ -1704,10 +1708,12 @@ async function getCollationDetails(
                 throw createError(errorMessage);
             }
             sqlAuthEnabled = runningInstance[0].sqlAuthEnabled;
-            sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
+            executableName = getDatabaseInstanceName(selectedInstanceName, isDefault);
+            sqlInstanceName = selectedInstanceName;
         }
         return getCollationForInstance(credentialsId, region, activeNodeInstanceId as string, {
             name: sqlInstanceName,
+            executableName,
             sqlAuthEnabled
         });
     } catch (error: any) {
@@ -1725,8 +1731,8 @@ async function getDefaultCollationAndVersion(
     executionTimeout?: string
 ) {
     logger.info('Getting MSSQL default collation', { credentialsId, region, activeNodeInstanceId });
-    const { name: instanceName, sqlAuthEnabled } = sqlInstance;
-    const defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, sqlAuthEnabled)];
+    const { name: instanceName, executableName, sqlAuthEnabled } = sqlInstance;
+    const defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, executableName, sqlAuthEnabled)];
 
     const defaultCollationResponse = await callSsmExecution(
         credentialsId,
