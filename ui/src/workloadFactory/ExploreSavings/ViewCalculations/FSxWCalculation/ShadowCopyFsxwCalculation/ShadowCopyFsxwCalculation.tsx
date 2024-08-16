@@ -23,14 +23,18 @@ const ShadowCopyFsxwCalculation = () => {
                 </DsTypography>
             );
         }
-        return <DsTypography variant="Regular_14">$4.4</DsTypography>;
+        return (
+            <DsTypography variant="Regular_14">
+                ${viewCalculationsResponse?.fsxwSnapshotCalculation?.totalMonthlyCostForFsxwSnapshotStorageCapacity}
+            </DsTypography>
+        );
     };
 
     return (
         <div className={CommonStyles.exploreSavingsCalculation}>
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="14"
+                id="15"
                 title={<div>{GENERAL.ES_SHADOW_COPY}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
