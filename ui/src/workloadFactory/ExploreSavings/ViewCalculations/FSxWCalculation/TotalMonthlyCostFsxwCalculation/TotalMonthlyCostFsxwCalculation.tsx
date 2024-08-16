@@ -23,13 +23,13 @@ const TotalMonthlyCostFsxwCalculation = () => {
                 </DsTypography>
             );
         }
-        return <DsTypography variant="Regular_14">$xxx</DsTypography>;
+        return <DsTypography variant="Regular_14">${viewCalculationsResponse?.fsxwTotalCost}</DsTypography>;
     };
     return (
         <div className={CommonStyles.exploreSavingsCalculation}>
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="16"
+                id="17"
                 title={<div>{GENERAL.ES_TOTAL_MONTHLY_COST}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}

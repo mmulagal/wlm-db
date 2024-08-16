@@ -1116,6 +1116,7 @@ export const GENERAL = {
     ES_FSXN_MULTI: 'FSx for ONTAP - multi availability zone',
     ES_FSXN_SINGLE: 'FSx for ONTAP - single availability zone',
     ES_FSXW_SINGLE: 'Single Availability Zone',
+    ES_FSXW_MULTI: 'Multi Availability Zone',
     ES_FSXN_AZ_DESC:
         'FSx for ONTAP costs are based on primary database volumes only because these volumes and their replicas share a file system.',
     ES_EBS_DESC: 'Costs for EBS are based on all EC2 instances.',
