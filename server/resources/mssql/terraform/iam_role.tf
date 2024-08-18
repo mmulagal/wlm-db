@@ -18,10 +18,4 @@ resource "aws_iam_role" "ec2_iam_role" {
   }
 }
 
-output "role_name" {
-  value = aws_iam_role.ec2_iam_role.name
-}
 
-output "role_id" {
-  value = aws_iam_role.ec2_iam_role.id
-}

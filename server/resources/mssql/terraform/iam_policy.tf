@@ -153,11 +153,4 @@ resource "aws_iam_role_policy" "ec2_iam_role_policy" {
   })
 }
 
-# Output policy name and policy ID
-output "policy_name" {
-  value = aws_iam_role_policy.ec2_iam_role_policy.name
-}
 
-output "policy_id" {
-  value = aws_iam_role_policy.ec2_iam_role_policy.id
-}

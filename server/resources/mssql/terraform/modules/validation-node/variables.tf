@@ -95,9 +95,14 @@ variable "validation_node_s3_artifacts_url" {
   type        = string
 }
 
-
 variable "validation_node1_wait_handler" {
   description = "The wait handler for the validation node"
   type        = string
-  default     = ""
+  default     = "test"
+}
+
+variable "validation_node_key_pair_private_key_path" {
+  description = "The path to the private key of the key pair"
+  type        = string
+  default     = "/Users/sathish/Downloads/occm_qa.pem"
 }

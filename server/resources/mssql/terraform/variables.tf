@@ -39,6 +39,7 @@ variable "deployment_name" {
   type        = string
   default     = "wlmdb-poc"
 }
+
 # Networking configuration variables
 variable "vpc_id" {
   description = "ID of the VPC"
@@ -63,6 +64,18 @@ variable "private_subnet2_id" {
   default     = "subnet-0fcd4374d52d4faf0"
 }
 
+variable "private_subnet1_cidr_block" {
+  description = "CIDR block for Private Subnet 1"
+  type        = string
+  default     = "10.0.128.0/20"
+}
+
+variable "private_subnet2_cidr_block" {
+  description = "CIDR block for Private Subnet 2"
+  type        = string
+  default     = "10.0.128.0/20"
+}
+
 variable "route_table1_id" {
   description = "ID of the routable table 1"
   type        = string
@@ -75,31 +88,26 @@ variable "route_table2_id" {
   default     = "rtb-044539dfce91103ab"
 }
 
-variable "availability_zone1" {
+variable "availability_zone1" { // not there
   description = "Availability Zone 1"
   type        = string
   default     = "ap-southeast-1a"
 }
 
-variable "availability_zone2" {
+variable "availability_zone2" { // not there
   description = "Availability Zone 2"
   type        = string
   default     = "ap-southeast-1c"
 }
-variable "security_group_id" {
+
+variable "security_group_id" { // not there
   description = "ID of the Security Group"
   type        = string
   default     = "sg-06989f7dcc767bcdf"
 }
 
-variable "default_security_group_id" {
-  description = "ID of the Default Security Group"
-  type        = string
-  default     = "sg-05f4939d6670b405f"
-}
-
 # Ec2 configuration variables
-variable "ec2_instance_type" {
+variable "workload_instance_type" {
   description = "Value of the instance type"
   type        = string
   default     = "m5.large"
@@ -111,13 +119,13 @@ variable "ec2_instance_keypair" {
 }
 
 # AD configuration variables
-variable "ad_type" {
+variable "ad_scenario_type" {
   description = "Value of the ad type"
   type        = string
   default     = "AWS_MANAGED_AD"
   validation {
-    condition     = contains(["USER_MANAGED_AD", "AWS_MANAGED_AD"], var.ad_type)
-    error_message = "The ad_type must be either USER_MANAGED_AD or AWS_MANAGED_AD."
+    condition     = contains(["USER_MANAGED_AD", "AWS_MANAGED_AD"], var.ad_scenario_type)
+    error_message = "The ad_scenario_type must be either USER_MANAGED_AD or AWS_MANAGED_AD."
   }
 }
 
@@ -139,7 +147,7 @@ variable "domain_dns_name" {
   default     = "wlmqa2.com"
 }
 
-variable "ad_security_group_id" {
+variable "domain_security_group_id" {
   description = "Value of the domain security group id"
   type        = string
   default     = "sg-06989f7dcc767bcdf"
@@ -148,24 +156,24 @@ variable "ad_security_group_id" {
 variable "dns_ip_addresses" {
   description = "Value of the dns ip addresses"
   type        = string
-  default     = "10.0.140.140, 10.0.29.45"
+  default     = "10.0.11.153,10.0.25.246"
 }
 
 variable "node_net_bios_names" {
   description = "Value of the node net bios name"
   type        = string
-  default     = "sqlnode-34602"
+  default     = "sqlnode-81451"
 }
 
 #FSx configuration variables
-variable "fsx_deployment_mode" {
-  description = "Value of the FSx deployment mode"
+variable "deployment_mode" {
+  description = "Value of the deployment mode"
   type        = string
   default     = "SINGLE_AZ_1"
 
   validation {
-    condition     = contains(["SINGLE_AZ_1", "MULTI_AZ_1"], var.fsx_deployment_mode)
-    error_message = "The fsx deployment mode must be either SINGLE_AZ_1 or MULTI_AZ_1."
+    condition     = contains(["SINGLE_AZ_1", "MULTI_AZ_1"], var.deployment_mode)
+    error_message = "The deployment mode must be either SINGLE_AZ_1 or MULTI_AZ_1."
   }
 }
 
@@ -189,16 +197,27 @@ variable "fsx_log_volume_name" {
   type        = string
 }
 
+variable "fsx_quorum_volume_name" {
+  description = "Value of the FSx quorum volume name"
+  type        = string
+}
+
 variable "fsx_data_volume_size" {
   description = "Value of the FSx data volume size"
-  type        = string
+  type        = number
   default     = 1153434
 }
 
 variable "fsx_log_volume_size" {
   description = "Value of the FSx log volume size"
-  type        = string
+  type        = number
   default     = 288359
+}
+
+variable "fsx_quorum_volume_size" {
+  description = "Value of the FSx quorum volume size"
+  type        = number
+  default     = 100
 }
 
 variable "fsx_temp_db_volume_name" {
@@ -208,19 +227,19 @@ variable "fsx_temp_db_volume_name" {
 
 variable "fsx_temp_db_volume_size" {
   description = "Value of the FSx temp db volume size"
-  type        = string
+  type        = number
   default     = 115344
 }
 
 variable "fsx_storage_capacity" {
   description = "Value of the FSx storage capacity"
-  type        = string
+  type        = number
   default     = 1826
 }
 
 variable "fsx_data_lun_size" {
   description = "Value of the FSx data lun size"
-  type        = string
+  type        = number
   default     = 1048576
 }
 
@@ -236,21 +255,21 @@ variable "fsx_user_name" {
 }
 
 variable "fsx_password" {
-  description = "Value of the Encrypted FSx password"
+  description = "Value of the FSx password"
   type        = string
   sensitive   = true
 }
 
-variable "database_size" {
-  description = "The size of the database"
+variable "fsx_encrypted_password" {
+  description = "Value of the FSx encrypted password"
   type        = string
-  default     = "200"
+  sensitive   = true
 }
 
 variable "fsx_vol_throughput" {
   description = "The throughput of the FSx volume"
-  type        = string
-  default     = "128"
+  type        = number
+  default     = 256
 }
 
 variable "fsx_iops" {
@@ -259,16 +278,28 @@ variable "fsx_iops" {
   default     = "3"
 }
 
-variable "encryption_key" {
+variable "fsx_volume_snapshot_policy" {
+  type        = string
+  description = "snapshot policy for the fsx volume"
+  default     = "daily_weekretention"
+}
+
+variable "fsx_encryption_key" {
   description = "The encryption key"
   type        = string
   default     = "0a96542a-f57b-487c-a0fc-4db5d74c0a89"
 }
 
+variable "ebs_volume_size" {
+  description = "Value of the ebs volume size"
+  type        = number
+  default     = 100
+}
+
 variable "ontap_sg_id" {
   description = "The security group ID for ONTAP"
-  type        = list(string)
-  default     = ["sg-0e815f376e4ab473b"]
+  type        = string
+  default     = "sg-0e815f376e4ab473b"
 }
 
 # SQL Server configuration variables
@@ -312,12 +343,6 @@ variable "sql_server_name" {
   default     = "sqldbapd1o"
 }
 
-variable "sql_ami_name" {
-  description = "The AMI name for SQL"
-  type        = string
-  default     = "Windows_Server-2022-English-Full-SQL_2022_Standard-2023.12.13"
-}
-
 variable "sql_svm_name" {
   description = "The SVM name for SQL"
   type        = string
@@ -346,7 +371,7 @@ variable "validation_ami_id" {
 variable "validation_instance_type" {
   description = "Value of the instance type"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
 variable "account_id" {
@@ -357,8 +382,8 @@ variable "account_id" {
 
 variable "cloud-provider-account-id" {
   description = "Value of the cloud provider account ID"
-  type        = string
-  default     = "464262061435"
+  type        = number
+  default     = 464262061435
 }
 
 variable "role_credentials_id" {
@@ -383,72 +408,60 @@ variable "jwt_token" {
 variable "is_s3_endpoint_created" {
   description = "Determines if S3 endpoint is created"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "is_cloudformation_endpoint_created" {
   description = "Determines if CloudFormation endpoint is created"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "is_ssm_endpoint_created" {
   description = "Determines if SSM endpoint is created"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "is_sqs_endpoint_created" {
   description = "Determines if SQS endpoint is created"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "is_cloudwatch_logs_endpoint_created" {
   description = "Determines if CloudWatch Logs endpoint is created"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "is_fsx_endpoint_created" {
   description = "Determines if FSx endpoint is created"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "is_ec2_endpoint_created" {
   description = "Determines if EC2 endpoint is created"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "is_ec2_messages_endpoint_created" {
   description = "Determines if EC2 Messages endpoint is created"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "is_ssm_messages_endpoint_created" {
   description = "Determines if SSM Messages endpoint is created"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "s3_gateway_endpoint_route_tables" {
   description = "Route table ids to attach to S3 gateway endpoint."
   type        = string
-}
-
-variable "private_subnet1_cidr_block" {
-  description = "CIDR block for Private Subnet 1"
-  type        = string
-  default     = "10.0.128.0/20"
-}
-
-variable "private_subnet2_cidr_block" {
-  description = "CIDR block for Private Subnet 2"
-  type        = string
-  default     = "10.0.128.0/20"
 }
 
 variable "notification_arn" {
@@ -470,6 +483,36 @@ variable "enable_cloud_watch_log" {
 variable "unique_id" {
   description = "Value of the Unique ID"
   type        = number
+}
+
+variable "is_custom_ami" {
+  description = "Flag to determine if custom AMI is used"
+  type        = bool
+  default     = false
+}
+
+variable "ms_sql_media_bucket_name" {
+  description = "Value of the MS SQL Media Bucket Name"
+  type        = string
+  default     = "LaunchWizard-sqlha"
+}
+
+variable "ms_sql_media_path_key" {
+  description = "Value of the MS SQL Media path Key"
+  type        = string
+  default     = "launchwizardscripts/sqlmedia/sqlserver.iso"
+}
+
+variable "perform_ad_check_node_1" {
+  description = "value of the perform ad check node 1"
+  type        = bool
+  default     = true
+}
+
+variable "perform_ad_check_node_2" {
+  description = "value of the perform ad check node 2"
+  type        = bool
+  default     = false
 }
 
 # variable "ec2_instance_type" {

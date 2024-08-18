@@ -26,7 +26,7 @@ terraform {
 }
 
 locals {
-  use_aws_directory_service_ee  = var.ad_type == "AWS_MANAGED_AD" ? true : false
+  use_aws_directory_service_ee  = var.ad_scenario_type == "AWS_MANAGED_AD" ? true : false
   new_ontap_fsx                 = var.fsx_file_system_id == "" ? true : false
   existing_ontap_fsx            = local.new_ontap_fsx ? false : true
   exclude_notification          = var.notification_arn == "" ? true : false
@@ -50,13 +50,18 @@ provider "aws" {
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.bucket_for_state # REPLACE WITH YOUR BUCKET NAME
 
-  force_destroy = true
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_versioning" "terraform_bucket_versioning" {
   bucket = aws_s3_bucket.terraform_state.id
   versioning_configuration {
     status = "Enabled"
+  }
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -67,6 +72,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state_c
       sse_algorithm = "AES256"
     }
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_dynamodb_table" "terraform_locks" {
@@ -76,6 +85,10 @@ resource "aws_dynamodb_table" "terraform_locks" {
   attribute {
     name = "LockID"
     type = "S"
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -105,6 +118,8 @@ module "vpc-endpoints-validation" {
 module "validation-node" {
   source = "./modules/validation-node"
 
+  # depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, module.vpc-endpoints-validation]
+
   validation_node_vpc_id                = var.vpc_id
   validation_node_aws_location          = var.aws_location
   validation_node_subnet_id             = var.private_subnet1_id
@@ -112,7 +127,7 @@ module "validation-node" {
   validation_node_ec2_role_name         = var.deployment_name
   validation_node_is_custom_ami         = false
   validation_node_key_pair_name         = var.ec2_instance_keypair
-  validation_node_perform_ad_check      = true
+  validation_node_perform_ad_check      = local.existing_ontap_fsx ? true : false
   validation_node_domain_dns_name       = var.domain_dns_name
   validation_node_domain_admin_user     = var.domain_admin_user_name
   validation_node_perform_fsx_check     = true
@@ -124,5 +139,5 @@ module "validation-node" {
   validation_node_sql_deployment_mode   = var.sql_deployment_mode
   validation_node_unique_id             = var.unique_id
   validation_node_s3_artifacts_url      = var.s3_artifacts_url
-  validation_node1_wait_handler         = ""
+  validation_node1_wait_handler         = "asdf"
 }

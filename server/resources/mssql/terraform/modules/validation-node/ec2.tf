@@ -6,10 +6,10 @@ locals {
   log_feature_enabled  = var.validation_node_enable_cloudwatch_log == true
 }
 
-resource "aws_iam_instance_profile" "validation_instance_profile" {
-  name = "validation_instance_profile"
-  role = var.validation_node_ec2_role_name
-}
+# resource "aws_iam_instance_profile" "validation_instance_profile" {
+#   name = "validation_instance_profile"
+#   role = var.validation_node_ec2_role_name
+# }
 
 resource "aws_security_group" "domain_member_sg" {
   name        = "domain_member_sg"
@@ -38,13 +38,13 @@ resource "aws_launch_template" "disable_imdsv1" {
   }
 }
 
-resource "null_resource" "validation_node1_wait_condition" {
-  count = var.validation_node_perform_ad_check ? 1 : 0
+# resource "null_resource" "validation_node1_wait_condition" {
+#   count = var.validation_node_perform_ad_check ? 1 : 0
 
-  provisioner "local-exec" {
-    command = "sleep 2700"
-  }
-}
+#   provisioner "local-exec" {
+#     command = "sleep 2700"
+#   }
+# }
 
 resource "aws_network_interface" "validation_node_ni" {
   subnet_id       = var.validation_node_subnet_id
@@ -56,7 +56,7 @@ resource "aws_instance" "validation_node" {
   instance_type = var.validation_node_instance_type
   key_name      = var.validation_node_key_pair_name
 
-  iam_instance_profile = aws_iam_instance_profile.validation_instance_profile.name
+  # iam_instance_profile = aws_iam_instance_profile.validation_instance_profile.name
 
   network_interface {
     device_index         = 0
@@ -72,21 +72,43 @@ resource "aws_instance" "validation_node" {
   }
 }
 
+
+# Wait for user data to complete execution on the instance
+resource "null_resource" "validation_node_user_data" {
+  triggers = {
+    instance_id = aws_instance.validation_node.id
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "while [ ! -f /tmp/user_data_done ]; do sleep 5; done"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "ec2-user" # replace with the appropriate user
+      private_key = file(var.validation_node_key_pair_private_key_path)
+      host        = aws_instance.validation_node.public_ip
+    }
+  }
+}
+
 data "template_file" "user_data" {
   template = file("${path.module}/user_data.ps1")
 
   vars = {
-    region             = var.validation_node_aws_location
-    deployment_name    = var.validation_node_deployment_name
-    s3_artifacts_url   = var.validation_node_s3_artifacts_url
-    dns_ip_addresses   = var.validation_node_dns_ip_addresses
-    domain_dns_name    = var.validation_node_domain_dns_name
-    subnet_id          = var.validation_node_subnet_id
-    domain_admin_user  = var.validation_node_domain_admin_user
-    wait_handler       = var.validation_node1_wait_handler
-    is_custom_ami      = var.validation_node_is_custom_ami
-    perform_fsx_check  = var.validation_node_perform_fsx_check
-    fsx_file_system_id = var.validation_node_fsx_file_system_id
-    log_group          = var.validation_node_deployment_name
+    region                        = var.validation_node_aws_location
+    deployment_name               = var.validation_node_deployment_name
+    s3_artifacts_url              = var.validation_node_s3_artifacts_url
+    dns_ip_addresses              = var.validation_node_dns_ip_addresses
+    domain_dns_name               = var.validation_node_domain_dns_name
+    subnet_id                     = var.validation_node_subnet_id
+    domain_admin_user             = var.validation_node_domain_admin_user
+    validation_node1_wait_handler = var.validation_node1_wait_handler
+    is_custom_ami                 = var.validation_node_is_custom_ami
+    perform_fsx_check             = var.validation_node_perform_fsx_check
+    fsx_file_system_id            = var.validation_node_fsx_file_system_id
+    log_group                     = var.validation_node_deployment_name
+    sql_deployment_mode           = var.validation_node_sql_deployment_mode
   }
 }
