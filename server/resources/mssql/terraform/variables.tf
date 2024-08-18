@@ -287,7 +287,7 @@ variable "fsx_volume_snapshot_policy" {
 variable "fsx_encryption_key" {
   description = "The encryption key"
   type        = string
-  default     = "0a96542a-f57b-487c-a0fc-4db5d74c0a89"
+  default     = "0ff7ae43-5a18-4bbb-af78-31e7a9127b71"
 }
 
 variable "ebs_volume_size" {

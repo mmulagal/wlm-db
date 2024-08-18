@@ -54,7 +54,7 @@ fsx_password               = "netapp1!" # replace with your actual password
 fsx_volume_snapshot_policy = "daily_weekretention"
 fsx_vol_throughput         = 256
 fsx_iops                   = "3"
-fsx_encryption_key         = "0a96542a-f57b-487c-a0fc-4db5d74c0a89"
+fsx_encryption_key         = "arn:aws:kms:ap-southeast-1:464262061435:key/0ff7ae43-5a18-4bbb-af78-31e7a9127b71"
 ontap_sg_id                = "sg-0e815f376e4ab473b"
 fsx_encrypted_password     = "netapp1!" # replace with your actual password
 

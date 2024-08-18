@@ -141,3 +141,35 @@ module "validation-node" {
   validation_node_s3_artifacts_url      = var.s3_artifacts_url
   validation_node1_wait_handler         = "asdf"
 }
+
+module "fsxn-new" {
+  source = "./modules/fsxn/fsxn_new"
+
+  deployment_mode                = var.deployment_mode
+  vpc_id                         = var.vpc_id
+  vpc_cidr                       = var.vpc_cidr
+  preferred_subnet_id            = var.private_subnet1_id
+  standby_subnet_id              = var.private_subnet2_id
+  preferred_route_table_id       = var.route_table1_id
+  standby_route_table_id         = var.route_table2_id
+  preferred_subnet_cidrblock     = var.private_subnet1_cidr_block
+  standby_subnet_cidrblock       = var.private_subnet2_cidr_block
+  parent_stack_name              = var.deployment_name
+  fsx_file_system_name           = var.fsx_file_system_name
+  fsx_storage_capacity           = var.fsx_storage_capacity
+  fsx_volume_throughput_capacity = var.fsx_vol_throughput
+  fsx_disk_iops                  = var.fsx_iops
+
+  fsx_kms_key_id                    = var.fsx_encryption_key
+  fsx_data_volume_name              = var.fsx_data_volume_name
+  fsx_data_volume_size              = var.fsx_data_volume_size
+  fsx_log_volume_name               = var.fsx_log_volume_name
+  fsx_log_volume_size               = var.fsx_log_volume_size
+  fsx_temp_db_volume_name           = var.fsx_temp_db_volume_name
+  fsx_temp_db_volume_size           = var.fsx_temp_db_volume_size
+  fsx_cluster_quorum_volume_name    = var.fsx_quorum_volume_name
+  fsx_cluster_quorum_volume_size    = var.fsx_quorum_volume_size
+  fsx_administrator_password        = var.fsx_password
+  fsx_svm_name                      = var.sql_svm_name
+  fsx_weekly_maintenance_start_time = "1:05:00"
+}
