@@ -1,0 +1,78 @@
+account_id - AccountId
+ad_type - ADScenarioType
+deploy_role_name = CfDeployRoleName
+is_cloudformation_endpoint_created- CloudformationEndpointExists
+cloud-provider-account-id - CloudProviderAccountId
+is_cloudwatch_logs_endpoint_created - CloudwatchLogsEndpointExists
+deployment_mode - DeploymentMode
+
+dns_ip_addresses - DNSIpAddresses
+domain_admin_password - DomainAdminPassword
+domain_admin_user_name - DomainAdminUser
+domain_dns_name - DomainDNSName
+ad_security_group_id - DomainMemberSGID
+
+EBSVolumeSize
+is_ec2_endpoint_created - Ec2EndpointExists
+is_ec2_messages_endpoint_created - Ec2MessagesEndpointExists
+enable_cloud_watch_log - EnableCloudWatchLogFeature
+
+fsx_password - EncryptedFsxPassword
+encryption_key - FileSystemEncryptionKeyId
+fsx_password- FSxAdminPassword
+fsx_user_name - FSxAdminUsername
+fsx_data_lun_size - FSxDataLunSize
+fsx_data_volume_name - FSxDataVolumeName
+fsx_data_volume_size - FSxDataVolumeSize
+fsx_iops- FSxDiskIops
+is_fsx_endpoint_created - FsxEndpointExists
+fsx_file_system_id- FSxFileSystemId
+fsx_file_system_name - FSxFileSystemName
+fsx_log_volume_name - FSxLogVolumeName
+fsx_log_volume_size - FSxLogVolumeSize
+fsx_quorum_volume_name- FSxQuorumVolumeName
+fsx_quorum_volume_size- FSxQuorumVolumeSize
+fsx_storage_capacity-FSxStorageCapacity
+fsx_svm_name- FSxSvmName
+fsx_temp_db_volume_name - FSxTempDbVolumeName
+fsx_temp_db_volume_size - FSxTempDbVolumeSize
+fsx_volume_snapshot_policy - FsxVolumeSnapshotPolicy
+fsx_vol_throughput - FSxVolumeThroughputCapacity
+
+is_custom_ami - IsCustomAmi
+jwt_token - JwtToken
+ec2_instance_keypair - KeyPairName
+Metrics
+ms_sql_media_bucket_name - MSSQLMediaBucketName
+ms_sql_media_path_key - MSSQLMediaPathKey
+node_net_bios_names - NodeNetBIOSNames
+notification_arn - NotificationARN
+ontap_sg_id - ONTAPSecurityGroupID
+private_subnet1_cidr_block - PrivateSubnet1Cidrblock
+private_subnet1_id - PrivateSubnet1ID
+private_subnet2_cidr_block - PrivateSubnet2Cidrblock
+private_subnet2_id - PrivateSubnet2ID
+RoleCredentialsId - role_credentials_id
+route_table1_id - RouteTable1Id
+route_table2_id - RouteTable2Id
+is_s3_endpoint_created - S3EndpointExists
+s3_gateway_endpoint_route_tables - S3EndpointRouteTables
+sql_ami_id - SQLAMIID
+sql_collation - SqlCollation
+sql_deployment_mode - SQLDeploymentMode
+SqlFSxWSFCName
+sql_igroup_name - SQLigroupname
+sql_server_name - SqlServerName
+sql_service_account_name - SQLServiceAccountName
+sql_service_account_password - SQLServiceAccountPassword
+sql_svm_name - SQLSvmName
+is_sqs_endpoint_created - SqsEndpointExists
+is_ssm_endpoint_created - SsmEndpointExists
+is_ssm_messages_endpoint_created - SSMMessagesEndpointExists
+unique_id - UniqueID
+validation_ami_id - ValidationAmi
+validation_instance_type - ValidationNodeInstanceType
+vpc_cidr - VPCCIDR
+vpc_id - VPCID
+wlmdb_aws_account_id - WlmdbAwsAccountId
+ec2_instance_type - WorkloadInstanceType
