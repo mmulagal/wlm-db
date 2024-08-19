@@ -57,7 +57,8 @@ try {
     }
     else {
         try {
-            . ..\common\InvokeRetryCommand.ps1
+            $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+            . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
             $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
                 
             $secure = $SsmParameter.domain.password
