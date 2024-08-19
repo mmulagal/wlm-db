@@ -26,16 +26,25 @@ import { setTabInfoFOrBXP } from './utils/utilityFunctions';
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const { statusData } = useAppSelector(state => state.headers.getStatus);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    //This code is only for BlueXP
     useRunOnce(() => {
         if (!isWorkloadFactory) {
             window.onmessage = (msg: any) => {
                 if (msg && msg?.data && msg?.data?.type === BXP_MESSAGES.SERVICE_LOCATION_CHANGE) {
-                    const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
-                    navigate('../fsxdb');
-                    dispatch(setSelectedHeaderTab(tabInfo));
+                    if (statusData && !statusData?.isActive) {
+                        window.parent.postMessage(
+                            { type: 'SERVICE:NAVIGATE', payload: { pathname: './fsxdb/marketing', replace: true } },
+                            '*'
+                        );
+                    } else {
+                        const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
+                        navigate('../fsxdb');
+                        dispatch(setSelectedHeaderTab(tabInfo));
+                    }
                 }
             };
         }

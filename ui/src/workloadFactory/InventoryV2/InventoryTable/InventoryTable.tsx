@@ -384,7 +384,7 @@ const InventoryTable = () => {
                     width="320px"
                     height="100px"
                 >
-                    <div className={styles.detectManageDisable}>
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
                         </Typography>
@@ -401,7 +401,7 @@ const InventoryTable = () => {
         ) {
             return (
                 <TooltipComponent title={GENERAL.ES_FSXW_NOT_SUPPORTED} placement="bottom" width="320px" height="50px">
-                    <div className={styles.detectManageDisable}>
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
                         </Typography>
@@ -419,6 +419,7 @@ const InventoryTable = () => {
             return (
                 <div
                     className={styles.detectManage}
+                    id="inventory-table-option"
                     onClick={() => {
                         if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
                             onClickESHost(dispatch, rowData);
@@ -440,7 +441,11 @@ const InventoryTable = () => {
             rowData.ssmState !== INVENTORY_STATUS.OFFLINE
         ) {
             return (
-                <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
+                <div
+                    className={styles.detectManageDisable}
+                    id="inventory-table-option"
+                    title={rowData?.detectOptionDisableMsg}
+                >
                     <Typography variant="Regular_14" className={styles.textStyle}>
                         {rowData?.action}
                     </Typography>
