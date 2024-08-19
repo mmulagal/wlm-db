@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './HeaderComponent.module.scss';
 import DatabaseHomePage from '../DatabaseHomePage';
-import { Button, Popover, SelectField, Typography } from '@netapp/design-system';
+import { BlueXPListeners, Button, Popover, SelectField, Typography, postBlueXPMessage } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
@@ -117,15 +117,15 @@ const HeaderComponent = ({ tab }: Tab) => {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
             if (!isWorkloadFactory) {
-                window.parent.postMessage(
-                    { type: 'SERVICE:NAVIGATE', payload: { pathname: './fsxdb/marketing', replace: true } },
-                    '*'
-                );
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: './fsxdb/marketing', replace: true }
+                });
             } else {
-                window.parent.postMessage(
-                    { type: 'SERVICE:NAVIGATE', payload: { pathname: './marketing', replace: true } },
-                    '*'
-                );
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: './marketing', replace: true }
+                });
             }
         } else {
             setStatusChk(false);
