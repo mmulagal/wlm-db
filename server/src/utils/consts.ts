@@ -1191,7 +1191,7 @@ const DEMO_STANADLONE_INSTANCE_ID = 'i-c5x3z1a7s9d2f3g';
 
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
-const TIMELINE_SERVICE_NAME = 'WF-Database';
+const TIMELINE_SERVICE_NAME = 'WF-Databases';
 
 export {
     WLMDB,
