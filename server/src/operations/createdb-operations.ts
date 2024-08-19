@@ -946,10 +946,6 @@ async function createDatabase(
             CUSTOM_SSM_EXECUTION_TIMEOUT
         );
 
-        if (process.env.NO_ERROR !== 'true') {
-            throw new Error('Error while creating database');
-        }
-
         logger.debug('Create database is done', createDatabaseResponse);
         const parsedDBResponse = createDatabaseResponse ? sqlResponseParsing(createDatabaseResponse) : {};
 
