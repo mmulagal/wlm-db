@@ -110,7 +110,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             tabValue = selectedHeaderTab;
         }
         dispatch(setSelectedHeaderTab(tabValue));
-    }, []);
+    }, [tab]);
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
