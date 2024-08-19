@@ -44,6 +44,7 @@ import { updateUserDBIntoInstanceTable, updateUserDBIntoResourceData } from './d
 import { resetCache } from '../utils/cache';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 import { updateResourceMetaData } from '../lib/database/db';
+import { cleanupResources } from './workloads/mssql/createdb-scripts';
 
 const logger = getLogger();
 
@@ -944,6 +945,11 @@ async function createDatabase(
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
         );
+
+        if (process.env.NO_ERROR !== 'true') {
+            throw new Error('Error while creating database');
+        }
+
         logger.debug('Create database is done', createDatabaseResponse);
         const parsedDBResponse = createDatabaseResponse ? sqlResponseParsing(createDatabaseResponse) : {};
 
@@ -1268,8 +1274,23 @@ async function cleanUpDatabaseDeployment(
                 `${CLEANUPSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataVolumeName wlmdb_sqldata_1708948249  -FSxLogVolumeName wlmdb_sqllog_1708948249 -IGROUP wlmdb_sqligroup_1708791218786`
             ];
         } else {
+            // cleaupCommand = [
+            //     `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered} -InstanceName ${instanceNameForScript} -IsDefaultInstance ${isDefaultInstance} -FilePathString '${filePaths}'}`
+            // ];
+
             cleaupCommand = [
-                `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered} -InstanceName ${instanceNameForScript} -IsDefaultInstance ${isDefaultInstance} -FilePathString '${filePaths}'}`
+                cleanupResources(
+                    fileSystemId!,
+                    sqlVMName!,
+                    iGroup,
+                    databaseName,
+                    isClustered,
+                    instanceNameForScript,
+                    isDefaultInstance,
+                    filePaths!,
+                    dataVolumeName,
+                    logVolumeName
+                )
             ];
         }
 
