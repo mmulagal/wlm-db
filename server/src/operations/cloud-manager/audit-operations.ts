@@ -3,7 +3,15 @@ import { cloneDeep } from 'lodash-es';
 import randomize from 'randomatic';
 import getLogger from '../../utils/logger';
 import { getSubjectFromBearerToken, hideSecretsValues } from '../../utils/utils';
-import { AUDIT_GROUP, HTTP_DELETE, HTTP_POST, HTTP_PUT, REQUEST_ID, VERSION, WLMDB } from '../../utils/consts';
+import {
+    AUDIT_GROUP,
+    HTTP_DELETE,
+    HTTP_POST,
+    HTTP_PUT,
+    REQUEST_ID,
+    TIMELINE_SERVICE_NAME,
+    VERSION
+} from '../../utils/consts';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import sendAudit from '../../lib/cloud-manager/audit';
 import validateSchema from '../../utils/schema-validation';
@@ -55,7 +63,7 @@ function extractAuditHeaders(headers: RequestHeaders) {
     const { host, authorization } = headers;
     return {
         host,
-        referer: WLMDB,
+        referer: TIMELINE_SERVICE_NAME,
         authorization,
         userAgent: headers['user-agent'],
         workspaceId: headers['x-workspace-id']
@@ -99,7 +107,7 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
                 : schema?.description || 'internal',
             status: AUDIT_PENDING_STATUS,
             requestId: request.id,
-            serviceName: WLMDB,
+            serviceName: TIMELINE_SERVICE_NAME,
             referrer: url as string,
             version: VERSION,
             requestData: secureActionParameters,
@@ -179,7 +187,7 @@ async function createAuditRecord(
             status,
             recordId: parseInt(randomize('0', 2), 10),
             requestId: getAsyncLocalStorageResource(REQUEST_ID) || 'system',
-            serviceName: WLMDB,
+            serviceName: TIMELINE_SERVICE_NAME,
             data: secureActionParameters
         };
 
