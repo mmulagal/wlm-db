@@ -515,6 +515,12 @@ variable "perform_ad_check_node_2" {
   default     = false
 }
 
+variable "sql_admin_accounts" {
+  description = "value of the sql admin accounts"
+  type        = string
+  default     = "sqlsa"
+}
+
 # variable "ec2_instance_type" {
 #   description = "Value of the instance type"
 #   type        = string

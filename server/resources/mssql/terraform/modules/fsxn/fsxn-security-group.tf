@@ -3,6 +3,9 @@ resource "aws_security_group" "ontap_security_group" {
   description = "Allow access to the Workload instances"
   vpc_id      = var.vpc_id
 
+  // Create the sg only when its new
+  count = local.fsx_is_existing ? 0 : 1
+
   dynamic "ingress" {
     for_each = [
       { from_port = -1, to_port = -1, protocol = "icmp", cidr_blocks = [var.preferred_subnet_cidrblock] },

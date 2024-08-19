@@ -92,8 +92,8 @@ resource "aws_dynamodb_table" "terraform_locks" {
   }
 }
 
-module "vpc-endpoints-validation" {
-  source = "./modules/vpc-endpoints-validation"
+module "vpc-endpoints" {
+  source = "./modules/vpc-endpoints"
 
   endpoints_vpc_id           = var.vpc_id
   endpoints_aws_location     = var.aws_location
@@ -142,9 +142,10 @@ module "validation-node" {
   validation_node1_wait_handler         = "asdf"
 }
 
-module "fsxn-new" {
-  source = "./modules/fsxn/fsxn_new"
+module "fsxn" {
+  source = "./modules/fsxn"
 
+  fsx_file_system_id             = "" // set this id to provision using existing fsx
   deployment_mode                = var.deployment_mode
   vpc_id                         = var.vpc_id
   vpc_cidr                       = var.vpc_cidr
@@ -172,4 +173,44 @@ module "fsxn-new" {
   fsx_administrator_password        = var.fsx_password
   fsx_svm_name                      = var.sql_svm_name
   fsx_weekly_maintenance_start_time = "1:05:00"
+}
+
+module "ec2" {
+  source = "./modules/ec2"
+
+  ec2_role_name                 = var.deployment_name
+  enable_cloudwatch_log_feature = var.enable_cloud_watch_log
+  log_group_name                = "SQLDLOG"
+  unique_id                     = var.unique_id
+  ami_id                        = var.sql_ami_id
+  byol_ami                      = "false"
+  key_pair_name                 = var.ec2_instance_keypair
+  private_subnet_id             = var.private_subnet1_id
+
+  vpc_id                     = var.vpc_id
+  vpc_cidr                   = var.vpc_cidr
+  deployment_name            = var.deployment_name
+  sql_server_name            = var.sql_server_name
+  sql_svm_name               = var.sql_svm_name
+  fsx_data_volume_name       = var.fsx_data_volume_name
+  fsx_log_volume_name        = var.fsx_log_volume_name
+  fsx_file_system_id         = var.fsx_file_system_id
+  fsx_temp_db_volume_name    = var.fsx_temp_db_volume_name
+  fsx_data_lun_size          = var.fsx_data_lun_size
+  sql_igroup_name            = var.sql_igroup_name
+  fsx_volume_snapshot_policy = var.fsx_volume_snapshot_policy
+  ad_dns_ip_addresses        = var.dns_ip_addresses
+  domain_dns_name            = var.domain_dns_name
+  domain_admin_user          = var.domain_admin_user_name
+  sql_admin_accounts         = var.sql_service_account_name
+  sql_collation              = var.sql_collation
+
+  sql_node_s3_artifacts_url = var.s3_artifacts_url
+  parent_stack_name         = var.deployment_name
+  sql_node_aws_location     = var.aws_location
+  route_table_id            = var.route_table1_id
+  ebs_volume_size           = var.ebs_volume_size
+  domain_member_sg_id       = var.domain_security_group_id
+  ontap_security_group_id   = local.new_ontap_fsx ? module.fsx.fsxn_security_group_id : var.ontap_sg_id
+  mssql_media_bucket_name   = var.ms_sql_media_bucket_name
 }

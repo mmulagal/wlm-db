@@ -97,3 +97,4 @@ notification_arn         = "testarn"
 s3_artifacts_url       = "https://wlfdb-artifacts.s3.ap-southeast-1.amazonaws.com/wlmdb"
 enable_cloud_watch_log = true
 unique_id              = 124324324
+sql_admin_accounts = 'sqlsa'

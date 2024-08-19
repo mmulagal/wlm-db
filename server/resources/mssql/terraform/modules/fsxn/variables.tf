@@ -188,3 +188,15 @@ variable "fsxn_volume_security_style" {
     error_message = "The security style must be one of UNIX or NTFS."
   }
 }
+
+variable "notification_arns" {
+  description = "The Amazon Resource Name (ARN) of the Amazon SNS topic to which you want to publish FSx for ONTAP file system backup notifications."
+  type        = list(string)
+  default     = []
+}
+
+variable "fsx_file_system_id" {
+  description = "ID of the FSx for ONTAP file system."
+  type        = string
+  default     = ""
+}

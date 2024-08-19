@@ -3,11 +3,16 @@ locals {
   fsx_is_kms_key_id_empty         = var.fsx_kms_key_id == "" ? true : false
   fsx_is_single_zone_deployment   = var.deployment_mode == "SINGLE_AZ_1" ? true : false
   fsx_is_multi_zone_deployment    = var.deployment_mode == "MULTI_AZ_1" ? true : false
+  fsx_is_existing                 = var.fsx_file_system_id != "" ? true : false
 }
 
 resource "aws_fsx_ontap_file_system" "fsx_ontap_fs" {
   # file_system_type   = "ONTAP"
 
+  // Create the fsx only when its new
+  count = local.fsx_is_existing ? 0 : 1
+
+  depends_on         = [aws_security_group.ontap_security_group]
   kms_key_id         = local.fsx_is_kms_key_id_empty ? null : var.fsx_kms_key_id
   security_group_ids = [aws_security_group.ontap_security_group.id]
   storage_capacity   = var.fsx_storage_capacity
