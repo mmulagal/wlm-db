@@ -32,7 +32,9 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+$ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+. "$ScriptsPath\common\InvokeRetryCommand.ps1" 
+$SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
 $FSxUserName = $SsmParameter.fsx.username
 $FSxPassword = $SsmParameter.fsx.password
 
@@ -42,13 +44,13 @@ $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding
 $isprivatesubnet = $False
 $FSxCertificateificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-${FSxRegion}.pem"
 try {
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
-        $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
-        $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-    }
+    Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
+    $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
+    $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+}
 catch {
-        $isprivatesubnet = $True      
-    }
+    $isprivatesubnet = $True      
+}
 
 $Ampersand = ""
 if ($OntapResourceFilter -ne "" -and $OntapResourceQuery -ne "") {
@@ -62,8 +64,9 @@ $Params = @{
     "ContentType" = "application/json"
 }
 
-if($isprivatesubnet -eq $False) {
-        Invoke-RestMethod @Params -Certificate $regionCertificateificate | ConvertTo-Json -Depth 100
-    }else {
-        Invoke-RestMethod @Params | ConvertTo-Json -Depth 100
-    }
+if ($isprivatesubnet -eq $False) {
+    Invoke-RestMethod @Params -Certificate $regionCertificateificate | ConvertTo-Json -Depth 100
+}
+else {
+    Invoke-RestMethod @Params | ConvertTo-Json -Depth 100
+}

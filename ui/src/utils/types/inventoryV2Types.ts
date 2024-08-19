@@ -345,6 +345,7 @@ export interface InstancesHostsRowInterface {
     estimatedUsageCost?: EstimatedUsageCostInterface;
     databaseInstancesSummary?: Array<DatabaseInstancesSummaryInterface>;
     nodeInstanceError?: string;
+    sqlLicenseIncluded?: boolean;
 }
 
 export interface DiscoverHostInterface {

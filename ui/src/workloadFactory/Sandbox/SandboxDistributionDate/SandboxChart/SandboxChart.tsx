@@ -64,7 +64,7 @@ const SandboxChart = () => {
                     </Typography>
                 )}
                 <Typography variant="Regular_14" className={isNA ? ` ${CommonStyles.notAvailable}` : ''}>
-                    sandboxes
+                    {GENERAL.SANDBOXES}
                 </Typography>
             </div>
             {/* @ts-ignore */}

@@ -18,6 +18,7 @@
         .firstRow {
             padding: 12px 0 0 40px;
             display: flex;
+            gap: 16px;
 
             .heading {
                 line-height: unset !important;
@@ -131,6 +132,12 @@
                 .active {
                     border-bottom: 2px solid var(--text-button-primary);
                     color: var(--text-button-primary);
+                    font-weight: 600 !important;
+                }
+
+                .blueXPHeaderClass {
+                    color: var(--text-button-primary);
+                    font-weight: 400;
                 }
             }
         }

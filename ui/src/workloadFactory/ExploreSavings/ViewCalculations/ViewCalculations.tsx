@@ -18,6 +18,12 @@ import InstancesEbsCalculation from './EBSCalculation/InstancesEbsCalculation/In
 import InstancesOntapCalculation from './OntapCalculation/InstancesOntapCalculation/InstancesOntapCalculation';
 import TotalMonthlyCostOntapCalculation from './OntapCalculation/TotalMonthlyCostOntapCalculation/TotalMonthlyCostOntapCalculation';
 import TotalMonthlyCostEbsCalculation from './EBSCalculation/TotalMonthlyCostEbsCalculation/TotalMonthlyCostEbsCalculation';
+import InstancesFsxwCalculation from './FSxWCalculation/InstancesFsxwCalculation/InstancesFsxwCalculation';
+import FsxwSazCalculation from './FSxWCalculation/FsxwSazCalculation/FsxwSazCalculation';
+import ClonesFsxwCalculation from './FSxWCalculation/ClonesFsxwCalculation/ClonesFsxwCalculation';
+import TotalMonthlyCostFsxwCalculation from './FSxWCalculation/TotalMonthlyCostFsxwCalculation/TotalMonthlyCostFsxwCalculation';
+import ShadowCopyFsxwCalculation from './FSxWCalculation/ShadowCopyFsxwCalculation/ShadowCopyFsxwCalculation';
+import FsxwMazCalculation from './FSxWCalculation/FsxwMazCalculation/FsxwMazCalculation';
 
 const ViewCalculations = () => {
     const dispatch = useDispatch();
@@ -38,8 +44,8 @@ const ViewCalculations = () => {
                         },
                         {
                             title:
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL ||
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
                                     ? 'Explore savings manually'
                                     : selectedServerName,
                             onClick: () => {
@@ -86,16 +92,34 @@ const ViewCalculations = () => {
                             <TotalMonthlyCostOntapCalculation />
                         </div>
 
-                        <div>
-                            <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
-                                {GENERAL.MS_EBS_CALCULATION}
-                            </DsTypography>
-                            <InstancesEbsCalculation />
-                            <ElasticBlockStorageCalculation />
-                            <SnapshotsEBSCalculation />
-                            <ClonesEBSCalculation />
-                            <TotalMonthlyCostEbsCalculation />
-                        </div>
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (
+                            <div>
+                                <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
+                                    {GENERAL.MS_EBS_CALCULATION}
+                                </DsTypography>
+                                <InstancesEbsCalculation />
+                                <ElasticBlockStorageCalculation />
+                                <SnapshotsEBSCalculation />
+                                <ClonesEBSCalculation />
+                                <TotalMonthlyCostEbsCalculation />
+                            </div>
+                        )}
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW && (
+                            <div>
+                                <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
+                                    {GENERAL.MS_FSXW_CALCULATION}
+                                </DsTypography>
+                                <InstancesFsxwCalculation />
+                                {viewCalculationsResponse?.azType === FSX_AZ_TYPE.SINGLE ? (
+                                    <FsxwSazCalculation />
+                                ) : (
+                                    <FsxwMazCalculation />
+                                )}
+                                <ShadowCopyFsxwCalculation />
+                                <ClonesFsxwCalculation />
+                                <TotalMonthlyCostFsxwCalculation />
+                            </div>
+                        )}
                     </div>
                 </AccordionController>
             </div>

@@ -164,6 +164,34 @@ async function callSsmExecution(
     }
 }
 
+async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableRegionType[] }> {
+    logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP');
+
+    try {
+        const fsxRegionResponse = await describeFSxOntapRegions();
+
+        const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+        const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
+
+        fsxRegionResponse.forEach(({ Value: regionCode }) => {
+            if (regionCode && !restrictedRegions.includes(regionCode)) {
+                fsxRegionsList.push({
+                    regionCode,
+                    regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
+                });
+            }
+        });
+
+        return { regions: fsxRegionsList };
+    } catch (error: any) {
+        logger.error('Get generic FSX ONTAP Region list has failed with error:', error);
+        if (error?.$metadata?.httpStatusCode && error.message) {
+            throw createError(error?.$metadata?.httpStatusCode, `Error fetching generic fsx region ${error.message}`);
+        }
+        throw new Error(`Error fetching generic fsx region: ${error}`);
+    }
+}
+
 async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegionType[] }> {
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
@@ -253,6 +281,7 @@ async function getEc2SqlParameters(credentialsId: string, region: string, ec2Ins
 
 export {
     executeSSMDocument,
+    getGenericFSxOntapRegionsList,
     getFSxOntapRegionsList,
     getSSMConnectionStatus,
     ssmPutParameters,

@@ -18,7 +18,8 @@ const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
   'C:\\SSM\\Configure-LUNs.ps1',
   'C:\\SSM\\Create-Database.ps1',
   'C:\\SSM\\Invoke-virtualmount.ps1',
-  'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1'
+  'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1',
+  'C:\\SSM\\Script-Version.txt'
 `;
 
 const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
@@ -283,12 +284,37 @@ const HOST_AND_SQL_INFO_PS1 = [
     return ($sqlInstanceDriveLetterOrPathList | Select -Unique)
   }
   
+  Function GetClusterDetails {
+    $clusterDetailsResponse = @{}
+
+    $clusterDetailsResponse['isClustered'] = $False
+
+    $clusterServiceStatus = (Get-Service -Name ClusSvc -ErrorAction SilentlyContinue).Status
+    if ($clusterServiceStatus -eq "Running") {
+      $clusterDetailsResponse['isClustered'] = $True
+      $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
+      If ($clusterName) {
+        $clusterDetailsResponse['name'] = $clusterName
+        $clusterDetailsResponse['windowsClusterNodes'] = (Get-ClusterNetworkInterface)
+                   
+        If (Get-ClusterResource -ErrorAction SilentlyContinue | ? { $_.ResourceType -eq "SQL Server Availability Group" }) {
+          $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
+        } else {
+          $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
+        }
+      }
+    }
+
+    return $clusterDetailsResponse
+  }
+    
   try {
     $responseObject = @{}
     $instanceSectionStartTime = Get-Date
     $sqlServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $DiskTargetInfoMap = GetDiskDriveDetails
     $MappedDrivesWithPath, $RegistryErrors = GetSMBMappedDrivesWithPath
+    $clusterDetails = GetClusterDetails
     $SMBConnections = GetSMBConnections
   
     $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
@@ -324,28 +350,21 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['sqlServerState'] = $sqlService.State
       $responseObject['windowsOsVersion'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
       
-      $clusterServiceStatus = (Get-Service -Name ClusSvc -ErrorAction SilentlyContinue).Status
-      if ($clusterServiceStatus -eq "Running") {
-        $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
-        If ($clusterName) {
-          $responseObject['sqlServerNodes'] = (Get-ClusterOwnerNode -ResourceType "SQL Server Availability Group" -ErrorAction SilentlyContinue).OwnerNodes.NodeName
-          $responseObject['nodeIps'] =  (Get-ClusterNetworkInterface | select-object -ExpandProperty Address)
-                    
-          If (Get-ClusterResource -ErrorAction SilentlyContinue | ? { $_.ResourceType -eq "SQL Server Availability Group" }) {
-            $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
-          } else {
-            $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
-          }
-        } Else {
-          $responseObject['failureInfo'] += "\${instanceName}: Cluster details not available." +
-          " If AOAG cluster, the remote server may be paused or is in the process of being started." +
-          " If FCI cluster, make sure the cluster service is running on all nodes in the cluster.\`n"
-        }
-      } else {
+      $sqlNodes = $null
+      if ($clusterDetails['isClustered']) {
+        $responseObject['windowsClusterName'] = $clusterDetails['name']
+        $responseObject['windowsClusterNodes'] = $clusterDetails['windowsClusterNodes']
+        $sqlNodes = (Get-ClusterResource -ErrorAction SilentlyContinue -Name "SQL Server" | ? { $_.OwnerGroup -eq "SQL Server ($instanceName)" } | Get-ClusterOwnerNode).OwnerNodes.Name
+      }
+        
+      if ([string]::IsNullOrEmpty($sqlNodes)) {
         $responseObject['sqlServerNodes'] = hostname
         $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
-      }
-  
+      } else {
+        $responseObject['sqlServerNodes'] =  $sqlNodes
+        $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = $clusterDetails['${SQL_SERVER_DEPLOYMENT_TYPE}']
+      }             
+
       if ($sqlService.State -eq "Running") {
         Get-Command -Type Application sqlcmd > $null 2> $null
         If ($? -eq $True) {
@@ -355,7 +374,6 @@ const HOST_AND_SQL_INFO_PS1 = [
           try {
             $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
             $responseObject['windowsAuthentication'] = $?
-    
   
             $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance
             if ($? -eq $False) {

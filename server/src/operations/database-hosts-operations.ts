@@ -47,7 +47,8 @@ import {
     ONLINE,
     OFFLINE,
     SQL_SERVICE_STATE,
-    UNKNOWN
+    UNKNOWN,
+    WIN_SQL_EC2_USAGE_OPERATION
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1774,7 +1775,8 @@ async function getDatabaseHostSummaryV2(
         resource_name: resourceName,
         region,
         credentials_id: credentialsId,
-        metadata
+        metadata,
+        ec2UsageOperation
     } = resourceDetail;
 
     let fieldsValues: Array<string> = [];
@@ -1874,18 +1876,17 @@ async function getDatabaseHostSummaryV2(
                 promises.push(Promise.resolve());
             }
 
-            if (getUsageEstimation) {
+            if (getUsageEstimation && activeNodeInstanceId) {
                 promises.push(
-                    getBillingOrPriceEstimation(
-                        resourceDetail,
-                        activeNodeInstanceId || node1InstanceId,
-                        isManagedResource
-                    ).catch(error => {
-                        logger.error(`Error while fetching data: ${error}.`);
-                        if (DATABASE_HOSTS_INDEX_MAPPING_V2[promises.length - 1]) {
-                            errormessages[DATABASE_HOSTS_INDEX_MAPPING_V2[promises.length - 1]] = JSON.stringify(error);
+                    getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource).catch(
+                        error => {
+                            logger.error(`Error while fetching data: ${error}.`);
+                            if (DATABASE_HOSTS_INDEX_MAPPING_V2[promises.length - 1]) {
+                                errormessages[DATABASE_HOSTS_INDEX_MAPPING_V2[promises.length - 1]] =
+                                    JSON.stringify(error);
+                            }
                         }
-                    })
+                    )
                 );
             } else {
                 promises.push(Promise.resolve());
@@ -2002,6 +2003,7 @@ async function getDatabaseHostSummaryV2(
             `Error while fetching database hosts details ${accountId}, ${error}`
         );
     }
+    databaseHostDetails.sqlLicenseIncluded = WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation!) || false;
     return databaseHostDetails;
 }
 

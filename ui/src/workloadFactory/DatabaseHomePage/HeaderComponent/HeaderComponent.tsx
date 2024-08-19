@@ -15,6 +15,7 @@ import {
 } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import { ReactComponent as BlueXPDatabase } from '../../../assets/blueXPDatabase.svg';
 import Inventory from '../../Inventory/Inventory';
 import { useDispatch } from 'react-redux';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
@@ -34,7 +35,7 @@ import {
 } from '../../../utils/apiService';
 import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
-import { WLF_TABS, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import { SAVINGS_CALC_MODE, WLF_TABS, WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
 import InventoryApis from '../../Inventory/InventoryApis';
@@ -44,7 +45,10 @@ import ExploreSavings from '../../ExploreSavings/ExploreSavings';
 import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCalulator';
 import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculations';
 import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorApi';
-import { setSavingsCalculatorRefresh } from '../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setSavingsCalculatorFrom,
+    setSavingsCalculatorRefresh
+} from '../../../store/workloadFactory/exploreSavingsSlice';
 import SandboxApis from '../../Sandbox/SandboxApis';
 import InventoryV2 from '../../InventoryV2/InventoryV2';
 import InventoryApisV2 from '../../InventoryV2/InventoryApisV2';
@@ -64,6 +68,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
+
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const { statusData, statusLoading } = useAppSelector(state => state.headers.getStatus);
 
@@ -94,20 +100,33 @@ const HeaderComponent = ({ tab }: Tab) => {
         let tabValue = '';
         if (tab === WLF_TABS.INVENTORY) {
             tabValue = WLF_TABS.INVENTORY;
+        } else if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+            tabValue = WLF_TABS.SAVINGS_CALCULATOR;
+            dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
+        } else if (tab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+            tabValue = WLF_TABS.SAVINGS_CALCULATOR;
+            dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
         } else {
             tabValue = selectedHeaderTab;
         }
         dispatch(setSelectedHeaderTab(tabValue));
-    }, []);
+    }, [tab]);
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            window.parent.postMessage(
-                { type: 'SERVICE:NAVIGATE', payload: { pathname: './marketing', replace: true } },
-                '*'
-            );
+            if (!isWorkloadFactory) {
+                window.parent.postMessage(
+                    { type: 'SERVICE:NAVIGATE', payload: { pathname: './fsxdb/marketing', replace: true } },
+                    '*'
+                );
+            } else {
+                window.parent.postMessage(
+                    { type: 'SERVICE:NAVIGATE', payload: { pathname: './marketing', replace: true } },
+                    '*'
+                );
+            }
         } else {
             setStatusChk(false);
         }
@@ -296,6 +315,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     };
 
     const TopBarComponent = () => {
+        const toShowPostgress = localStorage.getItem('postgress');
         return (
             <div className={styles.spaceArea}>
                 <div className={styles.contentArea}>
@@ -311,6 +331,19 @@ const HeaderComponent = ({ tab }: Tab) => {
                         >
                             <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
                         </Button>
+
+                        {toShowPostgress && (
+                            <Button
+                                variant="primary"
+                                onClick={() => {
+                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                }}
+                                id={'deploy-button'}
+                            >
+                                <div className={styles.buttonStyle}>{'Deploy Postgress'}</div>
+                            </Button>
+                        )}
+
                         {refreshComponent()}
                     </div>
                 </div>
@@ -327,9 +360,23 @@ const HeaderComponent = ({ tab }: Tab) => {
             <div className={styles.headerComponent}>
                 <div className={styles.firstSection}>
                     <div className={styles.firstRow}>
-                        <Typography variant="Regular_24" className={styles.heading}>
-                            {GENERAL.DATABASES}
-                        </Typography>
+                        {!isWorkloadFactory && (
+                            <>
+                                <BlueXPDatabase />
+                                <Typography
+                                    variant="Regular_24"
+                                    className={styles.heading}
+                                    style={{ color: 'var(--text-button-primary)' }}
+                                >
+                                    {GENERAL.DATABASES}
+                                </Typography>
+                            </>
+                        )}
+                        {isWorkloadFactory && (
+                            <Typography variant="Regular_24" className={styles.heading}>
+                                {GENERAL.DATABASES}
+                            </Typography>
+                        )}
                     </div>
 
                     <div className={styles.secondRow}>
@@ -338,8 +385,16 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 variant="Regular_14"
                                 className={
                                     selectedHeaderTab === WLF_TABS.DASHBOARD
-                                        ? `${styles.headerPart1} ${styles.active}`
-                                        : `${styles.headerPart1}`
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart1
+                                                  : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart1
+                                                  : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
+                                          }`
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.DASHBOARD);
@@ -352,8 +407,16 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 variant="Regular_14"
                                 className={
                                     selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.OVERVIEW
-                                        ? `${styles.headerPart2} ${styles.active}`
-                                        : `${styles.headerPart2}`
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart2
+                                                  : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart2
+                                                  : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
+                                          }`
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.INVENTORY);
@@ -367,8 +430,16 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 variant="Regular_14"
                                 className={
                                     selectedHeaderTab === WLF_TABS.SANDBOXES
-                                        ? `${styles.headerPart4} ${styles.active}`
-                                        : `${styles.headerPart4}`
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart4
+                                                  : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart4
+                                                  : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
+                                          }`
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.SANDBOXES);
@@ -384,8 +455,16 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
                                     selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                                     selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                                        ? `${styles.headerPart5} ${styles.active}`
-                                        : `${styles.headerPart5}`
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart5
+                                                  : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart5
+                                                  : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                          }`
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.EXPLORE_SAVINGS);
@@ -399,8 +478,16 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 variant="Regular_14"
                                 className={
                                     selectedHeaderTab === WLF_TABS.JOB_MONITORING
-                                        ? `${styles.headerPart3} ${styles.active}`
-                                        : `${styles.headerPart3}`
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart3
+                                                  : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart3
+                                                  : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
+                                          }`
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.JOB_MONITORING);

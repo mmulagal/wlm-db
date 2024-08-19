@@ -50,6 +50,15 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const navigate = useNavigate();
     const [fsxData, setFsxData] = useState({});
     const [msSqlInstance, setMsSqlInstance] = useState({});
+    const [storageType, setStorageType] = useState('');
+
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+            setStorageType(GENERAL.FSX_FOR_WINDOWS);
+        } else {
+            setStorageType(GENERAL.EBS);
+        }
+    }, [savingsCalculatorFrom]);
 
     useEffect(() => {
         const selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
@@ -89,7 +98,11 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             instanceType: instanceType,
             windowsServer: windowsServer
         };
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL && selectedManualDeploymentModel) {
+        if (
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) &&
+            selectedManualDeploymentModel
+        ) {
             mssqlInstanceData = {
                 ...mssqlInstanceData,
                 serverInstallationMode:
@@ -208,7 +221,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                 {GENERAL.MS_SQL_TWO_INSTANCES}
                             </DsTypography>
 
-                            {MSSQLServerInstance(msSqlInstance).map(
+                            {MSSQLServerInstance(msSqlInstance, storageType).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
                                     <TableLayout data={data} key={index} />
                                 )
@@ -216,7 +229,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                             <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
                                 {GENERAL.FSX_FOR_ONTAP} 1
                             </DsTypography>
-                            {calculatedFSXData(fsxData).map(
+                            {calculatedFSXData(fsxData, storageType).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
                                     <TableLayout data={data} key={index} />
                                 )
@@ -225,7 +238,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                             <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
                                 {GENERAL.FSX_FOR_ONTAP} 2
                             </DsTypography>
-                            {calculatedFSXData(fsxData).map(
+                            {calculatedFSXData(fsxData, storageType).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
                                     <TableLayout data={data} key={index} />
                                 )
@@ -248,7 +261,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                 {GENERAL.MS_SQL_SINGLE_INSTANCES}
                             </DsTypography>
 
-                            {MSSQLServerInstance(msSqlInstance).map(
+                            {MSSQLServerInstance(msSqlInstance, storageType).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
                                     <TableLayout data={data} key={index} />
                                 )
@@ -260,7 +273,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                             >
                                 {GENERAL.FSX_FOR_ONTAP}
                             </DsTypography>
-                            {calculatedFSXData(fsxData).map(
+                            {calculatedFSXData(fsxData, storageType).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
                                     <TableLayout data={data} key={index} />
                                 )

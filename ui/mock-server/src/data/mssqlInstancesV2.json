@@ -212,7 +212,8 @@
                 "ec2InstanceType":"m5.large",
                 "ec2InstanceName":"OSAKAJUN109q49I-2"
              }
-          ]
+          ],
+          "sqlLicenseIncluded": true
        },
        {
             "id":"i-09adb571ab7dd6c17",
@@ -338,7 +339,8 @@
                     },
                     "sqlServerDeploymentType":"Standalone"
                 }
-            ]
+            ],
+            "sqlLicenseIncluded": false
        },
        {
             "id":"i-0db20e831d1ce41e3",
@@ -665,7 +667,8 @@
                 "ec2InstanceType":"m5.large",
                 "ec2InstanceName":"sqlnode2-31974"
             }
-            ]
+            ],
+            "sqlLicenseIncluded": true
         },
         {
             "id":"i-0397e170050487f1c",
@@ -794,7 +797,8 @@
                 "ec2InstanceType":"m5.large",
                 "ec2InstanceName":"sqlnode2-31974"
             }
-            ]
+            ],
+            "sqlLicenseIncluded": true
         },
         {
             "id":"i-065dddc35ba1046ac",
@@ -923,7 +927,8 @@
                 "ec2InstanceType":"m5.large",
                 "ec2InstanceName":"sqlnode2-31974"
             }
-            ]
+            ],
+            "sqlLicenseIncluded": true
         },
         {
             "id":"i-008b54cdabafdbc58",
@@ -1052,7 +1057,8 @@
                 "ec2InstanceType":"m5.large",
                 "ec2InstanceName":"sqlnode2-31974"
             }
-            ]
+            ],
+            "sqlLicenseIncluded": true
         },
         {
             "id":"i-04e10959ecb1e9c65",
@@ -1247,7 +1253,8 @@
                 "ec2InstanceType":"m5.large",
                 "ec2InstanceName":"sqlnode2-31974"
             }
-            ]
+            ],
+            "sqlLicenseIncluded": true
         },
         {
             "id":"i-0b8da23acc3e1db9a",
@@ -1373,7 +1380,8 @@
                     },
                     "sqlServerDeploymentType":"Standalone"
                 }
-            ]
+            ],
+            "sqlLicenseIncluded": true
        },
        {
             "id":"i-04eebc22cce223f53",
@@ -1499,7 +1507,8 @@
                     },
                     "sqlServerDeploymentType":"Standalone"
                 }
-            ]
+            ],
+            "sqlLicenseIncluded": false
         },
         {
             "id":"i-0756aefb9a361daa9",
@@ -1625,7 +1634,8 @@
                     },
                     "sqlServerDeploymentType":"Standalone"
                 }
-            ]
+            ],
+            "sqlLicenseIncluded": true
         }
     ]
  }
