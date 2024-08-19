@@ -385,13 +385,17 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 variant="Regular_14"
                                 className={
                                     selectedHeaderTab === WLF_TABS.DASHBOARD
-                                        ? `${styles.headerPart1} ${styles.active}`
-                                        : `${styles.headerPart1}`
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart1
+                                                  : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart1
+                                                  : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
+                                          }`
                                 }
-                                style={{
-                                    color: !isWorkloadFactory ? 'var(--text-button-primary)' : '',
-                                    fontWeight: !isWorkloadFactory ? 400 : ''
-                                }}
                                 onClick={() => {
                                     handleClick(WLF_TABS.DASHBOARD);
                                 }}
@@ -403,15 +407,19 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 variant="Regular_14"
                                 className={
                                     selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.OVERVIEW
-                                        ? `${styles.headerPart2} ${styles.active}`
-                                        : `${styles.headerPart2}`
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart2
+                                                  : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart2
+                                                  : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
+                                          }`
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.INVENTORY);
-                                }}
-                                style={{
-                                    color: !isWorkloadFactory ? 'var(--text-button-primary)' : '',
-                                    fontWeight: !isWorkloadFactory ? 400 : ''
                                 }}
                                 id="inventory"
                             >
@@ -422,13 +430,17 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 variant="Regular_14"
                                 className={
                                     selectedHeaderTab === WLF_TABS.SANDBOXES
-                                        ? `${styles.headerPart4} ${styles.active}`
-                                        : `${styles.headerPart4}`
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart4
+                                                  : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart4
+                                                  : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
+                                          }`
                                 }
-                                style={{
-                                    color: !isWorkloadFactory ? 'var(--text-button-primary)' : '',
-                                    fontWeight: !isWorkloadFactory ? 400 : ''
-                                }}
                                 onClick={() => {
                                     handleClick(WLF_TABS.SANDBOXES);
                                 }}
@@ -443,15 +455,19 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
                                     selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                                     selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                                        ? `${styles.headerPart5} ${styles.active}`
-                                        : `${styles.headerPart5}`
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart5
+                                                  : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart5
+                                                  : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                          }`
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.EXPLORE_SAVINGS);
-                                }}
-                                style={{
-                                    color: !isWorkloadFactory ? 'var(--text-button-primary)' : '',
-                                    fontWeight: !isWorkloadFactory ? 400 : ''
                                 }}
                                 id="explore-savings"
                             >
@@ -462,15 +478,19 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 variant="Regular_14"
                                 className={
                                     selectedHeaderTab === WLF_TABS.JOB_MONITORING
-                                        ? `${styles.headerPart3} ${styles.active}`
-                                        : `${styles.headerPart3}`
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart3
+                                                  : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart3
+                                                  : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
+                                          }`
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.JOB_MONITORING);
-                                }}
-                                style={{
-                                    color: !isWorkloadFactory ? 'var(--text-button-primary)' : '',
-                                    fontWeight: !isWorkloadFactory ? 400 : ''
                                 }}
                                 id="job-monitoring"
                             >
