@@ -29,9 +29,6 @@ const Home = () => {
     const { statusData } = useAppSelector(state => state.headers.getStatus);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const locate = useLocation();
-
-    console.log(locate.pathname);
 
     //This code is only for BlueXP
     useRunOnce(() => {
