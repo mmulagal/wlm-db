@@ -23,7 +23,8 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Read fsxadmin password from secrets and encode the username:password with base64String
-. ..\common\InvokeRetryCommand.ps1
+$ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+. "$ScriptsPath\common\InvokeRetryCommand.ps1" 
 $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
 
 $FSxUserName = $SsmParameter.fsx.username
