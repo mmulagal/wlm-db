@@ -33,15 +33,15 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
 export const handleManualTCOEBS = (dispatch: any, navigate: any) => {
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
     dispatch(setDisableState(true));
-    navigate('./databases/exploreSavingsEBS', { replace: true });
-    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+    navigate('../databases/exploreSavingsEBS', { replace: true });
+    // dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
 export const handleManualTCOFSXW = (dispatch: any, navigate: any) => {
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
     dispatch(setDisableState(false));
-    navigate('./databases/exploreSavingsFsxW', { replace: true });
-    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+    navigate('../databases/exploreSavingsFsxW', { replace: true });
+    // dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {

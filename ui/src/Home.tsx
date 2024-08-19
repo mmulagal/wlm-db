@@ -31,7 +31,7 @@ const Home = () => {
     const navigate = useNavigate();
     const locate = useLocation();
 
-    console.log(location.pathname);
+    console.log(locate.pathname);
 
     //This code is only for BlueXP
     useRunOnce(() => {
