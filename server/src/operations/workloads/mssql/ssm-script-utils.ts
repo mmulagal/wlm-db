@@ -244,8 +244,8 @@ if($sqlAuthEnabled) {
 }
 
 #Get default collation and default version of SQL server
-$defaultSqlCollation = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryCollation" -InstanceName "$executableInstanceName" -ExtraArguments -y0
-$sqlVersion = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryVersion" -InstanceName "$executableInstanceName" -ExtraArguments -y0
+$defaultSqlCollation = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryCollation" -InstanceName "$executableInstanceName"
+$sqlVersion = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryVersion" -InstanceName "$executableInstanceName"
 
 Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 
@@ -994,7 +994,7 @@ const sqlQueryExecution = (
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
-    $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstanceName}" -ExtraArguments -y0
+    $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstanceName}"
 
     $queryResponse 
 
@@ -1019,18 +1019,18 @@ Function Call-SqlCmd {
     $sqlresponse = $null
     if ($sqlCredential.useSqlAuth -eq $True) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
-            $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query";
+            $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0;
         }
         else {
-            $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" $ExtraArguments;
+            $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
         }
     }
     if ([string]::IsNullOrEmpty($sqlresponse)) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
-            $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query";
+            $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0;
         }
         else {
-            $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" $ExtraArguments;
+            $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
         }
     }
     return $sqlresponse

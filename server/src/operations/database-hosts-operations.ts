@@ -1542,7 +1542,8 @@ async function getDatabaseInstanceSummary(
         is_default: isdefaultInstance,
         metadata,
         created_time: creationDate,
-        database_deployment_type: databaseDeploymentType
+        database_deployment_type: databaseDeploymentType,
+        sqlAuthEnabled
     } = databaseInstances;
 
     const { userDatabase = [] } = metadata as unknown as Metadata;
@@ -1606,7 +1607,7 @@ async function getDatabaseInstanceSummary(
                               region,
                               activeNodeInstanceId,
                               databaseInstanceName,
-                              databaseInstances.sqlAuthEnabled
+                              sqlAuthEnabled
                           )
                       ]
                     : [Promise.resolve()]), // Fetch server metadata
@@ -1628,7 +1629,7 @@ async function getDatabaseInstanceSummary(
                               region,
                               activeNodeInstanceId,
                               databaseInstanceName,
-                              databaseInstances.sqlAuthEnabled
+                              sqlAuthEnabled
                           )
                       ]
                     : [Promise.resolve()]), // Fetch io latency data
@@ -1643,7 +1644,7 @@ async function getDatabaseInstanceSummary(
                               undefined,
                               databaseInstances,
                               VERSION_2_0,
-                              databaseInstances.sqlAuthEnabled
+                              sqlAuthEnabled
                           )
                       ]
                     : [Promise.resolve()]), // Fetch protection status
@@ -1664,7 +1665,7 @@ async function getDatabaseInstanceSummary(
                               region,
                               activeNodeInstanceId,
                               databaseInstanceName,
-                              databaseInstances.sqlAuthEnabled
+                              sqlAuthEnabled
                           )
                       ]
                     : [Promise.resolve()]),
@@ -1939,7 +1940,7 @@ async function getDatabaseHostSummaryV2(
                 }
                 if (runningDatabaseInstances.length > 0) {
                     const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
-                        const instanceDetail = databaseInstancesDetail?.filter(
+                        const instanceDetail = databaseInstancesDetail?.find(
                             (e: InstanceDetails) => e.instanceName === instance.database_instance_name
                         );
                         instance.sqlAuthEnabled = instanceDetail[0].sqlAuthEnabled;

@@ -868,17 +868,18 @@ async function getMappings(
     });
 
     try {
-        const { fsxId, database } = srcDetails;
+        const { fsxId, database, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } =
+            srcDetails;
 
         let command = [
             getDbMappedOntapVolumes(
                 fsxId,
                 region,
                 database,
-                srcDetails.databaseInstanceName,
-                srcDetails.instanceName,
+                databaseInstanceName,
+                instanceName,
                 `Sandbox:${sandboxName}:`,
-                srcDetails.sqlAuthEnabled
+                sqlAuthEnabled
             )
         ];
 
@@ -890,7 +891,7 @@ async function getMappings(
             credentialsId,
             region,
             command,
-            srcDetails.activeNodeInstanceId,
+            activeNodeInstanceId,
             accountId,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT

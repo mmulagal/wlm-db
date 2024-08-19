@@ -623,7 +623,7 @@ async function invokeSSMForDatabaseDeployment(
             }
             sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
             databaseInstanceId = instanceDetail.database_instance_id;
-            isSqlAuthEnabled = sqlAuthEnabled || isSqlAuthEnabled;
+            isSqlAuthEnabled = sqlAuthEnabled || false;
         }
 
         if (isClustered === 'true' && standbyNodeInstanceId) {
@@ -1696,7 +1696,7 @@ async function getCollationDetails(
         if (instanceDetail && instancesDetails) {
             const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
-            const runningInstance = instancesDetails.filter(
+            const runningInstance = instancesDetails.find(
                 instance =>
                     instance.instanceName === instanceDetail.database_instance_name &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING

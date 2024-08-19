@@ -403,7 +403,7 @@ const getDbMappedOntapVolumes = (
         if($sqlAuthEnabled) {
             ${readSsmParameter(instanceName)}
         }
-        $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "${executableInstanceName}" -ExtraArguments -y0
+        $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "${executableInstanceName}"
 
         Write-Information "$logPrefix SQL response: $queryResponse"
         if ([string]::IsNullOrEmpty($queryResponse)) {
@@ -807,12 +807,12 @@ const createClonedDb = (
         }
 
         $selectquery = "SET NOCOUNT ON; SELECT name, state_desc FROM sys.databases where name = '$dbname' FOR JSON PATH;"
-        $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$selectquery" -InstanceName "${executableInstanceName}" -ExtraArguments -y0
+        $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$selectquery" -InstanceName "${executableInstanceName}"
 
         Write-Information "$logPrefix SQL response: $sqlresponse"
         [string[]]$ExistingDatabases = $sqlresponse | ConvertFrom-Json | % { $_.name }
 
-        $selectresult = (Call-SqlCmd -SqlCredential $sqlCredential -Query "$selectquery" -InstanceName "${executableInstanceName}" -ExtraArguments -y0) |  ConvertFrom-Json
+        $selectresult = (Call-SqlCmd -SqlCredential $sqlCredential -Query "$selectquery" -InstanceName "${executableInstanceName}") |  ConvertFrom-Json
 
         if ($selectresult.count -gt 0) {
             Write-Error "$logPrefix Database $dbname already exists and is in $($selectresult[0].state_desc) state. Exiting..."
@@ -837,8 +837,8 @@ const createClonedDb = (
                 .join(',\n')}
 "@
         
-        Call-SqlCmd -SqlCredential $sqlCredential -Query "$createQuery" -InstanceName "${executableInstanceName}" -ExtraArguments -y0
-        Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET OFFLINE" -InstanceName "${executableInstanceName}" -y0 
+        Call-SqlCmd -SqlCredential $sqlCredential -Query "$createQuery" -InstanceName "${executableInstanceName}"
+        Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET OFFLINE" -InstanceName "${executableInstanceName}"
         
         # Remove the actual files
         ${[...dataFileList, ...logFileList]
@@ -859,7 +859,7 @@ const createClonedDb = (
             })
             .join('\n')}
         
-        Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET ONLINE" -InstanceName "${executableInstanceName}" -y0 
+        Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET ONLINE" -InstanceName "${executableInstanceName}"
     } catch {
         Write-Error "$logPrefix $($_.Exception.Message)"
     }
@@ -952,7 +952,7 @@ const cleanUpOntapResources = (
                 $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
                 
                 $sqlres = $null
-                $sqlres = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstance}" -ExtraArguments -y0
+                $sqlres = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstance}"
 
                 if (-not [string]::IsNullOrEmpty($sqlres)) {
                     Write-Information "$logPrefix Database $dbname is in use"
@@ -1034,7 +1034,7 @@ const cleanUpOntapResources = (
             try {
                 $deleteQuery = "SET NOCOUNT ON; DROP DATABASE IF EXISTS $DBName;"
                 $sqlresponse = $null
-                $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$deleteQuery" -InstanceName "${executableInstance}" -ExtraArguments -y0
+                $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$deleteQuery" -InstanceName "${executableInstance}"
                 
                 if (-not [string]::IsNullOrEmpty($sqlresponse)) {
                     throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
@@ -1191,7 +1191,7 @@ const detachDbAndRemoveAccessPath = (
     try {
         $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$dbname' GROUP BY dbid FOR JSON PATH"
 
-        $sqlres = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstance}" -ExtraArguments -y0
+        $sqlres = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstance}"
         if ($sqlres -ne $null) {
             Write-Information "$logPrefix Database $dbname is in use"
             $responseObject['error'] = "Database $dbname is in use"
@@ -1204,13 +1204,7 @@ const detachDbAndRemoveAccessPath = (
             SELECT name, value
             FROM fn_listextendedproperty(default, default, default, default, default, default, default) FOR JSON PATH;
 "@
-        $sqlresponse = $null
-        if ($sqlCredential.useSqlAuth -eq $True) {
-            $sqlresponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "${executableInstance}"  -Q $query -y 0 -m 1
-        }
-        if ([string]::IsNullOrEmpty($response)) {
-            $sqlresponse = sqlcmd -S "${executableInstance}"  -Q $query -y 0 -m 1
-        }
+        $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstance}" -ExtraArguments -m1
         $sqlresponse = $sqlresponse | ConvertFrom-JSON
 
         $sqlresponse | ForEach-Object {
@@ -1228,7 +1222,7 @@ const detachDbAndRemoveAccessPath = (
 
         try {
             $detach = "EXEC sp_detach_db '$dbname', 'true'"
-            $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$detach" -InstanceName "${executableInstance}" -ExtraArguments -y0
+            $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$detach" -InstanceName "${executableInstance}"
 
             Write-Information "$logPrefix Detach response: $sqlresponse"
 
@@ -1608,7 +1602,7 @@ const addAccessPathAndAttachDb = (
 "@
         
         $attachresponse = $null
-        $attachresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$attachQuery" -InstanceName "${executableInstance}" -ExtraArguments -y0
+        $attachresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$attachQuery" -InstanceName "${executableInstance}"
         if ($attachresponse -ne $null) {
             $errorMessage = "SQLServerError: Could not create and attach the database $dbname. $attachresponse"
             Write-Information "$logPrefix $errorMessag"
@@ -1798,13 +1792,7 @@ const readExtendedPropertiesOfSandbox = (
             SELECT name, value
             FROM fn_listextendedproperty(default, default, default, default, default, default, default) FOR JSON PATH;
 "@
-        $sqlresponse = $null
-        if ($sqlCredential.useSqlAuth -eq $True) {
-            $sqlresponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "${executableInstanceName}" -Q $query -y 0 -m 1
-        }
-        if ([string]::IsNullOrEmpty($sqlresponse)) {
-            $sqlresponse = sqlcmd -S "${executableInstanceName}" -Q $query -y 0 -m 1
-        }
+        $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstanceName}" -ExtraArguments -m1
         $sqlresponse = $sqlresponse | ConvertFrom-JSON
 
         $sqlresponse | ForEach-Object {
@@ -1914,7 +1902,7 @@ $responseObject = @{}
 try {
     $ip = (Invoke-WebRequest -URI http://169.254.169.254/latest/meta-data/local-ipv4 -UseBasicParsing).Content;
     $query = "SET NOCOUNT ON; SELECT DISTINCT local_tcp_port FROM sys.dm_exec_connections  WHERE local_tcp_port IS NOT NULL"
-    $port = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "$ip\\${instanceName}" -ExtraArguments -y0
+    $port = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "$ip\\${instanceName}"
     $responseObject['server'] = "$($ip):$($port)${instanceName ? `\\${instanceName}` : ''}"
 } catch {
     $responseObject['error'] = "Failed to get connection info: $_.Exception.Message"
