@@ -44,6 +44,7 @@ function purgeOlderJobs() {
     setInterval(async () => deleteOlderJobs(Date.now() - Number(purgeAfter)), Number(purgeInterval));
 }
 
+// Scheduled task to update and manage EC2 instance recommendation preferences based on recent usage, and remove entries for instances no longer available in AWS."
 function updateInstanceRecommendationPreferences() {
     setInterval(async () => {
         logger.info('Updating instance recommendation preferences');
