@@ -138,7 +138,7 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
         })
     );
 
-    if (fsxObject) {
+    if (fsxObject.length) {
         return fsxObject[0];
     }
 
