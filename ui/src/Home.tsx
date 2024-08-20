@@ -22,6 +22,7 @@ import { useAppSelector } from './store/storeHooks';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventorySlice';
 import { useRunOnce } from './common/hooks/useRunOnce';
 import { setTabInfoFOrBXP } from './utils/utilityFunctions';
+import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -36,10 +37,10 @@ const Home = () => {
             window.onmessage = (msg: any) => {
                 if (msg && msg?.data && msg?.data?.type === BXP_MESSAGES.SERVICE_LOCATION_CHANGE) {
                     if (statusData && !statusData?.isActive) {
-                        window.parent.postMessage(
-                            { type: 'SERVICE:NAVIGATE', payload: { pathname: './fsxdb/marketing', replace: true } },
-                            '*'
-                        );
+                        postBlueXPMessage({
+                            type: BlueXPListeners.navigate,
+                            payload: { pathname: './fsxdb/marketing', replace: true }
+                        });
                     } else {
                         const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
                         navigate('../fsxdb');
