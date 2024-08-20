@@ -47,7 +47,6 @@ import {
     DOMAIN_ADMIN_PASSWORD,
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE,
     TEMPLATE_FSX_PASSWORD,
     TEMPLATE_METRICS,
     TRIGGERED_FROM,
@@ -701,21 +700,20 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
         networkConfiguration,
-        sqlConfiguration.sqlDeploymentMode,
-        Boolean(fsxConfiguration.fsxFileSystemId)
+        sqlConfiguration.sqlDeploymentMode
     );
 
     if (vpcValidationCheck.isViolated) {
-        let errorMessage;
+        let errorMessage = '';
         if (vpcValidationCheck.violationMessage !== undefined) {
             errorMessage = vpcValidationCheck.violationMessage;
         } else if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
             errorMessage = STANDALONE_NETWORK_VIOLATION_MESSAGE;
-        } else {
-            errorMessage = FCI_NETWORK_VIOLATION_MESSAGE;
         }
-        logger.error('VPC validation error:', errorMessage);
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+        if (!isEmpty(errorMessage)) {
+            logger.error('VPC validation error:', errorMessage);
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage!);
+        }
     }
 
     const derivedParams = fsxConfiguration.fsxFileSystemId
@@ -938,8 +936,7 @@ async function deployCloudFormationTemplate(
 
     const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
         networkConfiguration,
-        sqlConfiguration.sqlDeploymentMode,
-        Boolean(fsxConfiguration.fsxFileSystemId)
+        sqlConfiguration.sqlDeploymentMode
     );
 
     if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {

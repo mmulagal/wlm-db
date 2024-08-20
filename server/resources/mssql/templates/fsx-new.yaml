@@ -238,6 +238,7 @@ Conditions:
     FSxIsKmsKeyIdEmpty: !Equals [!Ref FSxKmsKeyId, '']
     FSxIsSingleZoneDeployment: !Equals [!Ref DeploymentMode, 'SINGLE_AZ_1']
     FSxIsMultiZoneDeployment: !Equals [!Ref DeploymentMode, 'MULTI_AZ_1']
+    IsRouteTableIdsSame: !Equals [!Ref PreferredRouteTableId, !Ref StandbyRouteTableId]
 
 Resources:
     ONTAPSecurityGroup:
@@ -557,7 +558,11 @@ Resources:
                 RouteTableIds:
                     !If [
                         FSxIsMultiZoneDeployment,
-                        [!Ref PreferredRouteTableId, !Ref StandbyRouteTableId],
+                        !If [
+                          IsRouteTableIdsSame,
+                          [!Ref PreferredRouteTableId],
+                          [!Ref PreferredRouteTableId, !Ref StandbyRouteTableId]
+                        ],
                         !Ref AWS::NoValue
                     ]
                 ThroughputCapacity: !Ref FSxVolumeThroughputCapacity
