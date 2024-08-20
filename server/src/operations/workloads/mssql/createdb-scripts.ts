@@ -22,6 +22,21 @@ $FilePathString = '${filePathString}'
 $FSxDataVolumeName = '${fSxDataVolumeName}'
 $FSxLogVolumeName = '${fSxLogVolumeName}'
 
+Add-Type @"
+            using System.Net;
+            using System.Security.Cryptography.X509Certificates;
+            public class TrustAllCertsPolicy : ICertificatePolicy {
+                public bool CheckValidationResult(
+                ServicePoint srvPoint, X509Certificate certificate,
+                WebRequest request, int certificateProblem) {
+                    return true;
+                }
+            }
+"@
+
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 $WarningPreference = 'SilentlyContinue';
 $silenttranscript = (Start-Transcript -Path C:\\cfn\\log\\cleanup_ontap.log.txt -Append)
@@ -171,7 +186,7 @@ function callGetOrDeleteApi {
             Invoke-RestMethod @Params -Certificate $restcert
         }
         else {
-            Invoke-RestMethod @Params -SkipCertificateCheck
+            Invoke-RestMethod
         }
         
     }
