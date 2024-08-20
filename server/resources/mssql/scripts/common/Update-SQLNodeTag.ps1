@@ -6,7 +6,8 @@ param(
 )
 Import-Module -Name AWSPowerShell
 try {
-    . ..\InvokeRetryCommand.ps1
+    $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+    . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri http://169.254.169.254/latest/api/token
     $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
     $DeploymentCompletionTag = New-Object Amazon.EC2.Model.Tag

@@ -30,13 +30,13 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
     setESInstanceData(rowData, dispatch);
 };
 
-export const handleManualTCOEBS = (dispatch: any) => {
+export const handleManualTCOEBS = (dispatch: any, navigate: any) => {
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
-export const handleManualTCOFSXW = (dispatch: any) => {
+export const handleManualTCOFSXW = (dispatch: any, navigate: any) => {
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
     dispatch(setDisableState(false));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));

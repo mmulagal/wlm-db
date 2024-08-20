@@ -147,7 +147,7 @@ const PreviewDefault = () => {
             editable: GENERAL.YES,
             id: '17'
         },
-        { accordionName: GENERAL.DATABASE_NAME, defaultValue: dbName, editable: GENERAL.YES, id: '7' },
+        { accordionName: GENERAL.DATABASE_SERVER_NAME, defaultValue: dbName, editable: GENERAL.YES, id: '7' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,
             defaultValue: instanceValue?.value,

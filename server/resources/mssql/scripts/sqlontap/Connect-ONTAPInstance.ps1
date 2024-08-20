@@ -21,7 +21,8 @@ $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token }
 
 $ErrorActionPreference = "Stop"
 try {
-    . ..\common\InvokeRetryCommand.ps1
+    $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+    . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
     $fslist = Invoke-WithRetry -Command { Get-FSXFileSystem -FileSystemId $FileSystemId }
     #Fetch iSCSI interface addresses from the target SVM
 

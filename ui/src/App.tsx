@@ -7,7 +7,6 @@ import { useInitialize } from './utils/appConfig';
 import FullStoryComp from './common/FullStoryComp';
 import ComponentLoader from './common/ComponentLoader/ComponentLoader';
 import { useEffect, useRef } from 'react';
-import { postMessageToCM } from './utils/bxputils';
 
 function App() {
     const { loading, accountId, accessToken } = useAppSelector(state => state.auth);
