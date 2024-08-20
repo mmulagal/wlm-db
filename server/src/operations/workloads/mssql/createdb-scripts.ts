@@ -1,39 +1,47 @@
+import { getVolumeIdFromPath } from './sandbox-scripts';
+
+const cleanupResources = (
+    fileSystemId: string,
+    sqlVMName: string,
+    iGROUP: string,
+    dbName: string,
+    isClustered: string,
+    instanceName: string,
+    isDefaultInstance: string,
+    filePathString: string,
+    fSxDataVolumeName: string = '',
+    fSxLogVolumeName: string = ''
+) => `
+
+$FileSystemId = '${fileSystemId}'
+$SQLVMName = '${sqlVMName}'
+$IGROUP = '${iGROUP}'
+$DBName = '${dbName}'
+$IsClustered = '${isClustered}'
+$InstanceName = '${instanceName}'
+$IsDefaultInstance = '${isDefaultInstance}'
+$FilePathString = '${filePathString}'
+$FSxDataVolumeName = '${fSxDataVolumeName}'
+$FSxLogVolumeName = '${fSxLogVolumeName}'
+
+Add-Type @"
+            using System.Net;
+            using System.Security.Cryptography.X509Certificates;
+            public class TrustAllCertsPolicy : ICertificatePolicy {
+                public bool CheckValidationResult(
+                ServicePoint srvPoint, X509Certificate certificate,
+                WebRequest request, int certificateProblem) {
+                    return true;
+                }
+            }
+"@
+
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
-    [string]$FileSystemId,
-
-    [Parameter(Mandatory = $true)]
-    [string]$SQLVMName,
-
-    [Parameter(Mandatory = $false)]
-    [string]$FSxDataVolumeName,
-
-    [Parameter(Mandatory = $false)]
-    [string]$FSxLogVolumeName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$IGROUP,
-    
-    [Parameter(Mandatory = $true)]
-    [string]$DBName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$IsClustered,   
-    
-    [Parameter(Mandatory = $true)]
-    [string]$InstanceName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$IsDefaultInstance,
-
-    [Parameter(Mandatory = $true)]
-    [string]$FilePathString
-
-)
 $WarningPreference = 'SilentlyContinue';
-$silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append)
+$silenttranscript = (Start-Transcript -Path C:\\cfn\\log\\cleanup_ontap.log.txt -Append)
 
 $ErrorActionPreference = "Stop"
 
@@ -41,7 +49,7 @@ $ErrorActionPreference = "Stop"
 
 $FilePaths = $FilePathString.Split(',')
 $FSxCredStore = "/netapp/wlmdb/$FileSystemId"
-$credobject = (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json
+$credobject = (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
 
 $username = $credobject.fsx.username
 $password = $credobject.fsx.password
@@ -69,27 +77,7 @@ else {
     $loglabel = $DBName + "-Log"
 }
 
-Function Get-VolumeIdFromPath {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$absolutePath
-    )
-
-    $fullPath = [string](Resolve-Path $absolutePath)
-    $bestMatch = ''
-    $bestMatchObj = $null
-    gwmi Win32_MountPoint | % {
-        $_.Directory -match '="(.*)"' | Out-Null
-        $mountDir = $matches[1].Replace('\\\\', '\\')
-        If (!$mountDir.EndsWith('\\')) { $mountDir = $mountDir + '\\' }
-        If ($fullPath.StartsWith($mountDir, 'InvariantCultureIgnoreCase') -and $bestMatch.Length -lt $mountDir.Length) { 
-            $bestMatch = $mountDir
-            $bestMatchObj = $_
-        }
-    }
-    $bestMatchObj.Volume -match '{(.+?)}' | Out-Null
-    return $matches[1]
-}
+${getVolumeIdFromPath}
 
 if ($IsClustered -ne "false") {
     
@@ -107,7 +95,7 @@ if ($IsClustered -ne "false") {
 
     $sqlgroup = Get-ClusterResource | Where-Object Name -eq $ClusterResourceName
 
-    $sqlserver = Get-WmiObject -namespace root\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+    $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
     $resourcegroup = $sqlserver.GetRelated() | Where-Object Type -eq 'Physical Disk'
 
     $clusterdisksToRemove = @()
@@ -148,9 +136,9 @@ if ($connection -eq $False) {
 }
 else {
     $certuri = "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-    Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
-    $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-    $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root | ? { $_.Subject -like $cert.Subject }
+    Invoke-WebRequest -Uri $certuri -OutFile C:\\cfn\\cert.pem
+    $cert = Import-Certificate -FilePath C:\\cfn\\cert.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+    $restcert = Get-ChildItem -Path Cert:\\LocalMachine\\Root | ? { $_.Subject -like $cert.Subject }
 }
 
 function callGetOrDeleteApi {
@@ -180,7 +168,7 @@ function callGetOrDeleteApi {
             Invoke-RestMethod @Params -Certificate $restcert
         }
         else {
-            Invoke-RestMethod @Params -SkipCertificateCheck
+            Invoke-RestMethod @Params
         }
         
     }
@@ -279,8 +267,8 @@ catch {
 
 if ($FilePaths.count -ne 0) {
     $virtualDrives = $filePaths | ForEach-Object {
-        $splits = $_.Split('\')
-        $splits[0] + '\' + $splits[1]
+        $splits = $_.Split('\\')
+        $splits[0] + '\\' + $splits[1]
     }
 
     $virtualDrives | ForEach-Object {
@@ -293,3 +281,6 @@ $result.Add('Message', 'Cleaning up resources complete')
 $resultjson = ($result | ConvertTo-Json) 
 $resultjson 
   
+`;
+
+export { cleanupResources };

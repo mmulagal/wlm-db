@@ -2133,5 +2133,6 @@ export {
     readExtendedPropertiesOfSandbox,
     getSnapshotsToClone,
     getConnectionInfo,
-    invokeVirtualMountScript
+    invokeVirtualMountScript,
+    getVolumeIdFromPath
 };
