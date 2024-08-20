@@ -99,7 +99,7 @@ const MSSqlHeader = () => {
                     dispatch(setSaveConfigName(''));
                     if (dialogFrom === FROM_DIALOG.HEADER_CROSS) {
                         if (databaseHostEntryPoint === 'inventory') {
-                            navigate('databases/inventory');
+                            navigate('fsxdb/inventory');
                         } else if (databaseHostEntryPoint === 'database') {
                             navigate('/databases');
                         } else {
@@ -115,7 +115,7 @@ const MSSqlHeader = () => {
     //Function to call when hit cross without dialog
     const handleNavigateWithoutDialog = () => {
         if (databaseHostEntryPoint === 'inventory') {
-            navigate('databases/inventory');
+            navigate('fsxdb/inventory');
         } else if (databaseHostEntryPoint === 'database') {
             navigate('/databases');
         } else {

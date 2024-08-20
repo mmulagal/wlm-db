@@ -133,7 +133,7 @@ const MSSqlFooter = () => {
 
     const handleCancel = () => {
         if (databaseHostEntryPoint === 'inventory') {
-            navigate('databases/inventory');
+            navigate('fsxdb/inventory');
         } else if (databaseHostEntryPoint === 'database') {
             navigate('/databases');
         } else {

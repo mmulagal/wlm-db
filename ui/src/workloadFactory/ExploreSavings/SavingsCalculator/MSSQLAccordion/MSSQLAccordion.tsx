@@ -144,7 +144,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     };
 
     return (
-        <div className={styles.mssqlAccordion}>
+        <div className={styles.mssqlAccordion} id="recommended-accordion">
             <DsAccordion
                 id="1"
                 title={GENERAL.RECOMMENDED_ES_TITLE}
