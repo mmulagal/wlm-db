@@ -21,7 +21,6 @@ import {
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
     subJobDescriptions,
     SqlServerDeploymentModel,
     ARTIFACT_BUCKET_NAME,
@@ -260,11 +259,7 @@ function getSubjectFromBearerToken() {
     return decodedToken?.payload.sub;
 }
 
-function isNetworkConfigurationViolated(
-    networkConfiguration: CFNetworkConfigurationType,
-    deploymentMode: string,
-    isExistingFSx: boolean
-) {
+function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigurationType, deploymentMode: string) {
     const noViolation = { isViolated: false };
 
     if (deploymentMode === STANDALONE) {
@@ -290,13 +285,6 @@ function isNetworkConfigurationViolated(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return noViolation;
-    }
-
-    if (!isExistingFSx && networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id) {
-        return {
-            isViolated: true,
-            violationMessage: FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
-        };
     }
     return noViolation;
 }

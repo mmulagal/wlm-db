@@ -315,27 +315,6 @@ async function validateVpcId(
             };
         }
         case ROUTE_TABLE_2: {
-            const routeTable1 = isValidVpc.subnets?.find(({ id }) => id === subnet1)?.routeTableId;
-            const routeTable2 = isValidVpc.subnets?.find(({ id }) => id === subnet2)?.routeTableId;
-
-            if (routeTable1 === routeTable2) {
-                return {
-                    key: PRIVATE_SUBNET_2,
-                    status: 'error',
-                    message:
-                        'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.',
-                    allowedValues: uniqBy(
-                        isValidVpc.subnets
-                            ?.filter(({ availabilityZone }) => availabilityZone === az2)
-                            ?.map(({ id, name }) => ({
-                                label: name,
-                                value: id
-                            })),
-                        'value'
-                    )
-                };
-            }
-
             return {
                 key,
                 value: isValidVpc.subnets?.find(({ id }) => id === subnet2)?.routeTableId
