@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import {
     SqlServerDeploymentModel,
     HOURS_IN_MONTH,
@@ -6,16 +6,7 @@ import {
     DEMO_STANADLONE_INSTANCE_ID
 } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import {
-    StorageSummary,
-    EbsCostCalculation,
-    ManualModeMarketingRequestBody,
-    getManualModeStorageSavings,
-    getStorageSavings,
-    FsxCostCalculations,
-    FsxCalculation,
-    InstanceEbsData
-} from '../../lib/cloud-manager/marketing';
+import { getManualModeStorageSavings, getStorageSavings } from '../../lib/cloud-manager/marketing';
 import {
     EbsCloneCalculationType,
     EbsCostCalculationType,
@@ -24,6 +15,18 @@ import {
     StorageSavingsRequestBodyType
 } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes, sizeInGigaBytes } from '../../utils/utils';
+import {
+    EbsCostCalculation,
+    FsxCalculation,
+    FsxCostCalculations,
+    FsxwCostCalculation,
+    InstanceEbsData,
+    ManualModeComparisionResponse,
+    ManualModeEbsComparisonResponse,
+    ManualModeFsxwComparisonResponse,
+    ManualModeMarketingRequestBody,
+    StorageSummary
+} from '../../utils/marketing-types';
 
 const logger = getLogger();
 
@@ -73,33 +76,68 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
     const { snapshotFrequency, sqlServerDeploymentType, clonedCopiesCount, monthlyChangeRatePercentage, ec2Instances } =
         params || {};
 
-    const instancesObject = ec2Instances.map(instance => {
-        const { ec2InstanceDescription, isPrimary, volumes } = instance;
+    const instancesObject = compact(
+        ec2Instances?.map(instance => {
+            const { ec2InstanceDescription, isPrimary, volumes } = instance;
 
-        if (hasDuplicateVolumeType(volumes)) {
-            throw new Error('Duplicate volume types are not allowed');
-        }
+            if (volumes) {
+                if (hasDuplicateVolumeType(volumes)) {
+                    throw new Error('Duplicate volume types are not allowed');
+                }
 
-        const volumeArray = volumes.map(volume => {
-            const { volumeType, volumeNumber, storageAmount, volumeIops, throughput } = volume;
-            return {
-                volumeType,
-                volumeNumber,
-                storageAmount: {
-                    size: sizeInGigaBytes(storageAmount, 'B'),
-                    unit: 'GiB'
-                },
-                volumeIops: volumeIops && volumeIops > 0 ? volumeIops : 0,
-                throughput: throughput && throughput > 0 ? throughput : 0
-            };
-        });
+                const volumeArray = volumes.map(volume => {
+                    const { volumeType, volumeNumber, storageAmount, volumeIops, throughput } = volume;
+                    return {
+                        volumeType,
+                        volumeNumber,
+                        storageAmount: {
+                            size: sizeInGigaBytes(storageAmount, 'B'),
+                            unit: 'GiB'
+                        },
+                        volumeIops: volumeIops && volumeIops > 0 ? volumeIops : 0,
+                        throughput: throughput && throughput > 0 ? throughput : 0
+                    };
+                });
 
-        return {
-            instanceName: ec2InstanceDescription,
-            isPrimary,
-            volumes: volumeArray
-        };
-    });
+                return {
+                    instanceName: ec2InstanceDescription,
+                    isPrimary,
+                    volumes: volumeArray
+                };
+            }
+            return null;
+        })
+    );
+
+    const fsxObject = compact(
+        ec2Instances?.map(instance => {
+            const { fsxw } = instance;
+            if (fsxw) {
+                const { storageAmount, deploymentType, volumeIops, throughput, storageVolumeType } = fsxw;
+                return {
+                    useCase: 'Low-latency',
+                    region,
+                    deploymentType: deploymentType === 'Single' ? 'Single' : 'Multi',
+                    storageAmount: {
+                        size: sizeInGigaBytes(storageAmount, 'B'),
+                        unit: 'GiB'
+                    },
+                    iops: volumeIops,
+                    throughput,
+                    storageVolumeType,
+                    snapshotFreq: snapshotFrequency,
+                    deduplicationSavings: 0,
+                    cloneEnvs: clonedCopiesCount,
+                    monthlyChangeRate: monthlyChangeRatePercentage
+                };
+            }
+            return null;
+        })
+    );
+
+    if (fsxObject.length) {
+        return fsxObject[0];
+    }
 
     return {
         useCase: 'Low-latency',
@@ -213,10 +251,8 @@ async function invokeMarketingApi(
             ]
         }) as ManualModeMarketingRequestBody;
 
-        const { ebsTotal, instanceEbs, fsx, single, multi } = await getManualModeStorageSavings(
-            accountId,
-            marketingRequestBody
-        );
+        const { ebsTotal, instanceEbs, fsx, single, multi } =
+            await getManualModeStorageSavings<ManualModeEbsComparisonResponse>(accountId, marketingRequestBody);
 
         return {
             ebs: ebsTotal,
@@ -333,6 +369,66 @@ function formatEbsCalculationObject(
         ebsCostCalculation,
         ebsCloneCalculation,
         ebsSnapshotCalculation
+    };
+}
+
+function formatFsxwCalculationObject(fsxwSummary: StorageSummary, fsxwCostCalculationObject: FsxwCostCalculation) {
+    logger.debug('Formatting FSxw calculation object', fsxwSummary, fsxwCostCalculationObject);
+
+    const {
+        desiredStorageCapacityGb: { size: desiredStorageCapacitySize, unit: desiredStorageCapacityUnit },
+        deduplicationSavings,
+        totalDefaultProvisionedIops,
+        additionalUserProvisionedIops,
+        totalMonthlyCostForFsxwProvisionedSsdIops: totalMonthlyCostForProvisionedSsdIops,
+        fsxwIopsPrice,
+        billedIops,
+        numberOfFileSystemsRequiredForStorageCapacity,
+        numberOfFileSystemsRequiredForThroughputCapacity,
+        monthlyCostForFsxwStorageCapacity: monthlyCostForStorageCapacity,
+        fsxwMaxThroughput,
+        requiredNumberOfFsxwFileSystemsFractional: requiredFractionalFileSystems,
+        requiredNumberOfFsxwFileSystemsRoundUp: requiredFileSystems,
+        minimumThroughputCapacityRequiredToProvisionFileSystems: minThroughputCapacityRequired,
+        provisionedThroughputCapacity,
+        fsxwSsdPrice,
+        fsxwMaxCapacity: { size: fsxwMaxCapacitySize, unit: fsxwMaxCapacityUnit },
+        totalMonthlyCostForFsxwThroughputCapacity: totalMonthlyCostForThroughputCapacity,
+        totalStorageChargeMonthly: totalMonthlyCost,
+        throughput,
+        fsxwMinThroughput,
+        fsxwThroughputPrice
+    } = fsxwCostCalculationObject;
+
+    const storageSavings = desiredStorageCapacitySize * deduplicationSavings;
+    const provisionedStorageCapacity = desiredStorageCapacitySize - storageSavings;
+
+    return {
+        storageSavings:
+            (convertToBytes(desiredStorageCapacitySize, desiredStorageCapacityUnit) || 0) * deduplicationSavings,
+        provisionedStorageCapacity,
+        desiredStorageCapacity: convertToBytes(desiredStorageCapacitySize, desiredStorageCapacityUnit) || 0,
+        deduplicationSavings,
+        monthlyCostForStorageCapacity,
+        totalDefaultProvisionedIops,
+        additionalUserProvisionedIops,
+        billedIops,
+        totalMonthlyCostForProvisionedSsdIops,
+        fsxwIopsPrice,
+        numberOfFileSystemsRequiredForStorageCapacity,
+        numberOfFileSystemsRequiredForThroughputCapacity,
+        fsxwMaxThroughput,
+        requiredFractionalFileSystems,
+        requiredFileSystems,
+        minThroughputCapacityRequired,
+        provisionedThroughputCapacity,
+        totalMonthlyCostForThroughputCapacity,
+        totalMonthlyCost,
+        fsxwSsdPrice,
+        fsxwMaxCapacity: convertToBytes(fsxwMaxCapacitySize, fsxwMaxCapacityUnit) || 0,
+        throughput,
+        fsxwMinThroughput,
+        fsxwThroughputPrice
     };
 }
 
@@ -787,6 +883,61 @@ async function derivePrimaryInstanceEbsCostCalculation(
     };
 }
 
+function deriveFsxCostCalculation(
+    fsxwSummary: StorageSummary,
+    fsxwCostCalculations: FsxwCostCalculation,
+    clonedCopiesCount: number,
+    monthlyChangeRatePercentage: number
+) {
+    logger.info('Deriving FSx cost calculation', {
+        fsxwSummary,
+        fsxwCostCalculations,
+        clonedCopiesCount,
+        monthlyChangeRatePercentage
+    });
+
+    const { capacity, iops, throughput } = fsxwSummary;
+
+    const fsxwCalculationBreakdown = formatFsxwCalculationObject(fsxwSummary, fsxwCostCalculations);
+    const fsxwCloneCalculation = {
+        clonedCopiesCount,
+        capacity,
+        iops,
+        throughput,
+        totalCloneMonthlyCost: clonedCopiesCount * (capacity + iops + throughput)
+    };
+
+    const {
+        desiredSnapshotStorageCapacity: {
+            size: desiredSnapshotStorageCapacitySize,
+            unit: desiredSnapshotStorageCapacityUnit
+        },
+        storageSavingSnapshot: { size: storageSavingSnapshotSize, unit: storageSavingSnapshotUnit },
+        effectiveProvisionedStorageCapacityForFsxwSnapshot: {
+            size: effProvStorageCapacityForFsxwSnapshotSize,
+            unit: effProvStorageCapacityForFsxwSnapshotUnit
+        },
+        monthlyCostForFsxwSnapshotStorageCapacity,
+        totalMonthlyCostForFsxwSnapshotStorageCapacity
+    } = fsxwCostCalculations;
+
+    const fsxwSnapshotCalculation = {
+        desiredSnapshotStorageCapacity:
+            convertToBytes(desiredSnapshotStorageCapacitySize, desiredSnapshotStorageCapacityUnit) || 0,
+        storageSavingSnapshot: convertToBytes(storageSavingSnapshotSize, storageSavingSnapshotUnit) || 0,
+        provisionedStorageCapacityForFsxwSnapshot:
+            convertToBytes(effProvStorageCapacityForFsxwSnapshotSize, effProvStorageCapacityForFsxwSnapshotUnit) || 0,
+        monthlyCostForFsxwSnapshotStorageCapacity,
+        totalMonthlyCostForFsxwSnapshotStorageCapacity
+    };
+
+    return {
+        fsxwCalculation: fsxwCalculationBreakdown,
+        fsxwCloneCalculation,
+        fsxwSnapshotCalculation
+    };
+}
+
 async function formatManualStorageSavingsCalculationMetrics(
     accountId: string,
     region: string,
@@ -796,45 +947,95 @@ async function formatManualStorageSavingsCalculationMetrics(
 
     const marketingRequestBody = getMarketingApiManualModeRequestBody(region, params) as ManualModeMarketingRequestBody;
 
-    const { instanceEbs, single, multi, ebsTotal } = await getManualModeStorageSavings(accountId, marketingRequestBody);
+    const resp = await getManualModeStorageSavings<ManualModeComparisionResponse>(accountId, marketingRequestBody);
 
-    const { ebsSnapshotCalculation, ebsCloneCalculation } = await derivePrimaryInstanceEbsCostCalculation(
-        instanceEbs,
+    if (marketingRequestBody.instances) {
+        const { instanceEbs, single, multi, ebsTotal } = resp as ManualModeEbsComparisonResponse;
+        const { ebsSnapshotCalculation, ebsCloneCalculation } = await derivePrimaryInstanceEbsCostCalculation(
+            instanceEbs,
+            params.clonedCopiesCount,
+            params.monthlyChangeRatePercentage
+        );
+
+        const volumeTypes = ['gp2', 'gp3', 'io2', 'st1', 'io1'];
+        const volumesList = mapVolumes(
+            instanceEbs,
+            volumeTypes,
+            params.clonedCopiesCount,
+            params.monthlyChangeRatePercentage
+        );
+
+        const { gp2, gp3, io2, st1, io1 } = volumesList;
+
+        const allVolumesEbsCalculation = {
+            ...(!isEmpty(gp2) && { gp2: aggregateData(gp2) }),
+            ...(!isEmpty(gp3) && { gp3: aggregateData(gp3) }),
+            ...(!isEmpty(io2) && { io2: aggregateData(io2) }),
+            ...(!isEmpty(st1) && { st1: aggregateData(st1) }),
+            ...(!isEmpty(io1) && { io1: aggregateData(io1) })
+        };
+
+        const reqObject = {
+            clonedCopiesCount: params.clonedCopiesCount,
+            monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+            snapshotFrequency: params.snapshotFrequency
+        };
+
+        return {
+            ...(single && { single: derivePropertiesBasedOnDeploymentType(single, reqObject) }),
+            ...(multi && { multi: derivePropertiesBasedOnDeploymentType(multi, reqObject) }),
+            ebs: ebsTotal,
+            ebsCalculation: allVolumesEbsCalculation,
+            ebsCloneCalculation,
+            ebsSnapshotCalculation
+        };
+    }
+
+    const {
+        fsxw,
+        fsxw_cost_calculation,
+        fsx_cost_calculation_no_snapshot,
+        fsx_snapshot_cost_calculation,
+        fsx_calculation,
+        fsx_clone_cost_calculation
+    } = resp as ManualModeFsxwComparisonResponse;
+    const { fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation } = deriveFsxCostCalculation(
+        fsxw,
+        fsxw_cost_calculation,
         params.clonedCopiesCount,
         params.monthlyChangeRatePercentage
     );
 
-    const volumeTypes = ['gp2', 'gp3', 'io2', 'st1', 'io1'];
-    const volumesList = mapVolumes(
-        instanceEbs,
-        volumeTypes,
-        params.clonedCopiesCount,
-        params.monthlyChangeRatePercentage
-    );
+    const depType = params.ec2Instances[0].fsxw?.deploymentType || 'single';
 
-    const { gp2, gp3, io2, st1, io1 } = volumesList;
-
-    const allVolumesEbsCalculation = {
-        ...(!isEmpty(gp2) && { gp2: aggregateData(gp2) }),
-        ...(!isEmpty(gp3) && { gp3: aggregateData(gp3) }),
-        ...(!isEmpty(io2) && { io2: aggregateData(io2) }),
-        ...(!isEmpty(st1) && { st1: aggregateData(st1) }),
-        ...(!isEmpty(io1) && { io1: aggregateData(io1) })
-    };
-
-    const reqObject = {
-        clonedCopiesCount: params.clonedCopiesCount,
-        monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
-        snapshotFrequency: params.snapshotFrequency
-    };
+    logger.info('DEPTYPE', depType);
 
     return {
-        ...(single && { single: derivePropertiesBasedOnDeploymentType(single, reqObject) }),
-        ...(multi && { multi: derivePropertiesBasedOnDeploymentType(multi, reqObject) }),
-        ebs: ebsTotal,
-        ebsCalculation: allVolumesEbsCalculation,
-        ebsCloneCalculation,
-        ebsSnapshotCalculation
+        ...(depType.toLowerCase() === 'single' && {
+            single: derivePropertiesBasedOnDeploymentType(
+                {
+                    fsx_calculation,
+                    fsx_cost_calculation_no_snapshot,
+                    fsx_snapshot_cost_calculation,
+                    fsx_clone_cost_calculation
+                },
+                params
+            )
+        }),
+        ...(depType.toLowerCase() === 'multi' && {
+            multi: derivePropertiesBasedOnDeploymentType(
+                {
+                    fsx_calculation,
+                    fsx_cost_calculation_no_snapshot,
+                    fsx_snapshot_cost_calculation,
+                    fsx_clone_cost_calculation
+                },
+                params
+            )
+        }),
+        fsxwCalculation,
+        fsxwCloneCalculation,
+        fsxwSnapshotCalculation
     };
 }
 export {
