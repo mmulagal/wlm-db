@@ -6,7 +6,7 @@ import { useAppSelector } from '../../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { TableLayout } from '../../ViewCalculationsUtils';
 
-const InstancesFsxwCalculation = () => {
+const FsxwMazCalculation = () => {
     const { viewCalculationsResponse, selectedDeploymentModel, viewCalculationsLoading, selectedHostDetails } =
         useAppSelector(state => state.exploreSavings);
     const [viewLoading, setViewLoading] = useState(false);
@@ -23,28 +23,35 @@ const InstancesFsxwCalculation = () => {
                 </DsTypography>
             );
         }
-        return <DsTypography variant="Regular_14">${viewCalculationsResponse?.totalFsxwEc2MachineCost}</DsTypography>;
+        return (
+            <DsTypography variant="Regular_14">
+                ${viewCalculationsResponse?.fsxwCalculation?.totalMonthlyCost || 0}
+            </DsTypography>
+        );
     };
+
     return (
         <div className={CommonStyles.exploreSavingsCalculation}>
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="12"
-                title={<div>{GENERAL.ES_MSSQL_EC2_INSTANCES}</div>}
+                id="14"
+                title={<div>{GENERAL.ES_FSXW_MULTI}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >
                 {viewCalculationsResponse && (
                     <AccordionCardContent>
                         <DsTypography className={CommonStyles.accordionContentSet}>
-                            {viewCalculationForFsxw(
-                                viewCalculationsResponse,
-                                selectedDeploymentModel
-                            ).Ec2InstanceCalculation.map(
-                                (data: { label: string; text?: string; value?: string }, index: number) => (
-                                    <TableLayout key={index} data={data} />
-                                )
-                            )}
+                            <div style={{ marginTop: '16px' }}>
+                                {viewCalculationForFsxw(
+                                    { ...viewCalculationsResponse, type: 'Multi' },
+                                    selectedDeploymentModel
+                                ).FSxWCalculation.map(
+                                    (data: { label: string; text?: string; value?: string }, index: number) => (
+                                        <TableLayout key={index} data={data} />
+                                    )
+                                )}
+                            </div>
                         </DsTypography>
                     </AccordionCardContent>
                 )}
@@ -53,4 +60,4 @@ const InstancesFsxwCalculation = () => {
     );
 };
 
-export default InstancesFsxwCalculation;
+export default FsxwMazCalculation;

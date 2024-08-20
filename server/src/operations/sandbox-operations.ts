@@ -2586,10 +2586,10 @@ async function performSplitOperation(
             credentialsId,
             region,
             parentJobId,
-            JSON.stringify([
+            [
                 ...mappings.data.map(vol => ({ volumeId: vol.volumeUuid, volumeName: vol.volumeName })),
                 ...mappings.log.map(vol => ({ volumeId: vol.volumeUuid, volumeName: vol.volumeName }))
-            ]),
+            ],
             resDetails
         );
 
@@ -2668,7 +2668,7 @@ async function splitVolumes(
     credentialsId: string,
     region: string,
     parentJobId: string,
-    volumes: string,
+    volumes: { volumeId: string; volumeName: string }[],
     resourceDetail: HostAndDbInfo
 ) {
     logger.info('Split volumes', { accountId, credentialsId, region, parentJobId, volumes, resourceDetail });
@@ -2690,7 +2690,7 @@ async function splitVolumes(
             splitFlexCloneVolumes(
                 resourceDetail.fsxId,
                 region,
-                volumes,
+                JSON.stringify(uniqBy(volumes, 'volumeId')),
                 resourceDetail.instanceName,
                 `Sandbox:${resourceDetail.database}:`
             )

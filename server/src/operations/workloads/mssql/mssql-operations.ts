@@ -638,7 +638,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                         writeToCache(AWS_SSM_PARAMETER, parameterKey, ssmParameter, '60s');
                     }
                 }
-                const { sql } = ssmParameter ? JSON.parse(ssmParameter) : { sql: {} };
+                const { sql = {} } = ssmParameter ? JSON.parse(ssmParameter) : {};
 
                 instancesDetails.forEach(obj => {
                     (obj as any).isDefault = !obj.instanceName.includes('$');

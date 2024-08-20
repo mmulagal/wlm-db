@@ -28,8 +28,6 @@ const _ = require('lodash');
 const SavingsCalculatorManualApi = () => {
     const dispatch = useAppDispatch();
 
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
-
     const {
         numberOfClonedCopies,
         monthlyChangeRate,
@@ -55,8 +53,6 @@ const SavingsCalculatorManualApi = () => {
         selectedManualStorageCapacityUnit
     } = useAppSelector(state => state.exploreSavings);
 
-    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
-
     const [getInstanceTypes] = useLazyGetInstanceTypesWithoutCredQuery();
     const [getRegionsWithoutCred] = useLazyGetRegionsWithoutCredQuery();
 
@@ -71,7 +67,6 @@ const SavingsCalculatorManualApi = () => {
             dispatch(setManualRegionsLoading(true));
             getRegionsWithoutCred({})
                 .then(res => {
-                    console.log('res data', res?.data);
                     dispatch(addManualRegionsList(res?.data));
                     dispatch(setManualRegionsLoading(false));
                 })

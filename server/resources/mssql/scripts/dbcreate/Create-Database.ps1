@@ -52,8 +52,7 @@ if ($DataLogicalName -eq $LogLogicalName) {
 if ($ResourceID) { 
   $SQLCredStore = "/netapp/wlmdb/$ResourceID"
   try {
-    . ..\common\InvokeRetryCommand.ps1
-    $credobject = Invoke-WithRetry -Command { (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json }
+    $credobject = (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
     $instancelist = $credobject.sql.sqlinstancename
     $instancecount = $instancelist.Count
     if ($instancecount -eq 1) {

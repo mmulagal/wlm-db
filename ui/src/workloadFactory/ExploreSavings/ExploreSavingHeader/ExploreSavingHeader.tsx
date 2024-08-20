@@ -10,11 +10,13 @@ import ExploreSavingsTableV2 from '../ExploreSavingsTableV2/ExploreSavingsTableV
 import { handleManualTCOEBS, handleManualTCOFSXW } from '../ExploreSavingsUtils';
 import { useDispatch } from 'react-redux';
 import useResize from '../../../common/hooks/useResize';
+import { useNavigate } from 'react-router-dom';
 
 const ExploreSavingHeader = () => {
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const dispatch = useDispatch();
     const windowSize = useResize();
+    const navigate = useNavigate();
 
     return (
         <>
@@ -49,14 +51,14 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch)}
+                                        onClick={() => handleManualTCOEBS(dispatch, navigate)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-fsxW"
-                                        onClick={() => handleManualTCOFSXW(dispatch)}
+                                        onClick={() => handleManualTCOFSXW(dispatch, navigate)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
@@ -99,7 +101,7 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch)}
+                                        onClick={() => handleManualTCOEBS(dispatch, navigate)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
@@ -107,7 +109,7 @@ const ExploreSavingHeader = () => {
                                         className={styles.link}
                                         id="explore-savings-manually-fsxW"
                                         style={{ whiteSpace: 'unset' }}
-                                        onClick={() => handleManualTCOFSXW(dispatch)}
+                                        onClick={() => handleManualTCOFSXW(dispatch, navigate)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
@@ -150,14 +152,14 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch)}
+                                        onClick={() => handleManualTCOEBS(dispatch, navigate)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-fsxW"
-                                        onClick={() => handleManualTCOFSXW(dispatch)}
+                                        onClick={() => handleManualTCOFSXW(dispatch, navigate)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>

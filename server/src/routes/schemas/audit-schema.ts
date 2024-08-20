@@ -1,5 +1,5 @@
 import { Type, Static } from '@fastify/type-provider-typebox';
-import { WLMDB } from '../../utils/consts.js';
+import { TIMELINE_SERVICE_NAME } from '../../utils/consts.js';
 
 const STATUS_TYPES = Type.Union([
     Type.Literal('pending'),
@@ -13,7 +13,7 @@ const CreateAuditGroupSchema = Type.Object({
     actionName: Type.String(),
     status: STATUS_TYPES,
     requestId: Type.String(),
-    serviceName: Type.Literal(WLMDB),
+    serviceName: Type.Literal(TIMELINE_SERVICE_NAME),
     referrer: Type.String(),
     version: Type.String(),
     requestData: Type.String(),
@@ -28,7 +28,7 @@ const UpdateAuditGroupSchema = Type.Object({
     actionName: Type.String(),
     status: STATUS_TYPES,
     requestId: Type.String(),
-    serviceName: Type.Literal(WLMDB),
+    serviceName: Type.Literal(TIMELINE_SERVICE_NAME),
     referrer: Type.String(),
     version: Type.String(),
     principalId: Type.String(),
@@ -43,7 +43,7 @@ const AuditRecordSchema = Type.Object({
     creationTime: Type.Number(),
     status: STATUS_TYPES,
     requestId: Type.String(),
-    serviceName: Type.Literal(WLMDB),
+    serviceName: Type.Literal(TIMELINE_SERVICE_NAME),
     data: Type.String(),
     errors: Type.Optional(Type.Array(Type.String()))
 });
