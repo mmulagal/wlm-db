@@ -1,6 +1,13 @@
 [CmdletBinding()]
 param(
+
+    [Parameter(Mandatory=$true)]
+    [string]$FSxID,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname
 )
+
 Import-Module -Name AWSPowerShell
 try {
     $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
