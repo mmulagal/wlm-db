@@ -186,7 +186,7 @@ function callGetOrDeleteApi {
             Invoke-RestMethod @Params -Certificate $restcert
         }
         else {
-            Invoke-RestMethod
+            Invoke-RestMethod @Params
         }
         
     }
