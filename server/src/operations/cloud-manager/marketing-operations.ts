@@ -6,11 +6,7 @@ import {
     DEMO_STANADLONE_INSTANCE_ID
 } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import {
-    ManualModeMarketingRequestBody,
-    getManualModeStorageSavings,
-    getStorageSavings
-} from '../../lib/cloud-manager/marketing';
+import { getManualModeStorageSavings, getStorageSavings } from '../../lib/cloud-manager/marketing';
 import {
     EbsCloneCalculationType,
     EbsCostCalculationType,
@@ -28,6 +24,7 @@ import {
     ManualModeComparisionResponse,
     ManualModeEbsComparisonResponse,
     ManualModeFsxwComparisonResponse,
+    ManualModeMarketingRequestBody,
     StorageSummary
 } from '../../routes/types/marketing.types';
 

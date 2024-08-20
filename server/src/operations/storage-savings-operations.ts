@@ -28,8 +28,12 @@ import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice } from '../
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { getSqlInstanceLicenseRecommendations, manualModeComputeLicenseDetails } from './recommendation-operations';
-import { ManualModeMarketingRequestBody, getManualModeStorageSavings } from '../lib/cloud-manager/marketing';
-import { ManualModeEbsComparisonResponse, ManualModeFsxwComparisonResponse } from '../routes/types/marketing.types';
+import { getManualModeStorageSavings } from '../lib/cloud-manager/marketing';
+import {
+    ManualModeEbsComparisonResponse,
+    ManualModeFsxwComparisonResponse,
+    ManualModeMarketingRequestBody
+} from '../routes/types/marketing.types';
 
 const logger = getLogger();
 

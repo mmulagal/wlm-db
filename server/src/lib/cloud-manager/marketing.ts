@@ -4,8 +4,8 @@ import getLogger from '../../utils/logger';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import {
     CalculateEbsComparisonResponse,
-    ManualModeMarketingRequestBody,
     MarketingRequestBody,
+    ManualModeMarketingRequestBody,
     StorageInstanceResponse,
     StorageVolumesResponse
 } from '../../routes/types/marketing.types';
@@ -100,11 +100,4 @@ async function getVolumesListFromStorage(accountId: string, credentialsId: strin
     return response;
 }
 
-export {
-    ManualModeMarketingRequestBody,
-    getStorageSavings,
-    getManualModeStorageSavings,
-    getVolumesListFromStorage,
-    getInstanceListFromStorage,
-    CalculateEbsComparisonResponse
-};
+export { getStorageSavings, getManualModeStorageSavings, getVolumesListFromStorage, getInstanceListFromStorage };

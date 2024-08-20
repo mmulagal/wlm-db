@@ -2,8 +2,7 @@ import {
     getStorageSavings,
     getInstanceListFromStorage,
     getVolumesListFromStorage,
-    getManualModeStorageSavings,
-    ManualModeMarketingRequestBody
+    getManualModeStorageSavings
 } from '../../../src/lib/cloud-manager/marketing';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/opentelemetry-scope';
@@ -14,7 +13,10 @@ import {
     getMarketingApiRequestBody,
     getMarketingApiManualModeRequestBody
 } from '../../../src/operations/cloud-manager/marketing-operations';
-import { ManualModeEbsComparisonResponse } from '../../../src/routes/types/marketing.types';
+import {
+    ManualModeEbsComparisonResponse,
+    ManualModeMarketingRequestBody
+} from '../../../src/routes/types/marketing.types';
 
 describe('Marketing lib', () => {
     it('Getting storage savings', async () => {
