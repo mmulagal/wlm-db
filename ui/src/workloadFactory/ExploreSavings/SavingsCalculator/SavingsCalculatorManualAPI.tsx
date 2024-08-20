@@ -3,12 +3,15 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetManualStorageSavingsMutation,
     useGetManualViewCalculationsMutation,
-    useLazyGetInstanceTypesQuery
+    useLazyGetInstanceTypesWithoutCredQuery,
+    useLazyGetRegionsWithoutCredQuery
 } from '../../../utils/apiService';
 import {
     addManualInstanceTypeList,
+    addManualRegionsList,
     setDisableState,
     setInstanceLoading,
+    setManualRegionsLoading,
     setRequestedPayload,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
@@ -25,8 +28,6 @@ const _ = require('lodash');
 const SavingsCalculatorManualApi = () => {
     const dispatch = useAppDispatch();
 
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
-
     const {
         numberOfClonedCopies,
         monthlyChangeRate,
@@ -42,25 +43,48 @@ const SavingsCalculatorManualApi = () => {
         volumeFilledStatus,
         manualTCOVolumeTypes2,
         savingsCalculatorFrom,
-        requestedPayload
+        requestedPayload,
+        selectedSnapshotFrequency,
+        selectedManualDeploymentType,
+        selectedManualStorageType,
+        manualStorageCapacity,
+        selectedManualFSXIOPS,
+        selectedManualFSXThroughput,
+        selectedManualStorageCapacityUnit
     } = useAppSelector(state => state.exploreSavings);
 
-    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
-
-    const [getInstanceTypes] = useLazyGetInstanceTypesQuery();
+    const [getInstanceTypes] = useLazyGetInstanceTypesWithoutCredQuery();
+    const [getRegionsWithoutCred] = useLazyGetRegionsWithoutCredQuery();
 
     const [getManualStorageSavingsApi] = useGetManualStorageSavingsMutation();
     const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
 
     useEffect(() => {
         if (
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSX
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+        ) {
+            dispatch(setManualRegionsLoading(true));
+            getRegionsWithoutCred({})
+                .then(res => {
+                    dispatch(addManualRegionsList(res?.data));
+                    dispatch(setManualRegionsLoading(false));
+                })
+                .catch(error => {
+                    dispatch(setManualRegionsLoading(false));
+                });
+        }
+    }, [savingsCalculatorFrom]);
+
+    useEffect(() => {
+        if (
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) &&
+            selectedManualRegion
         ) {
             dispatch(setInstanceLoading(true));
             getInstanceTypes({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                region: headerSelectedRegion?.label2
+                region: selectedManualRegion?.data?.regionCode
             })
                 .then(res => {
                     dispatch(addManualInstanceTypeList(res?.data));
@@ -70,7 +94,7 @@ const SavingsCalculatorManualApi = () => {
                     dispatch(setInstanceLoading(false));
                 });
         }
-    }, [savingsCalculatorFrom]);
+    }, [savingsCalculatorFrom, selectedManualRegion]);
 
     const getManualStorageSavingsData = async () => {
         const payload = generateManualStorageSavingsPayload();
@@ -114,7 +138,7 @@ const SavingsCalculatorManualApi = () => {
     };
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL) {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
             const payload = generateManualStorageSavingsPayload();
             const comparedPayloadValues = _.isEqual(payload, requestedPayload);
 
@@ -147,6 +171,44 @@ const SavingsCalculatorManualApi = () => {
         manualTCOVolumeTypes,
         volumeFilledStatus,
         manualTCOVolumeTypes2
+    ]);
+
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+            const payload = generateManualStorageSavingsPayload();
+            const comparedPayloadValues = _.isEqual(payload, requestedPayload);
+
+            if (
+                !comparedPayloadValues &&
+                selectedManualRegion &&
+                numberOfClonedCopies &&
+                monthlyChangeRate &&
+                selectedManualInstanceType &&
+                manualStorageCapacity &&
+                selectedManualFSXIOPS &&
+                selectedManualFSXThroughput
+            ) {
+                dispatch(setDisableState(false));
+                dispatch(setRequestedPayload(payload));
+                triggerManualStorageAPI();
+            }
+        }
+    }, [
+        savingsCalculatorFrom,
+        numberOfClonedCopies,
+        monthlyChangeRate,
+        selectedManualDeploymentModel,
+        selectedManualRegion,
+        selectedManualServerEdition,
+        selectedManualInstanceType,
+        monthlyBYOLCost,
+        selectedSnapshotFrequency,
+        selectedManualDeploymentType,
+        selectedManualStorageType,
+        manualStorageCapacity,
+        selectedManualFSXIOPS,
+        selectedManualFSXThroughput,
+        selectedManualStorageCapacityUnit
     ]);
 
     return <></>;

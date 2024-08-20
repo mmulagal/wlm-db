@@ -143,6 +143,8 @@ export const API_ERRORS = {
     POWERSHELL_7: 'PowerShell 7 is required for managing the resource'
 };
 
+export const WLF_TO_PROTECT_NAVIGATE = '../add-working-environment/database-services/mssql/postgress';
+
 export const STATUS_CONST = {
     UP: 'Up',
     DOWN: 'Down',
@@ -286,6 +288,8 @@ export const WLF_TABS = {
     OVERVIEW: 'Overview',
     SANDBOXES: 'Sandboxes',
     EXPLORE_SAVINGS: 'Explore savings',
+    EXPLORE_SAVINGS_EBS: 'Explore savings EBS',
+    EXPLORE_SAVINGS_FsxW: 'Explore savings FsxW',
     SAVINGS_CALCULATOR: 'Savings Calculator',
     VIEW_THE_CALCULATIONS: 'View the calculations',
     JOB_MONITORING: 'Job monitoring',
@@ -548,9 +552,9 @@ export const FSX_AZ_TYPE = {
 };
 
 export const SAVINGS_CALC_MODE = {
-    MANUAL: 'Manual',
+    MANUAL_EBS: 'Manual_EBS',
     AUTO: 'Auto',
-    MANUAL_FSX: 'Manual_FSX'
+    MANUAL_FSXW: 'Manual_FSXW'
 };
 
 export const PARTNER_NODE = 'partner node';
@@ -561,4 +565,18 @@ export const FINDINGS = {
     INSUFFICIENT_DATA: 'INSUFFICIENT_DATA',
     UNDER_PROVISIONED: 'UNDER_PROVISIONED',
     INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS'
+};
+
+export const TCO_MANUAL_DEPLOYMENT_TYPE = {
+    SINGLE: 'Single availability zone',
+    MULTI: 'Multi availability zone'
+};
+
+export const BXP_MESSAGES = {
+    SERVICE_READY: 'SERVICE:READY',
+    SERVICE_NAVIGATE: 'SERVICE:NAVIGATE',
+    SERVICE_SHOW_WIZARD: 'SERVICE:OPEN-WIZARD',
+    SERVICE_HIDE_WIZARD: 'SERVICE:CLOSE-WIZARD',
+    SERVICE_CONNECTOR_CHANGE: 'SERVICE:CONNECTOR-CHANGE',
+    SERVICE_LOCATION_CHANGE: 'SERVICE:LOCATION-CHANGE'
 };

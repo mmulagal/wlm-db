@@ -42,7 +42,6 @@ import {
     SSM_PARAMETERS_BASE_PATH,
     SqlServerDeploymentModel,
     RESOURCE_SOURCE,
-    DBCREATE_RELATIVE_PATH,
     STORAGE_PROTOCOLS,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES,
     PSMODULES_RELATIVE_PATH,
@@ -59,7 +58,6 @@ import {
     UNAVAILABLE_PS_MODULES,
     GET_MISSING_RESOURCE_DETAILS,
     IS_DATABASE_CREATE_POSSIBLE,
-    COPY_SCIRPTS_TO_MANAGE_RESOURCE,
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
     REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     FAILURE_INFO,
@@ -90,6 +88,7 @@ import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
+import { copyScriptsToHost } from './resource-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -561,7 +560,9 @@ async function getHostAndSqlInfoFromPsOutput(
                         databaseCount,
                         failureInfo,
                         sqlServerDeploymentType,
-                        windowsOsVersion
+                        windowsOsVersion,
+                        windowsClusterName,
+                        windowsClusterNodes
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -598,7 +599,9 @@ async function getHostAndSqlInfoFromPsOutput(
                         deploymentTypes: compact(
                             uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
                         ),
-                        ...(databaseCount && { databaseCount })
+                        ...(databaseCount && { databaseCount }),
+                        ...(windowsClusterName && { windowsClusterName }),
+                        ...(windowsClusterNodes && { windowsClusterNodes })
                     });
                 }
             }
@@ -941,7 +944,8 @@ async function fetchUnmanagedHostsInformationV2(
                 clusterNodeDetails,
                 databaseInstanceDetails: [],
                 co_relation_id: null,
-                ebsVolumeIds: []
+                ebsVolumeIds: [],
+                ec2UsageOperation: ec2Instance.ec2UsageOperation
             };
             if (ec2Instance?.sqlServerInstances && ec2Instance?.sqlServerInstances.length > 0) {
                 ec2Instance?.sqlServerInstances?.forEach(sqlServerInstance => {
@@ -1633,27 +1637,14 @@ async function prepareDbScriptsForManage(
     });
 
     try {
-        // Get signed url for dbcreate.zip
-        const bucketname = getArtifactsRegionBucketName(region);
-        const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
+        const copyScriptResponse = await copyScriptsToHost(accountId, credentialsId, region, ec2InstanceId);
 
-        // Copy scripts to the EC2 instance
-        const ssmScriptsCopyResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-            ec2InstanceId,
-            accountId,
-            false,
-            (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
-        );
+        logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${copyScriptResponse}`);
 
-        logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);
-
-        if (ssmScriptsCopyResponse?.includes('failureInfo')) {
-            const responseInJson = JSON.parse(ssmScriptsCopyResponse);
+        if (copyScriptResponse?.includes('failureInfo')) {
+            const responseInJson = JSON.parse(copyScriptResponse);
             logger.error(
-                `Unable to prepare instance '${ec2InstanceId}'. Reason: failed to copy database operation artifacts. Error: ${ssmScriptsCopyResponse}`
+                `Unable to prepare instance '${ec2InstanceId}'. Reason: failed to copy database operation artifacts. Error: ${copyScriptResponse}`
             );
 
             jobStatusRecord = {

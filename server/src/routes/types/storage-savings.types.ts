@@ -20,7 +20,8 @@ const StorageSavingsRequestBody = Type.Object({
     monthlyChangeRatePercentage: Type.Number({
         minimum: 0,
         maximum: 100
-    })
+    }),
+    monthlySqlByolCost: Type.Optional(Type.Number())
 });
 
 const ManualStorageSavingsRequestParams = Type.Object({

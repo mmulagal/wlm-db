@@ -163,7 +163,7 @@ async function createDeploymentMockDataInDB(
     const instanceId = randomUUID();
 
     resourceId = resourceId || randomUUID();
-    const fsxId = `fs-${randomize('A0', 17)}`;
+    const fsxId = `fs-${randomize('0', 8)}`;
 
     const metadata: Metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
@@ -330,11 +330,12 @@ async function createFileSystemForDemo(
 
 async function updateUserDBIntoResourceData(
     accountId: string,
+    credentialsId: string,
     resourceId: string,
     databaseName: string,
     metaData: Metadata
 ) {
-    logger.info('updating user db into resource meta data', accountId, resourceId, databaseName);
+    logger.info('updating user db into resource meta data', accountId, resourceId, credentialsId, databaseName);
 
     const existingDatabases = metaData.userDatabase || [];
     const hasExistingDatabase = existingDatabases.some(db => db.name === databaseName);
@@ -358,7 +359,7 @@ async function updateUserDBIntoResourceData(
         };
         metaData.userDatabase = [...existingDatabases, databaseDetails];
 
-        await updateResourceMetaData(accountId, resourceId, metaData);
+        await updateResourceMetaData(accountId, credentialsId, resourceId, metaData);
     }
 }
 
@@ -398,11 +399,12 @@ async function updateUserDBIntoInstanceTable(
 
 async function updateSandboxDBIntoResourceData(
     accountId: string,
+    credentialsId: string,
     resourceId: string,
     sandboxDetails: Sandbox,
     metaData: Metadata
 ) {
-    logger.info('updating sandbox db into resource meta data', accountId, resourceId, sandboxDetails);
+    logger.info('updating sandbox db into resource meta data', accountId, credentialsId, resourceId, sandboxDetails);
 
     // this is used to retreive the newly created user databases in database list for demo using meta data
     if (metaData.sandboxes) {
@@ -410,7 +412,7 @@ async function updateSandboxDBIntoResourceData(
     }
     metaData.sandboxes = [...(metaData.sandboxes || []), sandboxDetails];
 
-    await updateResourceMetaData(accountId, resourceId, metaData);
+    await updateResourceMetaData(accountId, credentialsId, resourceId, metaData);
     return metaData;
 }
 

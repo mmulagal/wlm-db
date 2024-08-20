@@ -17,6 +17,7 @@ import {
     VpcSecurityGroupsResponse,
     VcpSecurityGroupParams
 } from '../types/aws.types';
+import { AccountIdParams, AccountIdRegionParams } from '../types/generic.types';
 
 // Base Request for AWS Routes
 const baseRequest = {
@@ -57,6 +58,16 @@ const GetAmiSchema = {
 };
 
 // GET EC2 instance types
+const GetGenericInstanceTypesSchema = {
+    tags: [RouteTags.AWS],
+    params: AccountIdRegionParams,
+    summary: 'List generic EC2 instance types',
+    description: 'Get generic EC2 instance types in the region supported for MS SQL deployment',
+    response: {
+        200: InstanceTypes
+    }
+};
+
 const GetInstanceTypesSchema = {
     ...baseRequest,
     summary: 'List EC2 instance types',
@@ -79,6 +90,16 @@ const GetSnsTopicsSchema = {
 const GetFSxRegionsSchema = {
     tags: [RouteTags.AWS],
     params: AwsParams,
+    summary: 'List AWS regions that supports FSx',
+    description: 'List the AWS regions enabled for the given account and supports Amazon FSx for NetApp ONTAP',
+    response: {
+        200: FSxRegionsResponse
+    }
+};
+
+const GetGenericFSxRegionsSchema = {
+    tags: [RouteTags.AWS],
+    params: AccountIdParams,
     summary: 'List AWS regions that supports FSx',
     description: 'List the AWS regions enabled for the given account and supports Amazon FSx for NetApp ONTAP',
     response: {
@@ -133,8 +154,10 @@ export {
     GetSnsTopicsSchema,
     GetFSxRegionsSchema,
     GetFsxKmsKeysListSchema,
+    GetGenericInstanceTypesSchema,
     GetInstanceTypesSchema,
     GetKeyPairsSchema,
+    GetGenericFSxRegionsSchema,
     GetFSxFileSystemsSchema,
     GetVpcSecurityGroupsSchema
 };

@@ -40,7 +40,11 @@ try {
     Write-Host $paths
     $params = "-d$dataPath\master.mdf;-e$sqlpath\ERRORLOG;-l$logPath\mastlog.ldf"
     $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+    . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
+    $SsmParameter = Invoke-WithRetry -Command {
+        (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    }
     $DomainAdminPassword = $SsmParameter.domain.password
     $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser, (ConvertTo-SecureString $DomainAdminPassword -AsPlainText -Force)))
     $SQLServiceAccountPassword = $SsmParameter.sql[0].password

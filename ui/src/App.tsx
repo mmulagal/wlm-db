@@ -1,16 +1,27 @@
 import { useAppSelector } from './store/storeHooks';
 import './App.css';
 import Home from './Home';
-import { ThemeProvider } from '@netapp/design-system';
+import { BlueXPListeners, ThemeProvider, postBlueXPMessage } from '@netapp/design-system';
 import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
 import FullStoryComp from './common/FullStoryComp';
 import ComponentLoader from './common/ComponentLoader/ComponentLoader';
+import { useEffect, useRef } from 'react';
 
 function App() {
-    const { loading, accountId } = useAppSelector(state => state.auth);
+    const { loading, accountId, accessToken } = useAppSelector(state => state.auth);
+    const readyNotifiedRef = useRef(false);
 
     useInitialize();
+
+    useEffect(() => {
+        if (!readyNotifiedRef.current && accessToken) {
+            postBlueXPMessage({
+                type: BlueXPListeners.ready
+            });
+            readyNotifiedRef.current = true;
+        }
+    }, [accessToken]);
 
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);

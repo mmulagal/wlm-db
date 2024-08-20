@@ -246,7 +246,7 @@ const getDbMappedOntapVolumes = (
     try {
         $sqlquery = @"
             SET NOCOUNT ON;
-            SELECT DISTINCT vs.volume_id as volumeid, mf.physical_name as filename, mf.type FROM sys.master_files AS mf
+            SELECT DISTINCT vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid FROM sys.master_files AS mf
             join sys.databases db
             on db.database_id = mf.database_id
             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
@@ -281,6 +281,8 @@ const getDbMappedOntapVolumes = (
                 $object = @{
                     "fileName" = $winvolume.filename
                     "lunSerialNumber" = $vol.serialnumber
+                    "fileId" = $winvolume.fileid
+                    "fileType" = $winvolume.type
                 }
                 $type = 'data'
                 if ($winvolume.type -ne 0) {
@@ -393,17 +395,14 @@ const getDbMappedOntapVolumes = (
             return $responseObject
         }
     
-        $responseObject =  sqlcmd -S $instanceName -Q $sqlquery -y 0;
-        Write-Information "$logPrefix SQL response: $responseObject"
-        if ([string]::IsNullOrEmpty($responseObject)) {
-            if ($responseObject -eq $null) {
-                $responseObject = @{}
-            }
+        $sqlresp = sqlcmd -S $instanceName -Q $sqlquery -y 0;
+        Write-Information "$logPrefix SQL response: $sqlresp"
+        if ([string]::IsNullOrEmpty($sqlresp)) {
             $responseObject['error'] = "SqlServerError: Could not get volumes of database $dbname"
             return $responseObject | ConvertTo-Json -Depth 5
         }
     
-        $responseObject = Get-SerialNumberOfWinVolumes $responseObject
+        $responseObject = Get-SerialNumberOfWinVolumes $sqlresp
         Write-Information "$logPrefix Serial numbers: $($responseObject | ConvertTo-Json)"
         if ($responseObject.data.Count -eq 0 -or $responseObject.log.Count -eq 0) {
             $responseObject['error'] = "Could not get windows volume serial numbers"
@@ -773,8 +772,10 @@ const createVolumeClone = (
 const createClonedDb = (
     dbName: string,
     instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    fileList: string[] = [],
-    logPrefix: string = ''
+    dataFileList: string[] = [],
+    logFileList: string[] = [],
+    logPrefix: string = '',
+    fileSuffix = ''
 ) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
@@ -793,13 +794,51 @@ const createClonedDb = (
             Write-Error "$logPrefix Database $dbname already exists and is in $($selectresult[0].state_desc) state. Exiting..."
         }
 
-        # SQL script to attach a database
-        $attachQuery = @"
-            CREATE DATABASE $dbname ON  
-            ${fileList.map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
-            FOR ATTACH;
+        $createQuery = @"
+            CREATE DATABASE $dbname ON
+            ${dataFileList
+                .map(file => {
+                    const newFilePath = file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`);
+                    const fileName = newFilePath.split('\\').pop();
+                    return `(NAME = '${fileName}', FILENAME = '${newFilePath}')`;
+                })
+                .join(',\n')}
+            LOG ON
+            ${logFileList
+                .map(file => {
+                    const newFilePath = file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`);
+                    const fileName = newFilePath.split('\\').pop();
+                    return `(NAME = '${fileName}', FILENAME = '${newFilePath}')`;
+                })
+                .join(',\n')}
 "@
-        sqlcmd -S "${instanceName}"  -Q $attachQuery
+
+        sqlcmd -S "${instanceName}"  -Q $createQuery -y 0
+        
+
+        sqlcmd -S "${instanceName}"  -Q "ALTER DATABASE $dbname SET OFFLINE" -y 0
+        
+        # Remove the actual files
+        ${[...dataFileList, ...logFileList]
+            .map(file => {
+                // replace mdf, ndf, ldf with epoch.mdf etc
+                const newFileName = file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`);
+                return `Remove-Item -Path "${newFileName}" -Force`;
+            })
+            .join('\n')}
+
+        # Rename the actual files to the new name
+        ${[...dataFileList, ...logFileList]
+            .map(file => {
+                // replace mdf, ndf, ldf with epoch.mdf etc
+                const newFileName = file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`);
+                return `$newFiles += '${newFileName}'
+                Rename-Item -Path "${file}" -NewName "${newFileName}"`;
+            })
+            .join('\n')}
+
+        sqlcmd -S "${instanceName}"  -Q "ALTER DATABASE $dbname SET ONLINE" -y 0
+
     } catch {
         Write-Error "$logPrefix $($_.Exception.Message)"
     }
@@ -2049,23 +2088,18 @@ try {
 }
 
 try {
-    $responseObject['dataPath'] = @()
-    $responseObject['logPath'] = @()
-
+    $responseObject['files'] = @()
     ($DataFilePath + $LogFilePath) | ForEach-Object {
         $path = $_
         $fileLeaf = Split-Path -Path $path -Leaf
-        $pathType = ''
         if ($path.Contains('\\data\\')) {
             $newFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $fileLeaf).FullName
-            $pathType = 'dataPath'
         } else {
             $newFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $fileLeaf).FullName
-            $pathType = 'logPath'
         }
 
         if (Test-Path $newFilePath) {
-            $responseObject[$pathType] += $newFilePath
+            $responseObject['files'] += $newFilePath
         } else {
             throw
         }

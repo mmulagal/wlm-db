@@ -59,11 +59,21 @@
 
 @media screen and (min-width: 1429px) and (max-width: 1715px) {
     .exploreSavingsHeader {
-        height: 276px;
+        height: 336px;
 
         .topPart {
             .contentSection {
                 padding: 32px 64px;
+
+                .rightSide {
+                    width: 45.77%;
+                }
+
+                .subText {
+                    .link {
+                        margin-top: 12px;
+                    }
+                }
             }
         }
     }
@@ -71,7 +81,7 @@
 
 @media screen and (max-width: 1428px) {
     .exploreSavingsHeader {
-        height: 384px;
+        height: 436px;
         width: 1128px;
 
         .topPart {
@@ -86,6 +96,12 @@
 
                 .rightSide {
                     width: 465px;
+                }
+
+                .subText {
+                    .link {
+                        margin-top: 8px;
+                    }
                 }
             }
         }

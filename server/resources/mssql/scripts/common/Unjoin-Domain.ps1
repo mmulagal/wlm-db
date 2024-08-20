@@ -10,7 +10,11 @@ try {
     $IsPartOfDomain = (Get-CimInstance win32_computersystem).PartOfDomain  
     Write-Host "Hostname $Hostname. User domain  $DomainNetBIOSName. IsPartOfDomain $IsPartOfDomain."  
     if($IsPartOfDomain -eq $True) {
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+        . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
+        $SsmParameter =  Invoke-WithRetry -Command {
+            (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        }
         $AdminUsername = $SsmParameter.domain.username
         $AdminPassword = $SsmParameter.domain.password
         $pass = ConvertTo-SecureString $AdminPassword -AsPlainText -Force

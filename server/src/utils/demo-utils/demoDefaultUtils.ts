@@ -29,7 +29,7 @@ function createDemoResources(
     const stackName = randomize('A', 10);
     const stackId = randomize('A0', 10);
     const sqlDeploymentMode = 'FCI';
-    const fsxFilSystemId = `fs-${randomize('a0', 10)}`;
+    const fsxFilSystemId = `fs-${randomize('0', 8)}`;
 
     createDeploymentMockDataInDB(
         accountId!,
@@ -140,7 +140,7 @@ async function createDemoResourcesPerRegion(
                     instanceName,
                     credentialsId,
                     region,
-                    `fs-${randomize('A0', 17)}`,
+                    `fs-${randomize('0', 8)}`,
                     protocol,
                     {}
                 );
@@ -193,7 +193,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
 
 async function returnInventorydata(instances?: string[]) {
     logger.info('Generate and return inventory data for demo', instances);
-    const fsxId = `fs-${randomize('a0', 17)}`;
+    const fsxId = `fs-${randomize('0', 8)}`;
     const ebsVolId = `vol -${randomize('a0', 17)}`;
     const inventoryData = inventoryDemoData(fsxId, ebsVolId);
 

@@ -6,10 +6,6 @@
     border-bottom: 1px solid var(--grey-30);
     display: flex;
     gap: 4px;
-    position: sticky;
-    z-index: 5;
-    background-color: var(--main-background);
-    top: 0;
 
     .headers {
         width: 240px;

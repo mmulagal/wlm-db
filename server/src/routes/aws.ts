@@ -11,7 +11,9 @@ import {
     GetInstanceTypesSchema,
     GetKeyPairsSchema,
     GetFSxFileSystemsSchema,
-    GetVpcSecurityGroupsSchema
+    GetVpcSecurityGroupsSchema,
+    GetGenericFSxRegionsSchema,
+    GetGenericInstanceTypesSchema
 } from './schemas/aws-schemas';
 import {
     getAmiList,
@@ -24,7 +26,7 @@ import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
 import { getFSxFileSystemsList } from '../operations/aws/fsx-operations';
 import { getFsxKmsKeysList } from '../operations/aws/kms-operations';
-import { getFSxOntapRegionsList } from '../operations/aws/ssm-operations';
+import { getFSxOntapRegionsList, getGenericFSxOntapRegionsList } from '../operations/aws/ssm-operations';
 
 const REGION_AGNOSTIC_PREFIX_PATH = '/v1/credentials/:credentialsId';
 const FSX_PREFIX_PATH = `${REGION_AGNOSTIC_PREFIX_PATH}/fsx`;
@@ -88,11 +90,28 @@ export default function awsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
+    server.get(
+        '/v1/regions/:region/instance-types',
+        { schema: GetGenericInstanceTypesSchema },
+        async (request, reply) => {
+            const {
+                params: { region }
+            } = request;
+            const response = await getInstanceTypes(region);
+            return reply.send(response);
+        }
+    );
+
     server.get(`${API_PREFIX_PATH}/instance-types`, { schema: GetInstanceTypesSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
         } = request;
-        const response = await getInstanceTypes(credentialsId, region);
+        const response = await getInstanceTypes(region, credentialsId);
+        return reply.send(response);
+    });
+
+    server.get('/v1/fsx/regions', { schema: GetGenericFSxRegionsSchema }, async (_request, reply) => {
+        const response = await getGenericFSxOntapRegionsList();
         return reply.send(response);
     });
 

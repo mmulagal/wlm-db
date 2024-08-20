@@ -463,6 +463,8 @@ interface DbInfo {
 
 interface VolumeLunMap {
     fileName: string;
+    fileId: string | number;
+    fileType: string | number;
     volumeName: string;
     lunPath: string;
     lunSerialNumber: string;
@@ -568,6 +570,7 @@ async function startSandboxCreation(
 
     let clonedVolumes;
     let mountPaths;
+    const fileSuffix = '-sandbox';
 
     try {
         await validateCloneParams(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, mountPoints);
@@ -603,9 +606,42 @@ async function startSandboxCreation(
             mappings,
             clonedVolumes,
             mountPoints
-        )) as { dataPath: Array<string>; logPath: Array<string> };
+        )) as { files: Array<string> };
 
-        await createCloneDb(accountId, credentialsId, region, parentJobId, destDetails, mountPaths, mappings.collation);
+        const mappingData = [...mappings.data, ...mappings.log];
+
+        const fileDataArr = mountPaths.files.map(path => {
+            const fileData = mappingData.find(vol => {
+                const oldFileName = vol.fileName.split('\\').pop();
+                const newFileName = path.split('\\').pop();
+                return oldFileName === newFileName;
+            });
+            return {
+                filePath: path,
+                fileId: fileData?.fileId || 0,
+                fileType: fileData?.fileType || 0
+            };
+        });
+
+        await createCloneDb(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            destDetails,
+            {
+                dataPath: fileDataArr
+                    .filter(file => Number(file.fileType) === 0)
+                    .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+                    .map(pathObj => pathObj.filePath),
+                logPath: fileDataArr
+                    .filter(file => Number(file.fileType) === 1)
+                    .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+                    .map(pathObj => pathObj.filePath)
+            },
+            mappings.collation,
+            fileSuffix
+        );
 
         await createExtendedProperties(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, {
             tag,
@@ -632,7 +668,9 @@ async function startSandboxCreation(
             clonedVolumes
                 ? uniq([...clonedVolumes.data.map(vol => vol.volumeId), ...clonedVolumes.log.map(vol => vol.volumeId)])
                 : [],
-            uniq(compact([...(mountPaths ? mountPaths.dataPath : []), ...(mountPaths ? mountPaths.logPath : [])]))
+            uniq(compact(mountPaths ? mountPaths.files : [])).map(file =>
+                file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`)
+            )
         );
     } finally {
         // clearning all the ssm command cache so that we will get the fresh data once the sandbox is created
@@ -1131,7 +1169,8 @@ async function createCloneDb(
     parentJobId: string,
     destDetails: HostAndDbInfo,
     mountPaths: { dataPath: Array<string>; logPath: Array<string> },
-    collation?: string
+    collation?: string,
+    fileSuffix = ''
 ) {
     logger.info(
         'Create database clone',
@@ -1164,8 +1203,10 @@ async function createCloneDb(
             createCloneDbScript(
                 destDetails.database,
                 destDetails.instanceName,
-                [...mountPaths.dataPath, ...mountPaths.logPath],
-                `Sandbox:${destDetails.database}:`
+                mountPaths.dataPath,
+                mountPaths.logPath,
+                `Sandbox:${destDetails.database}:`,
+                fileSuffix
             )
         ];
 
@@ -1192,7 +1233,8 @@ async function createCloneDb(
         if (
             resp &&
             !resp.toLowerCase().includes('converting database') &&
-            !resp.includes('running the upgrade step from version')
+            !resp.includes('running the upgrade step from version') &&
+            !resp.includes('The Service Broker in database')
         ) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, resp);
         }
@@ -1294,12 +1336,19 @@ async function createExtendedProperties(
 
             const updatedMetadata: Metadata = await updateSandboxDBIntoResourceData(
                 accountId,
+                credentialsId,
                 srcDetails.host,
                 props,
                 srcDetails.metadata
             );
 
-            await updateUserDBIntoResourceData(accountId, srcDetails.host, destDetails.database, updatedMetadata);
+            await updateUserDBIntoResourceData(
+                accountId,
+                credentialsId,
+                srcDetails.host,
+                destDetails.database,
+                updatedMetadata
+            );
         }
 
         status = JOBSTATUS.COMPLETED;
@@ -1438,7 +1487,7 @@ async function updateMetadataForSanbox(
     const newMetadata = metadata as unknown as Metadata;
     newMetadata.sandboxCreated = true;
     try {
-        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
     } catch (err) {
         const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${err}`;
@@ -1470,7 +1519,7 @@ async function updateMetadataForSanboxTesting(
     newMetadata.sandboxCreated = true;
     newMetadata.updatedManually = true;
     try {
-        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
         return 'metadata updated succesfully';
     } catch (err) {
         return err;
@@ -1500,7 +1549,7 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
             try {
                 delete newMetadata.sandboxCreated;
                 delete newMetadata.updatedManually;
-                await updateResourceMetaData(accountId, resourceId, newMetadata);
+                await updateResourceMetaData(accountId, credentialsId, resourceId, newMetadata);
             } catch (err) {
                 logger.error('Failed to update meatadata', resourceId, err);
             }
@@ -1552,7 +1601,7 @@ async function updateMetadataForSanboxDeletion(
     }
 
     try {
-        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
         await updateInstanceMetadata(accountId, databaseInstanceId, newInstanceMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
     } catch (err) {
@@ -1991,11 +2040,12 @@ async function performLifecycleUpdate(
 ) {
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
-    let mappings;
+    let mappings: undefined | VolumeLunMapping;
     let clonedVolumes;
     let mountPaths;
     let sandboxUpdated = false;
     let sandboxDetached = false;
+    const fileSuffix = '-sandbox';
     try {
         await validateLifeCycleParams(accountId, credentialsId, region, parentJobId, resourceDetails, action);
 
@@ -2050,15 +2100,59 @@ async function performLifecycleUpdate(
             parentJobId,
             resourceDetails,
             resourceDetails,
-            mappings,
+            // Changing the file name to match parent file names
+            {
+                ...mappings,
+                data: mappings.data.map(vol => ({
+                    ...vol,
+                    fileName: vol.fileName.replace(`${fileSuffix}.mdf`, '.mdf').replace(`${fileSuffix}.ndf`, '.ndf')
+                })),
+                log: mappings.log.map(vol => ({ ...vol, fileName: vol.fileName.replace(`${fileSuffix}.ldf`, '.ldf') }))
+            },
             clonedVolumes,
             {
                 dataDrive: mappings.data[0].fileName.split(':')[0],
                 logDrive: mappings.log[0].fileName.split(':')[0]
             }
-        )) as { dataPath: Array<string>; logPath: Array<string> };
+        )) as { files: Array<string> };
 
-        await createCloneDb(accountId, credentialsId, region, parentJobId, resourceDetails, mountPaths);
+        const fileDataArr = mountPaths.files.map(path => {
+            const fileData = mappingData.find(vol => {
+                const oldFileName = vol.fileName
+                    .split('\\')
+                    .pop()
+                    ?.replace(`${fileSuffix}.mdf`, '.mdf')
+                    .replace(`${fileSuffix}.ndf`, '.ndf')
+                    .replace(`${fileSuffix}.ldf`, '.ldf');
+                const newFileName = path.split('\\').pop();
+                return oldFileName === newFileName;
+            });
+            return {
+                filePath: path,
+                fileId: fileData?.fileId || 0,
+                fileType: fileData?.fileType || 0
+            };
+        });
+
+        await createCloneDb(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resourceDetails,
+            {
+                dataPath: fileDataArr
+                    .filter(file => Number(file.fileType) === 0)
+                    .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+                    .map(pathObj => pathObj.filePath),
+                logPath: fileDataArr
+                    .filter(file => Number(file.fileType) === 1)
+                    .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+                    .map(pathObj => pathObj.filePath)
+            },
+            undefined,
+            fileSuffix
+        );
 
         if (isDemoFlow) {
             const existingProps = resourceDetails.metadata.sandboxes?.find(
