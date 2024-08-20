@@ -5,6 +5,13 @@ import { FINDING, FileSystemTypes, HOURS_IN_MONTH, HttpErrorCodes, SqlServerDepl
 import {
     ComputeDetailsType,
     ComputeLicenseCostType,
+    EBSCloneCostCalculationRespType,
+    EBSCostCalculationRespType,
+    EBSSnapshotCalculationRespType,
+    FsxCalculationRespType,
+    FsxwCalculationRespType,
+    FsxwCloneCalculationRespType,
+    FsxwSnapshotCalculationRespType,
     LicenseDetailsType,
     ManualStorageSavingsRequestBodyType,
     StorageSavingsMetricsCalculationsResponseType,
@@ -909,8 +916,36 @@ async function getManualModeStorageSavingsCalculationMetrics(
 
     const { compute, license } = await manualModeComputeLicenseDetails(region, params);
 
-    const { ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi } =
-        await formatManualStorageSavingsCalculationMetrics(accountId, region, params);
+    const resp = await formatManualStorageSavingsCalculationMetrics(accountId, region, params);
+
+    if (params.ec2Instances[0].fsxw) {
+        const { single, multi, fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation } = resp as {
+            single: FsxCalculationRespType;
+            multi: FsxCalculationRespType;
+            fsxwCalculation?: FsxwCalculationRespType;
+            fsxwSnapshotCalculation?: FsxwSnapshotCalculationRespType;
+            fsxwCloneCalculation?: FsxwCloneCalculationRespType;
+        };
+        return {
+            recommendedComputeCalculation: compute.recommended,
+            recommendedLicenseCalculation: license.recommended,
+            existingComputeCalculation: compute.existing,
+            existingLicenseCalculation: license.existing,
+            ...(single && { single }),
+            ...(multi && { multi }),
+            fsxwCalculation,
+            fsxwCloneCalculation,
+            fsxwSnapshotCalculation
+        };
+    }
+
+    const { ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi } = resp as {
+        single?: FsxCalculationRespType;
+        multi?: FsxCalculationRespType;
+        ebsCalculation?: EBSCostCalculationRespType;
+        ebsSnapshotCalculation?: EBSSnapshotCalculationRespType;
+        ebsCloneCalculation?: EBSCloneCostCalculationRespType;
+    };
 
     return {
         recommendedComputeCalculation: compute.recommended,

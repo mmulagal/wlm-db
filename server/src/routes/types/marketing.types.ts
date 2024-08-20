@@ -442,12 +442,84 @@ interface ManualModeMarketingRequestBodyFsxW {
     ];
 }
 
-type ManualModeMarketingRequestBody = ManualModeMarketingRequestBodyFsxW | ManualModeMarketingRequestBodyEBS;
+interface FsxwCostCalculation {
+    deploymentType: string;
+    desiredStorageCapacityGb: {
+        size: number;
+        unit: string;
+    };
+    desiredStorageCapacityTb: {
+        size: number;
+        unit: string;
+    };
+    deduplicationSavings: number;
+    storageSavingCapacity: {
+        size: number;
+        unit: string;
+    };
+    effectiveProvisionedStorageCapacityForFsxw: {
+        size: number;
+        unit: string;
+    };
+    fsxwSsdPrice: {
+        price: number;
+        unit: string;
+    };
+    monthlyCostForFsxwStorageCapacity: number;
+    totalMonthlyCostForFsxwStorageCapacity: number;
+    iops: number;
+    totalDefaultProvisionedIops: number;
+    additionalUserProvisionedIops: number;
+    billedIops: number;
+    fsxwIopsPrice: number;
+    totalMonthlyCostForFsxwProvisionedSsdIops: number;
+    fsxwMaxCapacity: {
+        size: number;
+        unit: string;
+    };
+    numberOfFileSystemsRequiredForStorageCapacity: number;
+    throughput: number;
+    fsxwMaxThroughput: number;
+    numberOfFileSystemsRequiredForThroughputCapacity: number;
+    requiredNumberOfFsxwFileSystemsFractional: number;
+    requiredNumberOfFsxwFileSystemsRoundUp: number;
+    numberOfFsxwFileSystemsForMinimumThroughput: number;
+    fsxwMinThroughput: number;
+    minimumThroughputCapacityRequiredToProvisionFileSystems: number;
+    provisionedThroughputCapacity: number;
+    fsxwThroughputPrice: number;
+    totalMonthlyCostForFsxwThroughputCapacity: number;
+    totalStorageChargeMonthly: number;
+    desiredSnapshotStorageCapacity: {
+        size: number;
+        unit: string;
+    };
+    storageSavingSnapshot: {
+        size: number;
+        unit: string;
+    };
+    effectiveProvisionedStorageCapacityForFsxwSnapshot: {
+        size: number;
+        unit: string;
+    };
+    monthlyCostForFsxwSnapshotStorageCapacity: number;
+    totalMonthlyCostForFsxwSnapshotStorageCapacity: number;
+    snapshotAmountChangeGib: number;
+}
 
-type ManualModeFsxwComparisonResponse = Omit<ManualModeEbsComparisonResponse, 'instanceEbs'> & {
+type ManualModeFsxwComparisonResponse = {
     fsxw: StorageSummary;
+    fsxw_cost_calculation: FsxwCostCalculation;
+    fsx: StorageSummary;
     fsx_calculation: FsxCalculation;
+    fsx_cost_calculation_no_snapshot: FsxNoSnapshotCalculation;
+    fsx_snapshot_cost_calculation: FsxSnapshotCalculation;
+    fsx_clone_cost_calculation: FsxCloneCalculation;
 };
+
+type ManualModeComparisionResponse = ManualModeEbsComparisonResponse | ManualModeFsxwComparisonResponse;
+
+type ManualModeMarketingRequestBody = ManualModeMarketingRequestBodyFsxW | ManualModeMarketingRequestBodyEBS;
 
 export {
     StorageSummary,
@@ -466,5 +538,7 @@ export {
     StorageVolumesResponse,
     StorageInstance,
     StorageInstanceResponse,
-    ManualModeFsxwComparisonResponse
+    ManualModeFsxwComparisonResponse,
+    FsxwCostCalculation,
+    ManualModeComparisionResponse
 };
