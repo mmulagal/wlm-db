@@ -80,7 +80,10 @@ const Home = () => {
                                 <Route path={'tables'} element={<Tables />} />
                             </Route>
                             <Route path={'databases'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
-                            <Route path={'fsxdb/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
+                            <Route
+                                path={'databases/inventory'}
+                                element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
+                            />
                             <Route
                                 path={'databases/exploreSavingsEBS'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
@@ -118,7 +121,10 @@ const Home = () => {
                                 <Route path={'tables'} element={<Tables />} />
                             </Route>
                             <Route path={'fsxdb'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
-                            <Route path={'fsxdb/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
+                            <Route
+                                path={'databases/inventory'}
+                                element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
+                            />
                             <Route
                                 path={'databases/exploreSavingsEBS'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
