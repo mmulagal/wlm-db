@@ -1,3 +1,5 @@
+import { getVolumeIdFromPath } from './sandbox-scripts';
+
 const cleanupResources = (
     fileSystemId: string,
     sqlVMName: string,
@@ -75,27 +77,7 @@ else {
     $loglabel = $DBName + "-Log"
 }
 
-Function Get-VolumeIdFromPath {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$absolutePath
-    )
-
-    $fullPath = [string](Resolve-Path $absolutePath)
-    $bestMatch = ''
-    $bestMatchObj = $null
-    gwmi Win32_MountPoint | % {
-        $_.Directory -match '="(.*)"' | Out-Null
-        $mountDir = $matches[1].Replace('\\\\', '\\')
-        If (!$mountDir.EndsWith('\\')) { $mountDir = $mountDir + '\\' }
-        If ($fullPath.StartsWith($mountDir, 'InvariantCultureIgnoreCase') -and $bestMatch.Length -lt $mountDir.Length) { 
-            $bestMatch = $mountDir
-            $bestMatchObj = $_
-        }
-    }
-    $bestMatchObj.Volume -match '{(.+?)}' | Out-Null
-    return $matches[1]
-}
+${getVolumeIdFromPath}
 
 if ($IsClustered -ne "false") {
     
