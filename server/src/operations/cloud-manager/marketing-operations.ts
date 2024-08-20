@@ -26,7 +26,7 @@ import {
     ManualModeFsxwComparisonResponse,
     ManualModeMarketingRequestBody,
     StorageSummary
-} from '../../routes/types/marketing.types';
+} from '../../utils/marketing-types';
 
 const logger = getLogger();
 

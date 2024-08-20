@@ -8,7 +8,7 @@ import {
     ManualModeMarketingRequestBody,
     StorageInstanceResponse,
     StorageVolumesResponse
-} from '../../routes/types/marketing.types';
+} from '../../utils/marketing-types';
 
 const logger = getLogger();
 

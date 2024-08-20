@@ -13,10 +13,7 @@ import {
     getMarketingApiRequestBody,
     getMarketingApiManualModeRequestBody
 } from '../../../src/operations/cloud-manager/marketing-operations';
-import {
-    ManualModeEbsComparisonResponse,
-    ManualModeMarketingRequestBody
-} from '../../../src/routes/types/marketing.types';
+import { ManualModeEbsComparisonResponse, ManualModeMarketingRequestBody } from '../../../src/utils/marketing-types';
 
 describe('Marketing lib', () => {
     it('Getting storage savings', async () => {
