@@ -65,7 +65,7 @@ import {
 import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { getDriveInfo } from './createdb-operations';
-import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
+import { restGetUtilForOntap, sqlQueryExecution } from './workloads/mssql/ssm-script-utils';
 
 const logger = getLogger();
 const TIME_WINDOW = 60; // 60 seconds
@@ -492,6 +492,7 @@ interface HostAndDbInfo extends DbInfo {
     databaseInstanceName?: string;
     instanceMetadata?: databaseInstanceMetadata;
     activeNodeDetails?: ActiveSqlNodeDetails;
+    sqlAuthEnabled?: boolean;
 }
 
 interface ClonedVolume {
@@ -566,7 +567,7 @@ async function startSandboxCreation(
 ) {
     logger.info('Start sandbox creation process', { tag });
     let errorMsg;
-    let status;
+    let status: string;
 
     let clonedVolumes;
     let mountPaths;
@@ -867,10 +868,19 @@ async function getMappings(
     });
 
     try {
-        const { fsxId, database } = srcDetails;
+        const { fsxId, database, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } =
+            srcDetails;
 
         let command = [
-            getDbMappedOntapVolumes(fsxId, region, database, srcDetails.instanceName, `Sandbox:${sandboxName}:`)
+            getDbMappedOntapVolumes(
+                fsxId,
+                region,
+                database,
+                databaseInstanceName,
+                instanceName,
+                `Sandbox:${sandboxName}:`,
+                sqlAuthEnabled
+            )
         ];
 
         if (isDemoFlow) {
@@ -881,7 +891,7 @@ async function getMappings(
             credentialsId,
             region,
             command,
-            srcDetails.activeNodeInstanceId,
+            activeNodeInstanceId,
             accountId,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -1202,20 +1212,28 @@ async function createCloneDb(
             // The instance name fix is temporary fix where the instance name is retrieved from the getActiveNode method since we are supporting only single instance. The instance value passed by the user in the body of API will ot be used. Once we support multiple instances this needs to be updated as well.
             createCloneDbScript(
                 destDetails.database,
+                destDetails.databaseInstanceName,
                 destDetails.instanceName,
                 mountPaths.dataPath,
                 mountPaths.logPath,
                 `Sandbox:${destDetails.database}:`,
-                fileSuffix
+                fileSuffix,
+                destDetails.sqlAuthEnabled || false
             )
         ];
 
         if (isDemoFlow) {
             command = [
-                createCloneDbScript('testdb', DEFAULT_MSSQL_INSTANCE_NAME, [
-                    'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
-                    'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
-                ])
+                createCloneDbScript(
+                    'testdb',
+                    DEFAULT_INSTANCE_NAME,
+                    DEFAULT_MSSQL_INSTANCE_NAME,
+                    ['S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf'],
+                    ['L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'],
+                    '',
+                    '',
+                    false
+                )
             ];
         }
 
@@ -1288,15 +1306,29 @@ async function createExtendedProperties(
     });
 
     try {
-        let command = [addExtendedProperties(destDetails.database, destDetails.instanceName, extendedProps)];
+        let command = [
+            addExtendedProperties(
+                destDetails.database,
+                destDetails.databaseInstanceName,
+                destDetails.instanceName,
+                extendedProps,
+                destDetails.sqlAuthEnabled || false
+            )
+        ];
 
         if (isDemoFlow) {
             command = [
-                addExtendedProperties('testdb', DEFAULT_MSSQL_INSTANCE_NAME, {
-                    tag: 'demo',
-                    cloned_by: 'netapp_wf',
-                    source: 'resource|instance|testdb'
-                })
+                addExtendedProperties(
+                    'testdb',
+                    DEFAULT_INSTANCE_NAME,
+                    DEFAULT_MSSQL_INSTANCE_NAME,
+                    {
+                        tag: 'demo',
+                        cloned_by: 'netapp_wf',
+                        source: 'resource|instance|testdb'
+                    },
+                    false
+                )
             ];
         }
         const resp = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstanceId);
@@ -1411,7 +1443,8 @@ async function startCleanup(
                 destDetails.database,
                 destDetails.instanceName,
                 destDetails.databaseInstanceName,
-                `SandBox:${destDetails.database}:`
+                `SandBox:${destDetails.database}:`,
+                destDetails.sqlAuthEnabled || false
             )
         ];
 
@@ -1425,7 +1458,11 @@ async function startCleanup(
                         'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
                         'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
                     ]),
-                    'testdb'
+                    'testdb',
+                    DEFAULT_MSSQL_INSTANCE_NAME,
+                    DEFAULT_INSTANCE_NAME,
+                    '',
+                    false
                 )
             ];
         }
@@ -1645,10 +1682,15 @@ async function getSandboxConnectionString(
             };
         }
 
-        let command = [getConnectionInfo(databaseInstanceName === DEFAULT_INSTANCE_NAME ? '' : databaseInstanceName)];
+        let command = [
+            getConnectionInfo(
+                databaseInstanceName === DEFAULT_INSTANCE_NAME ? '' : databaseInstanceName,
+                srcDetails.sqlAuthEnabled
+            )
+        ];
 
         if (isDemoFlow) {
-            command = [getConnectionInfo('MSSQLSERVER')];
+            command = [getConnectionInfo('MSSQLSERVER', false)];
         }
 
         const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
@@ -1699,7 +1741,14 @@ async function getDatabaseMountPointInfo(
             databaseName = 'test-database';
         }
 
-        const command = [mountPointQuery(srcDetails.instanceName, databaseName)];
+        const command = [
+            sqlQueryExecution(
+                srcDetails.databaseInstanceName,
+                srcDetails.instanceName,
+                mountPointQuery(databaseName),
+                srcDetails.sqlAuthEnabled
+            )
+        ];
 
         const mountPoints = await callSsmExecution(credentialsId, region, command, srcDetails.activeNodeInstanceId);
         if (!mountPoints) {
@@ -2339,7 +2388,8 @@ async function detachSandboxAndAccessPath(
                 JSON.stringify([...mappings.data.map(vol => vol.fileName), ...mappings.log.map(vol => vol.fileName)]),
                 resourceDetails.instanceName,
                 resourceDetails.databaseInstanceName,
-                `SandBox:${resourceDetails.database}:`
+                `SandBox:${resourceDetails.database}:`,
+                resourceDetails.sqlAuthEnabled || false
             )
         ];
 
@@ -2350,7 +2400,9 @@ async function detachSandboxAndAccessPath(
                     '["123456789", "987654321"]',
                     '["S:\\test-db-Data", "L:\\test-db-Log"]',
                     DEFAULT_MSSQL_INSTANCE_NAME,
-                    DEFAULT_INSTANCE_NAME
+                    DEFAULT_INSTANCE_NAME,
+                    '',
+                    false
                 )
             ];
         }
@@ -2429,7 +2481,8 @@ async function reAttachSandboxAndAccessPath(
                 JSON.stringify(mappings.log.map(vol => ({ serial: vol.lunSerialNumber, path: vol.fileName }))),
                 resourceDetails.instanceName,
                 resourceDetails.databaseInstanceName,
-                `SandBox:${resourceDetails.database}:`
+                `SandBox:${resourceDetails.database}:`,
+                resourceDetails.sqlAuthEnabled || false
             )
         ];
         const resp = await callSsmExecution(
@@ -2702,26 +2755,24 @@ async function deleteExtendedProperties(
 
     try {
         let command = [
-            deleteExtendedPropertiesScript(resourceDetail.database, resourceDetail.instanceName, [
-                'cloned_by',
-                'source',
-                'createdAt',
-                'updatedAt',
-                'tag',
-                'accountId'
-            ])
+            deleteExtendedPropertiesScript(
+                resourceDetail.database,
+                resourceDetail.databaseInstanceName,
+                resourceDetail.instanceName,
+                ['cloned_by', 'source', 'createdAt', 'updatedAt', 'tag', 'accountId'],
+                resourceDetail.sqlAuthEnabled || false
+            )
         ];
 
         if (isDemoFlow) {
             command = [
-                deleteExtendedPropertiesScript('test-db', DEFAULT_MSSQL_INSTANCE_NAME, [
-                    'cloned_by',
-                    'source',
-                    'createdAt',
-                    'updatedAt',
-                    'tag',
-                    'accountId'
-                ])
+                deleteExtendedPropertiesScript(
+                    'test-db',
+                    DEFAULT_INSTANCE_NAME,
+                    DEFAULT_MSSQL_INSTANCE_NAME,
+                    ['cloned_by', 'source', 'createdAt', 'updatedAt', 'tag', 'accountId'],
+                    false
+                )
             ];
         }
 
@@ -2802,8 +2853,10 @@ async function checkDatabaseIntegrity(
         region,
         checkDataIntegrityJob.id,
         databaseName,
+        srcDetails.databaseInstanceName,
         srcDetails.instanceName,
-        srcDetails.activeNodeInstanceId
+        srcDetails.activeNodeInstanceId,
+        srcDetails.sqlAuthEnabled
     );
 
     return { jobId: checkDataIntegrityJob.id };
@@ -2816,15 +2869,25 @@ async function performIntegrityCheck(
     parentJobId: string,
     databaseName: string,
     instanceName: string,
-    activeNodeInstanceId: string
+    executableInstanceName: string,
+    activeNodeInstanceId: string,
+    sqlAuthEnabled: boolean
 ) {
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
     try {
-        let command = [checkDatabaseIntegrityScript(databaseName, instanceName, `SandBox:${databaseName}:`)];
+        let command = [
+            checkDatabaseIntegrityScript(
+                databaseName,
+                instanceName,
+                executableInstanceName,
+                `SandBox:${databaseName}:`,
+                sqlAuthEnabled
+            )
+        ];
 
         if (isDemoFlow) {
-            command = [checkDatabaseIntegrityScript('test-db', '.')];
+            command = [checkDatabaseIntegrityScript('test-db', DEFAULT_INSTANCE_NAME, '.', '', false)];
         }
 
         const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
@@ -3088,7 +3151,8 @@ async function runSandboxPreValidations(
                 srcInstanceDetail.database_instance_name,
                 srcInstanceDetail.is_default
             ),
-            instanceMetadata: srcInstanceMetadata
+            instanceMetadata: srcInstanceMetadata,
+            sqlAuthEnabled: srcInstanceName.sqlAuthEnabled
         },
         destDetails: {
             ...dest,
@@ -3104,7 +3168,8 @@ async function runSandboxPreValidations(
                 destInstanceDetail.is_default
             ),
             instanceMetadata: destInstanceMetadata,
-            activeNodeDetails: destStatus
+            activeNodeDetails: destStatus,
+            sqlAuthEnabled: destInstanceName.sqlAuthEnabled
         }
     };
 }

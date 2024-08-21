@@ -37,6 +37,7 @@ import {
     RESOURCE_UTILIZATION,
     GET_DEFAULT_COLLATION,
     GET_DEFAULT_DRIVES,
+    sqlQueryExecution,
     READ_SCRIPT_VERSION
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 import {
@@ -63,6 +64,7 @@ import {
     getConnectionInfo
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
+import { DEFAULT_INSTANCE_NAME } from '../../../../src/utils/consts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -360,11 +362,17 @@ const createCloneDbCommand = {
 
 const addExtendedPropertiesCommand = {
     commands: [
-        addExtendedProperties('testdb', '$env:computername', {
-            tag: 'demo',
-            cloned_by: 'netapp_wf',
-            source: 'resource|instance|testdb'
-        })
+        addExtendedProperties(
+            'testdb',
+            DEFAULT_INSTANCE_NAME,
+            '$env:computername',
+            {
+                tag: 'demo',
+                cloned_by: 'netapp_wf',
+                source: 'resource|instance|testdb'
+            },
+            true
+        )
     ]
 };
 
@@ -383,7 +391,9 @@ const cleanUpOntapResourcesCommand = {
     ]
 };
 
-const mountPointQueryCommand = { commands: [mountPointQuery('$env:computername', 'test-database')] };
+const mountPointQueryCommand = {
+    commands: [sqlQueryExecution('MSSQLSERVER', '$env:computername', mountPointQuery('test-database'), true)]
+};
 
 const getInstanceGuidCommand = { commands: [`sqlcmd -S "$env:computername" -Q "${INSTANCE_GUID}" -y 0`] };
 
@@ -400,7 +410,7 @@ const detachDbAndRemoveAccessPathCommand = {
 
 const deleteExtendedPropertiesCommand = {
     commands: [
-        deleteExtendedPropertiesScript('test-db', '$env:computername', [
+        deleteExtendedPropertiesScript('test-db', DEFAULT_INSTANCE_NAME, '$env:computername', [
             'cloned_by',
             'source',
             'createdAt',
@@ -435,7 +445,7 @@ const enterpriseFeatureUsageCheck = {
 };
 
 const checkDatabaseIntegirty = {
-    commands: [checkDatabaseIntegrityScript('test-db', '.')]
+    commands: [checkDatabaseIntegrityScript('test-db', DEFAULT_INSTANCE_NAME, '.', '', false)]
 };
 
 const getSnapshotsToCloneCommand = {

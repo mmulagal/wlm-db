@@ -178,6 +178,7 @@ describe('sandbox operations ', () => {
             'default',
             'test-database'
         );
+
         expect(resp).toEqual(sandboxResponse.sandboxMountPointResponse);
     });
 

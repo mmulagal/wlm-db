@@ -24,6 +24,7 @@ import { NodeDetails } from '../utils/common-types';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getDatabaseInstanceName, getMonthlyPriceFromHourlyPrice } from '../utils/utils';
 import { getEnrollmentStatus } from '../lib/aws/compute-optimizer';
+import { sqlQueryExecution } from './workloads/mssql/ssm-script-utils';
 import {
     ComputeDetailsType,
     LicenseDetailsType,
@@ -59,10 +60,12 @@ async function isUsingEnterpriseConfiguration(
         sqlServerInstanceInfo
     });
 
-    const { isDefaultInstance, sqlServerInstance } = sqlServerInstanceInfo;
+    const { isDefaultInstance, sqlServerInstance, sqlServerAuthentication } = sqlServerInstanceInfo;
     const sqlServerName = getDatabaseInstanceName(sqlServerInstance, isDefaultInstance);
 
-    const command = [`sqlcmd -S "${sqlServerName}" -Q "${ENTERPRISE_CHECK_QUERY}" -y 0`];
+    const command = [
+        sqlQueryExecution(sqlServerInstance, sqlServerName, ENTERPRISE_CHECK_QUERY, sqlServerAuthentication || false)
+    ];
 
     const checkEnterpriseConfigurationList = await callSsmExecution(
         credentialsId,

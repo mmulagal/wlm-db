@@ -1,6 +1,7 @@
 // instances input instances = ['"computername\\instanceName"', '"DEFAULT_MSSQL_INSTANCE_NAME"']; "DEFAULT_MSSQL_INSTANCE_NAME" represents the default instance
 
 import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
+import { readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 // ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
 const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
@@ -227,15 +228,18 @@ const getDbMappedOntapVolumes = (
     fsxid: string,
     fsxregion: string,
     dbName: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    logPrefix: string = ''
+    instanceName: string = DEFAULT_INSTANCE_NAME,
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    logPrefix: string = '',
+    sqlAuthEnabled: boolean = false
 ) => `
     $WarningPreference = 'SilentlyContinue';
     $FSxID = '${fsxid}'
     $FSxRegion = '${fsxregion}'
     $dbname = '${dbName}'
-    $instanceName = "${instanceName}"
+    $executableInstanceName = "${executableInstanceName}"
     $logPrefix = '${logPrefix}'
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_for_$dbname.log.txt" -Append | Out-Null
 
@@ -394,15 +398,23 @@ const getDbMappedOntapVolumes = (
             }
             return $responseObject
         }
-    
-        $sqlresp = sqlcmd -S $instanceName -Q $sqlquery -y 0;
-        Write-Information "$logPrefix SQL response: $sqlresp"
-        if ([string]::IsNullOrEmpty($sqlresp)) {
-            $responseObject['error'] = "SqlServerError: Could not get volumes of database $dbname"
-            return $responseObject | ConvertTo-Json -Depth 5
+
+        $sqlCredential = @{'useSqlAuth' = $False}
+        if($sqlAuthEnabled) {
+            ${readSsmParameter(instanceName)}
+        }
+        $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "${executableInstanceName}"
+
+        Write-Information "$logPrefix SQL response: $queryResponse"
+        if ([string]::IsNullOrEmpty($queryResponse)) {
+            if ($queryResponse -eq $null) {
+                $queryResponse = @{}
+            }
+            $queryResponse['error'] = "SqlServerError: Could not get volumes of database $dbname"
+            return $queryResponse | ConvertTo-Json -Depth 5
         }
     
-        $responseObject = Get-SerialNumberOfWinVolumes $sqlresp
+        $responseObject = Get-SerialNumberOfWinVolumes $queryResponse
         Write-Information "$logPrefix Serial numbers: $($responseObject | ConvertTo-Json)"
         if ($responseObject.data.Count -eq 0 -or $responseObject.log.Count -eq 0) {
             $responseObject['error'] = "Could not get windows volume serial numbers"
@@ -771,25 +783,37 @@ const createVolumeClone = (
 
 const createClonedDb = (
     dbName: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     dataFileList: string[] = [],
     logFileList: string[] = [],
     logPrefix: string = '',
-    fileSuffix = ''
+    fileSuffix = '',
+    sqlAuthEnabled: boolean
 ) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
     $logPrefix = '${logPrefix}'
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 
     Start-Transcript -Path "C:\\cfn\\log\\sqlserver_create_db_$dbname.log.txt" -Append | Out-Null
 
+    ${slqcmdExecutionTemplate}
+
     try {
+        $sqlCredential = @{'useSqlAuth' = $False}
+        if($sqlAuthEnabled) {
+            ${readSsmParameter(instanceName)}
+        }
+
         $selectquery = "SET NOCOUNT ON; SELECT name, state_desc FROM sys.databases where name = '$dbname' FOR JSON PATH;"
-        $sqlresponse =  sqlcmd -S "${instanceName}" -Q $selectquery -y 0;
+        $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$selectquery" -InstanceName "${executableInstanceName}"
 
         Write-Information "$logPrefix SQL response: $sqlresponse"
         [string[]]$ExistingDatabases = $sqlresponse | ConvertFrom-Json | % { $_.name }
-        $selectresult = (sqlcmd -S "${instanceName}" -Q $selectquery -y 0) | ConvertFrom-Json
+
+        $selectresult = (Call-SqlCmd -SqlCredential $sqlCredential -Query "$selectquery" -InstanceName "${executableInstanceName}") |  ConvertFrom-Json
+
         if ($selectresult.count -gt 0) {
             Write-Error "$logPrefix Database $dbname already exists and is in $($selectresult[0].state_desc) state. Exiting..."
         }
@@ -812,11 +836,9 @@ const createClonedDb = (
                 })
                 .join(',\n')}
 "@
-
-        sqlcmd -S "${instanceName}"  -Q $createQuery -y 0
         
-
-        sqlcmd -S "${instanceName}"  -Q "ALTER DATABASE $dbname SET OFFLINE" -y 0
+        Call-SqlCmd -SqlCredential $sqlCredential -Query "$createQuery" -InstanceName "${executableInstanceName}"
+        Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET OFFLINE" -InstanceName "${executableInstanceName}"
         
         # Remove the actual files
         ${[...dataFileList, ...logFileList]
@@ -836,9 +858,8 @@ const createClonedDb = (
                 Rename-Item -Path "${file}" -NewName "${newFileName}"`;
             })
             .join('\n')}
-
-        sqlcmd -S "${instanceName}"  -Q "ALTER DATABASE $dbname SET ONLINE" -y 0
-
+        
+        Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET ONLINE" -InstanceName "${executableInstanceName}"
     } catch {
         Write-Error "$logPrefix $($_.Exception.Message)"
     }
@@ -846,13 +867,23 @@ const createClonedDb = (
 
 const addExtendedProperties = (
     dbName: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    propObj: { [x: string]: string | number | boolean }
+    instanceName: string = DEFAULT_INSTANCE_NAME,
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    propObj: { [x: string]: string | number | boolean },
+    sqlAuthEnabled: boolean
 ) => `
 $dbname = '${dbName}'
+$sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 $extProps = '${JSON.stringify(propObj)}' | ConvertFrom-Json
 
 Start-Transcript -Path "C:\\cfn\\log\\add_extended_properties_$dbname.log.txt" -Append | Out-Null
+
+${slqcmdExecutionTemplate}
+
+$sqlCredential = @{'useSqlAuth' = $False}
+if($sqlAuthEnabled) {
+    ${readSsmParameter(instanceName)}
+}
 
 Write-Information "Sandbox:$($dbname): Adding extended properties $extProps"
 
@@ -875,8 +906,9 @@ ${Object.keys(propObj)
     .join('\n')}
 
 "@
+$response = $null
+Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstanceName}" -ExtraArguments -m1
 
-Sqlcmd -S "${instanceName}"  -Q $query -m 1
 Stop-Transcript | Out-Null
 `;
 
@@ -888,7 +920,8 @@ const cleanUpOntapResources = (
     dbName: string,
     executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceName: string = DEFAULT_INSTANCE_NAME,
-    logPrefix: string = ''
+    logPrefix: string = '',
+    sqlAuthEnabled: boolean
 ) => `
     $fsxid = '${fsxid}'
     $fsxregion = '${fsxregion}'
@@ -898,8 +931,16 @@ const cleanUpOntapResources = (
     $executableInstance = "${executableInstance}"
     $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
+    
+    ${slqcmdExecutionTemplate}
+
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
 
     $WarningPreference = 'SilentlyContinue';
     $responseObject = @{}
@@ -909,8 +950,9 @@ const cleanUpOntapResources = (
         try {
             if ($filePaths.count -ne 0) {
                 $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
-
-                $sqlres = sqlcmd -S $executableInstance -Q $query -y 0
+                
+                $sqlres = $null
+                $sqlres = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstance}"
 
                 if (-not [string]::IsNullOrEmpty($sqlres)) {
                     Write-Information "$logPrefix Database $dbname is in use"
@@ -991,7 +1033,9 @@ const cleanUpOntapResources = (
 
             try {
                 $deleteQuery = "SET NOCOUNT ON; DROP DATABASE IF EXISTS $DBName;"
-                $sqlresponse =  sqlcmd -S $executableInstance -Q $deleteQuery -y 0;
+                $sqlresponse = $null
+                $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$deleteQuery" -InstanceName "${executableInstance}"
+                
                 if (-not [string]::IsNullOrEmpty($sqlresponse)) {
                     throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
                 }
@@ -1017,8 +1061,8 @@ const cleanUpOntapResources = (
     $responseObject | ConvertTo-Json
 `;
 
-const mountPointQuery = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME, databaseName: string) =>
-    ` sqlcmd -S "${instanceName}" -Q "SET NOCOUNT ON;
+const mountPointQuery = (databaseName: string) =>
+    ` SET NOCOUNT ON;
     SELECT 
         CASE WHEN mf.type != 0 THEN 'Log' ELSE 'Data' END AS filetype,
         vs.logical_volume_name AS volumename,
@@ -1027,7 +1071,7 @@ const mountPointQuery = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME, dat
     JOIN sys.databases AS db ON db.database_id = mf.database_id
     CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
     WHERE db.name = '${databaseName}'
-    FOR JSON PATH;" -y 0 `;
+    FOR JSON PATH;`;
 
 const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, clonedBy: string) => `
     $WarningPreference = 'SilentlyContinue';
@@ -1120,7 +1164,8 @@ const detachDbAndRemoveAccessPath = (
     filePaths: string,
     executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceName: string = DEFAULT_INSTANCE_NAME,
-    logPrefix: string = ''
+    logPrefix: string = '',
+    sqlAuthEnabled: boolean
 ) => `
     $dbname = '${dbName}'
     $serialNumbers = '${serialNumbers}' | ConvertFrom-Json
@@ -1128,8 +1173,16 @@ const detachDbAndRemoveAccessPath = (
     $executableInstance = "${executableInstance}"
     $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 
     Start-Transcript -Path "C:\\cfn\\log\\detachdb_remove_accesspath_$dbname.log.txt" -Append | Out-Null
+    
+    ${slqcmdExecutionTemplate}
+
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
 
     if ($null -eq $responseObject) {
         $responseObject = @{}
@@ -1138,8 +1191,7 @@ const detachDbAndRemoveAccessPath = (
     try {
         $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$dbname' GROUP BY dbid FOR JSON PATH"
 
-        $sqlres = Sqlcmd -S $executableInstance -Q $query -y 0
-        
+        $sqlres = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstance}"
         if ($sqlres -ne $null) {
             Write-Information "$logPrefix Database $dbname is in use"
             $responseObject['error'] = "Database $dbname is in use"
@@ -1152,7 +1204,7 @@ const detachDbAndRemoveAccessPath = (
             SELECT name, value
             FROM fn_listextendedproperty(default, default, default, default, default, default, default) FOR JSON PATH;
 "@
-        $sqlresponse = Sqlcmd -S $executableInstance -Q $query -y 0 -m 1
+        $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstance}" -ExtraArguments -m1
         $sqlresponse = $sqlresponse | ConvertFrom-JSON
 
         $sqlresponse | ForEach-Object {
@@ -1170,7 +1222,7 @@ const detachDbAndRemoveAccessPath = (
 
         try {
             $detach = "EXEC sp_detach_db '$dbname', 'true'"
-            $sqlresponse =  sqlcmd -S $executableInstance -Q $detach -y 0;
+            $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$detach" -InstanceName "${executableInstance}"
 
             Write-Information "$logPrefix Detach response: $sqlresponse"
 
@@ -1251,7 +1303,8 @@ const addAccessPathAndAttachDb = (
     logfiles: string,
     executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceName: string = DEFAULT_INSTANCE_NAME,
-    logPrefix: string = ''
+    logPrefix: string = '',
+    sqlAuthEnabled: boolean
 ) => `
     $dbname = '${dbName}'
     $datafiles = '${datafiles}' | ConvertFrom-Json
@@ -1259,6 +1312,7 @@ const addAccessPathAndAttachDb = (
     $executableinstance = "${executableInstance}"
     $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 
     Start-Transcript -Path "C:\\cfn\\log\\add_accesspath_attachdb_$dbname.log.txt" -Append | Out-Null
 
@@ -1529,6 +1583,12 @@ const addAccessPathAndAttachDb = (
             Write-Information "$LogPrefix $errorMsg"
             throw $errorMsg
         }
+        
+        ${slqcmdExecutionTemplate}
+        $sqlCredential = @{'useSqlAuth' = $False}
+        if($sqlAuthEnabled) {
+            ${readSsmParameter(instanceName)}
+        }
 
         $attachQuery = @"
             IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '$dbname')
@@ -1540,7 +1600,9 @@ const addAccessPathAndAttachDb = (
                 FOR ATTACH
             END;
 "@
-        $attachresponse =  sqlcmd -S $executableinstance -Q $attachQuery -y 0;
+        
+        $attachresponse = $null
+        $attachresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$attachQuery" -InstanceName "${executableInstance}"
         if ($attachresponse -ne $null) {
             $errorMessage = "SQLServerError: Could not create and attach the database $dbname. $attachresponse"
             Write-Information "$logPrefix $errorMessag"
@@ -1635,14 +1697,24 @@ const splitFlexCloneVolumes = (
 
 const deleteExtendedPropertiesScript = (
     dbName: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    props: Array<string>
+    instanceName: string = DEFAULT_INSTANCE_NAME,
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    props: Array<string>,
+    sqlAuthEnabled: boolean
 ) => `
 $dbname = '${dbName}'
 $instanceName = "${instanceName}"
 $extProps = '${JSON.stringify(props)}' | ConvertFrom-Json
+$sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 
 Start-Transcript -Path "C:\\cfn\\log\\delete_extended_properties_$dbname.log.txt" -Append | Out-Null
+
+${slqcmdExecutionTemplate}
+
+$sqlCredential = @{'useSqlAuth' = $False}
+if($sqlAuthEnabled) {
+    ${readSsmParameter(instanceName)}
+}
 
 Write-Information "Sandbox:$($dbname): Deleting extended properties $extProps"
 
@@ -1659,16 +1731,31 @@ IF EXISTS (SELECT name, value FROM fn_listextendedproperty(default, default, def
     .join('\n')}
 "@
 
-Sqlcmd -S $instanceName -Q $query -m 1
+$response = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstanceName}" -ExtraArguments -m1
+
 Stop-Transcript | Out-Null
 `;
 
-const checkDatabaseIntegrityScript = (dbName: string, instanceName: string = '.', logPrefix: string = '') => `
+const checkDatabaseIntegrityScript = (
+    dbName: string,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
+    executableInstanceName: string = '.',
+    logPrefix: string = '',
+    sqlAuthEnabled: boolean
+) => `
 $dbname = '${dbName}'
 $instanceName = "${instanceName}"
 $logPrefix = '${logPrefix}'
+$sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 
 Start-Transcript -Path "C:\\cfn\\log\\check_integrity_for_$dbname.log.txt" -Append | Out-Null
+
+${slqcmdExecutionTemplate}
+
+$sqlCredential = @{'useSqlAuth' = $False}
+if($sqlAuthEnabled) {
+    ${readSsmParameter(instanceName)}
+}
 
 Write-Information "$logPrefix Checking database integrity"
 
@@ -1677,12 +1764,24 @@ USE $dbname;
 SET NOCOUNT ON;
 DBCC CHECKDB($dbname) WITH NO_INFOMSGS, ALL_ERRORMSGS;
 "@
-Sqlcmd -S $instanceName -Q $query -m 1
+
+$response = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstanceName}" -ExtraArguments -m1
 `;
 
-const readExtendedPropertiesOfSandbox = (dbName: string, instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `
+const readExtendedPropertiesOfSandbox = (
+    dbName: string,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean
+) => `
     $dbname = '${dbName}'
     $instanceName = "${instanceName}"
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
 
     $responseObject = @{}
 
@@ -1693,7 +1792,7 @@ const readExtendedPropertiesOfSandbox = (dbName: string, instanceName: string = 
             SELECT name, value
             FROM fn_listextendedproperty(default, default, default, default, default, default, default) FOR JSON PATH;
 "@
-        $sqlresponse = Sqlcmd -S $instanceName -Q $query -y 0 -m 1
+        $sqlresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstanceName}" -ExtraArguments -m1
         $sqlresponse = $sqlresponse | ConvertFrom-JSON
 
         $sqlresponse | ForEach-Object {
@@ -1788,13 +1887,22 @@ const getSnapshotsToClone = (
     $responseObject | ConvertTo-Json -Depth 5
 `;
 
-const getConnectionInfo = (instanceName: string) => `
+const getConnectionInfo = (instanceName: string, sqlAuthEnabled: boolean) => `
 
+$sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+$sqlCredential = @{'useSqlAuth' = $False}
+
+${slqcmdExecutionTemplate}
+
+if($sqlAuthEnabled) {
+    ${readSsmParameter(instanceName)}
+}
 $responseObject = @{}
 
 try {
     $ip = (Invoke-WebRequest -URI http://169.254.169.254/latest/meta-data/local-ipv4 -UseBasicParsing).Content;
-    $port = SQLCMD -S "$ip\\${instanceName}" -Q "SET NOCOUNT ON; SELECT DISTINCT local_tcp_port FROM sys.dm_exec_connections  WHERE local_tcp_port IS NOT NULL" -y 0;
+    $query = "SET NOCOUNT ON; SELECT DISTINCT local_tcp_port FROM sys.dm_exec_connections  WHERE local_tcp_port IS NOT NULL"
+    $port = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "$ip\\${instanceName}"
     $responseObject['server'] = "$($ip):$($port)${instanceName ? `\\${instanceName}` : ''}"
 } catch {
     $responseObject['error'] = "Failed to get connection info: $_.Exception.Message"

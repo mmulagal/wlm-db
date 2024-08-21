@@ -38,7 +38,10 @@ import {
     ServerState,
     DATABASE_METRIC_TYPE,
     DEFAULT_MSSQL_INSTANCE_NAME,
-    SQL_SERVICE_STATE
+    SQL_SERVICE_STATE,
+    SSM_PARAM_PREFIX,
+    AWS_SSM_PARAMETER,
+    DEFAULT_INSTANCE_NAME
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import {
@@ -53,7 +56,9 @@ import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
 import { DatabaseInstance, Metadata, ResourceDetails, InstanceDetails } from '../../../utils/common-types';
-import { INSTANCE_DETAILS, RESOURCE_UTILIZATION } from './ssm-script-utils';
+import { INSTANCE_DETAILS, RESOURCE_UTILIZATION, sqlQueryExecution } from './ssm-script-utils';
+import { getParameter } from '../../../lib/aws/ssm';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 
 const logger = getLogger();
 
@@ -83,9 +88,10 @@ async function getDatabasesCount(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
 ) {
-    logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId);
+    logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId, sqlAuthEnabled);
 
     const commands = [`sqlcmd -S "${instanceName}" -Q "${DATABASES_COUNT_V2}" -y 0`];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
@@ -403,9 +409,10 @@ async function getServerDetails(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
 ) {
-    logger.info('Get details of SQL Server database:', { credentialsId, region, activeNodeInstanceId });
+    logger.info('Get details of SQL Server database:', { credentialsId, region, activeNodeInstanceId, sqlAuthEnabled });
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
@@ -619,9 +626,26 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 const parsedResponse = sqlResponseParsing(response);
 
                 const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+
+                // Check if instance has SSM parameter store
+                const parameterKey = `${SSM_PARAM_PREFIX}${nodeId}`;
+                let ssmParameter;
+                if (hasCache(AWS_SSM_PARAMETER, parameterKey)) {
+                    ssmParameter = readFromCacheByKey(AWS_SSM_PARAMETER, parameterKey) as string;
+                } else {
+                    ssmParameter = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${nodeId}`);
+                    if (ssmParameter) {
+                        writeToCache(AWS_SSM_PARAMETER, parameterKey, ssmParameter, '60s');
+                    }
+                }
+                const { sql = {} } = ssmParameter ? JSON.parse(ssmParameter) : {};
+
                 instancesDetails.forEach(obj => {
                     (obj as any).isDefault = !obj.instanceName.includes('$');
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
+                    obj.sqlAuthEnabled = !isEmpty(sql)
+                        ? Boolean(sql?.find((e: { sqlinstancename: string }) => e.sqlinstancename === obj.instanceName))
+                        : false;
                 });
                 let isDefaultInstance = true;
                 let selectedInstance = instancesDetails.find(
@@ -694,9 +718,10 @@ async function getNativeSQLProtection(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
 ) {
-    logger.info('Fetch SQL native protection status', { credentialsId, region, activeNodeInstanceId });
+    logger.info('Fetch SQL native protection status', { credentialsId, region, activeNodeInstanceId, sqlAuthEnabled });
 
     try {
         if (!credentialsId || !region || !activeNodeInstanceId) {
@@ -723,12 +748,14 @@ async function getPerformanceMetrics(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
 ) {
     logger.info('Fetch SQL server performance metrics (assessment, latency, IOPS, throughput) for resource', {
         credentialsId,
         region,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        sqlAuthEnabled
     });
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
@@ -944,8 +971,10 @@ async function checkDatabaseExists(
     databaseHostId: string,
     databaseName: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    sqlInstanceId?: string
+    instanceName: string = DEFAULT_INSTANCE_NAME,
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlInstanceId?: string,
+    sqlAuthEnabled: boolean = false
 ) {
     logger.info('Checking Database name exists', {
         accountId,
@@ -970,7 +999,10 @@ async function checkDatabaseExists(
         }) as { userDatabase: any[] };
         return userDatabase?.some(db => db.name === databaseName) ?? false;
     }
-    const command = [`sqlcmd -S "${instanceName}" -Q "${DATABASE_NAME_EXISTS(databaseName)}" -y 0`];
+
+    const command = [
+        sqlQueryExecution(instanceName, executableInstanceName, DATABASE_NAME_EXISTS(databaseName), sqlAuthEnabled)
+    ];
 
     try {
         const checkDatabaseExistsResponse = await callSsmExecution(

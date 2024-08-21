@@ -26,7 +26,8 @@ import {
     HttpErrorCodes,
     RESOURCESTYPE,
     SQL_SERVICE_STATE,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    DEFAULT_MSSQL_INSTANCE_NAME
 } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
@@ -49,6 +50,11 @@ import { checkScriptNeedsUpdate, copyScriptsToHost } from './resource-operations
 
 const logger = getLogger();
 
+interface SqlInstance {
+    name: string;
+    executableName: string;
+    sqlAuthEnabled: boolean;
+}
 const isDemoFlow = isDemo();
 
 async function getDefaultDrives(
@@ -583,6 +589,7 @@ async function invokeSSMForDatabaseDeployment(
     let sqlInstanceName;
     let instancesDetails;
     let databaseInstanceId;
+    let isSqlAuthEnabled = false;
     try {
         ({
             isSSMConnected,
@@ -596,7 +603,11 @@ async function invokeSSMForDatabaseDeployment(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
         }
         if (instanceDetail && instancesDetails) {
-            const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
+            const {
+                database_instance_name: selectedInstanceName,
+                is_default: isDefault,
+                sqlAuthEnabled
+            } = instanceDetail;
             isDefaultInstance = isDefault ? 'true' : 'false';
             instanceNameForScript = selectedInstanceName;
 
@@ -613,6 +624,7 @@ async function invokeSSMForDatabaseDeployment(
             }
             sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
             databaseInstanceId = instanceDetail.database_instance_id;
+            isSqlAuthEnabled = sqlAuthEnabled || false;
         }
 
         if (isClustered === 'true' && standbyNodeInstanceId) {
@@ -645,7 +657,7 @@ async function invokeSSMForDatabaseDeployment(
             parentJobId,
             activeNodeInstanceId as string,
             collation,
-            sqlInstanceName,
+            { name: instanceNameForScript, executableName: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
             serverNameWithHostName,
             activeNodeDetails as ActiveSqlNodeDetails,
             databaseInstanceId
@@ -677,7 +689,7 @@ async function invokeSSMForDatabaseDeployment(
                 dataDrivePath,
                 logDrivePath,
                 collation,
-                sqlInstanceName,
+                { name: instanceNameForScript, executableName: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
                 serverNameWithHostName
             );
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
@@ -799,7 +811,7 @@ async function invokeSSMForDatabaseDeployment(
                 dataDrivePath,
                 logDrivePath,
                 collation,
-                sqlInstanceName,
+                { name: instanceNameForScript, executableName: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
                 serverNameWithHostName,
                 iGroup,
                 fsxDataVolumeName,
@@ -899,7 +911,7 @@ async function createDatabase(
     dataDrivePath: string,
     logDrivePath: string,
     collation: string,
-    sqlInstanceName: string,
+    sqlInstance: SqlInstance,
     serverNameWithHostName: string,
     iGroup?: string,
     fsxDataVolumeName?: string,
@@ -920,18 +932,24 @@ async function createDatabase(
         iGroup,
         fsxDataVolumeName,
         fsxLogVolumeName,
-        sqlInstanceName,
+        sqlInstance,
         serverNameWithHostName
     });
 
     let createDatabaseCommand;
+    const { name: instanceName, executableName: instanceExecutableName, sqlAuthEnabled } = sqlInstance;
+
     if (isDemoFlow) {
         createDatabaseCommand = [
             `${CREATEDBSCRIPT} -SQLServer Draculla  -DBName tempdb9  -DataPath J:\\MSSQL\\data\\tempdb9_data.mdf  -LogPath K:\\MSSQL\\data\\tempdb9_log.ldf`
         ];
+    } else if (sqlAuthEnabled) {
+        createDatabaseCommand = [
+            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation} -SqlInstanceName ${instanceExecutableName} -InstanceName ${instanceName} -ResourceID ${activeNodeInstanceId}`
+        ];
     } else {
         createDatabaseCommand = [
-            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation} -SqlInstanceName ${sqlInstanceName} -InstanceName ${sqlInstanceName}`
+            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation} -SqlInstanceName ${instanceExecutableName} -InstanceName ${instanceName}`
         ];
     }
 
@@ -1346,7 +1364,7 @@ async function validateParams(
     parentJobId: string,
     activeNodeInstanceId: string,
     collation: string,
-    instanceName: string,
+    sqlInstance: SqlInstance,
     serverNameWithHostName: string,
     activeNodeDetails: ActiveSqlNodeDetails,
     databaseInstanceId?: string
@@ -1363,7 +1381,7 @@ async function validateParams(
         sqlServerName,
         parentJobId,
         collation,
-        instanceName,
+        sqlInstance,
         serverNameWithHostName
     });
 
@@ -1384,6 +1402,7 @@ async function validateParams(
 
     const dataGibIntoBytes = convertGiBToBytes(dataVolumeSize);
     const logGibIntoBytes = convertGiBToBytes(logVolumeSize);
+    const { name: instanceName, executableName, sqlAuthEnabled } = sqlInstance;
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
@@ -1413,7 +1432,9 @@ async function validateParams(
             databaseName,
             activeNodeInstanceId,
             instanceName,
-            databaseInstanceId
+            executableName,
+            databaseInstanceId,
+            sqlAuthEnabled
         );
 
         if (databaseExists) {
@@ -1431,7 +1452,7 @@ async function validateParams(
             region,
             undefined,
             activeNodeInstanceId,
-            instanceName
+            { name: instanceName, executableName, sqlAuthEnabled }
         );
 
         const collationExists = collationList?.some(item => item?.name?.toLowerCase() === collation.toLowerCase());
@@ -1614,7 +1635,12 @@ async function checkDriveExists(
     return true;
 }
 
-async function getCollationForInstance(credentialsId: string, region: string, activeNode: string, sqlInstance: string) {
+async function getCollationForInstance(
+    credentialsId: string,
+    region: string,
+    activeNode: string,
+    sqlInstance: SqlInstance
+) {
     const { defaultCollation, mssqlVersion } = await getDefaultCollationAndVersion(
         credentialsId,
         region,
@@ -1632,7 +1658,7 @@ async function getCollationDetails(
     region: string,
     databaseInstanceId?: string,
     activeNode?: string,
-    sqlInstance?: string
+    sqlInstance?: SqlInstance
 ) {
     logger.info('Getting collation details from the database host', {
         accountId,
@@ -1684,23 +1710,31 @@ async function getCollationDetails(
         }
 
         let sqlInstanceName = instanceName;
+        let executableName = DEFAULT_MSSQL_INSTANCE_NAME;
+        let sqlAuthEnabled = false;
         if (instanceDetail && instancesDetails) {
             const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
-            const isInstanceRunning = instancesDetails.some(
+            const runningInstance = instancesDetails.find(
                 instance =>
                     instance.instanceName === instanceDetail.database_instance_name &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 
-            if (!isInstanceRunning && selectedInstanceName) {
+            if (isEmpty(runningInstance) && selectedInstanceName) {
                 const errorMessage = `Unable to access drive details in account ${accountId} for instance ${sqlInstanceName} is not running.`;
                 logger.error(errorMessage);
                 throw createError(errorMessage);
             }
-            sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
+            sqlAuthEnabled = runningInstance[0].sqlAuthEnabled;
+            executableName = getDatabaseInstanceName(selectedInstanceName, isDefault);
+            sqlInstanceName = selectedInstanceName;
         }
-        return getCollationForInstance(credentialsId, region, activeNodeInstanceId as string, sqlInstanceName);
+        return getCollationForInstance(credentialsId, region, activeNodeInstanceId as string, {
+            name: sqlInstanceName,
+            executableName,
+            sqlAuthEnabled
+        });
     } catch (error: any) {
         const errorMessage = `Unable to get collation information. ${error?.message}.`;
         logger.error(errorMessage);
@@ -1712,11 +1746,12 @@ async function getDefaultCollationAndVersion(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string,
+    sqlInstance: SqlInstance,
     executionTimeout?: string
 ) {
     logger.info('Getting MSSQL default collation', { credentialsId, region, activeNodeInstanceId });
-    const defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName)];
+    const { name: instanceName, executableName, sqlAuthEnabled } = sqlInstance;
+    const defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, executableName, sqlAuthEnabled)];
 
     const defaultCollationResponse = await callSsmExecution(
         credentialsId,
