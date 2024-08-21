@@ -289,13 +289,22 @@ const HOST_AND_SQL_INFO_PS1 = [
 
     $clusterDetailsResponse['isClustered'] = $False
 
-    $clusterServiceStatus = (Get-Service -Name ClusSvc -ErrorAction SilentlyContinue).Status
+    $clusterServiceStatus = (Get-Service -Name "ClusSvc" -ErrorAction SilentlyContinue).Status
     if ($clusterServiceStatus -eq "Running") {
       $clusterDetailsResponse['isClustered'] = $True
       $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
       If ($clusterName) {
         $clusterDetailsResponse['name'] = $clusterName
-        $clusterDetailsResponse['windowsClusterNodes'] = (Get-ClusterNetworkInterface)
+        $clusterNodes = Get-ClusterNetworkInterface | Select-Object -Property Address, Node
+        $clusterDetailsResponse['nodeIps'] =  (Get-ClusterNetworkInterface | select-object -ExpandProperty Address)    
+        $windowsClusterNodes = $clusterNodes | ForEach-Object {
+          @{
+            "Address" = $_.Address
+            "Node" = $_.Node
+          }
+        }
+
+        $clusterDetailsResponse['windowsClusterNodes'] = $windowsClusterNodes
                    
         If (Get-ClusterResource -ErrorAction SilentlyContinue | ? { $_.ResourceType -eq "SQL Server Availability Group" }) {
           $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
@@ -303,6 +312,9 @@ const HOST_AND_SQL_INFO_PS1 = [
           $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
         }
       }
+    }
+    else {
+      $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
     }
 
     return $clusterDetailsResponse
@@ -349,20 +361,20 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['sqlServerInstance'] = $instanceName
       $responseObject['sqlServerState'] = $sqlService.State
       $responseObject['windowsOsVersion'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
-      
+      $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = $clusterDetails['${SQL_SERVER_DEPLOYMENT_TYPE}']
+
       $sqlNodes = $null
       if ($clusterDetails['isClustered']) {
         $responseObject['windowsClusterName'] = $clusterDetails['name']
         $responseObject['windowsClusterNodes'] = $clusterDetails['windowsClusterNodes']
+        $responseObject['nodeIps'] = $clusterDetails['nodeIps']
         $sqlNodes = (Get-ClusterResource -ErrorAction SilentlyContinue -Name "SQL Server" | ? { $_.OwnerGroup -eq "SQL Server ($instanceName)" } | Get-ClusterOwnerNode).OwnerNodes.Name
       }
         
       if ([string]::IsNullOrEmpty($sqlNodes)) {
         $responseObject['sqlServerNodes'] = hostname
-        $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
       } else {
         $responseObject['sqlServerNodes'] =  $sqlNodes
-        $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = $clusterDetails['${SQL_SERVER_DEPLOYMENT_TYPE}']
       }             
 
       if ($sqlService.State -eq "Running") {
