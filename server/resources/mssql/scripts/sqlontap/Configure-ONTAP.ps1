@@ -255,7 +255,6 @@ $Body = @{
     "space-guarantee" = "none"
     "space-mgmt-try-first"= "volume_grow"
     "percent-snapshot-space" = "0"
-    "read-realloc" = "on"
     "tiering-policy" = "snapshot-only"
     "tiering-minimum-cooling-days" = "7"
     "autosize-mode" = "grow"
