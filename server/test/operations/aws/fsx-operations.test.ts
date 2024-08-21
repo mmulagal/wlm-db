@@ -65,7 +65,9 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
-            false
+            false,
+            undefined,
+            'MSSQLSERVER'
         );
         expect(response).toEqual(fsxResponse.volumeMap);
     });
