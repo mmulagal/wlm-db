@@ -408,7 +408,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"backupCount\":4}]\r\n",
+        "StandardOutputContent": "{\"MSSQLSERVER\": [{\"backupCount\":4}]\r\n}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -757,7 +757,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"clusterNodesInfo\":[{\"NodeName\":\"SQLNODE1-65579\",\"is_current_owner\":true},{\"NodeName\":\"SQLNODE2-65579\",\"is_current_owner\":false}],\"ServerEdition\":\"Standard Edition\",\"isClustered\":1,\"activeNode\":\"SQLNODE1-65579\",\"numberOfConnections\":8,\"serverDetails\":\"Microsoft SQL Server 2019 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64) \\n\\tOct 18 2021 09:37:01 \\n\\tCopyright (c) Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 <X64> (Build 14393: ) (Hypervisor)\\n\",\"clusterName\":\"FciClusterName\",\"totalCount\":8,\"ServerCollation\":\"SQL_Latin1_General_CP1_CI_AS\"}]\r\n",
+        "StandardOutputContent": "{\"MSSQLSERVER\": [{\"clusterNodesInfo\":[{\"NodeName\":\"SQLNODE1-65579\",\"is_current_owner\":true},{\"NodeName\":\"SQLNODE2-65579\",\"is_current_owner\":false}],\"ServerEdition\":\"Standard Edition\",\"isClustered\":1,\"activeNode\":\"SQLNODE1-65579\",\"numberOfConnections\":8,\"serverDetails\":\"Microsoft SQL Server 2019 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64) \\n\\tOct 18 2021 09:37:01 \\n\\tCopyright (c) Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 <X64> (Build 14393: ) (Hypervisor)\\n\",\"clusterName\":\"FciClusterName\",\"totalCount\":8,\"ServerCollation\":\"SQL_Latin1_General_CP1_CI_AS\"}]\r\n}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -782,7 +782,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\r\n    \"cpu\":  \"[{\\\"percentUsed\\\":25,\\\"used\\\":8589934592,\\\"total\\\":9895604649984,\\\"remaining\\\":8589934592}]\",\r\n    \"disk\":  \"[{\\\"total\\\":9895604649984,\\\"remaining\\\":7421703487488}]\",\r\n    \"dbSize\":  \"[{\\\"TotalSize\\\":2473901162496}]\",\r\n    \"memory\":  \"[{\\\"used\\\":8589934592,\\\"total\\\":17179869184,\\\"remaining\\\":8589934592,\\\"percentUsed\\\":50}]\"\r\n}\r\n",
+        "StandardOutputContent": "{\"MSSQLSERVER\": {\r\n    \"cpu\":  \"[{\\\"percentUsed\\\":25,\\\"used\\\":8589934592,\\\"total\\\":9895604649984,\\\"remaining\\\":8589934592}]\",\r\n    \"disk\":  \"[{\\\"total\\\":9895604649984,\\\"remaining\\\":7421703487488}]\",\r\n    \"dbSize\":  \"[{\\\"TotalSize\\\":2473901162496}]\",\r\n    \"memory\":  \"[{\\\"used\\\":8589934592,\\\"total\\\":17179869184,\\\"remaining\\\":8589934592,\\\"percentUsed\\\":50}]\"\r\n}\r\n}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -1243,7 +1243,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"totalCount\":8}]\r\n",
+        "StandardOutputContent": "{\"MSSQLSERVER\":[{\"totalCount\":8}]\r\n}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
