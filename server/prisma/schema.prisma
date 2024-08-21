@@ -142,6 +142,21 @@ model database_instances {
   @@index([database_instance_name], map: "k_wlmdb_database_instances_database_instance_name")
 }
 
+model tracked_ec2 {
+  id                        String   @id @default(uuid()) @db.VarChar(40)
+  instance_id               String   @db.VarChar(30)
+  account_id                String   @db.VarChar(30)
+  credentials_id            String   @db.VarChar(80)
+  region                    String   @db.VarChar(30)
+  feature                   String   @db.VarChar(255)
+  cloud_provider_account_id String  @db.VarChar(80)
+  last_updated              DateTime @default(now())
+
+  @@unique([instance_id, credentials_id, account_id], name: "uk_wlmdb_tracked_ec2", map: "uk_wlmdb_tracked_ec2")
+  @@index([instance_id], map: "k_wlmdb_tracked_ec2_instance_id")
+  @@index([account_id], name: "k_wlmdb_tracked_ec2_account_id")
+}
+
 enum JOBSTATUS {
   IN_PROGRESS
   COMPLETED
