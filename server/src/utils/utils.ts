@@ -29,7 +29,8 @@ import {
     FSX_VOL_THROUGHPUT,
     FSX_STORAGE_MIN_CAPACITY_IN_GIB,
     HOURS_IN_MONTH,
-    DEFAULT_MSSQL_INSTANCE_NAME
+    DEFAULT_MSSQL_INSTANCE_NAME,
+    DEFAULT_INSTANCE_NAME
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -587,6 +588,9 @@ function getMonthlyPriceFromHourlyPrice(hourlyPrice?: number) {
     }
 }
 
+// This is for generating instance name that can be executed in the local machine.
+// For the default instance name 'MSSQLSERVER' - "$env:COMPUTERNAME"
+// For the custom instance name - "$env:COMPUTERNAME\\$instanceName"
 function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true) {
     logger.info('Generate database instance name', { instanceName, isDefault });
 
@@ -599,6 +603,12 @@ function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true
 
 function isDemo() {
     return process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
+}
+
+function getOriginalDatabaseInstanceName(instanceName: string | undefined): string {
+    return !instanceName || instanceName === DEFAULT_INSTANCE_NAME || instanceName === DEFAULT_MSSQL_INSTANCE_NAME
+        ? DEFAULT_INSTANCE_NAME
+        : instanceName?.split('\\')?.[1];
 }
 
 export {
@@ -637,5 +647,6 @@ export {
     convertToBytes,
     getMonthlyPriceFromHourlyPrice,
     getDatabaseInstanceName,
-    isDemo
+    isDemo,
+    getOriginalDatabaseInstanceName
 };
