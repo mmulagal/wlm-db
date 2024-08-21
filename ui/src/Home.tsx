@@ -35,7 +35,12 @@ const Home = () => {
     useRunOnce(() => {
         if (!isWorkloadFactory) {
             window.onmessage = (msg: any) => {
-                if (msg && msg?.data && msg?.data?.type === BXP_MESSAGES.SERVICE_LOCATION_CHANGE) {
+                if (
+                    msg &&
+                    msg?.data &&
+                    (msg?.data?.type === BXP_MESSAGES.SERVICE_LOCATION_CHANGE ||
+                        msg?.data?.type === BXP_MESSAGES.SERVICE_ON_READY)
+                ) {
                     if (statusData && !statusData?.isActive) {
                         postBlueXPMessage({
                             type: BlueXPListeners.navigate,
