@@ -1943,7 +1943,7 @@ async function getDatabaseHostSummaryV2(
                         const instanceDetail = databaseInstancesDetail?.find(
                             (e: InstanceDetails) => e.instanceName === instance.database_instance_name
                         );
-                        instance.sqlAuthEnabled = instanceDetail[0].sqlAuthEnabled;
+                        instance.sqlAuthEnabled = instanceDetail.sqlAuthEnabled;
                         const instanceResult = await getDatabaseInstanceSummary(
                             accountId,
                             credentialsId,
