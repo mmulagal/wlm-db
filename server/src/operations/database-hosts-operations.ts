@@ -1646,6 +1646,7 @@ async function getDatabaseInstanceSummary(
                               region,
                               activeNodeInstanceId,
                               databaseInstanceName,
+                              undefined,
                               sqlAuthEnabled
                           )
                       ]
@@ -1668,6 +1669,7 @@ async function getDatabaseInstanceSummary(
                               region,
                               activeNodeInstanceId,
                               databaseInstanceName,
+                              undefined,
                               sqlAuthEnabled
                           )
                       ]
@@ -1683,6 +1685,7 @@ async function getDatabaseInstanceSummary(
                               undefined,
                               databaseInstances,
                               VERSION_2_0,
+                              undefined,
                               sqlAuthEnabled
                           )
                       ]
@@ -1704,6 +1707,7 @@ async function getDatabaseInstanceSummary(
                               region,
                               activeNodeInstanceId,
                               databaseInstanceName,
+                              undefined,
                               sqlAuthEnabled
                           )
                       ]

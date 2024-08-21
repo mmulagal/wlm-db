@@ -61,7 +61,12 @@ import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
 import { DatabaseInstance, Metadata, ResourceDetails, InstanceDetails } from '../../../utils/common-types';
-import { INSTANCE_DETAILS, RESOURCE_UTILIZATION, sqlQueryExecution, sqlQueryExecutionWithAuth } from './ssm-script-utils';
+import {
+    INSTANCE_DETAILS,
+    RESOURCE_UTILIZATION,
+    sqlQueryExecution,
+    sqlQueryExecutionWithAuth
+} from './ssm-script-utils';
 import { getParameter } from '../../../lib/aws/ssm';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 
