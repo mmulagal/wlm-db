@@ -403,6 +403,9 @@ const getDbMappedOntapVolumes = (
         if($sqlAuthEnabled) {
             ${readSsmParameter(instanceName)}
         }
+
+        ${slqcmdExecutionTemplate}
+
         $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "${executableInstanceName}"
 
         Write-Information "$logPrefix SQL response: $queryResponse"
@@ -1782,6 +1785,8 @@ const readExtendedPropertiesOfSandbox = (
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
+
+    ${slqcmdExecutionTemplate}
 
     $responseObject = @{}
 

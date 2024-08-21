@@ -991,6 +991,8 @@ const sqlQueryExecution = (
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
     $sqlCredential = @{'useSqlAuth' = $False}
 
+    ${slqcmdExecutionTemplate}
+    
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }

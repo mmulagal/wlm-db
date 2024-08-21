@@ -1726,7 +1726,7 @@ async function getCollationDetails(
                 logger.error(errorMessage);
                 throw createError(errorMessage);
             }
-            sqlAuthEnabled = runningInstance[0].sqlAuthEnabled;
+            sqlAuthEnabled = runningInstance.sqlAuthEnabled;
             executableName = getDatabaseInstanceName(selectedInstanceName, isDefault);
             sqlInstanceName = selectedInstanceName;
         }
