@@ -34,7 +34,6 @@ import {
     CloudProviders,
     ACCOUNT_ID,
     RESOURCE_RETRIVAL_ERROR,
-    WF,
     ServerState,
     DATABASE_METRIC_TYPE,
     DEFAULT_MSSQL_INSTANCE_NAME,
@@ -53,7 +52,6 @@ import {
 } from '../../../lib/database/db';
 import { getDatabaseInstanceName, generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
-import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
 import { DatabaseInstance, Metadata, ResourceDetails, InstanceDetails } from '../../../utils/common-types';
 import { INSTANCE_DETAILS, RESOURCE_UTILIZATION, sqlQueryExecution } from './ssm-script-utils';
@@ -554,16 +552,15 @@ async function discoverMsSqlServer(
             node2InstanceId: standbyNodeInstanceId
         }
     });
-    const { source } = await lookupCredentials(credentialsId);
-    if (source === WF) {
-        await associateResource(credentialsId, accountId, [
-            {
-                id: resourceId,
-                name: resourceName,
-                type: resourceType
-            }
-        ]);
-    }
+
+    await associateResource(credentialsId, accountId, [
+        {
+            id: resourceId,
+            name: resourceName,
+            type: resourceType
+        }
+    ]);
+
     return { resourceId, resourceName };
 }
 async function deleteResourceById(accountId: string, resourceId: string) {

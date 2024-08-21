@@ -1,8 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { decrypt, describeKey, encrypt, listAliases, listKeys } from '../../../src/lib/aws/kms';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-
-import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
