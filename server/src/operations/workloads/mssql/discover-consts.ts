@@ -368,7 +368,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         $responseObject['windowsClusterName'] = $clusterDetails['name']
         $responseObject['windowsClusterNodes'] = $clusterDetails['windowsClusterNodes']
         $responseObject['nodeIps'] = $clusterDetails['nodeIps']
-        $sqlNodes = (Get-ClusterResource -ErrorAction SilentlyContinue -Name "SQL Server" | ? { $_.OwnerGroup -eq "SQL Server ($instanceName)" } | Get-ClusterOwnerNode).OwnerNodes.Name
+        $sqlNodes = (Get-ClusterOwnerNode -ResourceType "SQL Server Availability Group" -ErrorAction SilentlyContinue).OwnerNodes.NodeName
       }
         
       if ([string]::IsNullOrEmpty($sqlNodes)) {
