@@ -97,7 +97,7 @@ const SavingsCalculator = () => {
         }, 10);
     };
     return (
-        <div style={{ height: '90vh', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
+        <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
                 <div className={styles.savingsCalculator} id="export-pdf">
                     <div className={styles.breadCrumb}>
