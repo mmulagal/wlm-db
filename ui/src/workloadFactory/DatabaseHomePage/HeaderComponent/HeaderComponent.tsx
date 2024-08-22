@@ -549,7 +549,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <ExploreSavings />
                         </>
                     )}
-                    {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
+                    {(selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && <SavingsCalculator />}
                     {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
                     {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
                 </div>
