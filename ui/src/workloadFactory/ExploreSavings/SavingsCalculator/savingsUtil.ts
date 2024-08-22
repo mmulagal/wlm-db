@@ -1209,9 +1209,9 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
 export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentModel: string) => {
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
-    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
-        selectedDeploymentModel = selectedManualDeploymentModel?.value;
-    }
+
+    selectedDeploymentModel = selectedManualDeploymentModel?.value;
+
     return {
         Ec2InstanceCalculation:
             selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
