@@ -1209,9 +1209,9 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
 export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentModel: string) => {
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
-    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
-        selectedDeploymentModel = selectedManualDeploymentModel?.value;
-    }
+
+    selectedDeploymentModel = selectedManualDeploymentModel?.value;
+
     return {
         Ec2InstanceCalculation:
             selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
@@ -1948,6 +1948,18 @@ const setSQLServerEdition = (value: string) => {
     }
 };
 
+const deploymentTypeSelection = (value: string, savingsCalculatorFrom: string | null) => {
+    if (value !== 'Standalone') {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+            return 'FCI';
+        } else {
+            return 'AOAG';
+        }
+    } else {
+        return value;
+    }
+};
+
 export const generateManualStorageSavingsPayload = () => {
     const state = store.getState();
     const {
@@ -1956,11 +1968,15 @@ export const generateManualStorageSavingsPayload = () => {
         selectedManualDeploymentModel,
         selectedSnapshotFrequency,
         monthlyBYOLCost,
-        selectedManualServerEdition
+        selectedManualServerEdition,
+        savingsCalculatorFrom
     } = state.exploreSavings;
     const payloadObj: any = {};
-    payloadObj.sqlServerDeploymentType =
-        selectedManualDeploymentModel?.value !== 'Standalone' ? 'AOAG' : selectedManualDeploymentModel?.value;
+    payloadObj.sqlServerDeploymentType = deploymentTypeSelection(
+        selectedManualDeploymentModel?.value,
+        savingsCalculatorFrom
+    );
+
     payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
     payloadObj.snapshotFrequency = selectedSnapshotFrequency?.value;
     payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
