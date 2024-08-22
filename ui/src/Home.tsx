@@ -47,9 +47,16 @@ const Home = () => {
                             payload: { pathname: './fsxdb/marketing', replace: true }
                         });
                     } else {
-                        const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
-                        navigate('../fsxdb');
-                        dispatch(setSelectedHeaderTab(tabInfo));
+                        if (
+                            msg?.data?.payload?.pathname ===
+                            '/fsxdb/add-working-environment/database-services/mssql/create'
+                        ) {
+                            navigate('../fsxdb/add-working-environment/database-services/mssql/create');
+                        } else {
+                            const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
+                            navigate('../fsxdb');
+                            dispatch(setSelectedHeaderTab(tabInfo));
+                        }
                     }
                 }
             };
