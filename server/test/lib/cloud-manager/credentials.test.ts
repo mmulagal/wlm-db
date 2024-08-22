@@ -1,15 +1,9 @@
 import { faker } from '@faker-js/faker';
 import {
-    getAllBxpCredentials,
-    getBxpCredentialDetails,
     getAllWfCredentials,
     getWfCredentialDetails,
     associateResource
 } from '../../../src/lib/cloud-manager/credentials';
-import {
-    cloudManagerAwsCredentials,
-    credentialsId
-} from '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import {
     allCredentials,
     genericDecryptedCredentials
@@ -17,6 +11,7 @@ import {
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
+import { DEFAULT_AWS_CREDENTIALS_ID } from '../../utils/consts';
 
 const accountId = `account-${faker.string.alpha(6)}`;
 
@@ -26,18 +21,6 @@ vi.mock('../../../src/utils/async-local-storage.ts', () => ({
         return accountId;
     }
 }));
-describe('Get Blue XP credentials ', () => {
-    it('should return a list of AWS credentials', async () => {
-        const credentialsType = 'aws_assume_role';
-        const resp = await getAllBxpCredentials(credentialsType);
-        expect(resp.length).toBeDefined();
-    });
-
-    it('should return details of AWS credential for credentials id passed', async () => {
-        const resp = await getBxpCredentialDetails(credentialsId);
-        expect(resp).toEqual(cloudManagerAwsCredentials);
-    });
-});
 
 describe('Get workload factory credentials ', () => {
     // Its not mocked as we are making actual api call
@@ -48,12 +31,12 @@ describe('Get workload factory credentials ', () => {
     });
 
     it('should return decrypted AWS credentials for credentials id passed', async () => {
-        const resp = await getWfCredentialDetails(credentialsId, accountId);
+        const resp = await getWfCredentialDetails(DEFAULT_AWS_CREDENTIALS_ID, accountId);
         expect(resp).toEqual(genericDecryptedCredentials);
     });
 
     it('Associate resources in credentials service', async () => {
-        const resp = await associateResource(credentialsId, accountId, [
+        const resp = await associateResource(DEFAULT_AWS_CREDENTIALS_ID, accountId, [
             {
                 id: '0cec115582d22fcc87b193ae485fa4bba0d67d590e806674fe07e6fbea608652',
                 name: 'sqldbvy5p4',

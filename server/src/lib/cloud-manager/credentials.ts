@@ -1,35 +1,12 @@
 import { isEmpty } from 'lodash-es';
-import {
-    ACCOUNT_ID,
-    CREDENTIALS_ENDPOINT,
-    WORKLOAD_FACTORY_ENDPOINT,
-    HEADERS,
-    USER_TOKEN,
-    WF_USER_CRED_TYPE,
-    BXP_USER_CRED_TYPE
-} from '../../utils/consts';
+import { ACCOUNT_ID, WORKLOAD_FACTORY_ENDPOINT, HEADERS, USER_TOKEN, WF_USER_CRED_TYPE } from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { getBxpServiceToken, getWfServiceToken } from './auth';
+import { getWfServiceToken } from './auth';
 
 const logger = getLogger();
-
-interface Credentials {
-    credentialsId: string;
-    credentialsType: string;
-    isSimulated: boolean;
-}
-
-interface AllCredentials extends Credentials {
-    extra: {
-        name: string;
-        externalId?: string;
-        arn: string;
-    };
-}
-
 interface AllWfCredentials {
     items: [
         {
@@ -43,73 +20,6 @@ interface AllWfCredentials {
         }
     ];
     nextToken: string;
-}
-
-/**
- * Retuns an array of provided credentialsType
- * credentials added to that account by calling SaS credentials API
- * @param credentialsType
- * @returns Array of credentials added to BlueXP
- */
-async function getAllBxpCredentials(credentialsType: string): Promise<Array<AllCredentials>> {
-    logger.info('Getting all Blue XP credentials for credentials type ', credentialsType);
-
-    const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
-    return gotInstanceForInternalRequest
-        .get(`credentials/accounts/${accountId}/credentials`, {
-            prefixUrl: CREDENTIALS_ENDPOINT,
-            headers: {
-                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)
-            },
-            searchParams: {
-                credentialsType
-            }
-        })
-        .json<AllCredentials[]>();
-}
-
-/**
- * Takes credentials as parameter and returns credntial keys by calling
- * SaS credentials API
- * @param credentialsId
- * @returns credentials:
- * { accessKey: string;
- *  secretKey: string;
- *  sessionId: string;
- *  expiration: Date }
- */
-
-interface bxpCredentials {
-    credentials: { accessKey: string; secretKey: string; sessionId: string; expiration: Date };
-    extra: { arn: string };
-}
-async function getBxpCredentialDetails(credentialsId: string, accountId?: string) {
-    logger.info('Getting Blue XP credential details for ', { credentialsId, accountId });
-
-    if (!process.env.TEST && hasCache(BXP_USER_CRED_TYPE, credentialsId)) {
-        return readFromCacheByKey(BXP_USER_CRED_TYPE, credentialsId);
-    }
-
-    const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
-
-    const { token } = await getBxpServiceToken();
-
-    const response = await gotInstanceForInternalRequest
-        .get(`credentials/accounts/${tenancyAccountId}/credentials/${credentialsId}`, {
-            prefixUrl: CREDENTIALS_ENDPOINT,
-            headers: {
-                [HEADERS.AUTHORIZATION]: token
-            },
-            searchParams: {
-                getDecrypted: true
-            }
-        })
-        .json<bxpCredentials>();
-
-    if (!isEmpty(response?.credentials?.accessKey)) {
-        writeToCache(BXP_USER_CRED_TYPE, credentialsId, response);
-    }
-    return response;
 }
 
 /**
@@ -257,13 +167,4 @@ async function createAwsCredential(
     }
 }
 
-export {
-    wfCredentials,
-    bxpCredentials,
-    getBxpCredentialDetails,
-    getAllBxpCredentials,
-    getAllWfCredentials,
-    getWfCredentialDetails,
-    associateResource,
-    createAwsCredential
-};
+export { wfCredentials, getAllWfCredentials, getWfCredentialDetails, associateResource, createAwsCredential };
