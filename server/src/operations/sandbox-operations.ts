@@ -1944,13 +1944,17 @@ async function getSandboxSplitEstimate(
     };
     const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, src, src);
 
+    const { fsxId, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } = srcDetails;
+
     let command = [
         getDbMappedOntapVolumes(
-            srcDetails.fsxId,
+            fsxId,
             region,
             sandboxName,
-            srcDetails.instanceName,
-            `Sandbox:${sandboxName}:`
+            databaseInstanceName,
+            instanceName,
+            `Sandbox:${sandboxName}:`,
+            sqlAuthEnabled
         )
     ];
 
@@ -1958,14 +1962,7 @@ async function getSandboxSplitEstimate(
         command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
     }
 
-    const mappings = await callSsmExecution(
-        credentialsId,
-        region,
-        command,
-        srcDetails.activeNodeInstanceId,
-        accountId,
-        false
-    );
+    const mappings = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId, accountId, false);
 
     if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
@@ -2936,13 +2933,17 @@ async function getSandboxSnapshots(
     const source = { host: databaseHostId, instance: databaseInstanceId, database: sandboxName };
     const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-    let mappingsCommand = [getDbMappedOntapVolumes(srcDetails.fsxId, region, sandboxName, srcDetails.instanceName)];
+    const { fsxId, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } = srcDetails;
+
+    let mappingsCommand = [
+        getDbMappedOntapVolumes(fsxId, region, sandboxName, databaseInstanceName, instanceName, sqlAuthEnabled)
+    ];
 
     if (isDemoFlow) {
         mappingsCommand = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
     }
 
-    const mappings = await callSsmExecution(credentialsId, region, mappingsCommand, srcDetails.activeNodeInstanceId);
+    const mappings = await callSsmExecution(credentialsId, region, mappingsCommand, activeNodeInstanceId);
 
     if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
