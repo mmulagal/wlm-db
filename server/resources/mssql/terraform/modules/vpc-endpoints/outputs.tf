@@ -1,5 +1,5 @@
 output "https_security_group_id" {
-  value = aws_security_group.https_security_group.id
+  value = local.create_sg ? aws_security_group.https_security_group[0].id : null
 }
 
 output "s3_endpoint_id" {

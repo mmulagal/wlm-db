@@ -1,7 +1,7 @@
 # For Fsx for ONTAP
 output "fsx_fs_logical_id" {
   description = "Logical ID of the FSx for ONTAP file system"
-  value       = aws_fsx_ontap_file_system.fsx_ontap_fs.id
+  value       = local.fsx_is_existing ? var.fsx_file_system_id : aws_fsx_ontap_file_system.fsx_ontap_fs[0].id
 }
 
 #For SVM
@@ -27,7 +27,7 @@ output "fsx_svm_uuid" {
 
 output "fsx_fs_resource_arn" {
   description = "ARN of the FSx for ONTAP file system"
-  value       = aws_fsx_ontap_file_system.fsx_ontap_fs.arn
+  value       = local.fsx_is_existing ? null : aws_fsx_ontap_file_system.fsx_ontap_fs[0].arn
 }
 
 # For Data Volume
@@ -117,5 +117,5 @@ output "fsx_temp_dp_volume_uuid" {
 #For FSX Security Group
 output "fsxn_security_group_id" {
   description = "The ID of the fsxn security group."
-  value       = aws_security_group.ontap_security_group.id
+  value       = local.fsx_is_existing ? null : aws_security_group.ontap_security_group[0].id
 }

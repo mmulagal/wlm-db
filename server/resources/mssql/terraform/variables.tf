@@ -29,10 +29,10 @@ variable "terraform_state_locking" {
   type        = string
 }
 
-variable "s3_template_url" {
-  description = "Value of the S3 Template URL"
-  type        = string
-}
+# variable "s3_template_url" {
+#   description = "Value of the S3 Template URL"
+#   type        = string
+# }
 
 variable "deployment_name" {
   description = "Value of the Deployment Name"
@@ -40,299 +40,404 @@ variable "deployment_name" {
   default     = "wlmdb-poc"
 }
 
-# Networking configuration variables
+variable "s3_artifacts_url" {
+  description = "Value of the S3 Artifacts URL"
+  type        = string
+}
+
+variable "fsx_encryption_key" {
+  description = "The encryption key for FSx"
+  type        = string
+}
+
+# standalone mode
 variable "vpc_id" {
-  description = "ID of the VPC"
+  description = "The ID of the VPC"
   type        = string
   default     = "vpc-046f7e26255458373"
 }
 
 variable "vpc_cidr" {
-  description = "CIDR block of the vpc"
+  description = "The CIDR block of the VPC"
+  type        = string
   default     = "10.0.0.0/16"
 }
 
 variable "private_subnet1_id" {
-  description = "ID of the private subnet 1"
-  type        = string
-  default     = "subnet-03302cffd47acd237"
-}
-
-variable "private_subnet2_id" {
-  description = "ID of the private subnet 2"
+  description = "The ID of the first private subnet"
   type        = string
   default     = "subnet-0fcd4374d52d4faf0"
 }
 
-variable "private_subnet1_cidr_block" {
-  description = "CIDR block for Private Subnet 1"
-  type        = string
-  default     = "10.0.128.0/20"
-}
-
-variable "private_subnet2_cidr_block" {
-  description = "CIDR block for Private Subnet 2"
-  type        = string
-  default     = "10.0.128.0/20"
-}
-
 variable "route_table1_id" {
-  description = "ID of the routable table 1"
-  type        = string
-  default     = "rtb-09a5394f5cee60073"
-}
-
-variable "route_table2_id" {
-  description = "ID of the routable table 2"
+  description = "The ID of the first route table"
   type        = string
   default     = "rtb-044539dfce91103ab"
 }
 
-variable "availability_zone1" { // not there
-  description = "Availability Zone 1"
+variable "private_subnet2_id" {
+  description = "The ID of the second private subnet"
   type        = string
-  default     = "ap-southeast-1a"
+  default     = "subnet-03302cffd47acd237"
 }
 
-variable "availability_zone2" { // not there
-  description = "Availability Zone 2"
+variable "route_table2_id" {
+  description = "The ID of the second route table"
   type        = string
-  default     = "ap-southeast-1c"
+  default     = "rtb-09a5394f5cee60073"
 }
 
-variable "security_group_id" { // not there
-  description = "ID of the Security Group"
-  type        = string
-  default     = "sg-06989f7dcc767bcdf"
-}
-
-# Ec2 configuration variables
-variable "workload_instance_type" {
-  description = "Value of the instance type"
-  type        = string
-  default     = "m5.large"
-}
-variable "ec2_instance_keypair" {
-  description = "Value of the instance key pair"
-  type        = string
-  default     = "occm_qa"
-}
-
-# AD configuration variables
 variable "ad_scenario_type" {
-  description = "Value of the ad type"
+  description = "The type of AD scenario"
   type        = string
-  default     = "AWS_MANAGED_AD"
-  validation {
-    condition     = contains(["USER_MANAGED_AD", "AWS_MANAGED_AD"], var.ad_scenario_type)
-    error_message = "The ad_scenario_type must be either USER_MANAGED_AD or AWS_MANAGED_AD."
-  }
-}
-
-variable "domain_admin_user_name" {
-  description = "Value of the domain admin user name"
-  type        = string
-  default     = "admin"
+  default     = "USER_MANAGED_AD"
 }
 
 variable "domain_admin_password" {
-  description = "Value of the domain admin password"
+  description = "The password of the domain admin"
   type        = string
-  sensitive   = true
+  default     = "Collector@1234"
 }
 
 variable "domain_dns_name" {
-  description = "Value of the domain dns name"
+  description = "The DNS name of the domain"
   type        = string
-  default     = "wlmqa2.com"
-}
-
-variable "domain_security_group_id" {
-  description = "Value of the domain security group id"
-  type        = string
-  default     = "sg-06989f7dcc767bcdf"
+  default     = "wlmnew.com"
 }
 
 variable "dns_ip_addresses" {
-  description = "Value of the dns ip addresses"
+  description = "The IP addresses of the DNS"
   type        = string
-  default     = "10.0.11.153,10.0.25.246"
+  default     = "10.0.141.68"
 }
 
-variable "node_net_bios_names" {
-  description = "Value of the node net bios name"
+variable "domain_member_sg_id" {
+  description = "The ID of the domain member security group"
   type        = string
-  default     = "sqlnode-81451"
+  default     = ""
 }
 
-#FSx configuration variables
-variable "deployment_mode" {
-  description = "Value of the deployment mode"
+variable "tf_deploy_role_name" {
+  description = "The name of the terraform deployment role"
   type        = string
-  default     = "SINGLE_AZ_1"
-
-  validation {
-    condition     = contains(["SINGLE_AZ_1", "MULTI_AZ_1"], var.deployment_mode)
-    error_message = "The deployment mode must be either SINGLE_AZ_1 or MULTI_AZ_1."
-  }
+  default     = "wlm-operate-permissions-role"
 }
 
-variable "fsx_file_system_id" {
-  description = "Value of the FSx file system id"
+variable "validation_ami" {
+  description = "The AMI ID for validation"
   type        = string
+  default     = "ami-07b4b6e7643cb29ed"
 }
 
-variable "fsx_file_system_name" {
-  description = "Value of the FSx file system name"
+variable "validation_node_instance_type" {
+  description = "The instance type for the validation node"
   type        = string
+  default     = "t2.micro"
 }
 
-variable "fsx_data_volume_name" {
-  description = "Value of the FSx data volume name"
+variable "account_id" {
+  description = "The account ID"
   type        = string
+  default     = "account-aHP3esT5"
 }
 
-variable "fsx_log_volume_name" {
-  description = "Value of the FSx log volume name"
-  type        = string
-}
-
-variable "fsx_quorum_volume_name" {
-  description = "Value of the FSx quorum volume name"
-  type        = string
-}
-
-variable "fsx_data_volume_size" {
-  description = "Value of the FSx data volume size"
+variable "cloud_provider_account_id" {
+  description = "The cloud provider's account ID"
   type        = number
-  default     = 1153434
+  default     = 464262061435
 }
 
-variable "fsx_log_volume_size" {
-  description = "Value of the FSx log volume size"
+variable "role_credentials_id" {
+  description = "The ID of the role credentials"
+  type        = string
+  default     = "0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8"
+}
+
+variable "wlmdb_aws_account_id" {
+  description = "The AWS account ID for WLMDB"
   type        = number
-  default     = 288359
+  default     = 464262061435
 }
 
-variable "fsx_quorum_volume_size" {
-  description = "Value of the FSx quorum volume size"
+variable "jwt_token" {
+  description = "The JWT token"
+  type        = string
+  default     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7InVzZXIiOiJTWVNURU1AbmV0YXBwLmNvbSJ9LCJpYXQiOjE3MjQwNjUxNjUsImV4cCI6MTcyNDY2OTk2NX0.1hoOmaU6EnuXsIPVM6K61atNCDSZrURCPRQJtJWsF1c"
+}
+
+variable "metrics" {
+  description = "The metrics"
+  type        = string
+  default     = "triggered-from:rest-api,instance-type:m5.large,sql-version:2016,database-size:200,sql-host-name:sqldbspb9e,deployed-from:wlmdb"
+}
+
+variable "s3_endpoint_route_tables" {
+  description = "The S3 endpoint route tables"
+  type        = string
+  default     = ""
+}
+
+variable "private_subnet1_cidrblock" {
+  description = "The CIDR block for the first private subnet"
+  type        = string
+  default     = "10.0.16.0/20"
+}
+
+variable "private_subnet2_cidrblock" {
+  description = "The CIDR block for the second private subnet"
+  type        = string
+  default     = ""
+}
+
+variable "encrypted_fsx_password" {
+  description = "The encrypted password for FSx"
+  type        = string
+  default     = "Netapp123"
+}
+
+variable "ebs_volume_size" {
+  description = "The size of the EBS volume"
   type        = number
   default     = 100
 }
 
-variable "fsx_temp_db_volume_name" {
-  description = "Value of the FSx temp db volume name"
+variable "s3_endpoint_exists" {
+  description = "Does the S3 endpoint exist?"
+  type        = bool
+  default     = true
+}
+
+variable "cloudformation_endpoint_exists" {
+  description = "Does the CloudFormation endpoint exist?"
+  type        = bool
+  default     = true
+}
+
+variable "ssm_endpoint_exists" {
+  description = "Does the SSM endpoint exist?"
+  type        = bool
+  default     = true
+}
+
+variable "sqs_endpoint_exists" {
+  description = "Does the SQS endpoint exist?"
+  type        = bool
+  default     = true
+}
+
+variable "cloudwatch_logs_endpoint_exists" {
+  description = "Does the CloudWatch Logs endpoint exist?"
+  type        = bool
+  default     = true
+}
+
+variable "fsx_endpoint_exists" {
+  description = "Does the FSx endpoint exist?"
+  type        = bool
+  default     = true
+}
+
+variable "ec2_endpoint_exists" {
+  description = "Does the EC2 endpoint exist?"
+  type        = bool
+  default     = true
+}
+
+variable "ec2_messages_endpoint_exists" {
+  description = "Does the EC2 Messages endpoint exist?"
+  type        = bool
+  default     = true
+}
+
+variable "ssm_messages_endpoint_exists" {
+  description = "Does the SSM Messages endpoint exist?"
+  type        = bool
+  default     = true
+}
+
+variable "unique_id" {
+  description = "The unique ID"
   type        = string
+  default     = "1724065163786"
+}
+
+variable "fsx_file_system_name" {
+  description = "The name of the FSx file system"
+  type        = string
+  default     = "wlmdb-fsx-1724065163786"
+}
+
+variable "fsx_data_volume_name" {
+  description = "The name of the FSx data volume"
+  type        = string
+  default     = "wlmdb_sqldata_1724065163786"
+}
+
+variable "fsx_data_volume_size" {
+  description = "The size of the FSx data volume"
+  type        = number
+  default     = 225281
+}
+
+variable "fsx_log_volume_name" {
+  description = "The name of the FSx log volume"
+  type        = string
+  default     = "wlmdb_sqllog_1724065163786"
+}
+
+variable "fsx_log_volume_size" {
+  description = "The size of the FSx log volume"
+  type        = number
+  default     = 56321
+}
+
+variable "fsx_temp_db_volume_name" {
+  description = "The name of the FSx temp DB volume"
+  type        = string
+  default     = "wlmdb_sqltemp_1724065163786"
 }
 
 variable "fsx_temp_db_volume_size" {
-  description = "Value of the FSx temp db volume size"
+  description = "The size of the FSx temp DB volume"
   type        = number
-  default     = 115344
+  default     = 22529
+}
+
+variable "fsx_quorum_volume_name" {
+  description = "The name of the FSx quorum volume"
+  type        = string
+  default     = "wlmdb_quorum"
+}
+
+variable "fsx_quorum_volume_size" {
+  description = "The size of the FSx quorum volume"
+  type        = number
+  default     = 100
+}
+
+
+variable "fsx_svm_name" {
+  description = "The name of the FSx SVM"
+  type        = string
+  default     = "wlmdb_svm_1724065163786"
+}
+
+variable "sql_igroup_name" {
+  description = "The name of the SQL igroup"
+  type        = string
+  default     = "wlmdb_sqligroup_1724065163786"
+}
+
+variable "sql_svm_name" {
+  description = "The name of the SQL SVM"
+  type        = string
+  default     = "wlmdb_sqlsvm_1724065163786"
+}
+
+variable "node_net_bios_names" {
+  description = "The NetBIOS names of the nodes"
+  type        = string
+  default     = "sqlnode-77776"
 }
 
 variable "fsx_storage_capacity" {
-  description = "Value of the FSx storage capacity"
+  description = "The storage capacity of FSx"
   type        = number
-  default     = 1826
+  default     = 1024
 }
 
 variable "fsx_data_lun_size" {
-  description = "Value of the FSx data lun size"
+  description = "The size of the FSx data LUN"
   type        = number
-  default     = 1048576
+  default     = 204800
 }
 
-variable "fsx_svm_name" {
-  description = "Value of the FSx SVM name"
+variable "domain_admin_user" {
+  description = "The username of the domain admin"
   type        = string
-  default     = "svm1"
+  default     = "administrator"
 }
-variable "fsx_user_name" {
-  description = "Value of the FSx user name"
+
+variable "fsx_admin_username" {
+  description = "The username of the FSx admin"
   type        = string
   default     = "fsxadmin"
 }
 
-variable "fsx_password" {
-  description = "Value of the FSx password"
+variable "sql_service_account_name" {
+  description = "The name of the SQL service account"
   type        = string
-  sensitive   = true
+  default     = "sqladminapg5m"
 }
 
-variable "fsx_encrypted_password" {
-  description = "Value of the FSx encrypted password"
+variable "deployment_mode" {
+  description = "The deployment mode"
   type        = string
-  sensitive   = true
+  default     = "SINGLE_AZ_1"
 }
 
-variable "fsx_vol_throughput" {
-  description = "The throughput of the FSx volume"
+variable "fsx_file_system_id" {
+  description = "The ID of the FSx file system"
+  type        = string
+  default     = ""
+}
+
+variable "fsx_admin_password" {
+  description = "The password of the FSx admin"
+  type        = string
+  default     = "Netapp123"
+}
+
+variable "fsx_volume_throughput_capacity" {
+  description = "The throughput capacity of the FSx volume"
   type        = number
-  default     = 256
+  default     = 128
 }
 
-variable "fsx_iops" {
-  description = "The IOPS of the FSx volume"
-  type        = string
-  default     = "3"
-}
-
-variable "fsx_volume_snapshot_policy" {
-  type        = string
-  description = "snapshot policy for the fsx volume"
-  default     = "daily_weekretention"
-}
-
-variable "fsx_encryption_key" {
-  description = "The encryption key"
-  type        = string
-  default     = "0ff7ae43-5a18-4bbb-af78-31e7a9127b71"
-}
-
-variable "ebs_volume_size" {
-  description = "Value of the ebs volume size"
+variable "fsx_disk_iops" {
+  description = "The IOPS of the FSx disk"
   type        = number
-  default     = 100
+  default     = 3
 }
 
-variable "ontap_sg_id" {
-  description = "The security group ID for ONTAP"
+variable "file_system_encryption_key_id" {
+  description = "The ID of the file system encryption key"
+  type        = string
+  default     = "0a96542a-f57b-487c-a0fc-4db5d74c0a89"
+}
+
+variable "ontap_security_group_id" {
+  description = "The ID of the ONTAP security group"
   type        = string
   default     = "sg-0e815f376e4ab473b"
 }
 
-# SQL Server configuration variables
+variable "fsx_volume_snapshot_policy" {
+  description = "The snapshot policy of the FSx volume"
+  type        = string
+  default     = "daily_weekretention"
+}
+
 variable "sql_deployment_mode" {
-  description = "The deployment mode for SQL"
+  description = "The deployment mode of SQL"
   type        = string
   default     = "standalone"
-  validation {
-    condition     = contains(["standalone", "fci"], var.sql_deployment_mode)
-    error_message = "The sql_deployment_mode must be either 'standalone' or 'fci'."
-  }
 }
 
 variable "sql_ami_id" {
-  description = "The AMI ID for SQL"
+  description = "The AMI ID of SQL"
   type        = string
-  default     = "ami-0017fb94c6269ce73"
-}
-
-variable "sql_service_account_name" {
-  description = "The name of the sql service account"
-  type        = string
-  default     = "sqladminapsm7"
+  default     = "ami-0c2a40c28c6020bd8"
 }
 
 variable "sql_service_account_password" {
-  description = "The password of the sql service account"
+  description = "The password of the SQL service account"
   type        = string
-  sensitive   = true
+  default     = "Netapp123"
 }
 
 variable "sql_collation" {
-  description = "The collation for SQL"
+  description = "The collation of SQL"
   type        = string
   default     = "SQL_Latin1_General_CP1_CI_AS"
 }
@@ -340,228 +445,74 @@ variable "sql_collation" {
 variable "sql_server_name" {
   description = "The name of the SQL server"
   type        = string
-  default     = "sqldbapd1o"
-}
-
-variable "sql_svm_name" {
-  description = "The SVM name for SQL"
-  type        = string
-  default     = "sqlsvm1"
-}
-
-variable "sql_igroup_name" {
-  description = "The igroup name for SQL"
-  type        = string
-  default     = "sqligroup1"
-}
-
-#extra params added from backend
-variable "deploy_role_name" {
-  description = "Value of the IAM Role"
-  type        = string
-  default     = "wlm-operate-permissions-role"
-}
-
-variable "validation_ami_id" {
-  description = "Value of the AMI ID"
-  type        = string
-  default     = "ami-0dc86cd5724f1007c"
-}
-
-variable "validation_instance_type" {
-  description = "Value of the instance type"
-  type        = string
-  default     = "t3.micro"
-}
-
-variable "account_id" {
-  description = "Value of the account ID"
-  type        = string
-  default     = "account-aHP3esT5"
-}
-
-variable "cloud-provider-account-id" {
-  description = "Value of the cloud provider account ID"
-  type        = number
-  default     = 464262061435
-}
-
-variable "role_credentials_id" {
-  description = "Value of the role credentials ID"
-  type        = string
-  default     = "0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8"
-}
-
-variable "wlmdb_aws_account_id" {
-  description = "Value of the AWS account ID"
-  type        = string
-  default     = "718273455463"
-}
-
-variable "jwt_token" {
-  description = "Value of the JWT Token"
-  type        = string
-  sensitive   = true
-}
-
-# vpc end points configuration variables
-variable "is_s3_endpoint_created" {
-  description = "Determines if S3 endpoint is created"
-  type        = bool
-  default     = true
-}
-
-variable "is_cloudformation_endpoint_created" {
-  description = "Determines if CloudFormation endpoint is created"
-  type        = bool
-  default     = true
-}
-
-variable "is_ssm_endpoint_created" {
-  description = "Determines if SSM endpoint is created"
-  type        = bool
-  default     = true
-}
-
-variable "is_sqs_endpoint_created" {
-  description = "Determines if SQS endpoint is created"
-  type        = bool
-  default     = true
-}
-
-variable "is_cloudwatch_logs_endpoint_created" {
-  description = "Determines if CloudWatch Logs endpoint is created"
-  type        = bool
-  default     = true
-}
-
-variable "is_fsx_endpoint_created" {
-  description = "Determines if FSx endpoint is created"
-  type        = bool
-  default     = true
-}
-
-variable "is_ec2_endpoint_created" {
-  description = "Determines if EC2 endpoint is created"
-  type        = bool
-  default     = true
-}
-
-variable "is_ec2_messages_endpoint_created" {
-  description = "Determines if EC2 Messages endpoint is created"
-  type        = bool
-  default     = true
-}
-
-variable "is_ssm_messages_endpoint_created" {
-  description = "Determines if SSM Messages endpoint is created"
-  type        = bool
-  default     = true
-}
-
-variable "s3_gateway_endpoint_route_tables" {
-  description = "Route table ids to attach to S3 gateway endpoint."
-  type        = string
-}
-
-variable "notification_arn" {
-  description = "Value of the Notification ARN"
-  type        = string
-}
-
-variable "s3_artifacts_url" {
-  description = "Value of the S3 Artifacts URL"
-  type        = string
-}
-
-variable "enable_cloud_watch_log" {
-  description = "Flag to enable CloudWatch log"
-  type        = bool
-  default     = true
-}
-
-variable "unique_id" {
-  description = "Value of the Unique ID"
-  type        = number
+  default     = "sqldbspb9e"
 }
 
 variable "is_custom_ami" {
-  description = "Flag to determine if custom AMI is used"
-  type        = bool
-  default     = false
+  description = "Is a custom AMI being used?"
+  type        = string
+  default     = "false"
 }
 
-variable "ms_sql_media_bucket_name" {
-  description = "Value of the MS SQL Media Bucket Name"
+variable "workload_instance_type" {
+  description = "The instance type of the workload"
+  type        = string
+  default     = "m5.large"
+}
+
+variable "key_pair_name" {
+  description = "The name of the key pair"
+  type        = string
+  default     = "occm_qa"
+}
+
+variable "notification_arn" {
+  description = "The ARN for notifications"
+  type        = string
+  default     = ""
+}
+
+variable "enable_cloud_watch_log_feature" {
+  description = "Is the CloudWatch log feature enabled?"
+  type        = bool
+  default     = true
+}
+
+variable "mssql_media_bucket_name" {
+  description = "The name of the bucket containing the MSSQL media"
   type        = string
   default     = "LaunchWizard-sqlha"
 }
 
-variable "ms_sql_media_path_key" {
-  description = "Value of the MS SQL Media path Key"
+variable "mssql_media_path_key" {
+  description = "The path key to the MSSQL media in the bucket"
   type        = string
   default     = "launchwizardscripts/sqlmedia/sqlserver.iso"
 }
 
-variable "perform_ad_check_node_1" {
-  description = "value of the perform ad check node 1"
-  type        = bool
-  default     = true
-}
-
-variable "perform_ad_check_node_2" {
-  description = "value of the perform ad check node 2"
-  type        = bool
-  default     = false
-}
-
-variable "sql_admin_accounts" {
-  description = "value of the sql admin accounts"
+variable "verify_signature" {
+  description = "signed s3 url"
   type        = string
-  default     = "sqlsa"
 }
 
-# variable "ec2_instance_type" {
-#   description = "Value of the instance type"
-#   type        = string
-# }
+variable "unzip_archive" {
+  description = "signed s3 url"
+  type        = string
+}
+variable "aws_launch_wizard_for_fcn" {
+  description = "signed s3 url"
+  type        = string
+}
+variable "validation_zip" {
+  description = "signed s3 url"
+  type        = string
+}
+variable "signing_files_zip" {
+  description = "signed s3 url"
+  type        = string
+}
 
-# variable "ec2_instance_keypair" {
-#   description = "Value of the instance key pair"
-#   type        = string
-# }
-
-# variable "fsxn_password" {
-#   description = "Default Password"
-#   type        = string
-#   sensitive   = true
-# }
-
-# variable "volume_security_style" {
-#   description = "Default Volume Security Style"
-#   type        = string
-#   default     = "NTFS"
-# }
-
-# variable "vpc_cidr" {
-#   description = "CIDR block of the vpc"
-#   default     = "10.0.0.0/16"
-# }
-
-# variable "public_subnets_cidr" {
-#   type        = list(any)
-#   description = "CIDR block for Public Subnet"
-#   default     = ["10.0.0.0/20", "10.0.16.0/20"]
-# }
-
-# variable "private_subnets_cidr" {
-#   type        = list(any)
-#   description = "CIDR block for Private Subnet"
-#   default     = ["10.0.128.0/20", "10.0.144.0/20"]
-# }
-
-# variable "availability_zones" {
-#   type        = list(any)
-#   description = "AZ in which all the resources will be deployed"
-#   default     = ["ap-southeast-1a", "ap-southeast-1b"]
-# }
+variable "open_ssl_win64_zip" {
+  description = "signed s3 url"
+  type        = string
+}

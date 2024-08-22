@@ -5,13 +5,13 @@ terraform {
   ## YOU WILL UNCOMMENT THIS CODE THEN RERUN TERRAFORM INIT
   ## TO SWITCH FROM LOCAL BACKEND TO REMOTE AWS BACKEND
   #############################################################
-  backend "s3" {
-    bucket         = "sathish-tf-poc" # REPLACE WITH YOUR BUCKET NAME
-    key            = "bootstrap/terraform.tfstate"
-    region         = "ap-southeast-1"
-    dynamodb_table = "terraform-state-locking"
-    encrypt        = true
-  }
+  # backend "s3" {
+  #   bucket         = "sathish-tf-poc" # REPLACE WITH YOUR BUCKET NAME
+  #   key            = "bootstrap/terraform.tfstate"
+  #   region         = "ap-southeast-1"
+  #   dynamodb_table = "terraform-state-locking"
+  #   encrypt        = true
+  # }
 
   required_providers {
     aws = {
@@ -34,6 +34,7 @@ locals {
   is_standalone                 = var.sql_deployment_mode == "standalone" ? true : false
   is_failover_cluster           = local.is_standalone ? false : true
   should_send_saas_notification = var.role_credentials_id == "" ? false : true
+  fsx_is_single_zone_deployment = var.deployment_mode == "SINGLE_AZ_1" ? true : false
 }
 
 provider "aws" {
@@ -47,104 +48,112 @@ provider "aws" {
 }
 
 # These resources used to setup the s3 and dynamo table for state locking and versioning in remote backend instead of local
-resource "aws_s3_bucket" "terraform_state" {
-  bucket = var.bucket_for_state # REPLACE WITH YOUR BUCKET NAME
+# resource "aws_s3_bucket" "terraform_state" {
+#   bucket = var.bucket_for_state # REPLACE WITH YOUR BUCKET NAME
 
-  lifecycle {
-    prevent_destroy = true
-  }
-}
+#   lifecycle {
+#     prevent_destroy = false
+#   }
+# }
 
-resource "aws_s3_bucket_versioning" "terraform_bucket_versioning" {
-  bucket = aws_s3_bucket.terraform_state.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
+# resource "aws_s3_bucket_versioning" "terraform_bucket_versioning" {
+#   bucket = aws_s3_bucket.terraform_state.id
+#   versioning_configuration {
+#     status = "Enabled"
+#   }
+#   lifecycle {
+#     prevent_destroy = false
+#   }
+# }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state_crypto_conf" {
-  bucket = aws_s3_bucket.terraform_state.bucket
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
+# resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state_crypto_conf" {
+#   bucket = aws_s3_bucket.terraform_state.bucket
+#   rule {
+#     apply_server_side_encryption_by_default {
+#       sse_algorithm = "AES256"
+#     }
+#   }
 
-  lifecycle {
-    prevent_destroy = true
-  }
-}
+#   lifecycle {
+#     prevent_destroy = false
+#   }
+# }
 
-resource "aws_dynamodb_table" "terraform_locks" {
-  name         = var.terraform_state_locking
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
+# resource "aws_dynamodb_table" "terraform_locks" {
+#   name         = var.terraform_state_locking
+#   billing_mode = "PAY_PER_REQUEST"
+#   hash_key     = "LockID"
+#   attribute {
+#     name = "LockID"
+#     type = "S"
+#   }
 
-  lifecycle {
-    prevent_destroy = true
-  }
-}
+#   lifecycle {
+#     prevent_destroy = false
+#   }
+# }
 
 module "vpc-endpoints" {
   source = "./modules/vpc-endpoints"
 
-  endpoints_vpc_id           = var.vpc_id
+  vpc_id                     = var.vpc_id
   endpoints_aws_location     = var.aws_location
-  preferred_subnet_id        = var.private_subnet1_id
-  preferred_subnet_cidrblock = var.private_subnet1_cidr_block
+  preferred_subnet1_id       = var.private_subnet1_id
+  preferred_subnet_cidrblock = var.private_subnet1_cidrblock
 
-  standby_subnet_id        = var.private_subnet2_id
-  standby_subnet_cidrblock = var.private_subnet2_cidr_block
-  s3_endpoint_route_tables = var.s3_gateway_endpoint_route_tables
+  standby_subnet1_id       = local.is_failover_cluster ? var.private_subnet2_id : ""
+  standby_subnet_cidrblock = local.is_failover_cluster ? var.private_subnet2_cidrblock : ""
+  s3_endpoint_route_tables = var.s3_endpoint_route_tables
 
-  s3_endpoint_exists              = var.is_s3_endpoint_created
-  cloudformation_endpoint_exists  = var.is_cloudformation_endpoint_created
-  ssm_endpoint_exists             = var.is_ssm_endpoint_created
-  sqs_endpoint_exists             = var.is_sqs_endpoint_created
-  cloudwatch_logs_endpoint_exists = var.is_cloudwatch_logs_endpoint_created
-  fsx_endpoint_exists             = var.is_fsx_endpoint_created
-  ec2_endpoint_exists             = var.is_ec2_endpoint_created
-  ec2_messages_endpoint_exists    = var.is_ec2_messages_endpoint_created
-  ssm_messages_endpoint_exists    = var.is_ssm_messages_endpoint_created
+  s3_endpoint_exists              = var.s3_endpoint_exists
+  cloudformation_endpoint_exists  = var.cloudformation_endpoint_exists
+  ssm_endpoint_exists             = var.ssm_endpoint_exists
+  sqs_endpoint_exists             = var.sqs_endpoint_exists
+  cloudwatch_logs_endpoint_exists = var.cloudwatch_logs_endpoint_exists
+  fsx_endpoint_exists             = var.fsx_endpoint_exists
+  ec2_endpoint_exists             = var.ec2_endpoint_exists
+  ec2_messages_endpoint_exists    = var.ec2_messages_endpoint_exists
+  ssm_messages_endpoint_exists    = var.ssm_messages_endpoint_exists
 }
 
 module "validation-node" {
   source = "./modules/validation-node"
 
-  # depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, module.vpc-endpoints-validation]
+  depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, aws_ssm_parameter.credentials_ssm_parameter, module.vpc-endpoints]
 
-  validation_node_vpc_id                = var.vpc_id
-  validation_node_aws_location          = var.aws_location
-  validation_node_subnet_id             = var.private_subnet1_id
-  validation_node_dns_ip_addresses      = var.dns_ip_addresses
-  validation_node_ec2_role_name         = var.deployment_name
-  validation_node_is_custom_ami         = false
-  validation_node_key_pair_name         = var.ec2_instance_keypair
-  validation_node_perform_ad_check      = local.existing_ontap_fsx ? true : false
-  validation_node_domain_dns_name       = var.domain_dns_name
-  validation_node_domain_admin_user     = var.domain_admin_user_name
-  validation_node_perform_fsx_check     = true
-  validation_node_fsx_file_system_id    = var.fsx_file_system_id
-  validation_node_enable_cloudwatch_log = var.enable_cloud_watch_log
-  validation_node_ami                   = var.validation_ami_id
-  validation_node_instance_type         = var.validation_instance_type
-  validation_node_deployment_name       = var.deployment_name
-  validation_node_sql_deployment_mode   = var.sql_deployment_mode
-  validation_node_unique_id             = var.unique_id
-  validation_node_s3_artifacts_url      = var.s3_artifacts_url
-  validation_node1_wait_handler         = "asdf"
+  vpc_id                        = var.vpc_id
+  aws_location                  = var.aws_location
+  subnet_id                     = var.private_subnet1_id
+  dns_ip_addresses              = var.dns_ip_addresses
+  ec2_role_name                 = var.deployment_name
+  is_custom_ami                 = var.is_custom_ami
+  key_pair_name                 = var.key_pair_name
+  perform_ad_check              = true
+  domain_dns_name               = var.domain_dns_name
+  domain_admin_user             = var.domain_admin_user
+  perform_fsx_check             = local.existing_ontap_fsx ? "true" : "false" // verify both ad n fsx check bool or string 
+  fsx_file_system_id            = local.existing_ontap_fsx ? var.fsx_file_system_id : ""
+  enable_cloudwatch_log_feature = var.enable_cloud_watch_log_feature
+  ami                           = var.validation_ami
+  validation_node_instance_type = var.validation_node_instance_type
+  deployment_name               = var.deployment_name
+  unique_id                     = var.unique_id
+  s3_artifacts_url              = var.s3_artifacts_url
+  validation_node1_wait_handler = "asdf"
+  verify_signature              = var.verify_signature
+  unzip_archive                 = var.unzip_archive
+  aws_launch_wizard_for_fcn     = var.aws_launch_wizard_for_fcn
+  validation_zip                = var.validation_zip
+  signing_files_zip             = var.signing_files_zip
+  open_ssl_win64_zip            = var.open_ssl_win64_zip
+  sql_deployment_mode           = var.sql_deployment_mode
+  // notificaiton arn to be sent to the validation node
 }
 
 module "fsxn" {
   source = "./modules/fsxn"
 
+  depends_on                     = [module.validation-node]
   fsx_file_system_id             = "" // set this id to provision using existing fsx
   deployment_mode                = var.deployment_mode
   vpc_id                         = var.vpc_id
@@ -153,15 +162,12 @@ module "fsxn" {
   standby_subnet_id              = var.private_subnet2_id
   preferred_route_table_id       = var.route_table1_id
   standby_route_table_id         = var.route_table2_id
-  preferred_subnet_cidrblock     = var.private_subnet1_cidr_block
-  standby_subnet_cidrblock       = var.private_subnet2_cidr_block
-  parent_stack_name              = var.deployment_name
   fsx_file_system_name           = var.fsx_file_system_name
   fsx_storage_capacity           = var.fsx_storage_capacity
-  fsx_volume_throughput_capacity = var.fsx_vol_throughput
-  fsx_disk_iops                  = var.fsx_iops
+  fsx_volume_throughput_capacity = var.fsx_volume_throughput_capacity
+  fsx_disk_iops                  = var.fsx_disk_iops
 
-  fsx_kms_key_id                    = var.fsx_encryption_key
+  fsx_kms_key_id                    = "" #var.fsx_encryption_key
   fsx_data_volume_name              = var.fsx_data_volume_name
   fsx_data_volume_size              = var.fsx_data_volume_size
   fsx_log_volume_name               = var.fsx_log_volume_name
@@ -170,47 +176,49 @@ module "fsxn" {
   fsx_temp_db_volume_size           = var.fsx_temp_db_volume_size
   fsx_cluster_quorum_volume_name    = var.fsx_quorum_volume_name
   fsx_cluster_quorum_volume_size    = var.fsx_quorum_volume_size
-  fsx_administrator_password        = var.fsx_password
+  fsx_administrator_password        = var.fsx_admin_password
   fsx_svm_name                      = var.sql_svm_name
   fsx_weekly_maintenance_start_time = "1:05:00"
 }
 
-module "ec2" {
-  source = "./modules/ec2"
+# module "ec2" {
+#   source = "./modules/ec2"
 
-  ec2_role_name                 = var.deployment_name
-  enable_cloudwatch_log_feature = var.enable_cloud_watch_log
-  log_group_name                = "SQLDLOG"
-  unique_id                     = var.unique_id
-  ami_id                        = var.sql_ami_id
-  byol_ami                      = "false"
-  key_pair_name                 = var.ec2_instance_keypair
-  private_subnet_id             = var.private_subnet1_id
+#   depends_on = [module.vpc-endpoints, module.validation-node, module.fsxn]
 
-  vpc_id                     = var.vpc_id
-  vpc_cidr                   = var.vpc_cidr
-  deployment_name            = var.deployment_name
-  sql_server_name            = var.sql_server_name
-  sql_svm_name               = var.sql_svm_name
-  fsx_data_volume_name       = var.fsx_data_volume_name
-  fsx_log_volume_name        = var.fsx_log_volume_name
-  fsx_file_system_id         = var.fsx_file_system_id
-  fsx_temp_db_volume_name    = var.fsx_temp_db_volume_name
-  fsx_data_lun_size          = var.fsx_data_lun_size
-  sql_igroup_name            = var.sql_igroup_name
-  fsx_volume_snapshot_policy = var.fsx_volume_snapshot_policy
-  ad_dns_ip_addresses        = var.dns_ip_addresses
-  domain_dns_name            = var.domain_dns_name
-  domain_admin_user          = var.domain_admin_user_name
-  sql_admin_accounts         = var.sql_service_account_name
-  sql_collation              = var.sql_collation
+#   ec2_role_name                 = var.deployment_name
+#   enable_cloudwatch_log_feature = var.enable_cloud_watch_log_feature
+#   log_group_name                = "SQLDLOG"
+#   unique_id                     = var.unique_id
+#   ami_id                        = var.sql_ami_id
+#   byol_ami                      = "false"
+#   key_pair_name                 = var.key_pair_name
+#   private_subnet_id             = var.private_subnet1_id
 
-  sql_node_s3_artifacts_url = var.s3_artifacts_url
-  parent_stack_name         = var.deployment_name
-  sql_node_aws_location     = var.aws_location
-  route_table_id            = var.route_table1_id
-  ebs_volume_size           = var.ebs_volume_size
-  domain_member_sg_id       = var.domain_security_group_id
-  ontap_security_group_id   = local.new_ontap_fsx ? module.fsx.fsxn_security_group_id : var.ontap_sg_id
-  mssql_media_bucket_name   = var.ms_sql_media_bucket_name
-}
+#   vpc_id                     = var.vpc_id
+#   vpc_cidr                   = var.vpc_cidr
+#   deployment_name            = var.deployment_name
+#   sql_server_name            = var.sql_server_name
+#   sql_svm_name               = var.sql_svm_name
+#   fsx_data_volume_name       = var.fsx_data_volume_name
+#   fsx_log_volume_name        = var.fsx_log_volume_name
+#   fsx_file_system_id         = var.fsx_file_system_id
+#   fsx_temp_db_volume_name    = var.fsx_temp_db_volume_name
+#   fsx_data_lun_size          = var.fsx_data_lun_size
+#   sql_igroup_name            = var.sql_igroup_name
+#   fsx_volume_snapshot_policy = var.fsx_volume_snapshot_policy
+#   ad_dns_ip_addresses        = var.dns_ip_addresses
+#   domain_dns_name            = var.domain_dns_name
+#   domain_admin_user          = var.domain_admin_user
+#   sql_admin_accounts         = var.sql_service_account_name
+#   sql_collation              = var.sql_collation
+
+#   sql_node_s3_artifacts_url = var.s3_artifacts_url
+#   parent_stack_name         = var.deployment_name
+#   sql_node_aws_location     = var.aws_location
+#   route_table_id            = var.route_table1_id
+#   ebs_volume_size           = var.ebs_volume_size
+#   domain_member_sg_id       = var.domain_member_sg_id
+#   ontap_security_group_id   = local.new_ontap_fsx ? module.fsxn.fsxn_security_group_id : var.ontap_security_group_id
+#   mssql_media_bucket_name   = var.mssql_media_bucket_name
+# }

@@ -1,10 +1,10 @@
-variable "endpoints_vpc_id" {
+variable "vpc_id" {
   description = "ID of the VPC"
   type        = string
   default     = "vpc-046f7e26255458373"
 }
 
-variable "endpoints_vpc_cidr" {
+variable "vpc_cidr" {
   description = "CIDR block of the vpc"
   default     = "10.0.0.0/16"
 }
@@ -15,17 +15,17 @@ variable "endpoints_aws_location" {
   default     = "ap-southeast-1"
 }
 
-variable "preferred_subnet_id" {
+variable "preferred_subnet1_id" {
   description = "Specify the preferred subnet for your file system."
   type        = string
 }
 
-variable "preferred_subnet_cidrblock" {
+variable "preferred_subnet_cidrblock" { # check
   description = "Cidrblock for preferred subnet."
   type        = string
 }
 
-variable "standby_subnet_id" {
+variable "standby_subnet1_id" {
   description = "Specify the standby subnet for your file system."
   type        = string
 }

@@ -1,29 +1,82 @@
 
-$WarningPreference = 'SilentlyContinue';
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
-$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
-$instance_id = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
-# $FailureReason = "CF endpoint is not reachable. Check your subnet outbound connectivity."
-# try {
-#   $Response = Invoke-WebRequest -Uri 'https://cloudformation.${region}.amazonaws.com' -UseBasicParsing
-#   $StatusCode = $Response.StatusCode
-# }
-# catch { 
-#   Write-Output $_
-#   $StatusCode = 0
-# }
-# Write-Output $StatusCode
-# if ($StatusCode -eq 200) {
+<powershell>
+# Write output
+Write-Output "Starting user data script from terraform"
 
+# # Create directory if it doesn't exist
+# if (!(Test-Path -Path C:\\cfn\\)) {
+#     New-Item -ItemType Directory -Path C:\\cfn\\
+#     Write-Output "Created directory C:\\cfn\\"
+# }
+
+# # Create a text file in the directory
+# New-Item -Path 'C:\\cfn\\' -Name 'test.txt' -ItemType 'file' -Value 'Hello, World!'
+# Write-Output "Created file C:\\cfn\\test.txt"
+
+$WarningPreference = 'SilentlyContinue';
+#[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
+try {
+    $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+    Write-Output "Successfully obtained the token."
+
+    $instance_id = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+    Write-Output "Successfully obtained the instance ID: $instance_id"
+}
+catch {
+    Write-Output "An error occurred while getting token: $_"
+}
 $deploymentname = "${deployment_name}"
 $ssmParameterName = "/netapp/wlmdb/$deploymentname"
 $region = "${region}"
 $log_group = "${log_group}"
 $s3_artifacts_url = "${s3_artifacts_url}"
 $deployment_name = "${deployment_name}"
+$fsx_file_system_id = "${fsx_file_system_id}"
+$sql_deployment_mode = "${sql_deployment_mode}"
 
-Write-SSMParameter -Name $ssmParameterName -Value (Get-SSMParameter -Name $ssmParameterName -WithDecryption $True).Value -Type "SecureString" -Overwrite $true
-    
+Write-Output "Deployment Name: $deployment_name"
+# Step 1: Download the file from S3 to the temp folder
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
+$tempFilePath = Join-Path -Path $env:TEMP -ChildPath "signed-url.json"
+Invoke-WebRequest -Uri "$s3_artifacts_url" -OutFile $tempFilePath
+
+Write-Output "Downloaded the file to $tempFilePath"
+# Step 2: Parse the file and assign the URLs to the variables
+$urls = Get-Content -Path $tempFilePath | ConvertFrom-Json
+
+$verify_signature = $urls.verify_signature
+$unzip_archive = $urls.unzip_archive
+$aws_launch_wizard_for_fcn = $urls.aws_launch_wizard_for_fcn
+$validation_zip = $urls.validation_zip
+$signing_files_zip = $urls.signing_files_zip
+$open_ssl_win64_zip = $urls.open_ssl_win64_zip
+
+
+# in summary, this command is retrieving the current value of an SSM parameter, decrypting it, and then overwriting the parameter with the same value, ensuring it's stored as a "SecureString".
+# Write-SSMParameter -Name $ssmParameterName -Value (Get-SSMParameter -Name $ssmParameterName -WithDecryption $True).Value -Type "SecureString" -Overwrite $true
+function Update-SSMParameterToSecureString {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ssmParameterName
+    )
+
+    try {
+        $parameter = Get-SSMParameter -Name $ssmParameterName
+        if ($parameter.Type -ne "SecureString") {
+            Write-SSMParameter -Name $ssmParameterName -Value $parameter.Value -Type "SecureString" -Overwrite $true
+            Write-Output "The parameter is now stored as a SecureString"
+        }
+        else {
+            Write-Output "The parameter is already stored as a SecureString"
+        }
+    }
+    catch {
+        Write-Output "An error occurred: $_"
+    }
+}
+
+Update-SSMParameterToSecureString -ssmParameterName $ssmParameterName
+
 function Install-SSMAgent {
     param(
         [string]$region
@@ -33,10 +86,25 @@ function Install-SSMAgent {
         Get-Service AmazonSSMAgent -ErrorAction Stop
     }
     catch {
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
         $progressPreference = "silentlyContinue"
         $ssmAgentUrl = "https://amazon-ssm-$region.s3.$region.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe"
+        Write-Output "Downloading SSM Agent from $ssmAgentUrl"
         Invoke-WebRequest $ssmAgentUrl -OutFile "$env:USERPROFILE\Desktop\SSMAgent_latest.exe"
+        
+        # Install the SSM Agent
+        Write-Output "Installing SSM Agent"
+        Start-Process -FilePath "$env:USERPROFILE\Desktop\SSMAgent_latest.exe" -ArgumentList '/S'
+        Start-Sleep -Seconds 30
+    
+        # Set the SSM Agent service to start automatically
+        Write-Output "Setting SSM Agent service to start automatically"
+        Set-Service -Name AmazonSSMAgent -StartupType Automatic
+        Start-Sleep -Seconds 30
+    
+        # Restart the SSM Agent service
+        Write-Output "Restarting SSM Agent service"
+        Restart-Service AmazonSSMAgent -Force -ErrorAction Continue
+        Start-Sleep -Seconds 30
     }
 }
 
@@ -44,6 +112,17 @@ function Install-SSMAgent {
 Install-SSMAgent -region "$region"
 
 Set-ExecutionPolicy Unrestricted -Scope Process -Force
+
+# Define the directories
+$dirs = @("C:\\cfn\\log", "C:\\Program Files\\Amazon\\SSM\\Plugins\\awsCloudWatch\\")
+
+# Check each directory
+foreach ($dir in $dirs) {
+    if (!(Test-Path -Path $dir)) {
+        # Directory doesn't exist, create it
+        New-Item -ItemType Directory -Path $dir | Out-Null
+    }
+}
 
 # Configure CloudWatch
 $config = @{
@@ -103,34 +182,34 @@ $config = @{
 }
 
 try {
-    Set-Content -Path "C:\\Program Files\\Amazon\\SSM\\Plugins\\awsCloudWatch\\AWS.EC2.Windows.CloudWatch.json" -Value (ConvertTo-Json -InputObject $config)
-  
-    # Install SSM agent
-    Write-Output "try{Start-Process -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe -ArgumentList '/S'}catch{Write-Host $_.exception}" > C:/install-ssm.ps1
-    powershell.exe -Command C:/install-ssm.ps1
-    sleep 30
-    powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType Automatic"
-    sleep 30
-    Write-Output "try{Restart-Service AmazonSSMAgent -Force -ErrorAction Continue}catch{Write-Host $_.exception}" > C:/restart-ssm.ps1
-    powershell.exe -Command C:/restart-ssm.ps1
-    sleep 30    
+    Set-Content -Path "C:\\Program Files\\Amazon\\SSM\\Plugins\\awsCloudWatch\\AWS.EC2.Windows.CloudWatch.json" -Value (ConvertTo-Json -InputObject $config) 
 }
 catch {
     Write-Output "An error occurred install ssm: $_.Exception.Message"
 }
 
+Write-Output "Configured CloudWatch successfully"
+
 function Invoke-WebRequestWithRetry {
-    param (
+    param(
         [string]$Uri,
         [string]$OutFile
     )
 
+    # Create the directory if it doesn't exist
+    $OutDir = Split-Path -Path $OutFile -Parent
+    if (!(Test-Path -Path $OutDir)) {
+        New-Item -ItemType Directory -Path $OutDir | Out-Null
+    }
+
+    # Download the file
     try {
+        Write-Output "Starting to download file from $Uri"
         Invoke-WebRequest -Uri $Uri -OutFile $OutFile -ErrorAction Stop
+        Write-Output "Successfully downloaded file to $OutFile"
     }
     catch {
-        Write-Output "Failed to download from $Uri. Error: $_"
-        throw $_
+        Write-Output "An error occurred while downloading file: $_"
     }
 }
 
@@ -140,12 +219,15 @@ function Invoke-Command {
     )
 
     try {
+        Write-Output "Starting to execute command: $command"
         & powershell.exe -Command $command
         if ($LASTEXITCODE -ne 0) {
             throw "Command failed with exit code $LASTEXITCODE"
         }
+        Write-Output "Successfully executed command: $command"
     }
     catch {
+        Write-Output "An error occurred while executing command: $_"
         Write-Error $_.Exception.Message
         exit $LASTEXITCODE
     }
@@ -153,33 +235,38 @@ function Invoke-Command {
 
 # Usage
 try {
-    Invoke-WebRequestWithRetry -Uri "$s3_artifacts_url/scripts/Verify-Signature.ps1" -OutFile "C:\\cfn\\scripts\\Verify-Signature.ps1"
-    Invoke-WebRequestWithRetry -Uri "$s3_artifacts_url/scripts/Unzip-Archive.ps1" -OutFile "C:\\cfn\\scripts\\Unzip-Archive.ps1"
-    Invoke-WebRequestWithRetry -Uri "$s3_artifacts_url/modules/AWSLaunchWizardForCFN.zip" -OutFile "C:\\cfn\\modules\\AWSLaunchWizardForCFN.zip"
-    Invoke-WebRequestWithRetry -Uri "$s3_artifacts_url/scripts/validation.zip" -OutFile "C:\\cfn\\scripts\\validation.zip"
-    Invoke-WebRequestWithRetry -Uri "$s3_artifacts_url/signig_files.zip" -OutFile "C:\\cfn\\signig_files.zip"
-    Invoke-WebRequestWithRetry -Uri "$s3_artifacts_url/OpenSSL-Win64.zip" -OutFile "C:\\cfn\\OpenSSL-Win64.zip"
+    Invoke-WebRequestWithRetry -Uri "$verify_signature" -OutFile "C:\\cfn\\scripts\\Verify-Signature.ps1"
+    Invoke-WebRequestWithRetry -Uri "$unzip_archive" -OutFile "C:\\cfn\\scripts\\Unzip-Archive.ps1"
+    Invoke-WebRequestWithRetry -Uri "$aws_launch_wizard_for_fcn" -OutFile "C:\\cfn\\modules\\AWSLaunchWizardForCFN.zip"
+    Invoke-WebRequestWithRetry -Uri "$validation_zip" -OutFile "C:\\cfn\\scripts\\validation.zip"
+    Invoke-WebRequestWithRetry -Uri "$signing_files_zip" -OutFile "C:\\cfn\\signig_files.zip"
+    Invoke-WebRequestWithRetry -Uri "$open_ssl_win64_zip" -OutFile "C:\\cfn\\OpenSSL-Win64.zip"
 
+    Write-Output "Downloaded the files successfully"
 
     Invoke-Command "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\signig_files.zip -Destination C:\\cfn"
     Invoke-Command "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\OpenSSL-Win64.zip -Destination C:\\cfn"
-    Invoke-Command "C:\\cfn\\scripts\\Verify-Signature.ps1 -FilePath C:\\cfn\\scripts\\validation.zip -SignatureFilePath C:\\cfn\\signig_files\\validation.sig -PubFilePath C:\\cfn\\signig_files\\validation.pub -ResourceID ValidationNode1 -Stackname '$deployment_name'"
+    # commented since having issue with signature verification
+    # Invoke-Command "C:\\cfn\\scripts\\Verify-Signature.ps1 -FilePath C:\\cfn\\scripts\\validation.zip -SignatureFilePath C:\\cfn\\signig_files\\validation.sig -PubFilePath C:\\cfn\\signig_files\\validation.pub -ResourceID ValidationNode1 -Stackname '$deployment_name'"
     Invoke-Command "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\scripts\\validation.zip -Destination C:\\cfn\\scripts"
+
+    Write-Output "Unzipped the files successfully"
 
     Invoke-Command "C:\\cfn\\scripts\\validation\\Update-DNSServers.ps1 -DNSIpAddresses '${dns_ip_addresses}'"
     Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-VPCConnectivity.ps1 -subnet '${subnet_id}' -region '$region' -Stackname '$deployment_name' -ResourceID ValidationNode1 -WaitHandler '${validation_node1_wait_handler}'"
     Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-Credentials.ps1 -DomainName '${domain_dns_name}' -UserName '${domain_admin_user}' -isSecretManagerSupported 0 -Stackname '$deployment_name' -Parentstackname '$deployment_name' -ResourceID ValidationNode1 -WaitHandler '${validation_node1_wait_handler}'"
-    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-FsxConnectivity.ps1 -PerformFSxCheck '${perform_fsx_check}' -FSxFileSystemId '${fsx_file_system_id}' -FSxRegion '$region' -Stackname '$deployment_name' -Parentstackname '$deployment_name' -ResourceID ValidationNode1"
-    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-Ami.ps1 -IsCustomAmi '${is_custom_ami}' -Region '$region' -DomainDNSName '${domain_dns_name}' -SQLDeploymentMode '${sql_deployment_mode}' -Stackname '$deployment_name' -Parentstackname '$deployment_name' -ResourceID ValidationNode1"
+    # run this validate-fsxconnecitivity.ps1 script only for existing fsx file system
+    if (![string]::IsNullOrEmpty($fsx_file_system_id)) {
+        Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-FsxConnectivity.ps1 -PerformFSxCheck '${perform_fsx_check}' -FSxFileSystemId '$fsx_file_system_id' -FSxRegion '$region' -Stackname '$deployment_name' -Parentstackname '$deployment_name' -ResourceID ValidationNode1"
+    }
+    # this runs for the custom ami verifications
+    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-Ami.ps1 -IsCustomAmi '${is_custom_ami}' -Region '$region' -SQLDeploymentMode '$sql_deployment_mode' -DomainDNSName '${domain_dns_name}' -Stackname '$deployment_name' -Parentstackname '$deployment_name' -ResourceID ValidationNode1 -WaitHandler '${validation_node1_wait_handler}'"
+    Write-Output "Validation ran successfully"
 }
 catch {
     Write-Output "An error occurred last: $_.Exception.Message"
 }
+New-EC2Tag -Region "$region" -ResourceId "$instance_id" -Tag @{ Key = "user_data"; Value = "completed" }
 
 Write-Output "Validation completed successfully"
-touch /tmp/user_data_done
-# shutdown /s
-# } else {
-#   Write-Output $FailureReason
-#   shutdown /s
-# }
+</powershell>

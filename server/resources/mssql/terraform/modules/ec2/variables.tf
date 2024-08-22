@@ -11,7 +11,7 @@ variable "ec2_role_name" {
 
 variable "enable_cloudwatch_log_feature" {
   description = "Enable AWS CloudWatch logging."
-  type        = string
+  type        = bool
   default     = "false"
 }
 

@@ -1,23 +1,47 @@
 locals {
-  is_gov_region        = contains(["us-gov-west-1", "us-gov-east-1"], var.validation_node_aws_location)
-  ad_check_enabled     = var.validation_node_perform_ad_check == true
-  ad_check_not_enabled = var.validation_node_perform_ad_check == false
-  create_new_role      = var.validation_node_ec2_role_name == null
-  log_feature_enabled  = var.validation_node_enable_cloudwatch_log == true
+  is_gov_region        = contains(["us-gov-west-1", "us-gov-east-1"], var.aws_location)
+  ad_check_enabled     = var.perform_ad_check == true
+  ad_check_not_enabled = var.perform_ad_check == false
+  create_new_role      = var.ec2_role_name == null
+  log_feature_enabled  = var.enable_cloudwatch_log_feature == true
 }
 
-# resource "aws_iam_instance_profile" "validation_instance_profile" {
-#   name = "validation_instance_profile"
-#   role = var.validation_node_ec2_role_name
-# }
+resource "aws_iam_instance_profile" "validation_instance_profile" {
+  name = "validation_instance_profile"
+  role = var.ec2_role_name
+}
+
+data "aws_vpc" "selected" {
+  id = var.vpc_id
+}
 
 resource "aws_security_group" "domain_member_sg" {
   name        = "domain_member_sg"
   description = "Domain Members"
-  vpc_id      = var.validation_node_vpc_id
+  vpc_id      = var.vpc_id
 
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  ingress {
+    from_port   = 3389
+    to_port     = 3389
+    protocol    = "tcp"
+    cidr_blocks = ["202.3.121.6/32"]
+  }
   tags = {
-    ResourceGroupID = var.validation_node_unique_id
+    ResourceGroupID = var.unique_id
   }
 }
 
@@ -47,16 +71,16 @@ resource "aws_launch_template" "disable_imdsv1" {
 # }
 
 resource "aws_network_interface" "validation_node_ni" {
-  subnet_id       = var.validation_node_subnet_id
+  subnet_id       = var.subnet_id
   security_groups = [aws_security_group.domain_member_sg.id]
 }
 
 resource "aws_instance" "validation_node" {
-  ami           = var.validation_node_ami
+  ami           = var.ami
   instance_type = var.validation_node_instance_type
-  key_name      = var.validation_node_key_pair_name
+  key_name      = var.key_pair_name
 
-  # iam_instance_profile = aws_iam_instance_profile.validation_instance_profile.name
+  iam_instance_profile = aws_iam_instance_profile.validation_instance_profile.name
 
   network_interface {
     device_index         = 0
@@ -72,43 +96,40 @@ resource "aws_instance" "validation_node" {
   }
 }
 
-
-# Wait for user data to complete execution on the instance
-resource "null_resource" "validation_node_user_data" {
-  triggers = {
-    instance_id = aws_instance.validation_node.id
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "while [ ! -f /tmp/user_data_done ]; do sleep 5; done"
-    ]
-
-    connection {
-      type        = "ssh"
-      user        = "ec2-user" # replace with the appropriate user
-      private_key = file(var.validation_node_key_pair_private_key_path)
-      host        = aws_instance.validation_node.public_ip
-    }
-  }
-}
-
 data "template_file" "user_data" {
   template = file("${path.module}/user_data.ps1")
 
   vars = {
-    region                        = var.validation_node_aws_location
-    deployment_name               = var.validation_node_deployment_name
-    s3_artifacts_url              = var.validation_node_s3_artifacts_url
-    dns_ip_addresses              = var.validation_node_dns_ip_addresses
-    domain_dns_name               = var.validation_node_domain_dns_name
-    subnet_id                     = var.validation_node_subnet_id
-    domain_admin_user             = var.validation_node_domain_admin_user
+    region                        = var.aws_location
+    deployment_name               = var.deployment_name
+    s3_artifacts_url              = var.s3_artifacts_url
+    dns_ip_addresses              = var.dns_ip_addresses
+    domain_dns_name               = var.domain_dns_name
+    subnet_id                     = var.subnet_id
+    domain_admin_user             = var.domain_admin_user
     validation_node1_wait_handler = var.validation_node1_wait_handler
-    is_custom_ami                 = var.validation_node_is_custom_ami
-    perform_fsx_check             = var.validation_node_perform_fsx_check
-    fsx_file_system_id            = var.validation_node_fsx_file_system_id
-    log_group                     = var.validation_node_deployment_name
-    sql_deployment_mode           = var.validation_node_sql_deployment_mode
+    is_custom_ami                 = var.is_custom_ami
+    perform_fsx_check             = var.perform_fsx_check
+    fsx_file_system_id            = var.fsx_file_system_id
+    log_group                     = var.deployment_name
+    verify_signature              = var.verify_signature
+    unzip_archive                 = var.unzip_archive
+    aws_launch_wizard_for_fcn     = var.aws_launch_wizard_for_fcn
+    validation_zip                = var.validation_zip
+    signing_files_zip             = var.signing_files_zip
+    open_ssl_win64_zip            = var.open_ssl_win64_zip
+    sql_deployment_mode           = var.sql_deployment_mode
+  }
+}
+
+
+#Wait for user data to complete execution on the instance
+resource "null_resource" "wait_for_tag" {
+  triggers = {
+    instance_id = aws_instance.validation_node.id
+  }
+
+  provisioner "local-exec" {
+    command = "pwsh -Command \"while ((& '${path.module}/check_tag.ps1' '${aws_instance.validation_node.id}' '${var.aws_location}') -ne 'completed') { Write-Output 'Waiting for tag...'; sleep 10 }\""
   }
 }

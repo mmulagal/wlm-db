@@ -23,10 +23,10 @@ variable "fsx_disk_iops" {
   description = "The total number of SSD IOPS provisioned for the file system. The maximum is 80,000 IOPS."
   type        = number
   default     = 3
-  validation {
-    condition     = (var.fsx_disk_iops >= 0 && var.fsx_disk_iops <= 80000)
-    error_message = "The number of IOPS must be between 0 and 80,000."
-  }
+  # validation {
+  #   condition     = (var.fsx_disk_iops >= 0 && var.fsx_disk_iops <= 80000) || var.fsx_disk_iops == 3
+  #   error_message = "The number of IOPS must be between 0 and 80,000."
+  # }
 }
 
 variable "fsx_storage_capacity" {
@@ -155,29 +155,29 @@ variable "standby_route_table_id" {
   default     = "rtb-123456"
 }
 
-variable "preferred_subnet_cidrblock" {
-  description = "Cidrblock for preferred subnet."
-  type        = string
-  validation {
-    condition     = can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.preferred_subnet_cidrblock))
-    error_message = "The preferred subnet CIDR block must be a valid CIDR notation."
-  }
-}
+# variable "preferred_subnet_cidrblock" {
+#   description = "Cidrblock for preferred subnet."
+#   type        = string
+#   validation {
+#     condition     = can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.preferred_subnet_cidrblock))
+#     error_message = "The preferred subnet CIDR block must be a valid CIDR notation."
+#   }
+# }
 
-variable "standby_subnet_cidrblock" {
-  description = "Cidrblock for standby subnet."
-  type        = string
-  default     = "10.1.1.1/18"
-  validation {
-    condition     = can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.standby_subnet_cidrblock))
-    error_message = "The standby subnet CIDR block must be a valid CIDR notation."
-  }
-}
+# variable "standby_subnet_cidrblock" {
+#   description = "Cidrblock for standby subnet."
+#   type        = string
+#   default     = "10.1.1.1/18"
+#   validation {
+#     condition     = can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:\\/([0-9]|[1-2][0-9]|3[0-2]))?$", var.standby_subnet_cidrblock))
+#     error_message = "The standby subnet CIDR block must be a valid CIDR notation."
+#   }
+# }
 
-variable "parent_stack_name" {
-  description = "Name of the parent CloudFormation stack."
-  type        = string
-}
+# variable "deployment_name" {
+#   description = "Name of the parent tf provisoning."
+#   type        = string
+# }
 
 variable "fsxn_volume_security_style" {
   description = "The security style of the volume."

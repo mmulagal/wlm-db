@@ -5,11 +5,11 @@ resource "aws_ssm_parameter" "credentials_ssm_parameter" {
   value       = <<EOF
 {
   "fsx": {
-    "username": "${var.fsx_user_name}",
-    "password": "${var.fsx_password}"
+    "username": "${var.fsx_admin_username}",
+    "password": "${var.fsx_admin_password}"
   },
   "domain": {
-    "username": "${var.domain_admin_user_name}",
+    "username": "${var.domain_admin_user}",
     "password": "${var.domain_admin_password}"
   },
   "sql": [{
