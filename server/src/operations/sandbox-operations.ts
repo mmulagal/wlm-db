@@ -799,14 +799,14 @@ async function validateCloneParams(
         if (destDatabaseExists) {
             throw createError(
                 412,
-                `Database ${destDetails.database} already exists on destination host ${srcDetails.host}`
+                `Database ${destDetails.database} already exists on destination host ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`
             );
         }
 
         if (!srcDatabaseExists && !isDemoFlow) {
             throw createError(
                 412,
-                `Database ${srcDetails.database} does not exists on source host ${destDetails.host}`
+                `Database ${srcDetails.database} does not exists on source host ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`
             );
         }
 
@@ -1901,7 +1901,7 @@ async function validateDeleteSandboxParams(
         if (!dbExists && !isDemoFlow) {
             throw createError(
                 412,
-                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`
+                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`
             );
         }
 
@@ -2325,7 +2325,7 @@ async function validateLifeCycleParams(
         if (!dbExists && !isDemoFlow) {
             throw createError(
                 412,
-                `Database ${resourceDetails.database} does not exists on host ${resourceDetails.resourceName}`
+                `Database ${resourceDetails.database} does not exists on host ${resourceDetails.resourceName}\\${resourceDetails}\\${resourceDetails.databaseInstanceName}`
             );
         }
         status = JOBSTATUS.COMPLETED;
@@ -2641,7 +2641,7 @@ async function validateSplitParams(
         if (!dbExists && !isDemoFlow) {
             throw createError(
                 412,
-                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`
+                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`
             );
         }
 
@@ -2831,7 +2831,7 @@ async function checkDatabaseIntegrity(
     if (!databaseDetails) {
         throw createError(
             HttpErrorCodes.NOT_FOUND,
-            `Database ${databaseName} does not exists on source host ${srcDetails.resourceName}`
+            `Database ${databaseName} does not exists on source host ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`
         );
     }
 
