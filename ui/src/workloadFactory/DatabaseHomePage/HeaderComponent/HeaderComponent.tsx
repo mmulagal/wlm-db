@@ -102,9 +102,9 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (tab === WLF_TABS.INVENTORY) {
             tabValue = WLF_TABS.INVENTORY;
         } else if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
-            tabValue = WLF_TABS.EXPLORE_SAVINGS;
+            tabValue = WLF_TABS.EXPLORE_SAVINGS_EBS;
         } else if (tab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-            tabValue = WLF_TABS.EXPLORE_SAVINGS;
+            tabValue = WLF_TABS.EXPLORE_SAVINGS_FsxW;
         } else {
             tabValue = selectedHeaderTab;
         }
@@ -124,6 +124,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
                     dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
                 }
+                navigate('../fsxdb');
             } else {
                 if (!isWorkloadFactory) {
                     postBlueXPMessage({
