@@ -533,9 +533,7 @@ export const formatViewCalcData = (
                     viewCalculationsResponse?.fsxwCalculation?.desiredStorageCapacity
                 ),
                 storageSavings: formatCalcSize(viewCalculationsResponse?.fsxwCalculation?.storageSavings),
-                provisionedStorageCapacity: formatCalcSize(
-                    viewCalculationsResponse?.fsxwCalculation?.provisionedStorageCapacity
-                ),
+                provisionedStorageCapacity: viewCalculationsResponse?.fsxwCalculation?.provisionedStorageCapacity,
                 monthlyCostForStorageCapacity: formatNumbers(
                     viewCalculationsResponse?.fsxwCalculation?.monthlyCostForStorageCapacity
                 ),
