@@ -605,26 +605,25 @@ async function invokeSSMForDatabaseDeployment(
         if (instanceDetail && instancesDetails) {
             const {
                 database_instance_name: selectedInstanceName,
-                is_default: isDefault,
-                sqlAuthEnabled
+                is_default: isDefault
             } = instanceDetail;
             isDefaultInstance = isDefault ? 'true' : 'false';
             instanceNameForScript = selectedInstanceName;
 
-            const isInstanceRunning = instancesDetails.some(
+            const runningInstance = instancesDetails.find(
                 instance =>
                     instance.instanceName === instanceDetail.database_instance_name &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 
-            if (!isInstanceRunning && selectedInstanceName) {
+            if (isEmpty(runningInstance) && selectedInstanceName) {
                 const errorMessage = `Unable to access drive details in account ${accountId} for instance ${sqlInstanceName} is not running.`;
                 logger.error(errorMessage);
                 throw createError(errorMessage);
             }
             sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
             databaseInstanceId = instanceDetail.database_instance_id;
-            isSqlAuthEnabled = sqlAuthEnabled || false;
+            isSqlAuthEnabled = runningInstance.sqlAuthEnabled || false;
         }
 
         if (isClustered === 'true' && standbyNodeInstanceId) {
