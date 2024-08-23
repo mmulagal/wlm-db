@@ -74,6 +74,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const { statusData, statusLoading } = useAppSelector(state => state.headers.getStatus);
 
     const [selectedTab, setSelectedTab] = useState(WLF_TABS.DASHBOARD);
+    const [tabInfo, setTabInfo] = useState('');
 
     const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData, regionsLoading } = useAppSelector(state => state.headers.getRegions);
@@ -101,14 +102,13 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (tab === WLF_TABS.INVENTORY) {
             tabValue = WLF_TABS.INVENTORY;
         } else if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
-            tabValue = WLF_TABS.SAVINGS_CALCULATOR;
-            dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
+            tabValue = WLF_TABS.EXPLORE_SAVINGS;
         } else if (tab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-            tabValue = WLF_TABS.SAVINGS_CALCULATOR;
-            dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
+            tabValue = WLF_TABS.EXPLORE_SAVINGS;
         } else {
             tabValue = selectedHeaderTab;
         }
+        setTabInfo(tabValue);
         dispatch(setSelectedHeaderTab(tabValue));
     }, [tab]);
 
@@ -116,22 +116,32 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            if (!isWorkloadFactory) {
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: { pathname: './fsxdb/marketing', replace: true }
-                });
+            if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+                if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
+                    dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                } else {
+                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
+                    dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                }
             } else {
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: { pathname: './marketing', replace: true }
-                });
+                if (!isWorkloadFactory) {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: { pathname: './fsxdb/marketing', replace: true }
+                    });
+                } else {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: { pathname: './marketing', replace: true }
+                    });
+                }
             }
         } else {
             setStatusChk(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statusData]);
+    }, [statusData, tabInfo]);
 
     //Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
@@ -538,7 +548,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <Sandbox />
                         </>
                     )}
-                    {selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS && (
+                    {(selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (
                         <>
                             <div className={styles.exploreSavingSection}>
                                 <div className={styles.contentArea}>
@@ -549,9 +561,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <ExploreSavings />
                         </>
                     )}
-                    {(selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && <SavingsCalculator />}
+                    {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
                     {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
                     {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
                 </div>
