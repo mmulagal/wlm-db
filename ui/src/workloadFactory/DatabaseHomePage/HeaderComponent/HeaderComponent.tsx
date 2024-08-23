@@ -74,6 +74,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const { statusData, statusLoading } = useAppSelector(state => state.headers.getStatus);
 
     const [selectedTab, setSelectedTab] = useState(WLF_TABS.DASHBOARD);
+    const [tabInfo, setTabInfo] = useState('');
 
     const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData, regionsLoading } = useAppSelector(state => state.headers.getRegions);
@@ -107,6 +108,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         } else {
             tabValue = selectedHeaderTab;
         }
+        setTabInfo(tabValue);
         dispatch(setSelectedHeaderTab(tabValue));
     }, [tab]);
 
@@ -114,8 +116,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS || tab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-                if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+            if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+                if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS) {
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
                     dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
                 } else {
@@ -139,7 +141,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             setStatusChk(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statusData]);
+    }, [statusData, tabInfo]);
 
     //Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
