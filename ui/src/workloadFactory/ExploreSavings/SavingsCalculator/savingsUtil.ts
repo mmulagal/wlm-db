@@ -25,7 +25,8 @@ import {
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
-    const { recommendedTargetInstance } = state.exploreSavings;
+    const { recommendedTargetInstance, monthlyBYOLCost } = state.exploreSavings;
+    const checkBYOLTooltip = Number(monthlyBYOLCost) > 0;
     return [
         {
             type: 'Capacity',
@@ -88,8 +89,9 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'SQL license',
-            isTooltip:
-                'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
+            isTooltip: checkBYOLTooltip
+                ? 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL Server license-included AMIs. SQL license costs for SQL on Elastic Block Store are based on the Enterprise license with BYOL. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.'
+                : 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
             fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)
