@@ -38,14 +38,16 @@ import {
     GET_DEFAULT_COLLATION,
     GET_DEFAULT_DRIVES,
     sqlQueryExecution,
-    READ_SCRIPT_VERSION
+    READ_SCRIPT_VERSION,
+    sqlQueryExecutionWithAuth
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 import {
     SERVER_DETAILS,
     PERFORMANCE_METRICS_WITH_LATENCY,
     INSTANCE_GUID,
     ENTERPRISE_CHECK_QUERY,
-    DATABASES_COUNT_V2
+    DATABASES_COUNT_V2,
+    NATIVE_SQL_BACKUPS
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
     GET_SANDBOX_DETAILS,
@@ -85,9 +87,7 @@ const dbCountParams = {
 };
 
 const dbCountParamasV2 = {
-    commands: [
-        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT COUNT(*) AS totalCount FROM sys.databases FOR JSON PATH" -y 0'
-    ]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES_COUNT_V2)]
 };
 
 const dbSummaryParams1 = {
@@ -187,9 +187,7 @@ const serverIOLatencyParams = {
 };
 
 const nativeSqlBackupParams = {
-    commands: [
-        'sqlcmd -S "$env:computername" -Q "SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\' FOR JSON PATH\n" -y 0'
-    ]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], NATIVE_SQL_BACKUPS)]
 };
 
 const nativeSqlBackupDatabasesParams = {
@@ -300,7 +298,7 @@ const checkDBExists = {
 };
 
 const serverDetails = {
-    commands: [`sqlcmd -S "$env:computername" -Q "${SERVER_DETAILS}" -y 0`]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SERVER_DETAILS)]
 };
 
 const clusterNetwokIpInfo = {
@@ -308,7 +306,7 @@ const clusterNetwokIpInfo = {
 };
 
 const resourceUtilization = {
-    commands: [RESOURCE_UTILIZATION('$env:computername')]
+    commands: [RESOURCE_UTILIZATION(['MSSQLSERVER'])]
 };
 
 const getCollationDetails = {
