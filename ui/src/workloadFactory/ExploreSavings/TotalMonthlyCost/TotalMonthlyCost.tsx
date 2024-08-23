@@ -43,7 +43,8 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                                 colors={['chart-9', 'chart-6']}
                                 categories={[
                                     GENERAL.CATEGORY_POINT_ONE,
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO
                                         ? GENERAL.CATEGORY_POINT_TWO
                                         : GENERAL.FSXW_CATEGORY
                                 ]}
@@ -60,7 +61,8 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                             colors={storageSavingsResponse && ['chart-9', 'chart-6']}
                             categories={[
                                 GENERAL.CATEGORY_POINT_ONE,
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO
                                     ? GENERAL.CATEGORY_POINT_TWO
                                     : GENERAL.FSXW_CATEGORY
                             ]}

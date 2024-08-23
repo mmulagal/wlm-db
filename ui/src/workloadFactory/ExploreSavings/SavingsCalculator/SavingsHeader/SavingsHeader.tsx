@@ -20,7 +20,10 @@ const SavingsHeader = () => {
                 <MSSQL />
             </div>
             <DsTypography variant="Semibold_16" className={styles.content}>
-                {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ? GENERAL.SAVINGS_HEADER : GENERAL.SAVINGS_HEADER_FSX}
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO
+                    ? GENERAL.SAVINGS_HEADER
+                    : GENERAL.SAVINGS_HEADER_FSX}
             </DsTypography>
         </div>
     );
