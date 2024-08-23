@@ -725,12 +725,12 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
     }
 }
 
-async function getAllInstanceDetails(credentialsId: string, region: string, nodeIds: string[]) {
+async function getAllInstanceDetails(credentialsId: string, region: string, nodeIds: string[], accountId?: string) {
     logger.info('Fetch all MSSQL instance details', { credentialsId, region });
     const commands = [INSTANCE_DETAILS];
     try {
         for (const nodeId of nodeIds) {
-            const response = await callSsmExecution(credentialsId, region, commands, nodeId);
+            const response = await callSsmExecution(credentialsId, region, commands, nodeId, accountId);
             if (response) {
                 let parsedResponse = sqlResponseParsing(response);
                 parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
@@ -1146,8 +1146,14 @@ async function getSqlServerVersion(
     return sqlServerVersion;
 }
 
-async function getMssqlInstanceGuid(credentialsId: string, region: string, instanceName: string, nodeIds: string[]) {
-    logger.info('Fetching mssql instance id', nodeIds, instanceName);
+async function getMssqlInstanceGuid(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceName: string,
+    nodeIds: string[]
+) {
+    logger.info('Fetching mssql instance id', accountId, nodeIds, instanceName);
     const commands = [`sqlcmd -S "${instanceName}" -Q "${INSTANCE_GUID}" -y 0`];
     let response;
     try {
@@ -1155,7 +1161,7 @@ async function getMssqlInstanceGuid(credentialsId: string, region: string, insta
 
         for (const nodeId of nodeIds) {
             logger.info('Fetching MSSQL instance GUID', nodeId);
-            response = await callSsmExecution(credentialsId, region, commands, nodeId);
+            response = await callSsmExecution(credentialsId, region, commands, nodeId, accountId);
             if (response) {
                 [{ instance_guid: sqlInstanceGuid }] = sqlResponseParsing(response);
 
@@ -1180,6 +1186,7 @@ async function getMssqlInstanceGuid(credentialsId: string, region: string, insta
 }
 
 async function getActiveSqlNodeAndInstanceDetails(
+    accountId: string,
     credentialsId: string,
     region: string,
     nodeIds: string[],
@@ -1188,6 +1195,7 @@ async function getActiveSqlNodeAndInstanceDetails(
     resourceName?: string
 ) {
     logger.info('Getting active SQL node and instance details', {
+        accountId,
         credentialsId,
         region,
         nodeIds,
@@ -1199,7 +1207,7 @@ async function getActiveSqlNodeAndInstanceDetails(
         for (const nodeId of nodeIds) {
             const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId]);
+                const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId], accountId);
                 instanceDetails?.forEach((obj: { instanceName: string }) => {
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
                 });
@@ -1246,6 +1254,7 @@ async function getActiveNodeAndInstanceDetails(
     const { database_instance_name: instanceName } = databaseInstanceDetails;
 
     const activeNodeResponse = await getActiveSqlNodeAndInstanceDetails(
+        accountId,
         credentialsId,
         region,
         [node1InstanceId, ...(node2InstanceId ? [node2InstanceId] : [])],

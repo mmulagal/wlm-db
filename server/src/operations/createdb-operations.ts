@@ -238,6 +238,7 @@ async function getDriveInfoFromSSM(
     if (
         isSSMConnected === undefined ||
         !activeNodeInstanceId ||
+        (sqlDeploymentType === 'FCI' && !standbyNodeInstanceId) ||
         !instanceName ||
         !instancesDetails ||
         !instancesDetails?.length

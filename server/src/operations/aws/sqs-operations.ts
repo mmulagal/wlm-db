@@ -600,7 +600,8 @@ async function processCloudFormationMessages() {
                                                         const deployedInstances = await getAllInstanceDetails(
                                                             credentialsId,
                                                             region,
-                                                            nodeIds
+                                                            nodeIds,
+                                                            accountId
                                                         );
 
                                                         const instanceNames = deployedInstances.map(
@@ -616,6 +617,7 @@ async function processCloudFormationMessages() {
                                                                     : instanceName;
 
                                                                 const sqlInstanceGuid = await getMssqlInstanceGuid(
+                                                                    accountId,
                                                                     credentialsId,
                                                                     region,
                                                                     getDatabaseInstanceName(

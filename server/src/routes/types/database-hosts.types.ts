@@ -175,13 +175,26 @@ const StoragePerStorageTypeResponse = Type.Object({
 });
 type StoragePerStorageTypeResponseType = Static<typeof StoragePerStorageTypeResponse>;
 
+const FsxResourceInfoResponse = Type.Optional(
+    Type.Array(
+        Type.Object({
+            id: Type.String(),
+            capacityCost: Type.Optional(Type.Number()),
+            operationalCost: Type.Optional(Type.Number()),
+            size: Type.Optional(Type.Number()),
+            cost: Type.Optional(Type.Number())
+        })
+    )
+);
+
 const UsageCostPerStorageTypeResponse = Type.Optional(
     Type.Object({
         compute: Type.Number({ description: 'Compute cost in dollars' }),
         storage: Type.Object({
             fsxn: Type.Optional(Type.Number({ description: 'FSX for NetApp ONTAP Storage  cost in dollars' })),
             fsxw: Type.Optional(Type.Number({ description: 'FSX for Windows Storage cost in dollars' })),
-            ebs: Type.Optional(Type.Number({ description: 'EBS Storage cost in dollars' }))
+            ebs: Type.Optional(Type.Number({ description: 'EBS Storage cost in dollars' })),
+            fsxnBreakDownById: Type.Optional(FsxResourceInfoResponse)
         }),
         connectivity: Type.Number({ description: 'Connectivity cost in dollars' }),
         others: Type.Number({
@@ -252,16 +265,6 @@ const EbsResourceInfoResponse = Type.Optional(
             throughput: Type.Optional(Type.Number()), // Optional for gp2 volumes
             iops: Type.Optional(Type.Number()), // Optional for st1
             volumeType: Type.String()
-        })
-    )
-);
-const FsxResourceInfoResponse = Type.Optional(
-    Type.Array(
-        Type.Object({
-            id: Type.String(),
-            capacityCost: Type.Number(),
-            operationalCost: Type.Number(),
-            size: Type.Optional(Type.Number())
         })
     )
 );
