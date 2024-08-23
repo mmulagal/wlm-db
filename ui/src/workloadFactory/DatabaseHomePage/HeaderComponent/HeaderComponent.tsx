@@ -101,11 +101,9 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (tab === WLF_TABS.INVENTORY) {
             tabValue = WLF_TABS.INVENTORY;
         } else if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
-            tabValue = WLF_TABS.SAVINGS_CALCULATOR;
-            dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
+            tabValue = WLF_TABS.EXPLORE_SAVINGS;
         } else if (tab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-            tabValue = WLF_TABS.SAVINGS_CALCULATOR;
-            dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
+            tabValue = WLF_TABS.EXPLORE_SAVINGS;
         } else {
             tabValue = selectedHeaderTab;
         }
@@ -116,16 +114,26 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            if (!isWorkloadFactory) {
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: { pathname: './fsxdb/marketing', replace: true }
-                });
+            if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS || tab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+                if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
+                    dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                } else {
+                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
+                    dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                }
             } else {
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: { pathname: './marketing', replace: true }
-                });
+                if (!isWorkloadFactory) {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: { pathname: './fsxdb/marketing', replace: true }
+                    });
+                } else {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: { pathname: './marketing', replace: true }
+                    });
+                }
             }
         } else {
             setStatusChk(false);
@@ -538,7 +546,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <Sandbox />
                         </>
                     )}
-                    {selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS && (
+                    {(selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (
                         <>
                             <div className={styles.exploreSavingSection}>
                                 <div className={styles.contentArea}>
@@ -549,9 +559,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <ExploreSavings />
                         </>
                     )}
-                    {(selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && <SavingsCalculator />}
+                    {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
                     {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
                     {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
                 </div>
