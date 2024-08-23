@@ -119,10 +119,10 @@ const HeaderComponent = ({ tab }: Tab) => {
             if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
                 if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS) {
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
-                    dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                 } else {
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
-                    dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                 }
             } else {
                 if (!isWorkloadFactory) {
@@ -361,7 +361,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         );
     };
 
-    return statusLoading ? (
+    return statusLoading && !isDemoMode ? (
         <div className={styles.loader}>
             <ComponentLoader style={{ margin: '0 auto' }} />
         </div>
