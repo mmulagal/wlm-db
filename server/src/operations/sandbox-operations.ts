@@ -783,6 +783,7 @@ async function validateCloneParams(
                 destDetails.host,
                 destDetails.database,
                 destDetails.activeNodeInstanceId,
+                destDetails.databaseInstanceName,
                 destDetails.instanceName
             ),
             checkDatabaseExists(
@@ -792,6 +793,7 @@ async function validateCloneParams(
                 srcDetails.host,
                 srcDetails.database,
                 srcDetails.activeNodeInstanceId,
+                srcDetails.databaseInstanceName,
                 srcDetails.instanceName
             )
         ]);
@@ -1083,39 +1085,53 @@ async function invokeVirtualMount(
         if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
             await sleep(45000);
         }
-        const dataMappingfiles = mappings.data.map(vol => vol.fileName.split('\\').slice(1).join('\\'));
-        const logMappingfiles = mappings.log.map(vol => vol.fileName.split('\\').slice(1).join('\\'));
 
-        const dataFilePaths = dataMappingfiles.map(file => `${mountPoints.dataDrive}:\\${file}`);
-        const logFilePaths = logMappingfiles.map(file => `${mountPoints.logDrive}:\\${file}`);
+        let i = 1;
+        const fileLunMap: Array<{ parentFilePath: string; lun: string; folderPath: string; label: string }> = [];
+        mappings.data.forEach(vol => {
+            const { fileName, volumeName } = vol;
+
+            const clonedVol = clonedVolumes.data.find(dataVols => dataVols.volumeName.includes(volumeName));
+
+            const existingFileLunMap = fileLunMap.find(({ lun }) => lun === clonedVol?.lunSerialNumber);
+
+            fileLunMap.push({
+                parentFilePath: fileName,
+                lun: clonedVol?.lunSerialNumber as string,
+                folderPath:
+                    existingFileLunMap?.folderPath || `${mountPoints.dataDrive}:\\${destDetails.database}-Data-${i}`,
+                label: existingFileLunMap?.label || `${destDetails.database}-Data-${i}`
+            });
+
+            i += 1;
+        });
+
+        i = 1;
+        mappings.log.forEach(vol => {
+            const { fileName, volumeName } = vol;
+
+            const clonedVol = clonedVolumes.log.find(dataVols => dataVols.volumeName.includes(volumeName));
+
+            const existingFileLunMap = fileLunMap.find(({ lun }) => lun === clonedVol?.lunSerialNumber);
+
+            fileLunMap.push({
+                parentFilePath: fileName,
+                lun: clonedVol?.lunSerialNumber as string,
+                folderPath:
+                    existingFileLunMap?.folderPath || `${mountPoints.logDrive}:\\${destDetails.database}-Log-${i}`,
+                label: existingFileLunMap?.label || `${destDetails.database}-Log-${i}`
+            });
+
+            i += 1;
+        });
 
         try {
             const isDefaultSqlServerInstance: boolean = destDetails.databaseInstanceName === DEFAULT_INSTANCE_NAME;
 
-            // let command = [
-            //     `${INVOKE_VIRTUAL_MOUNT} -DBName '${destDetails.database}' -DataFilePathString '${dataFilePaths.join(
-            //         ','
-            //     )}'  -LogFilePathString '${logFilePaths.join(',')}' -DataSerialString '${clonedVolumes.data
-            //         .map(vol => vol.lunSerialNumber)
-            //         .join(',')}' -LogSerialString '${clonedVolumes.log
-            //         .map(vol => vol.lunSerialNumber)
-            //         .join(',')}' -DbInstanceName '${
-            //         destDetails.databaseInstanceName
-            //     }' -IsDefaultInstance '${isDefaultSqlServerInstance}' -LogPrefix 'Sandbox:${destDetails.database}:'`
-            // ];
-
-            const clonedDataLuns = clonedVolumes.data.map(vol => vol.lunSerialNumber);
-            const clonedLogLuns = clonedVolumes.log
-                .map(vol => vol.lunSerialNumber)
-                .filter(lun => clonedDataLuns.indexOf(lun) === -1);
-
             let command = [
                 invokeVirtualMountScript(
                     destDetails.database,
-                    JSON.stringify(dataFilePaths),
-                    JSON.stringify(logFilePaths),
-                    JSON.stringify(clonedDataLuns),
-                    JSON.stringify(clonedLogLuns),
+                    JSON.stringify(fileLunMap),
                     destDetails.databaseInstanceName!,
                     isDefaultSqlServerInstance,
                     `Sandbox:${destDetails.database}:`
@@ -1895,6 +1911,7 @@ async function validateDeleteSandboxParams(
             resourceDetails.host,
             resourceDetails.database,
             resourceDetails.activeNodeInstanceId,
+            resourceDetails.databaseInstanceName,
             resourceDetails.instanceName
         );
 
@@ -2313,7 +2330,7 @@ async function validateLifeCycleParams(
     });
 
     try {
-        const { host, database, activeNodeInstanceId, instanceName } = resourceDetails;
+        const { host, database, activeNodeInstanceId, databaseInstanceName, instanceName } = resourceDetails;
 
         const dbExists = await checkDatabaseExists(
             accountId,
@@ -2322,6 +2339,7 @@ async function validateLifeCycleParams(
             host,
             database,
             activeNodeInstanceId!,
+            databaseInstanceName,
             instanceName
         );
 
@@ -2638,6 +2656,7 @@ async function validateSplitParams(
             resourceDetails.host,
             resourceDetails.database,
             resourceDetails.activeNodeInstanceId,
+            resourceDetails.databaseInstanceName,
             resourceDetails.instanceName
         );
 
@@ -2828,6 +2847,7 @@ async function checkDatabaseIntegrity(
         databaseHostId,
         databaseName,
         srcDetails.activeNodeInstanceId,
+        srcDetails.databaseInstanceName,
         srcDetails.instanceName
     );
 
