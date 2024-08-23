@@ -1344,7 +1344,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             },
             {
                 label: 'Effective provisioned storage capacity',
-                value: `${viewCalculation.fsxwCalculation.provisionedStorageCapacity}`,
+                value: `${viewCalculation.fsxwCalculation.provisionedStorageCapacity} GiB`,
                 text: `Desired storage capacity - Storage savings =  ${viewCalculation.fsxwCalculation.desiredStorageCapacity} - ${viewCalculation.fsxwCalculation.storageSavings}`
             },
             {
@@ -1437,7 +1437,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             },
             {
                 label: 'Effective provisioned storage capacity for FSx for Windows File Server',
-                value: `${viewCalculation.fsxwSnapshotCalculation.provisionedStorageCapacityForFsxwSnapshot} GiB`,
+                value: `${viewCalculation.fsxwSnapshotCalculation.provisionedStorageCapacityForFsxwSnapshot}`,
                 text: `Desired shadow copy storage capacity - Storage saving = ${viewCalculation.fsxwSnapshotCalculation.desiredSnapshotStorageCapacity} - ${viewCalculation.fsxwSnapshotCalculation.storageSavingSnapshot}`
             },
             {
