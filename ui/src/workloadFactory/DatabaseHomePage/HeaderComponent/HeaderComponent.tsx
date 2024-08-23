@@ -360,215 +360,223 @@ const HeaderComponent = ({ tab }: Tab) => {
             </div>
         );
     };
+    const checkConditionForHeaderComponent = () => {
+        if (
+            statusChk ||
+            (!statusChk && (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW))
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    };
 
     return statusLoading && !isDemoMode ? (
         <div className={styles.loader}>
             <ComponentLoader style={{ margin: '0 auto' }} />
         </div>
     ) : (
-        statusChk ||
-            (!statusChk && (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (
-                <div className={styles.headerComponent}>
-                    <div className={styles.firstSection}>
-                        <div className={styles.firstRow}>
-                            {!isWorkloadFactory && (
-                                <>
-                                    <BlueXPDatabase />
-                                    <Typography
-                                        variant="Regular_24"
-                                        className={styles.heading}
-                                        style={{ color: 'var(--text-button-primary)' }}
-                                    >
-                                        {GENERAL.DATABASES}
-                                    </Typography>
-                                </>
-                            )}
-                            {isWorkloadFactory && (
-                                <Typography variant="Regular_24" className={styles.heading}>
+        checkConditionForHeaderComponent() && (
+            <div className={styles.headerComponent}>
+                <div className={styles.firstSection}>
+                    <div className={styles.firstRow}>
+                        {!isWorkloadFactory && (
+                            <>
+                                <BlueXPDatabase />
+                                <Typography
+                                    variant="Regular_24"
+                                    className={styles.heading}
+                                    style={{ color: 'var(--text-button-primary)' }}
+                                >
                                     {GENERAL.DATABASES}
                                 </Typography>
-                            )}
-                        </div>
-
-                        <div className={styles.secondRow}>
-                            <div className={styles.overviewTabs}>
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.DASHBOARD
-                                            ? `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart1
-                                                      : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
-                                              } ${styles.active}`
-                                            : `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart1
-                                                      : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
-                                              }`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.DASHBOARD);
-                                    }}
-                                    id="dashboard"
-                                >
-                                    {GENERAL.TAB_DASHBOARD}
-                                </Typography>
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.INVENTORY ||
-                                        selectedHeaderTab === WLF_TABS.OVERVIEW
-                                            ? `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart2
-                                                      : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
-                                              } ${styles.active}`
-                                            : `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart2
-                                                      : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
-                                              }`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.INVENTORY);
-                                    }}
-                                    id="inventory"
-                                >
-                                    {GENERAL.TAB_INVENTORY}
-                                </Typography>
-
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.SANDBOXES
-                                            ? `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart4
-                                                      : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
-                                              } ${styles.active}`
-                                            : `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart4
-                                                      : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
-                                              }`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.SANDBOXES);
-                                    }}
-                                    id="sandboxes"
-                                >
-                                    Sandboxes
-                                </Typography>
-
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
-                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                                            ? `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart5
-                                                      : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
-                                              } ${styles.active}`
-                                            : `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart5
-                                                      : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
-                                              }`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.EXPLORE_SAVINGS);
-                                    }}
-                                    id="explore-savings"
-                                >
-                                    Explore savings
-                                </Typography>
-
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.JOB_MONITORING
-                                            ? `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart3
-                                                      : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
-                                              } ${styles.active}`
-                                            : `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart3
-                                                      : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
-                                              }`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.JOB_MONITORING);
-                                    }}
-                                    id="job-monitoring"
-                                >
-                                    {GENERAL.TAB_JOB_MONITORING}
-                                </Typography>
-                            </div>
-                        </div>
+                            </>
+                        )}
+                        {isWorkloadFactory && (
+                            <Typography variant="Regular_24" className={styles.heading}>
+                                {GENERAL.DATABASES}
+                            </Typography>
+                        )}
                     </div>
-                    <div className={styles.extraSpace} />
-                    <div className={styles.selectedTabSection}>
-                        {selectedHeaderTab === WLF_TABS.DASHBOARD && (
-                            <div className={styles.dashboardSection}>
-                                <DatabaseHomePage TopBarComponent={TopBarComponent} />
-                            </div>
-                        )}
-                        {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
-                        {selectedHeaderTab === WLF_TABS.INVENTORY && isInventoryV2 && (
-                            <>
-                                <div className={styles.inventoryHeaderSection}>
-                                    <div className={styles.contentArea}>
-                                        {selectComponents()}
-                                        <div className={styles.content}>{refreshComponent()}</div>
-                                    </div>
-                                </div>
-                                <InventoryV2 />
-                            </>
-                        )}
-                        {selectedHeaderTab === WLF_TABS.JOB_MONITORING && (
-                            <>
-                                <JobMonitoring SelectComponent={selectComponents} RefreshComponent={refreshComponent} />
-                            </>
-                        )}
-                        {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && (
-                            <DatabaseHostOverviewV2 refreshTime={refreshTime} refreshPage={refreshPage} />
-                        )}
-                        {selectedHeaderTab === WLF_TABS.OVERVIEW && !isInventoryV2 && <DatabaseHostOverview />}
-                        {selectedHeaderTab === WLF_TABS.SANDBOXES && (
-                            <>
-                                <div className={styles.sandboxSection}>
-                                    <div className={styles.contentArea}>
-                                        {selectComponents()}
-                                        <div className={styles.content}>{refreshComponent()}</div>
-                                    </div>
-                                </div>
-                                <Sandbox />
-                            </>
-                        )}
-                        {(selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (
-                            <>
-                                <div className={styles.exploreSavingSection}>
-                                    <div className={styles.contentArea}>
-                                        {selectComponents()}
-                                        <div className={styles.content}>{refreshComponent()}</div>
-                                    </div>
-                                </div>
-                                <ExploreSavings />
-                            </>
-                        )}
-                        {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
-                        {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
-                        {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
+
+                    <div className={styles.secondRow}>
+                        <div className={styles.overviewTabs}>
+                            <Typography
+                                variant="Regular_14"
+                                className={
+                                    selectedHeaderTab === WLF_TABS.DASHBOARD
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart1
+                                                  : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart1
+                                                  : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
+                                          }`
+                                }
+                                onClick={() => {
+                                    handleClick(WLF_TABS.DASHBOARD);
+                                }}
+                                id="dashboard"
+                            >
+                                {GENERAL.TAB_DASHBOARD}
+                            </Typography>
+                            <Typography
+                                variant="Regular_14"
+                                className={
+                                    selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.OVERVIEW
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart2
+                                                  : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart2
+                                                  : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
+                                          }`
+                                }
+                                onClick={() => {
+                                    handleClick(WLF_TABS.INVENTORY);
+                                }}
+                                id="inventory"
+                            >
+                                {GENERAL.TAB_INVENTORY}
+                            </Typography>
+
+                            <Typography
+                                variant="Regular_14"
+                                className={
+                                    selectedHeaderTab === WLF_TABS.SANDBOXES
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart4
+                                                  : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart4
+                                                  : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
+                                          }`
+                                }
+                                onClick={() => {
+                                    handleClick(WLF_TABS.SANDBOXES);
+                                }}
+                                id="sandboxes"
+                            >
+                                Sandboxes
+                            </Typography>
+
+                            <Typography
+                                variant="Regular_14"
+                                className={
+                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                                    selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                    selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart5
+                                                  : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart5
+                                                  : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                          }`
+                                }
+                                onClick={() => {
+                                    handleClick(WLF_TABS.EXPLORE_SAVINGS);
+                                }}
+                                id="explore-savings"
+                            >
+                                Explore savings
+                            </Typography>
+
+                            <Typography
+                                variant="Regular_14"
+                                className={
+                                    selectedHeaderTab === WLF_TABS.JOB_MONITORING
+                                        ? `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart3
+                                                  : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
+                                          } ${styles.active}`
+                                        : `${
+                                              isWorkloadFactory
+                                                  ? styles.headerPart3
+                                                  : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
+                                          }`
+                                }
+                                onClick={() => {
+                                    handleClick(WLF_TABS.JOB_MONITORING);
+                                }}
+                                id="job-monitoring"
+                            >
+                                {GENERAL.TAB_JOB_MONITORING}
+                            </Typography>
+                        </div>
                     </div>
                 </div>
-            ))
+                <div className={styles.extraSpace} />
+                <div className={styles.selectedTabSection}>
+                    {selectedHeaderTab === WLF_TABS.DASHBOARD && (
+                        <div className={styles.dashboardSection}>
+                            <DatabaseHomePage TopBarComponent={TopBarComponent} />
+                        </div>
+                    )}
+                    {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
+                    {selectedHeaderTab === WLF_TABS.INVENTORY && isInventoryV2 && (
+                        <>
+                            <div className={styles.inventoryHeaderSection}>
+                                <div className={styles.contentArea}>
+                                    {selectComponents()}
+                                    <div className={styles.content}>{refreshComponent()}</div>
+                                </div>
+                            </div>
+                            <InventoryV2 />
+                        </>
+                    )}
+                    {selectedHeaderTab === WLF_TABS.JOB_MONITORING && (
+                        <>
+                            <JobMonitoring SelectComponent={selectComponents} RefreshComponent={refreshComponent} />
+                        </>
+                    )}
+                    {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && (
+                        <DatabaseHostOverviewV2 refreshTime={refreshTime} refreshPage={refreshPage} />
+                    )}
+                    {selectedHeaderTab === WLF_TABS.OVERVIEW && !isInventoryV2 && <DatabaseHostOverview />}
+                    {selectedHeaderTab === WLF_TABS.SANDBOXES && (
+                        <>
+                            <div className={styles.sandboxSection}>
+                                <div className={styles.contentArea}>
+                                    {selectComponents()}
+                                    <div className={styles.content}>{refreshComponent()}</div>
+                                </div>
+                            </div>
+                            <Sandbox />
+                        </>
+                    )}
+                    {(selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (
+                        <>
+                            <div className={styles.exploreSavingSection}>
+                                <div className={styles.contentArea}>
+                                    {selectComponents()}
+                                    <div className={styles.content}>{refreshComponent()}</div>
+                                </div>
+                            </div>
+                            <ExploreSavings />
+                        </>
+                    )}
+                    {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
+                    {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
+                    {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
+                </div>
+            </div>
+        )
     );
 };
 
