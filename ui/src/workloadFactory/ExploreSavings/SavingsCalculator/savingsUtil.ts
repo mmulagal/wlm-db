@@ -324,6 +324,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
         storageType = GENERAL.EBS;
     } else {
         storageType = GENERAL.FSX_FOR_WINDOWS;
+        selectedDeploymentModel = selectedManualDeploymentModel?.value;
     }
     return {
         Ec2InstanceCalculation:
