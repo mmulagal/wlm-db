@@ -43,7 +43,7 @@ describe('Cost explorer Operations', () => {
                     {
                         cost: 118.7759587606,
                         id: 'fs-0d5efc3057c4f12cb',
-                        size: 1024
+                        size: 0
                     }
                 ]
             },
