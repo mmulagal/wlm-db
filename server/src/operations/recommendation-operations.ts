@@ -947,9 +947,9 @@ async function getSqlInstanceLicenseRecommendations(
                         sqlServerEdition,
                         sqlServerVersion,
                         price:
-                            existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
-                                ? existingInstanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense
-                                : undefined,
+                            recommendedInstanceHourlyPrice && recommendedInstanceHourlyPriceWithoutLicense
+                                ? recommendedInstanceHourlyPrice - recommendedInstanceHourlyPriceWithoutLicense
+                                : undefined, // recommendedInstanceHourlyPrice is considering the recommendedSqlLicenseType which in this case is what was existing previously, ( existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit )
                         message
                     };
                 }
