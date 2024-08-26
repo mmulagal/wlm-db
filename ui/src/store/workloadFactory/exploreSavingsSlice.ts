@@ -364,6 +364,11 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualRegion = null;
             state.selectedManualDeploymentModel = null;
             state.selectedManualServerEdition = null;
+            state.getManualInstanceTypeList = {
+                instanceTypeData: {},
+                instanceTypeLoading: false,
+                instanceTypeError: null
+            };
             state.selectedManualInstanceType = null;
             state.selectedSecondaryManualInstanceType = null;
             state.monthlyBYOLCost = '';
