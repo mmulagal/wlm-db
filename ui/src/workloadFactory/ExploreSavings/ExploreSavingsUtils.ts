@@ -38,7 +38,7 @@ export const handleManualTCOEBS = (dispatch: any, navigate: any) => {
 
 export const handleManualTCOFSXW = (dispatch: any, navigate: any) => {
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
-    dispatch(setDisableState(false));
+    dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
