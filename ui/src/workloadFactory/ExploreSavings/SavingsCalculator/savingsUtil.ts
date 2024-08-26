@@ -321,16 +321,19 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
     let storageType = '';
-    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
-        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    let deploymentModelValue = selectedDeploymentModel;
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+        storageType = GENERAL.FSX_FOR_WINDOWS;
+        deploymentModelValue = selectedManualDeploymentModel?.value;
+    } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+        deploymentModelValue = selectedManualDeploymentModel?.value;
         storageType = GENERAL.EBS;
     } else {
-        storageType = GENERAL.FSX_FOR_WINDOWS;
-        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+        storageType = GENERAL.EBS;
     }
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -767,12 +770,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
 export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentModel: string) => {
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
-    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
-        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    let deploymentModelValue = selectedDeploymentModel;
+    if (savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO) {
+        deploymentModelValue = selectedManualDeploymentModel?.value;
     }
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -1212,12 +1216,15 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
 export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentModel: string) => {
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
+    let deploymentModelValue = selectedDeploymentModel;
 
-    selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    if (savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO) {
+        deploymentModelValue = selectedManualDeploymentModel?.value;
+    }
 
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
