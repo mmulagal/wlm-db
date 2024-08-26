@@ -604,10 +604,7 @@ async function invokeSSMForDatabaseDeployment(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
         }
         if (instanceDetail && instancesDetails) {
-            const {
-                database_instance_name: selectedInstanceName,
-                is_default: isDefault
-            } = instanceDetail;
+            const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
             isDefaultInstance = isDefault ? 'true' : 'false';
             instanceNameForScript = selectedInstanceName;
 
@@ -1751,7 +1748,12 @@ async function getDefaultCollationAndVersion(
 ) {
     logger.info('Getting MSSQL default collation', { credentialsId, region, activeNodeInstanceId });
     const { name: instanceName, executableName, sqlAuthEnabled } = sqlInstance;
-    const defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, executableName, sqlAuthEnabled)];
+
+    let defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, executableName, sqlAuthEnabled)];
+
+    if (isDemoFlow) {
+        defaultCollationCommand = [GET_DEFAULT_COLLATION('MSSQLSERVER', '$env:computername', false)];
+    }
 
     const defaultCollationResponse = await callSsmExecution(
         credentialsId,

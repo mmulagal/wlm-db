@@ -310,7 +310,7 @@ const resourceUtilization = {
 };
 
 const getCollationDetails = {
-    commands: [GET_DEFAULT_COLLATION('$env:computername')]
+    commands: [GET_DEFAULT_COLLATION('MSSQLSERVER', '$env:computername', false)]
 };
 
 const getOntapSandboxVolumeSavingsParams = {
