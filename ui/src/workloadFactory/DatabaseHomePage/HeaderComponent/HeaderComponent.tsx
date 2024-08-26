@@ -147,7 +147,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         credentialData?.map((val: any, idx: number) => {
-            const credValue = `${GENERAL.HEADER_CREDENTIAL} | ${val.name}`;
+            const credValue = `${val.name} | ${GENERAL.HEADER_ACCOUNT_ID}: ${val.providerAccountId}`;
             const label2 = `${GENERAL.HEADER_ACCOUNT_ID}: ${val.providerAccountId}`;
             const option = generateOptionType(credValue, credValue, label2, false, '', val);
             options.push(option);
@@ -173,7 +173,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         const options: optionType[] = [];
         const sortedRegionsData = regionsSort(regionsData?.regions || []);
         sortedRegionsData?.map((val: any, idx: number) => {
-            const regionValue = val.regionName;
+            const regionValue = `${val.regionName} | ${val.regionCode}`;
             const label2 = val.regionCode;
             const option = generateOptionType(regionValue, regionValue, label2, false, '', val);
             options.push(option);
@@ -287,7 +287,6 @@ const HeaderComponent = ({ tab }: Tab) => {
                         placeholder="Select a Credential"
                         isSearchable={generateAWSAccounts.length > 5}
                         options={generateAWSAccounts}
-                        variant="two-lines"
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
@@ -312,7 +311,6 @@ const HeaderComponent = ({ tab }: Tab) => {
                         placeholder="Select a Region"
                         isSearchable={generateRegionsData.length > 5}
                         options={generateRegionsData}
-                        variant="two-lines"
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
