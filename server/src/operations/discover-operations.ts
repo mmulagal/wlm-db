@@ -1935,13 +1935,6 @@ async function manageSqlServerV2(
                         );
                     }
 
-                    // Temporary check until manage of sql auth is supported
-                    if (windowsAuthentication === false) {
-                        throw Error(
-                            'Managing SQL Server instance is not possible. Check if the SQL Server service is running or windows authentication is enabled'
-                        );
-                    }
-
                     if (isEmpty(storageInfo)) {
                         throw Error('SQL Server instance is not hosted on storage of type FSx for NetApp.');
                     }
