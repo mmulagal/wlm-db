@@ -1153,7 +1153,7 @@ const validateSQLInstanceCredentials = `
     $credential = $null
     $sqlCredential = @{}
     if(-Not [string]::IsNullOrEmpty($sqlCredentials)) {
-        $credential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq $serverInstanceName})[0] 
+        $credential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq $instance})[0] 
         if (-Not [string]::IsNullOrEmpty($credential) -And -Not [string]::IsNullOrEmpty($credential.username) -And -Not [string]::IsNullOrEmpty($credential.password)) {
             $sqlCredential.add('useSqlAuth', $True)
             $sqlCredential.add('username', $credential.username)
