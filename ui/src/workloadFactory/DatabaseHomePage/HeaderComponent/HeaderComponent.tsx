@@ -554,7 +554,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         </div>
                     </div>
 
-                    {!isWorkloadFactory && (
+                    {true && (
                         <div className={styles.thirdRow}>
                             <Menu />
                             <div className={styles.menuPopOverHide}>
@@ -585,25 +585,24 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                                                     break;
                                                 case 'apiHub':
-                                                    postBlueXPMessage({
-                                                        type: BlueXPListeners.navigate,
-                                                        payload: {
-                                                            pathname: '%VITE_WORKLOAD_IFRAME_URL%/api-doc',
-                                                            replace: true
-                                                        }
-                                                    });
+                                                    //@ts-ignore
+                                                    window
+                                                        .open(
+                                                            'https://staging.console.workloads.netapp.com/api-doc',
+                                                            '_blank'
+                                                        )
+                                                        .focus();
+                                                    break;
 
                                                     break;
                                                 case 'monitoringGitHubRepository':
-                                                    postBlueXPMessage({
-                                                        type: BlueXPListeners.navigate,
-                                                        payload: {
-                                                            pathname:
-                                                                'https://github.com/NetApp/FSx-ONTAP-samples-scripts/tree/main/Monitoring',
-                                                            replace: true
-                                                        }
-                                                    });
-
+                                                    //@ts-ignore
+                                                    window
+                                                        .open(
+                                                            'https://github.com/NetApp/FSx-ONTAP-samples-scripts/tree/main/Monitoring',
+                                                            '_blank'
+                                                        )
+                                                        .focus();
                                                     break;
                                                 case 'subscribeToRss':
                                                     postBlueXPMessage({
