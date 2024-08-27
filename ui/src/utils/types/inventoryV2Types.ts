@@ -41,6 +41,7 @@ export interface InventoryTableData {
     totalInstance?: number;
     managedInstance?: number;
     serverInstallationMode?: string;
+    serverAllInstallationMode?: Array<string>;
     vpcId?: string;
     vpcName?: string;
     vpcCidr?: string;

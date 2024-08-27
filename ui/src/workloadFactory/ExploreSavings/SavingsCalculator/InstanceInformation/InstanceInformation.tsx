@@ -59,7 +59,9 @@ const InstanceInformation = () => {
                 },
                 {
                     details: 'Deployment model',
-                    value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+                    value: selectedHostDetails?.serverAllInstallationMode
+                        ? selectedHostDetails?.serverAllInstallationMode.join(', ')
+                        : selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
                     id: '3',
                     findings: findingsDbModel
                 }
