@@ -6,6 +6,7 @@ import { getSubjectFromBearerToken, hideSecretsValues } from '../../utils/utils'
 import {
     AUDIT_GROUP,
     HTTP_DELETE,
+    HTTP_PATCH,
     HTTP_POST,
     HTTP_PUT,
     REQUEST_ID,
@@ -80,7 +81,7 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
         body
     } = request;
 
-    if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(method as string)) {
+    if ([HTTP_POST, HTTP_PUT, HTTP_PATCH, HTTP_DELETE].includes(method as string)) {
         const auditHeaders = extractAuditHeaders(headers as RequestHeaders);
 
         const actionParameters = {
@@ -123,7 +124,7 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
 
 async function updateAuditGroupResponse(request: FastifyRequest, payload?: any) {
     logger.debug('Updating audit group response');
-    if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(request.raw.method as string)) {
+    if ([HTTP_POST, HTTP_PUT, HTTP_PATCH, HTTP_DELETE].includes(request.raw.method as string)) {
         const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
         try {
             auditGroup.responseData = payload;
@@ -135,10 +136,11 @@ async function updateAuditGroupResponse(request: FastifyRequest, payload?: any) 
         }
     }
 }
+
 async function updateAuditGroup(request: FastifyRequest, reply: FastifyReply, payload?: any) {
     logger.debug('Updating audit group');
 
-    if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(request.raw.method as string)) {
+    if ([HTTP_POST, HTTP_PUT, HTTP_PATCH, HTTP_DELETE].includes(request.raw.method as string)) {
         const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
 
         try {
@@ -177,7 +179,7 @@ async function createAuditRecord(
 ) {
     logger.debug('Sending audit record');
 
-    if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(requestType)) {
+    if ([HTTP_POST, HTTP_PUT, HTTP_PATCH, HTTP_DELETE].includes(requestType)) {
         const clonedData = cloneDeep(actionParameters);
         const secureActionParameters = JSON.stringify(hideSecretsValues(clonedData));
 
@@ -200,4 +202,32 @@ async function createAuditRecord(
     }
 }
 
-export { createAuditGroup, updateAuditGroupResponse, updateAuditGroup, createAuditRecord };
+async function updateLongRunningAuditGroup(
+    status?: AUDIT_STATUS,
+    message?: string,
+    resourceId?: string,
+    responseData = undefined
+) {
+    logger.info('Updating long running audit group:', {
+        status,
+        message,
+        resourceId,
+        responseData
+    });
+
+    const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
+
+    if (auditGroup) {
+        auditGroup.status = status || auditGroup.status;
+        auditGroup.resourceId = resourceId || auditGroup.resourceId;
+        auditGroup.responseData = responseData ? JSON.stringify(responseData) : auditGroup.responseData;
+
+        if (status === AUDIT_FAILED_STATUS && message) {
+            auditGroup.errors = [message];
+        }
+
+        sendAudit({ json: { auditGroup } });
+    }
+}
+
+export { createAuditGroup, updateAuditGroupResponse, updateAuditGroup, createAuditRecord, updateLongRunningAuditGroup };

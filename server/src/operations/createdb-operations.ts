@@ -27,7 +27,8 @@ import {
     RESOURCESTYPE,
     SQL_SERVICE_STATE,
     SSM_COMMAND_CACHE_TYPE,
-    DEFAULT_MSSQL_INSTANCE_NAME
+    DEFAULT_MSSQL_INSTANCE_NAME,
+    AuditStatus
 } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
@@ -47,6 +48,7 @@ import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT }
 import { updateResourceMetaData } from '../lib/database/db';
 import { cleanupResources } from './workloads/mssql/createdb-scripts';
 import { checkScriptNeedsUpdate, copyScriptsToHost } from './resource-operations';
+import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 const logger = getLogger();
 
@@ -420,99 +422,106 @@ async function deployDatabase(
         databaseInstanceId
     });
 
-    const {
-        items: [resourceDetail]
-    } = await getResources(accountId, databaseHostId);
+    try {
+        const {
+            items: [resourceDetail]
+        } = await getResources(accountId, databaseHostId);
 
-    let {
-        resource_id: resourceId,
-        co_relation_id: fileSystemId,
-        metadata,
-        resource_name: sqlServerName
-    } = resourceDetail;
-    const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
+        let {
+            resource_id: resourceId,
+            co_relation_id: fileSystemId,
+            metadata,
+            resource_name: sqlServerName
+        } = resourceDetail;
+        const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
 
-    if (!credentialsId || !region || !node1InstanceId) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource  information');
-    }
-    let instanceDetail;
-    let isClustered;
-    let fsxSvmId;
-    let databaseDeploymentType;
-    let fsxSvmDetails;
-    let instanceName;
-
-    if (databaseInstanceId) {
-        instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-        ({
-            fsxn_ids: fileSystemId,
-            fsx_svm_id: fsxSvmDetails,
-            database_deployment_type: databaseDeploymentType,
-            database_instance_name: instanceName
-        } = instanceDetail as unknown as DatabaseInstance);
-
-        isClustered = databaseDeploymentType === 'FCI' ? 'true' : 'false';
-        fsxSvmId = (fsxSvmDetails as unknown as Record<string, string>)[fileSystemId as string];
-    } else {
-        isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
-        ({ fsxSvmId } = metadata as unknown as Metadata);
-    }
-
-    // check whether any jobs on the same resource running
-    const filterParams = {
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
-        typeFilter: JOBTYPE.CREATE_RESOURCE
-    };
-    const {
-        items: [job]
-    } = await getJobs(accountId, credentialsId, region, filterParams);
-
-    if (job) {
-        // Calculate the time difference in minutes
-        const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
-        const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
-        // workaround to allow the user to create database when there is a job stuck in progress for a very long time
-        if (timeDifferenceInMinutes <= 15) {
-            throw createError(
-                412,
-                `A database creation operation for ${sqlServerName} is already in progress with job ID ${job.id}`
-            );
+        if (!credentialsId || !region || !node1InstanceId) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource  information');
         }
+        let instanceDetail;
+        let isClustered;
+        let fsxSvmId;
+        let databaseDeploymentType;
+        let fsxSvmDetails;
+        let instanceName;
+
+        if (databaseInstanceId) {
+            instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+            ({
+                fsxn_ids: fileSystemId,
+                fsx_svm_id: fsxSvmDetails,
+                database_deployment_type: databaseDeploymentType,
+                database_instance_name: instanceName
+            } = instanceDetail as unknown as DatabaseInstance);
+
+            isClustered = databaseDeploymentType === 'FCI' ? 'true' : 'false';
+            fsxSvmId = (fsxSvmDetails as unknown as Record<string, string>)[fileSystemId as string];
+        } else {
+            isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
+            ({ fsxSvmId } = metadata as unknown as Metadata);
+        }
+
+        // check whether any jobs on the same resource running
+        const filterParams = {
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: sqlServerName as string,
+            typeFilter: JOBTYPE.CREATE_RESOURCE
+        };
+        const {
+            items: [job]
+        } = await getJobs(accountId, credentialsId, region, filterParams);
+
+        if (job) {
+            // Calculate the time difference in minutes
+            const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
+            const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
+            // workaround to allow the user to create database when there is a job stuck in progress for a very long time
+            if (timeDifferenceInMinutes <= 15) {
+                throw createError(
+                    412,
+                    `A database creation operation for ${sqlServerName} is already in progress with job ID ${job.id}`
+                );
+            }
+        }
+
+        const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
+
+        // create the parent job for database deployment
+        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+            type: JOBTYPE.CREATE_RESOURCE,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: serverNameWithHostName,
+            name: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`,
+            startTime: Date.now(),
+            description: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`
+        });
+
+        invokeSSMForDatabaseDeployment(
+            credentialsId,
+            region,
+            databaseName,
+            dataFileConfig,
+            logFileConfig,
+            collation,
+            fileSystemId,
+            isClustered,
+            sqlServerName,
+            node1InstanceId,
+            fsxSvmId,
+            jobId,
+            resourceId,
+            serverNameWithHostName,
+            node2InstanceId,
+            metadata as Metadata,
+            instanceDetail as unknown as DatabaseInstance
+        );
+        return { jobId };
+    } catch (err: any) {
+        const errorMsg = `Error while creating user database ${databaseName} in host ${databaseHostId} in account ${accountId}. ${err?.message}`;
+        logger.error(errorMsg, err);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
-
-    const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
-
-    // create the parent job for database deployment
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        type: JOBTYPE.CREATE_RESOURCE,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName,
-        name: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`,
-        startTime: Date.now(),
-        description: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`
-    });
-
-    invokeSSMForDatabaseDeployment(
-        credentialsId,
-        region,
-        databaseName,
-        dataFileConfig,
-        logFileConfig,
-        collation,
-        fileSystemId,
-        isClustered,
-        sqlServerName,
-        node1InstanceId,
-        fsxSvmId,
-        jobId,
-        resourceId,
-        serverNameWithHostName,
-        node2InstanceId,
-        metadata as Metadata,
-        instanceDetail as unknown as DatabaseInstance
-    );
-    return { jobId };
 }
 
 async function invokeSSMForDatabaseDeployment(
@@ -694,7 +703,7 @@ async function invokeSSMForDatabaseDeployment(
                 endTime: Date.now(),
                 error: undefined
             });
-
+            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             if (isDemoFlow) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(
@@ -820,7 +829,7 @@ async function invokeSSMForDatabaseDeployment(
                 endTime: Date.now(),
                 error: undefined
             });
-
+            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             await updateCreateDbMetrics(accountId, credentialsId, resourceId, metaData as Metadata);
 
             if (isDemoFlow) {
@@ -880,7 +889,7 @@ async function invokeSSMForDatabaseDeployment(
                 `${dataDrivePath},${logDrivePath}`
             );
         }
-
+        updateLongRunningAuditGroup(AuditStatus.FAILED, err?.message);
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),

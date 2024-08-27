@@ -131,7 +131,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     collation,
                     databaseInstanceId
                 );
-                return reply.send(response);
+                return reply.code(202).send(response);
             }
         )
         .get(
@@ -242,7 +242,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 tag,
                 mountPoints
             );
-            return reply.send(response);
+            return reply.code(202).send(response);
         })
         .get(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/connection-string`,
@@ -295,7 +295,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseInstanceId,
                     sandboxName
                 );
-                return reply.send(response);
+                return reply.code(202).send(response);
             }
         )
         .patch(
@@ -316,7 +316,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     action,
                     snapshot
                 );
-                return reply.send(response);
+                return reply.code(202).send(response);
             }
         )
         .post(
