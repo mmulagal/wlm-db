@@ -2,7 +2,7 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
-import { attempt, trimEnd, trimStart, camelCase } from 'lodash-es';
+import { attempt, trimEnd, trimStart, camelCase, isEmpty } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Tag } from '@aws-sdk/client-ec2';
@@ -613,8 +613,10 @@ function getOriginalDatabaseInstanceName(instanceName: string | undefined): stri
 }
 
 async function decompressSSMResponse(response: string) {
+    logger.debug('Decompressing SSM response', { response });
+
     response = response.replaceAll('\r\n', '');
-    if (!isBase64(response)) {
+    if (isEmpty(response) || !isBase64(response)) {
         return response;
     }
 
