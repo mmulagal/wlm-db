@@ -492,6 +492,7 @@ interface HostAndDbInfo extends DbInfo {
     databaseInstanceName?: string;
     instanceMetadata?: databaseInstanceMetadata;
     activeNodeDetails?: ActiveSqlNodeDetails;
+    databaseInstanceId?: string;
     sqlAuthEnabled?: boolean;
 }
 
@@ -783,7 +784,10 @@ async function validateCloneParams(
                 destDetails.host,
                 destDetails.database,
                 destDetails.activeNodeInstanceId,
-                destDetails.instanceName
+                destDetails.databaseInstanceName,
+                destDetails.instanceName,
+                destDetails.databaseInstanceId,
+                destDetails.sqlAuthEnabled
             ),
             checkDatabaseExists(
                 accountId,
@@ -792,7 +796,10 @@ async function validateCloneParams(
                 srcDetails.host,
                 srcDetails.database,
                 srcDetails.activeNodeInstanceId,
-                srcDetails.instanceName
+                srcDetails.databaseInstanceName,
+                srcDetails.instanceName,
+                srcDetails.databaseInstanceId,
+                srcDetails.sqlAuthEnabled
             )
         ]);
 
@@ -1895,7 +1902,10 @@ async function validateDeleteSandboxParams(
             resourceDetails.host,
             resourceDetails.database,
             resourceDetails.activeNodeInstanceId,
-            resourceDetails.instanceName
+            resourceDetails.databaseInstanceName,
+            resourceDetails.instanceName,
+            resourceDetails.databaseInstanceId,
+            resourceDetails.sqlAuthEnabled
         );
 
         if (!dbExists && !isDemoFlow) {
@@ -2310,7 +2320,15 @@ async function validateLifeCycleParams(
     });
 
     try {
-        const { host, database, activeNodeInstanceId, instanceName } = resourceDetails;
+        const {
+            host,
+            database,
+            activeNodeInstanceId,
+            databaseInstanceName,
+            databaseInstanceId,
+            sqlAuthEnabled,
+            instanceName
+        } = resourceDetails;
 
         const dbExists = await checkDatabaseExists(
             accountId,
@@ -2319,7 +2337,10 @@ async function validateLifeCycleParams(
             host,
             database,
             activeNodeInstanceId!,
-            instanceName
+            databaseInstanceName,
+            instanceName,
+            databaseInstanceId,
+            sqlAuthEnabled
         );
 
         if (!dbExists && !isDemoFlow) {
@@ -2628,14 +2649,27 @@ async function validateSplitParams(
     });
 
     try {
+        const {
+            host,
+            database,
+            instanceName,
+            activeNodeInstanceId,
+            databaseInstanceId,
+            databaseInstanceName,
+            sqlAuthEnabled
+        } = resourceDetails;
+
         const dbExists = await checkDatabaseExists(
             accountId,
             credentialsId,
             region,
-            resourceDetails.host,
-            resourceDetails.database,
-            resourceDetails.activeNodeInstanceId,
-            resourceDetails.instanceName
+            host,
+            database,
+            activeNodeInstanceId,
+            databaseInstanceName,
+            instanceName,
+            databaseInstanceId,
+            sqlAuthEnabled
         );
 
         if (!dbExists && !isDemoFlow) {
@@ -2825,7 +2859,10 @@ async function checkDatabaseIntegrity(
         databaseHostId,
         databaseName,
         srcDetails.activeNodeInstanceId,
-        srcDetails.instanceName
+        srcDetails.databaseInstanceName,
+        srcDetails.instanceName,
+        srcDetails.databaseInstanceId,
+        srcDetails.sqlAuthEnabled
     );
 
     if (!databaseDetails) {
@@ -2936,7 +2973,15 @@ async function getSandboxSnapshots(
     const { fsxId, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } = srcDetails;
 
     let mappingsCommand = [
-        getDbMappedOntapVolumes(fsxId, region, sandboxName, databaseInstanceName, instanceName, sqlAuthEnabled)
+        getDbMappedOntapVolumes(
+            fsxId,
+            region,
+            sandboxName,
+            databaseInstanceName,
+            instanceName,
+            `Sandbox:${sandboxName}:`,
+            sqlAuthEnabled
+        )
     ];
 
     if (isDemoFlow) {
@@ -3118,24 +3163,25 @@ async function runSandboxPreValidations(
         );
     }
 
-    const srcInstanceName = srcStatus.instancesDetails?.find(
+    const srcInstance = srcStatus.instancesDetails?.find(
         instance =>
             instance.instanceName === srcInstanceDetail.database_instance_name &&
             instance.instanceState === SQL_SERVICE_STATE.RUNNING
     );
 
-    const destInstanceName = destStatus.instancesDetails?.find(
+    const destInstance = destStatus.instancesDetails?.find(
         instance =>
             instance.instanceName === destInstanceDetail.database_instance_name &&
             instance.instanceState === SQL_SERVICE_STATE.RUNNING
     );
 
-    if (!srcInstanceName || !destInstanceName) {
+    if (!srcInstance || !destInstance) {
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             'Source or destination instance is not running, please check the instance status'
         );
     }
+
     const { metadata: srcInstanceMetadata } = srcInstanceDetail as { metadata: databaseInstanceMetadata };
     const { metadata: destInstanceMetadata } = destInstanceDetail as { metadata: databaseInstanceMetadata };
 
@@ -3153,7 +3199,8 @@ async function runSandboxPreValidations(
                 srcInstanceDetail.is_default
             ),
             instanceMetadata: srcInstanceMetadata,
-            sqlAuthEnabled: srcInstanceName.sqlAuthEnabled
+            databaseInstanceId: srcInstanceDetail.database_instance_id,
+            sqlAuthEnabled: Boolean(srcInstance.sqlAuthEnabled)
         },
         destDetails: {
             ...dest,
@@ -3170,7 +3217,8 @@ async function runSandboxPreValidations(
             ),
             instanceMetadata: destInstanceMetadata,
             activeNodeDetails: destStatus,
-            sqlAuthEnabled: destInstanceName.sqlAuthEnabled
+            databaseInstanceId: destInstanceDetail.database_instance_id,
+            sqlAuthEnabled: Boolean(destInstance.sqlAuthEnabled)
         }
     };
 }
