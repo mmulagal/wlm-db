@@ -18,7 +18,7 @@ import {
     putParameter,
     getParameter
 } from '../../lib/aws/ssm';
-import { generateHash, sleep } from '../../utils/utils';
+import { decompressSSMResponse, generateHash, sleep } from '../../utils/utils';
 import { AWS_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
@@ -153,7 +153,7 @@ async function callSsmExecution(
             throw createError(errorMessage);
         }
 
-        const output = response?.StandardOutputContent;
+        const output = await decompressSSMResponse(response?.StandardOutputContent || '');
         if (cacheData) {
             logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
             writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');

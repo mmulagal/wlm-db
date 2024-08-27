@@ -4,6 +4,29 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../uti
 
 import { SCRIPT_VERSON_FILE } from './const';
 
+const compressResponse = `
+    Function Deflate-String {
+        param (
+            [Parameter(Mandatory = $true)]
+            [string]$stringToCompress
+        )
+
+        $encoder = New-Object System.Text.UTF8Encoding
+        $memoryStream = New-Object System.IO.MemoryStream
+        $deflateStream = New-Object System.IO.Compression.DeflateStream($memoryStream, [System.IO.Compression.CompressionMode]::Compress)
+
+        $buffer = $encoder.GetBytes($stringToCompress)
+        $deflateStream.Write($buffer, 0, $buffer.Length)
+        $memoryStream.Position = 0
+        $deflateStream.Dispose()
+
+        $bytes = $memoryStream.ToArray()
+        $encodedString = [Convert]::ToBase64String($bytes)
+
+        return $encodedString
+    }
+`;
+
 const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string) => ` 
 Function GetSMBMappedDrivesWithPath() {
     $DriveLetterPath = @{}
@@ -270,7 +293,10 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
                 $responseObject[$instance] = $_.Exception.Message
             }
         }
-        $responseObject | ConvertTo-Json -Depth 5
+        $response = $responseObject | ConvertTo-Json -Depth 5
+
+        ${compressResponse}
+        return (Deflate-String $response)
     } catch {
         Write-Information $_.Exception.Message
         $responseObject.add('error', $_.Exception.Message)
@@ -901,7 +927,10 @@ const getMappedOntapVolumesScript = (
             $responseObject.add('volumeDBMap', $volumeDBMap)
             $instanceRespones[$serverInstanceName] = $responseObject
         }
-        return $instanceRespones | ConvertTo-Json -Depth 5
+        $response = $instanceRespones | ConvertTo-Json -Depth 5
+
+        ${compressResponse}
+        return (Deflate-String $response)
     } catch {
         Write-Error $_.Exception.Message
     }
@@ -974,8 +1003,10 @@ const restGetUtilForOntap = (
             error = $_.Exception.Message
         }
     }
-    $responseObject | ConvertTo-Json -Depth 5
-    
+    $response = $responseObject | ConvertTo-Json -Depth 5
+
+    ${compressResponse}
+    return (Deflate-String $response)
 `;
 // prettier-ignore
 const INSTANCE_DETAILS = 'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*)"} | Select-Object @{Name=\'instanceName\'; Expression={$_.Name}}, @{Name=\'instanceState\'; Expression={$_.State}} | ConvertTo-Json';
@@ -1091,8 +1122,8 @@ const sqlQueryExecution = (
     }
     $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstanceName}"
 
-    $queryResponse 
-
+    ${compressResponse}
+    return (Deflate-String $queryResponse) 
 `;
 
 const slqcmdExecutionTemplate = `
@@ -1217,7 +1248,10 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
                 $responseObject[$instance] = $_.Exception.Message
             }
         }
-        $responseObject | ConvertTo-Json -Depth 5
+        $response = $responseObject | ConvertTo-Json -Depth 5
+
+        ${compressResponse}
+        return (Deflate-String $response)
     } catch {
         Write-Information $_.Exception.Message
         $responseObject.add('error', $_.Exception.Message)
@@ -1242,5 +1276,6 @@ export {
     readSsmParameter,
     slqcmdExecutionTemplate,
     READ_SCRIPT_VERSION,
-    sqlQueryExecutionWithAuth
+    sqlQueryExecutionWithAuth,
+    compressResponse
 };
