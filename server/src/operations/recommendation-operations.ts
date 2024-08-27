@@ -407,7 +407,11 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
 
     const { sqlServerDeploymentType, sqlServerEdition, monthlySqlByolCost, ec2Instances } = params;
 
-    const instanceTypes = ec2Instances.map((instance: { ec2InstanceType: any }) => instance.ec2InstanceType);
+    let instanceTypes = ec2Instances.map((instance: { ec2InstanceType: any }) => instance.ec2InstanceType);
+
+    if (sqlServerDeploymentType === 'FCI') {
+        instanceTypes = [...instanceTypes, ...instanceTypes];
+    }
 
     const existingInstanceTypesPricingDetails = await deriveInstanceCountPricingDetails(instanceTypes, region);
 

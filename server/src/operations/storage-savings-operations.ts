@@ -701,11 +701,13 @@ async function performManualModeStorageSavingsCalculations(
         fsx,
         fsxw,
         ...(fsxCalculationData && {
-            fsxCalculation: fsxCalculationData,
-            fsxBreakdown: fsxStorageCapacityBreakdown(
-                fsxCalculationData.totalStorageCapacity,
-                params.sqlServerDeploymentType!
-            )
+            [params.sqlServerDeploymentType === 'FCI' ? 'multi' : 'single']: {
+                fsxCalculation: fsxCalculationData,
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    fsxCalculationData.totalStorageCapacity,
+                    params.sqlServerDeploymentType!
+                )
+            }
         }),
         totalSummary: {
             existing:
