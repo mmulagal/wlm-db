@@ -609,9 +609,7 @@ function isDemo() {
 }
 
 function getOriginalDatabaseInstanceName(instanceName: string | undefined): string {
-    return !instanceName || instanceName === DEFAULT_INSTANCE_NAME || instanceName === DEFAULT_MSSQL_INSTANCE_NAME
-        ? DEFAULT_INSTANCE_NAME
-        : instanceName?.split('\\')?.[1];
+    return instanceName?.split('\\')?.[1] || DEFAULT_INSTANCE_NAME;
 }
 
 async function decompressSSMResponse(response: string) {
