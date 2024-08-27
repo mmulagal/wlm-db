@@ -2865,7 +2865,7 @@ async function checkDatabaseIntegrity(
         srcDetails.sqlAuthEnabled
     );
 
-    if (!databaseDetails) {
+    if (!databaseDetails && !isDemoFlow) {
         throw createError(
             HttpErrorCodes.NOT_FOUND,
             `Database ${databaseName} does not exists on source host ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`
