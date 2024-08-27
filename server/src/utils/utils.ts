@@ -8,6 +8,9 @@ import crypto from 'crypto';
 import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import numeral from 'numeral';
+import isBase64 from 'is-base64';
+import { inflateRaw } from 'node:zlib';
+import { promisify } from 'util';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -611,6 +614,24 @@ function getOriginalDatabaseInstanceName(instanceName: string | undefined): stri
         : instanceName?.split('\\')?.[1];
 }
 
+async function decompressSSMResponse(response: string) {
+    response = response.replaceAll('\r\n', '');
+    if (!isBase64(response)) {
+        return response;
+    }
+
+    try {
+        const buffer = Buffer.from(response, 'base64');
+
+        const inflateRawPromise = promisify(inflateRaw);
+        const result = await inflateRawPromise(buffer);
+        return result.toString();
+    } catch (err) {
+        logger.error('Error decompressing SSM response', err);
+        throw createError('Error decompressing SSM response');
+    }
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -648,5 +669,6 @@ export {
     getMonthlyPriceFromHourlyPrice,
     getDatabaseInstanceName,
     isDemo,
-    getOriginalDatabaseInstanceName
+    getOriginalDatabaseInstanceName,
+    decompressSSMResponse
 };

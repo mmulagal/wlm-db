@@ -1,7 +1,7 @@
 // instances input instances = ['"computername\\instanceName"', '"DEFAULT_MSSQL_INSTANCE_NAME"']; "DEFAULT_MSSQL_INSTANCE_NAME" represents the default instance
 
 import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
-import { readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
+import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 // ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
 const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
@@ -63,7 +63,10 @@ foreach ($instance in $instances) {
     }
 }
 
-$results | ConvertTo-Json -Depth 5
+$response = $results | ConvertTo-Json -Depth 5
+
+${compressResponse}
+return (Deflate-String $response)
 `;
 
 const checkDatabaseExists = (dbCloneName: string, instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `
