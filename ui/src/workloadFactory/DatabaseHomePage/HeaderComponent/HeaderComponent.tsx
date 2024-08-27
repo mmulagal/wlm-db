@@ -554,7 +554,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         </div>
                     </div>
 
-                    {isWorkloadFactory && (
+                    {!isWorkloadFactory && (
                         <div className={styles.thirdRow}>
                             <Menu />
                             <div className={styles.menuPopOverHide}>
