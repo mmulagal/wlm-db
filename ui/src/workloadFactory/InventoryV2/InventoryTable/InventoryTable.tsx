@@ -419,7 +419,11 @@ const InventoryTable = () => {
             return (
                 <div
                     className={styles.detectManage}
-                    id="inventory-table-option"
+                    id={
+                        rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS
+                            ? 'explore-savings-inventory-table'
+                            : 'inventory-table-option'
+                    }
                     onClick={() => {
                         if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
                             onClickESHost(dispatch, rowData);
