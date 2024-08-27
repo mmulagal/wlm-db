@@ -25,8 +25,8 @@ import {
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
-    const { recommendedTargetInstance, monthlyBYOLCost } = state.exploreSavings;
-    const checkBYOLTooltip = Number(monthlyBYOLCost) > 0;
+    const { recommendedTargetInstance, selectedHostDetails } = state.exploreSavings;
+    const checkBYOLTooltip = selectedHostDetails?.sqlLicenseIncluded ? false : true;
     return [
         {
             type: 'Capacity',
