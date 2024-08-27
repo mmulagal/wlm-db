@@ -1106,7 +1106,11 @@ async function checkDatabaseExists(
         region,
         databaseHostId,
         databaseName,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        instanceName,
+        executableInstanceName,
+        sqlInstanceId,
+        sqlAuthEnabled
     });
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {

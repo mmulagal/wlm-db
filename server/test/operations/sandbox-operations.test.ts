@@ -46,7 +46,7 @@ beforeAll(async () => {
                     name: 'testdb1',
                     size: 1234,
                     status: 'Running',
-                    type: 'Standalore',
+                    type: 'Standalone',
                     protection: {
                         isAwsBackupEnabled: true,
                         isFsxOntapSnapshotsEnabled: true,
@@ -58,7 +58,7 @@ beforeAll(async () => {
                     name: 'testdb2',
                     size: 1234,
                     status: 'Running',
-                    type: 'Standalore',
+                    type: 'Standalone',
                     protection: {
                         isAwsBackupEnabled: true,
                         isFsxOntapSnapshotsEnabled: true,
