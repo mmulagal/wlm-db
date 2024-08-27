@@ -48,7 +48,7 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
                     className={styles.text}
                     style={{ width: '80px' }}
                     onClick={() => (loading || disableState ? () => {} : handleExport())}
-                    id="export-pdf"
+                    id="es-export-pdf"
                 >
                     {GENERAL.EXPORT_PDF}
                 </DsTypography>
