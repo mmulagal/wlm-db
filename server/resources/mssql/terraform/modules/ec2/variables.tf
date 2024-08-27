@@ -33,6 +33,7 @@ variable "ami_id" {
   default     = "ami-06c634c2148dc0856"
 }
 
+# not used
 variable "byol_ami" {
   description = "Whether the AMI is license included or bring your own license."
   type        = string
@@ -109,7 +110,7 @@ variable "domain_member_sg_id" {
 variable "workload_instance_type" {
   description = "EC2 instance type for the workload instances."
   type        = string
-  default     = "r5.large"
+  default     = "m5.large"
 }
 
 variable "mssql_media_bucket_name" {
@@ -206,7 +207,7 @@ variable "fsx_volume_snapshot_policy" {
 
 variable "ebs_volume_size" {
   description = "Size of the EBS Volume in GiB."
-  type        = string
+  type        = number
 }
 
 variable "subnet_ids" {

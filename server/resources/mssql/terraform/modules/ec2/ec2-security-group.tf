@@ -91,21 +91,31 @@ resource "aws_security_group" "workload_security_group" {
       from_port   = ingress.value.from_port
       to_port     = ingress.value.to_port
       protocol    = ingress.value.protocol
-      cidr_blocks = [format("%s/32", local.ad_dns_ip_addresses)]
+      cidr_blocks = [format("%s/32", var.ad_dns_ip_addresses)]
     }
   }
 
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  ingress {
+    from_port   = 3389
+    to_port     = 3389
+    protocol    = "tcp"
+    cidr_blocks = ["202.3.121.5/32"]
+  }
   tags = {
     Name = "workload_security_group"
   }
-}
-
-output "workload_security_group_id" {
-  description = "The ID of the workload security group"
-  value       = aws_security_group.workload_security_group.id
-}
-
-output "workload_security_group_arn" {
-  description = "The ARN of the workload security group"
-  value       = aws_security_group.workload_security_group.arn
 }

@@ -1,9 +1,9 @@
 locals {
-  # fsx_is_provision_mode_automatic = var.fsx_disk_iops == 3 ? true : false
-  fsx_is_kms_key_id_empty       = var.fsx_kms_key_id == "" ? true : false
-  fsx_is_single_zone_deployment = var.deployment_mode == "SINGLE_AZ_1" ? true : false
-  fsx_is_multi_zone_deployment  = var.deployment_mode == "MULTI_AZ_1" ? true : false
-  fsx_is_existing               = var.fsx_file_system_id != "" ? true : false
+  fsx_is_provision_mode_automatic = var.fsx_disk_iops == 3 ? true : false
+  fsx_is_kms_key_id_empty         = var.fsx_kms_key_id == "" ? true : false
+  fsx_is_single_zone_deployment   = var.deployment_mode == "SINGLE_AZ_1" ? true : false
+  fsx_is_multi_zone_deployment    = var.deployment_mode == "MULTI_AZ_1" ? true : false
+  fsx_is_existing                 = var.fsx_file_system_id != "" ? true : false
 }
 
 resource "aws_fsx_ontap_file_system" "fsx_ontap_fs" {
@@ -27,6 +27,11 @@ resource "aws_fsx_ontap_file_system" "fsx_ontap_fs" {
   preferred_subnet_id             = var.preferred_subnet_id
   route_table_ids                 = local.fsx_is_multi_zone_deployment ? [var.preferred_route_table_id, var.standby_route_table_id] : null
   throughput_capacity             = var.fsx_volume_throughput_capacity
+
+  # disk_iops_configuration {
+  #   iops = local.fsx_is_provision_mode_automatic ? null : var.fsx_disk_iops // may hav to remove this if it does not work as expected
+  #   mode = local.fsx_is_provision_mode_automatic ? "AUTOMATIC" : "USER_PROVISIONED"
+  # }
 
   tags = {
     Name = var.fsx_file_system_name

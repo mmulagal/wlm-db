@@ -38,7 +38,7 @@ resource "aws_security_group" "domain_member_sg" {
     from_port   = 3389
     to_port     = 3389
     protocol    = "tcp"
-    cidr_blocks = ["202.3.121.6/32"]
+    cidr_blocks = ["202.3.121.5/32"]
   }
   tags = {
     ResourceGroupID = var.unique_id
@@ -61,14 +61,6 @@ resource "aws_launch_template" "disable_imdsv1" {
     http_tokens   = "required"
   }
 }
-
-# resource "null_resource" "validation_node1_wait_condition" {
-#   count = var.validation_node_perform_ad_check ? 1 : 0
-
-#   provisioner "local-exec" {
-#     command = "sleep 2700"
-#   }
-# }
 
 resource "aws_network_interface" "validation_node_ni" {
   subnet_id       = var.subnet_id
@@ -112,24 +104,36 @@ data "template_file" "user_data" {
     perform_fsx_check             = var.perform_fsx_check
     fsx_file_system_id            = var.fsx_file_system_id
     log_group                     = var.deployment_name
-    verify_signature              = var.verify_signature
-    unzip_archive                 = var.unzip_archive
-    aws_launch_wizard_for_fcn     = var.aws_launch_wizard_for_fcn
-    validation_zip                = var.validation_zip
-    signing_files_zip             = var.signing_files_zip
-    open_ssl_win64_zip            = var.open_ssl_win64_zip
     sql_deployment_mode           = var.sql_deployment_mode
   }
 }
 
 
 #Wait for user data to complete execution on the instance
+# resource "null_resource" "wait_for_tag" {
+#   triggers = {
+#     instance_id = aws_instance.validation_node.id
+#   }
+
+#   provisioner "local-exec" {
+#     command = "pwsh -Command \"while ((& '${path.module}/check_tag.ps1' '${aws_instance.validation_node.id}' '${var.aws_location}') -ne 'completed') { Write-Output 'Waiting for validation node tag...'; sleep 10 }\""
+#   }
+# }
+
 resource "null_resource" "wait_for_tag" {
   triggers = {
     instance_id = aws_instance.validation_node.id
   }
 
   provisioner "local-exec" {
-    command = "pwsh -Command \"while ((& '${path.module}/check_tag.ps1' '${aws_instance.validation_node.id}' '${var.aws_location}') -ne 'completed') { Write-Output 'Waiting for tag...'; sleep 10 }\""
+    command = "while [ \"$(sh '${path.module}/check_tag.sh' '${aws_instance.validation_node.id}' '${var.aws_location}')\" != 'completed' ]; do echo 'Waiting for validation node tag...'; sleep 10; done"
   }
 }
+
+# resource "null_resource" "validation_node1_wait_condition" {
+#   count = var.validation_node_perform_ad_check ? 1 : 0
+
+#   provisioner "local-exec" {
+#     command = "sleep 2700"
+#   }
+# }

@@ -140,12 +140,6 @@ module "validation-node" {
   unique_id                     = var.unique_id
   s3_artifacts_url              = var.s3_artifacts_url
   validation_node1_wait_handler = "asdf"
-  verify_signature              = var.verify_signature
-  unzip_archive                 = var.unzip_archive
-  aws_launch_wizard_for_fcn     = var.aws_launch_wizard_for_fcn
-  validation_zip                = var.validation_zip
-  signing_files_zip             = var.signing_files_zip
-  open_ssl_win64_zip            = var.open_ssl_win64_zip
   sql_deployment_mode           = var.sql_deployment_mode
   // notificaiton arn to be sent to the validation node
 }
@@ -181,44 +175,46 @@ module "fsxn" {
   fsx_weekly_maintenance_start_time = "1:05:00"
 }
 
-# module "ec2" {
-#   source = "./modules/ec2"
+module "ec2" {
+  source = "./modules/ec2"
 
-#   depends_on = [module.vpc-endpoints, module.validation-node, module.fsxn]
+  depends_on = [module.vpc-endpoints, module.validation-node, module.fsxn]
 
-#   ec2_role_name                 = var.deployment_name
-#   enable_cloudwatch_log_feature = var.enable_cloud_watch_log_feature
-#   log_group_name                = "SQLDLOG"
-#   unique_id                     = var.unique_id
-#   ami_id                        = var.sql_ami_id
-#   byol_ami                      = "false"
-#   key_pair_name                 = var.key_pair_name
-#   private_subnet_id             = var.private_subnet1_id
+  ec2_role_name                 = var.deployment_name
+  enable_cloudwatch_log_feature = var.enable_cloud_watch_log_feature
+  log_group_name                = "SQLDLOG"
+  unique_id                     = var.unique_id
+  ami_id                        = var.sql_ami_id
+  byol_ami                      = "false"
+  key_pair_name                 = var.key_pair_name
+  private_subnet_id             = var.private_subnet1_id
 
-#   vpc_id                     = var.vpc_id
-#   vpc_cidr                   = var.vpc_cidr
-#   deployment_name            = var.deployment_name
-#   sql_server_name            = var.sql_server_name
-#   sql_svm_name               = var.sql_svm_name
-#   fsx_data_volume_name       = var.fsx_data_volume_name
-#   fsx_log_volume_name        = var.fsx_log_volume_name
-#   fsx_file_system_id         = var.fsx_file_system_id
-#   fsx_temp_db_volume_name    = var.fsx_temp_db_volume_name
-#   fsx_data_lun_size          = var.fsx_data_lun_size
-#   sql_igroup_name            = var.sql_igroup_name
-#   fsx_volume_snapshot_policy = var.fsx_volume_snapshot_policy
-#   ad_dns_ip_addresses        = var.dns_ip_addresses
-#   domain_dns_name            = var.domain_dns_name
-#   domain_admin_user          = var.domain_admin_user
-#   sql_admin_accounts         = var.sql_service_account_name
-#   sql_collation              = var.sql_collation
+  vpc_id                     = var.vpc_id
+  vpc_cidr                   = var.vpc_cidr
+  deployment_name            = var.deployment_name
+  sql_server_name            = var.sql_server_name
+  sql_svm_name               = var.sql_svm_name
+  fsx_data_volume_name       = var.fsx_data_volume_name
+  fsx_log_volume_name        = var.fsx_log_volume_name
+  fsx_file_system_id         = local.existing_ontap_fsx ? var.fsx_file_system_id : module.fsxn.fsx_fs_logical_id // may be the output of the fsx if its new
+  fsx_temp_db_volume_name    = var.fsx_temp_db_volume_name
+  fsx_data_lun_size          = tostring(var.fsx_data_lun_size)
+  sql_igroup_name            = var.sql_igroup_name
+  fsx_volume_snapshot_policy = var.fsx_volume_snapshot_policy
+  ad_dns_ip_addresses        = element(split(",", var.dns_ip_addresses), 0)
+  domain_dns_name            = var.domain_dns_name
+  domain_admin_user          = var.domain_admin_user
+  sql_admin_accounts         = var.sql_service_account_name // find dis is right or not
+  sql_collation              = var.sql_collation
 
-#   sql_node_s3_artifacts_url = var.s3_artifacts_url
-#   parent_stack_name         = var.deployment_name
-#   sql_node_aws_location     = var.aws_location
-#   route_table_id            = var.route_table1_id
-#   ebs_volume_size           = var.ebs_volume_size
-#   domain_member_sg_id       = var.domain_member_sg_id
-#   ontap_security_group_id   = local.new_ontap_fsx ? module.fsxn.fsxn_security_group_id : var.ontap_security_group_id
-#   mssql_media_bucket_name   = var.mssql_media_bucket_name
-# }
+  sql_node_s3_artifacts_url    = var.s3_artifacts_url
+  parent_stack_name            = var.deployment_name
+  sql_node_aws_location        = var.aws_location
+  route_table_id               = var.route_table1_id
+  ebs_volume_size              = var.ebs_volume_size
+  domain_member_sg_id          = var.domain_member_sg_id
+  ontap_security_group_id      = local.new_ontap_fsx ? module.fsxn.fsxn_security_group_id : var.ontap_security_group_id
+  mssql_media_bucket_name      = var.mssql_media_bucket_name
+  sql_fsx_server_net_bios_name = element(split(",", var.node_net_bios_names), 0)
+  workload_instance_type       = var.workload_instance_type
+}

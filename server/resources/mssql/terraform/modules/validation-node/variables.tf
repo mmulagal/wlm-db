@@ -102,34 +102,6 @@ variable "key_pair_private_key_path" {
   type        = string
   default     = "/Users/sathish/Downloads/occm_qa.pem"
 }
-
-variable "verify_signature" {
-  description = "signed s3 url"
-  type        = string
-}
-
-variable "unzip_archive" {
-  description = "signed s3 url"
-  type        = string
-}
-variable "aws_launch_wizard_for_fcn" {
-  description = "signed s3 url"
-  type        = string
-}
-variable "validation_zip" {
-  description = "signed s3 url"
-  type        = string
-}
-variable "signing_files_zip" {
-  description = "signed s3 url"
-  type        = string
-}
-
-variable "open_ssl_win64_zip" {
-  description = "signed s3 url"
-  type        = string
-}
-
 variable "sql_deployment_mode" {
   description = "The deployment mode of SQL"
   type        = string

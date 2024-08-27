@@ -489,30 +489,3 @@ variable "mssql_media_path_key" {
   type        = string
   default     = "launchwizardscripts/sqlmedia/sqlserver.iso"
 }
-
-variable "verify_signature" {
-  description = "signed s3 url"
-  type        = string
-}
-
-variable "unzip_archive" {
-  description = "signed s3 url"
-  type        = string
-}
-variable "aws_launch_wizard_for_fcn" {
-  description = "signed s3 url"
-  type        = string
-}
-variable "validation_zip" {
-  description = "signed s3 url"
-  type        = string
-}
-variable "signing_files_zip" {
-  description = "signed s3 url"
-  type        = string
-}
-
-variable "open_ssl_win64_zip" {
-  description = "signed s3 url"
-  type        = string
-}

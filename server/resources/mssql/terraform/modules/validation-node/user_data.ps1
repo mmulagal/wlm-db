@@ -3,28 +3,8 @@
 # Write output
 Write-Output "Starting user data script from terraform"
 
-# # Create directory if it doesn't exist
-# if (!(Test-Path -Path C:\\cfn\\)) {
-#     New-Item -ItemType Directory -Path C:\\cfn\\
-#     Write-Output "Created directory C:\\cfn\\"
-# }
-
-# # Create a text file in the directory
-# New-Item -Path 'C:\\cfn\\' -Name 'test.txt' -ItemType 'file' -Value 'Hello, World!'
-# Write-Output "Created file C:\\cfn\\test.txt"
-
 $WarningPreference = 'SilentlyContinue';
-#[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
-try {
-    $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
-    Write-Output "Successfully obtained the token."
 
-    $instance_id = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
-    Write-Output "Successfully obtained the instance ID: $instance_id"
-}
-catch {
-    Write-Output "An error occurred while getting token: $_"
-}
 $deploymentname = "${deployment_name}"
 $ssmParameterName = "/netapp/wlmdb/$deploymentname"
 $region = "${region}"
@@ -35,14 +15,23 @@ $fsx_file_system_id = "${fsx_file_system_id}"
 $sql_deployment_mode = "${sql_deployment_mode}"
 
 Write-Output "Deployment Name: $deployment_name"
+
 # Step 1: Download the file from S3 to the temp folder
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
 $tempFilePath = Join-Path -Path $env:TEMP -ChildPath "signed-url.json"
 Invoke-WebRequest -Uri "$s3_artifacts_url" -OutFile $tempFilePath
-
 Write-Output "Downloaded the file to $tempFilePath"
+
 # Step 2: Parse the file and assign the URLs to the variables
-$urls = Get-Content -Path $tempFilePath | ConvertFrom-Json
+$json = Get-Content -Path $tempFilePath | ConvertFrom-Json
+$urls = $json.validation_node
+
+Write-Output "The s3 urls object: $urls"
+
+if ($null -eq $urls) {
+    Write-Output "The s3 urls object is null. Cannot proceed with assignments."
+    exit
+}
 
 $verify_signature = $urls.verify_signature
 $unzip_archive = $urls.unzip_archive
@@ -52,6 +41,24 @@ $signing_files_zip = $urls.signing_files_zip
 $open_ssl_win64_zip = $urls.open_ssl_win64_zip
 
 
+function Get-InstanceId {
+    try {
+        $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+        #Write-Output "Successfully obtained the token."
+
+        $instance_id = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+        #Write-Output "Successfully obtained the instance ID: $instance_id"
+        return $instance_id
+    }
+    catch {
+        Write-Output "An error occurred while getting token: $_"
+        return $null
+    }
+}
+
+$instance_id = Get-InstanceId
+
+Write-Output "Got the Instance ID: $instance_id"
 # in summary, this command is retrieving the current value of an SSM parameter, decrypting it, and then overwriting the parameter with the same value, ensuring it's stored as a "SecureString".
 # Write-SSMParameter -Name $ssmParameterName -Value (Get-SSMParameter -Name $ssmParameterName -WithDecryption $True).Value -Type "SecureString" -Overwrite $true
 function Update-SSMParameterToSecureString {
@@ -84,6 +91,15 @@ function Install-SSMAgent {
 
     try {
         Get-Service AmazonSSMAgent -ErrorAction Stop
+        # Set the SSM Agent service to start automatically
+        Write-Output "Setting SSM Agent service to start automatically"
+        Set-Service -Name AmazonSSMAgent -StartupType Automatic
+        Start-Sleep -Seconds 30
+     
+        # Restart the SSM Agent service
+        Write-Output "Restarting SSM Agent service"
+        Restart-Service AmazonSSMAgent -Force -ErrorAction Continue
+        Start-Sleep -Seconds 30
     }
     catch {
         $progressPreference = "silentlyContinue"
@@ -108,7 +124,6 @@ function Install-SSMAgent {
     }
 }
 
-# Call the function
 Install-SSMAgent -region "$region"
 
 Set-ExecutionPolicy Unrestricted -Scope Process -Force
@@ -185,7 +200,7 @@ try {
     Set-Content -Path "C:\\Program Files\\Amazon\\SSM\\Plugins\\awsCloudWatch\\AWS.EC2.Windows.CloudWatch.json" -Value (ConvertTo-Json -InputObject $config) 
 }
 catch {
-    Write-Output "An error occurred install ssm: $_.Exception.Message"
+    Write-Output "An error occurred setup cloud watch config: $_.Exception.Message"
 }
 
 Write-Output "Configured CloudWatch successfully"
@@ -233,8 +248,8 @@ function Invoke-Command {
     }
 }
 
-# Usage
 try {
+    Write-Output "Downloading the files"
     Invoke-WebRequestWithRetry -Uri "$verify_signature" -OutFile "C:\\cfn\\scripts\\Verify-Signature.ps1"
     Invoke-WebRequestWithRetry -Uri "$unzip_archive" -OutFile "C:\\cfn\\scripts\\Unzip-Archive.ps1"
     Invoke-WebRequestWithRetry -Uri "$aws_launch_wizard_for_fcn" -OutFile "C:\\cfn\\modules\\AWSLaunchWizardForCFN.zip"
@@ -266,7 +281,13 @@ try {
 catch {
     Write-Output "An error occurred last: $_.Exception.Message"
 }
-New-EC2Tag -Region "$region" -ResourceId "$instance_id" -Tag @{ Key = "user_data"; Value = "completed" }
+try {
+    New-EC2Tag -Region "$region" -ResourceId "$instance_id" -Tag @{ Key = "user_data"; Value = "completed" }
+}
+catch {
+    Write-Output "An error occurred while tagging the instance: $_"
+    exit
+}
 
 Write-Output "Validation completed successfully"
 </powershell>
