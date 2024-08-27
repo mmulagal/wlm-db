@@ -487,12 +487,17 @@ async function getMappedOntapVolumes(
 
         const instancesResponse: { [key: string]: any } = {};
         instanceNames?.forEach((iName: string) => {
-            const { volumeDBMap, volumes } = parsedResponse?.[iName] ?? {};
-            if (volumes && !isEmpty(volumes?.records)) {
-                const volumeUuids = volumes.records.map(({ uuid }: { uuid: string }) => uuid);
-                instancesResponse[iName] = { volumeUuids, volumeDBMap };
-            } else {
-                instancesResponse[iName] = { volumeUuids: [], volumeDBMap: {} };
+            if (
+                parsedResponse?.[iName] &&
+                !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
+            ) {
+                const { volumeDBMap, volumes } = parsedResponse?.[iName] ?? {};
+                if (volumes && !isEmpty(volumes?.records)) {
+                    const volumeUuids = volumes.records.map(({ uuid }: { uuid: string }) => uuid);
+                    instancesResponse[iName] = { volumeUuids, volumeDBMap };
+                } else {
+                    instancesResponse[iName] = { volumeUuids: [], volumeDBMap: {} };
+                }
             }
         });
 

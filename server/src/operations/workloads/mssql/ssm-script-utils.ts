@@ -1184,7 +1184,7 @@ const validateSQLInstanceCredentials = `
     $credential = $null
     $sqlCredential = @{}
     if(-Not [string]::IsNullOrEmpty($sqlCredentials)) {
-        $credential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq $instance})[0] 
+        $credential =  $sqlCredentials.sql.Where({$_.sqlinstancename -eq $serverInstanceName})[0] 
         if (-Not [string]::IsNullOrEmpty($credential) -And -Not [string]::IsNullOrEmpty($credential.username) -And -Not [string]::IsNullOrEmpty($credential.password)) {
             $sqlCredential.add('useSqlAuth', $True)
             $sqlCredential.add('username', $credential.username)
@@ -1226,10 +1226,10 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
         $responseObject = @{}
         ${getSqlCredentials(sqlAuthEnabled)}
         $sqlInstances | ForEach-Object {
-            $instance = $_
+            $serverInstanceName = $_
             $instanceName = "$env:COMPUTERNAME"
-            if ($instance -ne 'MSSQLSERVER') {
-                $instanceName = "$env:COMPUTERNAME\\$instance"
+            if ($serverInstanceName -ne 'MSSQLSERVER') {
+                $instanceName = "$env:COMPUTERNAME\\$serverInstanceName"
             }
             try {
                 ${validateSQLInstanceCredentials}
@@ -1243,9 +1243,9 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
                 if ($LASTEXITCODE -ne 0) {
                     throw $sqlError
                 }
-                $responseObject[$instance] = $sqlResponse | ConvertFrom-Json
+                $responseObject[$serverInstanceName] = $sqlResponse | ConvertFrom-Json
             } catch {
-                $responseObject[$instance] = $_.Exception.Message
+                $responseObject[$serverInstanceName] = "error: $_.Exception.Message"
             }
         }
         $response = $responseObject | ConvertTo-Json -Depth 5

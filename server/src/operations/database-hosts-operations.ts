@@ -1696,7 +1696,9 @@ async function getDatabaseInstanceSummary(
                               credentialsId,
                               region,
                               activeNodeInstanceId,
-                              databaseInstanceName
+                              databaseInstanceName,
+                              undefined,
+                              sqlAuthEnabled
                           )
                       ]
                     : [Promise.resolve()]),
@@ -1981,6 +1983,14 @@ async function getDatabaseHostSummaryV2(
                             instance => instance.instanceState === 'Running'
                         ) ?? [];
                 }
+
+                runningDatabaseInstances = runningDatabaseInstances.map(resource => ({
+                    ...resource,
+                    sqlAuthEnabled: databaseInstancesDetail.find(
+                        ({ instanceName }: { instanceName: string }) => instanceName === resource.database_instance_name
+                    )?.sqlAuthEnabled
+                }));
+
                 if (runningDatabaseInstances.length > 0) {
                     promises.push(
                         getDatabaseInstancesSummary(
@@ -2270,7 +2280,7 @@ async function getInstanceDetails(
         databaseInstanceDetails as unknown as DatabaseInstance
     );
     const { nodeId: activeNodeInstanceId, matchingInstance } = activeNodeResponse;
-    const { instanceName, instanceState } = matchingInstance;
+    const { instanceName, instanceState, sqlAuthEnabled = false } = matchingInstance;
     if (instanceState !== SQL_SERVICE_STATE.RUNNING) {
         const errorMessage = `Instance id ${databaseInstanceId} is not running on host ${databaseHostId}.`;
         logger.error(errorMessage);
@@ -2279,7 +2289,8 @@ async function getInstanceDetails(
     const newDatabaseInstanceDetails = {
         ...databaseInstanceDetails,
         instanceName,
-        instanceState
+        instanceState,
+        sqlAuthEnabled
     } as unknown as DatabaseInstance;
 
     return { activeNodeInstanceId, newDatabaseInstanceDetails };
@@ -2459,7 +2470,7 @@ async function getDatabaseInstancesSummary(
     let isSqlAuthEnabled = false;
     if (shouldQueryServerDetails || getPerformance || getProtection || getResourceutilization || getDbCount) {
         // const instances = await determineSqlAuthEnabled(accountId, credentialsId, activeNodeInstanceId, region, databaseInstances);
-        isSqlAuthEnabled = [].some((instance: any) => instance.isSqlAuthEnabled);
+        isSqlAuthEnabled = databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
     }
 
     try {
