@@ -20,6 +20,7 @@ const CostSavings = ({ disableState }: CS) => {
     const [savings, setSavings] = useState<any>(0);
     const [savingsPer, setSavingsPer] = useState<any>(0);
     const [costZeroCase, setCostZeroCase] = useState(false);
+    const [savingsCalculated, setSavingsCalculated] = useState(false);
 
     useEffect(() => {
         const fsxTotal = storageSavingsResponse?.totalSummary?.recommendedTotal
@@ -30,6 +31,7 @@ const CostSavings = ({ disableState }: CS) => {
             : 0;
         if (storageSavingsResponse && fsxTotal && ebsTotal && fsxTotal <= ebsTotal) {
             setSavings(ebsTotal - fsxTotal);
+            setSavingsCalculated(true);
             const percent = 100 * ((ebsTotal - fsxTotal) / ebsTotal);
             setSavingsPer(percent);
             setCostZeroCase(false);
@@ -49,7 +51,10 @@ const CostSavings = ({ disableState }: CS) => {
                     {disableState ? <CostSavingsDisabledImage /> : <CostSavingsImage />}
                 </div>
                 <div className={costZeroCase ? `${styles.textContent} ${styles.changeWidth}` : styles.textContent}>
-                    <div className={styles.topValue}>
+                    <div
+                        className={`${styles.topValue} ${savings !== 0 ? 'es-nonzero-cost-savings' : ''}`}
+                        id={savingsCalculated ? 'es-cost-savings' : ''}
+                    >
                         <DsTypography
                             variant="Regular_16"
                             className={
