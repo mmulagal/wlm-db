@@ -943,7 +943,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\r\n    \"dataPath\":  \"S:\\\\testdb_clone-Data\\\\mssql\\\\data\\\\testdb.mdf\",\r\n \"logPath\":  \"L:\\\\testdb_clone-Log\\\\mssql\\\\log\\\\testdb_log.ldf\"}\r\n",
+        "StandardOutputContent": "{\r\n    \"files\": [ \"S:\\\\testdb_clone-Data\\\\mssql\\\\data\\\\testdb.mdf\",\r\n  \"L:\\\\testdb_clone-Log\\\\mssql\\\\log\\\\testdb_log.ldf\"]}\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
