@@ -554,7 +554,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         </div>
                     </div>
 
-                    {!isWorkloadFactory && (
+                    {isWorkloadFactory && (
                         <div className={styles.thirdRow}>
                             <Menu />
                             <div className={styles.menuPopOverHide}>
@@ -571,22 +571,53 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                                             switch (menuId) {
                                                 case 'links':
-                                                    parentNavigate({ pathname: '' });
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: { pathname: './fsxhome/links', replace: true }
+                                                    });
+
                                                     break;
                                                 case 'workLoadFactoryCredentials':
-                                                    parentNavigate({ pathname: '' });
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: { pathname: './fsxhome/credentials', replace: true }
+                                                    });
+
                                                     break;
                                                 case 'apiHub':
-                                                    parentNavigate({ pathname: '' });
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: '%VITE_WORKLOAD_IFRAME_URL%/api-doc',
+                                                            replace: true
+                                                        }
+                                                    });
+
                                                     break;
                                                 case 'monitoringGitHubRepository':
-                                                    parentNavigate({ pathname: '' });
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname:
+                                                                'https://github.com/NetApp/FSx-ONTAP-samples-scripts/tree/main/Monitoring',
+                                                            replace: true
+                                                        }
+                                                    });
+
                                                     break;
                                                 case 'subscribeToRss':
-                                                    parentNavigate({ pathname: '' });
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: { pathname: './links', replace: true }
+                                                    });
+
                                                     break;
                                                 case 'feedback':
-                                                    parentNavigate({ pathname: '' });
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: { pathname: './fsxhome/feedback', replace: true }
+                                                    });
+
                                                     break;
                                             }
                                         }
