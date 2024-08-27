@@ -63,9 +63,9 @@ import {
     checkDatabaseIntegrityScript,
     getSnapshotsToClone,
     readExtendedPropertiesOfSandbox,
-    getConnectionInfo
+    getConnectionInfo,
+    invokeVirtualMountScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
-import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 import { DEFAULT_INSTANCE_NAME } from '../../../../src/utils/consts';
 
 const ssmMock = mockClient(SSMClient);
@@ -345,16 +345,31 @@ const cloneVolumeCommand = {
 
 const invokeVirtualMountCommand = {
     commands: [
-        `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve -InstanceName MSSQLSERVER -IsDefaultInstance true`
+        invokeVirtualMountScript(
+            'test-clone',
+            'D:\\MSSQL\\data\\testdb_data.mdf',
+            'E:\\MSSQL\\log\\testdb_log.ldf',
+            'lWB44?VEq9vf',
+            'lWB44?VEq9ve',
+            'MSSQLSERVER',
+            true,
+            'Sandbox'
+        )
     ]
 };
 
 const createCloneDbCommand = {
     commands: [
-        createClonedDb('testdb', '$env:computername', [
-            'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
-            'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
-        ])
+        createClonedDb(
+            'testdb',
+            'MSSQLSERVER',
+            '$env:computername',
+            ['S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf'],
+            ['L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'],
+            '',
+            '',
+            false
+        )
     ]
 };
 
@@ -362,14 +377,14 @@ const addExtendedPropertiesCommand = {
     commands: [
         addExtendedProperties(
             'testdb',
-            DEFAULT_INSTANCE_NAME,
+            'MSSQLSERVER',
             '$env:computername',
             {
                 tag: 'demo',
                 cloned_by: 'netapp_wf',
                 source: 'resource|instance|testdb'
             },
-            true
+            false
         )
     ]
 };

@@ -1065,11 +1065,9 @@ const cleanUpOntapResources = (
 `;
 
 const mountPointQuery = (databaseName: string) =>
-    ` SET NOCOUNT ON;
-    SELECT 
-        CASE WHEN mf.type != 0 THEN 'Log' ELSE 'Data' END AS filetype,
-        vs.logical_volume_name AS volumename,
-        mf.physical_name AS filepath
+    `SET NOCOUNT ON;
+    SELECT CASE WHEN mf.type != 0 THEN 'Log' ELSE 'Data' END AS filetype,
+    vs.logical_volume_name AS volumename, mf.physical_name AS filepath
     FROM sys.master_files AS mf
     JOIN sys.databases AS db ON db.database_id = mf.database_id
     CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs

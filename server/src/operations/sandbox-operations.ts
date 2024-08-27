@@ -55,7 +55,6 @@ import { getDatabaseInstanceName, isDemo, sleep, sqlResponseParsing } from '../u
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
-import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
 import {
     updateSandboxDBIntoInstanceData,
     updateSandboxDBIntoResourceData,
@@ -1124,7 +1123,16 @@ async function invokeVirtualMount(
 
             if (isDemoFlow) {
                 command = [
-                    `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve -InstanceName MSSQLSERVER -IsDefaultInstance true`
+                    invokeVirtualMountScript(
+                        'test-clone',
+                        'D:\\MSSQL\\data\\testdb_data.mdf',
+                        'E:\\MSSQL\\log\\testdb_log.ldf',
+                        'lWB44?VEq9vf',
+                        'lWB44?VEq9ve',
+                        'MSSQLSERVER',
+                        true,
+                        'Sandbox'
+                    )
                 ];
             }
 
@@ -1738,10 +1746,11 @@ async function getDatabaseMountPointInfo(
 
     try {
         if (isDemoFlow) {
+            srcDetails.databaseInstanceName = 'MSSQLSERVER';
             databaseName = 'test-database';
         }
 
-        const command = [
+        let command = [
             sqlQueryExecution(
                 srcDetails.databaseInstanceName,
                 srcDetails.instanceName,
@@ -1749,6 +1758,10 @@ async function getDatabaseMountPointInfo(
                 srcDetails.sqlAuthEnabled
             )
         ];
+
+        if (isDemoFlow) {
+            command = [sqlQueryExecution('MSSQLSERVER', '$env:computername', mountPointQuery('test-database'), true)];
+        }
 
         const mountPoints = await callSsmExecution(credentialsId, region, command, srcDetails.activeNodeInstanceId);
         if (!mountPoints) {
