@@ -6,6 +6,11 @@ import { SCRIPT_VERSON_FILE } from './const';
 
 const compressResponse = `
     Function Deflate-String {
+        if ([string]::IsNullOrEmpty($stringToCompress)) {
+            Write-Information "The string to compress is either null or empty."
+            return $null
+        }
+        
         param (
             [Parameter(Mandatory = $true)]
             [string]$stringToCompress
