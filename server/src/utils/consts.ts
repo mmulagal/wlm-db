@@ -74,7 +74,17 @@ const API_PATH_HEALTH: string = '/health';
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
-const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt', '/pricing'];
+const AUDIT_EXCLUDE_LIST = [
+    '/batch',
+    '/prompt',
+    '/pricing',
+    '/cloudformation/template',
+    '/storage-savings',
+    '/manual-storage-savings',
+    '/calculations',
+    '/v1/mssql/credentials',
+    '/sandboxes-meta-update'
+];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
@@ -124,6 +134,12 @@ enum DeploymentState {
     INITIALIZING = 'Initializing',
     SUCCESS = 'Success',
     FAILED = 'Failed'
+}
+
+enum AuditStatus {
+    PENDING = 'pending',
+    SUCCESS = 'success',
+    FAILED = 'failed'
 }
 
 enum RouteTags {
@@ -1477,5 +1493,6 @@ export {
     TCO_FEATURE,
     CURRENT_SCRIPT_VERSION,
     AWS_SSM_PARAMETER,
-    TIMELINE_SERVICE_NAME
+    TIMELINE_SERVICE_NAME,
+    AuditStatus
 };

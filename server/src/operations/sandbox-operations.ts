@@ -22,7 +22,8 @@ import {
     SSM_COMMAND_CACHE_TYPE,
     SandboxLifecycleAction,
     SANDBOX_LIFECYCLE_REFRESH,
-    SQL_SERVICE_STATE
+    SQL_SERVICE_STATE,
+    AuditStatus
 } from '../utils/consts';
 import {
     GET_SANDBOX_DETAILS,
@@ -65,6 +66,7 @@ import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { getDriveInfo } from './createdb-operations';
 import { restGetUtilForOntap, sqlQueryExecution } from './workloads/mssql/ssm-script-utils';
+import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 const logger = getLogger();
 const TIME_WINDOW = 60; // 60 seconds
@@ -524,35 +526,47 @@ async function createSandbox(
     Object.entries(mountPoints).forEach(([key, value]) => {
         mountPoints[key as keyof MountPoints] = value.toUpperCase();
     });
+    try {
+        const { srcDetails, destDetails } = await runSandboxPreValidations(
+            accountId,
+            credentialsId,
+            region,
+            source,
+            dest
+        );
+        if (isDemo()) {
+            srcDetails.databaseInstanceName = srcDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
+            destDetails.databaseInstanceName = destDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
+        }
 
-    const { srcDetails, destDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, dest);
-    if (isDemo()) {
-        srcDetails.databaseInstanceName = srcDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
-        destDetails.databaseInstanceName = destDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
+        const job = await registerJob(accountId, credentialsId, region, {
+            name: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
+            description: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
+            resourceName: dest.database,
+            initiator: 'SYSTEM',
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.SANDBOX
+        });
+
+        startSandboxCreation(
+            accountId,
+            credentialsId,
+            region,
+            job.id,
+            srcDetails,
+            destDetails as HostAndDbInfo,
+            tag,
+            mountPoints
+        );
+
+        return { jobId: job.id };
+    } catch (err: any) {
+        const errorMsg = `Error while creating sandbox ${dest.database}. ${err?.message}`;
+        logger.error(errorMsg, err);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
-
-    const job = await registerJob(accountId, credentialsId, region, {
-        name: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
-        description: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
-        resourceName: dest.database,
-        initiator: 'SYSTEM',
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.SANDBOX
-    });
-
-    startSandboxCreation(
-        accountId,
-        credentialsId,
-        region,
-        job.id,
-        srcDetails,
-        destDetails as HostAndDbInfo,
-        tag,
-        mountPoints
-    );
-
-    return { jobId: job.id };
 }
 
 async function startSandboxCreation(
@@ -654,10 +668,12 @@ async function startSandboxCreation(
         });
 
         status = JOBSTATUS.COMPLETED;
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (e: any) {
         logger.error(e);
         errorMsg = e.message || 'Internal Server Error';
         status = JOBSTATUS.FAILED;
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
 
         await startCleanup(
             accountId,
@@ -1818,22 +1834,29 @@ async function deleteSandbox(
         databaseName
     );
 
-    const source = { host: databaseHostId, instance: databaseInstanceId, database: databaseName };
-    const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
+    try {
+        const source = { host: databaseHostId, instance: databaseInstanceId, database: databaseName };
+        const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-    const job = await registerJob(accountId, credentialsId, region, {
-        name: `Delete sandbox ${databaseName}`,
-        description: `Delete sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
-        resourceName: databaseName,
-        initiator: 'SYSTEM',
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.SANDBOX
-    });
+        const job = await registerJob(accountId, credentialsId, region, {
+            name: `Delete sandbox ${databaseName}`,
+            description: `Delete sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
+            resourceName: databaseName,
+            initiator: 'SYSTEM',
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.SANDBOX
+        });
 
-    performSandboxDeletion(accountId, region, credentialsId, job.id, srcDetails);
+        performSandboxDeletion(accountId, region, credentialsId, job.id, srcDetails);
 
-    return { jobId: job.id };
+        return { jobId: job.id };
+    } catch (err: any) {
+        const errorMsg = `Error while deleting sandbox ${databaseName} in database host ${databaseHostId}. ${err?.message}`;
+        logger.error(errorMsg, err);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    }
 }
 
 async function performSandboxDeletion(
@@ -1869,10 +1892,12 @@ async function performSandboxDeletion(
             uniq([...mappings.data.map(map => map.fileName), ...mappings.log.map(map => map.fileName)])
         );
         status = JOBSTATUS.COMPLETED;
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (e: any) {
         logger.error('Failed to delete the sandbox', e);
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status,
@@ -2074,28 +2099,39 @@ async function updateSandboxLifeCycle(
         snapshot
     );
 
-    const source = { host: databaseHostId, instance: databaseInstanceId, database: databaseName };
-    const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
+    try {
+        const source = { host: databaseHostId, instance: databaseInstanceId, database: databaseName };
+        const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-    const job = await registerJob(accountId, credentialsId, region, {
-        name: `${
-            action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
-        } sandbox ${databaseName}`,
-        description: `${
-            action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
-        } sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${
-            srcDetails.databaseInstanceName
-        }`,
-        initiator: 'SYSTEM',
-        type: JOBTYPE.SANDBOX,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: databaseName,
-        startTime: Date.now()
-    });
+        const job = await registerJob(accountId, credentialsId, region, {
+            name: `${
+                action === SANDBOX_LIFECYCLE_REFRESH
+                    ? SandboxLifecycleAction.REFRESH
+                    : SandboxLifecycleAction.REBASELINE
+            } sandbox ${databaseName}`,
+            description: `${
+                action === SANDBOX_LIFECYCLE_REFRESH
+                    ? SandboxLifecycleAction.REFRESH
+                    : SandboxLifecycleAction.REBASELINE
+            } sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${
+                srcDetails.databaseInstanceName
+            }`,
+            initiator: 'SYSTEM',
+            type: JOBTYPE.SANDBOX,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: databaseName,
+            startTime: Date.now()
+        });
 
-    performLifecycleUpdate(accountId, credentialsId, region, job.id, srcDetails, action, snapshot);
+        performLifecycleUpdate(accountId, credentialsId, region, job.id, srcDetails, action, snapshot);
 
-    return { jobId: job.id };
+        return { jobId: job.id };
+    } catch (err: any) {
+        const errorMsg = `Error while updating Sandbox life cycle for ${databaseName} in database host ${databaseHostId}. ${err?.message}`;
+        logger.error(errorMsg, err);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    }
 }
 
 async function performLifecycleUpdate(
@@ -2260,10 +2296,12 @@ async function performLifecycleUpdate(
         );
 
         status = JOBSTATUS.COMPLETED;
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (e: any) {
         logger.error(`Failed to perform lifecycle update for sandbox ${resourceDetails.database}`, e);
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
 
         // Clean up only when the sandbox is not updated
         if (!sandboxUpdated) {
