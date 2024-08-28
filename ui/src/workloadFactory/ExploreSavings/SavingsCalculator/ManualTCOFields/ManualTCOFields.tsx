@@ -56,7 +56,6 @@ const ManualTCOFields = () => {
     //Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        console.log(getManualRegionsList?.manualRegionsData);
         //@ts-ignore
         const sortedRegionsData = regionsSort(getManualRegionsList?.manualRegionsData?.regions || []);
         sortedRegionsData?.map((val, idx: number) => {

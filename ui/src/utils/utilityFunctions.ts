@@ -1598,3 +1598,24 @@ export const setTabInfoFOrBXP = (tab: string) => {
             return WLF_TABS.DASHBOARD;
     }
 };
+
+export const apiDOCURL = () => {
+    if (navigator.userAgent.includes('Chrome')) {
+        if (
+            !window.location ||
+            !window.location.ancestorOrigins ||
+            !window.location.ancestorOrigins.length ||
+            window.location.ancestorOrigins[0].includes('staging')
+        ) {
+            return 'https://staging.console.workloads.netapp.com/api-doc';
+        } else {
+            return 'https://console.workloads.netapp.com/api-doc';
+        }
+    } else {
+        if (document.referrer.includes('staging')) {
+            return 'https://staging.console.workloads.netapp.com/api-doc';
+        } else {
+            return 'https://console.workloads.netapp.com/api-doc';
+        }
+    }
+};
