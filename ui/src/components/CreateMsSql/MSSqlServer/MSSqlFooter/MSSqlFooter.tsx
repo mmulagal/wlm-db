@@ -6,7 +6,8 @@ import {
     WLF_TABS,
     PRODUCTION,
     TIMELINE_PROD_LINK,
-    TIMELINE_STAGE_LINK
+    TIMELINE_STAGE_LINK,
+    FORM_TO_WLF_NAVIGATE_BLUEXP
 } from '../../../../utils/consts';
 import {
     setDeployRedirectToCfLink,
@@ -126,7 +127,7 @@ const MSSqlFooter = () => {
         }
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
         notificationMsg = setTimeout(() => {
-            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigateToCanvas('/');
+            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
             dispatch(setIsRefreshed(true));
         }, 3000);
     };
