@@ -159,16 +159,15 @@ async function getSandboxDetails(
     await Promise.all(
         instances.map(async instance => {
             let command = [
-                GET_SANDBOX_DETAILS([
-                    `"${getDatabaseInstanceName(
-                        instance.instanceName,
-                        instance.instanceName === DEFAULT_INSTANCE_NAME
-                    )}"`
-                ])
+                GET_SANDBOX_DETAILS(
+                    instance.instanceName,
+                    getDatabaseInstanceName(instance.instanceName, instance.instanceName === DEFAULT_INSTANCE_NAME),
+                    instance.sqlAuthEnabled
+                )
             ];
 
             if (isDemoFlow) {
-                command = [GET_SANDBOX_DETAILS([DEFAULT_MSSQL_INSTANCE_NAME])];
+                command = [GET_SANDBOX_DETAILS(DEFAULT_MSSQL_INSTANCE_NAME)];
             }
 
             const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
