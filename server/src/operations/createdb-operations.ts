@@ -497,6 +497,7 @@ async function deployDatabase(
         }
 
         const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
+        updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
 
         // create the parent job for database deployment
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
@@ -901,7 +902,7 @@ async function invokeSSMForDatabaseDeployment(
                 `${dataDrivePath},${logDrivePath}`
             );
         }
-        updateLongRunningAuditGroup(AuditStatus.FAILED, err?.message);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, err?.message, serverNameWithHostName);
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
