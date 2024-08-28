@@ -6,15 +6,15 @@ import { SCRIPT_VERSON_FILE } from './const';
 
 const compressResponse = `
     Function Deflate-String {
-        if ([string]::IsNullOrEmpty($stringToCompress)) {
-            Write-Information "The string to compress is either null or empty."
-            return $null
-        }
-        
         param (
             [Parameter(Mandatory = $true)]
             [string]$stringToCompress
         )
+
+        if ([string]::IsNullOrEmpty($stringToCompress)) {
+            Write-Information "The string to compress is either null or empty."
+            return $null
+        }
 
         $encoder = New-Object System.Text.UTF8Encoding
         $memoryStream = New-Object System.IO.MemoryStream
@@ -1266,7 +1266,6 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
     }
 `;
 
-// console.log(sqlQueryExecution(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, DATABASES, false));
 export {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
