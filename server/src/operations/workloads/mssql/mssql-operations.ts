@@ -496,6 +496,7 @@ async function getServerDetails(
         isSingleInstance = true;
     }
 
+    isSqlAuthEnabled = isDemoFlow ? true : isSqlAuthEnabled;
     const command = [sqlQueryExecutionWithAuth(instanceNames, SERVER_DETAILS, isSqlAuthEnabled)];
     const serverAllDetails = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
 
