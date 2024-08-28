@@ -5,11 +5,7 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../uti
 import { SCRIPT_VERSON_FILE } from './const';
 
 const compressResponse = `
-    Function Deflate-String {
-        param (
-            [Parameter(Mandatory = $true)]
-            [string]$stringToCompress
-        )
+    Function Deflate-String([string]$stringToCompress) {
 
         if ([string]::IsNullOrEmpty($stringToCompress)) {
             Write-Information "The string to compress is either null or empty."

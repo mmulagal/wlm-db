@@ -4,63 +4,76 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../uti
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 // ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
-const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
-$instances = (${instances})
-$results = @()
+const GET_SANDBOX_DETAILS = (
+    instanceName: string = DEFAULT_INSTANCE_NAME,
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
+) => `
 
-foreach ($instance in $instances) {
-    try {
-        $query = @"
-        SET NOCOUNT ON;
-        DROP TABLE IF EXISTS #properties;
-        
-        CREATE TABLE #properties (
-            database_name nvarchar(255),
-            name nvarchar(255),
-            value sql_variant
-        );
-        
-        INSERT INTO #properties
-        EXEC sp_MSforeachdb '
-            USE [?];
-            SELECT database_name = DB_NAME(), l.name, l.value
-            FROM sys.databases d
-            OUTER APPLY fn_listextendedproperty(default, default, default, default, default, default, default) l
-            WHERE d.name = DB_NAME()
-            AND database_id > 4
-            AND l.name IS NOT NULL
-            AND l.value IS NOT NULL ';
-        
-            SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
-            FROM (
-                SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
-                FROM #properties AS p1
-            ) AS grouped_properties
-            GROUP BY database_name, properties
-            FOR JSON PATH;
+$instanceName = "${instanceName}"
+$executableInstanceName = "${executableInstanceName}"
+$results = @()
+$sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+
+try {
+    $query = @"
+    SET NOCOUNT ON;
+    DROP TABLE IF EXISTS #properties;
+    
+    CREATE TABLE #properties (
+        database_name nvarchar(255),
+        name nvarchar(255),
+        value sql_variant
+    );
+    
+    INSERT INTO #properties
+    EXEC sp_MSforeachdb '
+        USE [?];
+        SELECT database_name = DB_NAME(), l.name, l.value
+        FROM sys.databases d
+        OUTER APPLY fn_listextendedproperty(default, default, default, default, default, default, default) l
+        WHERE d.name = DB_NAME()
+        AND database_id > 4
+        AND l.name IS NOT NULL
+        AND l.value IS NOT NULL ';
+    
+        SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
+        FROM (
+            SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
+            FROM #properties AS p1
+        ) AS grouped_properties
+        GROUP BY database_name, properties
+        FOR JSON PATH;
 "@
 
-        $output = sqlcmd -S $instance -Q $query -y 0 2> $null
 
-        if ($output) {
-            $results += [PSCustomObject]@{
-                Instance = $instance
-                Output = $output
-            }
-        }
-        else {
-            $results += [PSCustomObject]@{
-                Instance = $instance
-                Output = "No sandboxes created for the instance"
-            }
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
+
+    ${slqcmdExecutionTemplate}
+
+    $output = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName $executableInstanceName
+
+    if ($output) {
+        $results += [PSCustomObject]@{
+            Instance = $instanceName
+            Output = $output
         }
     }
-    catch {
-        [PSCustomObject]@{
-            Instance = $instance
-            Error = "Error executing query on $instance $($_.Exception.Message)"
-        } | ConvertTo-Json
+    else {
+        $results += [PSCustomObject]@{
+            Instance = $instanceName
+            Output = "No sandboxes created for the instance"
+        }
     }
+}
+catch {
+    [PSCustomObject]@{
+        Instance = $instanceName
+        Error = "Error executing query on $instance $($_.Exception.Message)"
+    } | ConvertTo-Json
 }
 
 $response = $results | ConvertTo-Json -Depth 5
