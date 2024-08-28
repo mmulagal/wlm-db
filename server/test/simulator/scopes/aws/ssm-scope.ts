@@ -252,7 +252,7 @@ const getHostAndSqlServerInfo = {
 // };
 
 const getDefaultDriveLetters = {
-    commands: [GET_DEFAULT_DRIVES('$env:computername')]
+    commands: [GET_DEFAULT_DRIVES]
 };
 
 const getActiveNodeDriveDetailsStandalone = {

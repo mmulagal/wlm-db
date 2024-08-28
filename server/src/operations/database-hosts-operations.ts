@@ -1557,7 +1557,8 @@ async function getDatabaseInstanceSummary(
     region: string,
     databaseInstances: DatabaseInstance,
     fields?: string,
-    resourceDetails?: ResourceDetails
+    resourceDetails?: ResourceDetails,
+    standbyNodeInstanceId?: string
     /*
     resource detail is used to fetch node Topology for host its optional in instance summary
     as its returned at host level for database-hosts api(inventory) and
@@ -1572,7 +1573,8 @@ async function getDatabaseInstanceSummary(
         region,
         databaseInstances,
         fields,
-        resourceDetails
+        resourceDetails,
+        standbyNodeInstanceId
     );
 
     const {
@@ -1715,7 +1717,16 @@ async function getDatabaseInstanceSummary(
                       ]
                     : [Promise.resolve()]),
                 ...(shouldQueryNodeTopology && resourceDetails
-                    ? [getNodeTopology(accountId, region, databaseInstanceId, resourceDetails, activeNodeInstanceId)]
+                    ? [
+                          getNodeTopology(
+                              accountId,
+                              region,
+                              databaseInstanceId,
+                              resourceDetails,
+                              activeNodeInstanceId,
+                              standbyNodeInstanceId
+                          )
+                      ]
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
@@ -2095,7 +2106,7 @@ async function getDatabaseHostInstanceSummary(
 ) {
     logger.info('Fetching details about a database host instance ', accountId, databaseHostId, databaseInstanceId);
 
-    const { activeNodeInstanceId, newDatabaseInstanceDetails } = await getInstanceDetails(
+    const { activeNodeInstanceId, newDatabaseInstanceDetails, standbyNodeInstanceId } = await getInstanceDetails(
         accountId,
         credentialsId,
         region,
@@ -2112,7 +2123,8 @@ async function getDatabaseHostInstanceSummary(
         region,
         newDatabaseInstanceDetails,
         fields,
-        resourceDetails
+        resourceDetails,
+        standbyNodeInstanceId
     );
     logger.debug('Database host instance details', databaseInstanceSummary);
     return databaseInstanceSummary;
@@ -2283,7 +2295,7 @@ async function getInstanceDetails(
         resourceDetails,
         databaseInstanceDetails as unknown as DatabaseInstance
     );
-    const { nodeId: activeNodeInstanceId, matchingInstance } = activeNodeResponse;
+    const { nodeId: activeNodeInstanceId, matchingInstance, standbyNodeInstanceId } = activeNodeResponse;
     const { instanceName, instanceState, sqlAuthEnabled = false } = matchingInstance;
     if (instanceState !== SQL_SERVICE_STATE.RUNNING) {
         const errorMessage = `Instance id ${databaseInstanceId} is not running on host ${databaseHostId}.`;
@@ -2297,7 +2309,7 @@ async function getInstanceDetails(
         sqlAuthEnabled
     } as unknown as DatabaseInstance;
 
-    return { activeNodeInstanceId, newDatabaseInstanceDetails };
+    return { activeNodeInstanceId, newDatabaseInstanceDetails, standbyNodeInstanceId };
 }
 
 async function getDatabaseDetails(
