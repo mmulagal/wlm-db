@@ -69,7 +69,11 @@ async function getDefaultDrives(
     executionTimeout?: string
 ) {
     logger.info('Getting MSSQL default data and log drives', { credentialsId, region, activeNodeInstanceId });
-    const defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
+    let defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
+
+    if (isDemoFlow) {
+        defaultDrivesCommand = [GET_DEFAULT_DRIVES(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, true)];
+    }
 
     const defaultDriveResponse = await callSsmExecution(
         credentialsId,
@@ -1816,6 +1820,5 @@ export {
     newDBInitialization,
     configureLuns,
     cleanUpDatabaseDeployment,
-    getCollationDetails,
-    getDefaultDrives
+    getCollationDetails
 };

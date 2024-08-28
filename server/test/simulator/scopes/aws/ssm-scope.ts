@@ -88,7 +88,7 @@ const dbCountParams = {
 };
 
 const dbCountParamasV2 = {
-    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES_COUNT_V2)]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES_COUNT_V2, false)]
 };
 
 const dbSummaryParams1 = {
@@ -226,7 +226,7 @@ const getStorageParams = {
 // };
 
 const getPerformanceWithLatencyMetrics = {
-    commands: [`sqlcmd -S "$env:computername" -Q "${PERFORMANCE_METRICS_WITH_LATENCY}" -y 0`]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], PERFORMANCE_METRICS_WITH_LATENCY, false)]
 };
 
 const getServerInstallDate = {
@@ -252,7 +252,7 @@ const getHostAndSqlServerInfo = {
 // };
 
 const getDefaultDriveLetters = {
-    commands: [GET_DEFAULT_DRIVES]
+    commands: [GET_DEFAULT_DRIVES(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, true)]
 };
 
 const getActiveNodeDriveDetailsStandalone = {
@@ -299,7 +299,7 @@ const checkDBExists = {
 };
 
 const serverDetails = {
-    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SERVER_DETAILS)]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SERVER_DETAILS, true)]
 };
 
 const clusterNetwokIpInfo = {
@@ -307,7 +307,7 @@ const clusterNetwokIpInfo = {
 };
 
 const resourceUtilization = {
-    commands: [RESOURCE_UTILIZATION(['MSSQLSERVER'])]
+    commands: [RESOURCE_UTILIZATION(['MSSQLSERVER'], false)]
 };
 
 const getCollationDetails = {
