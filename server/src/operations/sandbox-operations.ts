@@ -770,8 +770,20 @@ async function validateCloneParams(
     try {
         if (srcDetails.host !== destDetails.host || srcDetails.instance !== destDetails.instance) {
             const [srcSqlServerVersion, destSqlServerVersion] = await Promise.all([
-                getSqlServerVersion(credentialsId, region, srcDetails.activeNodeInstanceId, srcDetails.instanceName),
-                getSqlServerVersion(credentialsId, region, destDetails.activeNodeInstanceId, destDetails.instanceName)
+                getSqlServerVersion(
+                    credentialsId,
+                    region,
+                    srcDetails.activeNodeInstanceId,
+                    srcDetails.instanceName,
+                    srcDetails.sqlAuthEnabled
+                ),
+                getSqlServerVersion(
+                    credentialsId,
+                    region,
+                    destDetails.activeNodeInstanceId,
+                    destDetails.instanceName,
+                    destDetails.sqlAuthEnabled
+                )
             ]);
 
             if (srcSqlServerVersion > destSqlServerVersion) {

@@ -22,7 +22,8 @@ import {
     DISK_UTILISATION,
     MEMORY_UTILISATION,
     INSTANCE_GUID,
-    DATABASES_COUNT_V2
+    DATABASES_COUNT_V2,
+    SERVER_VERSION
 } from './queries';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -1180,13 +1181,21 @@ async function getSqlServerVersion(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
 ) {
-    logger.info('Get SQL server version:', { credentialsId, region, activeNodeInstanceId, instanceName });
-    const command = [`sqlcmd -S "${instanceName}"-Q "SELECT @@VERSION" -y 0`];
+    logger.info('Get SQL server version:', {
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        executableInstanceName,
+        sqlAuthEnabled
+    });
+    const instanceName = getOriginalDatabaseInstanceName(executableInstanceName);
+    const command = [sqlQueryExecution(instanceName, executableInstanceName, SERVER_VERSION, sqlAuthEnabled)];
     const sqlServerVersionResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
-    const serverInfo = sqlServerVersionResponse ? sqlServerVersionResponse?.replaceAll('\r\n', '').split('\t') : ''; // const sqlServerVersion: parsedSqlSeverVersionResponse[0].substring(0, serverInfo[0].indexOf('(')).trim(),
-    const sqlServerVersion = serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim();
+    const { version = '' } = sqlServerVersionResponse ? sqlResponseParsing(sqlServerVersionResponse) : {}; // const sqlServerVersion: parsedSqlSeverVersionResponse[0].substring(0, serverInfo[0].indexOf('(')).trim(),
+    const sqlServerVersion = version ? version.substring(0, version.indexOf('(')).trim() : '';
 
     return sqlServerVersion;
 }
