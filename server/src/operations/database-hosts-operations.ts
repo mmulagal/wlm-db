@@ -2139,7 +2139,8 @@ async function getDatabasesV2(
         database_instance_name: savedInstanceName,
         fsxn_ids: fileSystemId,
         metadata,
-        is_default: isdefaultInstance
+        is_default: isdefaultInstance,
+        sqlAuthEnabled
     } = newDatabaseInstanceDetails;
     const { userDatabase = [] } = metadata as unknown as databaseInstanceMetadata;
     const instanceName = getDatabaseInstanceName(savedInstanceName, isdefaultInstance);
@@ -2163,7 +2164,8 @@ async function getDatabasesV2(
             getProtection,
             userDatabase,
             activeNodeInstanceId,
-            instanceName
+            instanceName,
+            sqlAuthEnabled
         );
     } catch (error) {
         const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
@@ -2180,7 +2182,7 @@ async function getProtectionDetails(
     activeNodeInstanceId?: string,
     instanceName?: string,
     instanceNames?: string[],
-    isSqlAuth = false
+    isSqlAuthEnabled = false
 ): Promise<{ awsBackup: BackupType; ontapBackup: BackupType }> {
     logger.info('Getting Proteciton details', {
         credentialsId,
@@ -2206,7 +2208,9 @@ async function getProtectionDetails(
             fileSystemId,
             isSystemDatabase,
             activeNodeInstanceId,
-            instanceName
+            instanceName,
+            undefined,
+            isSqlAuthEnabled
         ));
     } else {
         const instanceVolumeMapping = ((await getMappedOntapVolumes(
@@ -2217,7 +2221,7 @@ async function getProtectionDetails(
             activeNodeInstanceId,
             instanceName,
             instanceNames,
-            isSqlAuth
+            isSqlAuthEnabled
         )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {} }];
         volumeUuids =
             Object.values(instanceVolumeMapping)
@@ -2305,7 +2309,8 @@ async function getDatabaseDetails(
     getProtection: boolean,
     userDatabase: any,
     activeNodeInstanceId?: string,
-    instanceName?: string
+    instanceName?: string,
+    sqlAuthEnabled?: boolean
 ) {
     logger.info('Getting database details', {
         accountId,
@@ -2315,16 +2320,25 @@ async function getDatabaseDetails(
         fileSystemId,
         activeNodeInstanceId,
         instanceName,
-        getProtection
+        getProtection,
+        sqlAuthEnabled
     });
 
     try {
         const [{ databases } = { databases: [] }, backedupDatabases, { awsBackup = {}, ontapBackup = {} } = {}] =
             await Promise.all(
                 [
-                    getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
+                    getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName, sqlAuthEnabled),
                     ...(activeNodeInstanceId && getProtection
-                        ? [getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName)]
+                        ? [
+                              getNativeSQLBackedupDatabases(
+                                  databaseHostId,
+                                  activeNodeInstanceId,
+                                  instanceName,
+                                  undefined,
+                                  sqlAuthEnabled
+                              )
+                          ]
                         : [Promise.resolve()]), // Fetch native sql protection status
                     ...(activeNodeInstanceId && getProtection
                         ? [
@@ -2334,7 +2348,9 @@ async function getDatabaseDetails(
                                   fileSystemId,
                                   false,
                                   activeNodeInstanceId,
-                                  instanceName
+                                  instanceName,
+                                  undefined,
+                                  sqlAuthEnabled
                               )
                           ]
                         : [Promise.resolve()]) // Fetch protection status
