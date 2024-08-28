@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './HeaderComponent.module.scss';
 import DatabaseHomePage from '../DatabaseHomePage';
 import { BlueXPListeners, Button, Popover, SelectField, Typography, postBlueXPMessage } from '@netapp/design-system';
@@ -6,6 +6,7 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
 import {
+    apiDOCURL,
     checkValueSavedForCred,
     checkValueSavedForRegion,
     generateOptionType,
@@ -75,7 +76,6 @@ const HeaderComponent = ({ tab }: Tab) => {
     const [menuOpenedRow, setOpenedRow] = useState<null | boolean>(null);
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
-    const menuOpenedRowDetail: any = useRef(null);
 
     const { statusData, statusLoading } = useAppSelector(state => state.headers.getStatus);
 
@@ -592,13 +592,9 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                                                     break;
                                                 case 'apiHub':
+                                                    let url = apiDOCURL();
                                                     //@ts-ignore
-                                                    window
-                                                        .open(
-                                                            'https://staging.console.workloads.netapp.com/api-doc',
-                                                            '_blank'
-                                                        )
-                                                        .focus();
+                                                    window.open(url, '_blank').focus();
                                                     break;
 
                                                     break;
