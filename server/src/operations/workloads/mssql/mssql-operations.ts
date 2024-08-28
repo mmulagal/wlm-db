@@ -1309,20 +1309,29 @@ async function getActiveNodeAndInstanceDetails(
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
     const { database_instance_name: instanceName } = databaseInstanceDetails;
 
-    const activeNodeResponse = await getActiveSqlNodeAndInstanceDetails(
-        accountId,
-        credentialsId,
-        region,
-        [node1InstanceId, ...(node2InstanceId ? [node2InstanceId] : [])],
-        instanceName,
-        resourceId,
-        resourceName || ''
-    );
+    const activeNodeResponse: { nodeId: string; matchingInstance: any; standbyNodeInstanceId?: string } =
+        await getActiveSqlNodeAndInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            [node1InstanceId, ...(node2InstanceId ? [node2InstanceId] : [])],
+            instanceName,
+            resourceId,
+            resourceName || ''
+        );
     if (!activeNodeResponse) {
         const errorMessage = `${node1InstanceId} , ${node2InstanceId} are not in active state for resource id: ${resourceId}, resource name : ${resourceName} `;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
+    const { nodeId: activeNodeInstanceId } = activeNodeResponse;
+    const standbyNodeInstanceId = node2InstanceId
+        ? node1InstanceId === activeNodeInstanceId
+            ? node2InstanceId
+            : node1InstanceId
+        : undefined;
+    activeNodeResponse.standbyNodeInstanceId = standbyNodeInstanceId;
+
     return activeNodeResponse;
 }
 

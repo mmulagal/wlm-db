@@ -73,7 +73,7 @@ const CloudFormationStaticTemplateRequestBody = Type.Object({
             })
         )
     ),
-    credentialsId: Type.Optional(Type.String({ format: 'uuid' })),
+    credentialsId: Type.Optional(Type.String()),
     region: Type.Optional(Type.String())
 });
 

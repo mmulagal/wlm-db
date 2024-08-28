@@ -64,10 +64,12 @@ async function getDefaultDrives(
     region: string,
     activeNodeInstanceId: string,
     instanceName: string,
+    executableInstanceName: string,
+    isSqlAuthEnabled: boolean,
     executionTimeout?: string
 ) {
     logger.info('Getting MSSQL default data and log drives', { credentialsId, region, activeNodeInstanceId });
-    const defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName)];
+    const defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
 
     const defaultDriveResponse = await callSsmExecution(
         credentialsId,
@@ -79,19 +81,16 @@ async function getDefaultDrives(
         executionTimeout
     );
 
-    const [parsedDefaultDataDrive, parsedDefaultLogDrive] = defaultDriveResponse
-        ? sqlResponseParsing(defaultDriveResponse)
-        : [];
+    const parsedDefaultDriveResponse = defaultDriveResponse ? sqlResponseParsing(defaultDriveResponse) : '';
 
-    const currentDataDrive =
-        parsedDefaultDataDrive && !parsedDefaultDataDrive.includes('error')
-            ? sqlResponseParsing(parsedDefaultDataDrive)[0].CurrentDataDrive
+    const parsedCurrentDrive =
+        parsedDefaultDriveResponse && !parsedDefaultDriveResponse.includes('error')
+            ? sqlResponseParsing(parsedDefaultDriveResponse)[0]
             : '';
 
-    const currentLogDrive =
-        parsedDefaultLogDrive && !parsedDefaultLogDrive.includes('error')
-            ? sqlResponseParsing(parsedDefaultLogDrive)[0].CurrentLogDrive
-            : '';
+    const currentDataDrive = (parsedCurrentDrive?.DefaultDataDrive || [])[0] || '';
+    const currentLogDrive = (parsedCurrentDrive?.DefaultLogDrive || [])[0] || '';
+
     logger.debug('MSSQL default data and log drives response', { currentDataDrive, currentLogDrive });
     return { currentDataDrive, currentLogDrive };
 }
@@ -256,6 +255,8 @@ async function getDriveInfoFromSSM(
         throw createError(errorMessage);
     }
 
+    let isSqlAuthEnabled = false;
+    let actualInstanceName;
     if (!activeNodeInstance && instanceDetail && instancesDetails) {
         const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
@@ -271,6 +272,11 @@ async function getDriveInfoFromSSM(
             throw createError(errorMessage);
         }
         instanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
+        actualInstanceName = instanceDetail.database_instance_name;
+        isSqlAuthEnabled = instancesDetails.some(
+            instance =>
+                instance.instanceName === instanceDetail.database_instance_name && instance.sqlAuthEnabled === true
+        );
     }
 
     if (sqlDeploymentType === 'FCI' && !forSandbox && standbyNodeInstanceId) {
@@ -303,7 +309,9 @@ async function getDriveInfoFromSSM(
                       credentialsId,
                       region,
                       activeNodeInstanceId as string,
+                      actualInstanceName!,
                       instanceName,
+                      isSqlAuthEnabled,
                       executionTimeout
                   )
         ]);
@@ -1808,5 +1816,6 @@ export {
     newDBInitialization,
     configureLuns,
     cleanUpDatabaseDeployment,
-    getCollationDetails
+    getCollationDetails,
+    getDefaultDrives
 };

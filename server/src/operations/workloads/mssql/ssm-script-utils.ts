@@ -180,24 +180,30 @@ $driveLettersObject | ConvertTo-Json
 }
 */
 
-const GET_DEFAULT_DRIVES = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `
-#Get default data drive of SQL server
-$defaultDataDrive =  sqlcmd -S "${instanceName}" -Q @"
-    SET NOCOUNT ON;
-    DECLARE @DataPath NVARCHAR(500);
-    EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;
-    SELECT LEFT(@DataPath,1) AS CurrentDataDrive FOR JSON PATH;
-"@ -y 0
+const GET_DEFAULT_DRIVES = (
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
+) => `
+$sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+$executableInstanceName = "${executableInstanceName}"
+$instanceName = "${instanceName}"
+$defaultDrivesQuery = "SET NOCOUNT ON;
+SELECT 
+SERVERPROPERTY('InstanceDefaultDataPath') AS DefaultDataDrive,
+SERVERPROPERTY('InstanceDefaultLogPath') AS DefaultLogDrive FOR JSON PATH;"
 
-#Get default log drive of SQL server
-$defaultLogDrive = sqlcmd -S "${instanceName}"  -Q @"
-    SET NOCOUNT ON;
-    DECLARE @LogPath NVARCHAR(500);
-    EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;
-    SELECT LEFT(@LogPath,1) AS CurrentLogDrive FOR JSON PATH;
-"@ -y 0
+    ${slqcmdExecutionTemplate}
 
-Write-Output $defaultDataDrive $defaultLogDrive | ConvertTo-Json
+$sqlCredential = @{'useSqlAuth' = $False}
+if($sqlAuthEnabled) {
+    ${readSsmParameter(instanceName)}
+}
+
+#Get default collation and default version of SQL server
+$defaultDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "$defaultDrivesQuery" -InstanceName "$executableInstanceName"
+
+Write-Output $defaultDrives | ConvertTo-Json
 `;
 
 const cpuQuery = `@"
