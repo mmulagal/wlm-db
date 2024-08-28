@@ -206,7 +206,7 @@ async function updateLongRunningAuditGroup(
     status?: AUDIT_STATUS,
     message?: string,
     resourceId?: string,
-    responseData = undefined
+    responseData?: any
 ) {
     logger.info('Updating long running audit group:', {
         status,

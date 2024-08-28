@@ -55,7 +55,7 @@ const DeployTemplateSchema = {
     description: 'Deploy CloudFormation template to provision SQL FCI',
     body: CloudFormationTemplateRequestBody,
     response: {
-        200: CloudFormationDeploymentResponse
+        202: CloudFormationDeploymentResponse
     }
 };
 
