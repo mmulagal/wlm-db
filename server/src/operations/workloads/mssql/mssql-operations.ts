@@ -117,8 +117,13 @@ async function getDatabasesCount(
     return isSingleInstance ? parsedResponse[sqlInstanceName!]?.[0] : parsedResponse;
 }
 
-async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: string, instanceName?: string) {
-    logger.info('Get databases summary for resource:', resourceId);
+async function getDataBasesSummary(
+    resourceId: string,
+    activeNodeInstanceId?: string,
+    instanceName?: string,
+    sqlAuthEnabled = false
+) {
+    logger.info('Get databases summary for resource:', resourceId, sqlAuthEnabled);
 
     const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
     if (!credentialsId || !region || !node1InstanceId) {
@@ -139,23 +144,35 @@ async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: st
     }
 
     try {
-        let dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId, instanceName);
-        dbCount = dbCount?.totalCount || 0;
+        const sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
+        // let dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId, instanceName, undefined, sqlAuthEnabled);
+        // dbCount = dbCount?.totalCount || 0;
 
-        const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
-        const batchQueries: string[] = [];
-        for (let i = 0, offset = 0; i < rowscount; i++) {
-            batchQueries.push(`sqlcmd -S "${instanceName}" -Q "${DATABASES(offset, DB_ROWS_COUNT)}" -y 0`);
-            offset += DB_ROWS_COUNT;
-        }
+        // const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
+        // const batchQueries: string[] = [];
+        // for (let i = 0, offset = 0; i < rowscount; i++) {
+        //    batchQueries.push(sqlQueryExecution(sqlInstanceName, instanceName, DATABASES(offset, DB_ROWS_COUNT), sqlAuthEnabled));
+        //    offset += DB_ROWS_COUNT;
+        // }
 
-        const responses = await Promise.map(
-            batchQueries,
-            async query => callSsmExecution(credentialsId, region, [query], activeNodeInstanceId!),
-            { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+        // const responses = await Promise.map(
+        //    batchQueries,
+        //    async query => callSsmExecution(credentialsId, region, [query], activeNodeInstanceId!),
+        //    { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+        // );
+        // const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
+        // // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
+
+        // Changing the logic, as ssm response compression would take care of this
+        const commands = sqlQueryExecution(sqlInstanceName, instanceName, DATABASES, sqlAuthEnabled);
+        const dbSummary = await callSsmExecution(
+            credentialsId,
+            region,
+            [commands],
+            activeNodeInstanceId,
+            undefined,
+            false
         );
-        const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
-        // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
         const cleanDBSummanry = sqlResponseParsing(dbSummary);
 
         return { databases: cleanDBSummanry };

@@ -1347,5 +1347,30 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "dbSummaryResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryResponse",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryResponse",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"databaseId\":177,\"databaseName\":\"RetailBanking\",\"creationDate\":\"2023-04-11T17:49:40.963\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":553648128,\"collationName\":\"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":34,\"databaseName\":\"MFGSales\",\"creationDate\":\"2023-04-11T17:23:39.663\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216,\"collationName\":\"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":203,\"databaseName\":\"AssetManagement\",\"creationDate\":\"2023-04-11T17:49:48.887\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216,\"collationName\":\"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":58,\"databaseName\":\"HRAudit\",\"creationDate\":\"2023-04-11T17:43:09.220\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216,\"collationName\":\"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":234,\"databaseName\":\"PrivateBanking\",\"creationDate\":\"2023-04-11T17:49:58.353\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216,\"collationName\":\"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":30,\"databaseName\":\"SalesData\",\"creationDate\":\"2023-04-11T17:23:38.587\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216,\"collationName\":\"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":24,\"databaseName\":\"ExpenseTracker\",\"creationDate\":\"2023-04-11T17:23:36.840\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216,\"collationName\":\"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":250,\"databaseName\":\"TimeSheet\",\"creationDate\":\"2023-04-11T17:50:03.333\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216,\"collationName\":\"SQL_Latin1_General_CP1_CI_AS\"}]",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }

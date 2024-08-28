@@ -47,7 +47,8 @@ import {
     INSTANCE_GUID,
     ENTERPRISE_CHECK_QUERY,
     DATABASES_COUNT_V2,
-    NATIVE_SQL_BACKUPS
+    NATIVE_SQL_BACKUPS,
+    DATABASES
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
     GET_SANDBOX_DETAILS,
@@ -66,7 +67,7 @@ import {
     getConnectionInfo,
     invokeVirtualMountScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
-import { DEFAULT_INSTANCE_NAME } from '../../../../src/utils/consts';
+import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../../src/utils/consts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -485,6 +486,10 @@ const checkScriptUpdate = {
     commands: [READ_SCRIPT_VERSION]
 };
 
+const dbSummary = {
+    commands: [sqlQueryExecution(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, DATABASES, false)]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -617,7 +622,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getConnectionInforCommand })
     .resolves(listSendCommandCommandResponse.getConnectionInfoCommand)
     .on(SendCommandCommand, { Parameters: checkScriptUpdate })
-    .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand);
+    .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand)
+    .on(SendCommandCommand, { Parameters: dbSummary })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -755,7 +762,11 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkSrciptUpdateCommand'
     })
-    .resolves(getCommandInvocationResponse.checkScriptUpdateResp);
+    .resolves(getCommandInvocationResponse.checkScriptUpdateResp)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryCommand'
+    })
+    .resolves(getCommandInvocationResponse.dbSummaryResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

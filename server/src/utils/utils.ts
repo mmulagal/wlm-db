@@ -616,7 +616,7 @@ async function decompressSSMResponse(response: string) {
     logger.debug('Decompressing SSM response', { response });
 
     response = response.replaceAll('\r\n', '');
-    if (isEmpty(response) || !isBase64(response)) {
+    if (isDemo() || isEmpty(response) || !isBase64(response)) {
         return response;
     }
 

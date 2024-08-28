@@ -1126,6 +1126,8 @@ const sqlQueryExecution = (
         ${readSsmParameter(instanceName)}
     }
     $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstanceName}"
+    $queryResponse = $queryResponse | ConvertFrom-Json
+    $queryResponse = $queryResponse | ConvertTo-Json -Depth 5
 
     ${compressResponse}
     return (Deflate-String $queryResponse) 
@@ -1264,6 +1266,7 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
     }
 `;
 
+// console.log(sqlQueryExecution(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, DATABASES, false));
 export {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
