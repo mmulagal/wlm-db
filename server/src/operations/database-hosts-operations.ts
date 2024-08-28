@@ -2617,6 +2617,7 @@ async function getDatabaseInstancesSummary(
     }
 
     return databaseInstances.map((databaseInstance: DatabaseInstance, index) => {
+        const instanceName = instanceNames?.[index];
         const {
             database_instance_id: databaseInstanceId,
             database_instance_name: savedDatabaseInstanceName,
@@ -2635,8 +2636,8 @@ async function getDatabaseInstancesSummary(
         };
 
         databaseInstanceDetails.status = ServerState.UP;
-        if (shouldQueryServerDetails && serverDetails) {
-            const instanceServerDetails = serverDetails?.[instanceNames?.[index]];
+        const instanceServerDetails = serverDetails?.[instanceName];
+        if (shouldQueryServerDetails && instanceServerDetails) {
             instanceServerDetails.creationDate = creationDate ? Date.parse(creationDate.toString()) : '';
             databaseInstanceDetails.databaseServer = instanceServerDetails;
         }
@@ -2645,8 +2646,8 @@ async function getDatabaseInstancesSummary(
             databasesCount.totalCount += userDatabase.length;
         }
 
-        if (getDbCount && databasesCount) {
-            const [instanceDbCount] = databasesCount?.[instanceNames?.[index]] ?? [];
+        const [instanceDbCount] = databasesCount?.[instanceName] ?? [];
+        if (getDbCount && instanceDbCount) {
             databaseInstanceDetails.databaseCount = instanceDbCount?.totalCount || 0;
         }
 
@@ -2655,15 +2656,15 @@ async function getDatabaseInstancesSummary(
         }
 
         databaseInstanceDetails.databaseInstanceTopology = databaseInstancetopologyData?.[index];
-        const instancePerformanceData = performanceData?.[instanceNames?.[index]];
+        const instancePerformanceData = performanceData?.[instanceName];
         databaseInstanceDetails.performance = getPerformance
             ? { assessment: instancePerformanceData?.assessment, rwMetrics: instancePerformanceData! }
             : {};
         databaseInstanceDetails.storage = storageData?.[index];
         databaseInstanceDetails.sqlServerDeploymentType = databaseDeploymentType || '';
 
-        if (getResourceutilization && resourceUtilizationData) {
-            const instanceResourceUtilizationData = resourceUtilizationData?.[instanceNames?.[index]];
+        const instanceResourceUtilizationData = resourceUtilizationData?.[instanceName];
+        if (getResourceutilization && instanceResourceUtilizationData) {
             databaseInstanceDetails.resourceUtilization = {
                 cpu: instanceResourceUtilizationData.cpuUtilization! || {},
                 memory: instanceResourceUtilizationData.memoryUtilization! || {},
