@@ -16,6 +16,8 @@ import {
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as BlueXPDatabase } from '../../../assets/blueXPDatabase.svg';
+import { ReactComponent as ExternalLink } from '../../../assets/ic_external_link.svg';
+import { ReactComponent as RSS } from '../../../assets/ic_rss.svg';
 import { ReactComponent as Menu } from '../../../assets/ic_menu.svg';
 import Inventory from '../../Inventory/Inventory';
 import { useDispatch } from 'react-redux';
@@ -56,12 +58,11 @@ import InventoryApisV2 from '../../InventoryV2/InventoryApisV2';
 import DatabaseHostOverviewV2 from '../../ResourcePage/ResourceHomePage/DatabaseHostOverviewV2';
 import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { updateRefreshBlocked } from '../../../store/authSlice';
-import RedirectComponent from '../../ExploreSavings/SavingsCalculator/RedirectComponent';
+
 import SavingsCalculatorManualApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorManualAPI';
 import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice';
 import { useNavigate } from 'react-router-dom';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { parentNavigate } from '../../../utils/bxpUtils';
 
 type Tab = {
     tab: string;
@@ -386,15 +387,21 @@ const HeaderComponent = ({ tab }: Tab) => {
             },
             {
                 id: 'apiHub',
-                displayName: 'API Hub'
+                displayName: 'API Hub',
+                tagAdded: true,
+                tag: <ExternalLink />
             },
             {
                 id: 'monitoringGitHubRepository',
-                displayName: 'Monitoring GitHub repository'
+                displayName: 'Monitoring GitHub repository',
+                tagAdded: true,
+                tag: <ExternalLink />
             },
             {
                 id: 'subscribeToRss',
-                displayName: 'Subscribe to RSS'
+                displayName: 'Subscribe to RSS',
+                tagAdded: true,
+                tag: <RSS />
             },
             {
                 id: 'feedback',

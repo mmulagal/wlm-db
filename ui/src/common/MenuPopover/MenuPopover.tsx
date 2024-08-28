@@ -72,7 +72,7 @@ function MenuPopover({
                     }}
                 >
                     {item?.displayName}
-                    {item.tagAdded && item.tag}
+                    {item.tagAdded && <div style={{ marginLeft: '-8px' }}>{item.tag}</div>}
                     {item?.customComponent}
                 </li>
             );
