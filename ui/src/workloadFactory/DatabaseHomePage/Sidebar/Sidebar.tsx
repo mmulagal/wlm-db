@@ -201,8 +201,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         if (data) {
             setIsRightPanelTemplateLoading(false);
         } else {
-            payload.credentialsId = credDetails?.credId || '';
-            payload.region = credDetails?.region || '';
+            if (credDetails?.credId) {
+                payload.credentialsId = credDetails?.credId;
+            }
+            if (credDetails?.region) {
+                payload.region = credDetails?.region;
+            }
             loadTemplateData({ payload: payload }).then((data: any) => {
                 if (data?.data) {
                     storeRightPanelTemplateResponse(id, data?.data);
