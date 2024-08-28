@@ -8,6 +8,16 @@ import {
     ManualStorageSavingsRequestParams
 } from '../types/storage-savings.types';
 
+const internalUpdateRecommendationPreferenceSchema = {
+    tags: [RouteTags.STORAGE_SAVINGS],
+    hide: process.env.NODE_ENV === 'production',
+    summary: 'Internal API to update recommendation preference',
+    description: 'Internal API to update recommendation preference',
+    response: {
+        200: {}
+    }
+};
+
 const getStorageSavingsSchema = {
     tags: [RouteTags.STORAGE_SAVINGS],
     summary: 'Storage savings calculations for MSSQL server',
@@ -53,6 +63,7 @@ const getManualStorageSavingsCalculationMetricsSchema = {
 };
 
 export {
+    internalUpdateRecommendationPreferenceSchema,
     getStorageSavingsSchema,
     getStorageSavingsCalculationMetricsSchema,
     getManualStorageSavingsSchema,
