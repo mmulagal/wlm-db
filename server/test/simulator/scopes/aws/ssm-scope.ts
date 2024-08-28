@@ -299,7 +299,7 @@ const checkDBExists = {
 };
 
 const serverDetails = {
-    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SERVER_DETAILS, true)]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SERVER_DETAILS, false)]
 };
 
 const clusterNetwokIpInfo = {

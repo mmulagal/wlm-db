@@ -2498,7 +2498,9 @@ async function getDatabaseInstancesSummary(
     let isSqlAuthEnabled = false;
     if (shouldQueryServerDetails || getPerformance || getProtection || getResourceutilization || getDbCount) {
         // const instances = await determineSqlAuthEnabled(accountId, credentialsId, activeNodeInstanceId, region, databaseInstances);
-        isSqlAuthEnabled = databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
+        isSqlAuthEnabled = isDemoFlow
+            ? isSqlAuthEnabled
+            : databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
     }
 
     try {

@@ -112,7 +112,6 @@ async function getDatabasesCount(
         isSingleInstance = true;
     }
 
-    isSqlAuthEnabled = isDemoFlow ? false : isSqlAuthEnabled;
     const commands = [sqlQueryExecutionWithAuth(instanceNames, DATABASES_COUNT_V2, isSqlAuthEnabled)];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
     logger.debug('Fetching databases count response', response);
@@ -214,7 +213,6 @@ async function getAllResourceUtilisationDetails(
         instanceNames = [sqlInstanceName];
         isSingleInstance = true;
     }
-    isSqlAuthEnabled = isDemoFlow ? false : isSqlAuthEnabled;
     const commands = [RESOURCE_UTILIZATION(instanceNames, isSqlAuthEnabled)];
     const resurceUtilizationData = await callSsmExecution(
         credentialsId,
@@ -496,7 +494,6 @@ async function getServerDetails(
         isSingleInstance = true;
     }
 
-    isSqlAuthEnabled = isDemoFlow ? true : isSqlAuthEnabled;
     const command = [sqlQueryExecutionWithAuth(instanceNames, SERVER_DETAILS, isSqlAuthEnabled)];
     const serverAllDetails = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
 
@@ -1272,7 +1269,9 @@ async function getActiveSqlNodeAndInstanceDetails(
 
                 instanceDetails?.forEach((obj: { instanceName: string; sqlAuthEnabled: boolean }) => {
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
-                    obj.sqlAuthEnabled = !isEmpty(sql)
+                    obj.sqlAuthEnabled = isDemoFlow
+                        ? false
+                        : !isEmpty(sql)
                         ? Boolean(
                               sql?.find(
                                   ({ sqlinstancename }: { sqlinstancename: string }) =>
