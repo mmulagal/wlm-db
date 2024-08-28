@@ -5,6 +5,7 @@ import { STORAGE_TYPE } from '@prisma/client';
 import { compact } from 'lodash-es';
 import { deleteOlderJobs } from '../lib/database/job';
 import {
+    ACCOUNT_ID,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     TCO_FEATURE
@@ -18,6 +19,7 @@ import { manageInstanceRecommendationPreReqs } from './aws/compute-optimizer-ope
 import { getEc2Arn } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
 import { fetchSqlServerInstanceConfiguration } from './recommendation-operations';
+import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -47,6 +49,12 @@ function purgeOlderJobs() {
 // Scheduled task to update and manage EC2 instance recommendation preferences based on recent usage, and remove entries for instances no longer available in AWS."
 function updateInstanceRecommendationPreferences() {
     setInterval(async () => {
+        await updatePreferences();
+    }, Number(ms(config.get('db.tco.update-recommendation-preference'))));
+}
+
+async function updatePreferences() {
+    getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
         logger.info('Updating instance recommendation preferences');
         const trackedEc2Instances = await listTrackedEc2(TCO_FEATURE);
         await Promise.map(
@@ -59,6 +67,7 @@ function updateInstanceRecommendationPreferences() {
                     credentials_id: credentialsId,
                     region
                 } = instance;
+                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 try {
                     const {
                         items: [ec2HostDetails]
@@ -129,12 +138,13 @@ function updateInstanceRecommendationPreferences() {
             { concurrency: 5 }
         );
         logger.info('Updating instance recommendation preferences completed');
-    }, Number(ms(config.get('db.tco.update-recommendation-preference'))));
+    });
 }
 
 export {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
-    updateInstanceRecommendationPreferences
+    updateInstanceRecommendationPreferences,
+    updatePreferences
 };
