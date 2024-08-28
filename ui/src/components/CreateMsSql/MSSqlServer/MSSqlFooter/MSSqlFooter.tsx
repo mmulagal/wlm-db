@@ -71,60 +71,35 @@ const MSSqlFooter = () => {
             stackName = stackName.split('/')[1];
         }
         let message;
-        if (isWorkloadFactoryStatus) {
-            message = (
-                <>
-                    {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
-                    {
-                        <>
-                            <Button
-                                Component="button"
-                                variant="text"
-                                onClick={() => {
-                                    clearTimeout(notificationMsg);
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+
+        message = (
+            <>
+                {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
+                {
+                    <>
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                clearTimeout(notificationMsg);
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                if (isWorkloadFactoryStatus) {
                                     navigate('../databases');
-                                    dispatch(clearNotifications());
-                                }}
-                            >
-                                {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
-                            </Button>
-                        </>
-                    }
-                    {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
-                </>
-            );
-        } else {
-            const timelineUrl =
-                process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
-            message = (
-                <>
-                    {GENERAL.CREATE_INFO_MESSAGE[0]}
-                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName : ''}
-                    {stackName && stackUrl && (
-                        <>
-                            {GENERAL.CREATE_INFO_MESSAGE[1]}
-                            <Button
-                                Component="button"
-                                variant="link"
-                                onClick={() => window.open(stackUrl, '_blank', 'noopener')}
-                            >
-                                {stackName}
-                            </Button>
-                        </>
-                    )}
-                    {GENERAL.CREATE_INFO_MESSAGE[2]}
-                    <Button
-                        Component="button"
-                        variant="text"
-                        onClick={() => window.open(timelineUrl, '_blank', 'noopener')}
-                    >
-                        {GENERAL.CREATE_INFO_MESSAGE[3]}
-                    </Button>
-                    {GENERAL.CREATE_INFO_MESSAGE[4]}
-                </>
-            );
-        }
+                                } else {
+                                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                                }
+
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
+                        </Button>
+                    </>
+                }
+                {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
+            </>
+        );
+
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
         notificationMsg = setTimeout(() => {
             isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
