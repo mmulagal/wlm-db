@@ -46,7 +46,7 @@ Parameters:
     Description: The name of the volume for SQL Server data.
     Type: String
     Default: vol_pgdata
-  FSxLogVolumeName:
+  FSXLogVolumeName:
     Description: The name of the volume for the SQL Server log.
     Type: String
     Default: vol_pglog
@@ -59,21 +59,26 @@ Parameters:
     Type: String
     Default: fs-0d5efc3057c4f12cb
   FSXUsername:
-    Description: ID for the FSx for ONTAP file system.
+    Description: Username for the FSx for ONTAP file system.
     Type: String
     Default: fsxadmin
   FSXPassword:
-    Description: ID for the FSx for ONTAP file system.
+    Description: Password for the FSx for ONTAP file system.
     Type: String
+    NoEcho: true
     Default: netapp1!
   FSXMgmtIp:
-    Description: ID for the FSx for ONTAP file system.
+    Description: Management IP for the FSx for ONTAP file system.
     Type: String
     Default: "172.31.255.201"
   FSXNFSIP:
-    Description: ID for the FSx for ONTAP file system.
+    Description: NFS IP for the FSx for ONTAP file system.
     Type: String
     Default: "172.31.255.248"
+  FSxAggrName:
+    Description: Aggregate FSx for ONTAP file system.
+    Type: String
+    Default: "aggr1"
   EBSVolumeSize:
     Description: Size of the EBS Volume in GiB.
     Type: String
@@ -81,7 +86,7 @@ Parameters:
   AMIId:
     Description: The AMI ID for the EC2 instances.
     Type: String
-    Default: ami-060e277c0d4cce553
+    Default: ami-0a6b545f62129c495
 
 Resources:
   LaunchWizardSqlFSxProfile:
@@ -123,42 +128,79 @@ Resources:
         'Fn::Base64':
           !Sub |
             #!/bin/bash
+            exec > /var/log/user-data.log 2>&1
             echo "Setting up the environment..."
             fsxusername=${FSXUsername}
             fsxpassword=${FSXPassword}
             fsxMgmtIp=${FSXMgmtIp}
             fsxNFSIP=${FSXNFSIP}
+            fsxsvmname=${SQLSvmName}
+            fsxaggrname=${FSxAggrName}
             fsxdatamountpoint=/${FSXDataVolumeName}
-            fsxlogmountpoint=/${FSxLogVolumeName}
+            fsxlogmountpoint=/${FSXLogVolumeName}
             fsxdatavolumename=${FSXDataVolumeName}
-            fsxlogvolumename=${FSxLogVolumeName}
+            fsxlogvolumename=${FSXLogVolumeName}
             psql_data_default=/var/lib/pgsql/14/data
             archive_dir=/pglog/logs/archived_logs
             psql_svcs=postgresql
             dbname=testDB
 
-            # Function to check status and exit on failure
+            # Function to check the status of the previous command and exit on failure
             check_status() {
               if [ $? -ne 0 ]; then
                 echo "$1"
-                /opt/aws/bin/cfn-signal -e 1 --stack ${AWS::StackName} --resource SqlNode --region ${AWS::Region}
-                exit 1
+                exit 1;
               fi
             }
 
-            # Create FlexVols
-            curl -k -u $fsxusername:$fsxpassword -H "Content-Type: application/json" -X POST -d '{ "name":"'$fsxdatavolumename'","size":"10G", "nas": { "path":"'$fsxdatamountpoint'" }, "svm": { "name": "fsx" }, "aggregates": [ { "name": "aggr1" } ] }' https://$fsxMgmtIp/api/storage/volumes
-            check_status "Failed to create data volume"
+            # Increase shared memory limits
+            echo "kernel.shmmax = 68719476736" | sudo tee /etc/sysctl.d/99-postgresql.conf
+            echo "kernel.shmall = 4294967296" | sudo tee -a /etc/sysctl.d/99-postgresql.conf
+            sudo sysctl --system
+            
+            check_status "Failed to increase shared memory limits"
 
-            curl -k -u $fsxusername:$fsxpassword -H "Content-Type: application/json" -X POST -d '{ "name":"'$fsxlogvolumename'","size":"1G","nas": { "path":"'$fsxlogmountpoint'" }, "svm": { "name": "fsx" }, "aggregates": [ { "name": "aggr1" } ] }' https://$fsxMgmtIp/api/storage/volumes
-            check_status "Failed to create log volume"
+            # Configure passwordless sudo for ec2-user
+            echo "ec2-user ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/ec2-user
+            check_status "Failed to configure passwordless sudo for ec2-user"
+
+            # Create postgres user and group, set permissions
+            if ! id "postgres" &>/dev/null; then
+              sudo groupadd -f postgres
+              sudo useradd -g postgres postgres
+              check_status "Failed to create postgres user and group"
+            fi
+
+            # Check if data volume exists
+            data_volume_exists=$(curl -s -k -u $fsxusername:$fsxpassword -H "Content-Type: application/json" -X GET https://$fsxMgmtIp/api/storage/volumes | grep -c '"name": "'$fsxdatavolumename'"')
+            if [ $data_volume_exists -eq 0 ]; then
+              echo "Creating data volume..."
+              curl -k -u $fsxusername:$fsxpassword -H "Content-Type: application/json" -X POST -d '{ "name":"'$fsxdatavolumename'","size":"10G", "nas": { "path":"'$fsxdatamountpoint'" }, "svm": { "name": "'$fsxsvmname'" }, "aggregates": [ { "name": "'$fsxaggrname'" } ] }' https://$fsxMgmtIp/api/storage/volumes
+              check_status "Failed to create data volume"
+            else
+              echo "Data volume already exists."
+            fi
+
+            # Check if log volume exists
+            log_volume_exists=$(curl -s -k -u $fsxusername:$fsxpassword -H "Content-Type: application/json" -X GET https://$fsxMgmtIp/api/storage/volumes | grep -c '"name": "'$fsxlogvolumename'"')
+            if [ $log_volume_exists -eq 0 ]; then
+              echo "Creating log volume..."
+              curl -k -u $fsxusername:$fsxpassword -H "Content-Type: application/json" -X POST -d '{ "name":"'$fsxlogvolumename'","size":"1G","nas": { "path":"'$fsxlogmountpoint'" }, "svm": { "name": "'$fsxsvmname'" }, "aggregates": [ { "name": "'$fsxaggrname'" } ] }' https://$fsxMgmtIp/api/storage/volumes
+              check_status "Failed to create log volume"
+            else
+              echo "Log volume already exists."
+            fi
+
+            # Add the PostgreSQL 15 repository
+            sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm --skip-broken
+            check_status "Failed to add PostgreSQL repository"
 
             # Install PostgreSQL and NFS utilities
-            sudo apt update
-            check_status "Failed to update package list"
-
-            sudo apt install -y postgresql nfs-common
+            sudo yum install -y postgresql15 postgresql15-server nfs-utils
             check_status "Failed to install PostgreSQL or NFS utilities"
+
+            # Add PostgreSQL binaries to PATH
+            export PATH=$PATH:/usr/bin
 
             # Create directories
             sudo mkdir -p /pgdata /pglog
@@ -171,35 +213,45 @@ Resources:
             sudo mount -t nfs $fsxNFSIP:$fsxlogmountpoint /pglog
             check_status "Failed to mount log volume"
 
-            # Create postgres user and group, set permissions
-            sudo groupadd -f postgres
-            sudo useradd -g postgres postgres || true
+            # Set permissions for directories
             sudo chmod 0700 /pgdata /pglog
             sudo chown -R postgres:postgres /pgdata /pglog
             check_status "Failed to set permissions"
 
+            # Remove existing contents of /pgdata directory
+            sudo rm -rf /pgdata/*
+
             # Initialize the database cluster on the FSxN mounted volume
-            sudo -u postgres /usr/lib/postgresql/14/bin/initdb -D /pgdata
+            sudo -u postgres /usr/bin/initdb -D /pgdata
             check_status "Failed to initialize PostgreSQL database cluster on FSxN volume"
 
-            # Update PostgreSQL configuration to use the new data directory
-            sudo sed -i "s|^#data_directory =.*|data_directory = '/pgdata'|" /etc/postgresql/14/main/postgresql.conf
+            # Update PostgreSQL configuration to use the new data and log directories
+            sudo sed -i "s|^#data_directory =.*|data_directory = '/pgdata'|" /pgdata/postgresql.conf
+            sudo sed -i "s|^#log_directory =.*|log_directory = '/pglog'|" /pgdata/postgresql.conf
             check_status "Failed to update PostgreSQL configuration"
 
-            # Start the PostgreSQL service
-            sudo systemctl start postgresql@14-main
-            check_status "Failed to start PostgreSQL service"
+            # Initialize database
+            sudo /usr/bin/postgresql-setup --initdb
+            check_status "Failed to initialize PostgreSQL service"
 
             # Enable the PostgreSQL service to start on boot
-            sudo systemctl enable postgresql@14-main
+            sudo systemctl enable postgresql
             check_status "Failed to enable PostgreSQL service"
 
+            # Start the PostgreSQL service
+            sudo systemctl start postgresql
+            check_status "Failed to start PostgreSQL service"
+
             # Verify the installation
-            sudo -u postgres psql -c "SELECT version();"
+            sudo -u postgres /usr/bin/psql -c "SELECT version();"
             check_status "Failed to verify PostgreSQL installation"
+
+            
 
             # Switch to postgres user and move wal logs to log volume
             sudo chown -R postgres:postgres /pgdata/pg_wal
+            # Ensure the target directory is empty
+            sudo rm -rf /pglog/pg_wal
             sudo -u postgres mv /pgdata/pg_wal /pglog/pg_wal
             check_status "Failed to move WAL logs"
 
@@ -212,21 +264,50 @@ Resources:
             check_status "Failed to create PostgreSQL archive log directory"
 
             # Create a new database
-            sudo -u postgres psql -c "CREATE DATABASE $dbname;"
+            sudo -i -u postgres /usr/bin/psql -c "CREATE DATABASE $dbname;"
             check_status "Failed to create database $dbname"
 
             # List all databases
-            sudo -u postgres psql -c "\l"
+            sudo -u postgres /usr/bin/psql -c "\l"
             check_status "Failed to list databases"
 
             # Verify the data directory
-            data_directory=$(sudo -u postgres psql -t -c "SHOW data_directory;" | xargs)
+            data_directory=$(sudo -u postgres /usr/bin/psql -t -c "SHOW data_directory;" | xargs)
             if [ "$data_directory" = "/pgdata" ]; then
                 echo "PostgreSQL data directory is correctly set to the FSxN mounted volume: $data_directory"
             else
                 echo "Error: PostgreSQL data directory is not set to the FSxN mounted volume. Current data directory: $data_directory"
                 exit 1
             fi
+
+            # Install dependencies for pgvector
+            sudo yum install -y git gcc make libpq-devel
+            check_status "Failed to install dependencies for pgvector"
+
+            # Clone the pgvector repository
+            git clone https://github.com/pgvector/pgvector.git
+            check_status "Failed to clone pgvector repository"
+
+            # Install PostgreSQL development packages
+            sudo yum install -y postgresql15-private-devel --allowerasing
+            check_status "Failed to install postgresql15-private-devel"
+
+            sudo yum install -y postgresql15-server-devel
+            check_status "Failed to install postgresql15-server-devel"
+
+            # Build and install pgvector
+            cd pgvector
+            make
+            sudo make install
+            check_status "Failed to build and install pgvector"
+
+            # Enable pgvector extension in PostgreSQL
+            sudo sysctl -p
+            sudo systemctl restart postgresql
+            sudo -u postgres /usr/bin/psql -c "CREATE EXTENSION vector;"
+            check_status "Failed to create pgvector extension"
+
+            echo "pgvector installation complete."
 
   WorkloadSecurityGroup:
     Type: AWS::EC2::SecurityGroup
