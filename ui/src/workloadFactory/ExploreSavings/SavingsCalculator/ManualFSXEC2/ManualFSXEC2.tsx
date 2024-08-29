@@ -66,7 +66,7 @@ const ManualFSXEC2 = () => {
                 isLoading={instanceTypeLoading}
                 isSearchable={true}
                 options={generateInstances}
-                className={styles.setWidth}
+                className={`${styles.setWidth} savings-calculator-input-fields`}
             />
         </div>
     );
