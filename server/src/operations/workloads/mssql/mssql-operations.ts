@@ -113,10 +113,21 @@ async function getDatabasesCount(
         isSingleInstance = true;
     }
 
-    const commands = [sqlQueryExecutionWithAuth(instanceNames, DATABASES_COUNT_V2, isSqlAuthEnabled)];
+    let commands = [sqlQueryExecutionWithAuth(instanceNames, DATABASES_COUNT_V2, isSqlAuthEnabled)];
+    if (isDemoFlow) {
+        commands = [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES_COUNT_V2, false)];
+    }
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
     logger.debug('Fetching databases count response', response);
-    const parsedResponse = response ? sqlResponseParsing(response) : {};
+    let parsedResponse = response ? sqlResponseParsing(response) : {};
+
+    if (isDemoFlow) {
+        parsedResponse = instanceNames.reduce((result: { [key: string]: any }, name) => {
+            result[name] = parsedResponse.MSSQLSERVER;
+            return result;
+        }, {});
+    }
+
     return isSingleInstance ? parsedResponse[sqlInstanceName!]?.[0] : parsedResponse;
 }
 
