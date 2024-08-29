@@ -13,6 +13,7 @@ import {
     setInstanceLoading,
     setManualRegionsLoading,
     setRequestedPayload,
+    setRequestedRegion,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
     setViewCalculationsApiResponse,
@@ -50,7 +51,8 @@ const SavingsCalculatorManualApi = () => {
         manualStorageCapacity,
         selectedManualFSXIOPS,
         selectedManualFSXThroughput,
-        selectedManualStorageCapacityUnit
+        selectedManualStorageCapacityUnit,
+        requestedRegion
     } = useAppSelector(state => state.exploreSavings);
 
     const [getInstanceTypes] = useLazyGetInstanceTypesWithoutCredQuery();
@@ -140,7 +142,9 @@ const SavingsCalculatorManualApi = () => {
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
             const payload = generateManualStorageSavingsPayload();
-            const comparedPayloadValues = _.isEqual(payload, requestedPayload);
+            const comparedPayloadValues =
+                _.isEqual(payload, requestedPayload) &&
+                selectedManualRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
 
             if (
                 !comparedPayloadValues &&
@@ -153,6 +157,7 @@ const SavingsCalculatorManualApi = () => {
             ) {
                 dispatch(setDisableState(false));
                 dispatch(setRequestedPayload(payload));
+                dispatch(setRequestedRegion(selectedManualRegion));
                 triggerManualStorageAPI();
             }
         }
@@ -176,7 +181,9 @@ const SavingsCalculatorManualApi = () => {
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
             const payload = generateManualStorageSavingsPayload();
-            const comparedPayloadValues = _.isEqual(payload, requestedPayload);
+            const comparedPayloadValues =
+                _.isEqual(payload, requestedPayload) &&
+                selectedManualRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
 
             const storageCapCHeck = () => {
                 if (
@@ -210,6 +217,7 @@ const SavingsCalculatorManualApi = () => {
             if (!comparedPayloadValues && selectedManualRegion && checkValidation() && selectedManualInstanceType) {
                 dispatch(setDisableState(false));
                 dispatch(setRequestedPayload(payload));
+                dispatch(setRequestedRegion(selectedManualRegion));
                 triggerManualStorageAPI();
             }
         }

@@ -17,6 +17,7 @@ export interface ExploreSavingsSliceEntities {
     selectedManualDeploymentType: any;
     disableState: boolean;
     requestedPayload: any;
+    requestedRegion: any;
     selectedSnapshotFrequency: any;
     secondaryVolumeFilledStatus: boolean;
     numberOfClonedCopies: number | any;
