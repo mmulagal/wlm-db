@@ -289,10 +289,14 @@ async function handleInstanceRecommendation(
             let recommendedInstanceHourlyPriceWithoutLicense: number | undefined;
             if (isAwsLicenseIncluded) {
                 // if the existing instance is using AWS license included, then get the AWS license included price for the recommended instance type
-                recommendedInstanceHourlyPrice =
-                    recommendedInstancePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit;
+                recommendedInstanceHourlyPrice = recommendedInstancePricingDetails?.[recommendedSqlLicenseType]
+                    ?.pricePerUnit
+                    ? recommendedInstancePricingDetails[recommendedSqlLicenseType].pricePerUnit * totalNodesCount
+                    : undefined;
 
-                recommendedInstanceHourlyPriceWithoutLicense = recommendedInstancePricingDetails?.NA?.pricePerUnit;
+                recommendedInstanceHourlyPriceWithoutLicense = recommendedInstancePricingDetails?.NA?.pricePerUnit
+                    ? recommendedInstancePricingDetails.NA.pricePerUnit * totalNodesCount
+                    : undefined;
             } else {
                 // if the existing instance is using BYOL, then use the BYOL price for the recommended instance type; assumption: BYOL price is the same for recommended ec2 instance types
                 recommendedInstanceHourlyPrice = existingInstanceHourlyPrice;
@@ -307,17 +311,17 @@ async function handleInstanceRecommendation(
                 ? getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPriceWithoutLicense)
                 : undefined;
             recommendedCompute = {
-                price: recommendedInstanceHourlyPrice
-                    ? recommendedInstanceHourlyPrice * totalNodesCount
-                    : recommendedInstanceHourlyPrice,
-                baseInstancePrice: recommendedInstanceHourlyPriceWithoutLicense
-                    ? recommendedInstanceHourlyPriceWithoutLicense * totalNodesCount
-                    : recommendedInstanceHourlyPriceWithoutLicense,
+                price: recommendedInstanceHourlyPrice,
+                baseInstancePrice: recommendedInstanceHourlyPriceWithoutLicense,
                 instanceType: recommendedNodeInstanceTypes.join(', '),
                 machineDetails: recommendedNodeInstanceTypes.map(instanceType => ({
                     instanceType,
-                    price: recommendedInstanceHourlyPrice,
-                    basePrice: recommendedInstanceHourlyPriceWithoutLicense,
+                    price: recommendedInstanceHourlyPrice
+                        ? recommendedInstanceHourlyPrice / totalNodesCount
+                        : undefined,
+                    basePrice: recommendedInstanceHourlyPriceWithoutLicense
+                        ? recommendedInstanceHourlyPriceWithoutLicense / totalNodesCount
+                        : undefined,
                     computeMonthlyPrice: rcomputeMonthlyPrice,
                     instanceMonthlyPrice: rinstanceMonthlyPrice,
                     licenseMonthlyPrice:
@@ -639,7 +643,7 @@ async function getSqlInstanceLicenseRecommendations(
     credentialsId: string,
     region: string,
     ec2HostDetails: DiscoverResponseInfoType,
-    monthlySqlByolCost?: number,
+    monthlySqlByolCostPerHost?: number,
     partnerNodeDetails?: DiscoverResponseInfoType[]
 ) {
     logger.info('Getting sql instance and license recommendations', {
@@ -651,7 +655,7 @@ async function getSqlInstanceLicenseRecommendations(
     });
 
     let { ec2InstanceId: instanceId, sqlServerInstances, ec2InstanceType, ec2UsageOperation } = ec2HostDetails;
-    if (monthlySqlByolCost && ec2UsageOperation && WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation)) {
+    if (monthlySqlByolCostPerHost && ec2UsageOperation && WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation)) {
         throw createError(
             HttpErrorCodes.BAD_REQUEST,
             'We dont support BYOL configuration for EC2 instances with pre-installed SQL Server license.'
@@ -730,6 +734,9 @@ async function getSqlInstanceLicenseRecommendations(
                 }
             }
 
+            const monthlySqlByolCost = monthlySqlByolCostPerHost
+                ? monthlySqlByolCostPerHost * nodeInstanceTypes.length
+                : 0;
             const existingInstanceTypesPricingDetails = await deriveInstanceCountPricingDetails(
                 nodeInstanceTypes,
                 region
@@ -788,7 +795,7 @@ async function getSqlInstanceLicenseRecommendations(
                     ? SQL_WEB
                     : SQL_STD;
 
-                const { licenseFinding: currentLicenseFinding, recommendedLicenseType: recommendedSqlLicenseType } =
+                let { licenseFinding: currentLicenseFinding, recommendedLicenseType: recommendedSqlLicenseType } =
                     sqlServerEngineEdition === ENT_ENGINE_EDITION
                         ? await getLicenseRecommendations(
                               accountId,
@@ -800,6 +807,9 @@ async function getSqlInstanceLicenseRecommendations(
                           ) // returns SQL Ent or SQL Std
                         : { licenseFinding, recommendedLicenseType: existingLicenseType };
 
+                const byolHourlyPricePerHost = monthlySqlByolCostPerHost
+                    ? monthlySqlByolCostPerHost / HOURS_IN_MONTH
+                    : undefined;
                 const byolHourlyPrice = monthlySqlByolCost ? monthlySqlByolCost / HOURS_IN_MONTH : undefined;
                 const byolInstancePrice =
                     byolHourlyPrice && existingInstanceHourlyPriceWithoutLicense
@@ -825,8 +835,8 @@ async function getSqlInstanceLicenseRecommendations(
                             const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(computeHourlyPrice); // compute price is exclusive of license price
 
                             const nodeInstanceByolPrice =
-                                byolHourlyPrice && computeHourlyPrice
-                                    ? computeHourlyPrice + byolHourlyPrice
+                                byolHourlyPricePerHost && computeHourlyPrice
+                                    ? computeHourlyPrice + byolHourlyPricePerHost
                                     : undefined;
 
                             const instanceHourlyPrice =
@@ -898,8 +908,12 @@ async function getSqlInstanceLicenseRecommendations(
                             'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license with AWS ami based while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license with BYOL. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.';
                     } else {
                         // return existing BYOL as recommended
+                        awsLicenseIncluded = false;
                         recommendedInstanceHourlyPrice =
                             byolHourlyPrice + recommendedInstanceHourlyPriceWithoutLicense!;
+                        // User shall view in the cost breakdown the compared sql license included only if src edition was Ent and we recommend using Stan
+                        // if the recommended license type is SQL Std ; but the BYOL price is cheaper than the recommended SQL Std price, then do not recommend the license change
+                        recommendedSqlLicenseType = existingLicenseType;
                     }
                 }
 
