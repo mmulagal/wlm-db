@@ -55,7 +55,8 @@ import {
     getDatabaseInstanceName,
     generateHash,
     sqlResponseParsing,
-    getOriginalDatabaseInstanceName
+    getOriginalDatabaseInstanceName,
+    isDemo
 } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { getResources } from '../../database/database-operations';
@@ -70,6 +71,7 @@ import { getParameter } from '../../../lib/aws/ssm';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
@@ -145,6 +147,7 @@ async function getDataBasesSummary(
     }
 
     try {
+        sqlAuthEnabled = isDemoFlow ? false : sqlAuthEnabled;
         const sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
         // let dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId, instanceName, undefined, sqlAuthEnabled);
         // dbCount = dbCount?.totalCount || 0;
@@ -211,7 +214,6 @@ async function getAllResourceUtilisationDetails(
         instanceNames = [sqlInstanceName];
         isSingleInstance = true;
     }
-
     const commands = [RESOURCE_UTILIZATION(instanceNames, isSqlAuthEnabled)];
     const resurceUtilizationData = await callSsmExecution(
         credentialsId,
@@ -873,12 +875,22 @@ async function getPerformanceMetrics(
         isSingleInstance = true;
     }
 
-    const commands = [sqlQueryExecutionWithAuth(instanceNames, PERFORMANCE_METRICS_WITH_LATENCY, isSqlAuthEnabled)];
+    let commands = [sqlQueryExecutionWithAuth(instanceNames, PERFORMANCE_METRICS_WITH_LATENCY, isSqlAuthEnabled)];
+    if (isDemoFlow) {
+        commands = [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], PERFORMANCE_METRICS_WITH_LATENCY, false)];
+    }
+
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId, undefined, false);
 
     logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
 
-    const parsedResponse = response ? sqlResponseParsing(response) : {};
+    let parsedResponse = response ? sqlResponseParsing(response) : {};
+    if (isDemoFlow) {
+        parsedResponse = instanceNames.reduce((result: { [key: string]: any }, name) => {
+            result[name] = parsedResponse;
+            return result;
+        }, {});
+    }
     if (response) {
         const instancesResponse: { [key: string]: any } = {};
         instanceNames.forEach(instance => {
@@ -1166,7 +1178,7 @@ async function checkDatabaseExists(
             ? sqlResponseParsing(checkDatabaseExistsResponse)
             : {};
 
-        if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length) {
+        if (!isEmpty(parsedDatabaseExistsResponse)) {
             return true;
         }
         return false;
@@ -1266,7 +1278,9 @@ async function getActiveSqlNodeAndInstanceDetails(
 
                 instanceDetails?.forEach((obj: { instanceName: string; sqlAuthEnabled: boolean }) => {
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
-                    obj.sqlAuthEnabled = !isEmpty(sql)
+                    obj.sqlAuthEnabled = isDemoFlow
+                        ? false
+                        : !isEmpty(sql)
                         ? Boolean(
                               sql?.find(
                                   ({ sqlinstancename }: { sqlinstancename: string }) =>

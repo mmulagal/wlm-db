@@ -589,7 +589,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[\r\n    \"[{\\\"CurrentDataDrive\\\":\\\"S\\\"}]\",\r\n    \"[{\\\"CurrentLogDrive\\\":\\\"L\\\"}]\"\r\n]\r\n",
+        "StandardOutputContent": "\"[{\\\"DefaultDataDrive\\\":\\\"D:\\\\\\\\MSSQL16.FINANCE\\\\\\\\MSSQL\\\\\\\\DATA\\\\\\\\\\\",\\\"DefaultLogDrive\\\":\\\"L:\\\\\\\\MSSQL16.FINANCE\\\\\\\\MSSQL\\\\\\\\DATA\\\\\\\\\\\"}]\"\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

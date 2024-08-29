@@ -548,6 +548,12 @@ async function createSandbox(
             type: JOBTYPE.SANDBOX
         });
 
+        updateLongRunningAuditGroup(
+            undefined,
+            undefined,
+            `${destDetails.resourceName}\\${destDetails.databaseInstanceName}`
+        );
+
         startSandboxCreation(
             accountId,
             credentialsId,
@@ -1859,6 +1865,12 @@ async function deleteSandbox(
             type: JOBTYPE.SANDBOX
         });
 
+        updateLongRunningAuditGroup(
+            undefined,
+            undefined,
+            `${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`
+        );
+
         performSandboxDeletion(accountId, region, credentialsId, job.id, srcDetails);
 
         return { jobId: job.id };
@@ -2133,6 +2145,12 @@ async function updateSandboxLifeCycle(
             resourceName: databaseName,
             startTime: Date.now()
         });
+
+        updateLongRunningAuditGroup(
+            undefined,
+            undefined,
+            `${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`
+        );
 
         performLifecycleUpdate(accountId, credentialsId, region, job.id, srcDetails, action, snapshot);
 

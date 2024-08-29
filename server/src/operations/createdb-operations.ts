@@ -70,8 +70,11 @@ async function getDefaultDrives(
     executionTimeout?: string
 ) {
     logger.info('Getting MSSQL default data and log drives', { credentialsId, region, activeNodeInstanceId });
-    
-    const defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
+    let defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
+
+    if (isDemoFlow) {
+        defaultDrivesCommand = [GET_DEFAULT_DRIVES(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, true)];
+    }
 
     const defaultDriveResponse = await callSsmExecution(
         credentialsId,
@@ -499,6 +502,7 @@ async function deployDatabase(
         }
 
         const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
+        updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
 
         // create the parent job for database deployment
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
@@ -903,7 +907,7 @@ async function invokeSSMForDatabaseDeployment(
                 `${dataDrivePath},${logDrivePath}`
             );
         }
-        updateLongRunningAuditGroup(AuditStatus.FAILED, err?.message);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, err?.message, serverNameWithHostName);
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
@@ -1822,6 +1826,5 @@ export {
     newDBInitialization,
     configureLuns,
     cleanUpDatabaseDeployment,
-    getCollationDetails,
-    getDefaultDrives
+    getCollationDetails
 };

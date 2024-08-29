@@ -302,6 +302,9 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
         }
         $response = $responseObject | ConvertTo-Json -Depth 5
 
+        if([string]::IsNullOrEmpty($response)) {
+            throw "Failed to compress the response because the response is either null or empty. $response"
+        }
         ${compressResponse}
         return (Deflate-String $response)
     } catch {
@@ -936,6 +939,9 @@ const getMappedOntapVolumesScript = (
         }
         $response = $instanceRespones | ConvertTo-Json -Depth 5
 
+        if([string]::IsNullOrEmpty($response)) {
+            throw "Failed to compress the response because the response is either null or empty. $response"
+        }
         ${compressResponse}
         return (Deflate-String $response)
     } catch {
@@ -1012,6 +1018,9 @@ const restGetUtilForOntap = (
     }
     $response = $responseObject | ConvertTo-Json -Depth 5
 
+    if([string]::IsNullOrEmpty($response)) {
+        throw "Failed to compress the response because the response is either null or empty. $response"
+    }
     ${compressResponse}
     return (Deflate-String $response)
 `;
@@ -1132,6 +1141,10 @@ const sqlQueryExecution = (
     $queryResponse = $queryResponse | ConvertFrom-Json
     $queryResponse = $queryResponse | ConvertTo-Json -Depth 5
 
+    if([string]::IsNullOrEmpty($queryResponse)) {
+        Write-Information "Failed to compress the response because the response is either null or empty. $queryResponse"
+        return $queryResponse
+    }
     ${compressResponse}
     return (Deflate-String $queryResponse) 
 `;
@@ -1261,6 +1274,10 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
         }
         $response = $responseObject | ConvertTo-Json -Depth 5
 
+        if([string]::IsNullOrEmpty($response)) {
+            Write-Information "Failed to compress the response because the response is either null or empty. $response"
+            return $response
+        }
         ${compressResponse}
         return (Deflate-String $response)
     } catch {

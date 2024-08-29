@@ -506,7 +506,8 @@ function getArtifactsRegionBucketName(region: string) {
 
 function sqlResponseParsing(response: string) {
     try {
-        const cleanResponse = response.replaceAll('\r\n', '');
+        // Some responses have \\r\\n in them, so repeating this step twice to remove all of them
+        const cleanResponse = response.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
         const jsonResponse = JSON.parse(cleanResponse);
         return jsonResponse;
     } catch (error) {

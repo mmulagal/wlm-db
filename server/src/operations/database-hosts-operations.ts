@@ -2384,7 +2384,7 @@ async function getDatabaseDetails(
                 size: database.databaseSize,
                 status: database.databaseStatus,
                 collation: database.collationName,
-                type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
+                type: MSSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
                     ? MSSQL_DATABASE_TYPES.SYSTEM
                     : MSSQL_DATABASE_TYPES.USER,
                 ...(getProtection && {
@@ -2498,7 +2498,9 @@ async function getDatabaseInstancesSummary(
     let isSqlAuthEnabled = false;
     if (shouldQueryServerDetails || getPerformance || getProtection || getResourceutilization || getDbCount) {
         // const instances = await determineSqlAuthEnabled(accountId, credentialsId, activeNodeInstanceId, region, databaseInstances);
-        isSqlAuthEnabled = databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
+        isSqlAuthEnabled = isDemoFlow
+            ? isSqlAuthEnabled
+            : databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
     }
 
     try {
