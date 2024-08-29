@@ -264,7 +264,7 @@ async function getDriveInfoFromSSM(
         instance =>
             instance.instanceName === instanceDetail.database_instance_name && instance.sqlAuthEnabled === true
     ) : false;
-    let actualInstanceName = await getOriginalDatabaseInstanceName(instanceName); 
+    let actualInstanceName = getOriginalDatabaseInstanceName(instanceName); 
     if (!activeNodeInstance && instanceDetail && instancesDetails) {
 
         const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
