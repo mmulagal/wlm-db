@@ -2088,7 +2088,7 @@ async function unmanageDatabaseInstance(
         // When all database instances are removed, the EC2 ceases to be a
         // managed resource, since  we aren't managing any SQL Server instance.
         // So we need to remove the EC2 resource from wlmdb.resource table.
-        if (postDeleteDatabaseInstances.length <= 0) {
+        if (postDeleteDatabaseInstances.length <= 0 && !isDemoFlow) {
             deleteResource(accountId, resourceId, credentialsId);
         }
     }
