@@ -426,7 +426,7 @@ const deleteExtendedPropertiesCommand = {
     commands: [
         deleteExtendedPropertiesScript(
             'test-db',
-            'MSSQLSERVER',
+            DEFAULT_INSTANCE_NAME,
             '$env:computername',
             ['cloned_by', 'source', 'createdAt', 'updatedAt', 'tag', 'accountId'],
             false
