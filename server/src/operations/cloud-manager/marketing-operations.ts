@@ -437,8 +437,8 @@ function derivePropertiesBasedOnDeploymentType(
     params: StorageSavingsRequestBodyType
 ) {
     const {
-        fsx_calculation: { throughputCapacity: suggestedFsxnThroughputCapacity },
         fsx_cost_calculation_no_snapshot: {
+            provisionedThroughputCapacity: suggestedFsxnThroughputCapacity,
             desiredStorageCapacityGB: { size: desiredStorageCapacitySize, unit: desiredStorageCapacityUnit },
             numberOfVolumes,
             FSXnCapacityPrice: { price: fsxnCapacityPriceWithoutSnapshot, unit: fsxnCapacityUnitWithoutSnapshot },
