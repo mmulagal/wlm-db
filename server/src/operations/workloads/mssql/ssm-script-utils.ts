@@ -1138,13 +1138,15 @@ const sqlQueryExecution = (
         ${readSsmParameter(instanceName)}
     }
     $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "${executableInstanceName}"
-    $queryResponse = $queryResponse | ConvertFrom-Json
-    $queryResponse = $queryResponse | ConvertTo-Json -Depth 5
 
     if([string]::IsNullOrEmpty($queryResponse)) {
         Write-Information "Failed to compress the response because the response is either null or empty. $queryResponse"
         return $queryResponse
     }
+        
+    $queryResponse = $queryResponse | ConvertFrom-Json
+    $queryResponse = $queryResponse | ConvertTo-Json -Depth 5
+    
     ${compressResponse}
     return (Deflate-String $queryResponse) 
 `;
