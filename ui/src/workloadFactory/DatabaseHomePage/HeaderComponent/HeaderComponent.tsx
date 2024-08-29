@@ -90,6 +90,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
+    const toShowPostgress = localStorage.getItem('postgress');
 
     HeaderComponentApi();
     if (isInventoryV2) {
@@ -328,42 +329,6 @@ const HeaderComponent = ({ tab }: Tab) => {
         );
     };
 
-    const TopBarComponent = () => {
-        const toShowPostgress = localStorage.getItem('postgress');
-        return (
-            <div className={styles.spaceArea}>
-                <div className={styles.contentArea}>
-                    {selectComponents()}
-                    <div className={styles.content}>
-                        <Button
-                            variant="primary"
-                            onClick={() => {
-                                dispatch(setDatabaseHostEntryPoint('database'));
-                                navigate(WLF_TO_FORM_NAVIGATE);
-                            }}
-                            id={'deploy-button'}
-                        >
-                            <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
-                        </Button>
-
-                        {toShowPostgress && (
-                            <Button
-                                variant="primary"
-                                onClick={() => {
-                                    navigate(WLF_TO_PROTECT_NAVIGATE);
-                                }}
-                                id={'deploy-button'}
-                            >
-                                <div className={styles.buttonStyle}>{'Deploy Postgress'}</div>
-                            </Button>
-                        )}
-
-                        {refreshComponent()}
-                    </div>
-                </div>
-            </div>
-        );
-    };
     const checkConditionForHeaderComponent = () => {
         if (
             statusChk ||
@@ -635,7 +600,38 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
-                            <DatabaseHomePage TopBarComponent={TopBarComponent} />
+                            <div className={styles.spaceArea}>
+                                <div className={styles.contentArea}>
+                                    {selectComponents()}
+                                    <div className={styles.content}>
+                                        <Button
+                                            variant="primary"
+                                            onClick={() => {
+                                                dispatch(setDatabaseHostEntryPoint('database'));
+                                                navigate(WLF_TO_FORM_NAVIGATE);
+                                            }}
+                                            id={'deploy-button'}
+                                        >
+                                            <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
+                                        </Button>
+
+                                        {toShowPostgress && (
+                                            <Button
+                                                variant="primary"
+                                                onClick={() => {
+                                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                }}
+                                                id={'deploy-button'}
+                                            >
+                                                <div className={styles.buttonStyle}>{'Deploy Postgress'}</div>
+                                            </Button>
+                                        )}
+
+                                        {refreshComponent()}
+                                    </div>
+                                </div>
+                            </div>
+                            <DatabaseHomePage />
                         </div>
                     )}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
