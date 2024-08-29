@@ -835,6 +835,7 @@ const createClonedDb = (
         Write-Information "$logPrefix SQL response: $sqlresponse"
         [string[]]$ExistingDatabases = $sqlresponse | ConvertFrom-Json | % { $_.name }
 
+
         $selectresult = (Call-SqlCmd -SqlCredential $sqlCredential -Query "$selectquery" -InstanceName "${executableInstanceName}") |  ConvertFrom-Json
 
         if ($selectresult.count -gt 0) {

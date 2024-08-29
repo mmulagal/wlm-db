@@ -1143,7 +1143,6 @@ const sqlQueryExecution = (
         Write-Information "Failed to compress the response because the response is either null or empty. $queryResponse"
         return $queryResponse
     }
-        
     $queryResponse = $queryResponse | ConvertFrom-Json
     $queryResponse = $queryResponse | ConvertTo-Json -Depth 5
     
@@ -1176,7 +1175,7 @@ Function Call-SqlCmd {
             $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
         }
     }
-    if ($LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -ne 0 -Or $sqlCredential.useSqlAuth -eq $False) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
             $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0;
         }
