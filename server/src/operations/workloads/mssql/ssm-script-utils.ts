@@ -1174,7 +1174,7 @@ Function Call-SqlCmd {
             $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
         }
     }
-    if ([string]::IsNullOrEmpty($sqlresponse)) {
+    if ($LASTEXITCODE -ne 0) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
             $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0;
         }
