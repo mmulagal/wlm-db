@@ -824,12 +824,17 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
                 ...data,
                 recommendedInstance: {
                     ...data?.compute?.recommended?.machineDetails?.[0],
-                    licenseMonthlyPrice: data?.license?.recommended?.licenseMonthlyPrice,
-                    computeMonthlyPrice: data?.compute?.recommended?.computeMonthlyPrice
+                    licenseMonthlyPrice: data?.license?.existing?.licenseMonthlyPrice,
+                    computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
                 },
                 totalSummary: {
                     ...data?.totalSummary,
-                    recommendedTotal: data?.totalSummary?.recommended
+                    recommendedTotal:
+                        Number(data?.totalSummary?.recommended || 0) -
+                        Number(data?.compute?.recommended?.computeMonthlyPrice || 0) -
+                        Number(data?.license?.recommended?.licenseMonthlyPrice || 0) +
+                        Number(data?.compute?.existing?.computeMonthlyPrice || 0) +
+                        Number(data?.license?.existing?.licenseMonthlyPrice || 0)
                 }
             };
         }
