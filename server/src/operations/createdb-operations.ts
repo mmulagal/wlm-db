@@ -15,7 +15,8 @@ import {
     sqlResponseParsing,
     getCollationForMSSQLVersion,
     getDatabaseInstanceName,
-    isDemo
+    isDemo,
+    getOriginalDatabaseInstanceName
 } from '../utils/utils';
 import {
     ACCOUNT_ID,
@@ -69,6 +70,7 @@ async function getDefaultDrives(
     executionTimeout?: string
 ) {
     logger.info('Getting MSSQL default data and log drives', { credentialsId, region, activeNodeInstanceId });
+    
     const defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
 
     const defaultDriveResponse = await callSsmExecution(
@@ -255,9 +257,13 @@ async function getDriveInfoFromSSM(
         throw createError(errorMessage);
     }
 
-    let isSqlAuthEnabled = false;
-    let actualInstanceName;
+    let isSqlAuthEnabled = instancesDetails && instanceDetail ? instancesDetails.some(
+        instance =>
+            instance.instanceName === instanceDetail.database_instance_name && instance.sqlAuthEnabled === true
+    ) : false;
+    let actualInstanceName = await getOriginalDatabaseInstanceName(instanceName); 
     if (!activeNodeInstance && instanceDetail && instancesDetails) {
+
         const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
         const isInstanceRunning = instancesDetails.some(
@@ -272,7 +278,7 @@ async function getDriveInfoFromSSM(
             throw createError(errorMessage);
         }
         instanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
-        actualInstanceName = instanceDetail.database_instance_name;
+        actualInstanceName = selectedInstanceName;
         isSqlAuthEnabled = instancesDetails.some(
             instance =>
                 instance.instanceName === instanceDetail.database_instance_name && instance.sqlAuthEnabled === true
@@ -1478,7 +1484,7 @@ async function validateParams(
         if ((isDataVirtualMount || isLogVirtualMount) && (!isDataDriveExists || !isLogDriveExists)) {
             throw createError(412, 'Virtual Mount should not be selected for new data/log drives');
         }
-
+        
         const { existingDriveInfo, availableDriveLetters } = await getDriveInfo(
             accountId,
             databaseHostId,
