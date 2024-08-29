@@ -1178,7 +1178,7 @@ async function checkDatabaseExists(
             ? sqlResponseParsing(checkDatabaseExistsResponse)
             : {};
 
-        if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length) {
+        if (!isEmpty(parsedDatabaseExistsResponse)) {
             return true;
         }
         return false;

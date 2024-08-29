@@ -78,6 +78,10 @@ catch {
 
 $response = $results | ConvertTo-Json -Depth 5
 
+if([string]::IsNullOrEmpty($response)) {
+    Write-Information "Failed to compress the response because the response is either null or empty. $response"
+    return $response
+}
 ${compressResponse}
 return (Deflate-String $response)
 `;
