@@ -424,14 +424,13 @@ const detachDbAndRemoveAccessPathCommand = {
 
 const deleteExtendedPropertiesCommand = {
     commands: [
-        deleteExtendedPropertiesScript('test-db', DEFAULT_INSTANCE_NAME, '$env:computername', [
-            'cloned_by',
-            'source',
-            'createdAt',
-            'updatedAt',
-            'tag',
-            'accountId'
-        ])
+        deleteExtendedPropertiesScript(
+            'test-db',
+            'MSSQLSERVER',
+            '$env:computername',
+            ['cloned_by', 'source', 'createdAt', 'updatedAt', 'tag', 'accountId'],
+            false
+        )
     ]
 };
 
