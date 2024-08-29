@@ -144,7 +144,7 @@ const SavingsCalculatorManualApi = () => {
             const payload = generateManualStorageSavingsPayload();
             const comparedPayloadValues =
                 _.isEqual(payload, requestedPayload) &&
-                selectedManualRegion?.data?.reginCode === requestedRegion?.data?.regionCode;
+                selectedManualRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
 
             if (
                 !comparedPayloadValues &&
@@ -183,7 +183,7 @@ const SavingsCalculatorManualApi = () => {
             const payload = generateManualStorageSavingsPayload();
             const comparedPayloadValues =
                 _.isEqual(payload, requestedPayload) &&
-                selectedManualRegion?.data?.reginCode === requestedRegion?.data?.regionCode;
+                selectedManualRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
 
             const storageCapCHeck = () => {
                 if (
