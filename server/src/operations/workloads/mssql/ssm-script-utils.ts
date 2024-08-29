@@ -1111,6 +1111,7 @@ const readSsmParameter = (instance: string) =>
            
     `;
 
+// All the queries using the following template must respond in json format (use FOR JSON PATH), else the conversion will fail.
 const sqlQueryExecution = (
     instanceName: string = DEFAULT_INSTANCE_NAME,
     executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
