@@ -104,7 +104,7 @@ describe('Create database operations', () => {
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
-            true,
+            false,
             undefined,
             'D5A2D0E6-0AF2-4228-97E7-B627ACEE10E8'
         );
