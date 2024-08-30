@@ -498,6 +498,8 @@ async function getMappedOntapVolumes(
                 } else {
                     instancesResponse[iName] = { volumeUuids: [], volumeDBMap: {} };
                 }
+            } else {
+                logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);
             }
         });
 
