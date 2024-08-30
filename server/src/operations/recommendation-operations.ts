@@ -307,10 +307,10 @@ async function handleInstanceRecommendation(
             computeFinding = finding;
             const recommendedNodeInstanceTypes = Array(totalNodesCount).fill(recommendedInstanceType);
             const rinstanceMonthlyPrice = recommendedInstanceHourlyPrice
-                ? getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPrice)
+                ? (getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPrice) || 0) / totalNodesCount
                 : undefined;
             const rcomputeMonthlyPrice = recommendedInstanceHourlyPriceWithoutLicense
-                ? getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPriceWithoutLicense)
+                ? (getMonthlyPriceFromHourlyPrice(recommendedInstanceHourlyPriceWithoutLicense) || 0) / totalNodesCount
                 : undefined;
             recommendedCompute = {
                 price: recommendedInstanceHourlyPrice,
@@ -345,10 +345,11 @@ async function handleInstanceRecommendation(
                         basePrice,
                         computeMonthlyPrice,
                         instanceMonthlyPrice,
-                        licenseMonthlyPrice:
-                            computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
+                        licenseMonthlyPrice: isAwsLicenseIncluded
+                            ? computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
                                 ? instanceMonthlyPrice - computeMonthlyPrice
-                                : undefined,
+                                : undefined
+                            : monthlySqlByolCostPerHost || 0,
                         hoursInMonth: HOURS_IN_MONTH
                     };
                 }),
