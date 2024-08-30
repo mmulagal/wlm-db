@@ -816,10 +816,12 @@ async function getSqlInstanceLicenseRecommendations(
                         ? existingInstanceHourlyPriceWithoutLicense + byolHourlyPrice
                         : undefined;
 
-                const existingInstanceHourlyPrice =
-                    byolInstancePrice ||
-                    getPricingByLicenseType(existingLicenseType, existingInstanceTypesPricingDetails); // existingInstanceHourlyPrice in inclusive of BYOL price or AWS license price
-
+                let existingInstanceHourlyPrice = existingInstanceHourlyPriceWithoutLicense;
+                if (byolInstancePrice || WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation)) {
+                    existingInstanceHourlyPrice =
+                        byolInstancePrice ||
+                        getPricingByLicenseType(existingLicenseType, existingInstanceTypesPricingDetails); // existingInstanceHourlyPrice in inclusive of BYOL price or AWS license price
+                }
                 licenseFinding = currentLicenseFinding;
 
                 // existing compute and license details
@@ -939,6 +941,14 @@ async function getSqlInstanceLicenseRecommendations(
 
                 // sql license recommendation logic; applicable only if the current instance is enterprise edition(sqlServerEngineEdition === 3)
                 // it either returns SQL Ent or SQL Std
+
+                let recommendedLicensePrice = 0; // license price is relevant only if BYOL or SQL based AMI is used
+                if (byolInstancePrice || WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation)) {
+                    recommendedLicensePrice =
+                        recommendedInstanceHourlyPrice && recommendedInstanceHourlyPriceWithoutLicense
+                            ? recommendedInstanceHourlyPrice - recommendedInstanceHourlyPriceWithoutLicense
+                            : 0;
+                }
                 if (
                     sqlServerEngineEdition === ENT_ENGINE_EDITION &&
                     recommendedSqlLicenseType === SQL_STD &&
@@ -947,10 +957,7 @@ async function getSqlInstanceLicenseRecommendations(
                     recommendedLicense = {
                         sqlServerEdition: `Standard Edition (${processorArchitecture})`,
                         sqlServerVersion,
-                        price:
-                            recommendedInstanceHourlyPrice && recommendedInstanceHourlyPriceWithoutLicense
-                                ? recommendedInstanceHourlyPrice - recommendedInstanceHourlyPriceWithoutLicense
-                                : undefined,
+                        price: recommendedLicensePrice,
                         message: recommendedLicenseMessage
                     };
                 } else {
@@ -964,10 +971,7 @@ async function getSqlInstanceLicenseRecommendations(
                     recommendedLicense = {
                         sqlServerEdition,
                         sqlServerVersion,
-                        price:
-                            recommendedInstanceHourlyPrice && recommendedInstanceHourlyPriceWithoutLicense
-                                ? recommendedInstanceHourlyPrice - recommendedInstanceHourlyPriceWithoutLicense
-                                : undefined, // recommendedInstanceHourlyPrice is considering the recommendedSqlLicenseType which in this case is what was existing previously, ( existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit )
+                        price: recommendedLicensePrice, // recommendedInstanceHourlyPrice is considering the recommendedSqlLicenseType which in this case is what was existing previously, ( existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit )
                         message
                     };
                 }
