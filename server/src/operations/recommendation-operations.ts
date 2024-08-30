@@ -345,10 +345,11 @@ async function handleInstanceRecommendation(
                         basePrice,
                         computeMonthlyPrice,
                         instanceMonthlyPrice,
-                        licenseMonthlyPrice:
-                            computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
+                        licenseMonthlyPrice: isAwsLicenseIncluded
+                            ? computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
                                 ? instanceMonthlyPrice - computeMonthlyPrice
-                                : undefined,
+                                : undefined
+                            : monthlySqlByolCostPerHost || 0,
                         hoursInMonth: HOURS_IN_MONTH
                     };
                 }),
