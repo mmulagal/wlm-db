@@ -2224,12 +2224,12 @@ try {
     ($DataFilePath + $LogFilePath) | ForEach-Object {
         $path = $_
         $fileLeaf = Split-Path -Path $path -Leaf
-        if ($path.Contains('\\data\\')) {
+       
+        if ($path.ToLower().Contains('\\data\\')) {
             $newFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $fileLeaf).FullName
         } else {
             $newFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $fileLeaf).FullName
         }
-
         if (Test-Path $newFilePath) {
             $responseObject['files'] += $newFilePath
         } else {
