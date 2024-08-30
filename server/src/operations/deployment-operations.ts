@@ -136,19 +136,16 @@ async function getSubnetsCidr(
         sqlConfiguration.sqlDeploymentMode === STANDALONE
             ? [networkConfiguration.privateSubnet1Id!]
             : [networkConfiguration.privateSubnet1Id!, networkConfiguration.privateSubnet2Id!];
-    if (subnetIds.length > 1) {
-        const { Subnets } = await describeSubnets(credentialsId!, region!, { SubnetIds: subnetIds });
-        const subnetCidrs = Subnets?.map(({ SubnetId: subnetId, CidrBlock: cidrBlock }) => ({ subnetId, cidrBlock }));
-        const privateSubnet1Cidr = subnetCidrs
-            ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet1Id)
-            .map(subnet => subnet.cidrBlock);
-        const privateSubnet2Cidr = subnetCidrs
-            ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet2Id)
-            .map(subnet => subnet.cidrBlock);
+    const { Subnets } = await describeSubnets(credentialsId!, region!, { SubnetIds: subnetIds });
+    const subnetCidrs = Subnets?.map(({ SubnetId: subnetId, CidrBlock: cidrBlock }) => ({ subnetId, cidrBlock }));
+    const privateSubnet1Cidr = subnetCidrs
+        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet1Id)
+        .map(subnet => subnet.cidrBlock);
+    const privateSubnet2Cidr = subnetCidrs
+        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet2Id)
+        .map(subnet => subnet.cidrBlock);
 
-        return { privateSubnet1Cidr, privateSubnet2Cidr };
-    }
-    return { privateSubnet1Cidr: '', privateSubnet2Cidr: '' };
+    return { privateSubnet1Cidr, privateSubnet2Cidr };
 }
 
 async function formatTemplateParameters(
