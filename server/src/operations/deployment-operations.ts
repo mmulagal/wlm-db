@@ -80,7 +80,8 @@ import {
     EBS_DEFAULT_VOLUME_SIZE,
     TEMPLATE_PRIVATESUBNET1_CIDRBLOCK,
     TEMPLATE_PRIVATESUBNET2_CIDRBLOCK,
-    AuditStatus
+    AuditStatus,
+    FCI
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -123,6 +124,13 @@ async function getSubnetsCidr(
     sqlConfiguration: SQLConfigurationType
 ) {
     logger.info('Fetch cidr block for subnets', credentialsId, region);
+
+    if (
+        isEmpty(networkConfiguration.privateSubnet1Id) ||
+        (sqlConfiguration.sqlDeploymentMode === FCI && isEmpty(networkConfiguration.privateSubnet2Id))
+    ) {
+        return { privateSubnet1Cidr: '', privateSubnet2Cidr: '' };
+    }
 
     const subnetIds =
         sqlConfiguration.sqlDeploymentMode === STANDALONE

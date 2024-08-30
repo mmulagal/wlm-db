@@ -260,13 +260,16 @@ async function getDriveInfoFromSSM(
         throw createError(errorMessage);
     }
 
-    let isSqlAuthEnabled = instancesDetails && instanceDetail ? instancesDetails.some(
-        instance =>
-            instance.instanceName === instanceDetail.database_instance_name && instance.sqlAuthEnabled === true
-    ) : false;
-    let actualInstanceName = getOriginalDatabaseInstanceName(instanceName); 
+    let isSqlAuthEnabled =
+        instancesDetails && instanceDetail
+            ? instancesDetails.some(
+                  instance =>
+                      instance.instanceName === instanceDetail.database_instance_name &&
+                      instance.sqlAuthEnabled === true
+              )
+            : false;
+    let actualInstanceName = getOriginalDatabaseInstanceName(instanceName);
     if (!activeNodeInstance && instanceDetail && instancesDetails) {
-
         const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
         const isInstanceRunning = instancesDetails.some(
@@ -1488,7 +1491,7 @@ async function validateParams(
         if ((isDataVirtualMount || isLogVirtualMount) && (!isDataDriveExists || !isLogDriveExists)) {
             throw createError(412, 'Virtual Mount should not be selected for new data/log drives');
         }
-        
+
         const { existingDriveInfo, availableDriveLetters } = await getDriveInfo(
             accountId,
             databaseHostId,
