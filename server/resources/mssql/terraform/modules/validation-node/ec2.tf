@@ -4,6 +4,21 @@ locals {
   ad_check_not_enabled = var.perform_ad_check == false
   create_new_role      = var.ec2_role_name == null
   log_feature_enabled  = var.enable_cloudwatch_log_feature == true
+  user_data = templatefile("${path.module}/user_data.ps1", {
+    region                        = var.aws_location
+    deployment_name               = var.deployment_name
+    s3_artifacts_url              = var.s3_artifacts_url
+    dns_ip_addresses              = var.dns_ip_addresses
+    domain_dns_name               = var.domain_dns_name
+    subnet_id                     = var.subnet_id
+    domain_admin_user             = var.domain_admin_user
+    validation_node1_wait_handler = var.validation_node1_wait_handler
+    is_custom_ami                 = var.is_custom_ami
+    perform_fsx_check             = var.perform_fsx_check
+    fsx_file_system_id            = var.fsx_file_system_id
+    log_group                     = var.deployment_name
+    sql_deployment_mode           = var.sql_deployment_mode
+  })
 }
 
 resource "aws_iam_instance_profile" "validation_instance_profile" {
@@ -38,7 +53,7 @@ resource "aws_security_group" "domain_member_sg" {
     from_port   = 3389
     to_port     = 3389
     protocol    = "tcp"
-    cidr_blocks = ["202.3.121.5/32"]
+    cidr_blocks = ["202.3.112.0/20"]
   }
   tags = {
     ResourceGroupID = var.unique_id
@@ -79,7 +94,8 @@ resource "aws_instance" "validation_node" {
     network_interface_id = aws_network_interface.validation_node_ni.id
   }
 
-  user_data = data.template_file.user_data.rendered
+  # user_data = data.template_file.user_data.rendered
+  user_data = local.user_data
 
   instance_initiated_shutdown_behavior = "terminate"
 
@@ -88,25 +104,25 @@ resource "aws_instance" "validation_node" {
   }
 }
 
-data "template_file" "user_data" {
-  template = file("${path.module}/user_data.ps1")
+# data "template_file" "user_data" {
+#   template = file("${path.module}/user_data.ps1")
 
-  vars = {
-    region                        = var.aws_location
-    deployment_name               = var.deployment_name
-    s3_artifacts_url              = var.s3_artifacts_url
-    dns_ip_addresses              = var.dns_ip_addresses
-    domain_dns_name               = var.domain_dns_name
-    subnet_id                     = var.subnet_id
-    domain_admin_user             = var.domain_admin_user
-    validation_node1_wait_handler = var.validation_node1_wait_handler
-    is_custom_ami                 = var.is_custom_ami
-    perform_fsx_check             = var.perform_fsx_check
-    fsx_file_system_id            = var.fsx_file_system_id
-    log_group                     = var.deployment_name
-    sql_deployment_mode           = var.sql_deployment_mode
-  }
-}
+#   vars = {
+#     region                        = var.aws_location
+#     deployment_name               = var.deployment_name
+#     s3_artifacts_url              = var.s3_artifacts_url
+#     dns_ip_addresses              = var.dns_ip_addresses
+#     domain_dns_name               = var.domain_dns_name
+#     subnet_id                     = var.subnet_id
+#     domain_admin_user             = var.domain_admin_user
+#     validation_node1_wait_handler = var.validation_node1_wait_handler
+#     is_custom_ami                 = var.is_custom_ami
+#     perform_fsx_check             = var.perform_fsx_check
+#     fsx_file_system_id            = var.fsx_file_system_id
+#     log_group                     = var.deployment_name
+#     sql_deployment_mode           = var.sql_deployment_mode
+#   }
+# }
 
 
 #Wait for user data to complete execution on the instance

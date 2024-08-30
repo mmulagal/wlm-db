@@ -39,7 +39,7 @@ $aws_launch_wizard_for_fcn = $urls.aws_launch_wizard_for_fcn
 $validation_zip = $urls.validation_zip
 $signing_files_zip = $urls.signing_files_zip
 $open_ssl_win64_zip = $urls.open_ssl_win64_zip
-
+$common_zip = $urls.common_zip
 
 function Get-InstanceId {
     try {
@@ -250,12 +250,14 @@ function Invoke-Command {
 
 try {
     Write-Output "Downloading the files"
+    $ProgressPreference = 'SilentlyContinue'
     Invoke-WebRequestWithRetry -Uri "$verify_signature" -OutFile "C:\\cfn\\scripts\\Verify-Signature.ps1"
     Invoke-WebRequestWithRetry -Uri "$unzip_archive" -OutFile "C:\\cfn\\scripts\\Unzip-Archive.ps1"
     Invoke-WebRequestWithRetry -Uri "$aws_launch_wizard_for_fcn" -OutFile "C:\\cfn\\modules\\AWSLaunchWizardForCFN.zip"
     Invoke-WebRequestWithRetry -Uri "$validation_zip" -OutFile "C:\\cfn\\scripts\\validation.zip"
     Invoke-WebRequestWithRetry -Uri "$signing_files_zip" -OutFile "C:\\cfn\\signig_files.zip"
     Invoke-WebRequestWithRetry -Uri "$open_ssl_win64_zip" -OutFile "C:\\cfn\\OpenSSL-Win64.zip"
+    Invoke-WebRequestWithRetry -Uri "$common_zip" -OutFile "C:\\cfn\\scripts\\common.zip"
 
     Write-Output "Downloaded the files successfully"
 

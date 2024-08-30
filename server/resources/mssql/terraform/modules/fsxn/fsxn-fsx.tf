@@ -32,6 +32,13 @@ resource "aws_fsx_ontap_file_system" "fsx_ontap_fs" {
   #   iops = local.fsx_is_provision_mode_automatic ? null : var.fsx_disk_iops // may hav to remove this if it does not work as expected
   #   mode = local.fsx_is_provision_mode_automatic ? "AUTOMATIC" : "USER_PROVISIONED"
   # }
+  dynamic "disk_iops_configuration" {
+    for_each = var.fsx_disk_iops != 3 ? [1] : []
+    content {
+      iops = var.fsx_disk_iops
+      mode = "USER_PROVISIONED"
+    }
+  }
 
   tags = {
     Name = var.fsx_file_system_name

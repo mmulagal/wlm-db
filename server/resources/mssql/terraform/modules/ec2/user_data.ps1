@@ -138,76 +138,6 @@ function Install-SSMAgent {
 
 Install-SSMAgent -region "$region"
 
-# Configure CloudWatch Logs
-$config = if ($log_feature_enabled -eq "true") {
-  @"
-{
-"IsEnabled" : true,
-"EngineConfiguration" : {
-  "PollInterval" : "00:00:05",
-  "Components" : [{
-    "Id" : "ApplicationEventLog",
-    "FullName" : "AWS.EC2.Windows.CloudWatch.EventLog.EventLogInputComponent,AWS.EC2.Windows.CloudWatch",
-    "Parameters" : {
-      "LogName" : "Application",
-      "Levels" : "7"
-    }
-  },
-  {
-    "Id": "CfnInitLog",
-    "FullName": "AWS.EC2.Windows.CloudWatch.CustomLog.CustomLogInputComponent,AWS.EC2.Windows.CloudWatch",
-    "Parameters": {
-      "LogDirectoryPath": "C:\\cfn\\log",
-      "LogName" : "CfnInit",
-      "Levels" : "7",
-      "TimestampFormat": "yyyy-MM-dd HH:mm:ss,fff",
-      "Encoding": "ASCII",
-      "CultureName": "en-US",
-      "TimeZoneKind": "Local"
-    }
-  },
-  {
-    "Id": "CloudWatchCfnInitLog",
-    "FullName": "AWS.EC2.Windows.CloudWatch.CloudWatchLogsOutput,AWS.EC2.Windows.CloudWatch",
-    "Parameters": {
-      "AccessKey": "",
-      "SecretKey": "",
-      "Region": "$region",
-      "LogGroup": "$deployment_name",
-      "LogStream": "$instance_id"
-    }
-  },
-  {
-    "Id" : "CloudWatch",
-    "FullName" : "AWS.EC2.Windows.CloudWatch.CloudWatch.CloudWatchOutputComponent,AWS.EC2.Windows.CloudWatch",
-    "Parameters" : {
-      "AccessKey" : "",
-      "SecretKey" : "",
-      "Region": "$region",
-      "NameSpace" : "Windows/Default"
-    }
-  }],
-  "Flows": {
-    "Flows": [
-      "CfnInitLog,CloudWatchCfnInitLog"
-    ]
-  }
-}
-}
-"@
-}
-else {
-  '{ "IsEnabled" : false}'
-}
-
-try {
-  Set-Content -Path "C:\\Program Files\\Amazon\\SSM\\Plugins\\awsCloudWatch\\AWS.EC2.Windows.CloudWatch.json" -Value $config
-  Write-Output "Successfully configured CloudWatch Logs"
-}
-catch {
-  Write-Output "An error occurred while setting up CloudWatch Logs: $_"
-}
-
 function Invoke-WebRequestWithRetry {
   param(
     [string]$Uri,
@@ -237,8 +167,9 @@ function Invoke-Commands {
   )
 
   foreach ($command in $commands) {
+    $commandString = $command.Command | Out-String
     try {
-      Write-Output "Starting to execute command: $command"
+      Write-Output "Starting to execute command: $commandString"
       if ($command.UseExecutionPolicy) {
         & powershell.exe -ExecutionPolicy RemoteSigned -Command $command.Command
       }
@@ -248,10 +179,11 @@ function Invoke-Commands {
       if ($LASTEXITCODE -ne 0) {
         throw "Command failed with exit code $LASTEXITCODE"
       }
-      Write-Output "Successfully executed command: $command"
+      Write-Output "Successfully executed command: $commandString"
     }
     catch {
-      Write-Output "An error occurred while executing command: $_"
+      Write-Output "An error occurred while executing command $commandString"
+      Write-Output $_
       Write-Error $_.Exception.Message
       exit $LASTEXITCODE
     }
@@ -301,9 +233,9 @@ try {
     @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer"; UseExecutionPolicy = $false },
     # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dbcreate.zip -SignatureFilePath C:\cfn\signig_files\dbcreate.sig -PubFilePath C:\cfn\signig_files\dbcreate.pub -ResourceID SqlNode -Stackname $deployment_name"; UseExecutionPolicy = $false },
     @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\scripts\dbcreate.zip -Destination C:\cfn\scripts"; UseExecutionPolicy = $false },
-    @{Command = "Copy-Item C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory) -Recurse"; UseExecutionPolicy = $false },
-    @{Command = "Copy-Item C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\"; UseExecutionPolicy = $false },
-    @{Command = "Copy-Item C:\cfn\scripts\dbcreate\* -Destination C:\SSM\ -Recurse"; UseExecutionPolicy = $false },
+    @{Command = "Copy-Item C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM -Type Directory) -Recurse"; UseExecutionPolicy = $false },
+    @{Command = "Copy-Item C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM"; UseExecutionPolicy = $false },
+    @{Command = "Copy-Item C:\cfn\scripts\dbcreate\* -Destination C:\SSM -Recurse"; UseExecutionPolicy = $false },
     @{Command = "C:\cfn\scripts\common\HideAllSSMScripts.ps1"; UseExecutionPolicy = $false },
     # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\Installer\dependent-packages.zip -SignatureFilePath C:\cfn\signig_files\dependent-packages.sig -PubFilePath C:\cfn\signig_files\dependent-packages.pub -ResourceID SqlNode -Stackname $deployment_name"; UseExecutionPolicy = $false },
     @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer"; UseExecutionPolicy = $false }
@@ -313,8 +245,10 @@ try {
   Write-Output "Completed verifying the signatures and extracting the files"
   
   $sql_setup_command = @(
-    @{Command = "C:\cfn\scripts\Sql-Setup.ps1 -deployment_name $deployment_name -region $region -sql_server_name $sql_server_name -sql_svm_name $sql_svm_name -fsx_data_volume_name $fsx_data_volume_name -fsx_log_volume_name $fsx_log_volume_name -fsx_file_system_id $fsx_file_system_id -fsx_temp_db_volume_name $fsx_temp_db_volume_name -fsx_data_lun_size $fsx_data_lun_size -sql_igroup_name $sql_igroup_name -fsx_volume_snapshot_policy $fsx_volume_snapshot_policy -ad_dns_ip_addresses $ad_dns_ip_addresses -domain_dns_name $domain_dns_name -domain_admin_user $domain_admin_user -sql_admin_accounts $sql_admin_accounts -sql_collation $sql_collation"; UseExecutionPolicy = $false }
+    @{Command = "C:\cfn\scripts\Sql-Setup.ps1 -deployment_name '$deployment_name' -region '$region' -sql_server_name '$sql_server_name' -sql_svm_name '$sql_svm_name' -fsx_data_volume_name '$fsx_data_volume_name' -fsx_log_volume_name '$fsx_log_volume_name' -fsx_file_system_id '$fsx_file_system_id' -fsx_temp_db_volume_name '$fsx_temp_db_volume_name' -fsx_data_lun_size '$fsx_data_lun_size' -sql_igroup_name '$sql_igroup_name' -fsx_volume_snapshot_policy '$fsx_volume_snapshot_policy' -ad_dns_ip_addresses '$ad_dns_ip_addresses' -domain_dns_name '$domain_dns_name' -domain_admin_user '$domain_admin_user' -sql_admin_accounts '$sql_admin_accounts' -sql_collation '$sql_collation'"; UseExecutionPolicy = $false }
   )
+  $command = "C:\cfn\scripts\Sql-Setup.ps1 -deployment_name '$deployment_name' -region '$region' -sql_server_name '$sql_server_name' -sql_svm_name '$sql_svm_name' -fsx_data_volume_name '$fsx_data_volume_name' -fsx_log_volume_name '$fsx_log_volume_name' -fsx_file_system_id '$fsx_file_system_id' -fsx_temp_db_volume_name '$fsx_temp_db_volume_name' -fsx_data_lun_size '$fsx_data_lun_size' -sql_igroup_name '$sql_igroup_name' -fsx_volume_snapshot_policy '$fsx_volume_snapshot_policy' -ad_dns_ip_addresses '$ad_dns_ip_addresses' -domain_dns_name '$domain_dns_name' -domain_admin_user '$domain_admin_user' -sql_admin_accounts '$sql_admin_accounts' -sql_collation '$sql_collation'"
+  Write-Output $command
   Invoke-Commands -commands $sql_setup_command
 }
 catch {

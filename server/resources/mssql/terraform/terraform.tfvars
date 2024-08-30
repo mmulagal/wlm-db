@@ -54,12 +54,12 @@ fsx_svm_name            = "wlmdb_svm_1724065163786"
 
 sql_igroup_name          = "wlmdb_sqligroup_1724065163786"
 sql_svm_name             = "wlmdb_sqlsvm_1724065163786"
-node_net_bios_names      = "sqlnode-77776"
+node_net_bios_names      = "sqlnode-tf-sathish"
 fsx_storage_capacity     = 1024            # number
 fsx_data_lun_size        = 204800          # number
 domain_admin_user        = "administrator" #domain_admin_user_name
 fsx_admin_username       = "fsxadmin"      #fsx_user_name
-sql_service_account_name = "sqladminapg5m"
+sql_service_account_name = "sqladminadg4m"
 
 deployment_mode                = "SINGLE_AZ_1"
 fsx_file_system_id             = ""          # can have value if its existing
@@ -84,7 +84,7 @@ enable_cloud_watch_log_feature = true # enable_cloud_watch_log
 mssql_media_bucket_name        = "LaunchWizard-sqlha"
 mssql_media_path_key           = "launchwizardscripts/sqlmedia/sqlserver.iso"
 
-s3_artifacts_url   = "https://sathish-wlmdb-artifacts.s3.ap-southeast-1.amazonaws.com/wlmdb/signed-url.json?response-content-disposition=inline&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEOf%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaDmFwLXNvdXRoZWFzdC0xIkYwRAIgK0h7DbeOekMIHkbVoTL4MQThgqq78HgExeuW%2Bq7gkfoCIGQFJGuBM%2F5CIKgwjz67rIgmLyqyDgcJ3yHhTb5KxIsfKt8DCPD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEQABoMNDY0MjYyMDYxNDM1IgyXfHRs5trlzpDP3qwqswPdJgVyMAm5e0baw87pmGeB%2BBm%2B98raXCMgCtC7Tkb3813cdYp1WBo%2FtYhZduZ40rXKqB4ZSXaePaCD5djZ9poT2vyHwFDcigkKKIKpSczVZwJMf9ghk2bxaFPEJjS%2FpvM%2Fuvks1q0YFRzIcaBsoMaPDH0Vnfo4J%2BLLVtYyOLgoLebiWYuhYtw%2BP07FVyU%2B8TeJLxaL6XUZXljsERRjaXUMeh1s7F8klKUsUMD163cwrW%2F5GImqFL2sqBsZIaOLhmE0H2ahT8HILCWMIX6d4AVCfntyswb6Zw6equLXYMC2NfjKgXnvq6RMjvTLSNp8sKTfu%2BIY2O%2F7LM0XjQjPX2oaDQkgsKqiMKUlLJMjZM7K%2F6TiIdtswbJBWSAU%2F7pcaKRPRshJQ9fI3iTyk6uQXNUG8hw5PkRjc0U7zGSp2Hhkuz%2FpKyKuFvspQntkb0j9bKp0zIjOzH6%2F7uIEareC682Sg%2BWI3sX3pW0BloU%2BwKb3CAH2BHQMSbZ3XCT%2B%2B0VppuekrYl42Ke%2FVHqs7cf9H225HzDsgsFD6CDAAq4M1RR0neXwW9CZN%2F6ywnDdMxOw%2F5MGunEwtbqytgY6lQLQ%2BYXJ9HISXGuP1hH4%2BLSmNhF3fs4tTEzCbwvu9pSVStDjsTwZQddm7s006Zuij6QNRrgWd93fFhDXnH8GVikNRUkHThPFgkeNjiD9l7wAmfkcOF6SYdczNKBCu%2BrADq8X%2B0ebFCwjlzlC28W45Ho2meJ6Jpn180c6fpdy%2B1JuffDDnOVSWzWYdAdUSR90sOsDLjmURXe22zT2QSTaukb0AREHcFes7Pwsoj%2BoVRaVmLH%2Br92hnLSBUl%2B%2F8IDMC%2BGlfDda2hwo%2FrATPzcVmdXjjznLGYauUJ8CZnbM8vKoOexkQ5zDaUWcYcxC5HCUdipF3RmWUwMhuQoXQVvMTS19QhurRiV3rUBaTAqQF58wqJ%2Bj2XI4&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20240826T174849Z&X-Amz-SignedHeaders=host&X-Amz-Expires=43200&X-Amz-Credential=ASIAWYGBM3V5WXBVBH6M%2F20240826%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Signature=39884709d3e1cad4a57b936b3b1da50a612cee2789e18e597643be1c150633af"
+s3_artifacts_url   = "https://sathish-wlmdb-artifacts.s3.ap-southeast-1.amazonaws.com/wlmdb/signed-url.json?response-content-disposition=inline&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEEoaDmFwLXNvdXRoZWFzdC0xIkgwRgIhAO4lIaEU7UAbeHN37seTNnY%2FIbOshRNUJDi%2BI1HZ4fm%2BAiEAqcO2DsIyb2qsJefF0%2FQpuiUp%2FswEX%2BCOZiIZGwfB%2FmQq1gMIYxAAGgw0NjQyNjIwNjE0MzUiDN76lRYrn0qlMB3SwiqzA%2FdlPsX1sfVpU8kj3qljlRRI8Ll7HcjefqT6GWkYCOMru0Hj8adyCW09zGLkpVAaxezq5K8sPAdH4S0ILBg8bTKv8QkE2YsqxnXHQqNtME%2FqPoZBYDXeA90dO%2BuELTndnq4nXEwjJ%2FpPS7QIcJnqUdHO00TIZiose05ju33Pv4lQFWISRbY%2BZFu7jfQK0LVEnPgAldEAiht29Kk0AOtcduwd9bXtb6Rg4GbPOiwMc9xaA17W3CN%2BcnLPEwhxXuQS2koCxvHDvP7sjdXwYoVuUK9tjyiiiTP9090XECr4cK8qrz8oLMXBsGQzRRoAIMzA%2BK%2FGIEnzvB4QxJhqhssZi3R%2F%2Bzz0utv5%2FXLY%2FWpXckcHVXC7l8%2BtJSMSx1jtSewyOesMQGCoSpvBzlPuWnKb3R%2BxJ858AgT3%2BSb%2FFOdxpeZBWYdYu2SS3LneKta09Wtljyx1sz0oVmTwZ9TETkChcDDJKVCiHVMhRw3lg2eKZoFwoQZP1qCYnQWJQZmwBOJ794dwey629lyf7Xhh24zqRQ7YAwLnZN4IUABK2MqifmHP2STvipcp4ZP%2FhY7GNFgp58SsnDDr%2FMe2BjqTAtGdgrRYqdMGl53Bttq4mDn1Yaadlg5amhem3L2Hv%2BATnayZ140aGnxcD%2FiMvoY4c1pDE1%2FbIqCJWceMdHQdYxLqykVXWILfD1NNB5GbZA6CVXl335bozu6nnJuB55SyLgUMTC%2Fb%2FcfmMRUH%2FpsmTHju%2FhB7ZAqDmP0umrX0XDNhEMPp%2FC%2Fj8082OgSDV5BMdrnrAZVZMfdeC01LZa%2BQ6m5pMi6scvnDbLNOtvVarkzLCQSObJgVusChc%2BjluFsS%2F9JX0rMDKr95ImWgkNNAGypIuvAmPlKUE7OqXgEFNTsZEHCFeKi1gyTA6JgsKs7Bqk2hSc1hBdvY1NXS8UjhRFQItYq7KJ21BToq3B08hzBwOQ8X&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20240830T192359Z&X-Amz-SignedHeaders=host&X-Amz-Expires=43200&X-Amz-Credential=ASIAWYGBM3V55TXWBQ42%2F20240830%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Signature=70e06195309c7eaa9e91eb9f55334c17aa055a5b7d2ad53cc1a7a18cd091d3a5"
 fsx_encryption_key = "arn:aws:kms:ap-southeast-1:464262061435:key/0ff7ae43-5a18-4bbb-af78-31e7a9127b71"
 # for fci fsx
 fsx_quorum_volume_name = "wlmdb-quorum"

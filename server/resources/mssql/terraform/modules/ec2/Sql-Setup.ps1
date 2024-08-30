@@ -1,4 +1,4 @@
-$WarningPreference = 'SilentlyContinue';
+[CmdletBinding()]
 
 param(
     [Parameter(Mandatory = $true)]
@@ -40,7 +40,9 @@ function Invoke-Commands {
         [Parameter(Mandatory = $true)]
         [PSCustomObject[]]$commands,
         [Parameter(Mandatory = $true)]
-        [string]$logFile
+        [string]$logFile,
+        [Parameter(Mandatory = $false)]
+        [bool]$usePwsh = $false
     )
 
     # Create the log file if it doesn't exist
@@ -49,32 +51,47 @@ function Invoke-Commands {
     }
 
     # Get the completed commands from the log file
-    $completedCommands = Get-Content $logFile
+    $completedCommands = Get-Content $logFile | Where-Object { $_ -match "SUCCESS:" }
 
     foreach ($command in $commands) {
-        if ($completedCommands -contains $command.Command) {
-            Write-Output "Skipping command $command as it's already completed"
+        $commandString = $command.Command | Out-String
+        if ($completedCommands -contains ("SUCCESS: " + $command.Command)) {
+            Write-Output "Skipping command $commandString as it's already completed"
             continue
         }
 
+        # Write the command to the log file before executing it
+        Add-Content -Path $logFile -Value $command.Command
+
         try {
-            Write-Output "Starting to execute command: $command"
+            Write-Output "Starting to execute command: $commandString"
             if ($command.UseExecutionPolicy) {
-                & powershell.exe -ExecutionPolicy RemoteSigned -Command $command.Command
+                if ($usePwsh) {
+                    & pwsh -ExecutionPolicy RemoteSigned -Command $command.Command
+                }
+                else {
+                    & powershell.exe -ExecutionPolicy RemoteSigned -Command $command.Command
+                }
             }
             else {
-                & powershell.exe -Command $command.Command
+                if ($usePwsh) {
+                    & pwsh -Command $command.Command
+                }
+                else {
+                    & powershell.exe -Command $command.Command
+                }
             }
             if ($LASTEXITCODE -ne 0) {
                 throw "Command failed with exit code $LASTEXITCODE"
             }
-            Write-Output "Successfully executed command: $command"
+            Write-Output "Successfully executed command: $commandString"
 
-            # Write the command to the log file
-            Add-Content -Path $logFile -Value $command.Command
+            # Write a success marker to the log file
+            Add-Content -Path $logFile -Value ("SUCCESS: " + $command.Command)
         }
         catch {
-            Write-Output "An error occurred while executing command: $_"
+            Write-Output "An error occurred while executing command $commandString"
+            Write-Output $_
             Write-Error $_.Exception.Message
             exit $LASTEXITCODE
         }
@@ -84,16 +101,19 @@ function Invoke-Commands {
 try {
     #InitialSetup
     Write-Output "Starting the initial setup"
+    Write-Output "deployment_name : $deployment_name"
+    Write-Output "region : $region"
+    $ProgressPreference = 'SilentlyContinue'
     $setup_commands = @(
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\modules\AWSLaunchWizardForCFN.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\modules\AWSLaunchWizardForSSM.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\common\InitializeDisks.ps1"; UseExecutionPolicy = $false },
-        @{Command = "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID SqlNode -Stackname $deployment_name"; UseExecutionPolicy = $false },
+        @{Command = "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID SqlNode -Stackname '$deployment_name'"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\sqlfci\LCM-Config.ps1"; UseExecutionPolicy = $false },
-        @{Command = "C:\cfn\scripts\common\Unjoin-Domain.ps1 -Parentstackname $deployment_name"; UseExecutionPolicy = $false },
-        # @{Command = "C:\cfn\scripts\common\Restart-Computer.ps1"; UseExecutionPolicy = $false },
-        @{Command = "C:\cfn\scripts\common\Rename-Computer.ps1 -Restart -NewName $sql_server_name"; UseExecutionPolicy = $false }
-        # @{Command = "C:\cfn\scripts\common\Restart-Computer.ps1"; UseExecutionPolicy = $false }
+        @{Command = "C:\cfn\scripts\common\Unjoin-Domain.ps1 -Parentstackname '$deployment_name'"; UseExecutionPolicy = $false },
+        #@{Command = "C:\cfn\scripts\common\Restart-Computer.ps1"; UseExecutionPolicy = $false },
+        @{Command = "C:\cfn\scripts\common\Rename-Computer.ps1 -Restart -NewName '$sql_server_name'"; UseExecutionPolicy = $false }
+        #@{Command = "C:\cfn\scripts\common\Restart-Computer.ps1"; UseExecutionPolicy = $false }
     )
     
     Invoke-Commands -commands $setup_commands -logFile "C:\cfn\tflogs\setup_commands.log"
@@ -108,25 +128,42 @@ try {
 
     Invoke-Commands -commands $ontap_pre_req_commands -logFile "C:\cfn\tflogs\ontap_pre_req_commands.log"
 
-    pwsh -Command C:\\cfn\\scripts\\sqlontap\\Update-AWSToolsModules.ps1
-    # powershell.exe -Command "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"
+    $update_aws_tools_commands = @(
+        @{
+            Command            = "C:\\cfn\\scripts\\sqlontap\\Update-AWSToolsModules.ps1"
+            UseExecutionPolicy = $false
+        }
+    )
+    Invoke-Commands -commands $update_aws_tools_commands -logFile "C:\cfn\tflogs\update_aws_tools_commands.log" -usePwsh $true
 
-    pwsh -Command "C:\\cfn\\scripts\\sqlontap\\Configure-ONTAP.ps1 -Parentstackname '$deployment_name' -SQLVMName '$sql_svm_name' -FSxDataVolumeName '$fsx_data_volume_name' -FSxLogVolumeName '$fsx_log_volume_name' -FileSystemId '$fsx_file_system_id' -FSxTempDbVolumeName '$fsx_temp_db_volume_name' -FSxDataLunSize '$fsx_data_lun_size' -IGROUP '$sql_igroup_name' -SnapshotPolicy '$fsx_volume_snapshot_policy' -ResourceID SqlNode -Stackname '$deployment_name'"
+    #$restart_command_three = @(
+    #     @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false }
+    # )
+    #Invoke-Commands -commands $restart_command_three -logFile "C:\cfn\tflogs\restart_command_three.log"
+    
+    $configure_ontap_commands = @(
+        @{
+            Command            = "`"C:\\cfn\\scripts\\sqlontap\\Configure-ONTAP.ps1 -Parentstackname '$deployment_name' -SQLVMName '$sql_svm_name' -FSxDataVolumeName '$fsx_data_volume_name' -FSxLogVolumeName '$fsx_log_volume_name' -FileSystemId '$fsx_file_system_id' -FSxTempDbVolumeName '$fsx_temp_db_volume_name' -FSxDataLunSize '$fsx_data_lun_size' -IGROUP '$sql_igroup_name' -SnapshotPolicy '$fsx_volume_snapshot_policy' -ResourceID SqlNode -Stackname '$deployment_name'`""
+            UseExecutionPolicy = $false
+        }
+    )
+
+    Invoke-Commands -commands $configure_ontap_commands -logFile "C:\cfn\tflogs\configure_ontap_commands.log" -usePwsh $true
      
     $ontap_commands = @(
         @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$fsx_file_system_id' -SQLVMName '$sql_svm_name' -ResourceID SqlNode -Stackname '$deployment_name'"; UseExecutionPolicy = $false },
         @{Command = "C:\\cfn\\scripts\\sqlontap\\Initialize-Iscsidisk.ps1 -IsFCI false"; UseExecutionPolicy = $false }
     )
     
-
     Invoke-Commands -commands $ontap_commands -logFile "C:\cfn\tflogs\ontap_commands.log"
     Write-Output "Completed ontap configuration"
 
     # instance preparation
     Write-Output "Starting instance preparation"
+    # enable this restart after testing
     $instance_prep_commands = @(
         @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
-        # @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
+        #@{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
         @{Command = "C:\\cfn\\scripts\\sqlfci\\Add-DNSEntry.ps1 -ADServerPrivateIP '$ad_dns_ip_addresses' -DomainDNSName '$domain_dns_name'"; UseExecutionPolicy = $false },
         @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$domain_dns_name'"; UseExecutionPolicy = $false },
         @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$domain_dns_name' -Parentstackname '$deployment_name' -DomainAdminUser '$domain_admin_user'"; UseExecutionPolicy = $false },
@@ -159,7 +196,10 @@ try {
     Invoke-Commands -commands $configure_sql -logFile "C:\cfn\tflogs\configure_sql.log"
     Write-Output "Completed sql configure"
 
-    powershell.exe -Command "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"
+    # $restart_command_five = @(
+    #     @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false }
+    # )
+    # Invoke-Commands -commands $restart_command_five -logFile "C:\cfn\tflogs\restart_command_five.log"
 
     # Write-Output "Starting the Cleanup"
     # clean up

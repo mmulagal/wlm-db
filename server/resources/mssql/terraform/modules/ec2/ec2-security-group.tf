@@ -113,7 +113,7 @@ resource "aws_security_group" "workload_security_group" {
     from_port   = 3389
     to_port     = 3389
     protocol    = "tcp"
-    cidr_blocks = ["202.3.121.5/32"]
+    cidr_blocks = ["202.3.112.0/20"]
   }
   tags = {
     Name = "workload_security_group"

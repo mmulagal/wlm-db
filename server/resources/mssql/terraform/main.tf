@@ -116,38 +116,38 @@ module "vpc-endpoints" {
   ssm_messages_endpoint_exists    = var.ssm_messages_endpoint_exists
 }
 
-module "validation-node" {
-  source = "./modules/validation-node"
+# module "validation-node" {
+#   source = "./modules/validation-node"
 
-  depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, aws_ssm_parameter.credentials_ssm_parameter, module.vpc-endpoints]
+#   depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, aws_ssm_parameter.credentials_ssm_parameter, module.vpc-endpoints]
 
-  vpc_id                        = var.vpc_id
-  aws_location                  = var.aws_location
-  subnet_id                     = var.private_subnet1_id
-  dns_ip_addresses              = var.dns_ip_addresses
-  ec2_role_name                 = var.deployment_name
-  is_custom_ami                 = var.is_custom_ami
-  key_pair_name                 = var.key_pair_name
-  perform_ad_check              = true
-  domain_dns_name               = var.domain_dns_name
-  domain_admin_user             = var.domain_admin_user
-  perform_fsx_check             = local.existing_ontap_fsx ? "true" : "false" // verify both ad n fsx check bool or string 
-  fsx_file_system_id            = local.existing_ontap_fsx ? var.fsx_file_system_id : ""
-  enable_cloudwatch_log_feature = var.enable_cloud_watch_log_feature
-  ami                           = var.validation_ami
-  validation_node_instance_type = var.validation_node_instance_type
-  deployment_name               = var.deployment_name
-  unique_id                     = var.unique_id
-  s3_artifacts_url              = var.s3_artifacts_url
-  validation_node1_wait_handler = "asdf"
-  sql_deployment_mode           = var.sql_deployment_mode
-  // notificaiton arn to be sent to the validation node
-}
+#   vpc_id                        = var.vpc_id
+#   aws_location                  = var.aws_location
+#   subnet_id                     = var.private_subnet1_id
+#   dns_ip_addresses              = var.dns_ip_addresses
+#   ec2_role_name                 = var.deployment_name
+#   is_custom_ami                 = var.is_custom_ami
+#   key_pair_name                 = var.key_pair_name
+#   perform_ad_check              = true
+#   domain_dns_name               = var.domain_dns_name
+#   domain_admin_user             = var.domain_admin_user
+#   perform_fsx_check             = local.existing_ontap_fsx ? "true" : "false" // verify both ad n fsx check bool or string 
+#   fsx_file_system_id            = local.existing_ontap_fsx ? var.fsx_file_system_id : ""
+#   enable_cloudwatch_log_feature = var.enable_cloud_watch_log_feature
+#   ami                           = var.validation_ami
+#   validation_node_instance_type = var.validation_node_instance_type
+#   deployment_name               = var.deployment_name
+#   unique_id                     = var.unique_id
+#   s3_artifacts_url              = var.s3_artifacts_url
+#   validation_node1_wait_handler = "asdf"
+#   sql_deployment_mode           = var.sql_deployment_mode
+#   // notificaiton arn to be sent to the validation node
+# }
 
 module "fsxn" {
   source = "./modules/fsxn"
 
-  depends_on                     = [module.validation-node]
+  # depends_on                     = [module.validation-node]
   fsx_file_system_id             = "" // set this id to provision using existing fsx
   deployment_mode                = var.deployment_mode
   vpc_id                         = var.vpc_id
@@ -178,7 +178,8 @@ module "fsxn" {
 module "ec2" {
   source = "./modules/ec2"
 
-  depends_on = [module.vpc-endpoints, module.validation-node, module.fsxn]
+  # depends_on = [module.vpc-endpoints, module.validation-node, module.fsxn]
+  depends_on = [module.vpc-endpoints, module.fsxn]
 
   ec2_role_name                 = var.deployment_name
   enable_cloudwatch_log_feature = var.enable_cloud_watch_log_feature
