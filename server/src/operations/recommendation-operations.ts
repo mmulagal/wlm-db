@@ -240,7 +240,8 @@ async function handleInstanceRecommendation(
     totalNodesCount: number,
     existingInstanceHourlyPrice?: number,
     existingInstanceHourlyPriceWithoutLicense?: number,
-    isAwsLicenseIncluded: boolean = true
+    isAwsLicenseIncluded: boolean = true,
+    monthlySqlByolCostPerHost?: number
 ) {
     logger.info('Handling instance recommendations', {
         accountId,
@@ -255,7 +256,8 @@ async function handleInstanceRecommendation(
         existingInstanceHourlyPrice,
         existingInstanceHourlyPriceWithoutLicense,
         totalNodesCount,
-        isAwsLicenseIncluded
+        isAwsLicenseIncluded,
+        monthlySqlByolCostPerHost
     });
 
     let recommendedCompute;
@@ -324,10 +326,11 @@ async function handleInstanceRecommendation(
                         : undefined,
                     computeMonthlyPrice: rcomputeMonthlyPrice,
                     instanceMonthlyPrice: rinstanceMonthlyPrice,
-                    licenseMonthlyPrice:
-                        rcomputeMonthlyPrice !== undefined && rinstanceMonthlyPrice !== undefined
+                    licenseMonthlyPrice: isAwsLicenseIncluded
+                        ? rcomputeMonthlyPrice !== undefined && rinstanceMonthlyPrice !== undefined
                             ? rinstanceMonthlyPrice - rcomputeMonthlyPrice
-                            : undefined,
+                            : undefined
+                        : monthlySqlByolCostPerHost || 0,
                     hoursInMonth: HOURS_IN_MONTH,
                     licenseIncluded: isAwsLicenseIncluded
                 })),
@@ -848,10 +851,11 @@ async function getSqlInstanceLicenseRecommendations(
                                 ]?.pricePerUnit; // instance price is inclusive of license price (priority to BYOL price if available)
                             const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(instanceHourlyPrice);
 
-                            const licenseMonthlyPrice =
-                                computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
+                            const licenseMonthlyPrice = WIN_SQL_EC2_USAGE_OPERATION.includes(usageOperation)
+                                ? computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
                                     ? instanceMonthlyPrice - computeMonthlyPrice
-                                    : undefined;
+                                    : undefined
+                                : monthlySqlByolCost || 0;
 
                             return {
                                 instanceType,
@@ -894,7 +898,7 @@ async function getSqlInstanceLicenseRecommendations(
                         ? recommendedInstanceHourlyPrice - recommendedInstanceHourlyPriceWithoutLicense
                         : undefined; // license price for the recommended license type for the current instance type from AWS license included machine
 
-                let awsLicenseIncluded = !byolHourlyPrice;
+                let awsLicenseIncluded = WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation);
 
                 let recommendedLicenseMessage;
 
@@ -933,7 +937,8 @@ async function getSqlInstanceLicenseRecommendations(
                     nodeInstanceTypes.length,
                     recommendedInstanceHourlyPrice, // license type is already identified, so use the price for the recommended license type which is essentially existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit || byolHourlyPrice
                     recommendedInstanceHourlyPriceWithoutLicense,
-                    awsLicenseIncluded
+                    awsLicenseIncluded,
+                    monthlySqlByolCostPerHost
                 ));
                 existingCompute.finding = computeFinding;
                 recommendedInstanceHourlyPrice = recommendedCompute.price;
