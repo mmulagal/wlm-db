@@ -2209,7 +2209,7 @@ async function performLifecycleUpdate(
             resourceDetails,
             resourceDetails,
             {
-                svm: mappings.svm,
+                svm: mappings.data[0]?.parentSvm || mappings.svm,
                 data: mappings.data.map(vol => ({ ...vol, volumeName: vol.parentVolume! })),
                 log: mappings.log.map(vol => ({ ...vol, volumeName: vol.parentVolume! }))
             },
