@@ -1005,7 +1005,7 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const { useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
+export const { useGetJobsSummaryQuery, useLazyGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
