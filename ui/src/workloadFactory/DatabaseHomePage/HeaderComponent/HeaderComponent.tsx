@@ -37,7 +37,13 @@ import {
     workloadFactoryResourceApi,
     workloadFactoryResourceApiV2
 } from '../../../utils/apiService';
-import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
+import {
+    setFromTime,
+    setJobsList,
+    setSubJobsData,
+    setTimeInterval,
+    setToTime
+} from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import { SAVINGS_CALC_MODE, WLF_TABS, WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
@@ -375,6 +381,41 @@ const HeaderComponent = ({ tab }: Tab) => {
         ];
     };
 
+    //Job monitoring select drop down
+    //Function to generate the options for Select Field for License
+    const generateSelectFieldOptions = useMemo<optionType[]>((): optionType[] => {
+        const arr = ['Last 24 hours', 'Last 7 days', 'Last 14 days', 'Last 30 days'];
+        const options: optionType[] = [];
+        arr?.map((val, idx: number) => {
+            const option = generateOptionType(val, val, '', false, '');
+            options.push(option);
+        });
+        // setDropdownValue(options[0]);
+        return options;
+    }, []);
+
+    const [dropDownValue, setDropdownValue] = useState<any>(null);
+
+    const setTimeRange = (selectedTime: string) => {
+        let days = 1;
+        if (selectedTime === 'Last 7 days') {
+            days = 7;
+        } else if (selectedTime === 'Last 14 days') {
+            days = 14;
+        } else if (selectedTime === 'Last 30 days') {
+            days = 30;
+        }
+        dispatchTimeInterval(days);
+    };
+
+    const dispatchTimeInterval = (days: number) => {
+        const toDate = Date.now();
+        const fromDate = toDate - days * (3600 * 1000 * 24);
+        dispatch(setFromTime(fromDate));
+        dispatch(setToTime(toDate));
+        dispatch(setTimeInterval(days));
+    };
+
     return statusLoading && !isDemoMode ? (
         <div className={styles.loader}>
             <ComponentLoader style={{ margin: '0 auto' }} />
@@ -648,7 +689,34 @@ const HeaderComponent = ({ tab }: Tab) => {
                     )}
                     {selectedHeaderTab === WLF_TABS.JOB_MONITORING && (
                         <>
-                            <JobMonitoring SelectComponent={selectComponents} RefreshComponent={refreshComponent} />
+                            <div className={styles.inventoryHeaderSection}>
+                                <div className={styles.contentArea}>
+                                    {selectComponents()}
+                                    <div className={styles.content}>
+                                        <div className={styles.selectContainer}>
+                                            <SelectField
+                                                isClearable={false}
+                                                onChange={(selectedOptions: any): void => {
+                                                    setDropdownValue(selectedOptions);
+                                                    setTimeRange(selectedOptions?.value);
+                                                }}
+                                                isSearchable={false}
+                                                variant="underline"
+                                                options={generateSelectFieldOptions}
+                                                value={
+                                                    dropDownValue ? [dropDownValue] : [generateSelectFieldOptions[0]]
+                                                }
+                                            />
+                                        </div>
+                                        {refreshComponent()}
+                                    </div>
+                                </div>
+                            </div>
+                            <JobMonitoring
+                                dropDownValue={dropDownValue}
+                                setDropdownValue={setDropdownValue}
+                                generateSelectFieldOptions={generateSelectFieldOptions}
+                            />
                         </>
                     )}
                     {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && (

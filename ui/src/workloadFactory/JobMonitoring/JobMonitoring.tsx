@@ -1,47 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FlashingDotsLoader, Typography } from '@netapp/design-system';
-import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import LineChart from '../DatabaseHomePage/LineChart/LineChart';
 import styles from './JobMonitoring.module.scss';
 import { GENERAL } from '../../utils/appConstants';
 import JobMonitoringTable from './JobMonitoringTable/JobMonitoringTable';
 import JobDistribution from './JobDistribution/JobDistribution';
-import { generateOptionType } from '../../utils/utilityFunctions';
 import { setFromTime, setTimeInterval, setToTime } from '../../store/workloadFactory/jobMonitoringSlice';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 
-const JobMonitoring = ({ SelectComponent, RefreshComponent }: any) => {
+const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownValue }: any) => {
     const dispatch = useAppDispatch();
 
     const timelineData = useAppSelector(state => state.jobMonitoring.jobsSummaryTimeline);
     const timelineLoading = useAppSelector(state => state.jobMonitoring.jobsSummaryTimelineLoading);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
-
-    const [dropDownValue, setDropdownValue] = useState<any>(null);
-
-    //Function to generate the options for Select Field for License
-    const generateSelectFieldOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = ['Last 24 hours', 'Last 7 days', 'Last 14 days', 'Last 30 days'];
-        const options: optionType[] = [];
-        arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
-            options.push(option);
-        });
-        // setDropdownValue(options[0]);
-        return options;
-    }, []);
-
-    const setTimeRange = (selectedTime: string) => {
-        let days = 1;
-        if (selectedTime === 'Last 7 days') {
-            days = 7;
-        } else if (selectedTime === 'Last 14 days') {
-            days = 14;
-        } else if (selectedTime === 'Last 30 days') {
-            days = 30;
-        }
-        dispatchTimeInterval(days);
-    };
 
     const dispatchTimeInterval = (days: number) => {
         const toDate = Date.now();
@@ -58,29 +30,6 @@ const JobMonitoring = ({ SelectComponent, RefreshComponent }: any) => {
 
     return (
         <div className={styles.jobMonitoring}>
-            <div className={styles.headingContainer}>
-                <div className={styles.jobMonitoringSelectBox}>
-                    <SelectComponent />
-                </div>
-
-                <div className={styles.rightSegment}>
-                    <div className={styles.selectContainer}>
-                        <SelectField
-                            isClearable={false}
-                            onChange={(selectedOptions: any): void => {
-                                setDropdownValue(selectedOptions);
-                                setTimeRange(selectedOptions?.value);
-                            }}
-                            isSearchable={false}
-                            variant="underline"
-                            options={generateSelectFieldOptions}
-                            value={dropDownValue ? [dropDownValue] : [generateSelectFieldOptions[0]]}
-                        />
-                    </div>
-                    <RefreshComponent />
-                </div>
-            </div>
-
             <div className={styles.chartContainer}>
                 <div style={{ width: '49.8%', maxWidth: '790px' }}>
                     <JobDistribution />
