@@ -716,7 +716,8 @@ export const GENERAL = {
     MANAGE_HOST: 'Manage host',
     DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 / 2'],
     FAILED_TO_DETECT_HOST: 'Failed to detect host',
-    DETECT_FAILED_WITH_NO_STORAGE: 'Unable to identify attached storage. For SQL user authentication, reload the inventory page and try to manage again.',
+    DETECT_FAILED_WITH_NO_STORAGE:
+        'Unable to identify attached storage. For SQL user authentication, reload the inventory page and try to manage again.',
     DONE: 'Done',
     DETECT: 'Detect',
     SSM_CONNECTIVITY: 'SSM connectivity',
@@ -1062,6 +1063,8 @@ export const GENERAL = {
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
         'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+    ALL_FSXN_MANAGED_TEXT:
+        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
     ALL_UNDETECT_TEXT:
         'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
