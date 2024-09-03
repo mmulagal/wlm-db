@@ -15,7 +15,7 @@ import {
     jobMonitoringStatusMapping,
     sortListOfDict
 } from '../../../utils/utilityFunctions';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 
@@ -33,9 +33,9 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         setSubTaskList(sortedSubTaskList);
     }, [subJobsData, isDemoMode]);
 
-    const ExpandedRow = ({ rowData }: any) => {
+    const ExpandedRow = useCallback(({ rowData }: any) => {
         return <TaskTable taskList={rowData?.subJobs || []} />;
-    };
+    }, []);
 
     const JobsColDefs: ColumnProps[] = [
         {
