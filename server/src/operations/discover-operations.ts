@@ -16,7 +16,12 @@ import {
     upsertDatabaseInstance
 } from '../lib/database/db';
 import { getResources } from './database/database-operations';
-import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
+import {
+    describeInstance,
+    paginateDescribeEbsVolumes,
+    paginatedDescribeSubnets,
+    paginatedDescribeVpcs
+} from '../lib/aws/ec2';
 import {
     getResourceNameFromTags,
     sleep,
@@ -235,10 +240,15 @@ async function getHostAndSqlServerInfo(
           call will come with a new nextToken.
         */
         api1StartTime = performance.now();
-        const [fsxList, svmList, subnetList] = await Promise.all([
+        const [fsxList, svmList, subnetList, ebsVolumeList] = await Promise.all([
             describeFSxFileSystems(credentialsId, region),
             describeFSxStorageVirtualMachines(credentialsId, region),
-            paginatedDescribeSubnets(credentialsId, region, {})
+            paginatedDescribeSubnets(credentialsId, region, {}),
+            paginateDescribeEbsVolumes(credentialsId, region, {
+                Filters: [
+                    { Name: 'attachment.instance-id', Values: ssmConnectedNodes.map(target => target.ec2InstanceId) }
+                ]
+            })
         ]);
         api1EndTime = performance.now();
         logger.info(`API1Performance: Time taken by describe FSxFS/SVM: ${api1EndTime - api1StartTime}ms`);
@@ -306,6 +316,7 @@ async function getHostAndSqlServerInfo(
         logger.info(`API1Performance: Endpoint/FSx/Deployment map creation time: ${api1EndTime - api1StartTime}ms`);
 
         const subnetListMap = new Map(subnetList?.map(subnet => [subnet.SubnetId, subnet.AvailabilityZone]));
+        const ebsVolumeToAvailabilityZoneMap = new Map(ebsVolumeList?.map(vol => [vol.VolumeId, vol.AvailabilityZone]));
 
         // PowerShell execution would take some time, so we wait for a second before triggering polling.
         //
@@ -329,7 +340,8 @@ async function getHostAndSqlServerInfo(
                         commandId!,
                         endPointIpWithFsxInfo,
                         fsIdWithDeploymentType,
-                        subnetListMap
+                        subnetListMap,
+                        ebsVolumeToAvailabilityZoneMap
                     );
                     const dbInfoEndTime = performance.now();
                     logger.info(
@@ -374,7 +386,8 @@ async function getHostAndSqlInfoFromPsOutput(
     commandId: string,
     endPointIpWithFsxInfo: Map<string, FSxInfo>,
     fsIdWithDeploymentType: Map<string, DeployType>,
-    subnetListMap: Map<string | undefined, string | undefined>
+    subnetListMap: Map<string | undefined, string | undefined>,
+    ebsVolumeToAvailabilityZoneMap: Map<string | undefined, string | undefined>
 ): Promise<SqlServerInstanceInfoType[]> {
     logger.info('Get host and SQL server details from PowerShell output', {
         credentialsId,
@@ -479,14 +492,19 @@ async function getHostAndSqlInfoFromPsOutput(
                     }
 
                     for (const di of driveInfo) {
-                        const ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
+                        let ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
                         const volIdRegex = /^(vol)([a-zA-Z0-9]+)/; // volumeId derived from SerialNumberOrScsiTarget is of the format,vol012ab34ed, but, AWS ebs volume IDs are always in vol-012ab34ed format, so we need to convert it to the correct format.
                         if (ebsVolumeId) {
+                            ebsVolumeId = volIdRegex.test(ebsVolumeId)
+                                ? ebsVolumeId.replace(volIdRegex, '$1-$2')
+                                : ebsVolumeId;
                             storageTypes.push({
                                 type: STORAGE_TYPE.EBS,
-                                id: volIdRegex.test(ebsVolumeId)
-                                    ? ebsVolumeId.replace(volIdRegex, '$1-$2')
-                                    : ebsVolumeId // convert the volumeId to the correct format.
+                                id: ebsVolumeId
+                            });
+                            const ebsAvailabilityZone = ebsVolumeToAvailabilityZoneMap.get(ebsVolumeId);
+                            deploymentTypes.push({
+                                ...(ebsAvailabilityZone && { zones: [ebsAvailabilityZone] })
                             });
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
