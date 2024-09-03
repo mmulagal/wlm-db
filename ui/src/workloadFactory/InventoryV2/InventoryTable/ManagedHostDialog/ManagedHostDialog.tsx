@@ -35,14 +35,19 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                 if (obj.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     disabledText = GENERAL.MANAGE_DISABLE_FOR_UNDETECTED;
                 }
+                if (obj.statusColText === INVENTORY_STATUS.MANAGED) {
+                    disabledText = GENERAL.SQL_SERVER_MANAGED;
+                }
                 if (
                     obj.statusColText === INVENTORY_STATUS.UNMANAGED &&
                     obj?.status?.toLowerCase() === INVENTORY_STATUS.DOWN
                 ) {
                     disabledText = GENERAL.SQL_SERVER_NOT_RUNNING;
-                }
-                if (obj.statusColText === INVENTORY_STATUS.MANAGED) {
-                    disabledText = GENERAL.SQL_SERVER_MANAGED;
+                } else if (
+                    obj.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                    obj.fileSystemType !== GENERAL.FSX_FOR_ONTAP
+                ) {
+                    disabledText = GENERAL.FSXN_MANAGE_SUPPORTED;
                 }
                 return {
                     ...obj,
