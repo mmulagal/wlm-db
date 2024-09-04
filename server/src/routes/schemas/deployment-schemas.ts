@@ -13,7 +13,9 @@ import {
     CloudFormationTemplateHeader,
     FsxAvailableRegionsForThroughputListResponse,
     CollationListResponse,
-    CollationListQueryString
+    CollationListQueryString,
+    PgSqlCloudFormationTemplateRequestBody,
+    PgSqlCloudFormationDeploymentResponse
 } from '../types/deployment.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -51,11 +53,22 @@ const DeploymentSummaryListSchema = {
 const DeployTemplateSchema = {
     ...baseRequest,
     headers: CloudFormationTemplateHeader,
-    summary: 'Deploy CloudFormation template',
-    description: 'Deploy CloudFormation template to provision SQL FCI',
+    summary: 'Deploy CloudFormation template for pgsql',
+    description: 'Deploy CloudFormation template to provision PGSQL',
     body: CloudFormationTemplateRequestBody,
     response: {
         200: CloudFormationDeploymentResponse
+    }
+};
+
+const PgSqlDeployTemplateSchema = {
+    ...baseRequest,
+    headers: CloudFormationTemplateHeader,
+    summary: 'Deploy CloudFormation template for pgsql',
+    description: 'Deploy CloudFormation template to provision PGSQL',
+    body: PgSqlCloudFormationTemplateRequestBody,
+    response: {
+        200: PgSqlCloudFormationDeploymentResponse
     }
 };
 
@@ -108,5 +121,6 @@ export {
     CloudFormationTemplateSchema,
     DeploymentSummaryListSchema,
     FsxAvailableRegionsForThroughputSchema,
-    CollationListSchema
+    CollationListSchema,
+    PgSqlDeployTemplateSchema
 };

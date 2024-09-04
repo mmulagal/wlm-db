@@ -185,6 +185,12 @@ const PARAMETERS = [
         minLength: 1
     },
     {
+        name: 'PGSQLSvmName',
+        description: 'PGSQL Storage Machine Virtual Name.',
+        type: 'String',
+        minLength: 1
+    },
+    {
         name: 'WorkloadInstanceType',
         description: 'Amazon EC2 instance type for the WSFC Nodes.',
         type: 'String',

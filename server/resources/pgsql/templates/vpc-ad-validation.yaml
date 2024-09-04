@@ -1,0 +1,186 @@
+#prettier-ignore
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template creates AWS resources for validating Active Directory credentials
+            under the provided VPC. You will be billed for the AWS resources used if you create
+            a stack from this template.
+Metadata:
+    AWS::CloudFormation::Interface:
+        ParameterGroups:
+            - Label:
+                  default: Network Configuration
+              Parameters:
+                  - VPCID
+                  - SubnetID
+                  - Ec2RoleName
+            - Label:
+                  default: Amazon EC2 Configuration
+              Parameters:
+                  - KeyPairName
+            - Label:
+                  default: Amazon FSx for ONTAP Volume Configuration
+              Parameters:
+                  - PerformFSxCheck
+                  - FSxFileSystemId
+            - Label:
+                  default: AWS Launch Wizard Configuration
+              Parameters:
+                  - EnableCloudWatchLogFeature
+                  - ParentStackName
+            - Label:
+                  default: Microsoft SQL Server Configuration
+              Parameters:
+                  - SQLDeploymentMode
+        ParameterLabels:
+            UniqueID:
+                default: Unique ID for your resource tags
+            AMI:
+                default: AMI ID of the validation node
+            InstanceType:
+                default: Instance type of the validation node
+            KeyPairName:
+                default: Key pair Name
+            SubnetID:
+                default: Subnet ID
+            PurposeTag:
+                default: Tag your instances with purpose
+            VPCID:
+                default: VPC ID
+            Ec2RoleName:
+                default: Role name for EC2 instance profile
+            EnableCloudWatchLogFeature:
+                default: (optional) Enable monitoring by CloudWatch Logging
+            ParentStackName:
+                default: Stack name for parent cloudFormation stack
+            PerformFSxCheck:
+                default: Boolean to check whether to validate FSx for ONTAP credentials and reachability from subnet
+            FSxFileSystemId:
+                default: FSx for ONTAP Filesystem ID
+            SQLDeploymentMode:
+                default: SQL server deployment mode
+Parameters:
+    UniqueID:
+        Default: UID123
+        Description: Automation execution unique ID.
+        Type: String
+    AMI:
+        Type: String
+        Default: ami-061d37dd032d5c737
+    InstanceType:
+        Type: String
+        Default: t3.micro
+    KeyPairName:
+        Description: Public/private key pairs allow you to securely connect to your instance
+            after it launches.
+        Type: AWS::EC2::KeyPair::KeyName
+    SubnetID:
+        Description: ID of private subnet in an Availability Zone 1 for the workload (For example,
+            subnet-a0246dcd).
+        Type: AWS::EC2::Subnet::Id
+    VPCID:
+        Description: ID of the VPC (for example, vpc-0343606e).
+        Type: AWS::EC2::VPC::Id
+    Ec2RoleName:
+        Default: AmazonEC2RoleForLaunchWizard
+        Description: Role name for EC2 instance profile.
+        Type: String
+    EnableCloudWatchLogFeature:
+        Default: false
+        Description: Enable AWS CloudWatch logging.
+        Type: String
+    ParentStackName:
+        Description: Stack name for the parent CloudFormation stack.
+        Type: String
+    PerformFSxCheck:
+        AllowedValues:
+            - 'true'
+            - 'false'
+        Default: 'false'
+        Description: A boolean to check whether to validate FSx for ONTAP credentials and reachability from the subnet.
+        Type: String
+    FSxFileSystemId:
+        Description: ID for the FSx for ONTAP file system.
+        Type: String
+    SQLDeploymentMode:
+        Description: SQL server deployment mode
+        Type: String
+        AllowedValues:
+            - 'fci'
+            - 'standalone'
+        Default: 'fci'
+Conditions:
+    isGovRegion: !Or
+        - !Equals
+          - us-gov-west-1
+          - !Ref 'AWS::Region'
+        - !Equals
+          - us-gov-east-1
+          - !Ref 'AWS::Region'
+    CreateNewRole: !Equals
+        - !Ref 'Ec2RoleName'
+        - ''
+    LogFeatureEnabled: !Equals
+        - !Ref 'EnableCloudWatchLogFeature'
+        - 'true'
+Resources:
+    ValidationInstanceProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties:
+            Roles:
+                - !Ref 'Ec2RoleName'
+    DisableIMDSv1:
+        Type: AWS::EC2::LaunchTemplate
+        Properties:
+            LaunchTemplateData:
+                MetadataOptions:
+                    HttpEndpoint: enabled
+                    HttpTokens: required
+    ValidationNode1:
+        Type: AWS::EC2::Instance
+        CreationPolicy:
+            ResourceSignal:
+                Count: '1'
+                Timeout: PT45M
+        Metadata:
+            AWS::CloudFormation::Init:
+                configSets:
+                    config:
+                        - FetchResources
+                        - Finalize               
+                FetchResources:
+                    files:
+                        /home/ec2-user/validate-vpc.bash:
+                            source: {{{ ScriptValidation }}}
+                Finalize:
+                    commands:
+                        a-validate-vpc:
+                            command: !Join
+                                - '/home/ec2-user/validate-vpc.bash'
+                                - - ' -subnet '
+                                  - !Ref 'SubnetID'
+                                  - ' -region '
+                                  - !Ref 'AWS::Region'
+                                  - ' -Stackname '
+                                  - !Ref 'AWS::StackName'
+                                  - ' -ResourceID ValidationNode1'
+                                  - ' -WaitHandler '
+                                  - '"'
+                                  - '"'
+                                  - '"'
+                            waitAfterCompletion: '0'
+                        e-signal-resource:
+                            command: !Sub 'cfn-signal -e %ERRORLEVEL% --resource ValidationNode1
+                                --stack ${AWS::StackName} --region ${AWS::Region}'
+                            waitAfterCompletion: '0'
+        Properties:
+            ImageId: !Ref 'AMI'
+            InstanceType: !Ref 'InstanceType'
+            IamInstanceProfile: !Ref 'ValidationInstanceProfile'
+            LaunchTemplate:
+                LaunchTemplateId: !Ref 'DisableIMDSv1'
+                Version: !GetAtt 'DisableIMDSv1.DefaultVersionNumber'
+            NetworkInterfaces:
+                - DeviceIndex: '0'
+                  SubnetId: !Ref 'SubnetID'
+            KeyName: !Ref 'KeyPairName'
+            InstanceInitiatedShutdownBehavior: terminate

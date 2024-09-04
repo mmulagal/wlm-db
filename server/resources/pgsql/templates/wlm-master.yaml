@@ -1,0 +1,407 @@
+#prettier-ignore
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This template deploys Postgres SQL Server in the chosen deployment model (failover cluster instances or a standalone instance). 
+            This template creates an Amazon EC2 Windows instance and related resources.
+            You will be billed for the AWS resources used if you create a stack from this template.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Network Configuration
+        Parameters:
+          - VPCID
+          - VPCCIDR
+          - PrivateSubnet1ID
+          - RouteTable1Id
+          - PrivateSubnet1Cidrblock
+          - S3EndpointExists
+          - CloudformationEndpointExists
+          - SqsEndpointExists
+          - Ec2MessagesEndpointExists
+          - S3EndpointRouteTables
+      - Label:
+          default: Amazon EC2 Configuration
+        Parameters:
+          - WorkloadInstanceType
+          - KeyPairName
+          - ValidationAmi
+          - ValidationNodeInstanceType
+          - CfDeployRoleName
+          - EBSVolumeSize
+      - Label:
+          default: Amazon FSx for ONTAP configuration
+        Parameters:  
+          - DeploymentMode
+          - FSxFileSystemName
+          - FSxFileSystemId
+          - FSxAdminUsername
+          - FSxAdminPassword
+          - FSxSvmName
+          - FSxStorageCapacity
+          - FSxDataVolumeName
+          - FSxDataVolumeSize
+          - FSxLogVolumeName
+          - FSxLogVolumeSize
+          - FSxTempDbVolumeName
+          - FSxTempDbVolumeSize
+          - FSxQuorumVolumeName
+          - FSxQuorumVolumeSize
+          - FSxDataLunSize
+          - FSxVolumeThroughputCapacity
+          - ONTAPSecurityGroupID
+          - FileSystemEncryptionKeyId
+          - FSxDiskIops
+          - PGSQLSvmName
+      - Label:
+          default: CloudWatch, SNS Topic and Resource Tags configuration
+        Parameters:
+          - EnableCloudWatchLogFeature
+          - NotificationARN
+      - Label:
+          default: Custom Resource configuration ( DO NOT EDIT )
+        Parameters:
+          - AccountId
+          - CloudProviderAccountId
+          - RoleCredentialsId
+          - JwtToken
+          - EncryptedFsxPassword
+    ParameterLabels:
+      DeploymentMode:
+        default: File system deployment mode
+      CfDeployRoleName:
+        default: CloudFormation deployment role name
+      SqlFSxWSFCName:
+        default: Windows Server Failover Cluster name
+      KeyPairName:
+        default: Key pair name
+      SQLAMIID:
+        default: PG SQL node ami id
+      EBSVolumeSize:
+        default: Size of the EBS Volume.
+      VPCName:
+        default: Name of VPC
+      VPCCIDR:
+        default: VPC CIDR
+      VPCID:
+        default: VPC ID
+      FSxStorageCapacity:
+        default: FSx for ONTAP storage capacity
+      PrivateSubnet1ID:
+        default: Private subnet ID for the first SQL node, for example, subnet-000dc866d93550eb0 
+      PrivateSubnet2ID:
+        default: Private subnet ID for the second SQL node, for example, subnet-000dc866d93550eb0 
+      RouteTable1Id:
+        default: ID of the route table for private subnet 1.
+      RouteTable2Id:
+        default: ID of the route table for private subnet 2.
+      WorkloadInstanceType:
+        default: Instance type for cluster nodes
+      ONTAPSecurityGroupID:
+        default: Security Group ID for FSx for ONTAP
+      PGSQLSvmName:
+        default: SVM for creating PGSQL volumes 
+      FSxDiskIops:
+        default: Provisioned SSD IOPS  
+      FsxVolumeSnapshotPolicy:
+        default: Snapshot policy for the volume
+      EnableCloudWatchLogFeature:
+        default: (optional) Enable monitoring by CloudWatch Logging
+      NotificationARN:
+        default: (optional) Notification ARN
+      ValidationAmi:
+       default: Validation node AMI image ID
+      ValidationNodeInstanceType:
+       default: Validation node instance type
+      SQLDeploymentMode:
+        default: SQL server deployment mode
+      S3EndpointExists:
+        default: Boolean to check if an S3 endpoint exists in the vpc.
+      CloudformationEndpointExists:
+        default: Boolean to check if a Cloudformation endpoint exists in the vpc.
+      SqsEndpointExists:
+        default: Boolean to check if a SQS endpoint exists in the vpc.
+Parameters: 
+  UniqueID:
+    Description: Automation execution unique ID.
+    Type: String 
+
+  {{{DeploymentMode}}}
+
+  {{{SQLDeploymentMode}}}
+        
+  {{{CfDeployRoleName}}}
+
+  {{{KeyPairName}}}
+
+  {{{SQLAMIID}}}
+
+  {{{EBSVolumeSize}}}
+
+  {{{VPCCIDR}}}
+
+  {{{PrivateSubnet1ID}}}
+
+  {{{PrivateSubnet2ID}}}
+
+  {{{RouteTable1Id}}}
+  
+  {{{RouteTable2Id}}}
+  
+  {{{PGSQLSvmName}}}
+
+  {{{WorkloadInstanceType}}}
+
+  {{{FSxStorageCapacity}}}
+  
+  {{{FSxDataVolumeSize}}}
+
+  {{{FSxDataVolumeName}}}
+  
+  {{{FSxLogVolumeName}}}
+  
+  {{{FSxLogVolumeSize}}}
+  
+  {{{FSxTempDbVolumeName}}}
+  
+  {{{FSxTempDbVolumeSize}}}
+  
+  {{{FSxQuorumVolumeName}}}
+  
+  {{{FSxQuorumVolumeSize}}}
+
+  {{{FSxDataLunSize}}}
+
+  {{{FSxAdminUsername}}}
+         
+  {{{FSxAdminPassword}}}
+
+  {{{FSxSvmName}}}
+  
+  {{{FSxFileSystemName}}}
+
+  {{{FSxFileSystemId}}}
+  
+  {{{FSxDiskIops}}}
+  
+  {{{FSxVolumeThroughputCapacity}}}
+  
+  {{{FileSystemEncryptionKeyId}}}
+
+  {{{FsxVolumeSnapshotPolicy}}}
+  
+  {{{VPCID}}}
+  
+  {{{ONTAPSecurityGroupID}}}
+  
+  {{{EnableCloudWatchLogFeature}}}
+
+  {{{NotificationARN}}}
+  
+  {{{ValidationAmi}}}
+
+  {{{ValidationNodeInstanceType}}}
+  
+  {{{RoleCredentialsId}}}
+  
+  {{{AccountId}}}
+    
+  {{{CloudProviderAccountId}}}
+  
+  {{{JwtToken}}}
+
+  {{{EncryptedFsxPassword}}}
+  
+  {{{WlmdbAwsAccountId}}}
+  
+  {{{Metrics}}}
+
+  {{{S3EndpointExists}}}
+
+  {{{CloudformationEndpointExists}}}
+
+  {{{SqsEndpointExists}}}
+
+  {{{CloudwatchLogsEndpointExists}}}
+
+  {{{FsxEndpointExists}}}
+
+  {{{Ec2EndpointExists}}}
+
+  {{{Ec2MessagesEndpointExists}}}
+
+  {{{S3EndpointRouteTables}}}
+
+  {{{PrivateSubnet1Cidrblock}}}
+
+  {{{PrivateSubnet2Cidrblock}}}
+       
+Conditions:
+  NewOntapFsx: !Equals [!Ref "FSxFileSystemId", ""]
+  ExistingOntapFsx:
+    Fn::Not:
+    - Condition: NewOntapFsx
+  ExcludeNotification: !Equals [!Ref "NotificationARN", ""]
+  IncludeNotification: !Not [Condition: ExcludeNotification]
+  IsStandalone: !Equals [!Ref SQLDeploymentMode, 'standalone']
+  IsFailoverCluster: !Not [Condition: IsStandalone]
+  ShouldSendSaasNotification: !Not [!Equals [!Ref "RoleCredentialsId", ""]]
+  
+Resources:
+  EC2IAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref 'AWS::StackName'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+        - PolicyDocument:
+            Statement:
+              - Sid: CloudWatchDeploymentStatement
+                Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricAlarm
+                  - cloudwatch:DeleteAlarms
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:List*
+                  - cloudwatch:Get*
+                  - cloudwatch:Describe*
+                Resource: '*'
+              - Sid: CloudLogDeploymentCreateStatement
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:CreateLogGroup
+                  - logs:GetLogEvents
+                  - logs:GetLogDelivery
+                  - logs:GetLogRecord
+                  - logs:ListLogDeliveries
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                  - logs:TagResource
+                Resource: '*'
+              - Sid: CloudFormationDeploymentStatement
+                Effect: Allow
+                Action:
+                  - cloudformation:ListStacks
+                  - cloudformation:SignalResource
+                Resource: 
+                  - arn:aws:cloudformation:*:*:stack/WLMDB*
+              - Sid: STSStatement
+                Effect: Allow
+                Action:
+                  - sts:GetCallerIdentity
+                Resource: '*'
+              - Sid: IAMStatement
+                Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:GetPolicy
+                  - iam:GetRolePolicy
+                  - iam:PassRole
+                  - iam:GetUser
+                  - iam:GetPolicyVersion
+                Resource: '*'
+             
+           
+              - Sid: EC2MessagesStatement
+                Effect: Allow
+                Action:
+                  - ec2messages:AcknowledgeMessage
+                  - ec2messages:DeleteMessage
+                  - ec2messages:FailMessage
+                  - ec2messages:SendReply
+                Resource: '*'
+              - Sid: FsxStatement
+                Effect: Allow
+                Action:
+                  - fsx:DescribeFileSystems
+                  - fsx:DescribeVolumes
+                  - fsx:DescribeStorageVirtualMachines
+                Resource: '*'
+              - Sid: EC2Statement
+                Effect: Allow
+                Action:
+                  - ec2:Get*
+                  - ec2:Describe*
+                Resource: '*'
+              - Sid: EC2TaggingStatement
+                Effect: Allow
+                Action:
+                  - ec2:CreateTags
+                  - ec2:AuthorizeSecurityGroupIngress
+                Resource: '*'
+                Condition:
+                  StringLike:
+                    aws:ResourceTag/aws:cloudformation:stack-name:
+                      - WLMDB*
+            
+          PolicyName: !Join
+            - ''
+            - - !Ref 'AWS::StackName'
+              - WLMDB_Policy_I
+  ValidationStack1:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      # - VpcEndpointStack
+      - EC2IAMRole
+    Properties:
+      TemplateURL: {{{ValidationTemplate}}}
+      Parameters:
+        # DomainAdminUser:
+          # Ref: DomainAdminUser
+        # DomainDNSName:
+          # Ref: DomainDNSName
+        # DNSIpAddresses:
+          # Ref: DNSIpAddresses
+        KeyPairName:
+          Ref: KeyPairName
+        SubnetID:
+          Ref: PrivateSubnet1ID
+        VPCID:
+          Ref: VPCID
+        Ec2RoleName:
+          Ref: AWS::StackName
+        AMI:
+          Ref: ValidationAmi
+        InstanceType:
+          Ref: ValidationNodeInstanceType
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
+        PerformFSxCheck:
+          Fn::If:
+          - ExistingOntapFsx
+          - 'true'
+          - 'false'
+        FSxFileSystemId: 
+          Fn::If:
+          - ExistingOntapFsx
+          - Ref: FSxFileSystemId
+          - 'fs-id'
+        # IsCustomAmi:
+          # Ref: IsCustomAmi
+        SQLDeploymentMode:
+          Ref: SQLDeploymentMode
+      NotificationARNs:
+        Fn::If:
+        - IncludeNotification
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN]
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - []
+      {{{Tags}}}

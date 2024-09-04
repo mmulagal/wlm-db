@@ -68,6 +68,22 @@ const CloudFormationTemplateRequestBody = Type.Object({
     )
 });
 
+const PgSqlCloudFormationTemplateRequestBody = Type.Object({
+    networkConfiguration: CFNetworkConfiguration,
+    ec2Configuration: EC2Configuration,
+    fsxConfiguration: FSXConfiguration,
+    sqlConfiguration: Type.Pick(SQLConfiguration, ['sqlAmiId', 'sqlAmiName', 'sqlDeploymentMode']),
+    tags: Type.Optional(
+        Type.Array(
+            Type.Object({
+                key: Type.String(),
+                value: Type.String()
+            })
+        )
+    ),
+    topicArn: Type.Optional(Type.String())
+});
+
 const CloudFormationTemplateHeader = Type.Object({
     'triggered-from': Type.String({
         enum: ['wizard-advanced', 'wizard-quick', 'chatbot', 'rest-api'],
@@ -112,6 +128,8 @@ const CloudFormationDeploymentResponse = Type.Object({
     cloudFormationStackId: Type.Optional(Type.String()),
     missingPermissions: Type.Optional(MissingPermissions)
 });
+
+const PgSqlCloudFormationDeploymentResponse = Type.Any();
 
 const CloudFormationStaticTemplateResponse = Type.Object({
     url: Type.String(),
@@ -224,5 +242,7 @@ export {
     MissingPermission,
     FsxAvailableRegionsForThroughputListResponse,
     CollationListResponse,
-    CollationListQueryString
+    CollationListQueryString,
+    PgSqlCloudFormationTemplateRequestBody,
+    PgSqlCloudFormationDeploymentResponse
 };
