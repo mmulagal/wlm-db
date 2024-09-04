@@ -820,23 +820,41 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
                 };
             }
         } else {
-            result = {
-                ...data,
-                recommendedInstance: {
-                    ...data?.compute?.recommended?.machineDetails?.[0],
-                    licenseMonthlyPrice: data?.license?.existing?.licenseMonthlyPrice,
-                    computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
-                },
-                totalSummary: {
-                    ...data?.totalSummary,
-                    recommendedTotal:
-                        Number(data?.totalSummary?.recommended || 0) -
-                        Number(data?.compute?.recommended?.computeMonthlyPrice || 0) -
-                        Number(data?.license?.recommended?.licenseMonthlyPrice || 0) +
-                        Number(data?.compute?.existing?.computeMonthlyPrice || 0) +
-                        Number(data?.license?.existing?.licenseMonthlyPrice || 0)
-                }
-            };
+            if (data?.license?.existing?.sqlServerEdition === data?.license?.recommended?.sqlServerEdition) {
+                result = {
+                    ...data,
+                    recommendedInstance: {
+                        ...data?.compute?.recommended?.machineDetails?.[0],
+                        licenseMonthlyPrice: data?.license?.existing?.licenseMonthlyPrice,
+                        computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
+                    },
+                    totalSummary: {
+                        ...data?.totalSummary,
+                        recommendedTotal:
+                            Number(data?.totalSummary?.recommended || 0) -
+                            Number(data?.compute?.recommended?.computeMonthlyPrice || 0) -
+                            Number(data?.license?.recommended?.licenseMonthlyPrice || 0) +
+                            Number(data?.compute?.existing?.computeMonthlyPrice || 0) +
+                            Number(data?.license?.existing?.licenseMonthlyPrice || 0)
+                    }
+                };
+            } else {
+                result = {
+                    ...data,
+                    recommendedInstance: {
+                        ...data?.compute?.recommended?.machineDetails?.[0],
+                        licenseMonthlyPrice: data?.license?.recommended?.licenseMonthlyPrice,
+                        computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
+                    },
+                    totalSummary: {
+                        ...data?.totalSummary,
+                        recommendedTotal:
+                            Number(data?.totalSummary?.recommended || 0) -
+                            Number(data?.compute?.recommended?.computeMonthlyPrice || 0) +
+                            Number(data?.compute?.existing?.computeMonthlyPrice || 0)
+                    }
+                };
+            }
         }
     } else {
         result = data;
