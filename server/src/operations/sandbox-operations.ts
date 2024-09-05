@@ -1179,10 +1179,18 @@ async function invokeVirtualMount(
                 command = [
                     invokeVirtualMountScript(
                         'test-clone',
-                        'D:\\MSSQL\\data\\testdb_data.mdf',
-                        'E:\\MSSQL\\log\\testdb_log.ldf',
-                        'lWB44?VEq9vf',
-                        'lWB44?VEq9ve',
+                        JSON.stringify([
+                            {
+                                filePath: 'D:\\MSSQL\\data\\testdb_data.mdf',
+                                folderName: 'D:\\MSSQL\\data',
+                                lun: 'lWB44?VEq9vf'
+                            },
+                            {
+                                filePath: 'E:\\MSSQL\\log\\testdb_log.ldf',
+                                folderName: 'E:\\MSSQL\\log',
+                                lun: 'lWB44?VEq9ve'
+                            }
+                        ]),
                         'MSSQLSERVER',
                         true,
                         'Sandbox'
