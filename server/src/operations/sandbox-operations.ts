@@ -22,7 +22,8 @@ import {
     SSM_COMMAND_CACHE_TYPE,
     SandboxLifecycleAction,
     SANDBOX_LIFECYCLE_REFRESH,
-    SQL_SERVICE_STATE
+    SQL_SERVICE_STATE,
+    AuditStatus
 } from '../utils/consts';
 import {
     GET_SANDBOX_DETAILS,
@@ -55,7 +56,6 @@ import { getDatabaseInstanceName, isDemo, sleep, sqlResponseParsing } from '../u
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
-import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
 import {
     updateSandboxDBIntoInstanceData,
     updateSandboxDBIntoResourceData,
@@ -66,6 +66,7 @@ import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { getDriveInfo } from './createdb-operations';
 import { restGetUtilForOntap, sqlQueryExecution } from './workloads/mssql/ssm-script-utils';
+import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 const logger = getLogger();
 const TIME_WINDOW = 60; // 60 seconds
@@ -158,16 +159,15 @@ async function getSandboxDetails(
     await Promise.all(
         instances.map(async instance => {
             let command = [
-                GET_SANDBOX_DETAILS([
-                    `"${getDatabaseInstanceName(
-                        instance.instanceName,
-                        instance.instanceName === DEFAULT_INSTANCE_NAME
-                    )}"`
-                ])
+                GET_SANDBOX_DETAILS(
+                    instance.instanceName,
+                    getDatabaseInstanceName(instance.instanceName, instance.instanceName === DEFAULT_INSTANCE_NAME),
+                    instance.sqlAuthEnabled
+                )
             ];
 
             if (isDemoFlow) {
-                command = [GET_SANDBOX_DETAILS([DEFAULT_MSSQL_INSTANCE_NAME])];
+                command = [GET_SANDBOX_DETAILS(DEFAULT_MSSQL_INSTANCE_NAME)];
             }
 
             const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
@@ -492,6 +492,7 @@ interface HostAndDbInfo extends DbInfo {
     databaseInstanceName?: string;
     instanceMetadata?: databaseInstanceMetadata;
     activeNodeDetails?: ActiveSqlNodeDetails;
+    databaseInstanceId?: string;
     sqlAuthEnabled?: boolean;
 }
 
@@ -524,35 +525,53 @@ async function createSandbox(
     Object.entries(mountPoints).forEach(([key, value]) => {
         mountPoints[key as keyof MountPoints] = value.toUpperCase();
     });
+    try {
+        const { srcDetails, destDetails } = await runSandboxPreValidations(
+            accountId,
+            credentialsId,
+            region,
+            source,
+            dest
+        );
+        if (isDemo()) {
+            srcDetails.databaseInstanceName = srcDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
+            destDetails.databaseInstanceName = destDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
+        }
 
-    const { srcDetails, destDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, dest);
-    if (isDemo()) {
-        srcDetails.databaseInstanceName = srcDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
-        destDetails.databaseInstanceName = destDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
+        const job = await registerJob(accountId, credentialsId, region, {
+            name: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
+            description: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
+            resourceName: dest.database,
+            initiator: 'SYSTEM',
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.SANDBOX
+        });
+
+        updateLongRunningAuditGroup(
+            undefined,
+            undefined,
+            `${destDetails.resourceName}\\${destDetails.databaseInstanceName}`
+        );
+
+        startSandboxCreation(
+            accountId,
+            credentialsId,
+            region,
+            job.id,
+            srcDetails,
+            destDetails as HostAndDbInfo,
+            tag,
+            mountPoints
+        );
+
+        return { jobId: job.id };
+    } catch (err: any) {
+        const errorMsg = `Error while creating sandbox ${dest.database}. ${err?.message}`;
+        logger.error(errorMsg, err);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
-
-    const job = await registerJob(accountId, credentialsId, region, {
-        name: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
-        description: `Create sandbox ${dest.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
-        resourceName: dest.database,
-        initiator: 'SYSTEM',
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.SANDBOX
-    });
-
-    startSandboxCreation(
-        accountId,
-        credentialsId,
-        region,
-        job.id,
-        srcDetails,
-        destDetails as HostAndDbInfo,
-        tag,
-        mountPoints
-    );
-
-    return { jobId: job.id };
 }
 
 async function startSandboxCreation(
@@ -654,10 +673,12 @@ async function startSandboxCreation(
         });
 
         status = JOBSTATUS.COMPLETED;
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (e: any) {
         logger.error(e);
         errorMsg = e.message || 'Internal Server Error';
         status = JOBSTATUS.FAILED;
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
 
         await startCleanup(
             accountId,
@@ -754,8 +775,20 @@ async function validateCloneParams(
     try {
         if (srcDetails.host !== destDetails.host || srcDetails.instance !== destDetails.instance) {
             const [srcSqlServerVersion, destSqlServerVersion] = await Promise.all([
-                getSqlServerVersion(credentialsId, region, srcDetails.activeNodeInstanceId, srcDetails.instanceName),
-                getSqlServerVersion(credentialsId, region, destDetails.activeNodeInstanceId, destDetails.instanceName)
+                getSqlServerVersion(
+                    credentialsId,
+                    region,
+                    srcDetails.activeNodeInstanceId,
+                    srcDetails.instanceName,
+                    srcDetails.sqlAuthEnabled
+                ),
+                getSqlServerVersion(
+                    credentialsId,
+                    region,
+                    destDetails.activeNodeInstanceId,
+                    destDetails.instanceName,
+                    destDetails.sqlAuthEnabled
+                )
             ]);
 
             if (srcSqlServerVersion > destSqlServerVersion) {
@@ -784,7 +817,9 @@ async function validateCloneParams(
                 destDetails.database,
                 destDetails.activeNodeInstanceId,
                 destDetails.databaseInstanceName,
-                destDetails.instanceName
+                destDetails.instanceName,
+                destDetails.databaseInstanceId,
+                destDetails.sqlAuthEnabled
             ),
             checkDatabaseExists(
                 accountId,
@@ -794,21 +829,23 @@ async function validateCloneParams(
                 srcDetails.database,
                 srcDetails.activeNodeInstanceId,
                 srcDetails.databaseInstanceName,
-                srcDetails.instanceName
+                srcDetails.instanceName,
+                srcDetails.databaseInstanceId,
+                srcDetails.sqlAuthEnabled
             )
         ]);
 
         if (destDatabaseExists) {
             throw createError(
                 412,
-                `Database ${destDetails.database} already exists on destination host ${srcDetails.host}`
+                `Database ${destDetails.database} already exists on destination host ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`
             );
         }
 
         if (!srcDatabaseExists && !isDemoFlow) {
             throw createError(
                 412,
-                `Database ${srcDetails.database} does not exists on source host ${destDetails.host}`
+                `Database ${srcDetails.database} does not exists on source host ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`
             );
         }
 
@@ -1140,7 +1177,16 @@ async function invokeVirtualMount(
 
             if (isDemoFlow) {
                 command = [
-                    `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve -InstanceName MSSQLSERVER -IsDefaultInstance true`
+                    invokeVirtualMountScript(
+                        'test-clone',
+                        'D:\\MSSQL\\data\\testdb_data.mdf',
+                        'E:\\MSSQL\\log\\testdb_log.ldf',
+                        'lWB44?VEq9vf',
+                        'lWB44?VEq9ve',
+                        'MSSQLSERVER',
+                        true,
+                        'Sandbox'
+                    )
                 ];
             }
 
@@ -1754,10 +1800,11 @@ async function getDatabaseMountPointInfo(
 
     try {
         if (isDemoFlow) {
+            srcDetails.databaseInstanceName = 'MSSQLSERVER';
             databaseName = 'test-database';
         }
 
-        const command = [
+        let command = [
             sqlQueryExecution(
                 srcDetails.databaseInstanceName,
                 srcDetails.instanceName,
@@ -1765,6 +1812,10 @@ async function getDatabaseMountPointInfo(
                 srcDetails.sqlAuthEnabled
             )
         ];
+
+        if (isDemoFlow) {
+            command = [sqlQueryExecution('MSSQLSERVER', '$env:computername', mountPointQuery('test-database'), true)];
+        }
 
         const mountPoints = await callSsmExecution(credentialsId, region, command, srcDetails.activeNodeInstanceId);
         if (!mountPoints) {
@@ -1814,22 +1865,35 @@ async function deleteSandbox(
         databaseName
     );
 
-    const source = { host: databaseHostId, instance: databaseInstanceId, database: databaseName };
-    const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
+    try {
+        const source = { host: databaseHostId, instance: databaseInstanceId, database: databaseName };
+        const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-    const job = await registerJob(accountId, credentialsId, region, {
-        name: `Delete sandbox ${databaseName}`,
-        description: `Delete sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
-        resourceName: databaseName,
-        initiator: 'SYSTEM',
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.SANDBOX
-    });
+        const job = await registerJob(accountId, credentialsId, region, {
+            name: `Delete sandbox ${databaseName}`,
+            description: `Delete sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
+            resourceName: databaseName,
+            initiator: 'SYSTEM',
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.SANDBOX
+        });
 
-    performSandboxDeletion(accountId, region, credentialsId, job.id, srcDetails);
+        updateLongRunningAuditGroup(
+            undefined,
+            undefined,
+            `${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`
+        );
 
-    return { jobId: job.id };
+        performSandboxDeletion(accountId, region, credentialsId, job.id, srcDetails);
+
+        return { jobId: job.id };
+    } catch (err: any) {
+        const errorMsg = `Error while deleting sandbox ${databaseName} in database host ${databaseHostId}. ${err?.message}`;
+        logger.error(errorMsg, err);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    }
 }
 
 async function performSandboxDeletion(
@@ -1865,10 +1929,12 @@ async function performSandboxDeletion(
             uniq([...mappings.data.map(map => map.fileName), ...mappings.log.map(map => map.fileName)])
         );
         status = JOBSTATUS.COMPLETED;
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (e: any) {
         logger.error('Failed to delete the sandbox', e);
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status,
@@ -1912,13 +1978,15 @@ async function validateDeleteSandboxParams(
             resourceDetails.database,
             resourceDetails.activeNodeInstanceId,
             resourceDetails.databaseInstanceName,
-            resourceDetails.instanceName
+            resourceDetails.instanceName,
+            resourceDetails.databaseInstanceId,
+            resourceDetails.sqlAuthEnabled
         );
 
         if (!dbExists && !isDemoFlow) {
             throw createError(
                 412,
-                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`
+                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`
             );
         }
 
@@ -1961,13 +2029,17 @@ async function getSandboxSplitEstimate(
     };
     const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, src, src);
 
+    const { fsxId, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } = srcDetails;
+
     let command = [
         getDbMappedOntapVolumes(
-            srcDetails.fsxId,
+            fsxId,
             region,
             sandboxName,
-            srcDetails.instanceName,
-            `Sandbox:${sandboxName}:`
+            databaseInstanceName,
+            instanceName,
+            `Sandbox:${sandboxName}:`,
+            sqlAuthEnabled
         )
     ];
 
@@ -1975,14 +2047,7 @@ async function getSandboxSplitEstimate(
         command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
     }
 
-    const mappings = await callSsmExecution(
-        credentialsId,
-        region,
-        command,
-        srcDetails.activeNodeInstanceId,
-        accountId,
-        false
-    );
+    const mappings = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId, accountId, false);
 
     if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
@@ -2071,28 +2136,45 @@ async function updateSandboxLifeCycle(
         snapshot
     );
 
-    const source = { host: databaseHostId, instance: databaseInstanceId, database: databaseName };
-    const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
+    try {
+        const source = { host: databaseHostId, instance: databaseInstanceId, database: databaseName };
+        const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-    const job = await registerJob(accountId, credentialsId, region, {
-        name: `${
-            action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
-        } sandbox ${databaseName}`,
-        description: `${
-            action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
-        } sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${
-            srcDetails.databaseInstanceName
-        }`,
-        initiator: 'SYSTEM',
-        type: JOBTYPE.SANDBOX,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: databaseName,
-        startTime: Date.now()
-    });
+        const job = await registerJob(accountId, credentialsId, region, {
+            name: `${
+                action === SANDBOX_LIFECYCLE_REFRESH
+                    ? SandboxLifecycleAction.REFRESH
+                    : SandboxLifecycleAction.REBASELINE
+            } sandbox ${databaseName}`,
+            description: `${
+                action === SANDBOX_LIFECYCLE_REFRESH
+                    ? SandboxLifecycleAction.REFRESH
+                    : SandboxLifecycleAction.REBASELINE
+            } sandbox ${databaseName} in the database instance ${srcDetails.resourceName}\\${
+                srcDetails.databaseInstanceName
+            }`,
+            initiator: 'SYSTEM',
+            type: JOBTYPE.SANDBOX,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: databaseName,
+            startTime: Date.now()
+        });
 
-    performLifecycleUpdate(accountId, credentialsId, region, job.id, srcDetails, action, snapshot);
+        updateLongRunningAuditGroup(
+            undefined,
+            undefined,
+            `${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`
+        );
 
-    return { jobId: job.id };
+        performLifecycleUpdate(accountId, credentialsId, region, job.id, srcDetails, action, snapshot);
+
+        return { jobId: job.id };
+    } catch (err: any) {
+        const errorMsg = `Error while updating Sandbox life cycle for ${databaseName} in database host ${databaseHostId}. ${err?.message}`;
+        logger.error(errorMsg, err);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    }
 }
 
 async function performLifecycleUpdate(
@@ -2141,7 +2223,7 @@ async function performLifecycleUpdate(
             resourceDetails,
             resourceDetails,
             {
-                svm: mappings.svm,
+                svm: mappings.data[0]?.parentSvm || mappings.svm,
                 data: mappings.data.map(vol => ({ ...vol, volumeName: vol.parentVolume! })),
                 log: mappings.log.map(vol => ({ ...vol, volumeName: vol.parentVolume! }))
             },
@@ -2257,10 +2339,12 @@ async function performLifecycleUpdate(
         );
 
         status = JOBSTATUS.COMPLETED;
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (e: any) {
         logger.error(`Failed to perform lifecycle update for sandbox ${resourceDetails.database}`, e);
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
 
         // Clean up only when the sandbox is not updated
         if (!sandboxUpdated) {
@@ -2330,7 +2414,15 @@ async function validateLifeCycleParams(
     });
 
     try {
-        const { host, database, activeNodeInstanceId, databaseInstanceName, instanceName } = resourceDetails;
+        const {
+            host,
+            database,
+            activeNodeInstanceId,
+            databaseInstanceName,
+            databaseInstanceId,
+            sqlAuthEnabled,
+            instanceName
+        } = resourceDetails;
 
         const dbExists = await checkDatabaseExists(
             accountId,
@@ -2340,13 +2432,15 @@ async function validateLifeCycleParams(
             database,
             activeNodeInstanceId!,
             databaseInstanceName,
-            instanceName
+            instanceName,
+            databaseInstanceId,
+            sqlAuthEnabled
         );
 
         if (!dbExists && !isDemoFlow) {
             throw createError(
                 412,
-                `Database ${resourceDetails.database} does not exists on host ${resourceDetails.resourceName}`
+                `Database ${resourceDetails.database} does not exists on host ${resourceDetails.resourceName}\\${resourceDetails}\\${resourceDetails.databaseInstanceName}`
             );
         }
         status = JOBSTATUS.COMPLETED;
@@ -2685,21 +2779,33 @@ async function validateSplitParams(
     });
 
     try {
+        const {
+            host,
+            database,
+            instanceName,
+            activeNodeInstanceId,
+            databaseInstanceId,
+            databaseInstanceName,
+            sqlAuthEnabled
+        } = resourceDetails;
+
         const dbExists = await checkDatabaseExists(
             accountId,
             credentialsId,
             region,
-            resourceDetails.host,
-            resourceDetails.database,
-            resourceDetails.activeNodeInstanceId,
-            resourceDetails.databaseInstanceName,
-            resourceDetails.instanceName
+            host,
+            database,
+            activeNodeInstanceId,
+            databaseInstanceName,
+            instanceName,
+            databaseInstanceId,
+            sqlAuthEnabled
         );
 
         if (!dbExists && !isDemoFlow) {
             throw createError(
                 412,
-                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`
+                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`
             );
         }
 
@@ -2884,13 +2990,15 @@ async function checkDatabaseIntegrity(
         databaseName,
         srcDetails.activeNodeInstanceId,
         srcDetails.databaseInstanceName,
-        srcDetails.instanceName
+        srcDetails.instanceName,
+        srcDetails.databaseInstanceId,
+        srcDetails.sqlAuthEnabled
     );
 
-    if (!databaseDetails) {
+    if (!databaseDetails && !isDemoFlow) {
         throw createError(
             HttpErrorCodes.NOT_FOUND,
-            `Database ${databaseName} does not exists on source host ${srcDetails.resourceName}`
+            `Database ${databaseName} does not exists on source host ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`
         );
     }
 
@@ -2992,13 +3100,25 @@ async function getSandboxSnapshots(
     const source = { host: databaseHostId, instance: databaseInstanceId, database: sandboxName };
     const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-    let mappingsCommand = [getDbMappedOntapVolumes(srcDetails.fsxId, region, sandboxName, srcDetails.instanceName)];
+    const { fsxId, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } = srcDetails;
+
+    let mappingsCommand = [
+        getDbMappedOntapVolumes(
+            fsxId,
+            region,
+            sandboxName,
+            databaseInstanceName,
+            instanceName,
+            `Sandbox:${sandboxName}:`,
+            sqlAuthEnabled
+        )
+    ];
 
     if (isDemoFlow) {
         mappingsCommand = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
     }
 
-    const mappings = await callSsmExecution(credentialsId, region, mappingsCommand, srcDetails.activeNodeInstanceId);
+    const mappings = await callSsmExecution(credentialsId, region, mappingsCommand, activeNodeInstanceId);
 
     if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
@@ -3173,24 +3293,25 @@ async function runSandboxPreValidations(
         );
     }
 
-    const srcInstanceName = srcStatus.instancesDetails?.find(
+    const srcInstance = srcStatus.instancesDetails?.find(
         instance =>
             instance.instanceName === srcInstanceDetail.database_instance_name &&
             instance.instanceState === SQL_SERVICE_STATE.RUNNING
     );
 
-    const destInstanceName = destStatus.instancesDetails?.find(
+    const destInstance = destStatus.instancesDetails?.find(
         instance =>
             instance.instanceName === destInstanceDetail.database_instance_name &&
             instance.instanceState === SQL_SERVICE_STATE.RUNNING
     );
 
-    if (!srcInstanceName || !destInstanceName) {
+    if (!srcInstance || !destInstance) {
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             'Source or destination instance is not running, please check the instance status'
         );
     }
+
     const { metadata: srcInstanceMetadata } = srcInstanceDetail as { metadata: databaseInstanceMetadata };
     const { metadata: destInstanceMetadata } = destInstanceDetail as { metadata: databaseInstanceMetadata };
 
@@ -3208,7 +3329,8 @@ async function runSandboxPreValidations(
                 srcInstanceDetail.is_default
             ),
             instanceMetadata: srcInstanceMetadata,
-            sqlAuthEnabled: srcInstanceName.sqlAuthEnabled
+            databaseInstanceId: srcInstanceDetail.database_instance_id,
+            sqlAuthEnabled: Boolean(srcInstance.sqlAuthEnabled)
         },
         destDetails: {
             ...dest,
@@ -3225,7 +3347,8 @@ async function runSandboxPreValidations(
             ),
             instanceMetadata: destInstanceMetadata,
             activeNodeDetails: destStatus,
-            sqlAuthEnabled: destInstanceName.sqlAuthEnabled
+            databaseInstanceId: destInstanceDetail.database_instance_id,
+            sqlAuthEnabled: Boolean(destInstance.sqlAuthEnabled)
         }
     };
 }

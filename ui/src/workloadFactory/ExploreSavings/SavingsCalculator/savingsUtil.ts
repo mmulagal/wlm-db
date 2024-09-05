@@ -25,7 +25,8 @@ import {
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
-    const { recommendedTargetInstance } = state.exploreSavings;
+    const { recommendedTargetInstance, selectedHostDetails } = state.exploreSavings;
+    const checkBYOLTooltip = checkIfByolFieldRequired(selectedHostDetails, false);
     return [
         {
             type: 'Capacity',
@@ -88,8 +89,9 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'SQL license',
-            isTooltip:
-                'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
+            isTooltip: checkBYOLTooltip
+                ? 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL Server license-included AMIs. SQL license costs for SQL on Elastic Block Store are based on the Enterprise license with BYOL. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.'
+                : 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
             fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
                 ? `$${Number(
                       formatFractionalNumber(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)
@@ -319,15 +321,19 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
     let storageType = '';
-    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
-        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    let deploymentModelValue = selectedDeploymentModel;
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+        storageType = GENERAL.FSX_FOR_WINDOWS;
+        deploymentModelValue = selectedManualDeploymentModel?.value;
+    } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+        deploymentModelValue = selectedManualDeploymentModel?.value;
         storageType = GENERAL.EBS;
     } else {
-        storageType = GENERAL.FSX_FOR_WINDOWS;
+        storageType = GENERAL.EBS;
     }
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -764,12 +770,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
 export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentModel: string) => {
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
-    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
-        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    let deploymentModelValue = selectedDeploymentModel;
+    if (savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO) {
+        deploymentModelValue = selectedManualDeploymentModel?.value;
     }
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -1209,12 +1216,15 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
 export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentModel: string) => {
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
-    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
-        selectedDeploymentModel = selectedManualDeploymentModel?.value;
+    let deploymentModelValue = selectedDeploymentModel;
+
+    if (savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO) {
+        deploymentModelValue = selectedManualDeploymentModel?.value;
     }
+
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Machine 1 specification'
@@ -1341,7 +1351,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             },
             {
                 label: 'Effective provisioned storage capacity',
-                value: `${viewCalculation.fsxwCalculation.provisionedStorageCapacity}`,
+                value: `${viewCalculation.fsxwCalculation.provisionedStorageCapacity} GiB`,
                 text: `Desired storage capacity - Storage savings =  ${viewCalculation.fsxwCalculation.desiredStorageCapacity} - ${viewCalculation.fsxwCalculation.storageSavings}`
             },
             {
@@ -1948,6 +1958,18 @@ const setSQLServerEdition = (value: string) => {
     }
 };
 
+const deploymentTypeSelection = (value: string, savingsCalculatorFrom: string | null) => {
+    if (value !== 'Standalone') {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+            return 'FCI';
+        } else {
+            return 'AOAG';
+        }
+    } else {
+        return value;
+    }
+};
+
 export const generateManualStorageSavingsPayload = () => {
     const state = store.getState();
     const {
@@ -1956,11 +1978,15 @@ export const generateManualStorageSavingsPayload = () => {
         selectedManualDeploymentModel,
         selectedSnapshotFrequency,
         monthlyBYOLCost,
-        selectedManualServerEdition
+        selectedManualServerEdition,
+        savingsCalculatorFrom
     } = state.exploreSavings;
     const payloadObj: any = {};
-    payloadObj.sqlServerDeploymentType =
-        selectedManualDeploymentModel?.value !== 'Standalone' ? 'AOAG' : selectedManualDeploymentModel?.value;
+    payloadObj.sqlServerDeploymentType = deploymentTypeSelection(
+        selectedManualDeploymentModel?.value,
+        savingsCalculatorFrom
+    );
+
     payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
     payloadObj.snapshotFrequency = selectedSnapshotFrequency?.value;
     payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
@@ -1970,4 +1996,28 @@ export const generateManualStorageSavingsPayload = () => {
     payloadObj.sqlServerEdition = setSQLServerEdition(selectedManualServerEdition?.value);
     payloadObj.ec2Instances = createInstances(state);
     return payloadObj;
+};
+
+export const checkIfByolFieldRequired = (selectedHostDetails: any, isByolField: boolean) => {
+    let serverEdition: any = [];
+    selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
+        if (perRow?.databaseServer?.serverEdition && !serverEdition.includes(perRow?.databaseServer?.serverEdition)) {
+            serverEdition.push(perRow?.databaseServer?.serverEdition);
+        }
+    });
+    const sqlEdition = serverEdition.join(',').toLowerCase();
+    const licenseIncluded = selectedHostDetails?.sqlLicenseIncluded;
+    // BYOL field should be disabled for sql edition (evaluation/express/developer) and if sql license included is true
+    if (
+        licenseIncluded ||
+        sqlEdition.includes('evaluation') ||
+        sqlEdition.includes('express') ||
+        sqlEdition.includes('developer')
+    ) {
+        return false;
+    } else if (licenseIncluded !== undefined && !licenseIncluded) {
+        return true;
+    } else {
+        return isByolField;
+    }
 };

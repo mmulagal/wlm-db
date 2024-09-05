@@ -13,6 +13,7 @@ import {
     setInstanceLoading,
     setManualRegionsLoading,
     setRequestedPayload,
+    setRequestedRegion,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
     setViewCalculationsApiResponse,
@@ -50,7 +51,8 @@ const SavingsCalculatorManualApi = () => {
         manualStorageCapacity,
         selectedManualFSXIOPS,
         selectedManualFSXThroughput,
-        selectedManualStorageCapacityUnit
+        selectedManualStorageCapacityUnit,
+        requestedRegion
     } = useAppSelector(state => state.exploreSavings);
 
     const [getInstanceTypes] = useLazyGetInstanceTypesWithoutCredQuery();
@@ -140,7 +142,9 @@ const SavingsCalculatorManualApi = () => {
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
             const payload = generateManualStorageSavingsPayload();
-            const comparedPayloadValues = _.isEqual(payload, requestedPayload);
+            const comparedPayloadValues =
+                _.isEqual(payload, requestedPayload) &&
+                selectedManualRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
 
             if (
                 !comparedPayloadValues &&
@@ -153,6 +157,7 @@ const SavingsCalculatorManualApi = () => {
             ) {
                 dispatch(setDisableState(false));
                 dispatch(setRequestedPayload(payload));
+                dispatch(setRequestedRegion(selectedManualRegion));
                 triggerManualStorageAPI();
             }
         }
@@ -176,20 +181,43 @@ const SavingsCalculatorManualApi = () => {
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
             const payload = generateManualStorageSavingsPayload();
-            const comparedPayloadValues = _.isEqual(payload, requestedPayload);
+            const comparedPayloadValues =
+                _.isEqual(payload, requestedPayload) &&
+                selectedManualRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
 
-            if (
-                !comparedPayloadValues &&
-                selectedManualRegion &&
-                numberOfClonedCopies &&
-                monthlyChangeRate &&
-                selectedManualInstanceType &&
-                manualStorageCapacity &&
-                selectedManualFSXIOPS &&
-                selectedManualFSXThroughput
-            ) {
+            const storageCapCHeck = () => {
+                if (
+                    Number(manualStorageCapacity) < 1 ||
+                    (selectedManualStorageCapacityUnit.label === 'TiB' && Number(manualStorageCapacity) > 64)
+                ) {
+                    return false;
+                } else {
+                    return true;
+                }
+            };
+
+            const checkValidation = () => {
+                if (
+                    numberOfClonedCopies <= 10 &&
+                    numberOfClonedCopies > 0 &&
+                    Number(monthlyChangeRate) <= 100 &&
+                    Number(monthlyChangeRate) > 0 &&
+                    Number(selectedManualFSXIOPS) > 96 &&
+                    Number(selectedManualFSXIOPS) < 400000 &&
+                    Number(selectedManualFSXThroughput) > 8 &&
+                    Number(selectedManualFSXThroughput) < 12288 &&
+                    storageCapCHeck()
+                ) {
+                    return true;
+                } else {
+                    return false;
+                }
+            };
+
+            if (!comparedPayloadValues && selectedManualRegion && checkValidation() && selectedManualInstanceType) {
                 dispatch(setDisableState(false));
                 dispatch(setRequestedPayload(payload));
+                dispatch(setRequestedRegion(selectedManualRegion));
                 triggerManualStorageAPI();
             }
         }

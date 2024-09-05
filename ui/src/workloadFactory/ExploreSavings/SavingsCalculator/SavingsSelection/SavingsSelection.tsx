@@ -20,6 +20,7 @@ import { FINDINGS, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import LearnHowDialog from './LearnHowDialog/LearnHowDialog';
 import { generateLabel2ForInstanceType } from '../../ExploreSavingsUtils';
+import { checkIfByolFieldRequired } from '../savingsUtil';
 
 const SavingsSelection = ({ printState }: any) => {
     const dispatch = useDispatch();
@@ -36,7 +37,7 @@ const SavingsSelection = ({ printState }: any) => {
         selectedHostDetails
     } = useAppSelector(state => state.exploreSavings);
 
-    const [isSqlLicense, setIsSqlLicense] = useState<boolean>(true);
+    const [isByolField, setIsByolField] = useState<boolean>(false);
     const [noOfClonedCopies, setNoOfClonedCopies] = useState<any>(numberOfClonedCopies);
     const [monthlyChangeRateNo, setMonthlyChangeRateNo] = useState<any>(monthlyChangeRate);
     const [instanceTypeData, setInstanceTypeData] = useState<any>({
@@ -54,7 +55,7 @@ const SavingsSelection = ({ printState }: any) => {
     const { setDialog, closeDialog } = useDialog();
 
     useEffect(() => {
-        setIsSqlLicense(selectedHostDetails?.sqlLicenseIncluded);
+        setIsByolField(checkIfByolFieldRequired(selectedHostDetails, isByolField));
     }, [selectedHostDetails]);
 
     //Use effect for machine description
@@ -103,7 +104,14 @@ const SavingsSelection = ({ printState }: any) => {
         const frequency = SNAPSHOT_FREQUENCY;
         const options: optionType[] = [];
         frequency?.map((val, idx: number) => {
-            const option = generateOptionType(val?.value, val?.label, '', false, '', val);
+            const option = generateOptionType(
+                val?.value,
+                <div className="savings-calculator-dropdown-options">{val?.label}</div>,
+                '',
+                false,
+                '',
+                val
+            );
             options.push(option);
         });
         return options;
@@ -120,7 +128,14 @@ const SavingsSelection = ({ printState }: any) => {
         const frequency = ['Daily', 'Weekly', 'Monthly'];
         const options: optionType[] = [];
         frequency?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '', val);
+            const option = generateOptionType(
+                val,
+                <div className="savings-calculator-dropdown-options">{val}</div>,
+                '',
+                false,
+                '',
+                val
+            );
             options.push(option);
         });
 
@@ -133,7 +148,7 @@ const SavingsSelection = ({ printState }: any) => {
             options.push(
                 generateOptionType(
                     option?.instanceType,
-                    <div>
+                    <div className="savings-calculator-dropdown-options">
                         {option?.instanceType} <span className={styles.greyedOutText}>(for all instances)</span>
                     </div>,
                     generateLabel2ForInstanceType(
@@ -149,7 +164,7 @@ const SavingsSelection = ({ printState }: any) => {
         options.push(
             generateOptionType(
                 instanceTypeData?.existingInstanceType,
-                instanceTypeData?.existingInstanceType,
+                <div className="savings-calculator-dropdown-options">{instanceTypeData?.existingInstanceType}</div>,
                 generateLabel2ForInstanceType(
                     [],
                     instanceTypeData?.existingInstanceType,
@@ -195,7 +210,7 @@ const SavingsSelection = ({ printState }: any) => {
     };
 
     return (
-        <div className={styles.savingsSelection}>
+        <div className={styles.savingsSelection} id="savings-calculator-input-group">
             <DsTypography variant="Regular_14">{GENERAL.ES_SAVINGS_SELECTION_TEXT}</DsTypography>
 
             <div className={styles.firstRow}>
@@ -216,7 +231,7 @@ const SavingsSelection = ({ printState }: any) => {
                     }
                     isSearchable={generateSnapshotFrequency.length > 5}
                     options={generateSnapshotFrequency}
-                    className={styles.widthSet}
+                    className={`${styles.widthSet} savings-calculator-input-fields`}
                 />
             </div>
 
@@ -238,7 +253,7 @@ const SavingsSelection = ({ printState }: any) => {
                             setNoOfClonedCopies(numVal);
                         }}
                         value={noOfClonedCopies}
-                        className={styles.widthSet}
+                        className={`${styles.widthSet} savings-calculator-input-fields`}
                         error={errorForClonedCopiesCount()}
                     />
                 )}
@@ -252,7 +267,7 @@ const SavingsSelection = ({ printState }: any) => {
                     }}
                     isSearchable={generateCloneRefresh.length > 5}
                     options={generateCloneRefresh}
-                    className={styles.widthSet}
+                    className={`${styles.widthSet} savings-calculator-input-fields`}
                 />
             </div>
 
@@ -274,7 +289,7 @@ const SavingsSelection = ({ printState }: any) => {
                         }}
                         isDisabled={loading}
                         value={monthlyChangeRateNo ? monthlyChangeRateNo : ''}
-                        className={styles.widthSet}
+                        className={`${styles.widthSet} savings-calculator-input-fields`}
                         info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
                         error={errorForChangeRate()}
                     />
@@ -289,7 +304,7 @@ const SavingsSelection = ({ printState }: any) => {
                 </div>
             </div>
             <div className={styles.secondRow}>
-                {!isSqlLicense && (
+                {isByolField && (
                     <TextField
                         label={GENERAL.BYOL_TEXT}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -298,7 +313,7 @@ const SavingsSelection = ({ printState }: any) => {
                         }}
                         isOptional={true}
                         value={byolValue}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 )}
                 <div className={styles.instanceTypeContainer}>
@@ -332,7 +347,7 @@ const SavingsSelection = ({ printState }: any) => {
                         }}
                         isSearchable={generateRecommendedInstanceTypes?.length > 5}
                         options={generateRecommendedInstanceTypes}
-                        className={styles.widthSet}
+                        className={`${styles.widthSet} savings-calculator-input-fields`}
                     />
                     {(instanceTypeData?.missingPermissions ||
                         (generateRecommendedInstanceTypes?.length === 1 && !storageSavingsLoading)) && (

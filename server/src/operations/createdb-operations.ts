@@ -15,7 +15,8 @@ import {
     sqlResponseParsing,
     getCollationForMSSQLVersion,
     getDatabaseInstanceName,
-    isDemo
+    isDemo,
+    getOriginalDatabaseInstanceName
 } from '../utils/utils';
 import {
     ACCOUNT_ID,
@@ -27,7 +28,8 @@ import {
     RESOURCESTYPE,
     SQL_SERVICE_STATE,
     SSM_COMMAND_CACHE_TYPE,
-    DEFAULT_MSSQL_INSTANCE_NAME
+    DEFAULT_MSSQL_INSTANCE_NAME,
+    AuditStatus
 } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
@@ -47,6 +49,7 @@ import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT }
 import { updateResourceMetaData } from '../lib/database/db';
 import { cleanupResources } from './workloads/mssql/createdb-scripts';
 import { checkScriptNeedsUpdate, copyScriptsToHost } from './resource-operations';
+import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 const logger = getLogger();
 
@@ -62,10 +65,16 @@ async function getDefaultDrives(
     region: string,
     activeNodeInstanceId: string,
     instanceName: string,
+    executableInstanceName: string,
+    isSqlAuthEnabled: boolean,
     executionTimeout?: string
 ) {
     logger.info('Getting MSSQL default data and log drives', { credentialsId, region, activeNodeInstanceId });
-    const defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName)];
+    let defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
+
+    if (isDemoFlow) {
+        defaultDrivesCommand = [GET_DEFAULT_DRIVES(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, true)];
+    }
 
     const defaultDriveResponse = await callSsmExecution(
         credentialsId,
@@ -77,19 +86,16 @@ async function getDefaultDrives(
         executionTimeout
     );
 
-    const [parsedDefaultDataDrive, parsedDefaultLogDrive] = defaultDriveResponse
-        ? sqlResponseParsing(defaultDriveResponse)
-        : [];
+    const parsedDefaultDriveResponse = defaultDriveResponse ? sqlResponseParsing(defaultDriveResponse) : '';
 
-    const currentDataDrive =
-        parsedDefaultDataDrive && !parsedDefaultDataDrive.includes('error')
-            ? sqlResponseParsing(parsedDefaultDataDrive)[0].CurrentDataDrive
+    const parsedCurrentDrive =
+        parsedDefaultDriveResponse && !parsedDefaultDriveResponse.includes('error')
+            ? sqlResponseParsing(parsedDefaultDriveResponse)[0]
             : '';
 
-    const currentLogDrive =
-        parsedDefaultLogDrive && !parsedDefaultLogDrive.includes('error')
-            ? sqlResponseParsing(parsedDefaultLogDrive)[0].CurrentLogDrive
-            : '';
+    const currentDataDrive = (parsedCurrentDrive?.DefaultDataDrive || [])[0] || '';
+    const currentLogDrive = (parsedCurrentDrive?.DefaultLogDrive || [])[0] || '';
+
     logger.debug('MSSQL default data and log drives response', { currentDataDrive, currentLogDrive });
     return { currentDataDrive, currentLogDrive };
 }
@@ -238,6 +244,7 @@ async function getDriveInfoFromSSM(
     if (
         isSSMConnected === undefined ||
         !activeNodeInstanceId ||
+        (sqlDeploymentType === 'FCI' && !standbyNodeInstanceId) ||
         !instanceName ||
         !instancesDetails ||
         !instancesDetails?.length
@@ -253,6 +260,15 @@ async function getDriveInfoFromSSM(
         throw createError(errorMessage);
     }
 
+    let isSqlAuthEnabled =
+        instancesDetails && instanceDetail
+            ? instancesDetails.some(
+                  instance =>
+                      instance.instanceName === instanceDetail.database_instance_name &&
+                      instance.sqlAuthEnabled === true
+              )
+            : false;
+    let actualInstanceName = getOriginalDatabaseInstanceName(instanceName);
     if (!activeNodeInstance && instanceDetail && instancesDetails) {
         const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
@@ -268,6 +284,11 @@ async function getDriveInfoFromSSM(
             throw createError(errorMessage);
         }
         instanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
+        actualInstanceName = selectedInstanceName;
+        isSqlAuthEnabled = instancesDetails.some(
+            instance =>
+                instance.instanceName === instanceDetail.database_instance_name && instance.sqlAuthEnabled === true
+        );
     }
 
     if (sqlDeploymentType === 'FCI' && !forSandbox && standbyNodeInstanceId) {
@@ -300,7 +321,9 @@ async function getDriveInfoFromSSM(
                       credentialsId,
                       region,
                       activeNodeInstanceId as string,
+                      actualInstanceName!,
                       instanceName,
+                      isSqlAuthEnabled,
                       executionTimeout
                   )
         ]);
@@ -419,99 +442,107 @@ async function deployDatabase(
         databaseInstanceId
     });
 
-    const {
-        items: [resourceDetail]
-    } = await getResources(accountId, databaseHostId);
+    try {
+        const {
+            items: [resourceDetail]
+        } = await getResources(accountId, databaseHostId);
 
-    let {
-        resource_id: resourceId,
-        co_relation_id: fileSystemId,
-        metadata,
-        resource_name: sqlServerName
-    } = resourceDetail;
-    const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
+        let {
+            resource_id: resourceId,
+            co_relation_id: fileSystemId,
+            metadata,
+            resource_name: sqlServerName
+        } = resourceDetail;
+        const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
 
-    if (!credentialsId || !region || !node1InstanceId) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource  information');
-    }
-    let instanceDetail;
-    let isClustered;
-    let fsxSvmId;
-    let databaseDeploymentType;
-    let fsxSvmDetails;
-    let instanceName;
-
-    if (databaseInstanceId) {
-        instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-        ({
-            fsxn_ids: fileSystemId,
-            fsx_svm_id: fsxSvmDetails,
-            database_deployment_type: databaseDeploymentType,
-            database_instance_name: instanceName
-        } = instanceDetail as unknown as DatabaseInstance);
-
-        isClustered = databaseDeploymentType === 'FCI' ? 'true' : 'false';
-        fsxSvmId = (fsxSvmDetails as unknown as Record<string, string>)[fileSystemId as string];
-    } else {
-        isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
-        ({ fsxSvmId } = metadata as unknown as Metadata);
-    }
-
-    // check whether any jobs on the same resource running
-    const filterParams = {
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: sqlServerName as string,
-        typeFilter: JOBTYPE.CREATE_RESOURCE
-    };
-    const {
-        items: [job]
-    } = await getJobs(accountId, credentialsId, region, filterParams);
-
-    if (job) {
-        // Calculate the time difference in minutes
-        const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
-        const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
-        // workaround to allow the user to create database when there is a job stuck in progress for a very long time
-        if (timeDifferenceInMinutes <= 15) {
-            throw createError(
-                412,
-                `A database creation operation for ${sqlServerName} is already in progress with job ID ${job.id}`
-            );
+        if (!credentialsId || !region || !node1InstanceId) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource  information');
         }
+        let instanceDetail;
+        let isClustered;
+        let fsxSvmId;
+        let databaseDeploymentType;
+        let fsxSvmDetails;
+        let instanceName;
+
+        if (databaseInstanceId) {
+            instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+            ({
+                fsxn_ids: fileSystemId,
+                fsx_svm_id: fsxSvmDetails,
+                database_deployment_type: databaseDeploymentType,
+                database_instance_name: instanceName
+            } = instanceDetail as unknown as DatabaseInstance);
+
+            isClustered = databaseDeploymentType === 'FCI' ? 'true' : 'false';
+            fsxSvmId = (fsxSvmDetails as unknown as Record<string, string>)[fileSystemId as string];
+        } else {
+            isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
+            ({ fsxSvmId } = metadata as unknown as Metadata);
+        }
+
+        // check whether any jobs on the same resource running
+        const filterParams = {
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: sqlServerName as string,
+            typeFilter: JOBTYPE.CREATE_RESOURCE
+        };
+        const {
+            items: [job]
+        } = await getJobs(accountId, credentialsId, region, filterParams);
+
+        if (job) {
+            // Calculate the time difference in minutes
+            const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
+            const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
+            // workaround to allow the user to create database when there is a job stuck in progress for a very long time
+            if (timeDifferenceInMinutes <= 15) {
+                throw createError(
+                    412,
+                    `A database creation operation for ${sqlServerName} is already in progress with job ID ${job.id}`
+                );
+            }
+        }
+
+        const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
+        updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
+
+        // create the parent job for database deployment
+        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+            type: JOBTYPE.CREATE_RESOURCE,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: serverNameWithHostName,
+            name: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`,
+            startTime: Date.now(),
+            description: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`
+        });
+
+        invokeSSMForDatabaseDeployment(
+            credentialsId,
+            region,
+            databaseName,
+            dataFileConfig,
+            logFileConfig,
+            collation,
+            fileSystemId,
+            isClustered,
+            sqlServerName,
+            node1InstanceId,
+            fsxSvmId,
+            jobId,
+            resourceId,
+            serverNameWithHostName,
+            node2InstanceId,
+            metadata as Metadata,
+            instanceDetail as unknown as DatabaseInstance
+        );
+        return { jobId };
+    } catch (err: any) {
+        const errorMsg = `Error while creating user database ${databaseName} in host ${databaseHostId} in account ${accountId}. ${err?.message}`;
+        logger.error(errorMsg, err);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
-
-    const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
-
-    // create the parent job for database deployment
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        type: JOBTYPE.CREATE_RESOURCE,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName,
-        name: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`,
-        startTime: Date.now(),
-        description: `Creating user database ${databaseName} on the SQL Server instance ${serverNameWithHostName}`
-    });
-
-    invokeSSMForDatabaseDeployment(
-        credentialsId,
-        region,
-        databaseName,
-        dataFileConfig,
-        logFileConfig,
-        collation,
-        fileSystemId,
-        isClustered,
-        sqlServerName,
-        node1InstanceId,
-        fsxSvmId,
-        jobId,
-        resourceId,
-        serverNameWithHostName,
-        node2InstanceId,
-        metadata as Metadata,
-        instanceDetail as unknown as DatabaseInstance
-    );
-    return { jobId };
 }
 
 async function invokeSSMForDatabaseDeployment(
@@ -603,28 +634,24 @@ async function invokeSSMForDatabaseDeployment(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
         }
         if (instanceDetail && instancesDetails) {
-            const {
-                database_instance_name: selectedInstanceName,
-                is_default: isDefault,
-                sqlAuthEnabled
-            } = instanceDetail;
+            const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
             isDefaultInstance = isDefault ? 'true' : 'false';
             instanceNameForScript = selectedInstanceName;
 
-            const isInstanceRunning = instancesDetails.some(
+            const runningInstance = instancesDetails.find(
                 instance =>
                     instance.instanceName === instanceDetail.database_instance_name &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 
-            if (!isInstanceRunning && selectedInstanceName) {
+            if (isEmpty(runningInstance) && selectedInstanceName) {
                 const errorMessage = `Unable to access drive details in account ${accountId} for instance ${sqlInstanceName} is not running.`;
                 logger.error(errorMessage);
                 throw createError(errorMessage);
             }
             sqlInstanceName = getDatabaseInstanceName(selectedInstanceName, isDefault);
             databaseInstanceId = instanceDetail.database_instance_id;
-            isSqlAuthEnabled = sqlAuthEnabled || false;
+            isSqlAuthEnabled = runningInstance.sqlAuthEnabled || false;
         }
 
         if (isClustered === 'true' && standbyNodeInstanceId) {
@@ -697,7 +724,7 @@ async function invokeSSMForDatabaseDeployment(
                 endTime: Date.now(),
                 error: undefined
             });
-
+            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             if (isDemoFlow) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(
@@ -823,7 +850,7 @@ async function invokeSSMForDatabaseDeployment(
                 endTime: Date.now(),
                 error: undefined
             });
-
+            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             await updateCreateDbMetrics(accountId, credentialsId, resourceId, metaData as Metadata);
 
             if (isDemoFlow) {
@@ -883,7 +910,7 @@ async function invokeSSMForDatabaseDeployment(
                 `${dataDrivePath},${logDrivePath}`
             );
         }
-
+        updateLongRunningAuditGroup(AuditStatus.FAILED, err?.message, serverNameWithHostName);
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
@@ -1751,7 +1778,12 @@ async function getDefaultCollationAndVersion(
 ) {
     logger.info('Getting MSSQL default collation', { credentialsId, region, activeNodeInstanceId });
     const { name: instanceName, executableName, sqlAuthEnabled } = sqlInstance;
-    const defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, executableName, sqlAuthEnabled)];
+
+    let defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, executableName, sqlAuthEnabled)];
+
+    if (isDemoFlow) {
+        defaultCollationCommand = [GET_DEFAULT_COLLATION('MSSQLSERVER', '$env:computername', false)];
+    }
 
     const defaultCollationResponse = await callSsmExecution(
         credentialsId,

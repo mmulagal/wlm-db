@@ -112,6 +112,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     },
     recommendedTargetInstance: '',
     requestedPayload: {},
+    requestedRegion: '',
     disableState: false,
     selectedManualDeploymentType: null,
     selectedManualStorageType: null,
@@ -147,6 +148,9 @@ const exploreSavingsSlice = createSlice({
             state.disableState = action.payload;
         },
         setRequestedPayload: (state, action: PayloadAction<any>) => {
+            state.requestedPayload = action.payload;
+        },
+        setRequestedRegion: (state, action: PayloadAction<any>) => {
             state.requestedPayload = action.payload;
         },
         setVolumeFilledStatus: (state, action: PayloadAction<any>) => {
@@ -364,6 +368,11 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualRegion = null;
             state.selectedManualDeploymentModel = null;
             state.selectedManualServerEdition = null;
+            state.getManualInstanceTypeList = {
+                instanceTypeData: {},
+                instanceTypeLoading: false,
+                instanceTypeError: null
+            };
             state.selectedManualInstanceType = null;
             state.selectedSecondaryManualInstanceType = null;
             state.monthlyBYOLCost = '';
@@ -394,6 +403,7 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setRequestedRegion,
     addManualRegionsList,
     setManualRegionsLoading,
     setSelectedManualFSXIOPS,

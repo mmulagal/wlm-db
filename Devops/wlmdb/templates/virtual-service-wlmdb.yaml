@@ -2,18 +2,34 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: wlmdb-vs
+  name: merged-wlmdb-vs
   namespace: wlmdb
 spec:
-  hosts:
-    - {{ .Values.global.bluexpDomain }}
   gateways:
     - istio-ingress/istio-api
+  hosts:
+    - {{ .Values.global.bluexpDomain }}
   http:
     - match:
-        - uri: 
+        - headers:
+            x-simulator:
+              exact: 'true'
+          uri:
             regex: '\/wlmdb.*'
-        - uri: 
+        - headers:
+            x-simulator:
+              exact: 'true'
+          uri:
+            regex: '\/accounts\/.*\/wlmdb\/v.*'
+      route:
+        - destination:
+            host: wlmdb.wlmdb-demo.svc.cluster.local
+            port:
+              number: 8085
+    - match:
+        - uri:
+            regex: '\/wlmdb.*'
+        - uri:
             regex: '\/accounts\/.*\/wlmdb\/v.*'
       route:
         - destination:

@@ -224,8 +224,12 @@ const CodeBox = () => {
             mssqlForm: actualData
         };
         const resBody = createMssqlPayload(changeObjectForm);
-        resBody.credentialsId = credDetails?.credId || '';
-        resBody.region = credDetails?.region || '';
+        if (credDetails?.credId) {
+            resBody.credentialsId = credDetails?.credId;
+        }
+        if (credDetails?.region) {
+            resBody.region = credDetails?.region;
+        }
         loadTemplateData({ payload: resBody }).then((data: any) => {
             if (data?.data) {
                 setRightPanelTemplateResponse(addEscapeInCli(data?.data));

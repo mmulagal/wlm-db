@@ -47,9 +47,16 @@ const Home = () => {
                             payload: { pathname: './fsxdb/marketing', replace: true }
                         });
                     } else {
-                        const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
-                        navigate('../fsxdb');
-                        dispatch(setSelectedHeaderTab(tabInfo));
+                        if (
+                            msg?.data?.payload?.pathname ===
+                            '/fsxdb/add-working-environment/database-services/mssql/create'
+                        ) {
+                            navigate('../fsxdb/add-working-environment/database-services/mssql/create');
+                        } else {
+                            const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
+                            navigate('../fsxdb');
+                            dispatch(setSelectedHeaderTab(tabInfo));
+                        }
                     }
                 }
             };
@@ -113,6 +120,10 @@ const Home = () => {
                                 element={<MainComponent />}
                             />
                             <Route
+                                path={`fsxdb/add-working-environment/database-services/:storage/create`}
+                                element={<MainComponent />}
+                            />
+                            <Route
                                 path={`add-working-environment/database-services/:storage/postgress`}
                                 element={<PostgressMainComponent />}
                             />
@@ -131,12 +142,21 @@ const Home = () => {
                                 path={'databases/inventory'}
                                 element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
                             />
+                            <Route path={'fsxdb/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                             <Route
                                 path={'databases/exploreSavingsEBS'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
                             <Route
+                                path={'fsxdb/exploreSavingsEBS'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                            />
+                            <Route
                                 path={'databases/exploreSavingsFsxW'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
+                            />
+                            <Route
+                                path={'fsxdb/exploreSavingsFsxW'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                             />
                             <Route path={'create-new-user'} element={<WizardComponent />} />

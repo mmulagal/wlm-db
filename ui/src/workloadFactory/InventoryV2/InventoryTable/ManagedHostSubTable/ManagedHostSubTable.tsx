@@ -438,7 +438,7 @@ const ManagedHostSubTable = ({
                     }
                     if (
                         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
+                        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
                     ) {
                         disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
                         width = '340px';

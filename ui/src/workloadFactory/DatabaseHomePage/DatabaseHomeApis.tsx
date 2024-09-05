@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { setRefetchJobSummaryApi } from '../../store/mssql/msSqlActionSlice';
+import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAggregatedCosts,
@@ -7,9 +6,10 @@ import {
     addAggregatedStorageSavings,
     addAggregateHostsCountData,
     addDatabaseHostsList,
-    addJobsSummary
+    addJobsSummary,
+    addJobsSummaryLoading
 } from '../../store/workloadFactory/databaseHomeSlice';
-import { useGetJobsSummaryQuery } from '../../utils/apiService';
+import { useLazyGetJobsSummaryQuery } from '../../utils/apiService';
 import {
     getAggrCost,
     getAggrProtection,
@@ -33,68 +33,58 @@ const DatabaseHomeApis = () => {
     const databaseHostsDataV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsData);
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const { sandboxSavings } = useAppSelector(state => state.sandbox.getSandboxSavings);
-    const refetchJobSummaryApi = useAppSelector(state => state.msSqlAction.refetchJobSummaryApi);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
+    const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
-    // skipApiCall to skip APi call when isActive is not true
-    const [skipApiCall, setSkipApiCall] = useState(true);
-    const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
+    const [getJobsSummaryApi] = useLazyGetJobsSummaryQuery();
 
-    useEffect(() => {
-        const toDate = Date.now();
-        const fromDate = toDate - 30 * (3600 * 1000 * 24);
-        setTime({ startTime: fromDate, endTime: toDate });
-    }, []);
+    const getJobsSummaryData = async () => {
+        const endTime = Date.now();
+        const startTime = endTime - 30 * (3600 * 1000 * 24);
+        try {
+            const result: any = await getJobsSummaryApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                region: headerSelectedRegion?.label2,
+                startTime: startTime,
+                endTime: endTime
+            });
 
-    const {
-        data: jobsSummaryData,
-        isFetching: jobsSummaryLoading,
-        isError: jobsSummaryError,
-        refetch: jobsSummaryRefetch
-    } = useGetJobsSummaryQuery(
-        {
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
-            startTime: time?.startTime,
-            endTime: time?.endTime
-        },
-        { skip: skipApiCall }
-    );
-
-    useEffect(() => {
-        if (refetchJobSummaryApi) {
-            dispatch(setRefetchJobSummaryApi(false));
-            jobsSummaryRefetch();
+            if (result && !result?.error) {
+                dispatch(
+                    addJobsSummary({
+                        jobsSummaryData: jobStatusPercent(result?.data),
+                        jobsSummaryLoading: false,
+                        jobsSummaryError: undefined
+                    })
+                );
+            } else {
+                dispatch(
+                    addJobsSummary({
+                        jobsSummaryData: undefined,
+                        jobsSummaryLoading: false,
+                        jobsSummaryError: undefined
+                    })
+                );
+            }
+        } catch (error) {
+            dispatch(
+                addJobsSummary({ jobsSummaryData: undefined, jobsSummaryLoading: false, jobsSummaryError: undefined })
+            );
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refetchJobSummaryApi]);
+    };
 
     useEffect(() => {
         resetDBHomePageState(dispatch); // reset dahsboard state if cred and region is changed
-        if (headerSelectedCred && headerSelectedRegion) {
+        if (headerSelectedCred && headerSelectedRegion && refreshTime) {
+            dispatch(addJobsSummaryLoading(true));
             setTimeout(() => {
-                setSkipApiCall(false);
+                getJobsSummaryData();
             }, 0);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [headerSelectedCred, headerSelectedRegion]);
-
-    useEffect(() => {
-        if (jobsSummaryError) {
-            dispatch(addJobsSummary({ undefined, jobsSummaryLoading, jobsSummaryError }));
-        } else {
-            dispatch(
-                addJobsSummary({
-                    jobsSummaryData: jobStatusPercent(jobsSummaryData),
-                    jobsSummaryLoading,
-                    jobsSummaryError
-                })
-            );
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [jobsSummaryData, jobsSummaryLoading, jobsSummaryError]);
+    }, [headerSelectedCred, headerSelectedRegion, refreshTime]);
 
     // To have database hosts data in dashboard - V1
     useEffect(() => {

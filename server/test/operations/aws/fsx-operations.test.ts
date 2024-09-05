@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/fsx-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/aws/ssm-scope';
@@ -65,7 +64,9 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
-            false
+            false,
+            undefined,
+            'MSSQLSERVER'
         );
         expect(response).toEqual(fsxResponse.volumeMap);
     });

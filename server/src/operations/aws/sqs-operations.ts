@@ -18,7 +18,6 @@ import {
     RESOURCESTYPE,
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB,
-    WF,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG,
     CF_STACK_RESOURCE_TYPE,
@@ -50,7 +49,6 @@ import {
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getAllInstanceDetails, getMsSqlResourceId, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
 // import { handleNotification } from '../cloud-manager/notification-operations';
-import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
 import { getDeployments } from '../database/database-operations';
 import { tagEc2Resource } from './ec2-operations';
@@ -149,25 +147,22 @@ async function handleResourceAssociation(
     });
 
     try {
-        const { source } = await lookupCredentials(credentialsId, accountId);
-        if (source === WF) {
-            const resourcesToAssociate = [
-                {
-                    id: resourceId,
-                    name: resourceName,
-                    type: RESOURCESTYPE.MSSQL as string
-                }
-            ];
-            if (fsxId && fsxName) {
-                resourcesToAssociate.push({
-                    id: fsxId,
-                    name: fsxName,
-                    type: 'FSxFileSystem'
-                });
+        const resourcesToAssociate = [
+            {
+                id: resourceId,
+                name: resourceName,
+                type: RESOURCESTYPE.MSSQL as string
             }
-
-            await associateResource(credentialsId, accountId, resourcesToAssociate);
+        ];
+        if (fsxId && fsxName) {
+            resourcesToAssociate.push({
+                id: fsxId,
+                name: fsxName,
+                type: 'FSxFileSystem'
+            });
         }
+
+        await associateResource(credentialsId, accountId, resourcesToAssociate);
     } catch (error) {
         logger.error('Failed to associate resource with credentials service', error);
     }
@@ -605,7 +600,8 @@ async function processCloudFormationMessages() {
                                                         const deployedInstances = await getAllInstanceDetails(
                                                             credentialsId,
                                                             region,
-                                                            nodeIds
+                                                            nodeIds,
+                                                            accountId
                                                         );
 
                                                         const instanceNames = deployedInstances.map(
@@ -621,6 +617,7 @@ async function processCloudFormationMessages() {
                                                                     : instanceName;
 
                                                                 const sqlInstanceGuid = await getMssqlInstanceGuid(
+                                                                    accountId,
                                                                     credentialsId,
                                                                     region,
                                                                     getDatabaseInstanceName(

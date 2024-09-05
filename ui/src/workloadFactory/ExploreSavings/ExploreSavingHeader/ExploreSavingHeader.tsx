@@ -20,7 +20,7 @@ const ExploreSavingHeader = () => {
 
     return (
         <>
-            {windowSize.width > 1715 && (
+            {windowSize.width > 1823 && (
                 <div className={styles.exploreSavingsHeader}>
                     <div className={styles.topPart}>
                         <div className={styles.svgContainer}>
@@ -70,7 +70,7 @@ const ExploreSavingHeader = () => {
                     {isInventoryV2 && <ExploreSavingsTableV2 />}
                 </div>
             )}
-            {windowSize.width > 1429 && windowSize.width <= 1715 && (
+            {windowSize.width > 1429 && windowSize.width <= 1823 && (
                 <div className={styles.exploreSavingsHeader}>
                     <div className={styles.topPart}>
                         <div className={styles.svgContainer}>

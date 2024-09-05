@@ -1,4 +1,3 @@
-import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../simulator/scopes/aws/fsx-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -47,7 +46,7 @@ beforeAll(async () => {
                     name: 'testdb1',
                     size: 1234,
                     status: 'Running',
-                    type: 'Standalore',
+                    type: 'Standalone',
                     protection: {
                         isAwsBackupEnabled: true,
                         isFsxOntapSnapshotsEnabled: true,
@@ -59,7 +58,7 @@ beforeAll(async () => {
                     name: 'testdb2',
                     size: 1234,
                     status: 'Running',
-                    type: 'Standalore',
+                    type: 'Standalone',
                     protection: {
                         isAwsBackupEnabled: true,
                         isFsxOntapSnapshotsEnabled: true,

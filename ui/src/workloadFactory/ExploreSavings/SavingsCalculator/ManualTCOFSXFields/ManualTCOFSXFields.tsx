@@ -172,7 +172,7 @@ const ManualTCOFSXFields = () => {
                         }}
                         isSearchable={generateDeploymentTypeList.length > 5}
                         options={generateDeploymentTypeList}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
 
                     <SelectField
@@ -185,7 +185,7 @@ const ManualTCOFSXFields = () => {
                         }}
                         isSearchable={generateStorageTypeList.length > 5}
                         options={generateStorageTypeList}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 </div>
 
@@ -199,7 +199,7 @@ const ManualTCOFSXFields = () => {
                                 setStorageCapacity(numVal);
                             }}
                             value={storageCapacity}
-                            className={styles.SCWidth}
+                            className={`${styles.SCWidth} savings-calculator-input-fields`}
                             error={handleStorageCapacityError()}
                         />
                         <SelectField
@@ -215,7 +215,7 @@ const ManualTCOFSXFields = () => {
                             }}
                             isSearchable={generateStorageCapacityUnitList.length > 5}
                             options={generateStorageCapacityUnitList}
-                            className={styles.SCUnitWidth}
+                            className={`${styles.SCUnitWidth} savings-calculator-input-fields`}
                         />
                     </div>
 
@@ -226,7 +226,7 @@ const ManualTCOFSXFields = () => {
                             setIOPSValue(numVal);
                         }}
                         value={iopsValue}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         error={handleIOPSError()}
                     />
                 </div>
@@ -239,7 +239,7 @@ const ManualTCOFSXFields = () => {
                             setThroughputValue(numVal);
                         }}
                         value={throughputValue}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         error={handleThroughputError()}
                     />
                 </div>

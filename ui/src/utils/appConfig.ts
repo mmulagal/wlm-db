@@ -38,11 +38,28 @@ const useInitialize = () => {
         // const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
         // const workspaceIdAsString = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
         // const isDemoFlag = Array.isArray(isDemoMode) ? isDemoMode[0] : isDemoMode;
-        const isWorkloadFactory =
-            !window.location ||
-            !window.location.ancestorOrigins ||
-            !window.location.ancestorOrigins.length ||
-            window.location.ancestorOrigins[0].includes(WORKLOADS);
+        const checkForPlatform = () => {
+            if (navigator.userAgent.includes('Chrome')) {
+                if (
+                    !window.location ||
+                    !window.location.ancestorOrigins ||
+                    !window.location.ancestorOrigins.length ||
+                    window.location.ancestorOrigins[0].includes(WORKLOADS)
+                ) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                if (document.referrer.includes(WORKLOADS)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        };
+        const isWorkloadFactory = checkForPlatform();
+
         // dispatch(updateIsDemoMode(isDemoFlag === 'true' ? true : false));
         dispatch(updateIsWorkloadfactory(isWorkloadFactory));
 

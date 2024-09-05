@@ -18,7 +18,7 @@ export default async function sendAudit(auditData: {
         auditRecord?: CreateAuditGroupSchemaType | UpdateAuditGroupSchemaType | AuditRecordSchemaType;
     };
 }) {
-    logger.debug('Sending Audit:', auditData);
+    logger.info('Sending Audit:', auditData);
 
     try {
         const { token } = await getBxpServiceToken();

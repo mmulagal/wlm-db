@@ -92,6 +92,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         totalInstance: totalInstanceCount,
         managedInstance: managedInstanceCount,
         serverInstallationMode: getInstallationMode(managedRow),
+        serverAllInstallationMode: getAllInstallationMode(managedRow),
         vpcId: managedRow?.nodeTopology?.vpcId,
         vpcName: managedRow?.nodeTopology?.vpcName,
         vpcCidr: managedRow?.nodeTopology?.vpcCidr,
@@ -164,6 +165,35 @@ export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) =
             installationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
         } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
             installationMode = GENERAL.AOAG;
+        }
+        return installationMode;
+    } else {
+        return '';
+    }
+};
+
+export const getAllInstallationMode = (row: ManagedHostsRowInterface | undefined) => {
+    let installationMode: Array<string> = [];
+    if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
+        for (let i = 0; i < row?.databaseInstancesSummary?.length; i++) {
+            const val = row?.databaseInstancesSummary[i];
+            let perInstallationMode = '';
+            if (val?.sqlServerDeploymentType) {
+                perInstallationMode = val?.sqlServerDeploymentType;
+            } else if (val?.databaseInstanceTopology?.serverInstallationMode) {
+                perInstallationMode = val?.databaseInstanceTopology?.serverInstallationMode;
+            }
+
+            if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+                perInstallationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+            } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+                perInstallationMode = GENERAL.AOAG;
+            } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                perInstallationMode = GENERAL.STANDALONE;
+            }
+            if (!installationMode.includes(perInstallationMode)) {
+                installationMode.push(perInstallationMode);
+            }
         }
         return installationMode;
     } else {
@@ -537,6 +567,7 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         totalInstance: totalInstanceCount,
         managedInstance: 0,
         serverInstallationMode: installationMode,
+        serverAllInstallationMode: getAllDiscoverInstallationMode(discoveredRow),
         vpcId: discoveredRow?.vpc?.id,
         vpcName: discoveredRow?.vpc?.name,
         vpcCidr: discoveredRow?.vpc?.cidrBlock,
@@ -600,6 +631,29 @@ export const getDiscoverInstallationMode = (row: DiscoverHostInterface) => {
         return installationMode;
     } else {
         return '';
+    }
+};
+
+export const getAllDiscoverInstallationMode = (row: DiscoverHostInterface) => {
+    let installationMode: Array<string> = [];
+    if (row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
+        for (let i = 0; i < row?.sqlServerInstances?.length; i++) {
+            const val = row?.sqlServerInstances[i];
+            let perInstallationMode = val?.sqlServerDeploymentType?.toLowerCase();
+            if (perInstallationMode === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+                perInstallationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+            } else if (perInstallationMode === SQL_DEPLOYMENT_MODE.AOAG) {
+                perInstallationMode = GENERAL.AOAG;
+            } else if (perInstallationMode === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                perInstallationMode = GENERAL.STANDALONE;
+            }
+            if (perInstallationMode && !installationMode.includes(perInstallationMode)) {
+                installationMode.push(perInstallationMode);
+            }
+        }
+        return installationMode;
+    } else {
+        return [];
     }
 };
 
@@ -960,6 +1014,9 @@ export const updateInventoryDatawithInstancesRes = (
             serverInstallationMode: !inventoryRow?.serverInstallationMode
                 ? getInstallationMode(instanceRow?.data)
                 : inventoryRow?.serverInstallationMode,
+            serverAllInstallationMode: !inventoryRow?.serverAllInstallationMode
+                ? getAllInstallationMode(instanceRow?.data)
+                : inventoryRow?.serverAllInstallationMode,
             sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow)
         };
         if (instanceRow) {

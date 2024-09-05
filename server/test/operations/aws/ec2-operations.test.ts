@@ -14,7 +14,6 @@ import {
     isEbsAwsBackupEnabled,
     getInstanceDetailsByPrivateIp
 } from '../../../src/operations/aws/ec2-operations';
-import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';

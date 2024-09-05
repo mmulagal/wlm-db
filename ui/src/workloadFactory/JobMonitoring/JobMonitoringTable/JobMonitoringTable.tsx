@@ -28,7 +28,7 @@ import {
     setSubJobsData,
     setSubJobsDataLoading
 } from '../../../store/workloadFactory/jobMonitoringSlice';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -51,6 +51,7 @@ const JobMonitoringTable = () => {
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
@@ -258,10 +259,10 @@ const JobMonitoringTable = () => {
         };
     };
 
-    const ExpandedRow = ({ rowData }: any) => {
+    const ExpandedRow = useCallback(({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();
         return <SubJobTable jobId={rowData?.id} statusType={statusType} />;
-    };
+    }, []);
 
     const JobsColDefs: ColumnProps[] = [
         {
@@ -459,10 +460,9 @@ const JobMonitoringTable = () => {
     };
 
     useEffect(() => {
-        // Even if jobsList is changed than also collapse subjobs
         collapseAllRows(tableProps?.updateRowState, tableProps?.rowsState);
         tableProps?.pagination?.gotoPage(0);
-    }, [timeInterval, jobsList]);
+    }, [timeInterval, refreshTime]);
 
     const downloadJobMonitoring = () => {
         dispatch(setDownloadJobsLoading(true));
