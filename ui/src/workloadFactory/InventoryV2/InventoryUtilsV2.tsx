@@ -81,6 +81,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
     let totalInstanceCount = managedRow?.databaseInstanceDetails?.length || 0;
     let ssmState = getSsmState(managedRow);
     let allocatedCapacity = getAllocatedCapacity(managedRow);
+
     const result = {
         id: managedRow?.id,
         ec2InstanceId: managedRow?.nodeTopology?.ec2Details?.[0]?.id,
@@ -110,6 +111,20 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         sqlServerInstances: formatInstanceData(managedRow)
     };
     return result;
+};
+
+export const getInstanceStatusForMixedCase = (managedHostRow: any) => {
+    let state = store.getState();
+    const discoveredHostData = state?.inventoryV2?.discoveredHosts?.discoveredHostData;
+    const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id;
+    if (ec2Id && discoveredHostData) {
+        let selectedEc2 = discoveredHostData?.filter((perHost: any) => perHost?.ec2InstanceId === ec2Id);
+        if (selectedEc2 && selectedEc2?.length > 0) {
+            let ssmState = getDiscoverSsmState(selectedEc2[0]);
+            return getDiscoveredPerInstanceStatus(selectedEc2[0], ssmState);
+        }
+    }
+    return [];
 };
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
@@ -274,18 +289,31 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
 };
 
 export const formatInstanceData = (row: ManagedHostsRowInterface) => {
+    const isAllManaged = row?.databaseInstanceDetails?.every(perRow => {
+        return perRow?.isManaged ? true : false;
+    });
+
+    let nonManagedStatus: any = [];
+    if (!isAllManaged) {
+        nonManagedStatus = getInstanceStatusForMixedCase(row);
+        // ToDo - to call data for mixed case. use in statusColText for unmanaged case
+    }
+
     let instanceRows;
     if (row?.databaseInstanceDetails) {
         instanceRows = row?.databaseInstanceDetails?.map(perRow => {
             const isManagedRow = row?.databaseInstanceDetails?.filter(
                 per => per?.instanceName === perRow?.instanceName
             );
+            const statusObj = nonManagedStatus?.filter((per: StatusObjInterface) => per?.name === perRow?.instanceName);
             return {
                 ...perRow,
                 databaseInstanceId: perRow?.databaseInstanceId,
                 databaseInstanceName: perRow?.instanceName,
                 status: perRow?.instanceState,
-                statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED
+                statusColText: isManagedRow?.[0]?.isManaged
+                    ? INVENTORY_STATUS.MANAGED
+                    : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED
             };
         });
     }
@@ -296,6 +324,9 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             );
             const isManagedRow = row?.databaseInstanceDetails?.filter(
                 per => per?.instanceName === perRow?.databaseInstanceName
+            );
+            const statusObj = nonManagedStatus?.filter(
+                (per: StatusObjInterface) => per?.name === perRow?.databaseInstanceName
             );
             const allocatedCapacity =
                 (perRow?.storage?.fsxn?.size || 0) +
@@ -308,7 +339,9 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     databaseInstanceName: instRow?.databaseInstanceName,
                     status: perRow?.status,
                     databaseCount: perRow?.databaseCount,
-                    statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED,
+                    statusColText: isManagedRow?.[0]?.isManaged
+                        ? INVENTORY_STATUS.MANAGED
+                        : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED,
                     fileSystemDeploymentMode: getFileSystemDeploymentMode(
                         perRow?.databaseInstanceTopology?.fileSystemDeploymentMode
                     ),
@@ -1017,7 +1050,11 @@ export const updateInventoryDatawithInstancesRes = (
             serverAllInstallationMode: !inventoryRow?.serverAllInstallationMode
                 ? getAllInstallationMode(instanceRow?.data)
                 : inventoryRow?.serverAllInstallationMode,
-            sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow)
+            sqlServerInstances: updateSqlServerInstancesForUnmanaged(
+                instanceRow?.data,
+                inventoryRow,
+                instanceRow?.isManagedHost
+            )
         };
         if (instanceRow) {
             const allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data]);
@@ -1084,7 +1121,11 @@ export const updateInventoryDatawithInstancesRes = (
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 hasInstanceData: false,
                 sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
-                sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow),
+                sqlServerInstances: updateSqlServerInstancesForUnmanaged(
+                    instanceRow?.data,
+                    inventoryRow,
+                    instanceRow?.isManagedHost
+                ),
                 //For explore savings
                 ebsResourceInfo: instanceRow?.data?.ebsResourceInfo,
                 clusterNodeDetails: instanceRow?.data?.clusterNodeDetails
@@ -1328,18 +1369,33 @@ export const updateSqlServerInstancesForBothNodes = (
 
 export const updateSqlServerInstancesForUnmanaged = (
     instanceData: InstancesHostsRowInterface | undefined,
-    existingInstanceRow: InventoryTableData
+    existingInstanceRow: InventoryTableData,
+    isManagedHost: boolean | undefined
 ) => {
     let instanceRows;
     if (existingInstanceRow) {
         instanceRows = existingInstanceRow?.sqlServerInstances;
     }
     if (instanceData?.databaseInstancesSummary && instanceData?.databaseInstancesSummary?.length > 0) {
+        // To check if manage/unmanage/undetected mixed case
+        let nonManagedStatus: any = [];
+        if (isManagedHost) {
+            const isAllManaged = instanceData?.databaseInstanceDetails?.every(perRow => {
+                return perRow?.isManaged ? true : false;
+            });
+            if (!isAllManaged) {
+                nonManagedStatus = getInstanceStatusForMixedCase(instanceData);
+                // ToDo - to call data for mixed case. use in statusColText for unmanaged case
+            }
+        }
         instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
             if (instRow?.statusColText !== INVENTORY_STATUS.MANAGED) {
                 const perRow = instanceData?.databaseInstancesSummary?.find(
                     (per: DatabaseInstancesSummaryInterface) =>
                         per?.databaseInstanceName === instRow?.databaseInstanceName
+                );
+                const statusObj = nonManagedStatus?.filter(
+                    (per: StatusObjInterface) => per?.name === instRow?.databaseInstanceName
                 );
                 const allocatedCapacity = instRow?.allocatedCapacity
                     ? instRow?.allocatedCapacity
@@ -1359,6 +1415,8 @@ export const updateSqlServerInstancesForUnmanaged = (
                     allocatedCapacity: allocatedCapacity,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                     databaseServer: instRow?.databaseServer || perRow?.databaseServer,
+                    statusColText:
+                        isManagedHost && statusObj?.[0]?.status ? statusObj?.[0]?.status : instRow?.statusColText,
                     fileSystemDeploymentMode:
                         instRow?.fileSystemDeploymentMode ||
                         getFileSystemDeploymentMode(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)

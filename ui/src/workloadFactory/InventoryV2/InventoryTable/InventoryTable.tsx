@@ -336,6 +336,7 @@ const InventoryTable = () => {
         rowData: any,
         checkForAllManaged: boolean,
         checkForAllUnDetectInstance: boolean,
+        checkForAllUnDetectOrManageInstance: boolean,
         checkForAllUnManagedInstance: boolean,
         checkForAllFsxnManagedInstance: boolean,
         checkForAllStorageType: boolean
@@ -368,6 +369,19 @@ const InventoryTable = () => {
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
             return (
                 <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all un-detect or managedinstances and storage type is N/A
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectOrManageInstance) {
+            return (
+                <TooltipComponent title={GENERAL.NO_UNMANAGED_TO_MANAGE} placement="bottom" width="320px" height="90px">
                     <div className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
@@ -514,6 +528,11 @@ const InventoryTable = () => {
                 const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
                 );
+                const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
+                    (item: any) =>
+                        item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
+                        item?.statusColText === INVENTORY_STATUS.MANAGED
+                );
                 const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
                 );
@@ -532,6 +551,7 @@ const InventoryTable = () => {
                     rowData,
                     checkForAllManaged,
                     checkForAllUnDetectInstance,
+                    checkForAllUnDetectOrManageInstance,
                     checkForAllUnManagedInstance,
                     checkForAllFsxnManagedInstance,
                     checkForAllStorageType
