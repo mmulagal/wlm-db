@@ -1087,7 +1087,7 @@ async function invokeVirtualMount(
         }
 
         let i = 1;
-        const fileLunMap: Array<{ parentFilePath: string; lun: string; folderPath: string; label: string }> = [];
+        const fileLunMap: Array<{ filePath: string; lun: string; folderPath: string; label: string }> = [];
         mappings.data.forEach(vol => {
             const { fileName, volumeName } = vol;
 
@@ -1096,7 +1096,7 @@ async function invokeVirtualMount(
             const existingFileLunMap = fileLunMap.find(({ lun }) => lun === clonedVol?.lunSerialNumber);
 
             fileLunMap.push({
-                parentFilePath: fileName,
+                filePath: fileName,
                 lun: clonedVol?.lunSerialNumber as string,
                 folderPath:
                     existingFileLunMap?.folderPath || `${mountPoints.dataDrive}:\\${destDetails.database}-Data-${i}`,
@@ -1115,7 +1115,7 @@ async function invokeVirtualMount(
             const existingFileLunMap = fileLunMap.find(({ lun }) => lun === clonedVol?.lunSerialNumber);
 
             fileLunMap.push({
-                parentFilePath: fileName,
+                filePath: fileName,
                 lun: clonedVol?.lunSerialNumber as string,
                 folderPath:
                     existingFileLunMap?.folderPath || `${mountPoints.logDrive}:\\${destDetails.database}-Log-${i}`,
@@ -2399,10 +2399,12 @@ async function detachSandboxAndAccessPath(
         let command = [
             detachDbAndRemoveAccessPath(
                 resourceDetails.database,
-                JSON.stringify([
-                    ...mappings.data.map(vol => vol.lunSerialNumber),
-                    ...mappings.log.map(vol => vol.lunSerialNumber)
-                ]),
+                JSON.stringify(
+                    uniq([
+                        ...mappings.data.map(vol => vol.lunSerialNumber),
+                        ...mappings.log.map(vol => vol.lunSerialNumber)
+                    ])
+                ),
                 JSON.stringify([...mappings.data.map(vol => vol.fileName), ...mappings.log.map(vol => vol.fileName)]),
                 resourceDetails.instanceName,
                 resourceDetails.databaseInstanceName,
@@ -2492,11 +2494,45 @@ async function reAttachSandboxAndAccessPath(
     });
 
     try {
+        const fileLunMap: Array<{ lun: string; filePath: string; label: string; folderPath: string }> = [];
+
+        mappings.data
+            .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+            .forEach(vol => {
+                const { fileName, lunPath } = vol;
+
+                const folderPath = fileName.split('\\').slice(0, -1).join('\\');
+                const label = folderPath.split('\\').pop() || `${resourceDetails.database}-Data`;
+
+                fileLunMap.push({
+                    filePath: fileName,
+                    lun: lunPath as string,
+                    label,
+                    folderPath
+                });
+            });
+
+        mappings.log
+            .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+            .forEach(vol => {
+                const { fileName, lunPath } = vol;
+
+                const folderPath = fileName.split('\\').slice(0, -1).join('\\');
+                const label = folderPath.split('\\').pop() || `${resourceDetails.database}-Log`;
+
+                fileLunMap.push({
+                    filePath: fileName,
+                    lun: lunPath,
+                    label,
+                    folderPath
+                });
+            });
+
         const command = [
             addAccessPathAndAttachDb(
                 resourceDetails.database,
-                JSON.stringify(mappings.data.map(vol => ({ serial: vol.lunSerialNumber, path: vol.fileName }))),
-                JSON.stringify(mappings.log.map(vol => ({ serial: vol.lunSerialNumber, path: vol.fileName }))),
+                JSON.stringify(fileLunMap),
+                resourceDetails.databaseInstanceName === DEFAULT_INSTANCE_NAME,
                 resourceDetails.instanceName,
                 resourceDetails.databaseInstanceName,
                 `SandBox:${resourceDetails.database}:`,
