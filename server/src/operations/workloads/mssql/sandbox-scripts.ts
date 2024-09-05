@@ -887,6 +887,7 @@ const createClonedDb = (
     } catch {
         Write-Error "$logPrefix $($_.Exception.Message)"
     }
+    Stop-Transcript | Out-Null
 `;
 
 const addExtendedProperties = (
@@ -1321,21 +1322,21 @@ const detachDbAndRemoveAccessPath = (
 
 const addAccessPathAndAttachDb = (
     dbName: string,
-    fileLunMap: string,
-    isDefaultInstance: boolean,
+    fileArr: string,
     executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = '',
     sqlAuthEnabled: boolean
 ) => `
+    $WarningPreference = 'SilentlyContinue';
+    $dbname = '${dbName}'
+    $logPrefix = '${logPrefix}'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
-
-    ${invokeVirtualMountScript(dbName, fileLunMap, instanceName, isDefaultInstance, logPrefix)}
 
     Start-Transcript -Path "C:\\cfn\\log\\attachdb_$dbname.log.txt" -Append | Out-Null
 
     try {
-        
+
         ${slqcmdExecutionTemplate}
         $sqlCredential = @{'useSqlAuth' = $False}
         if($sqlAuthEnabled) {
@@ -1345,14 +1346,12 @@ const addAccessPathAndAttachDb = (
         $attachQuery = @"
             IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '$dbname')
             BEGIN
-                CREATE DATABASE $dbname
-                ${[...JSON.parse(fileLunMap)]
-                    .map(({ filePath }) => (filePath ? `(FILENAME = '${filePath}')` : ''))
-                    .join()}
+                CREATE DATABASE $dbname ON
+                ${[...JSON.parse(fileArr)].map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
                 FOR ATTACH
             END;
 "@
-        
+
         $attachresponse = $null
         $attachresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$attachQuery" -InstanceName "${executableInstance}"
         if ($attachresponse -ne $null) {
@@ -1361,12 +1360,10 @@ const addAccessPathAndAttachDb = (
             throw $errorMessage
         }
     } catch {
-        Write-Information "$logPrefix $($_.Exception.Message)"
-        $responseObject['error'] = $_.Exception.Message
-        return $responseObject | ConvertTo-Json -Depth 5
+        Write-Error "$logPrefix $($_.Exception.Message)"
     }
 
-    return $responseObject | ConvertTo-Json -Depth 5
+    Stop-Transcript | Out-Null
 `;
 
 const splitFlexCloneVolumes = (
@@ -1778,7 +1775,7 @@ try {
             'partition' = $diskpartition
             'label' = $fileLunData.label
             'folderPath' = $fileLunData.folderPath
-            'filePath' = $fileLunData.filePath
+            'fileName' = $fileLunData.fileName
         }
     }
 
@@ -1925,8 +1922,7 @@ try {
 try {
     $responseObject['files'] = @()
     $FileLunArr | ForEach-Object {
-        $path = $_.filePath
-        $fileLeaf = Split-Path -Path $path -Leaf
+        $fileLeaf = $_.fileName
         
         $newFilePath = (Get-ChildItem -Path $_.folderPath -Recurse -Filter $fileLeaf).FullName
 

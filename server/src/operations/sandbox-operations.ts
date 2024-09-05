@@ -42,7 +42,6 @@ import {
     getSnapshotsToClone,
     getConnectionInfo,
     invokeVirtualMountScript
-    // invokeVirtualMountScript
 } from './workloads/mssql/sandbox-scripts';
 import { DatabaseInstance, Metadata, ResourceDetails, Sandbox, databaseInstanceMetadata } from '../utils/common-types';
 import {
@@ -1124,16 +1123,17 @@ async function invokeVirtualMount(
         }
 
         let i = 1;
-        const fileLunMap: Array<{ filePath: string; lun: string; folderPath: string; label: string }> = [];
+        const fileLunMap: Array<{ fileName: string; lun: string; folderPath: string; label: string }> = [];
         mappings.data.forEach(vol => {
             const { fileName, volumeName } = vol;
 
+            // We need the fileName from the mappings and the lun serial number from newly cloned volumes
             const clonedVol = clonedVolumes.data.find(dataVols => dataVols.volumeName.includes(volumeName));
 
             const existingFileLunMap = fileLunMap.find(({ lun }) => lun === clonedVol?.lunSerialNumber);
 
             fileLunMap.push({
-                filePath: fileName,
+                fileName: fileName.split('\\').pop() as string,
                 lun: clonedVol?.lunSerialNumber as string,
                 folderPath:
                     existingFileLunMap?.folderPath || `${mountPoints.dataDrive}:\\${destDetails.database}-Data-${i}`,
@@ -1147,12 +1147,12 @@ async function invokeVirtualMount(
         mappings.log.forEach(vol => {
             const { fileName, volumeName } = vol;
 
-            const clonedVol = clonedVolumes.log.find(dataVols => dataVols.volumeName.includes(volumeName));
+            const clonedVol = clonedVolumes.log.find(logVols => logVols.volumeName.includes(volumeName));
 
             const existingFileLunMap = fileLunMap.find(({ lun }) => lun === clonedVol?.lunSerialNumber);
 
             fileLunMap.push({
-                filePath: fileName,
+                fileName: fileName.split('\\').pop() as string,
                 lun: clonedVol?.lunSerialNumber as string,
                 folderPath:
                     existingFileLunMap?.folderPath || `${mountPoints.logDrive}:\\${destDetails.database}-Log-${i}`,
@@ -2256,14 +2256,19 @@ async function performLifecycleUpdate(
             parentJobId,
             resourceDetails,
             resourceDetails,
-            // Changing the file name to match parent file names
+            // Changing the file name to match parent file names and volume to match the parent volume name as refresh is done on parent db
             {
                 ...mappings,
                 data: mappings.data.map(vol => ({
                     ...vol,
+                    volumeName: vol.parentVolume!,
                     fileName: vol.fileName.replace(`${fileSuffix}.mdf`, '.mdf').replace(`${fileSuffix}.ndf`, '.ndf')
                 })),
-                log: mappings.log.map(vol => ({ ...vol, fileName: vol.fileName.replace(`${fileSuffix}.ldf`, '.ldf') }))
+                log: mappings.log.map(vol => ({
+                    ...vol,
+                    volumeName: vol.parentVolume!,
+                    fileName: vol.fileName.replace(`${fileSuffix}.ldf`, '.ldf')
+                }))
             },
             clonedVolumes,
             {
@@ -2474,15 +2479,14 @@ async function detachSandboxAndAccessPath(
     resourceDetails: HostAndDbInfo,
     mappings: VolumeLunMapping
 ) {
-    logger.info(
-        'Detach sandbox and access path',
+    logger.info('Detach sandbox and access path', {
         accountId,
         credentialsId,
         region,
         parentJobId,
         resourceDetails,
         mappings
-    );
+    });
 
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errMsg;
@@ -2596,19 +2600,19 @@ async function reAttachSandboxAndAccessPath(
     });
 
     try {
-        const fileLunMap: Array<{ lun: string; filePath: string; label: string; folderPath: string }> = [];
+        const fileLunMap: Array<{ lun: string; fileName: string; label: string; folderPath: string }> = [];
 
         mappings.data
             .sort((a, b) => Number(a.fileId) - Number(b.fileId))
             .forEach(vol => {
-                const { fileName, lunPath } = vol;
+                const { fileName, lunSerialNumber } = vol;
 
-                const folderPath = fileName.split('\\').slice(0, -1).join('\\');
+                const folderPath = fileName.split('\\').slice(0, 2).join('\\');
                 const label = folderPath.split('\\').pop() || `${resourceDetails.database}-Data`;
 
                 fileLunMap.push({
-                    filePath: fileName,
-                    lun: lunPath as string,
+                    fileName: fileName.split('\\')?.pop() as string,
+                    lun: lunSerialNumber,
                     label,
                     folderPath
                 });
@@ -2617,31 +2621,29 @@ async function reAttachSandboxAndAccessPath(
         mappings.log
             .sort((a, b) => Number(a.fileId) - Number(b.fileId))
             .forEach(vol => {
-                const { fileName, lunPath } = vol;
+                const { fileName, lunSerialNumber } = vol;
 
-                const folderPath = fileName.split('\\').slice(0, -1).join('\\');
+                const folderPath = fileName.split('\\').slice(0, 2).join('\\');
                 const label = folderPath.split('\\').pop() || `${resourceDetails.database}-Log`;
 
                 fileLunMap.push({
-                    filePath: fileName,
-                    lun: lunPath,
+                    fileName: fileName.split('\\')?.pop() as string,
+                    lun: lunSerialNumber,
                     label,
                     folderPath
                 });
             });
 
-        const command = [
-            addAccessPathAndAttachDb(
+        let command = [
+            invokeVirtualMountScript(
                 resourceDetails.database,
                 JSON.stringify(fileLunMap),
-                resourceDetails.databaseInstanceName === DEFAULT_INSTANCE_NAME,
                 resourceDetails.instanceName,
-                resourceDetails.databaseInstanceName,
-                `SandBox:${resourceDetails.database}:`,
-                resourceDetails.sqlAuthEnabled || false
+                resourceDetails.databaseInstanceName === DEFAULT_INSTANCE_NAME,
+                `SandBox:${resourceDetails.database}:`
             )
         ];
-        const resp = await callSsmExecution(
+        let resp = await callSsmExecution(
             credentialsId,
             region,
             command,
@@ -2660,6 +2662,54 @@ async function reAttachSandboxAndAccessPath(
 
         if (jsonResp.error) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, jsonResp.error);
+        }
+
+        command = [
+            addAccessPathAndAttachDb(
+                resourceDetails.database,
+                JSON.stringify([
+                    ...mappings.data
+                        .map(({ fileName, fileId, fileType }) => ({
+                            fileName,
+                            fileId,
+                            fileType
+                        }))
+                        .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+                        .map(({ fileName }) => fileName),
+                    ...mappings.log
+                        .map(({ fileName, fileId, fileType }) => ({
+                            fileName,
+                            fileId,
+                            fileType
+                        }))
+                        .sort((a, b) => Number(a.fileId) - Number(b.fileId))
+                        .map(({ fileName }) => fileName)
+                ]),
+                resourceDetails.instanceName,
+                resourceDetails.databaseInstanceName,
+                `SandBox:${resourceDetails.database}:`,
+                resourceDetails.sqlAuthEnabled || false
+            )
+        ];
+
+        resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            resourceDetails.activeNodeInstanceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
+
+        // We only get a response for  different server version or in case of error from query
+        if (
+            resp &&
+            !resp.toLowerCase().includes('converting database') &&
+            !resp.includes('running the upgrade step from version') &&
+            !resp.includes('The Service Broker in database')
+        ) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, resp);
         }
 
         status = JOBSTATUS.COMPLETED;
