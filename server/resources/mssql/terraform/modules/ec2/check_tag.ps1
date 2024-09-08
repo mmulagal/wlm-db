@@ -1,30 +1,21 @@
 param(
-    [Parameter(Mandatory = $true)]
     [string]$instance_id,
-    
-    [Parameter(Mandatory = $true)]
     [string]$region
 )
 
-# Import the AWS module
-Import-Module AWSPowerShell.NetCore
+while ($true) {
+    $tag_value = aws ec2 describe-tags --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=user_data" --region $region --output text --query 'Tags[].Value'
 
-# Get the tags for the instance
-$tags = Get-EC2Tag -Filters @{ Name = "resource-id"; Values = $instance_id } -Region $region
-
-# Initialize a flag to indicate whether the 'user_data' tag was found
-$user_data_found = $false
-
-# Find the 'user_data' tag and print its value
-foreach ($tag in $tags) {
-    if ($tag.Key -eq "user_data" -and $tag.Value -eq "completed") {
+    if ($tag_value -eq "completed") {
         Write-Output "completed"
-        $user_data_found = $true
         break
     }
-}
-
-# If the 'user_data' tag was not found, print a message
-if (-not $user_data_found) {
-    Write-Output "The 'user_data' tag was not found."
+    elseif ($tag_value -eq "failed") {
+        Write-Output "failed"
+        break
+    }
+    else {
+        Write-Output "The 'user_data' tag was not found."
+        Start-Sleep -Seconds 10
+    }
 }

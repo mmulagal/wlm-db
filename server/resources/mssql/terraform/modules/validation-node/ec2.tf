@@ -5,19 +5,19 @@ locals {
   create_new_role      = var.ec2_role_name == null
   log_feature_enabled  = var.enable_cloudwatch_log_feature == true
   user_data = templatefile("${path.module}/user_data.ps1", {
-    region                        = var.aws_location
-    deployment_name               = var.deployment_name
-    s3_artifacts_url              = var.s3_artifacts_url
-    dns_ip_addresses              = var.dns_ip_addresses
-    domain_dns_name               = var.domain_dns_name
-    subnet_id                     = var.subnet_id
-    domain_admin_user             = var.domain_admin_user
-    validation_node1_wait_handler = var.validation_node1_wait_handler
-    is_custom_ami                 = var.is_custom_ami
-    perform_fsx_check             = var.perform_fsx_check
-    fsx_file_system_id            = var.fsx_file_system_id
-    log_group                     = var.deployment_name
-    sql_deployment_mode           = var.sql_deployment_mode
+    region                                = var.aws_location
+    deployment_name                       = var.deployment_name
+    validation_node_initialization_s3_url = var.validation_node_initialization_s3_url
+    dns_ip_addresses                      = var.dns_ip_addresses
+    domain_dns_name                       = var.domain_dns_name
+    subnet_id                             = var.subnet_id
+    domain_admin_user                     = var.domain_admin_user
+    validation_node1_wait_handler         = var.validation_node1_wait_handler
+    is_custom_ami                         = var.is_custom_ami
+    perform_fsx_check                     = var.perform_fsx_check
+    fsx_file_system_id                    = var.fsx_file_system_id
+    log_group                             = var.deployment_name
+    sql_deployment_mode                   = var.sql_deployment_mode
   })
 }
 
@@ -97,52 +97,55 @@ resource "aws_instance" "validation_node" {
   # user_data = data.template_file.user_data.rendered
   user_data = local.user_data
 
-  instance_initiated_shutdown_behavior = "terminate"
+  # instance_initiated_shutdown_behavior = "terminate" // enable this once we add sudo shutdown -h now in user data so this will get terminated
+
+  timeouts {
+    create = "30m"
+  }
 
   tags = {
     Name = "ValidationNode1"
   }
 }
 
-# data "template_file" "user_data" {
-#   template = file("${path.module}/user_data.ps1")
-
-#   vars = {
-#     region                        = var.aws_location
-#     deployment_name               = var.deployment_name
-#     s3_artifacts_url              = var.s3_artifacts_url
-#     dns_ip_addresses              = var.dns_ip_addresses
-#     domain_dns_name               = var.domain_dns_name
-#     subnet_id                     = var.subnet_id
-#     domain_admin_user             = var.domain_admin_user
-#     validation_node1_wait_handler = var.validation_node1_wait_handler
-#     is_custom_ami                 = var.is_custom_ami
-#     perform_fsx_check             = var.perform_fsx_check
-#     fsx_file_system_id            = var.fsx_file_system_id
-#     log_group                     = var.deployment_name
-#     sql_deployment_mode           = var.sql_deployment_mode
-#   }
-# }
-
-
 #Wait for user data to complete execution on the instance
-# resource "null_resource" "wait_for_tag" {
-#   triggers = {
-#     instance_id = aws_instance.validation_node.id
-#   }
-
-#   provisioner "local-exec" {
-#     command = "pwsh -Command \"while ((& '${path.module}/check_tag.ps1' '${aws_instance.validation_node.id}' '${var.aws_location}') -ne 'completed') { Write-Output 'Waiting for validation node tag...'; sleep 10 }\""
-#   }
-# }
-
 resource "null_resource" "wait_for_tag" {
   triggers = {
     instance_id = aws_instance.validation_node.id
   }
 
   provisioner "local-exec" {
-    command = "while [ \"$(sh '${path.module}/check_tag.sh' '${aws_instance.validation_node.id}' '${var.aws_location}')\" != 'completed' ]; do echo 'Waiting for validation node tag...'; sleep 10; done"
+    command = <<EOF
+    if [ "$(uname)" == "Darwin" ]; then
+      while true; do
+        tag=$(sh '${path.module}/check_tag.sh' '${aws_instance.validation_node.id}' '${var.aws_location}')
+        if [ "$tag" = 'completed' ]; then
+          break
+        elif [ "$tag" = 'failed' ]; then
+          echo 'Validation Node failed to deploy'
+          exit 1
+        else
+          echo 'Waiting for validation node tag...'
+          sleep 10
+        fi
+      done
+    else
+      powershell.exe -Command "
+        do {
+          \$tag = & '${path.module}/check_tag.ps1' '${aws_instance.validation_node.id}' '${var.aws_location}'
+          if (\$tag -eq 'completed') {
+            break
+          } elseif (\$tag -eq 'failed') {
+            Write-Output 'Validation Node failed to deploy'
+            exit 1
+          } else {
+            Write-Output 'Waiting for validation node tag...'
+            Start-Sleep -Seconds 10
+          }
+        } while (\$true)
+      "
+    fi
+  EOF
   }
 }
 

@@ -227,8 +227,8 @@ variable "sql_node_aws_location" {
   type        = string
 }
 
-variable "sql_node_s3_artifacts_url" {
-  description = "The URL of the S3 artifacts"
+variable "sql_node_initialization_s3_url" {
+  description = "The URL of the S3 initialization url"
   type        = string
 }
 

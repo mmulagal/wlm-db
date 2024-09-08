@@ -86,8 +86,8 @@ variable "validation_node_instance_type" {
 #   type        = string
 # }
 
-variable "s3_artifacts_url" {
-  description = "The URL of the S3 artifacts"
+variable "validation_node_initialization_s3_url" {
+  description = "Value of the validaton node initialization URL"
   type        = string
 }
 

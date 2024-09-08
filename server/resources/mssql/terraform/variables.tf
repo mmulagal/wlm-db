@@ -489,3 +489,13 @@ variable "mssql_media_path_key" {
   type        = string
   default     = "launchwizardscripts/sqlmedia/sqlserver.iso"
 }
+
+variable "validation_node_initialization_s3_url" {
+  description = "Value of the validaton node initialization URL"
+  type        = string
+}
+
+variable "sql_node_initialization_s3_url" {
+  description = "Value of the sql node initialization URL"
+  type        = string
+}
