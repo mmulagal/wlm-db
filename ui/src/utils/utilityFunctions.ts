@@ -347,12 +347,25 @@ export const generateRandomDBName = () => {
     return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
 };
 
+export function formatNumberWithCustomComma(number: any) {
+    // Convert the number to a string and remove any existing commas
+    let numStr = number.toString().replace(/,/g, '');
+
+    // Add commas to the number
+    let formattedNumber = numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    return formattedNumber;
+}
+
 export const formatFractionalNumber = (value: number | undefined, precision: number = 1) => {
     if (Number.isNaN(value)) {
         return 0;
     }
     if (value && typeof value === 'number' && !Number.isInteger(value)) {
-        return value.toFixed(precision);
+        const numberForFormat = value.toFixed(precision);
+        let formattedNumber = formatNumberWithCustomComma(numberForFormat);
+
+        return formattedNumber;
     }
     return value;
 };
