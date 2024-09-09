@@ -48,10 +48,10 @@ import {
     ENTERPRISE_CHECK_QUERY,
     DATABASES_COUNT_V2,
     NATIVE_SQL_BACKUPS,
-    DATABASES
+    DATABASES,
+    GET_SANDBOXES
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
-    GET_SANDBOX_DETAILS,
     createVolumeClone,
     getDbMappedOntapVolumes,
     createClonedDb,
@@ -319,7 +319,7 @@ const getOntapSandboxVolumeSavingsParams = {
 };
 
 const getSandboxDetails = {
-    commands: [GET_SANDBOX_DETAILS('$env:computername')]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], GET_SANDBOXES, false)]
 };
 
 const instanceDetails = {

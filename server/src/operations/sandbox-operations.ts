@@ -16,7 +16,6 @@ import {
     DEFAULT_INSTANCE_NAME,
     DEFAULT_MSSQL_INSTANCE_NAME,
     HttpErrorCodes,
-    NO_SANDBOX_CREATED,
     RESOURCESTYPE,
     SANDBOX_API_SIZE,
     SSM_COMMAND_CACHE_TYPE,
@@ -26,7 +25,6 @@ import {
     AuditStatus
 } from '../utils/consts';
 import {
-    GET_SANDBOX_DETAILS,
     createVolumeClone as CreateVolumeCloneScript,
     getDbMappedOntapVolumes,
     cleanUpOntapResources,
@@ -64,8 +62,9 @@ import {
 import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { getDriveInfo } from './createdb-operations';
-import { restGetUtilForOntap, sqlQueryExecution } from './workloads/mssql/ssm-script-utils';
+import { restGetUtilForOntap, sqlQueryExecution, sqlQueryExecutionWithAuth } from './workloads/mssql/ssm-script-utils';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
+import { GET_SANDBOXES } from './workloads/mssql/queries';
 
 const logger = getLogger();
 const TIME_WINDOW = 60; // 60 seconds
@@ -74,6 +73,8 @@ const isDemoFlow = isDemo();
 interface SandboxObject {
     sandbox_properties: { name: string; value: string }[];
 }
+
+type sandboxType = SandboxObject & { database_name: string };
 
 function getProperty(item: SandboxObject, propertyName: string) {
     const property = item.sandbox_properties.find((prop: { name: string }) => prop.name === propertyName);
@@ -155,106 +156,76 @@ async function getSandboxDetails(
 
     let sandboxInfo: SandboxInfoResponseType[] = [];
 
-    await Promise.all(
-        instances.map(async instance => {
-            let command = [
-                GET_SANDBOX_DETAILS(
-                    instance.instanceName,
-                    getDatabaseInstanceName(instance.instanceName, instance.instanceName === DEFAULT_INSTANCE_NAME),
-                    instance.sqlAuthEnabled
-                )
-            ];
+    const instanceNames = instances.map(instance => instance.instanceName);
+    const isSqlAuthEnabled = instances.some(instance => instance.sqlAuthEnabled);
+    let command = [sqlQueryExecutionWithAuth(instanceNames, GET_SANDBOXES, isSqlAuthEnabled)];
 
-            if (isDemoFlow) {
-                command = [GET_SANDBOX_DETAILS(DEFAULT_MSSQL_INSTANCE_NAME)];
+    if (isDemoFlow) {
+        command = [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], GET_SANDBOXES)];
+    }
+
+    const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
+
+    try {
+        const parsedResponse = response ? sqlResponseParsing(response) : {};
+
+        instances.forEach(instance => {
+            const parsedInstanceResponse = parsedResponse?.[instance.instanceName];
+            if (typeof parsedInstanceResponse === 'string' && parsedInstanceResponse.includes('error')) {
+                const errorMessage = `Error fetching sandbox details for host: ${resourceId},${instance.instanceName},${accountId}${parsedInstanceResponse}.`;
+                // logger.error(errorMessage);
+                sandboxInfo.push(
+                    ...errorResponse(errorMessage).map(item => ({
+                        ...item,
+                        databaseInstanceName: instance.instanceName,
+                        databaseInstanceId: instance.databaseInstanceId
+                    }))
+                );
             }
 
-            const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
-
-            if (response) {
-                let parsedResponse;
-                try {
-                    parsedResponse = sqlResponseParsing(response);
-                } catch (err: any) {
-                    sandboxInfo.push(
-                        ...errorResponse(err.toString()).map(item => ({
-                            ...item,
-                            databaseInstanceName: instance.instanceName,
-                            databaseInstanceId: instance.databaseInstanceId
-                        }))
-                    );
-                    return;
-                }
-
-                if (parsedResponse?.Error) {
-                    const errorMessage = `Error fetching sandbox details for host: ${resourceId},${parsedResponse.Instance},${accountId}${parsedResponse?.Error}.`;
-                    // logger.error(errorMessage);
-                    sandboxInfo.push(
-                        ...errorResponse(errorMessage).map(item => ({
-                            ...item,
-                            databaseInstanceName: instance.instanceName,
-                            databaseInstanceId: instance.databaseInstanceId
-                        }))
-                    );
-                }
-                const sandboxDetails = parsedResponse.Output;
-
-                if (sandboxDetails === NO_SANDBOX_CREATED) {
-                    const errorMessage = `No sandboxes created for the instance:${parsedResponse.Instance} ,${resourceName},${accountId}.`;
-                    logger.error(errorMessage);
-                    sandboxInfo.push(
-                        ...errorResponse(errorMessage).map(item => ({
-                            ...item,
-                            databaseInstanceName: instance.instanceName,
-                            databaseInstanceId: instance.databaseInstanceId
-                        }))
-                    );
-                    return;
-                }
-
-                const finalSandboxDetails: string = Array.isArray(sandboxDetails)
-                    ? sandboxDetails.join('')
-                    : sandboxDetails;
-
-                try {
-                    const parsedSandboxDetails: {
-                        database_name: string;
-                        sandbox_properties: { name: string; value: string }[];
-                    }[] = sqlResponseParsing(finalSandboxDetails);
-
-                    const filteredSandboxItems = parsedSandboxDetails.filter(item =>
-                        item.sandbox_properties.some((prop: any) => prop.name === ACCOUNTID && prop.value === accountId)
-                    );
-
-                    filteredSandboxItems.forEach(item => {
-                        const sources = getSourceDetails(item);
-
-                        const databaseObject = {
-                            sandboxName: item.database_name,
-                            databaseHostName: resourceDetails.resource_name!,
-                            databaseHostId: resourceDetails.resource_id!,
-                            databaseInstanceName: instance.instanceName,
-                            databaseInstanceId: instance.databaseInstanceId,
-                            sourceDatabaseHostName: sources[0],
-                            sourceDatabaseInstanceName: sources[1],
-                            sourceDatabaseName: sources[2],
-                            createdAt: parseInt(getProperty(item, 'createdAt') || String(Date.now()), 10),
-                            updatedAt: parseInt(getProperty(item, 'updatedAt') || String(Date.now()), 10),
-                            tag: getProperty(item, 'tag')
-                        };
-
-                        sandboxInfo.push(databaseObject);
-                    });
-
-                    return sandboxInfo;
-                } catch (err) {
-                    sandboxInfo.push(
-                        ...errorResponse(err).map(item => ({ ...item, databaseInstanceName: instance.instanceName }))
-                    );
-                }
+            if (!parsedInstanceResponse) {
+                const errorMessage = `No sandboxes created for the instance:${instance.InstanceName} ,${resourceName},${accountId}.`;
+                logger.error(errorMessage);
+                sandboxInfo.push(
+                    ...errorResponse(errorMessage).map(item => ({
+                        ...item,
+                        databaseInstanceName: instance.instanceName,
+                        databaseInstanceId: instance.databaseInstanceId
+                    }))
+                );
+                return;
             }
-        })
-    );
+
+            const filteredSandboxItems = parsedInstanceResponse.filter((item: sandboxType) =>
+                item.sandbox_properties.some((prop: any) => prop.name === ACCOUNTID && prop.value === accountId)
+            );
+
+            filteredSandboxItems.forEach((item: sandboxType) => {
+                const sources = getSourceDetails(item);
+
+                const databaseObject = {
+                    sandboxName: item.database_name,
+                    databaseHostName: resourceDetails.resource_name!,
+                    databaseHostId: resourceDetails.resource_id!,
+                    databaseInstanceName: instance.instanceName,
+                    databaseInstanceId: instance.databaseInstanceId,
+                    sourceDatabaseHostName: sources[0],
+                    sourceDatabaseInstanceName: sources[1],
+                    sourceDatabaseName: sources[2],
+                    createdAt: parseInt(getProperty(item, 'createdAt') || String(Date.now()), 10),
+                    updatedAt: parseInt(getProperty(item, 'updatedAt') || String(Date.now()), 10),
+                    tag: getProperty(item, 'tag')
+                };
+
+                sandboxInfo.push(databaseObject);
+            });
+
+            return sandboxInfo;
+        });
+    } catch (err) {
+        logger.error(`Error fetching sandbox details for host: ${resourceId},${accountId}${err}.`);
+    }
+
     if (isDemoFlow && sandboxes) {
         const demoSandboxInfo = (managedInstances || []).flatMap(instance => {
             const {
