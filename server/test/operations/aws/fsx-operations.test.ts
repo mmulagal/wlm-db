@@ -8,7 +8,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/cloud-manager/fsx-core-scope';
 
-import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
+import { DEFAULT_AWS_REGION, DEFAULT_INSTANCE_NAME } from '../../../src/utils/consts';
 import {
     getFSxFileSystemsList,
     getOntapVolumesSnapshotCount,
@@ -66,7 +66,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             FSX_FILESYSTEM_ID,
             false,
             undefined,
-            'MSSQLSERVER'
+            [DEFAULT_INSTANCE_NAME]
         );
         expect(response).toEqual(fsxResponse.volumeMap);
     });

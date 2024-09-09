@@ -84,12 +84,9 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get databases count', async () => {
-        const resp = await getDatabasesCount(
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            ACTIVE_INSTANCE_ID,
-            DEFAULT_MSSQL_INSTANCE_NAME
-        );
+        const resp = await getDatabasesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, [
+            DEFAULT_INSTANCE_NAME
+        ]);
         expect(resp.totalCount).toEqual(8);
     });
 
@@ -119,12 +116,9 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get MSSQL native backups count ', async () => {
-        const resp = await getNativeSQLProtection(
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            ACTIVE_INSTANCE_ID,
-            DEFAULT_MSSQL_INSTANCE_NAME
-        );
+        const resp = await getNativeSQLProtection(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, [
+            DEFAULT_INSTANCE_NAME
+        ]);
         expect(resp).toEqual(4);
     });
 
