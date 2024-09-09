@@ -166,36 +166,36 @@ async function getSandboxDetails(
 
     const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
 
-    const parsedResponse = response ? sqlResponseParsing(response) : {};
+    try {
+        const parsedResponse = response ? sqlResponseParsing(response) : {};
 
-    instances.forEach(instance => {
-        const parsedInstanceResponse = parsedResponse?.[instance.instanceName];
-        if (typeof parsedInstanceResponse === 'string' && parsedInstanceResponse.includes('error')) {
-            const errorMessage = `Error fetching sandbox details for host: ${resourceId},${instance.instanceName},${accountId}${parsedInstanceResponse}.`;
-            // logger.error(errorMessage);
-            sandboxInfo.push(
-                ...errorResponse(errorMessage).map(item => ({
-                    ...item,
-                    databaseInstanceName: instance.instanceName,
-                    databaseInstanceId: instance.databaseInstanceId
-                }))
-            );
-        }
+        instances.forEach(instance => {
+            const parsedInstanceResponse = parsedResponse?.[instance.instanceName];
+            if (typeof parsedInstanceResponse === 'string' && parsedInstanceResponse.includes('error')) {
+                const errorMessage = `Error fetching sandbox details for host: ${resourceId},${instance.instanceName},${accountId}${parsedInstanceResponse}.`;
+                // logger.error(errorMessage);
+                sandboxInfo.push(
+                    ...errorResponse(errorMessage).map(item => ({
+                        ...item,
+                        databaseInstanceName: instance.instanceName,
+                        databaseInstanceId: instance.databaseInstanceId
+                    }))
+                );
+            }
 
-        if (!parsedInstanceResponse) {
-            const errorMessage = `No sandboxes created for the instance:${instance.InstanceName} ,${resourceName},${accountId}.`;
-            logger.error(errorMessage);
-            sandboxInfo.push(
-                ...errorResponse(errorMessage).map(item => ({
-                    ...item,
-                    databaseInstanceName: instance.instanceName,
-                    databaseInstanceId: instance.databaseInstanceId
-                }))
-            );
-            return;
-        }
+            if (!parsedInstanceResponse) {
+                const errorMessage = `No sandboxes created for the instance:${instance.InstanceName} ,${resourceName},${accountId}.`;
+                logger.error(errorMessage);
+                sandboxInfo.push(
+                    ...errorResponse(errorMessage).map(item => ({
+                        ...item,
+                        databaseInstanceName: instance.instanceName,
+                        databaseInstanceId: instance.databaseInstanceId
+                    }))
+                );
+                return;
+            }
 
-        try {
             const filteredSandboxItems = parsedInstanceResponse.filter((item: sandboxType) =>
                 item.sandbox_properties.some((prop: any) => prop.name === ACCOUNTID && prop.value === accountId)
             );
@@ -221,12 +221,10 @@ async function getSandboxDetails(
             });
 
             return sandboxInfo;
-        } catch (err) {
-            sandboxInfo.push(
-                ...errorResponse(err).map(item => ({ ...item, databaseInstanceName: instance.instanceName }))
-            );
-        }
-    });
+        });
+    } catch (err) {
+        logger.error(`Error fetching sandbox details for host: ${resourceId},${accountId}${err}.`);
+    }
 
     if (isDemoFlow && sandboxes) {
         const demoSandboxInfo = (managedInstances || []).flatMap(instance => {
