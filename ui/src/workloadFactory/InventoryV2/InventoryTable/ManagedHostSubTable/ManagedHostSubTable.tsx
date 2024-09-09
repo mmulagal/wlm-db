@@ -243,7 +243,7 @@ const ManagedHostSubTable = ({
         } else {
             dispatch(setValuesForForm(false));
             dispatch(setIsDetectHostLoading(true));
-            const sqlServerInstance = rowData?.sqlServerInstance || '';
+            const sqlServerInstance = rowData?.sqlServerInstance || rowData?.databaseInstanceName || '';
             try {
                 const result: any = await registerResourceCred({
                     credentialId: headerSelectedCred?.data?.credentialsId,
