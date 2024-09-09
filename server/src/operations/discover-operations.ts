@@ -48,7 +48,8 @@ import {
     DatabaseTypes,
     OFFLINE,
     SQL_SERVICE_STATE,
-    NOT_AVAILABLE
+    NOT_AVAILABLE,
+    PREPARE_PSMODULES_RELATIVE_PATH
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -1298,6 +1299,7 @@ async function validateCredentials(
     logger.info('Validate credentials', { instanceId, fsxCredentials, sqlCredentials });
 
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
+
     if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
         const errorMessage = `Unable to validate the credentials through SSM, for host ${instanceId}`;
         logger.error(errorMessage);
@@ -1695,10 +1697,14 @@ async function preparePsModulesForManage(
     });
 
     try {
+        // Get signed url for dependent-packages.zip to install the ps modules
+        const bucketname = getArtifactsRegionBucketName(region);
+        const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PREPARE_PSMODULES_RELATIVE_PATH);
+
         const ssmPsModuleInstallResponse = await callSsmExecution(
             credentialsId,
             region,
-            INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT),
+            INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT, copyPSModuleS3SignedUrl),
             ec2InstanceId,
             accountId,
             false,

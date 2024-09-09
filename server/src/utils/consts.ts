@@ -1142,6 +1142,7 @@ const FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL = '5h';
 const FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL = '1h';
 const DBCREATE_RELATIVE_PATH = `${WLMDB}/scripts/dbcreate.zip`;
 const PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/aws_ssm.zip`;
+const PREPARE_PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/dependent-packages.zip`;
 const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
 const DEFAULT_MSSQL_INSTANCE_NAME = '$env:computername';
 
@@ -1494,5 +1495,6 @@ export {
     CURRENT_SCRIPT_VERSION,
     AWS_SSM_PARAMETER,
     TIMELINE_SERVICE_NAME,
-    AuditStatus
+    AuditStatus,
+    PREPARE_PSMODULES_RELATIVE_PATH
 };
