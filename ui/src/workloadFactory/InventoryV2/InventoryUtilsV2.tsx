@@ -296,7 +296,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
     let nonManagedStatus: any = [];
     if (!isAllManaged) {
         nonManagedStatus = getInstanceStatusForMixedCase(row);
-        // ToDo - to call data for mixed case. use in statusColText for unmanaged case
+        // to call data for mixed case. use in statusColText for unmanaged case
     }
 
     let instanceRows;
@@ -1385,7 +1385,7 @@ export const updateSqlServerInstancesForUnmanaged = (
             });
             if (!isAllManaged) {
                 nonManagedStatus = getInstanceStatusForMixedCase(instanceData);
-                // ToDo - to call data for mixed case. use in statusColText for unmanaged case
+                // to call data for mixed case. use in statusColText for unmanaged case
             }
         }
         instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
