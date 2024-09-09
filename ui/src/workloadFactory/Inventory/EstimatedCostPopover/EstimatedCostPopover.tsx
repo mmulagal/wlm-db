@@ -16,7 +16,7 @@ const EstimatedCostPopover = (data: any) => {
                     {GENERAL.COMPUTE}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {`$ ${formatFractionalNumber(data?.compute, 2)}`}
+                    {`$${formatFractionalNumber(data?.compute, 2)}`}
                 </Typography>
             </div>
 
@@ -25,7 +25,7 @@ const EstimatedCostPopover = (data: any) => {
                     {GENERAL.STORAGE}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {`$ ${formatFractionalNumber(
+                    {`$${formatFractionalNumber(
                         (data?.storage?.fsxn || 0) + (data?.storage?.fsxw || 0) + (data?.storage?.ebs || 0),
                         2
                     )}`}
@@ -37,7 +37,7 @@ const EstimatedCostPopover = (data: any) => {
                     {GENERAL.CONNECTIVITY}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {`$ ${formatFractionalNumber(data?.connectivity, 2)}`}
+                    {`$${formatFractionalNumber(data?.connectivity, 2)}`}
                 </Typography>
             </div>
 
@@ -46,7 +46,7 @@ const EstimatedCostPopover = (data: any) => {
                     {GENERAL.OTHER}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {`$ ${formatFractionalNumber(data?.others, 2)}`}
+                    {`$${formatFractionalNumber(data?.others, 2)}`}
                 </Typography>
             </div>
 
@@ -55,7 +55,7 @@ const EstimatedCostPopover = (data: any) => {
                     {GENERAL.ESTIMATED_MONTHLY_COST}
                 </Typography>
                 <Typography variant="Semibold_13" className={styles.totalCost}>
-                    {`$ ${formatFractionalNumber(data?.totalCost, 2)}`}
+                    {`$${formatFractionalNumber(data?.totalCost, 2)}`}
                 </Typography>
             </div>
         </div>
