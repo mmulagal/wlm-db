@@ -595,10 +595,10 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
         $isprivatesubnet = $True}
       else {
         $isprivatesubnet = $False} 
-
+      $responseObject['isprivatesubnet'] =  $isprivatesubnet
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-      If($isprivatesubnet -eq $True){
+      If($isprivatesubnet -eq $False){
      
           If (-Not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
             Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
@@ -635,6 +635,10 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
           ForEach ($moduleName in $unavailableModuleList) {
               Install-Module -Name $moduleName -Repository 'AWS' -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
           } 
+          try{
+          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages" -Force -Recurse}catch{}
+          try{
+          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages.zip" -Force -Recurse}catch{}
       }
     }
   } catch {
