@@ -468,6 +468,7 @@ interface VolumeLunMap {
     lunPath: string;
     lunSerialNumber: string;
     volumeUuid: string;
+    svm: string;
     parentSvm?: string;
     parentVolume?: string;
     parentVolumeUuid?: string;
@@ -475,7 +476,6 @@ interface VolumeLunMap {
 }
 
 interface VolumeLunMapping {
-    svm: string;
     collation?: string;
     data: Array<VolumeLunMap>;
     log: Array<VolumeLunMap>;
@@ -1010,20 +1010,19 @@ async function createVolumeClone(
             CreateVolumeCloneScript(
                 srcDetails.fsxId,
                 region,
-                mapping.svm,
                 JSON.stringify({
-                    volumes: uniqBy(mapping.data, 'volumeUuid').map(vol => vol.volumeName),
+                    volumes: uniqBy(mapping.data, 'volumeUuid').map(({ volumeName, svm }) => ({ volumeName, svm })),
                     ...(snapshot && { snapshot })
                 }),
                 JSON.stringify({
-                    volumes: uniqBy(mapping.log, 'volumeUuid').map(vol => vol.volumeName),
+                    volumes: uniqBy(mapping.log, 'volumeUuid').map(({ volumeName, svm }) => ({ volumeName, svm })),
                     ...(snapshot && { snapshot })
                 }),
                 [
                     `cloned_by=${getClonedByTagValue(accountId, credentialsId)}`,
                     `source=${destDetails.host}_${destDetails.instance}`.replace(/-/g, '_')
                 ],
-                sqlVMName || mapping.svm,
+                sqlVMName!,
                 destDetails.database,
                 `Sandbox:${destDetails.database}:`
             )
@@ -1033,9 +1032,8 @@ async function createVolumeClone(
                 CreateVolumeCloneScript(
                     'test-fsx',
                     'us-east-1',
-                    'wlmdb_sqlsvm_1714090636810',
-                    JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
-                    JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
+                    JSON.stringify({ volumeName: 'wlmdb_sqldata_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
+                    JSON.stringify({ volumeName: 'wlmdb_sqllog_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
                     ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
                     'target-svm',
                     'testdb'
@@ -2231,9 +2229,8 @@ async function performLifecycleUpdate(
             resourceDetails,
             resourceDetails,
             {
-                svm: mappings.data[0]?.parentSvm || mappings.svm,
-                data: mappings.data.map(vol => ({ ...vol, volumeName: vol.parentVolume! })),
-                log: mappings.log.map(vol => ({ ...vol, volumeName: vol.parentVolume! }))
+                data: mappings.data.map(vol => ({ ...vol, volumeName: vol.parentVolume!, svm: vol.parentSvm! })),
+                log: mappings.log.map(vol => ({ ...vol, volumeName: vol.parentVolume!, svm: vol.parentSvm! }))
             },
             action === SANDBOX_LIFECYCLE_REFRESH ? snapshot : mappings.data[0]?.parentSnapshot
         )) as ClonedVolumes;

@@ -331,12 +331,11 @@ const getVolumeLunMappingsCommand = {
 
 const cloneVolumeCommand = {
     commands: [
-        createVolumeClone(
+        CreateVolumeCloneScript(
             'test-fsx',
             'us-east-1',
-            'wlmdb_sqlsvm_1714090636810',
-            JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
-            JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
+            JSON.stringify({ volumeName: 'wlmdb_sqldata_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
+            JSON.stringify({ volumeName: 'wlmdb_sqllog_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
             ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
             'target-svm',
             'testdb'

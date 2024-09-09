@@ -350,7 +350,6 @@ const getDbMappedOntapVolumes = (
             $LunRecords = $Response.records
     
             if ($LunRecords.count -gt 0) {
-                $responseObject['svm'] = $LunRecords[0].svm.name
                 $LunRecords | ForEach-Object {
                     $lunrecord = $_
                     foreach ($dataVol in $responseObject.data) {
@@ -358,6 +357,7 @@ const getDbMappedOntapVolumes = (
                             $dataVol.Add("lunPath", $lunrecord.name)
                             $dataVol.Add("volumeName", $lunrecord.location.volume.name)
                             $dataVol.Add("volumeUuid", $lunrecord.location.volume.uuid)
+                            $dataVol.Add("svm", $lunrecord.svm.name)
                         }
                     }
 
@@ -366,6 +366,7 @@ const getDbMappedOntapVolumes = (
                             $logVol.Add("lunPath", $lunrecord.name)
                             $logVol.Add("volumeName", $lunrecord.location.volume.name)
                             $logVol.Add("volumeUuid", $lunrecord.location.volume.uuid)
+                            $logVol.Add("svm", $lunrecord.svm.name)
                         }
                     }
                 }
@@ -465,7 +466,6 @@ const getDbMappedOntapVolumes = (
 const createVolumeClone = (
     fsxid: string,
     fsxregion: string,
-    sourceSvm: string,
     dataVolumes: string,
     logVolumes: string,
     tags: Array<string>,
@@ -475,7 +475,6 @@ const createVolumeClone = (
 ) => `
     $fsxid = '${fsxid}'
     $fsxregion = '${fsxregion}'
-    $sourceSvm = '${sourceSvm}'
     $targetSvm = '${targetSvm}'
     $dataVolumes = '${dataVolumes}' | convertFrom-json
     $logVolumes = '${logVolumes}' | convertFrom-json
@@ -545,8 +544,6 @@ const createVolumeClone = (
         }
 
         Function New-VolumeClone {
-            $parentsvm = $sourceSvm
-
 
             $cloneVolCreated = @()
             $volSnapshotCreated = @()
@@ -560,12 +557,13 @@ const createVolumeClone = (
                 if ([string]::IsNullOrEmpty($snapshot)) {
                     # Create snapshot
 
-                    foreach ($volName in $volume.volumes) {
+                    foreach ($vol in $volume.volumes) {
+                        $volName = $vol.volumeName
                         if ($volSnapshotCreated -notcontains $volName) {
                             $volSnapshotCreated += $volName
                             $job = New-Snapshot -volumeName $volName
                             if ($job.state -ne 'success') {
-                                throw "Could not create snapshot for $($volume.name). Ontap error: $($job.error.message)"
+                                throw "Could not create snapshot for $($volName). Ontap error: $($job.error.message)"
                             }  
                         }
                     }
@@ -575,7 +573,9 @@ const createVolumeClone = (
                 start-sleep 1
                 $ApiEndpoint = "/storage/volumes"
 
-                foreach ($volName in $volume.volumes) {
+                foreach ($vol in $volume.volumes) {
+                    $volName = $vol.volumeName
+                    $svm = $vol.svm
                     if ($cloneVolCreated -notcontains $volName) {
                         $cloneVolCreated += $volName
 
@@ -588,7 +588,7 @@ const createVolumeClone = (
                                     "name" = $volName
                                 }
                                 "parent_svm" = @{
-                                    "name" = $parentsvm
+                                    "name" = $svm
                                 }
                                 "parent_snapshot" = @{
                                     "name" = $snapshot
@@ -599,7 +599,7 @@ const createVolumeClone = (
                         $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "POST"
                         $job = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
                         if ($job.state -ne 'success') {
-                            throw "Could not create clone for $($volume.name). Ontap error: $($job.error.message)"
+                            throw "Could not create clone for $($volName). Ontap error: $($job.error.message)"
                         }
                     }
                 }
@@ -613,7 +613,8 @@ const createVolumeClone = (
             $volumeProcessed = @()
             $ApiQueryFilter = 'location.volume.name='
             @($dataVolumes, $logVolumes) | ForEach-Object {
-                foreach ($volName in $_.volumes) {
+                foreach ($vol in $_.volumes) {
+                    $volName = $vol.volumeName
                     if ($volumeProcessed -notcontains $volName) {
                         $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($volName) + '_clone_' + $epoch + '|'
                         $volumeProcessed += $volName
@@ -643,13 +644,15 @@ const createVolumeClone = (
                     "lunPath" = $_.name
                 }
 
-                foreach ($volName in $dataVolumes.volumes) {
+                foreach ($vol in $dataVolumes.volumes) {
+                    $volName = $vol.volumeName
                     if ($_.location.volume.name -match $volName) {
                         $responseObject['data'] += $volume
                     }
                 }
 
-                foreach ($volName in $logVolumes.volumes) {
+                foreach ($vol in $logVolumes.volumes) {
+                    $volName = $vol.volumeName
                     if ($_.location.volume.name -match $volName) {
                         $responseObject['log'] += $volume
                     }
@@ -674,47 +677,55 @@ const createVolumeClone = (
 
         Function Set-LUNSignature {
             # Set the LUN signature only if the source and target SVMs are the same
-            if ($sourceSvm -eq $targetSvm) {
-                if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
-                    Write-Information "$logPrefix NetApp.ONTAP Module does not exist, installing it now"
-
-                    Install-Module -Name NetApp.ONTAP -Force -AllowClobber
-                }
-
-                $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
-
-                $CloneDataLuns = @()
-                foreach ($vol in $responseObject['data']) {
-                    $CloneDataLuns += $vol.lunPath
-                }
-
-                $CloneLogLuns = @()
-                foreach ($vol in $responseObject['log']) {
-                    $CloneLogLuns += $vol.lunPath
-                }
-
-                # $CloneDataLuns = $responseObject['data'] | ForEach-Object { $_.lunPath }
-                # $CloneLogLuns = $responseObject['log'] | ForEach-Object { $_.lunPath }
+            $svmProcessed = @()
+            @($dataVolumes, $logVolumes) | ForEach-Object {
+                foreach ($vol in $_.volumes) {
+                    $sourceSvm = $vol.svm
                 
-                $ClonedLuns = $CloneDataLuns + $CloneLogLuns
+                    if ($sourceSvm -eq $targetSvm -and $svmProcessed -notcontains $sourceSvm) {
+                        if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
+                            Write-Information "$logPrefix NetApp.ONTAP Module does not exist, installing it now"
 
-                $lunPathProcessed = @()
-
-                $message
-                $ClonedLuns | ForEach-Object {
-                    $lunPath = $_
-
-                    if ($lunPathProcessed -notcontains $lunPath) {
-                        $lunPathProcessed += $lunPath
-
-                        $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
-                        if (-not $?) {
-                            $message += "Could not change LUN signature for $lunClonePath."
+                            Install-Module -Name NetApp.ONTAP -Force -AllowClobber
                         }
-                    }
-                }
 
-                return $message
+                        $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
+
+                        $CloneDataLuns = @()
+                        foreach ($vol in $responseObject['data']) {
+                            $CloneDataLuns += $vol.lunPath
+                        }
+
+                        $CloneLogLuns = @()
+                        foreach ($vol in $responseObject['log']) {
+                            $CloneLogLuns += $vol.lunPath
+                        }
+
+                        # $CloneDataLuns = $responseObject['data'] | ForEach-Object { $_.lunPath }
+                        # $CloneLogLuns = $responseObject['log'] | ForEach-Object { $_.lunPath }
+                        
+                        $ClonedLuns = $CloneDataLuns + $CloneLogLuns
+
+                        $lunPathProcessed = @()
+
+                        $message
+                        $ClonedLuns | ForEach-Object {
+                            $lunPath = $_
+
+                            if ($lunPathProcessed -notcontains $lunPath) {
+                                $lunPathProcessed += $lunPath
+
+                                $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
+                                if (-not $?) {
+                                    $message += "Could not change LUN signature for $lunClonePath."
+                                }
+                            }
+                        }
+
+                        return $message
+                    }
+                    $svmProcessed += $sourceSvm
+                }
             }
         }
 
