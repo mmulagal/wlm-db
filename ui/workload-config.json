@@ -8,7 +8,7 @@
     "apiDocUrl": "<%=process.env.SWAGGER%>",
     "stageIntegrations": [
         {
-            "path": "/marketing",
+            "path": "/fsxdb/marketing",
             "renderType": "iframe/v2",
             "iframeUrl": "https://workloads.netapp.com/database-workloads"
         },
