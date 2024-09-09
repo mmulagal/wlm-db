@@ -1,0 +1,20 @@
+.winServer {
+    padding: 32px 40px 0 40px;
+    display: flex;
+    flex-direction: column;
+
+    margin-bottom: 40px;
+
+    .head {
+        margin-bottom: 8px;
+    }
+
+    .comparison-table-column {
+        padding: 4px 16px 8px 21px;
+        margin-bottom: 2px;
+        align-items: center;
+        align-self: stretch;
+        min-height: 56px;
+        height: 56px;
+    }
+}
