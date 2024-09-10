@@ -28,7 +28,7 @@ const compressResponse = `
     }
 `;
 
-const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string) => ` 
+const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string, instanceName: string = DEFAULT_INSTANCE_NAME) => ` 
 Function GetSMBMappedDrivesWithPath() {
     $DriveLetterPath = @{}
     $Errors = ''
@@ -65,8 +65,28 @@ Function GetSMBMappedDrivesWithPath() {
     return $DriveLetterPath.Keys 
   }
 
-$disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
 $deploymentType  = '${deploymentType}'
+$instanceName = '${instanceName}'
+
+$sqlDrives = New-Object System.Collections.ArrayList
+
+if ($deploymentType -eq 'FCI') {
+    $sqlResource = ${instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'}
+    $sqlgroup = Get-ClusterResource | Where-Object Name -eq "$sqlResource"
+    $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+    $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
+
+    foreach ($resource in $resourcegroup) {
+        $sqldisks = $resource.GetRelated("MSCluster_Disk")
+        foreach ($disk in $sqldisks) {
+            $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
+            $diskdrive = $diskpart.path
+            $sqlDrives.Add($diskdrive) | Out-Null
+        }
+    }
+}
+
+$disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
 $results = New-Object System.Collections.ArrayList
 
 foreach ($disk in $disks) {
@@ -83,8 +103,9 @@ foreach ($disk in $disks) {
             }
 
             if ($deploymentType -eq 'FCI') {
-                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object { $_.Name -eq $logicalDisk.VolumeName }
-                $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
+                if ($sqlDrives -contains $logicalDisk.DeviceID) {
+                    $logicalDiskObject = $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value "SQL Server ($instanceName)" -PassThru
+                }
             }
 
             [void]$results.Add($logicalDiskObject)
