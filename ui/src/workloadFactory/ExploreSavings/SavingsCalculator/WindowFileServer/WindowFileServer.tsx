@@ -12,7 +12,6 @@ const WindowFileServer = () => {
     const [tableData, setTableData] = useState<any>([]);
 
     useEffect(() => {
-        console.log(selectedHostDetails);
         const deploymentType = selectedHostDetails?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
         const deploymentTypeText =
             deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
