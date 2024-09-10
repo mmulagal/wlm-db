@@ -362,8 +362,14 @@ export function formatNumberWithCustomComma(number: any, roundOffRequired: boole
     // Convert the number to a string and remove any existing commas
     let numStr = roundOffNumber.toString().replace(/,/g, '');
 
+    let formattedNumber;
+
     // Add commas to the number
-    let formattedNumber = numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    if (Number(numStr) > 1) {
+        formattedNumber = numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    } else {
+        formattedNumber = numStr;
+    }
 
     return formattedNumber;
 }
