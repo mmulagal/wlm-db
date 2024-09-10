@@ -63,34 +63,19 @@ const ExploreSavingsTableV2 = () => {
             width: '181px',
             renderCell: (cellData: any, rowData: any) => {
                 //Check for all Explore Savings FSXW rows
-                if (
-                    rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-                    rowData?.storageType === GENERAL.FSX_FOR_WINDOWS
-                ) {
-                    return (
-                        <TooltipComponent title={GENERAL.COMING_SOON} placement="bottom" width="110px" height="32px">
-                            <div className={styles.detectManageDisable} id="explore-savings-table-button">
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {GENERAL.ES_SAVINGS}
-                                </Typography>
-                            </div>
-                        </TooltipComponent>
-                    );
-                } else {
-                    return (
-                        <div
-                            className={styles.detectManage}
-                            onClick={() => {
-                                onClickESHost(dispatch, rowData);
-                            }}
-                            id="explore-savings-table-button"
-                        >
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                {GENERAL.ES_SAVINGS}
-                            </Typography>
-                        </div>
-                    );
-                }
+                return (
+                    <div
+                        className={styles.detectManage}
+                        onClick={() => {
+                            onClickESHost(dispatch, rowData);
+                        }}
+                        id="explore-savings-table-button"
+                    >
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {GENERAL.ES_SAVINGS}
+                        </Typography>
+                    </div>
+                );
             }
         };
     };

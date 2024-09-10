@@ -136,7 +136,8 @@ const SavingsCalculator = () => {
                                     : styles.firstContainer
                             }
                         >
-                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO && (
+                            {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
                                 <>
                                     <SavingsHeader />
                                     <SavingsSelection printState={printState} />

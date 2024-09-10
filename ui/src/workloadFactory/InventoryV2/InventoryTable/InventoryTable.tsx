@@ -409,23 +409,6 @@ const InventoryTable = () => {
             );
         }
 
-        //Check for all Explore Savings FSXW rows
-        if (
-            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-            checkForAllUnManagedInstance &&
-            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS
-        ) {
-            return (
-                <TooltipComponent title={GENERAL.ES_FSXW_NOT_SUPPORTED} placement="bottom" width="320px" height="50px">
-                    <div id="inventory-table-option" className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        }
-
         //Condition if storage type is not known and it is still loading for manage case
         if (
             rowData?.action === INVENTORY_ACTIONS.MANAGE &&

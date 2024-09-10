@@ -54,7 +54,10 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const [storageType, setStorageType] = useState('');
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
+        ) {
             setStorageType(GENERAL.FSX_FOR_WINDOWS);
         } else {
             setStorageType(GENERAL.EBS);
@@ -63,7 +66,10 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
 
     useEffect(() => {
         let selectedRegion = '';
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
+        ) {
             selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
         } else {
             selectedRegion = selectedManualRegion?.data?.regionName + ' | ' + selectedManualRegion?.data?.regionCode;

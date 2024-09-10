@@ -311,8 +311,10 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
     } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
         deploymentModelValue = selectedManualDeploymentModel?.value;
         storageType = GENERAL.EBS;
-    } else {
+    } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
         storageType = GENERAL.EBS;
+    } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+        storageType = GENERAL.FSX_FOR_WINDOWS;
     }
     return {
         Ec2InstanceCalculation:
@@ -754,7 +756,10 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
     let deploymentModelValue = selectedDeploymentModel;
-    if (savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO) {
+    if (
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+    ) {
         deploymentModelValue = selectedManualDeploymentModel?.value;
     }
     return {
@@ -1201,7 +1206,10 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
     let deploymentModelValue = selectedDeploymentModel;
 
-    if (savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO) {
+    if (
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+    ) {
         deploymentModelValue = selectedManualDeploymentModel?.value;
     }
 
