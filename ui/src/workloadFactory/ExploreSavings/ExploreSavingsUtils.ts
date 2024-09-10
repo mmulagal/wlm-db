@@ -232,7 +232,7 @@ export const formatViewCalcData = (
         cost += ebsViewCalculationData?.ebsCalculation?.totalEbsThroughputCost || 0;
         cost += ebsViewCalculationData?.ebsCalculation?.totalEbsIopsCost || 0;
         cost += ebsViewCalculationData?.ebsCalculation?.totalEbsStorageCost || 0;
-        return formatFractionalNumber(cost, 2);
+        return formatFractionalNumberForCost(cost, 2);
     };
 
     const totalFsxwCost = () => {
@@ -254,7 +254,7 @@ export const formatViewCalcData = (
             viewCalculationsResponse?.fsxwSnapshotCalculation?.totalMonthlyCostForFsxwSnapshotStorageCapacity || 0
         );
         cost += Number(viewCalculationsResponse?.fsxwCalculation?.totalMonthlyCost || 0);
-        return formatFractionalNumber(cost, 2);
+        return formatFractionalNumberForCost(cost, 2);
     };
 
     const onlyEbsCost = (ebsViewCalculationData: any) => {
@@ -279,7 +279,7 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[1]?.computeMonthlyPrice || 0
             );
         }
-        return formatFractionalNumber(cost, 2);
+        return formatFractionalNumberForCost(cost, 2);
     })();
 
     const totalFsxEc2MachineCost = (() => {
@@ -312,7 +312,7 @@ export const formatViewCalcData = (
         let cost = 0;
         cost += Number(viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForCapacity || 0);
         cost += Number(viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForFsxSsd || 0);
-        return formatFractionalNumber(cost, 2);
+        return formatFractionalNumberForCost(cost, 2);
     })();
 
     const totalAzCost = (() => {
@@ -359,8 +359,10 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.fsxOntapCalculation?.dataOnCapacityPoolStorageFactor
             ),
             capacityPoolStorage: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.capacityPoolStorage),
-            capacityMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.capacityMonthlyCost),
-            totalMonthlyCostForCapacity: formatNumbers(
+            capacityMonthlyCost: formatNumberWithCustomComma(
+                viewCalculationsResponse?.fsxOntapCalculation?.capacityMonthlyCost
+            ),
+            totalMonthlyCostForCapacity: formatNumberWithCustomComma(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyCostForCapacity
             ),
             totalMonthlyStorageCharge: `${formatNumberWithCustomComma(
@@ -452,10 +454,10 @@ export const formatViewCalcData = (
             capacityMonthlyCost: formatNumbers(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.capacityMonthlyCost
             ),
-            totalMonthlyCostForCapacity: formatNumbers(
+            totalMonthlyCostForCapacity: formatNumberWithCustomComma(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForCapacity
             ),
-            totalSnapshotMonthlyCost: formatNumbers(
+            totalSnapshotMonthlyCost: formatNumberWithCustomComma(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalSnapshotMonthlyCost
             )
         },
@@ -514,10 +516,10 @@ export const formatViewCalcData = (
             ),
             fsxwCloneCalculation: {
                 clonedCopiesCount: formatNumbers(viewCalculationsResponse?.fsxwCloneCalculation?.clonedCopiesCount),
-                capacity: formatNumbers(viewCalculationsResponse?.fsxwCloneCalculation?.capacity),
-                iops: formatNumbers(viewCalculationsResponse?.fsxwCloneCalculation?.iops),
-                throughput: formatNumbers(viewCalculationsResponse?.fsxwCloneCalculation?.throughput),
-                totalCloneMonthlyCost: formatNumbers(
+                capacity: formatNumberWithCustomComma(viewCalculationsResponse?.fsxwCloneCalculation?.capacity),
+                iops: formatNumberWithCustomComma(viewCalculationsResponse?.fsxwCloneCalculation?.iops),
+                throughput: formatNumberWithCustomComma(viewCalculationsResponse?.fsxwCloneCalculation?.throughput),
+                totalCloneMonthlyCost: formatNumberWithCustomComma(
                     viewCalculationsResponse?.fsxwCloneCalculation?.totalCloneMonthlyCost
                 )
             },
@@ -531,20 +533,22 @@ export const formatViewCalcData = (
                 provisionedStorageCapacityForFsxwSnapshot: formatCalcSize(
                     viewCalculationsResponse?.fsxwSnapshotCalculation?.provisionedStorageCapacityForFsxwSnapshot
                 ),
-                totalMonthlyCostForFsxwSnapshotStorageCapacity: formatNumbers(
+                totalMonthlyCostForFsxwSnapshotStorageCapacity: formatNumberWithCustomComma(
                     viewCalculationsResponse?.fsxwSnapshotCalculation?.totalMonthlyCostForFsxwSnapshotStorageCapacity
                 )
             },
             fsxwCalculation: {
                 deduplicationSavings: formatPercentage(viewCalculationsResponse?.fsxwCalculation?.deduplicationSavings),
                 fsxwSsdPrice: formatNumbers(viewCalculationsResponse?.fsxwCalculation?.fsxwSsdPrice?.price),
-                totalMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxwCalculation?.totalMonthlyCost),
+                totalMonthlyCost: formatNumberWithCustomComma(
+                    viewCalculationsResponse?.fsxwCalculation?.totalMonthlyCost
+                ),
                 desiredStorageCapacity: formatCalcSize(
                     viewCalculationsResponse?.fsxwCalculation?.desiredStorageCapacity
                 ),
                 storageSavings: formatCalcSize(viewCalculationsResponse?.fsxwCalculation?.storageSavings),
                 provisionedStorageCapacity: viewCalculationsResponse?.fsxwCalculation?.provisionedStorageCapacity,
-                monthlyCostForStorageCapacity: formatNumbers(
+                monthlyCostForStorageCapacity: formatNumberWithCustomComma(
                     viewCalculationsResponse?.fsxwCalculation?.monthlyCostForStorageCapacity
                 ),
                 totalDefaultProvisionedIops: formatNumbers(
@@ -554,7 +558,7 @@ export const formatViewCalcData = (
                     viewCalculationsResponse?.fsxwCalculation?.additionalUserProvisionedIops
                 ),
                 billedIops: formatNumbers(viewCalculationsResponse?.fsxwCalculation?.billedIops),
-                totalMonthlyCostForProvisionedSsdIops: formatNumbers(
+                totalMonthlyCostForProvisionedSsdIops: formatNumberWithCustomComma(
                     viewCalculationsResponse?.fsxwCalculation?.totalMonthlyCostForProvisionedSsdIops
                 ),
                 fsxwIopsPrice: formatNumbers(viewCalculationsResponse?.fsxwCalculation?.fsxwIopsPrice),
@@ -579,7 +583,7 @@ export const formatViewCalcData = (
                     viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity
                 ),
                 fsxwThroughputPrice: formatNumbers(viewCalculationsResponse?.fsxwCalculation?.fsxwThroughputPrice),
-                totalMonthlyCostForThroughputCapacity: formatNumbers(
+                totalMonthlyCostForThroughputCapacity: formatNumberWithCustomComma(
                     viewCalculationsResponse?.fsxwCalculation?.totalMonthlyCostForThroughputCapacity
                 )
             },
@@ -593,8 +597,10 @@ export const formatViewCalcData = (
             ...ebsViewCalculationData,
             ebsCalculation: {
                 ...ebsViewCalculationData?.ebsCalculation,
-                totalEbsThroughputCost: formatNumbers(ebsViewCalculationData?.ebsCalculation?.totalEbsThroughputCost),
-                totalEbsIopsCost: formatNumbers(ebsViewCalculationData?.ebsCalculation?.totalEbsIopsCost),
+                totalEbsThroughputCost: formatNumberWithCustomComma(
+                    ebsViewCalculationData?.ebsCalculation?.totalEbsThroughputCost
+                ),
+                totalEbsIopsCost: formatNumberWithCustomComma(ebsViewCalculationData?.ebsCalculation?.totalEbsIopsCost),
                 totalEbsStorageCost: formatNumberWithCustomComma(
                     ebsViewCalculationData?.ebsCalculation?.totalEbsStorageCost
                 )
@@ -708,22 +714,24 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
             monthlyCostOfSnapshots: formatNumbers(ebsSnapshotCalculation?.monthlyCostOfSnapshots),
             ebsInstanceMonth: formatNumbers(ebsSnapshotCalculation?.ebsInstanceMonth),
             totalSnapshots: formatNumbers(ebsSnapshotCalculation?.totalSnapshots),
-            initialSnapshotCost: formatNumbers(ebsSnapshotCalculation?.initialSnapshotCost),
-            monthlyCostPerSnapshot: formatNumbers(ebsSnapshotCalculation?.monthlyCostPerSnapshot),
-            discountForPartialStorageMonth: formatNumbers(ebsSnapshotCalculation?.discountForPartialStorageMonth),
-            incrementalSnapshotCost: formatNumbers(ebsSnapshotCalculation?.incrementalSnapshotCost),
-            totalSnapshotCost: formatNumbers(ebsSnapshotCalculation?.totalSnapshotCost),
-            totalEbsSnapshotCost: formatNumbers(ebsSnapshotCalculation?.totalEbsSnapshotCost),
-            ebsSnapshotCost: formatNumbers(ebsSnapshotCalculation?.ebsSnapshotCost),
-            ebsSnapshotPrice: formatNumbers(ebsSnapshotCalculation?.ebsSnapshotPrice),
+            initialSnapshotCost: formatNumberWithCustomComma(ebsSnapshotCalculation?.initialSnapshotCost),
+            monthlyCostPerSnapshot: formatNumberWithCustomComma(ebsSnapshotCalculation?.monthlyCostPerSnapshot),
+            discountForPartialStorageMonth: formatNumberWithCustomComma(
+                ebsSnapshotCalculation?.discountForPartialStorageMonth
+            ),
+            incrementalSnapshotCost: formatNumberWithCustomComma(ebsSnapshotCalculation?.incrementalSnapshotCost),
+            totalSnapshotCost: formatNumberWithCustomComma(ebsSnapshotCalculation?.totalSnapshotCost),
+            totalEbsSnapshotCost: formatNumberWithCustomComma(ebsSnapshotCalculation?.totalEbsSnapshotCost),
+            ebsSnapshotCost: formatNumberWithCustomComma(ebsSnapshotCalculation?.ebsSnapshotCost),
+            ebsSnapshotPrice: formatNumberWithCustomComma(ebsSnapshotCalculation?.ebsSnapshotPrice),
             totalEbsSnapshotCostValue: ebsSnapshotCalculation?.ebsSnapshotCost
         },
         ebsCloneCalculation: {
             clonedCopiesCount: formatNumbers(ebsCloneCalculation?.clonedCopiesCount),
-            capacity: formatNumbers(ebsCloneCalculation?.capacity),
-            iops: formatNumbers(ebsCloneCalculation?.iops),
-            throughput: formatNumbers(ebsCloneCalculation?.throughput),
-            totalCloneMonthlyCost: formatNumbers(ebsCloneCalculation?.totalCloneMonthlyCost),
+            capacity: formatNumberWithCustomComma(ebsCloneCalculation?.capacity),
+            iops: formatNumberWithCustomComma(ebsCloneCalculation?.iops),
+            throughput: formatNumberWithCustomComma(ebsCloneCalculation?.throughput),
+            totalCloneMonthlyCost: formatNumberWithCustomComma(ebsCloneCalculation?.totalCloneMonthlyCost),
             totalCloneMonthlyCostValue: ebsCloneCalculation?.totalCloneMonthlyCost
         }
     };
