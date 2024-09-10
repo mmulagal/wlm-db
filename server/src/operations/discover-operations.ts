@@ -3,7 +3,7 @@ import config from 'config';
 import randomize from 'randomatic';
 
 import { STORAGE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { FileSystem, FileSystemType } from '@aws-sdk/client-fsx';
+import { FileSystemType } from '@aws-sdk/client-fsx';
 import { attempt, compact, uniqBy, isEmpty, cloneDeep } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
@@ -54,7 +54,8 @@ import {
     OFFLINE,
     SQL_SERVICE_STATE,
     NOT_AVAILABLE,
-    PREPARE_PSMODULES_RELATIVE_PATH
+    PREPARE_PSMODULES_RELATIVE_PATH,
+    SINGLE_AZ
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -280,12 +281,6 @@ async function getHostAndSqlServerInfo(
                     type: FileSystemType.ONTAP
                 });
             }
-            const { OntapConfiguration, SubnetIds } =
-                fsxList.find((fsx: FileSystem) => fsx?.FileSystemId === fsId) || {};
-            fsIdWithDeploymentType.set(fsId!, {
-                deploymentType: OntapConfiguration?.DeploymentType,
-                subnetIds: SubnetIds!
-            });
         });
 
         // Fetch windows mount points from FSxW
@@ -311,6 +306,17 @@ async function getHostAndSqlServerInfo(
                     })
                 );
             });
+
+        fsxList.forEach(({ FileSystemId, OntapConfiguration, WindowsConfiguration, SubnetIds }) => {
+            if (FileSystemId) {
+                fsIdWithDeploymentType.set(FileSystemId, {
+                    deploymentType: isEmpty(OntapConfiguration)
+                        ? WindowsConfiguration?.DeploymentType
+                        : OntapConfiguration?.DeploymentType,
+                    subnetIds: SubnetIds
+                });
+            }
+        });
 
         api1EndTime = performance.now();
         logger.info(`API1Performance: Endpoint/FSx/Deployment map creation time: ${api1EndTime - api1StartTime}ms`);
@@ -501,7 +507,10 @@ async function getHostAndSqlInfoFromPsOutput(
                             });
                             const ebsAvailabilityZone = ebsVolumeToAvailabilityZoneMap.get(ebsVolumeId);
                             deploymentTypes.push({
-                                ...(ebsAvailabilityZone && { zones: [ebsAvailabilityZone] })
+                                ...(ebsAvailabilityZone && {
+                                    zones: [ebsAvailabilityZone],
+                                    type: SINGLE_AZ
+                                })
                             });
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
@@ -532,26 +541,35 @@ async function getHostAndSqlInfoFromPsOutput(
 
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
                             const targets = di?.SmbSharePath ? di.SmbSharePath.toLowerCase() : '';
-                            const matchedEndpoints = fsxEndpoints.filter(value =>
-                                targets.includes(value.toLowerCase())
-                            );
+                            const matchedEndpoint = fsxEndpoints.find(value => targets.includes(value.toLowerCase()));
 
-                            if (!isEmpty(matchedEndpoints)) {
-                                const fsxType = endPointIpWithFsxInfo.get(matchedEndpoints[0])?.type;
+                            if (matchedEndpoint) {
+                                const {
+                                    type: fsxType,
+                                    fsxId,
+                                    svmId
+                                } = endPointIpWithFsxInfo.get(matchedEndpoint) || {};
                                 if (fsxType === FileSystemType.WINDOWS) {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXW,
-                                        id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
+                                        id: fsxId,
                                         protocol: STORAGE_PROTOCOLS.SMB
                                     });
                                 } else {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXN,
-                                        id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
-                                        svmId: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.svmId,
+                                        id: fsxId,
+                                        svmId,
                                         protocol: STORAGE_PROTOCOLS.SMB
                                     });
                                 }
+
+                                const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
+                                deploymentTypes.push({
+                                    type: deploymentType,
+                                    zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
+                                    ids: subnetIds?.join()
+                                });
                             }
                         }
                     }
