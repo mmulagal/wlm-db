@@ -31,7 +31,6 @@ import ManualTCOFields from './ManualTCOFields/ManualTCOFields';
 import ManualEC2 from './ManualEC2/ManualEC2';
 import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
-import { useGetManualStorageSavingsMutation, useGetManualViewCalculationsMutation } from '../../../utils/apiService';
 
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
@@ -43,9 +42,6 @@ const SavingsCalculator = () => {
     const [printState, setPrintState] = useState(false);
     // const [disableState, setDisableState] = useState(false);
     const [isMutliFsx, setIsMutliFsx] = useState(false);
-
-    const [getManualStorageSavingsApi] = useGetManualStorageSavingsMutation();
-    const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
 
     const {
         savingsCalculatorFrom,

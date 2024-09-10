@@ -103,9 +103,10 @@ const SavingsCalculatorApi = () => {
                 dispatch(setStorageSavingsLoading(false));
             } else {
                 dispatch(setStorageSavingsLoading(false));
+                dispatch(setStorageSavingsResponse(null));
             }
         } catch (error) {
-            dispatch(setStorageSavingsResponse({}));
+            dispatch(setStorageSavingsResponse(null));
             dispatch(setStorageSavingsLoading(false));
         }
     };
@@ -140,6 +141,7 @@ const SavingsCalculatorApi = () => {
                 dispatch(setViewCalculationsLoading(false));
             } else {
                 dispatch(setViewCalculationsLoading(false));
+                dispatch(setViewCalculationsResponse(null));
             }
         } catch (error) {
             dispatch(setViewCalculationsResponse(null));

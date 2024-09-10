@@ -26,8 +26,8 @@ import {
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
-    const { recommendedTargetInstance, selectedHostDetails } = state.exploreSavings;
-    const checkBYOLTooltip = checkIfByolFieldRequired(selectedHostDetails, false);
+    const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom } = state.exploreSavings;
+    const checkBYOLTooltip = checkIfByolFieldRequired(selectedHostDetails, false, savingsCalculatorFrom);
     return [
         {
             type: 'Capacity',
@@ -1988,7 +1988,14 @@ export const generateManualStorageSavingsPayload = () => {
     return payloadObj;
 };
 
-export const checkIfByolFieldRequired = (selectedHostDetails: any, isByolField: boolean) => {
+export const checkIfByolFieldRequired = (
+    selectedHostDetails: any,
+    isByolField: boolean,
+    savingsCalculatorFrom: string | null
+) => {
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+        return false;
+    }
     let serverEdition: any = [];
     selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
         if (perRow?.databaseServer?.serverEdition && !serverEdition.includes(perRow?.databaseServer?.serverEdition)) {

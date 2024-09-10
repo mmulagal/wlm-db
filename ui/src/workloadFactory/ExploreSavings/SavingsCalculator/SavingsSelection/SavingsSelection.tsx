@@ -16,7 +16,7 @@ import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
-import { FINDINGS, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
+import { FINDINGS, SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import LearnHowDialog from './LearnHowDialog/LearnHowDialog';
 import { generateLabel2ForInstanceType } from '../../ExploreSavingsUtils';
@@ -34,7 +34,8 @@ const SavingsSelection = ({ printState }: any) => {
         storageSavingsLoading,
         recommendedTargetInstance,
         monthlyBYOLCost,
-        selectedHostDetails
+        selectedHostDetails,
+        savingsCalculatorFrom
     } = useAppSelector(state => state.exploreSavings);
 
     const [isByolField, setIsByolField] = useState<boolean>(false);
@@ -55,7 +56,7 @@ const SavingsSelection = ({ printState }: any) => {
     const { setDialog, closeDialog } = useDialog();
 
     useEffect(() => {
-        setIsByolField(checkIfByolFieldRequired(selectedHostDetails, isByolField));
+        setIsByolField(checkIfByolFieldRequired(selectedHostDetails, isByolField, savingsCalculatorFrom));
     }, [selectedHostDetails]);
 
     //Use effect for machine description
@@ -316,60 +317,62 @@ const SavingsSelection = ({ printState }: any) => {
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 )}
-                <div className={styles.instanceTypeContainer}>
-                    <SelectField
-                        label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
-                        info={GENERAL.RECOMMENDED_INSTANCE_TYPE_INFO}
-                        isClearable={false}
-                        isDisabled={
-                            instanceTypeData?.missingPermissions || generateRecommendedInstanceTypes.length === 1
-                        }
-                        variant="two-lines"
-                        isLoading={storageSavingsLoading}
-                        value={generateOptionType(
-                            recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                            recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                            generateLabel2ForInstanceType(
-                                instanceTypeData?.options,
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                    <div className={styles.instanceTypeContainer}>
+                        <SelectField
+                            label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
+                            info={GENERAL.RECOMMENDED_INSTANCE_TYPE_INFO}
+                            isClearable={false}
+                            isDisabled={
+                                instanceTypeData?.missingPermissions || generateRecommendedInstanceTypes.length === 1
+                            }
+                            variant="two-lines"
+                            isLoading={storageSavingsLoading}
+                            value={generateOptionType(
                                 recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                                storageSavingsResponse?.compute?.existing
-                            ),
-                            false,
-                            ''
-                        )}
-                        onChange={(selectedOptions: any): void => {
-                            const selectedVal = selectedOptions.value;
-                            dispatch(
-                                setRecommendedTargetInstance(
-                                    selectedVal === instanceTypeData?.existingInstanceType ? '' : selectedVal
-                                )
-                            );
-                        }}
-                        isSearchable={generateRecommendedInstanceTypes?.length > 5}
-                        options={generateRecommendedInstanceTypes}
-                        className={`${styles.widthSet} savings-calculator-input-fields`}
-                    />
-                    {(instanceTypeData?.missingPermissions ||
-                        (generateRecommendedInstanceTypes?.length === 1 && !storageSavingsLoading)) && (
-                        <div className={styles.errorContainer}>
-                            <InfoIcon />
-                            <DsTypography variant="Regular_13">
-                                {instanceTypeData?.missingPermissions
-                                    ? GENERAL.MISSING_PERMISSIONS_NOTICE
-                                    : GENERAL.RECOMMENDATIONS_UNAVAILABLE_NOTICE}
-                            </DsTypography>
-                            {instanceTypeData?.missingPermissions ? (
-                                <Button variant="text" onClick={handleLearnHowClick}>
-                                    {GENERAL.LEARN_HOW}
-                                </Button>
-                            ) : (
-                                <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                    {GENERAL.RECOMMENDATIONS_UNAVAILABLE_TOOLTIP}
-                                </DsTooltipInfo>
+                                recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                                generateLabel2ForInstanceType(
+                                    instanceTypeData?.options,
+                                    recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                                    storageSavingsResponse?.compute?.existing
+                                ),
+                                false,
+                                ''
                             )}
-                        </div>
-                    )}
-                </div>
+                            onChange={(selectedOptions: any): void => {
+                                const selectedVal = selectedOptions.value;
+                                dispatch(
+                                    setRecommendedTargetInstance(
+                                        selectedVal === instanceTypeData?.existingInstanceType ? '' : selectedVal
+                                    )
+                                );
+                            }}
+                            isSearchable={generateRecommendedInstanceTypes?.length > 5}
+                            options={generateRecommendedInstanceTypes}
+                            className={`${styles.widthSet} savings-calculator-input-fields`}
+                        />
+                        {(instanceTypeData?.missingPermissions ||
+                            (generateRecommendedInstanceTypes?.length === 1 && !storageSavingsLoading)) && (
+                            <div className={styles.errorContainer}>
+                                <InfoIcon />
+                                <DsTypography variant="Regular_13">
+                                    {instanceTypeData?.missingPermissions
+                                        ? GENERAL.MISSING_PERMISSIONS_NOTICE
+                                        : GENERAL.RECOMMENDATIONS_UNAVAILABLE_NOTICE}
+                                </DsTypography>
+                                {instanceTypeData?.missingPermissions ? (
+                                    <Button variant="text" onClick={handleLearnHowClick}>
+                                        {GENERAL.LEARN_HOW}
+                                    </Button>
+                                ) : (
+                                    <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                        {GENERAL.RECOMMENDATIONS_UNAVAILABLE_TOOLTIP}
+                                    </DsTooltipInfo>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

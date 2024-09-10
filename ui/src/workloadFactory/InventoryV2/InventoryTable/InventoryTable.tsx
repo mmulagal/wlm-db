@@ -1,13 +1,4 @@
-import {
-    Button,
-    DsFlashingDotsLoader,
-    Popover,
-    Table,
-    TableTopBar,
-    Typography,
-    useDialog,
-    useTable
-} from '@netapp/design-system';
+import { Button, Popover, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
 
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -67,7 +58,6 @@ const InventoryTable = () => {
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
     const { setDialog, closeDialog } = useDialog();

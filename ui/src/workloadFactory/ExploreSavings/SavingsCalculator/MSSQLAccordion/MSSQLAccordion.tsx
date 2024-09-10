@@ -167,7 +167,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                     selectedHostDetails?.loading ||
                     disableState ||
                     viewCalculationsLoading ||
-                    isMutliFsx
+                    isMutliFsx ||
+                    !storageSavingsResponse
                 }
                 disabledReason={isMutliFsx ? GENERAL.ES_MULTI_FSX_DISABLE_MSG : ''}
                 isExpanded={printState}
@@ -195,7 +196,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                         selectedHostDetails?.loading ||
                                         viewCalculationsLoading ||
                                         isMutliFsx ||
-                                        disableState
+                                        disableState ||
+                                        !storageSavingsResponse
                                     }
                                     onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                                 >
@@ -214,7 +216,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                     storageSavingsLoading ||
                                     selectedHostDetails?.loading ||
                                     viewCalculationsLoading ||
-                                    disableState
+                                    disableState ||
+                                    !storageSavingsResponse
                                 }
                                 onClick={() => handleCreateClick()}
                             >

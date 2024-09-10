@@ -20,7 +20,7 @@ const ExploreSavingsTableV2 = () => {
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
 
     const getInitialFilter = () => {
-        if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+        if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
             return {
                 textFilter: '',
                 count: 1,
@@ -28,21 +28,9 @@ const ExploreSavingsTableV2 = () => {
                     '3': {
                         activeCount: 1,
                         values: {
-                            [GENERAL.EBS]: true
-                        },
-                        valuesArray: [true]
-                    }
-                }
-            };
-        } else if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-            return {
-                textFilter: '',
-                count: 1,
-                columns: {
-                    '3': {
-                        activeCount: 1,
-                        values: {
-                            [GENERAL.FSX_FOR_WINDOWS]: true
+                            [selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS
+                                ? GENERAL.EBS
+                                : GENERAL.FSX_FOR_WINDOWS]: true
                         },
                         valuesArray: [true]
                     }
