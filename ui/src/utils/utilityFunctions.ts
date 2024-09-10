@@ -368,7 +368,7 @@ export function formatNumberWithCustomComma(number: any, roundOffRequired: boole
     if (Number(numStr) > 1) {
         formattedNumber = numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     } else {
-        formattedNumber = numStr;
+        formattedNumber = Number(numStr).toFixed(2);
     }
 
     return formattedNumber;
