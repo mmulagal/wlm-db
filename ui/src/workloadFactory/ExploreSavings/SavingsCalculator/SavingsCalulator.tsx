@@ -36,6 +36,7 @@ import { useGetManualStorageSavingsMutation, useGetManualViewCalculationsMutatio
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
 import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
+import WindowFileServer from './WindowFileServer/WindowFileServer';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
@@ -142,6 +143,7 @@ const SavingsCalculator = () => {
                                     <SavingsSelectedHost />
                                     <InstanceInformation />
                                     <SelectedVolumeSummary />
+                                    {/* <WindowFileServer /> */}
                                 </>
                             )}
                             {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (
