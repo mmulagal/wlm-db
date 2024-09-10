@@ -92,7 +92,8 @@ const ViewCalculations = () => {
                             <TotalMonthlyCostOntapCalculation />
                         </div>
 
-                        {savingsCalculatorFrom !== SAVINGS_CALC_MODE.MANUAL_FSXW && (
+                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) && (
                             <div>
                                 <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
                                     {GENERAL.MS_EBS_CALCULATION}
@@ -104,7 +105,8 @@ const ViewCalculations = () => {
                                 <TotalMonthlyCostEbsCalculation />
                             </div>
                         )}
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW && (
+                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
                             <div>
                                 <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
                                     {GENERAL.MS_FSXW_CALCULATION}

@@ -25,7 +25,12 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
     const deploymentModel = (() => {
         return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
-    dispatch(setSavingsCalculatorFrom('Auto'));
+    if (rowData?.storageType === GENERAL.EBS) {
+        dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_EBS));
+    } else {
+        dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_FSXW));
+    }
+
     dispatch(setDisableState(false));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(rowData?.id));
@@ -504,7 +509,10 @@ export const formatViewCalcData = (
         monthlyChangeRate: monthlyChangeRate
     };
 
-    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+    if (
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
+    ) {
         // ToDo - FsxW data
         result = {
             ...result,
@@ -792,7 +800,10 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
             savingsCalculatorFrom
         } = state.exploreSavings;
         let deploymentModelValue = selectedDeploymentModel;
-        if (savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+        ) {
             deploymentModelValue = selectedManualDeploymentModel?.value;
         }
         let recommendeRow: any = null;

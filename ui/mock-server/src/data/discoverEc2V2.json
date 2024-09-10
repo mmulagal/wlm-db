@@ -309,6 +309,47 @@
             ]
         },
         {
+            "ec2InstanceId": "i-04eebc22cce223f55",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-52631",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-046f7e26255458373",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.4365.2",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-FC7VH92",
+                    "serverGuid": "40CE7485-4BF5-4BEC-811B-48E06A8C4F42",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-FC7VH92"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXW",
+                            "id": "vol-078ccd469b9235323"
+                        }
+                    ],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
             "ec2InstanceId": "i-024105dac56a661b1",
             "ec2InstanceType": "m5.large",
             "ssmState": "connected",

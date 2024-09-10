@@ -45,7 +45,7 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                                 categories={[
                                     GENERAL.CATEGORY_POINT_ONE,
                                     savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
                                         ? GENERAL.CATEGORY_POINT_TWO
                                         : GENERAL.FSXW_CATEGORY
                                 ]}
@@ -63,7 +63,7 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                             categories={[
                                 GENERAL.CATEGORY_POINT_ONE,
                                 savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
                                     ? GENERAL.CATEGORY_POINT_TWO
                                     : GENERAL.FSXW_CATEGORY
                             ]}
@@ -84,7 +84,7 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                             categories={[
                                 GENERAL.CATEGORY_POINT_ONE,
                                 savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
                                     ? GENERAL.CATEGORY_POINT_TWO
                                     : GENERAL.FSXW_CATEGORY
                             ]}
@@ -108,7 +108,7 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                             categories={[
                                 GENERAL.CATEGORY_POINT_ONE,
                                 savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
                                     ? GENERAL.CATEGORY_POINT_TWO
                                     : GENERAL.FSXW_CATEGORY
                             ]}
