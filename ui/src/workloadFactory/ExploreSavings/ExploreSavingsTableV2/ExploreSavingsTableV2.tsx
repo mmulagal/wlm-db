@@ -1,20 +1,14 @@
-import { Table, useTable, Typography, TableTopBar, DsFlashingDotsLoader, DsButton } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTableV2.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
-import {
-    renderAllocatedCapacity,
-    renderEstimatedCost,
-    renderInstanceListText,
-    renderUnmanagedAZ
-} from '../../Inventory/InventoryUtils';
+import { renderAllocatedCapacity, renderInstanceListText, renderUnmanagedAZ } from '../../Inventory/InventoryUtils';
 import { onClickESHost } from '../ExploreSavingsUtils';
-import { INVENTORY_ACTIONS, INVENTORY_STATUS } from '../../../utils/consts';
+import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
-import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -23,6 +17,41 @@ const ExploreSavingsTableV2 = () => {
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const [tableData, setTableData] = useState<any>([]);
+    const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
+
+    const getInitialFilter = () => {
+        if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+            return {
+                textFilter: '',
+                count: 1,
+                columns: {
+                    '3': {
+                        activeCount: 1,
+                        values: {
+                            [GENERAL.EBS]: true
+                        },
+                        valuesArray: [true]
+                    }
+                }
+            };
+        } else if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+            return {
+                textFilter: '',
+                count: 1,
+                columns: {
+                    '3': {
+                        activeCount: 1,
+                        values: {
+                            [GENERAL.FSX_FOR_WINDOWS]: true
+                        },
+                        valuesArray: [true]
+                    }
+                }
+            };
+        } else {
+            return undefined;
+        }
+    };
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
@@ -173,16 +202,6 @@ const ExploreSavingsTableV2 = () => {
                 return renderUnmanagedAZ(cellData, rowData, styles);
             }
         },
-        // {
-        //     Header: GENERAL.DB_HOST_ESTIMATED_COST,
-        //     accessor: 'totalCost',
-        //     id: '8',
-        //     width: '176px',
-        //     isSortable: true,
-        //     renderCell: (cellData: any, rowData: any) => {
-        //         return renderEstimatedCost(cellData, rowData, styles);
-        //     }
-        // },
         lastColDetails()
     ];
 
@@ -196,7 +215,8 @@ const ExploreSavingsTableV2 = () => {
         columns: ExploreSavingsColDefs,
         rows: tableData || [],
         pageSize: 50,
-        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
+        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading,
+        initialFilterState: getInitialFilter()
     });
 
     return (
