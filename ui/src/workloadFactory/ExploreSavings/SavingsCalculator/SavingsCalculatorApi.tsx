@@ -25,7 +25,7 @@ import { setMssqlInstancesData as setMssqlInstancesDataV1 } from '../../../store
 import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { formatStorageSavingsRecommendedData, formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
 import { GENERAL } from '../../../utils/appConstants';
-import { INSTANCE_API_FIELDS } from '../../../utils/consts';
+import { INSTANCE_API_FIELDS, SAVINGS_CALC_MODE } from '../../../utils/consts';
 
 const SavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
@@ -38,7 +38,8 @@ const SavingsCalculatorApi = () => {
         savingsCalculatorRefresh,
         selectedDeploymentModel,
         selectedPartnerInstanceId,
-        monthlyBYOLCost
+        monthlyBYOLCost,
+        savingsCalculatorFrom
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
@@ -82,9 +83,14 @@ const SavingsCalculatorApi = () => {
         let payload: any = {
             snapshotFrequency: selectedSnapshotFrequency?.value,
             clonedCopiesCount: numberOfClonedCopies,
-            cloneRefreshFrequency: selectedCloneRefresh?.value,
             monthlyChangeRatePercentage: monthlyChangeRate
         };
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+            payload = {
+                ...payload,
+                cloneRefreshFrequency: selectedCloneRefresh?.value
+            };
+        }
         if (monthlyBYOLCost) {
             payload = {
                 ...payload,
@@ -115,9 +121,14 @@ const SavingsCalculatorApi = () => {
         let payload: any = {
             snapshotFrequency: selectedSnapshotFrequency?.value,
             clonedCopiesCount: numberOfClonedCopies,
-            cloneRefreshFrequency: selectedCloneRefresh?.value,
             monthlyChangeRatePercentage: monthlyChangeRate
         };
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+            payload = {
+                ...payload,
+                cloneRefreshFrequency: selectedCloneRefresh?.value
+            };
+        }
         if (monthlyBYOLCost) {
             payload = {
                 ...payload,
@@ -153,9 +164,10 @@ const SavingsCalculatorApi = () => {
         if (
             selectedSnapshotFrequency &&
             numberOfClonedCopies &&
-            selectedCloneRefresh &&
             monthlyChangeRate &&
-            selectedInstanceId
+            selectedInstanceId &&
+            ((savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && selectedCloneRefresh) ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW)
         ) {
             dispatch(setStorageSavingsLoading(true));
             dispatch(setViewCalculationsLoading(true));
