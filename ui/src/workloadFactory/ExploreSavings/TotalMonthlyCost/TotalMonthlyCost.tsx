@@ -5,6 +5,7 @@ import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { SAVINGS_CALC_MODE } from '../../../utils/consts';
+import { formatNumberWithCustomComma } from '../../../utils/utilityFunctions';
 
 type TMC = {
     disableState?: boolean;
@@ -101,7 +102,7 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                                     ? Number(storageSavingsResponse?.totalSummary?.existing)
                                     : 0
                             ]}
-                            yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
+                            yTickFormatter={yValue => '$' + formatNumberWithCustomComma(Number(yValue), true)}
                             height={370}
                             colors={storageSavingsResponse && ['chart-9', 'chart-6']}
                             categories={[
