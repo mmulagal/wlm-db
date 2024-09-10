@@ -852,7 +852,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "",
+        "StandardOutputContent": "{\"MSSQLSERVER\":  [{\"database_name\":  \"andbox_tst\",\"sandbox_properties\":  [{\"name\":  \"accountId\",\"value\":  \"ACCOUNT_ID\"},{\"name\":  \"cloned_by\",\"value\":  \"netapp_wf\"},{\"name\":  \"createdAt\",\"value\":  1725436823973},{\"name\":  \"source\",\"value\":  \"SQLDBAPD1X|MSSQLSERVER|tst\"},{\"name\":  \"tag\",\"value\":  \"Development\"},{\"name\":  \"updatedAt\",\"value\":  1725436823973}]},{\"database_name\":  \"Refresh_skg5h\",\"sandbox_properties\":  [{\"name\":  \"accountId\",\"value\":  \"ACCOUNT_ID\"},{\"name\":  \"cloned_by\",\"value\":  \"netapp_wf\"},{\"name\":  \"createdAt\",\"value\":  1725413306596},{\"name\":  \"source\",\"value\":  \"sqldbapd1x|MSSQLSERVER|testdb1\"},{\"name\":  \"tag\",\"value\":  \"Development\"},{\"name\":  \"updatedAt\",\"value\":  1725413438060}]},{\"database_name\":  \"sandbox_tst\",\"sandbox_properties\":  [{\"name\":  \"accountId\",\"value\":  \"ACCOUNT_ID\"},{\"name\":  \"cloned_by\",\"value\":  \"netapp_wf\"},{\"name\":  \"createdAt\",\"value\":  1725435696405},{\"name\":  \"source\",\"value\":  \"SQLDBAPD1X|MSSQLSERVER|tst\"},{\"name\":  \"tag\",\"value\":  \"Development\"},{\"name\":  \"updatedAt\",\"value\":  1725435696405}]}]\r\n}",
         "Status": "Success",
         "StatusDetails": "Success"
     },

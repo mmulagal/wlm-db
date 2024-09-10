@@ -336,7 +336,10 @@ const InventoryTable = () => {
         rowData: any,
         checkForAllManaged: boolean,
         checkForAllUnDetectInstance: boolean,
-        checkForAllUnManagedInstance: boolean
+        checkForAllUnDetectOrManageInstance: boolean,
+        checkForAllUnManagedInstance: boolean,
+        checkForAllFsxnManagedInstance: boolean,
+        checkForAllStorageType: boolean
     ) => {
         //Condition if installation mode is AOAG than disable manage
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
@@ -366,6 +369,19 @@ const InventoryTable = () => {
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
             return (
                 <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all un-detect or managedinstances and storage type is N/A
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectOrManageInstance) {
+            return (
+                <TooltipComponent title={GENERAL.NO_UNMANAGED_TO_MANAGE} placement="bottom" width="320px" height="90px">
                     <div className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
@@ -409,6 +425,46 @@ const InventoryTable = () => {
                 </TooltipComponent>
             );
         }
+
+        //Condition if storage type is not known and it is still loading for manage case
+        if (
+            rowData?.action === INVENTORY_ACTIONS.MANAGE &&
+            !checkForAllManaged &&
+            checkForAllFsxnManagedInstance &&
+            rowData?.loading &&
+            !checkForAllStorageType
+        ) {
+            return (
+                <TooltipComponent
+                    title={GENERAL.INVENTORY_LOADING_DISABLED}
+                    placement="bottom"
+                    width="170px"
+                    height="33px"
+                >
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        } else if (
+            rowData?.action === INVENTORY_ACTIONS.MANAGE &&
+            !checkForAllManaged &&
+            checkForAllFsxnManagedInstance
+        ) {
+            //Condition if all fsxn are managed and remaining storage type is unmanaged
+            return (
+                <TooltipComponent title={GENERAL.ALL_FSXN_MANAGED_TEXT} placement="bottom" width="320px" height="93px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
         //Normal use case to show dialog or move to explore savings
         if (
             rowData?.action &&
@@ -472,15 +528,33 @@ const InventoryTable = () => {
                 const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
                 );
+                const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
+                    (item: any) =>
+                        item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
+                        item?.statusColText === INVENTORY_STATUS.MANAGED
+                );
                 const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
                 );
-
+                const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
+                    return (
+                        (item?.statusColText === INVENTORY_STATUS.MANAGED &&
+                            item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
+                        (item?.statusColText !== INVENTORY_STATUS.MANAGED &&
+                            item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
+                    );
+                });
+                const checkForAllStorageType = rowData?.sqlServerInstances?.every(
+                    (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
+                );
                 return lastColJSX(
                     rowData,
                     checkForAllManaged,
                     checkForAllUnDetectInstance,
-                    checkForAllUnManagedInstance
+                    checkForAllUnDetectOrManageInstance,
+                    checkForAllUnManagedInstance,
+                    checkForAllFsxnManagedInstance,
+                    checkForAllStorageType
                 );
             }
         };

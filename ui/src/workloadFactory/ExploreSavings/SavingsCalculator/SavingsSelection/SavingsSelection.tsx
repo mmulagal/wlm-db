@@ -20,6 +20,7 @@ import { FINDINGS, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import LearnHowDialog from './LearnHowDialog/LearnHowDialog';
 import { generateLabel2ForInstanceType } from '../../ExploreSavingsUtils';
+import { checkIfByolFieldRequired } from '../savingsUtil';
 
 const SavingsSelection = ({ printState }: any) => {
     const dispatch = useDispatch();
@@ -36,7 +37,7 @@ const SavingsSelection = ({ printState }: any) => {
         selectedHostDetails
     } = useAppSelector(state => state.exploreSavings);
 
-    const [isSqlLicense, setIsSqlLicense] = useState<boolean>(true);
+    const [isByolField, setIsByolField] = useState<boolean>(false);
     const [noOfClonedCopies, setNoOfClonedCopies] = useState<any>(numberOfClonedCopies);
     const [monthlyChangeRateNo, setMonthlyChangeRateNo] = useState<any>(monthlyChangeRate);
     const [instanceTypeData, setInstanceTypeData] = useState<any>({
@@ -54,7 +55,7 @@ const SavingsSelection = ({ printState }: any) => {
     const { setDialog, closeDialog } = useDialog();
 
     useEffect(() => {
-        setIsSqlLicense(selectedHostDetails?.sqlLicenseIncluded);
+        setIsByolField(checkIfByolFieldRequired(selectedHostDetails, isByolField));
     }, [selectedHostDetails]);
 
     //Use effect for machine description
@@ -303,7 +304,7 @@ const SavingsSelection = ({ printState }: any) => {
                 </div>
             </div>
             <div className={styles.secondRow}>
-                {!isSqlLicense && (
+                {isByolField && (
                     <TextField
                         label={GENERAL.BYOL_TEXT}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {

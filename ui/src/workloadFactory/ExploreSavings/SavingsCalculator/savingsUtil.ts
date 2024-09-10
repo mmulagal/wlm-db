@@ -26,7 +26,7 @@ import {
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
     const { recommendedTargetInstance, selectedHostDetails } = state.exploreSavings;
-    const checkBYOLTooltip = selectedHostDetails?.sqlLicenseIncluded ? false : true;
+    const checkBYOLTooltip = checkIfByolFieldRequired(selectedHostDetails, false);
     return [
         {
             type: 'Capacity',
@@ -1996,4 +1996,28 @@ export const generateManualStorageSavingsPayload = () => {
     payloadObj.sqlServerEdition = setSQLServerEdition(selectedManualServerEdition?.value);
     payloadObj.ec2Instances = createInstances(state);
     return payloadObj;
+};
+
+export const checkIfByolFieldRequired = (selectedHostDetails: any, isByolField: boolean) => {
+    let serverEdition: any = [];
+    selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
+        if (perRow?.databaseServer?.serverEdition && !serverEdition.includes(perRow?.databaseServer?.serverEdition)) {
+            serverEdition.push(perRow?.databaseServer?.serverEdition);
+        }
+    });
+    const sqlEdition = serverEdition.join(',').toLowerCase();
+    const licenseIncluded = selectedHostDetails?.sqlLicenseIncluded;
+    // BYOL field should be disabled for sql edition (evaluation/express/developer) and if sql license included is true
+    if (
+        licenseIncluded ||
+        sqlEdition.includes('evaluation') ||
+        sqlEdition.includes('express') ||
+        sqlEdition.includes('developer')
+    ) {
+        return false;
+    } else if (licenseIncluded !== undefined && !licenseIncluded) {
+        return true;
+    } else {
+        return isByolField;
+    }
 };

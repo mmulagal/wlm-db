@@ -1250,6 +1250,136 @@
                     ]
                 }
             ]
+        },
+        {
+            "ec2InstanceId": "i-0db20e831d1ce41e3",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "TCO",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.2000.5",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Developer Edition (64-bit)",
+                    "sqlServerEngineEdition": 3,
+                    "sqlServerName": "EC2AMAZ-6F4OJSL",
+                    "serverGuid": "11EA0C97-50CE-4A80-9955-771008DE63BF",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 5,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "vol-058229dab6d33d374"
+                        },
+                        {
+                            "type": "FSXW",
+                            "id": "vol-0f1ae0046501426a3"
+                        }
+                    ],
+                    "deploymentTypes": []
+                },
+                {
+                    "sqlServerInstance": "MSSQLSERVER1",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4120.1",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-6F4OJSL",
+                    "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 5,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "vol-058229dab6d33d374"
+                        }
+                    ],
+                    "deploymentTypes": []
+                },
+                {
+                    "sqlServerInstance": "MSSQLSERVER3",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.2000.5",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Developer Edition (64-bit)",
+                    "sqlServerEngineEdition": 3,
+                    "sqlServerName": "EC2AMAZ-6F4OJSL",
+                    "serverGuid": "11EA0C97-50CE-4A80-9955-771008DE63BF",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 5,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "vol-058229dab6d33d374"
+                        },
+                        {
+                            "type": "FSXN",
+                            "id": "vol-0f1ae0046501426a3"
+                        }
+                    ],
+                    "deploymentTypes": []
+                },
+                {
+                    "sqlServerInstance": "MSSQLSERVER4",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4120.1",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-6F4OJSL",
+                    "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 5,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs123"
+                        }
+                    ],
+                    "deploymentTypes": []
+                }
+            ]
         }
     ],
     "nextToken": ""

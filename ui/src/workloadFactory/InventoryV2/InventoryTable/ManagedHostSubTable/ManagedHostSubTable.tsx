@@ -243,7 +243,7 @@ const ManagedHostSubTable = ({
         } else {
             dispatch(setValuesForForm(false));
             dispatch(setIsDetectHostLoading(true));
-            const sqlServerInstance = rowData?.sqlServerInstance || '';
+            const sqlServerInstance = rowData?.sqlServerInstance || rowData?.databaseInstanceName || '';
             try {
                 const result: any = await registerResourceCred({
                     credentialId: headerSelectedCred?.data?.credentialsId,
@@ -438,7 +438,7 @@ const ManagedHostSubTable = ({
                     }
                     if (
                         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
+                        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
                     ) {
                         disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
                         width = '340px';

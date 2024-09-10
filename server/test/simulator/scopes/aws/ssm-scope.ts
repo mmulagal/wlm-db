@@ -48,10 +48,10 @@ import {
     ENTERPRISE_CHECK_QUERY,
     DATABASES_COUNT_V2,
     NATIVE_SQL_BACKUPS,
-    DATABASES
+    DATABASES,
+    GET_SANDBOXES
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
-    GET_SANDBOX_DETAILS,
     createVolumeClone,
     getDbMappedOntapVolumes,
     createClonedDb,
@@ -319,7 +319,7 @@ const getOntapSandboxVolumeSavingsParams = {
 };
 
 const getSandboxDetails = {
-    commands: [GET_SANDBOX_DETAILS('$env:computername')]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], GET_SANDBOXES, false)]
 };
 
 const instanceDetails = {
@@ -334,9 +334,8 @@ const cloneVolumeCommand = {
         createVolumeClone(
             'test-fsx',
             'us-east-1',
-            'wlmdb_sqlsvm_1714090636810',
-            JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
-            JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
+            JSON.stringify({ volumeName: 'wlmdb_sqldata_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
+            JSON.stringify({ volumeName: 'wlmdb_sqllog_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
             ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
             'target-svm',
             'testdb'
@@ -348,10 +347,18 @@ const invokeVirtualMountCommand = {
     commands: [
         invokeVirtualMountScript(
             'test-clone',
-            'D:\\MSSQL\\data\\testdb_data.mdf',
-            'E:\\MSSQL\\log\\testdb_log.ldf',
-            'lWB44?VEq9vf',
-            'lWB44?VEq9ve',
+            JSON.stringify([
+                {
+                    filePath: 'D:\\MSSQL\\data\\testdb_data.mdf',
+                    folderName: 'D:\\MSSQL\\data',
+                    lun: 'lWB44?VEq9vf'
+                },
+                {
+                    filePath: 'E:\\MSSQL\\log\\testdb_log.ldf',
+                    folderName: 'E:\\MSSQL\\log',
+                    lun: 'lWB44?VEq9ve'
+                }
+            ]),
             'MSSQLSERVER',
             true,
             'Sandbox'

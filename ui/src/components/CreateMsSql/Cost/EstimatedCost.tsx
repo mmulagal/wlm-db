@@ -16,7 +16,7 @@ import { useGetEstimationCostMutation } from '../../../utils/apiService';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 import { FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import SizePopover from './SizePopover/SizePopover';
-import { isFsxnNew } from '../../../utils/utilityFunctions';
+import { formatNumberWithCustomComma, isFsxnNew } from '../../../utils/utilityFunctions';
 import { setEstimatedCostData, setEstimatedCostLoading } from '../../../store/mssql/mssqlSlice';
 import { useDispatch } from 'react-redux';
 
@@ -299,7 +299,7 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        `$${Number(data?.data?.compute).toFixed(2)}` || ''
+                                        `$${formatNumberWithCustomComma(Number(data?.data?.compute).toFixed(2))}` || ''
                                     )}
                                 </Typography>
                             </div>
@@ -343,9 +343,11 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(
-                                                data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.capacityCost
-                                            ).toFixed(2)}` || ''
+                                            `$${formatNumberWithCustomComma(
+                                                Number(
+                                                    data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.capacityCost
+                                                ).toFixed(2)
+                                            )}` || ''
                                         )}
                                     </Typography>
 
@@ -360,9 +362,11 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(
-                                                data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.operationalCost
-                                            ).toFixed(2)}` || ''
+                                            `$${formatNumberWithCustomComma(
+                                                Number(
+                                                    data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.operationalCost
+                                                ).toFixed(2)
+                                            )}` || ''
                                         )}
                                     </Typography>
                                 </div>
@@ -421,9 +425,9 @@ const EstimatedCost = () => {
                                     </div>
                                 ) : //@ts-ignore
                                 isFsxnNew(selectedFsxnType) ? (
-                                    `$${Number(data?.data?.total).toFixed(2)}` || ''
+                                    `$${formatNumberWithCustomComma(Number(data?.data?.total).toFixed(2))}` || ''
                                 ) : (
-                                    `$${Number(data?.data?.compute).toFixed(2)}` || ''
+                                    `$${formatNumberWithCustomComma(Number(data?.data?.compute).toFixed(2))}` || ''
                                 )}
                             </Typography>
                         </div>
