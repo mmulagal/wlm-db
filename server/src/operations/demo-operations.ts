@@ -134,7 +134,6 @@ async function createDeploymentMockDataInDB(
         fsxFileSystemId,
         serverName
     });
-    serverName = serverName || `sqldatabase${randomize('a0', 4)}`;
 
     const cloudProviderId = awsAccountId;
     const resourceName = serverName;
