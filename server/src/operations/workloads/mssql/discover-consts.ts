@@ -590,11 +590,15 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
 
       #Check if private network
       $isprivatesubnet = $True
-      $connection =  Invoke-WebRequest www.powershellgallery.com -UseBasicParsing 
-      if($connection.StatusCode -ne "200") {
-        $isprivatesubnet = $True}
-      else {
-        $isprivatesubnet = $False} 
+      try {
+        $connection =  Invoke-WebRequest www.powershellgallery.com -UseBasicParsing 
+        if($connection.StatusCode -ne "200") {
+          $isprivatesubnet = $True}
+        else {
+          $isprivatesubnet = $False} 
+      } catch {
+       $isprivatesubnet = $True
+       }
       $responseObject['isprivatesubnet'] =  $isprivatesubnet
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
