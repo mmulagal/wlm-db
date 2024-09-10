@@ -347,9 +347,20 @@ export const generateRandomDBName = () => {
     return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
 };
 
-export function formatNumberWithCustomComma(number: any) {
+export function formatNumberWithCustomComma(number: any, roundOffRequired: boolean = true) {
+    let roundOffNumber;
+    if (roundOffRequired) {
+        if (Number(number) < 1) {
+            roundOffNumber = number;
+        } else {
+            roundOffNumber = Math.round(Number(number));
+        }
+    } else {
+        roundOffNumber = number;
+    }
+
     // Convert the number to a string and remove any existing commas
-    let numStr = number.toString().replace(/,/g, '');
+    let numStr = roundOffNumber.toString().replace(/,/g, '');
 
     // Add commas to the number
     let formattedNumber = numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -362,8 +373,22 @@ export const formatFractionalNumber = (value: number | undefined, precision: num
         return 0;
     }
     if (value && typeof value === 'number' && !Number.isInteger(value)) {
+        return value.toFixed(precision);
+    }
+    return value;
+};
+
+export const formatFractionalNumberForCost = (
+    value: number | undefined,
+    precision: number = 1,
+    roundOffRequired: boolean = true
+) => {
+    if (Number.isNaN(value)) {
+        return 0;
+    }
+    if (value && typeof value === 'number' && !Number.isInteger(value)) {
         const numberForFormat = value.toFixed(precision);
-        let formattedNumber = formatNumberWithCustomComma(numberForFormat);
+        let formattedNumber = formatNumberWithCustomComma(numberForFormat, roundOffRequired);
 
         return formattedNumber;
     }
