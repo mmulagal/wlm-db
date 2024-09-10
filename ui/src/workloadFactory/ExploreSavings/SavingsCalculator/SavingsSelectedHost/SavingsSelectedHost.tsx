@@ -3,12 +3,12 @@ import styles from './SavingsSelectedHost.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
+import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 const SavingsSelectedHost = () => {
     const isDisabled = false;
-    const { selectedHostDetails, selectedPartnerHostDetails, getPartnerHostDetailsLoading } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const { selectedHostDetails, selectedPartnerHostDetails, getPartnerHostDetailsLoading, savingsCalculatorFrom } =
+        useAppSelector(state => state.exploreSavings);
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     const [totalVolume, setTotalVolume] = useState(0);
@@ -87,28 +87,29 @@ const SavingsSelectedHost = () => {
                 </div>
 
                 {/* <div className={styles.separator} /> */}
-
-                <div className={`${styles.container} ${styles.numberContainer}`}>
-                    {!selectedHostDetails?.loading && !getPartnerHostDetailsLoading && (
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                    <div className={`${styles.container} ${styles.numberContainer}`}>
+                        {!selectedHostDetails?.loading && !getPartnerHostDetailsLoading && (
+                            <DsTypography
+                                variant="Semibold_14"
+                                className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
+                            >
+                                {totalVolume || GENERAL.NOT_AVAILABLE}
+                            </DsTypography>
+                        )}
+                        {(selectedHostDetails?.loading || getPartnerHostDetailsLoading) && (
+                            <div className={styles.loader}>
+                                <FlashingDotsLoader />
+                            </div>
+                        )}
                         <DsTypography
-                            variant="Semibold_14"
-                            className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
+                            variant="Regular_14"
+                            className={isDisabled ? `${styles.heading} ${styles.disabledContent}` : styles.heading}
                         >
-                            {totalVolume || GENERAL.NOT_AVAILABLE}
+                            {GENERAL.ES_NUMBER_OF_VOLS}
                         </DsTypography>
-                    )}
-                    {(selectedHostDetails?.loading || getPartnerHostDetailsLoading) && (
-                        <div className={styles.loader}>
-                            <FlashingDotsLoader />
-                        </div>
-                    )}
-                    <DsTypography
-                        variant="Regular_14"
-                        className={isDisabled ? `${styles.heading} ${styles.disabledContent}` : styles.heading}
-                    >
-                        {GENERAL.ES_NUMBER_OF_VOLS}
-                    </DsTypography>
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );

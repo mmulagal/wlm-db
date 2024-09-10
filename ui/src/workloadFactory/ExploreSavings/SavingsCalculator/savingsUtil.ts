@@ -159,7 +159,6 @@ export const comparisonDataFsxw = (calculatedResponse: any) => {
         },
         {
             type: 'Compute',
-            isTooltip: recommendedTargetInstance ? GENERAL.COMPUTE_RECOMMENDED_TOOLTIP : '',
             fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
                 ? `$${Number(
                       formatFractionalNumberForCost(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)

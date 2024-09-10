@@ -143,8 +143,8 @@ const SavingsCalculator = () => {
                                     <SavingsSelection printState={printState} />
                                     <SavingsSelectedHost />
                                     <InstanceInformation />
-                                    <SelectedVolumeSummary />
-                                    {/* <WindowFileServer /> */}
+                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && <SelectedVolumeSummary />}
+                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && <WindowFileServer />}
                                 </>
                             )}
                             {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (
