@@ -1012,6 +1012,7 @@ export const GENERAL = {
     CATEGORY_POINT_ONE: 'Microsoft SQL server on FSx for ONTAP',
     CATEGORY_POINT_TWO: 'Microsoft SQL server on Amazon Elastic Block Store (EBS)',
     FSXW_CATEGORY: 'Microsoft SQL Server on FSx for Windows File Server',
+    WINDOW_FILE_SERVER_DETAILS: 'Windows file server details:',
     VIEW_CALC_TEXT:
         'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
@@ -1071,7 +1072,6 @@ export const GENERAL = {
         'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
         'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
-    ES_FSXW_NOT_SUPPORTED: 'Explore savings for FSx for Windows is not supported.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
         'The attempt to manage the SQL Server instance ',

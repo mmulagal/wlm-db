@@ -159,14 +159,15 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 >
                                     {' '}
                                     {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
                                         ? GENERAL.ES_MSSQL_EBS
                                         : GENERAL.ES_MSSQL_FSXW}
                                 </Text>
                             </div>
                         </CardTableContent>
 
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
                             ? comparisonDataFsxw(calculatedResponse).map((data: any, index: number) => (
                                   <ComparisonTableLayout
                                       key={index}

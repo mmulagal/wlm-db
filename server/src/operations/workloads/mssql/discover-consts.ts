@@ -573,7 +573,7 @@ const GET_MISSING_RESOURCE_DETAILS = [
 `
 ];
 
-const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string) => [
+const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL: string) => [
     `
   Set-Variable -Option Constant -Name MODULE_INSTALL_STATE_FILE -Value 'NtapPsModuleInstallInProgressFile'
   Set-Variable -Option Constant -Name NTAP_WF_MODULE_INSTALL_JOB -Value 'NtapWfModuleInstallJob'
@@ -585,24 +585,67 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string) => [
 
   try {
     $requiredModuleList = @(${requiredModules})
+    $s3SignedUrl = '${s3SignedURL}'
     $availableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
     $unavailableModuleList = $requiredModuleList | ? { $_ -NotIn $availableModuleList}
 
     If ($unavailableModuleList.Count -gt 0) {
-      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-     
-      If (-Not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
-        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-      }
-      
-      If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
-        If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
-          throw "Failed to install NuGet package provider. "
-        }
-      }
 
-      ForEach ($moduleName in $unavailableModuleList) {
-          Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+      #Check if private network
+      $isprivatesubnet = $True
+      try {
+        $connection =  Invoke-WebRequest www.powershellgallery.com -UseBasicParsing 
+        if($connection.StatusCode -ne "200") {
+          $isprivatesubnet = $True}
+        else {
+          $isprivatesubnet = $False} 
+      } catch {
+       $isprivatesubnet = $True
+       }
+      $responseObject['isprivatesubnet'] =  $isprivatesubnet
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+      If($isprivatesubnet -eq $False){
+     
+          If (-Not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          }
+          
+          If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
+            If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+              throw "Failed to install NuGet package provider. "
+            }
+          }
+
+          ForEach ($moduleName in $unavailableModuleList) {
+              Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+          }
+      }Else{
+          $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\dependent-packages.zip"
+          $Null = Expand-Archive -Path "$Env:Temp\\dependent-packages.zip" -DestinationPath $Env:Temp -Force
+          Unblock-File -Path "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
+          $destinationPath = "C:\\Program Files\\PackageManagement\\ProviderAssemblies"
+          $destinationPathExists = Test-Path -Path $destinationPath
+          if ($destinationPathExists -eq $False) {
+              New-Item -ItemType Directory -Path $destinationPath -Force
+          }
+
+          Copy-Item "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
+
+          $sourcelocation = "$Env:Temp\\dependent-packages\\aws"
+          Import-PackageProvider -Name NuGet
+          try {
+              Unregister-PSRepository -Name 'AWS'
+          }
+          catch {}
+          Register-PSRepository -Name 'AWS' -SourceLocation $sourcelocation -InstallationPolicy Trusted
+          ForEach ($moduleName in $unavailableModuleList) {
+              Install-Module -Name $moduleName -Repository 'AWS' -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+          } 
+          try{
+          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages" -Force -Recurse}catch{}
+          try{
+          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages.zip" -Force -Recurse}catch{}
       }
     }
   } catch {

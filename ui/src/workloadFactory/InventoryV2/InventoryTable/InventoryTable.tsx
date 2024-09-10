@@ -1,13 +1,4 @@
-import {
-    Button,
-    DsFlashingDotsLoader,
-    Popover,
-    Table,
-    TableTopBar,
-    Typography,
-    useDialog,
-    useTable
-} from '@netapp/design-system';
+import { Button, Popover, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
 
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -67,7 +58,6 @@ const InventoryTable = () => {
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
     const { setDialog, closeDialog } = useDialog();
@@ -400,23 +390,6 @@ const InventoryTable = () => {
                     width="320px"
                     height="100px"
                 >
-                    <div id="inventory-table-option" className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        }
-
-        //Check for all Explore Savings FSXW rows
-        if (
-            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-            checkForAllUnManagedInstance &&
-            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS
-        ) {
-            return (
-                <TooltipComponent title={GENERAL.ES_FSXW_NOT_SUPPORTED} placement="bottom" width="320px" height="50px">
                     <div id="inventory-table-option" className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}

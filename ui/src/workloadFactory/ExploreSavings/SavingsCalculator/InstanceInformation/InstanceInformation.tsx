@@ -5,11 +5,13 @@ import styles from './InstanceInformation.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import { FINDINGS } from '../../../../utils/consts';
+import { FINDINGS, SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 const InstanceInformation = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
-    const { storageSavingsResponse, storageSavingsLoading }: any = useAppSelector(state => state.exploreSavings);
+    const { savingsCalculatorFrom, storageSavingsResponse, storageSavingsLoading }: any = useAppSelector(
+        state => state.exploreSavings
+    );
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     const [tableData, setTableData] = useState([]);
@@ -49,7 +51,7 @@ const InstanceInformation = () => {
                     details: 'Instance type',
                     value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
                     id: '1',
-                    findings: findingsComputeData
+                    findings: savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ? findingsComputeData : ''
                 },
                 {
                     details: 'SQL Edition',
@@ -79,7 +81,7 @@ const InstanceInformation = () => {
                     details: 'Instance type',
                     value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
                     id: '1',
-                    findings: findingsComputeData
+                    findings: savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ? findingsComputeData : ''
                 },
                 {
                     details: 'SQL Edition',
@@ -141,11 +143,12 @@ const InstanceInformation = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return !storageSavingsLoading ? (
                     <>
-                        {rowData.details === 'Instance type' && (
-                            <div className={styles.instanceTypeTooltip}>
-                                <TooltipInfo>{GENERAL.INSTANCE_TYPE_FINDINGS_TOOLTIP}</TooltipInfo>
-                            </div>
-                        )}
+                        {rowData.details === 'Instance type' &&
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                                <div className={styles.instanceTypeTooltip}>
+                                    <TooltipInfo>{GENERAL.INSTANCE_TYPE_FINDINGS_TOOLTIP}</TooltipInfo>
+                                </div>
+                            )}
                         {rowData?.findings === FINDINGS.NOT_OPTIMIZED && (
                             <div className={styles.tooltips}>
                                 {rowData.details === 'SQL Edition' && (
@@ -171,6 +174,11 @@ const InstanceInformation = () => {
                             rowData?.findings === FINDINGS.INSUFFICIENT_PERMISSIONS) && (
                             <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
                         )}
+
+                        {rowData.details === 'Instance type' &&
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && (
+                                <DsTypography variant="Regular_14">-</DsTypography>
+                            )}
                     </>
                 ) : (
                     <DsFlashingDotsLoader />

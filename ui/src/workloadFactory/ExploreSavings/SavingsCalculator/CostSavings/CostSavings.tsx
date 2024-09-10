@@ -6,7 +6,11 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    formatFractionalNumberForCost,
+    formatNumberWithCustomComma
+} from '../../../../utils/utilityFunctions';
 import useResize from '../../../../common/hooks/useResize';
 
 type CS = {
@@ -72,7 +76,9 @@ const CostSavings = ({ disableState }: CS) => {
                             }}
                         >
                             {/* {!storageSavingsLoading && savings} */}
-                            {!storageSavingsLoading && !costZeroCase && Number(savings).toLocaleString()}
+                            {!storageSavingsLoading &&
+                                !costZeroCase &&
+                                formatNumberWithCustomComma(Number(savings), true).toLocaleString()}
                             {!storageSavingsLoading && costZeroCase && Number(0).toLocaleString()}
                         </DsTypography>
                     </div>
@@ -139,7 +145,7 @@ const CostSavings = ({ disableState }: CS) => {
                                 color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                             }}
                         >
-                            {!storageSavingsLoading && formatFractionalNumber(savingsPer, 0)}
+                            {!storageSavingsLoading && formatFractionalNumberForCost(savingsPer, 0, false)}
                         </DsTypography>
                         <DsTypography
                             variant="Regular_16"
