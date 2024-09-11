@@ -9,12 +9,12 @@
           "capacityCost": 552,
           "operationalCost": 178.052,
           "size": {
-            "total": 1840,
-            "data": 1153.434,
-            "log": 288.359,
-            "tempdb": 115.344,
-            "quorum": 12,
-            "buffer": 314.368
+            "total": 1975684956160,
+            "data": 1238490327023.616,
+            "log": 309623118626.816,
+            "tempdb": 123849676947.456,
+            "quorum": 12884901888,
+            "buffer": 337550069727.232
           }
         }
       ]
@@ -26,7 +26,7 @@
           "id": "ROOT_VOLUME",
           "volumeType": "gp3",
           "cost": 96,
-          "size": 1000
+          "size": 1073741824000
         }
       ]
     }

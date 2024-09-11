@@ -16,6 +16,7 @@ import {
     FORM_OPTIONS,
     FSXN_STORAGE_PROTOCOLS,
     FSX_DEPLOYMENT_MODE,
+    GIB_IN_BYTE,
     JM_DOWNLOAD,
     JOBS_REPORT,
     JOB_MONITORING_STATUS,
@@ -1662,4 +1663,28 @@ export const apiDOCURL = () => {
             return 'https://console.workloads.netapp.com/api-doc';
         }
     }
+};
+
+export const updateSizeInGib = (data: any): any => {
+    if (Array.isArray(data)) {
+        return data.map(item => updateSizeInGib(item));
+    } else if (typeof data === 'object' && data !== null) {
+        const updatedData: any = {};
+        for (const key in data) {
+            if (key === 'size') {
+                if (typeof data[key] === 'object') {
+                    updatedData[key] = {};
+                    for (const subKey in data[key]) {
+                        updatedData[key][subKey] = data[key][subKey] / GIB_IN_BYTE;
+                    }
+                } else {
+                    updatedData[key] = data[key] / GIB_IN_BYTE;
+                }
+            } else {
+                updatedData[key] = updateSizeInGib(data[key]);
+            }
+        }
+        return updatedData;
+    }
+    return data;
 };

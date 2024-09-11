@@ -16,7 +16,7 @@ import { useGetEstimationCostMutation } from '../../../utils/apiService';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 import { FORM_OPTIONS, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import SizePopover from './SizePopover/SizePopover';
-import { formatNumberWithCustomComma, isFsxnNew } from '../../../utils/utilityFunctions';
+import { formatNumberWithCustomComma, isFsxnNew, updateSizeInGib } from '../../../utils/utilityFunctions';
 import { setEstimatedCostData, setEstimatedCostLoading } from '../../../store/mssql/mssqlSlice';
 import { useDispatch } from 'react-redux';
 import { setPricingPayload } from '../../../store/mssql/msSqlActionSlice';
@@ -173,7 +173,6 @@ const EstimatedCost = () => {
                 };
             }
 
-            // ToDo - write logic to add ebs storage
             let ebsVolumeSize = 0;
             if (selectedLicenseType === FORM_OPTIONS.LICENSE_AMI) {
                 ebsVolumeSize = selectedLicenseId?.data?.ebsVolumeSize || 0;
@@ -220,9 +219,10 @@ const EstimatedCost = () => {
                                 setIsDisabled(true);
                                 dispatch(setEstimatedCostData(null));
                             } else {
-                                setData(data);
+                                let formattedData = updateSizeInGib(data);
+                                setData(formattedData);
                                 setIsDisabled(false);
-                                dispatch(setEstimatedCostData(data));
+                                dispatch(setEstimatedCostData(formattedData));
                             }
                             dispatch(setEstimatedCostLoading(false));
                         }, 2000);
@@ -318,6 +318,14 @@ const EstimatedCost = () => {
         return total.toFixed(2);
     };
 
+    const totalEbsSize = (data: Res) => {
+        let total = 0;
+        data?.data?.ebsStorage?.ebsBreakdownByVolumeType?.forEach((element: any) => {
+            total += Number(element?.size || 0);
+        });
+        return total;
+    };
+
     return (
         <div className={styles['estimated-cost']}>
             <AccordionCard
@@ -378,7 +386,9 @@ const EstimatedCost = () => {
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
                                             {GENERAL.SIZE}:
-                                            {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total + ' GiB'}
+                                            {' ' +
+                                                data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total +
+                                                ' GiB'}
                                         </Typography>
                                         {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total && (
                                             <TooltipInfo className={styles.tooltipClass}>
@@ -447,8 +457,7 @@ const EstimatedCost = () => {
                                     </Typography>
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
-                                            {GENERAL.SIZE}:
-                                            {' ' + data?.data?.ebsStorage?.ebsBreakdownByVolumeType?.[0]?.size + ' GiB'}
+                                            {GENERAL.SIZE}:{' ' + totalEbsSize(data) + ' GiB'}
                                         </Typography>
                                     </div>
                                     <div className={styles.sizeRow}>
