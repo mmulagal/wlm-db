@@ -79,10 +79,8 @@ foreach ($disk in $disks) {
                 FileSystem = $logicalDisk.FreeSpace
             }
 
-            if ($deploymentType -eq 'FCI') {
-                if ($sqlDrives -contains $logicalDisk.DeviceID) {
-                    $logicalDiskObject = $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value "SQL Server ($instanceName)" -PassThru
-                }
+            if ($deploymentType -eq 'FCI' -and $sqlDrives -contains $logicalDisk.DeviceID) {
+                $logicalDiskObject = $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value "SQL Server ($instanceName)" -PassThru
             }
 
             [void]$results.Add($logicalDiskObject)
