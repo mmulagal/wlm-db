@@ -1,5 +1,15 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { STANDALONE, FCI, SINGLE_AZ, MULTI_AZ, SQL_STD, SQL_ENT, SQL_WEB, CUSTOM } from '../../utils/consts';
+import {
+    STANDALONE,
+    FCI,
+    SINGLE_AZ,
+    MULTI_AZ,
+    SQL_STD,
+    SQL_ENT,
+    SQL_WEB,
+    CUSTOM,
+    EBS_ROOT_VOLUME
+} from '../../utils/consts';
 
 const PricingServiceRequest = Type.Object({
     compute: Type.Object({
@@ -33,11 +43,13 @@ const PricingServiceRequest = Type.Object({
             regionCode: Type.String({ minLength: 1 }),
             ebsResourceInfo: Type.Array(
                 Type.Object({
-                    id: Type.String({ description: 'Unique identifier for the EBS volume' }),
+                    id: Type.String({ description: 'Unique identifier for the EBS volume', default: EBS_ROOT_VOLUME }),
                     size: Type.Number({ description: 'Volume size in GiB' }),
                     throughput: Type.Optional(Type.Number({ description: 'Throughput is in MBps' })),
                     iops: Type.Optional(Type.Number()),
-                    volumeType: Type.String(Type.String({ enum: ['gp2', 'io1', 'st1', 'sc1', 'gp3', 'io2'] }))
+                    volumeType: Type.String(
+                        Type.String({ enum: ['gp2', 'io1', 'st1', 'sc1', 'gp3', 'io2'], default: 'gp3' })
+                    )
                 })
             )
         })
