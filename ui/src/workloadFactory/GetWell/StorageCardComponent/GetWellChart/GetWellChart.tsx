@@ -1,0 +1,111 @@
+import { useEffect, useRef } from 'react';
+import { Chart, registerables } from 'chart.js';
+
+import styles from './GetWellChart.module.scss';
+
+Chart.register(...registerables);
+
+type colorCodes = {
+    startColor: string;
+    endColor: string;
+};
+
+const GetWellChart = ({ startColor, endColor }: colorCodes) => {
+    const chartRef = useRef(null);
+
+    useEffect(() => {
+        //@ts-ignore
+        const ctx = chartRef?.current?.getContext('2d');
+
+        var gradientStroke = ctx.createLinearGradient(0, 50, 0, 400);
+        gradientStroke.addColorStop(0, '#0BAFFC');
+        gradientStroke.addColorStop(1, endColor);
+
+        var gradientFill = ctx.createLinearGradient(0, 0, 0, 150);
+        gradientFill.addColorStop(0, '#0BAFFC');
+        gradientFill.addColorStop(1, endColor);
+
+        // Create a gradient fill
+        var gradientBG = ctx.createLinearGradient(0, 0, 0, 70);
+        gradientBG.addColorStop(0, 'rgba(11, 175, 252, 0.5)'); // Color at top
+        gradientBG.addColorStop(1, 'rgba(11, 175, 252, 0.04)'); // Transparent at bottom
+
+        //@ts-ignore
+        var mayBarChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+                datasets: [
+                    {
+                        label: 'value',
+                        data: [70, 50, 70, 50, 70, 55, 45],
+                        borderColor: '#0BAFFC',
+
+                        pointBackgroundColor: gradientStroke,
+                        pointHoverBackgroundColor: gradientStroke,
+                        pointHoverBorderColor: gradientStroke,
+                        pointBorderWidth: 1.2,
+                        pointBorderColor: 'white',
+                        // pointHoverRadius: 10,
+                        // pointHoverBorderWidth: 1,
+                        pointRadius: 5,
+                        fill: true,
+                        backgroundColor: gradientBG,
+                        borderWidth: 3,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    filler: {
+                        propagate: false
+                    }
+                },
+
+                scales: {
+                    x: {
+                        display: false, // Hide X axis labels
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#404040'
+                        }
+                    },
+
+                    y: {
+                        display: false,
+                        beginAtZero: true,
+
+                        ticks: {
+                            color: '#404040'
+                        }
+                        // stacked: true
+                    }
+                },
+
+                interaction: {
+                    intersect: false
+                }
+            }
+        });
+
+        return () => {
+            mayBarChart.destroy();
+        };
+    }, []);
+
+    return (
+        <div className={styles.getWellChart}>
+            <canvas ref={chartRef} width={271} height={80}></canvas>
+        </div>
+    );
+};
+
+export default GetWellChart;

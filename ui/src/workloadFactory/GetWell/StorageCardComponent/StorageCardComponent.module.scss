@@ -1,0 +1,46 @@
+.storageCardComponent {
+    height: 125px;
+    width: 1608px;
+    background-color: var(--content-background);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+
+    .commonSection {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        height: 56px;
+        width: 224px;
+        border-right: 1px solid var(--border);
+
+        .statusTopSection {
+            display: flex;
+            gap: 4px;
+
+            .svgSection {
+                position: relative;
+                left: -4px;
+            }
+        }
+    }
+
+    .thirdSection {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        height: 64px;
+        width: 224px;
+        border-right: 1px solid var(--border);
+    }
+
+    .fourthSection {
+        display: flex;
+        flex-direction: column;
+        height: 93px;
+        width: 330px;
+        position: relative;
+        top: 5px;
+    }
+}
