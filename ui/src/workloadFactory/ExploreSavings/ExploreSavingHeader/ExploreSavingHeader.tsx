@@ -52,6 +52,7 @@ const ExploreSavingHeader = () => {
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
                                         onClick={() => handleManualTCOEBS(dispatch, navigate)}
+                                        style={{ marginTop: '12px' }}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
@@ -59,6 +60,7 @@ const ExploreSavingHeader = () => {
                                         className={styles.link}
                                         id="explore-savings-manually-fsxW"
                                         onClick={() => handleManualTCOFSXW(dispatch, navigate)}
+                                        style={{ marginTop: '4px' }}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
