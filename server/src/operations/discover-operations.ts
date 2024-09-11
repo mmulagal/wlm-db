@@ -475,6 +475,16 @@ async function getHostAndSqlInfoFromPsOutput(
                 responseInJson = [responseInJson];
             }
 
+            responseInJson.forEach((item: { [key: string]: any }) => {
+                try {
+                    if (item.hasOwnProperty('windowsClusterNodes')) {
+                        item.windowsClusterNodes = JSON.parse(item.windowsClusterNodes);
+                    }
+                } catch (error) {
+                    logger.error('Error parsing windowsClusterNodes:', error);
+                }
+            });
+
             for (const sqlServerInstanceInfo of responseInJson) {
                 // If an SQL Server version is unknown, default to 2015, which
                 // causes no data to be returned for the SQL Server instance.
