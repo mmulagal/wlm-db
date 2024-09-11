@@ -1,22 +1,33 @@
+
 {
-    "compute": 243,
-    "fsxnStorage": { 
-        "fsxStorageCost": 128, 
-        "fsxnCostBreakdownById": [
-            {
-                "operationalCost": 184.32, 
-                "capacityCost": 20, 
-                "size": {
-                    "data": 1128.6005859375,
-                    "log": 282.150390625,
-                    "tempdb": 112.8603515625,
-                    "total": 1536,
-                    "quorum": 11.71875,
-                    "buffer": 307
-                }
-            }
-        ]
+    "compute": 1319.8400000000001,
+    "total": 2145.8920000000003,
+    "fsxnStorage": {
+      "fsxStorageCost": 730.052,
+      "fsxnCostBreakdownById": [
+        {
+          "capacityCost": 552,
+          "operationalCost": 178.052,
+          "size": {
+            "total": 1840,
+            "data": 1153.434,
+            "log": 288.359,
+            "tempdb": 115.344,
+            "quorum": 12,
+            "buffer": 314.368
+          }
+        }
+      ]
     },
-    "vpc": 241,
-    "total": 5000
-}
+    "ebsStorage": {
+      "ebsStorageCost": 96,
+      "ebsBreakdownByVolumeType": [
+        {
+          "id": "ROOT_VOLUME",
+          "volumeType": "gp3",
+          "cost": 96,
+          "size": 1000
+        }
+      ]
+    }
+  }

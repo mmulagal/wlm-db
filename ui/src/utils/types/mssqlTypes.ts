@@ -45,6 +45,7 @@ export interface Ami {
     name: string;
     imageId: string;
     architecture?: string;
+    ebsVolumeSize?: string;
 }
 
 export interface SNS {

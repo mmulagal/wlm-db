@@ -14,11 +14,13 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useGetEstimationCostMutation } from '../../../utils/apiService';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
-import { FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { FORM_OPTIONS, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import SizePopover from './SizePopover/SizePopover';
 import { formatNumberWithCustomComma, isFsxnNew } from '../../../utils/utilityFunctions';
 import { setEstimatedCostData, setEstimatedCostLoading } from '../../../store/mssql/mssqlSlice';
 import { useDispatch } from 'react-redux';
+import { setPricingPayload } from '../../../store/mssql/msSqlActionSlice';
+const _ = require('lodash');
 
 type Res = {
     data: {
@@ -40,6 +42,17 @@ type Res = {
             ];
         };
         total: '';
+        ebsStorage: {
+            ebsStorageCost: '';
+            ebsBreakdownByVolumeType: [
+                {
+                    id: '';
+                    volumeType: '';
+                    cost: '';
+                    size: '';
+                }
+            ];
+        };
     };
 };
 
@@ -64,11 +77,14 @@ const EstimatedCost = () => {
     const iopsValueType = useAppSelector(state => state.mssqlForm.provisionedIOPS?.provisionedType);
     const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS?.IOPSValue);
     const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
+    const { selectedLicenseId, selectedCustomAMI } = useAppSelector(state => state.mssqlForm.license);
 
     const selectedZone1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
     const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedLicenseType = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
+
+    const pricingPayload = useAppSelector(state => state.msSqlAction.pricingPayload);
 
     const fsxVolThroughput = () => {
         const value = (throughputValue || '').split(' ');
@@ -110,6 +126,7 @@ const EstimatedCost = () => {
         ) {
             validDisk = true;
         }
+
         if (
             selectedCredId &&
             regionValue &&
@@ -155,32 +172,69 @@ const EstimatedCost = () => {
                     }
                 };
             }
-            setIsLoading(true);
-            dispatch(setEstimatedCostLoading(true));
-            getEstimationCost({ payload: payload })
-                .then((data: any) => {
-                    setTimeout(() => {
+
+            // ToDo - write logic to add ebs storage
+            let ebsVolumeSize = 0;
+            if (selectedLicenseType === FORM_OPTIONS.LICENSE_AMI) {
+                ebsVolumeSize = selectedLicenseId?.data?.ebsVolumeSize || 0;
+            } else if (selectedLicenseType === FORM_OPTIONS.CUSTOM_AMI) {
+                ebsVolumeSize = selectedCustomAMI?.data?.ebsVolumeSize || 0;
+            }
+
+            if (ebsVolumeSize > 100) {
+                payload = {
+                    ...payload,
+                    ebsStorage: {
+                        regionCode: updatedStr || '',
+                        ebsResourceInfo:
+                            deploymentModel?.label === GENERAL.SINGLE_INSTANCE
+                                ? [
+                                      {
+                                          size: ebsVolumeSize
+                                      }
+                                  ]
+                                : [
+                                      {
+                                          size: ebsVolumeSize
+                                      },
+                                      {
+                                          size: ebsVolumeSize
+                                      }
+                                  ]
+                    }
+                };
+            }
+
+            const comparedPayloadValues = _.isEqual(payload, pricingPayload);
+
+            if (!comparedPayloadValues) {
+                setIsLoading(true);
+                dispatch(setEstimatedCostLoading(true));
+                dispatch(setPricingPayload(payload));
+                getEstimationCost({ payload: payload })
+                    .then((data: any) => {
+                        setTimeout(() => {
+                            setIsLoading(false);
+                            setFetchResult(true);
+                            if (data.error) {
+                                setIsDisabled(true);
+                                dispatch(setEstimatedCostData(null));
+                            } else {
+                                setData(data);
+                                setIsDisabled(false);
+                                dispatch(setEstimatedCostData(data));
+                            }
+                            dispatch(setEstimatedCostLoading(false));
+                        }, 2000);
+                    })
+                    .catch((error: any) => {
                         setIsLoading(false);
-                        setFetchResult(true);
-                        if (data.error) {
-                            setIsDisabled(true);
-                            dispatch(setEstimatedCostData(null));
-                        } else {
-                            setData(data);
-                            setIsDisabled(false);
-                            dispatch(setEstimatedCostData(data));
-                        }
+                        setFetchResult(false);
+                        setIsDisabled(true);
                         dispatch(setEstimatedCostLoading(false));
-                    }, 2000);
-                })
-                .catch((error: any) => {
-                    setIsLoading(false);
-                    setFetchResult(false);
-                    setIsDisabled(true);
-                    dispatch(setEstimatedCostLoading(false));
-                    dispatch(setEstimatedCostData(null));
-                    console.log('Error while fetching data - ', error);
-                });
+                        dispatch(setEstimatedCostData(null));
+                    });
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
@@ -194,7 +248,9 @@ const EstimatedCost = () => {
         iopsValue,
         deploymentModel,
         selectedFsxnType,
-        selectedLicenseType
+        selectedLicenseType,
+        selectedLicenseId,
+        selectedCustomAMI
     ]);
 
     //To open accordion if default account is present
@@ -253,6 +309,13 @@ const EstimatedCost = () => {
         } else {
             return isDisabled || !regionValue || !selectedZone1 || !selectedZone2;
         }
+    };
+
+    const calculateTotalForExistingFsx = (data: Res | undefined) => {
+        let total = 0;
+        total += Number(data?.data?.compute || 0);
+        total += Number(data?.data?.ebsStorage?.ebsStorageCost || 0);
+        return total.toFixed(2);
     };
 
     return (
@@ -373,6 +436,45 @@ const EstimatedCost = () => {
                             </div>
                         )}
 
+                        {data?.data?.ebsStorage && (
+                            <div className={styles.storageContainer}>
+                                <Typography variant="Semibold_14" className={styles.compute}>
+                                    {!isFsxnNew(selectedFsxnType) ? GENERAL.STORAGE : ' '}
+                                </Typography>
+                                <div className={styles.secondRow}>
+                                    <Typography variant="Regular_14">
+                                        {GENERAL.TYPE}: {GENERAL.EBS}
+                                    </Typography>
+                                    <div className={styles.sizeRow}>
+                                        <Typography variant="Regular_14">
+                                            {GENERAL.SIZE}:
+                                            {' ' + data?.data?.ebsStorage?.ebsBreakdownByVolumeType?.[0]?.size + ' GiB'}
+                                        </Typography>
+                                    </div>
+                                    <div className={styles.sizeRow}>
+                                        <Typography variant="Regular_14">
+                                            {GENERAL.TYPE}:
+                                            {' ' + data?.data?.ebsStorage?.ebsBreakdownByVolumeType?.[0]?.volumeType}
+                                        </Typography>
+                                    </div>
+                                </div>
+                                <div className={styles.thirdRow}>
+                                    <Typography variant="Regular_14" className={styles.costValue}>
+                                        {isLoading ? (
+                                            <div className={styles.loadingPlacement}>
+                                                <LoadingComponent />
+                                            </div>
+                                        ) : (
+                                            //@ts-ignore
+                                            `$${formatNumberWithCustomComma(
+                                                Number(data?.data?.ebsStorage?.ebsStorageCost).toFixed(2)
+                                            )}` || ''
+                                        )}
+                                    </Typography>
+                                </div>
+                            </div>
+                        )}
+
                         {/* <div className={styles.connectivityContainer}>
                             <Typography variant="Semibold_14" className={styles.compute}>
                                 {GENERAL.CONNECTIVITY}
@@ -427,7 +529,7 @@ const EstimatedCost = () => {
                                 isFsxnNew(selectedFsxnType) ? (
                                     `$${formatNumberWithCustomComma(Number(data?.data?.total).toFixed(2))}` || ''
                                 ) : (
-                                    `$${formatNumberWithCustomComma(Number(data?.data?.compute).toFixed(2))}` || ''
+                                    `$${formatNumberWithCustomComma(calculateTotalForExistingFsx(data))}` || ''
                                 )}
                             </Typography>
                         </div>
