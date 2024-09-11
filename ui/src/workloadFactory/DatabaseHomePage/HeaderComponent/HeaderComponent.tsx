@@ -600,7 +600,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                 case 'apiHub':
                                                     let url = apiDOCURL();
                                                     //@ts-ignore
-                                                    window.open(url, '_blank').focus();
+                                                    window.open(url, '_blank', 'noopener').focus();
                                                     break;
 
                                                     break;
@@ -609,7 +609,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                     window
                                                         .open(
                                                             'https://github.com/NetApp/FSx-ONTAP-samples-scripts/tree/main/Monitoring',
-                                                            '_blank'
+                                                            '_blank',
+                                                            'noopener'
                                                         )
                                                         .focus();
                                                     break;
