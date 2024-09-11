@@ -240,8 +240,8 @@ const EstimatedCost = () => {
             return (
                 <Typography variant="Regular_14">
                     {isFsxnNew(selectedFsxnType)
-                        ? `$${Number(data?.data?.total).toFixed(2)}` || ''
-                        : `$${Number(data?.data?.compute).toFixed(2)}` || ''}
+                        ? `$${formatNumberWithCustomComma(Number(data?.data?.total).toFixed(2))}` || ''
+                        : `$${formatNumberWithCustomComma(Number(data?.data?.compute).toFixed(2))}` || ''}
                 </Typography>
             );
         }

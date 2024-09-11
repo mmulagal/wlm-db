@@ -27,7 +27,7 @@ import {
 import { getNetworkInterfacesList } from './ec2-operations';
 import { ResourceDetails } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { getFsxArn, getOriginalDatabaseInstanceName } from '../../utils/utils';
+import { getFsxArn } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
 import { getMappedOntapVolumesScript, restGetUtilForOntap } from '../workloads/mssql/ssm-script-utils';
@@ -438,7 +438,6 @@ async function getMappedOntapVolumes(
     fileSystemId: string,
     isSystemDatabase: boolean,
     activeNodeInstanceId?: string,
-    instanceName?: string,
     instanceNames?: string[],
     isSqlAuthEnabled = false
 ) {
@@ -448,7 +447,6 @@ async function getMappedOntapVolumes(
         fileSystemId,
         activeNodeInstanceId,
         isSystemDatabase,
-        instanceName,
         isSqlAuthEnabled
     });
 
@@ -460,18 +458,9 @@ async function getMappedOntapVolumes(
         // retrieve the mapped volumes for system databases alone when isSystemDatabase is true otherwise includes user dbs also
         const psIsSystemDatabase = isSystemDatabase ? '$true' : '$false';
 
-        let sqlInstanceName;
-        let isSingleInstance = false;
-        if (instanceName && isEmpty(instanceNames)) {
-            sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
-            instanceNames = [sqlInstanceName!];
-            isSingleInstance = true;
-        }
-
         const command = getMappedOntapVolumesScript(
             fileSystemId,
             region,
-            instanceName,
             psIsSystemDatabase,
             instanceNames,
             isSqlAuthEnabled
@@ -503,7 +492,7 @@ async function getMappedOntapVolumes(
             }
         });
 
-        return isSingleInstance ? instancesResponse[sqlInstanceName!] : instancesResponse;
+        return instancesResponse;
     } catch (err) {
         logger.error('Failed executing SSM script to get ontap mapped volumes', { err });
     }

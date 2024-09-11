@@ -815,7 +815,7 @@ export const getDiscoveredActions = (row: Array<StatusObjInterface>, installatio
     });
     if (!isFsxn && isStorage) {
         action = INVENTORY_ACTIONS.EXPLORE_SAVINGS;
-        actionDisable = isEbs ? (undetected?.length > 0 && unmanaged?.length === 0 ? true : false) : true;
+        actionDisable = undetected?.length > 0 && unmanaged?.length === 0 ? true : false;
     } else {
         action = INVENTORY_ACTIONS.MANAGE;
         if ((undetected?.length > 0 && unmanaged?.length > 0) || (undetected?.length === 0 && unmanaged?.length > 0)) {

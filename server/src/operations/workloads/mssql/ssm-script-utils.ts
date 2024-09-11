@@ -3,30 +3,7 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../uti
 /* eslint-disable no-useless-escape */
 
 import { SCRIPT_VERSON_FILE } from './const';
-
-const compressResponse = `
-    Function Deflate-String([string]$stringToCompress) {
-
-        if ([string]::IsNullOrEmpty($stringToCompress)) {
-            Write-Information "The string to compress is either null or empty."
-            return $null
-        }
-
-        $encoder = New-Object System.Text.UTF8Encoding
-        $memoryStream = New-Object System.IO.MemoryStream
-        $deflateStream = New-Object System.IO.Compression.DeflateStream($memoryStream, [System.IO.Compression.CompressionMode]::Compress)
-
-        $buffer = $encoder.GetBytes($stringToCompress)
-        $deflateStream.Write($buffer, 0, $buffer.Length)
-        $memoryStream.Position = 0
-        $deflateStream.Dispose()
-
-        $bytes = $memoryStream.ToArray()
-        $encodedString = [Convert]::ToBase64String($bytes)
-
-        return $encodedString
-    }
-`;
+import { compressResponse, ontapRestRequest } from './common-templates';
 
 const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string, instanceName: string = DEFAULT_INSTANCE_NAME) => ` 
 Function GetSMBMappedDrivesWithPath() {
@@ -515,7 +492,6 @@ const installPowerShellModule = (module: string) => `
 const getMappedOntapVolumesScript = (
     fsxid: string,
     fsxregion: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     isSystemDatabase: string = '$false',
     instances: string[] = [],
     sqlAuthEnabled: boolean = false
@@ -530,13 +506,7 @@ const getMappedOntapVolumesScript = (
 
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
-        $instances = '${JSON.stringify(
-            instances?.length
-                ? instances
-                : instanceName === DEFAULT_MSSQL_INSTANCE_NAME
-                ? [DEFAULT_INSTANCE_NAME]
-                : [instanceName?.split('\\')?.[1]]
-        )}' | ConvertFrom-Json
+        $instances = '${JSON.stringify(instances)}' | ConvertFrom-Json
 
         ${getSqlCredentials(sqlAuthEnabled)}
         $sqlInstances = $instances | ForEach-Object {
@@ -553,19 +523,7 @@ const getMappedOntapVolumesScript = (
             }
         }
 
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True -ErrorAction Stop).Value | Out-String | ConvertFrom-Json  
-        $FSxUserName = $SsmParameter.fsx.username
-        $FSxPassword = $SsmParameter.fsx.password
-        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-
-        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        $tempfileObject = New-TemporaryFile
-        $tempfile = $tempfileObject.FullName
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
-        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
-        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
+        ${ontapRestRequest()}
 
         $instanceRespones = @{}
         $sqlInstances | ForEach-Object {
@@ -709,25 +667,6 @@ const getMappedOntapVolumesScript = (
                     }
                 }
 
-                Function Invoke-ONTAPGetRequest {
-                    param(
-                        [Parameter(Mandatory = $false)]
-                        [string]$ApiEndpoint,
-
-                        [Parameter(Mandatory = $false)]
-                        [string]$ApiQueryFilter
-                    )
-
-                    $Params = @{
-                        "URI"     = 'https://' + $FSxHostName + '/api' + $ApiEndpoint + '?' + $ApiQueryFilter
-                        "Method"  = "GET"
-                        "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
-                        "ContentType" = "application/json"
-                    }
-
-                    return Invoke-RestMethod @Params -Certificate $regionCertificateificate
-                }
-
                 Function Get-LunFromSerialNumber($SerialNumbers, $VolumeSerialMapping) {
                     Write-Debug "Get ONTAP lun name from serial numbers for: $VolumeSerialMapping"
 
@@ -748,7 +687,7 @@ const getMappedOntapVolumesScript = (
                     if ($QueryFilter -ne '') {
                         $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
                     
-                        $Response = Invoke-ONTAPGetRequest @Params
+                        $Response = Invoke-ONTAPRequest @Params
 
                         $LunRecords = $Response.records
 
@@ -791,7 +730,7 @@ const getMappedOntapVolumesScript = (
                         $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=snapshot_count"}
                     
 
-                        $Response = Invoke-ONTAPGetRequest @Params
+                        $Response = Invoke-ONTAPRequest @Params
 
                         $VolumeNameMapping = @{}
                         foreach ($record in $Response.records) {
@@ -838,7 +777,7 @@ const getMappedOntapVolumesScript = (
                         $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=volume"}
                     
                     
-                        $cifsShares = Invoke-ONTAPGetRequest @Params
+                        $cifsShares = Invoke-ONTAPRequest @Params
                         $cifsRecords = $cifsShares.records
 
                         foreach ($record in $cifsRecords) {
@@ -1005,47 +944,9 @@ const restGetUtilForOntap = (
         $APIQueryFilter = '${apiQueryFilter}'
         $ApiQueryFields = '${apiQueryFields}'
 
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-        $FSxUserName = $SsmParameter.fsx.username
-        $FSxPassword = $SsmParameter.fsx.password
-        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-        
-        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        $tempfileObject = New-TemporaryFile
-        $tempfile = $tempfileObject.FullName
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
-        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
-        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
+        ${ontapRestRequest()}
      
-        Function Invoke-ONTAPGetRequest {
-            param(
-                [Parameter(Mandatory = $false)]
-                [string]$ApiEndpoint,
-     
-                [Parameter(Mandatory = $false)]
-                [string]$ApiQueryFilter,
-     
-                [Parameter(Mandatory = $false)]
-                [string]$ApiQueryFields
-            )
-     
-            $Ampersand = ''
-            if ($ApiQueryFields -ne '' -and $ApiQueryFilter -ne '') {
-                $Ampersand = '&';
-            }
-            $Params = @{
-                "URI"     = 'https://' + $FSxHostName + '/api' + $ApiEndpoint + '?' + $ApiQueryFilter + $Ampersand + $ApiQueryFields
-                "Method"  = "GET"
-                "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
-                "ContentType" = "application/json"
-            }
-     
-            return Invoke-RestMethod @Params -Certificate $regionCertificateificate
-        }
-     
-        $responseObject = Invoke-ONTAPGetRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
+        $responseObject = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
     } catch {
         $responseObject = @{
             error = $_.Exception.Message

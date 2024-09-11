@@ -24,7 +24,7 @@ router.post(
     `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/storage-savings/calculations`,
     async (req: {}, res: any) => {
         setTimeout(() => {
-            generateResponse(res, 200, ViewCalculations);
+            generateResponse(res, 200, ViewCalculationsFsxw);
         }, 5000);
     }
 );
