@@ -3,7 +3,7 @@ import config from 'config';
 import randomize from 'randomatic';
 
 import { STORAGE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { FileSystem, FileSystemType } from '@aws-sdk/client-fsx';
+import { FileSystemType } from '@aws-sdk/client-fsx';
 import { attempt, compact, uniqBy, isEmpty, cloneDeep } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
@@ -16,7 +16,12 @@ import {
     upsertDatabaseInstance
 } from '../lib/database/db';
 import { getResources } from './database/database-operations';
-import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
+import {
+    describeInstance,
+    paginateDescribeEbsVolumes,
+    paginatedDescribeSubnets,
+    paginatedDescribeVpcs
+} from '../lib/aws/ec2';
 import {
     getResourceNameFromTags,
     sleep,
@@ -49,7 +54,8 @@ import {
     OFFLINE,
     SQL_SERVICE_STATE,
     NOT_AVAILABLE,
-    PREPARE_PSMODULES_RELATIVE_PATH
+    PREPARE_PSMODULES_RELATIVE_PATH,
+    SINGLE_AZ
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -235,10 +241,15 @@ async function getHostAndSqlServerInfo(
           call will come with a new nextToken.
         */
         api1StartTime = performance.now();
-        const [fsxList, svmList, subnetList] = await Promise.all([
+        const [fsxList, svmList, subnetList, ebsVolumeList] = await Promise.all([
             describeFSxFileSystems(credentialsId, region),
             describeFSxStorageVirtualMachines(credentialsId, region),
-            paginatedDescribeSubnets(credentialsId, region, {})
+            paginatedDescribeSubnets(credentialsId, region, {}),
+            paginateDescribeEbsVolumes(credentialsId, region, {
+                Filters: [
+                    { Name: 'attachment.instance-id', Values: ssmConnectedNodes.map(target => target.ec2InstanceId) }
+                ]
+            })
         ]);
         api1EndTime = performance.now();
         logger.info(`API1Performance: Time taken by describe FSxFS/SVM: ${api1EndTime - api1StartTime}ms`);
@@ -270,12 +281,6 @@ async function getHostAndSqlServerInfo(
                     type: FileSystemType.ONTAP
                 });
             }
-            const { OntapConfiguration, SubnetIds } =
-                fsxList.find((fsx: FileSystem) => fsx?.FileSystemId === fsId) || {};
-            fsIdWithDeploymentType.set(fsId!, {
-                deploymentType: OntapConfiguration?.DeploymentType,
-                subnetIds: SubnetIds!
-            });
         });
 
         // Fetch windows mount points from FSxW
@@ -302,10 +307,22 @@ async function getHostAndSqlServerInfo(
                 );
             });
 
+        fsxList.forEach(({ FileSystemId, OntapConfiguration, WindowsConfiguration, SubnetIds }) => {
+            if (FileSystemId) {
+                fsIdWithDeploymentType.set(FileSystemId, {
+                    deploymentType: isEmpty(OntapConfiguration)
+                        ? WindowsConfiguration?.DeploymentType
+                        : OntapConfiguration?.DeploymentType,
+                    subnetIds: SubnetIds
+                });
+            }
+        });
+
         api1EndTime = performance.now();
         logger.info(`API1Performance: Endpoint/FSx/Deployment map creation time: ${api1EndTime - api1StartTime}ms`);
 
         const subnetListMap = new Map(subnetList?.map(subnet => [subnet.SubnetId, subnet.AvailabilityZone]));
+        const ebsVolumeToAvailabilityZoneMap = new Map(ebsVolumeList?.map(vol => [vol.VolumeId, vol.AvailabilityZone]));
 
         // PowerShell execution would take some time, so we wait for a second before triggering polling.
         //
@@ -329,7 +346,8 @@ async function getHostAndSqlServerInfo(
                         commandId!,
                         endPointIpWithFsxInfo,
                         fsIdWithDeploymentType,
-                        subnetListMap
+                        subnetListMap,
+                        ebsVolumeToAvailabilityZoneMap
                     );
                     const dbInfoEndTime = performance.now();
                     logger.info(
@@ -374,7 +392,8 @@ async function getHostAndSqlInfoFromPsOutput(
     commandId: string,
     endPointIpWithFsxInfo: Map<string, FSxInfo>,
     fsIdWithDeploymentType: Map<string, DeployType>,
-    subnetListMap: Map<string | undefined, string | undefined>
+    subnetListMap: Map<string | undefined, string | undefined>,
+    ebsVolumeToAvailabilityZoneMap: Map<string | undefined, string | undefined>
 ): Promise<SqlServerInstanceInfoType[]> {
     logger.info('Get host and SQL server details from PowerShell output', {
         credentialsId,
@@ -455,9 +474,6 @@ async function getHostAndSqlInfoFromPsOutput(
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
             }
-            responseInJson.forEach((item: { windowsClusterNodes: string }) => {
-                item.windowsClusterNodes = JSON.parse(item.windowsClusterNodes);
-            });
 
             for (const sqlServerInstanceInfo of responseInJson) {
                 // If an SQL Server version is unknown, default to 2015, which
@@ -479,14 +495,22 @@ async function getHostAndSqlInfoFromPsOutput(
                     }
 
                     for (const di of driveInfo) {
-                        const ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
+                        let ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
                         const volIdRegex = /^(vol)([a-zA-Z0-9]+)/; // volumeId derived from SerialNumberOrScsiTarget is of the format,vol012ab34ed, but, AWS ebs volume IDs are always in vol-012ab34ed format, so we need to convert it to the correct format.
                         if (ebsVolumeId) {
+                            ebsVolumeId = volIdRegex.test(ebsVolumeId)
+                                ? ebsVolumeId.replace(volIdRegex, '$1-$2')
+                                : ebsVolumeId;
                             storageTypes.push({
                                 type: STORAGE_TYPE.EBS,
-                                id: volIdRegex.test(ebsVolumeId)
-                                    ? ebsVolumeId.replace(volIdRegex, '$1-$2')
-                                    : ebsVolumeId // convert the volumeId to the correct format.
+                                id: ebsVolumeId
+                            });
+                            const ebsAvailabilityZone = ebsVolumeToAvailabilityZoneMap.get(ebsVolumeId);
+                            deploymentTypes.push({
+                                ...(ebsAvailabilityZone && {
+                                    zones: [ebsAvailabilityZone],
+                                    type: SINGLE_AZ
+                                })
                             });
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
@@ -517,26 +541,35 @@ async function getHostAndSqlInfoFromPsOutput(
 
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
                             const targets = di?.SmbSharePath ? di.SmbSharePath.toLowerCase() : '';
-                            const matchedEndpoints = fsxEndpoints.filter(value =>
-                                targets.includes(value.toLowerCase())
-                            );
+                            const matchedEndpoint = fsxEndpoints.find(value => targets.includes(value.toLowerCase()));
 
-                            if (!isEmpty(matchedEndpoints)) {
-                                const fsxType = endPointIpWithFsxInfo.get(matchedEndpoints[0])?.type;
+                            if (matchedEndpoint) {
+                                const {
+                                    type: fsxType,
+                                    fsxId,
+                                    svmId
+                                } = endPointIpWithFsxInfo.get(matchedEndpoint) || {};
                                 if (fsxType === FileSystemType.WINDOWS) {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXW,
-                                        id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
+                                        id: fsxId,
                                         protocol: STORAGE_PROTOCOLS.SMB
                                     });
                                 } else {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXN,
-                                        id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
-                                        svmId: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.svmId,
+                                        id: fsxId,
+                                        svmId,
                                         protocol: STORAGE_PROTOCOLS.SMB
                                     });
                                 }
+
+                                const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
+                                deploymentTypes.push({
+                                    type: deploymentType,
+                                    zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
+                                    ids: subnetIds?.join()
+                                });
                             }
                         }
                     }
