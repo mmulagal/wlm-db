@@ -295,15 +295,18 @@ const HOST_AND_SQL_INFO_PS1 = [
       $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
       If ($clusterName) {
         $clusterDetailsResponse['name'] = $clusterName
-        $clusterNodes = Get-ClusterNetworkInterface | Select-Object -Property Address, Node
-        $clusterDetailsResponse['nodeIps'] =  (Get-ClusterNetworkInterface | select-object -ExpandProperty Address)    
-        $windowsClusterNodes = $clusterNodes | ForEach-Object {
+        $clusterNodes = Get-ClusterNetworkInterface | ForEach-Object {
           @{
             "Address" = $_.Address
             "Node" = $_.Node
           }
         }
 
+        $windowsClusterNodes = $clusterNodes | ConvertTo-Json -Depth 1
+
+        $clusterDetailsResponse['nodeIps'] =  (Get-ClusterNetworkInterface | select-object -ExpandProperty Address)   
+
+ 
         $clusterDetailsResponse['windowsClusterNodes'] = $windowsClusterNodes
                    
         If (Get-ClusterResource -ErrorAction SilentlyContinue | ? { $_.ResourceType -eq "SQL Server Availability Group" }) {
