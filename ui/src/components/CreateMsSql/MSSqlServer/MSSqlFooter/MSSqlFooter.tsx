@@ -1,4 +1,4 @@
-import { Button, useDialog, Typography } from '@netapp/design-system';
+import { Button, useDialog, Typography, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import {
@@ -113,7 +113,14 @@ const MSSqlFooter = () => {
         } else if (databaseHostEntryPoint === 'database') {
             navigate('/databases');
         } else {
-            navigateToCanvas('/');
+            if (isWorkloadFactoryStatus) {
+                navigateToCanvas('/');
+            } else {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: './fsxhome', replace: true }
+                });
+            }
         }
     };
 
