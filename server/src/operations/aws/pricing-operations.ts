@@ -22,7 +22,8 @@ import {
     SINGLE_AZ,
     SQL_SOFTWARE_TYPES,
     SQL_STD,
-    HOURS_IN_MONTH
+    HOURS_IN_MONTH,
+    EBS_ROOT_VOLUME
 } from '../../utils/consts';
 import getProducts from '../../lib/aws/pricing';
 
@@ -39,6 +40,7 @@ interface ProductOutput {
 }
 
 const DEFAULT_EBS_STORAGE = 100; // 100GB
+const DEFAULT_EBS_VOL_TYPE = 'gp3';
 
 const AWS_PRICING_FORMAT_VERSION = {
     FormatVersion: 'aws_v1'
@@ -245,14 +247,11 @@ function getVpcInput(vpcInfo: PricingServiceRequestType['vpc']): ProductInput {
     };
 }
 
-function calculateEc2Cost(instanceRate: number, storageRate: number, deploymentMode: string): number {
+function calculateEc2Cost(instanceRate: number, deploymentMode: string): number {
     logger.debug('Calculating compute cost');
 
     const instanceCount = deploymentMode === FCI ? 2 : 1;
-    return (
-        getPriceUtil(instanceRate, HOURS_IN_MONTH, instanceCount) +
-        getPriceUtil(storageRate, DEFAULT_EBS_STORAGE, instanceCount)
-    );
+    return getPriceUtil(instanceRate, HOURS_IN_MONTH, instanceCount);
 }
 
 function calculateFsxnStorageCost(instanceRate: number, diskSize: number): number {
@@ -471,16 +470,28 @@ async function calculatePrice(
         fsxwStorage
     });
 
+    const ebsRootVolumes = new Array(compute.sqlDeploymentMode === FCI ? 2 : 1).fill(null).map((_, index) => ({
+        id: `${EBS_ROOT_VOLUME}${index + 1}`,
+        volumeType: DEFAULT_EBS_VOL_TYPE,
+        size: DEFAULT_EBS_STORAGE
+    }));
+
+    if (isEmpty(ebsStorage)) {
+        ebsStorage = {
+            regionCode: compute.regionCode,
+            ebsResourceInfo: ebsRootVolumes
+        };
+    }
+
     const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));
     const productRates = await getProductRates(inputList);
 
     const {
         ec2Instance: { compute: { pricePerUnit: ec2InstanceRate = 0 } = {} },
-        ec2Storage: { storage: { pricePerUnit: ec2StorageRate = 0 } = {} },
         vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {}
     } = productRates;
 
-    const ec2Cost = calculateEc2Cost(ec2InstanceRate, ec2StorageRate, compute?.sqlDeploymentMode);
+    const ec2Cost = calculateEc2Cost(ec2InstanceRate, compute?.sqlDeploymentMode);
     const vpcCost = vpcRate ? getPriceUtil(vpcRate, HOURS_IN_MONTH, 1) : 0;
 
     let totalFsxnCost = 0;
@@ -539,27 +550,30 @@ async function calculatePrice(
     }[] = [];
     let totalEbsStorageCost = 0;
     if (!isEmpty(ebsStorage)) {
-        await Promise.all(
-            ebsStorage.ebsResourceInfo.map(async ebsResource => {
-                const rate = productRates[`ebsStorage-${ebsResource.volumeType}`];
-                const cost = calculateEbsCost(
-                    ebsResource.volumeType,
-                    ebsResource.size,
-                    ebsResource.iops,
-                    ebsResource.throughput,
-                    rate
-                );
-                totalEbsStorageCost += cost;
-                ebsBreakdownByVolumeType.push({
-                    id: ebsResource.id,
-                    volumeType: ebsResource.volumeType,
-                    cost,
-                    size: ebsResource.size,
-                    iops: ebsResource?.iops,
-                    throughput: ebsResource?.throughput
-                });
-            })
+        const hasRootVolume = ebsStorage.ebsResourceInfo?.some(
+            ({ id, volumeType }) => id.includes(EBS_ROOT_VOLUME) && volumeType === 'gp3'
         );
+        if (!hasRootVolume) {
+            ebsStorage.ebsResourceInfo = [...ebsStorage.ebsResourceInfo, ...ebsRootVolumes];
+        }
+
+        ebsStorage.ebsResourceInfo.forEach(ebsResource => {
+            const rate = productRates[`ebsStorage-${ebsResource.volumeType}`];
+            const size =
+                ebsResource.id.includes(EBS_ROOT_VOLUME) && ebsResource.size <= 100
+                    ? DEFAULT_EBS_STORAGE
+                    : ebsResource.size;
+            const cost = calculateEbsCost(ebsResource.volumeType, size, ebsResource.iops, ebsResource.throughput, rate);
+            totalEbsStorageCost += cost;
+            ebsBreakdownByVolumeType.push({
+                id: ebsResource.id,
+                volumeType: ebsResource.volumeType,
+                cost,
+                size,
+                iops: ebsResource?.iops,
+                throughput: ebsResource?.throughput
+            });
+        });
     }
 
     let totalFsxwCost = 0;
