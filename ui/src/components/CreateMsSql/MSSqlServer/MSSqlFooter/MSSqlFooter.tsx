@@ -118,7 +118,7 @@ const MSSqlFooter = () => {
             } else {
                 postBlueXPMessage({
                     type: BlueXPListeners.navigate,
-                    payload: { pathname: './fsxhome', replace: true }
+                    payload: { pathname: '../../../../../fsxhome', replace: true }
                 });
             }
         }
