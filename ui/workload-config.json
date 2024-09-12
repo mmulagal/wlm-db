@@ -2,7 +2,7 @@
     "name": "Databases",
     "id": "databases",
     "to": "/databases",
-    "bluexpTo": "/fsxdb/marketing",
+    "bluexpTo": "fsxdb/marketing",
     "hasMenuItem": true,
     "hasPolicies": true,
     "apiDocUrl": "<%=process.env.SWAGGER%>",
