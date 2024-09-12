@@ -1806,10 +1806,10 @@ async function getDatabaseInstancesDetails(
             return {
                 instanceName,
                 instanceState: updatedInstanceState,
-                isManaged,
                 isDefault,
                 databaseInstanceId,
-                sqlAuthEnabled
+                sqlAuthEnabled,
+                ...(managedInstancesName.length > 0 && { isManaged })
             };
         }),
         ...managedInstancesName.filter(({ instanceName }) => !existingInstanceNames.has(instanceName))
@@ -2589,6 +2589,10 @@ async function getDatabaseInstancesSummary(
         databaseInstanceDetails.status = ServerState.UP;
         const instanceServerDetails = serverDetails?.[instanceName];
         if (shouldQueryServerDetails && instanceServerDetails) {
+            if (isDemoFlow && databaseInstancetopologyData[index].serverInstallationMode === 'Standalone') {
+                instanceServerDetails.nodeNames = [instanceServerDetails.nodeNames[0]];
+                delete instanceServerDetails.clusterName;
+            }
             instanceServerDetails.creationDate = creationDate ? Date.parse(creationDate.toString()) : '';
             databaseInstanceDetails.databaseServer = instanceServerDetails;
         }

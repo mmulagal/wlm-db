@@ -479,6 +479,7 @@ async function getHostAndSqlInfoFromPsOutput(
                 try {
                     if (item.hasOwnProperty('windowsClusterNodes')) {
                         item.windowsClusterNodes = JSON.parse(item.windowsClusterNodes);
+                        item.nodeIps = item.windowsClusterNodes.map((node: { Address: any }) => node.Address);
                     }
                 } catch (error) {
                     logger.error('Error parsing windowsClusterNodes:', error);
