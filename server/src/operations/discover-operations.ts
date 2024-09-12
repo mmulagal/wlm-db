@@ -1327,11 +1327,7 @@ async function rewriteOrDeleteSSMParameter(
     });
     if (sqlCredentials.length === instancesToBeDeleted.length) {
         // Delete the parameter store all credentials are invalid
-        logger.info('@@@@@@@@@@@@@@@@@@@@@');
         instanceIds.forEach(instanceId => paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`));
-        logger.info(instanceIds);
-        logger.info(paramesToDelete);
-        logger.info('@@@@@@@@@@@@@@@@@@@@@');
         await deleteSSMParameter(credentialsId, region, paramesToDelete);
     } else {
         // Rewrite parameter store after removing invalid credentials
@@ -1545,11 +1541,6 @@ async function deleteSSMParameter(credentialsId: string, region: string, ssmPara
     if (!isEmpty(newlyAddedSSMParameters) && !isEmpty(ssmParameterNames)) {
         const filteredSSMParameters = (ssmParameterNames || []).filter(param => {
             const [, lastPart] = param.match(ssmParamRegex) || [];
-            logger.info('$$$$$$$$$$$$$$$$$$$');
-            logger.info(param);
-            logger.info(lastPart);
-            logger.info(newlyAddedSSMParameters);
-            logger.info('$$$$$$$$$$$$$$$$$$$');
             return newlyAddedSSMParameters.includes(lastPart);
         });
 
