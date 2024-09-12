@@ -84,7 +84,6 @@ import {
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
 import {
-    convertToBytes,
     getDatabaseInstanceName,
     getOriginalDatabaseInstanceName,
     getResourceNameFromTags,
@@ -770,12 +769,9 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
                 fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById.map(id => ({
                     ...id,
-                    size: convertToBytes(id.size!.total, 'GiB')
+                    size: id.size!.total
                 })),
-                fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById.map(id => ({
-                    ...id,
-                    size: convertToBytes(id.size!, 'GiB')
-                }))
+                fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById
             },
             connectivity: pricingResponse?.vpc || 0,
             others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
