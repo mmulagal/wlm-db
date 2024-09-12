@@ -1366,8 +1366,6 @@ async function validateCredentials(
     const newSqlCredentials = cloneDeep(sqlCredentials);
     await verifyAndCreateCredentials(credentialsId, region, instanceId, fsxCredentials, newSqlCredentials, instanceIds);
 
-    logger.info('completed creating ssm parameter');
-
     let parsedResponse;
 
     try {
@@ -1397,15 +1395,7 @@ async function validateCredentials(
 
         command += '$responseObject | ConvertTo-Json -Compress';
 
-        const ssmresponse = await callSsmExecution(
-            credentialsId,
-            region,
-            [command],
-            instanceId,
-            undefined,
-            false,
-            '90'
-        );
+        const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
 
         const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
         parsedResponse = attempt(JSON.parse, cleanResponse);
