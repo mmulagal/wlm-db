@@ -157,6 +157,23 @@ model tracked_ec2 {
   @@index([account_id], name: "k_wlmdb_tracked_ec2_account_id")
 }
 
+model host_config_data{
+  id                        String   @id @default(uuid()) @db.VarChar(40)
+  account_id                String   @db.VarChar(30)
+  credentials_id            String   @db.VarChar(80)
+  region                    String   @db.VarChar(30)
+  resource_id               String   @db.VarChar(255)
+  database_instance_id      String   @db.VarChar(36)
+  timestamp                 DateTime @default(now())
+  last_updated              DateTime @default(now())
+  config_data                 Json?    @default("{}")
+  config_data_type            String   @db.VarChar(255)@default("CONFIG")
+  @@unique([account_id, credentials_id, resource_id, database_instance_id, timestamp, config_data_type], name: "uk_wlmdb_host_config_data", map: "uk_wlmdb_host_config_data")
+  @@index([account_id], name: "k_wlmdb_host_config_data_account_id")
+  @@index([credentials_id], map: "k_wlmdb_host_config_data_credentials_id")
+  @@index([resource_id], map: "k_wlmdb_host_config_data_resource_id")
+}
+
 enum JOBSTATUS {
   IN_PROGRESS
   COMPLETED
