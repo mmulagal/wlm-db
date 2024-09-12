@@ -198,7 +198,10 @@ const DiscoverCredentials = Type.Object({
 });
 
 const DiscoverCredentialsRequestBody = Type.Object({
-    credentials: Type.Array(DiscoverCredentials)
+    credentials: Type.Array(DiscoverCredentials),
+    clusterNodesIpAddress: Type.Optional(
+        Type.Array(Type.String({ description: 'Private ips of nodes in a clustered deployment' }))
+    )
 });
 
 const DiscoverCredentialsResponse = Type.Object({
