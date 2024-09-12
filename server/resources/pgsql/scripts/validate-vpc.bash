@@ -32,7 +32,7 @@ for service in "${!serviceURLHashTable[@]}"; do
     fi
 done
 
-if [ "$failed" = true ]; then
+if [ $failed = true ]; then
     FailureReason="Failed to connect to AWS Cloud Formation endpoint. Check if the security group allows HTTPS(443) tcp port and subnet is associated with the endpoint."
     echo "{\"status\": \"Failed\", \"reason\": \"$FailureReason\"}" | jq -c .
     cfn-signal.exe -e 1 -r "$FailureReason" "$WaitHandler"
@@ -40,5 +40,6 @@ if [ "$failed" = true ]; then
     exit 1
 else
     echo "{\"status\": \"Completed\", \"reason\": \"Done.\"}" | jq -c .
-    cfn-signal -e $? --stack $Stackname --resource $instanceId --region $region
+    echo ""
+    cfn-signal -e $? --stack $Stackname --resource $ResourceId --region $region
 fi

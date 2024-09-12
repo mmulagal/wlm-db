@@ -145,28 +145,23 @@ Resources:
             AWS::CloudFormation::Init:
                 configSets:
                     config:
+                        - CreateTempFolder
                         - FetchResources
-                        - Finalize               
+                        - Finalize       
+                CreateTempFolder:
+                    commands:
+                        a-create-temp-folder:
+                            command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
                 FetchResources:
                     files:
-                        /home/ec2-user/validate-vpc.bash:
+                        /home/ec2-user/cfn/scripts/validate-vpc.bash:
                             source: {{{ ScriptValidation }}}
                 Finalize:
                     commands:
                         a-validate-vpc:
-                            command: !Join
-                                - '/home/ec2-user/validate-vpc.bash'
-                                - - ' -subnet '
-                                  - !Ref 'SubnetID'
-                                  - ' -region '
-                                  - !Ref 'AWS::Region'
-                                  - ' -Stackname '
-                                  - !Ref 'AWS::StackName'
-                                  - ' -ResourceID ValidationNode1'
-                                  - ' -WaitHandler '
-                                  - '"'
-                                  - '"'
-                                  - '"'
+                            command: !Sub 
+                                - '/home/ec2-user/cfn/scripts/validate-vpc.bash -subnet ${subnetId} -region ${AWS::Region} -Stackname ${AWS::StackName} -ResourceID ValidationNode1'
+                                - subnetId: !Ref 'SubnetID'
                             waitAfterCompletion: '0'
                         e-signal-resource:
                             command: !Sub 'cfn-signal -e %ERRORLEVEL% --resource ValidationNode1
@@ -184,3 +179,22 @@ Resources:
                   SubnetId: !Ref 'SubnetID'
             KeyName: !Ref 'KeyPairName'
             InstanceInitiatedShutdownBehavior: terminate
+            UserData:
+                Fn::Base64: !Sub |
+                    #!/bin/bash -xe
+                    token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
+                    echo "Token: $token"
+                    instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
+                    echo "Instance ID: $instanceID"
+                    FailureReason="CF endpoint is not reachable. Check your subnet outbound connectivity."
+                    url=https://cloudformation.${AWS::Region}.amazonaws.com
+                    StatusCode=$(curl -s -o /dev/null -w "%{http_code}" $url)
+                    echo "Status code: $StatusCode"
+                    if [ "$StatusCode" != "200" ]; then
+                        echo $FailureReason
+                        aws cloudformation signal-resource --stack ${AWS::StackName} --logical-resource-id ValidationNode1 --status FAILURE --reason "$FailureReason" --region ${AWS::Region}
+                        exit 1
+                    else
+                        echo "CF endpoint is reachable."
+                        /opt/aws/bin/cfn-init -v -c config --stack ${AWS::StackName} --resource ValidationNode1 --region ${AWS::Region}
+                    fi
