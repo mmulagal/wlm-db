@@ -111,7 +111,7 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
             status: AUDIT_PENDING_STATUS,
             requestId: request.id,
             serviceName: TIMELINE_SERVICE_NAME,
-            referrer: url as string,
+            referrer: url && url.length < 180 ? url as string : url?.substring(0, 180) as string, // Here audit service has a limit of 191 characters for referrer
             version: VERSION,
             requestData: secureActionParameters,
             principalId: getSubjectFromBearerToken() as string

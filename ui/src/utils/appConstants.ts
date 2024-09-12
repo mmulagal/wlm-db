@@ -977,15 +977,15 @@ export const GENERAL = {
     EXPORT_PDF: 'Export PDF',
     ES_COST_SAVINGS: 'Cost savings',
     ES_SAVINGS_PERCENTAGE: 'Percentage savings',
-    ES_HEADING: 'Explore savings of selected host',
+    ES_HEADING: 'Detected host cost analysis',
     ES_HEADER:
-        'Automatically explore savings by selecting a Microsoft SQL Server host and then click "Explore savings". We\'ll calculate your potential savings with FSx for ONTAP storage for your database workloads.',
+        'You can identify potential savings by automatically comparing your database workloads to SQL server using FSx for ONTAP file systems. Choose a SQL server host and explore savings.',
     ES_SAVINGS: 'Explore savings',
-    MANUAL_EXLORE_SAVINGS: 'Manual explore savings',
-    EXPLORE_SAVING_MANUALLY: 'Explore savings Manually with EBS',
-    EXPLORE_SAVING_MANUALLY_FSX: 'Explore savings manually with FSx for Windows File Server',
+    MANUAL_EXLORE_SAVINGS: 'Custom configuration cost analysis',
+    EXPLORE_SAVING_MANUALLY: 'Analyze custom configuration for EBS',
+    EXPLORE_SAVING_MANUALLY_FSX: 'Analyze custom configuration for FSx for Windows',
     MANUAL_EXPLORE_SAVINGS_CONTENT:
-        'Alternatively, select "Explore savings manually". You\'ll  provide Microsoft SQL Server configuration details to get an accurate cost estimate comparison.',
+        'You can adjust SQL server, infrastructure, and storage settings to analyze for potential savings between your environment and SQL server using FSx for ONTAP.',
     INSTANCE_INFORMATION: 'Instance information:',
     ES_SAVE_CONFIG: 'Save configuration',
     ES_SAVE_CONFIG_DESC:
