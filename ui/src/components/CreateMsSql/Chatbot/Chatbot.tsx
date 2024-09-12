@@ -585,7 +585,8 @@ const Chatbot = () => {
                         const data = {
                             architecture: selectedLicense?.architecture,
                             amiVal: selectedLicense?.imageId,
-                            amiName: selectedLicense?.name
+                            amiName: selectedLicense?.name,
+                            ebsVolumeSize: selectedLicense?.ebsVolumeSize
                         };
                         const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
                         dispatch(setSelectedLicenseId(value ? option : null));
