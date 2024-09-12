@@ -1435,10 +1435,10 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
         });
     }
 
-    // Logic to add clusterNodeIpAddress for FCI only. This is for resourec-credentials API.
+    // Logic to add clusterNodesIpAddress for FCI only. This is for resourec-credentials API.
     if (rowData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
         let addresses = rowData?.windowsClusterNodes?.map((obj: { Address: string; Node: string }) => obj?.Address);
-        return { credentials: credList, clusterNodeIpAddress: addresses };
+        return { credentials: credList, clusterNodesIpAddress: addresses };
     } else {
         return { credentials: credList };
     }
