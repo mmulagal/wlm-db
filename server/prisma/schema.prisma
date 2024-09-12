@@ -132,6 +132,7 @@ model database_instances {
   storage_protocol                  String?           @db.VarChar(30)
   fsx_svm_id                        Json     
   metadata                          Json?             @default("{}")
+  host_config_data                  host_config_data[]
 
   resource resource @relation(fields: [account_id, credentials_id, region, resource_id], references: [account_id, credentials_id, region, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_region_resource_id")
 
@@ -168,6 +169,9 @@ model host_config_data{
   last_updated              DateTime @default(now())
   config_data                 Json?    @default("{}")
   config_data_type            String   @db.VarChar(255)@default("CONFIG")
+
+  database_instances database_instances @relation(fields: [account_id, credentials_id, resource_id, database_instance_id], references: [account_id, credentials_id, resource_id, database_instance_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_database_instances_unique_criteria")
+
   @@unique([account_id, credentials_id, resource_id, database_instance_id, timestamp, config_data_type], name: "uk_wlmdb_host_config_data", map: "uk_wlmdb_host_config_data")
   @@index([account_id], name: "k_wlmdb_host_config_data_account_id")
   @@index([credentials_id], map: "k_wlmdb_host_config_data_credentials_id")

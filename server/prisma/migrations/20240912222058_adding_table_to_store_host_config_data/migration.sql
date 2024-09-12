@@ -17,3 +17,6 @@ CREATE TABLE `host_config_data` (
     UNIQUE INDEX `uk_wlmdb_host_config_data`(`account_id`, `credentials_id`, `resource_id`, `database_instance_id`, `timestamp`, `config_data_type`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `host_config_data` ADD CONSTRAINT `k_wlmdb_database_instances_unique_criteria` FOREIGN KEY (`account_id`, `credentials_id`, `resource_id`, `database_instance_id`) REFERENCES `database_instances`(`account_id`, `credentials_id`, `resource_id`, `database_instance_id`) ON DELETE CASCADE ON UPDATE CASCADE;
