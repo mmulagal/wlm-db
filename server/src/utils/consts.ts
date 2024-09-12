@@ -312,7 +312,8 @@ const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Micr
 enum FileSystemTypes {
     EBS = 'EBS',
     FSXONTAP = 'FSx for ONTAP',
-    FSXWINDOWS = 'FSx for Windows'
+    FSXWINDOWS = 'FSx for Windows',
+    FSXW = 'FSXW'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';

@@ -648,7 +648,8 @@ async function getSqlInstanceLicenseRecommendations(
     region: string,
     ec2HostDetails: DiscoverResponseInfoType,
     monthlySqlByolCostPerHost?: number,
-    partnerNodeDetails?: DiscoverResponseInfoType[]
+    partnerNodeDetails?: DiscoverResponseInfoType[],
+    isFsxwCalcs: boolean = false
 ) {
     logger.info('Getting sql instance and license recommendations', {
         accountId,
@@ -674,16 +675,20 @@ async function getSqlInstanceLicenseRecommendations(
         }
     });
 
-    sqlServerInstances?.forEach(server => {
-        if (
-            server?.storage?.some(storage => storage.type === STORAGE_TYPE.FSXW || storage.type === STORAGE_TYPE.FSXN)
-        ) {
-            throw createError(
-                HttpErrorCodes.BAD_REQUEST,
-                'FSx storage is not supported for storage savings breakdown.'
-            );
-        }
-    });
+    if (!isFsxwCalcs) {
+        sqlServerInstances?.forEach(server => {
+            if (
+                server?.storage?.some(
+                    storage => storage.type === STORAGE_TYPE.FSXW || storage.type === STORAGE_TYPE.FSXN
+                )
+            ) {
+                throw createError(
+                    HttpErrorCodes.BAD_REQUEST,
+                    'FSx storage is not supported for storage savings breakdown.'
+                );
+            }
+        });
+    }
 
     const ebsVolumeIds = compact(
         sqlServerInstances?.flatMap(server =>
@@ -691,7 +696,7 @@ async function getSqlInstanceLicenseRecommendations(
         )
     );
 
-    if (ebsVolumeIds.length === 0) {
+    if (!isFsxwCalcs && ebsVolumeIds.length === 0) {
         throw createError(HttpErrorCodes.BAD_REQUEST, 'No EBS volumes found for the provided instance.');
     }
 
@@ -703,7 +708,7 @@ async function getSqlInstanceLicenseRecommendations(
                 { ec2InstanceType, ec2InstanceId: instanceId, ec2UsageOperation, ec2InstancePrivateIpAddress: '' }
             ];
 
-            if (!ebsVolumeIds.length) {
+            if (!isFsxwCalcs && !ebsVolumeIds.length) {
                 throw createError(
                     HttpErrorCodes.NOT_FOUND,
                     `No EBS volumes found for the provided instance: ${instanceId}`
