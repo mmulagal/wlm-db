@@ -18,7 +18,9 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as BlueXPDatabase } from '../../../assets/blueXPDatabase.svg';
 import { ReactComponent as ExternalLink } from '../../../assets/ic_external_link.svg';
+import { ReactComponent as ExternalLinkWhite } from '../../../assets/ic_external_link_white.svg';
 import { ReactComponent as RSS } from '../../../assets/ic_rss.svg';
+import { ReactComponent as RSS_White } from '../../../assets/ic_rss_white.svg';
 import { ReactComponent as Menu } from '../../../assets/ic_menu.svg';
 import Inventory from '../../Inventory/Inventory';
 import { useDispatch } from 'react-redux';
@@ -95,6 +97,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const toShowPostgress = localStorage.getItem('postgress');
 
@@ -360,19 +363,19 @@ const HeaderComponent = ({ tab }: Tab) => {
                 id: 'apiHub',
                 displayName: 'API Hub',
                 tagAdded: true,
-                tag: <ExternalLink />
+                tag: isDarkTheme ? <ExternalLinkWhite /> : <ExternalLink />
             },
             {
                 id: 'monitoringGitHubRepository',
                 displayName: 'Monitoring GitHub repository',
                 tagAdded: true,
-                tag: <ExternalLink />
+                tag: isDarkTheme ? <ExternalLinkWhite /> : <ExternalLink />
             },
             {
                 id: 'subscribeToRss',
                 displayName: 'Subscribe to RSS',
                 tagAdded: true,
-                tag: <RSS />
+                tag: isDarkTheme ? <RSS_White /> : <RSS />
             },
             {
                 id: 'feedback',
@@ -568,7 +571,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                     </div>
 
                     {!isWorkloadFactory && (
-                        <div className={styles.thirdRow}>
+                        <div
+                            className={isDarkTheme ? `${styles.thirdRow} ${styles.darkThemeThirdRow}` : styles.thirdRow}
+                        >
                             <Menu />
                             <div className={styles.menuPopOverHide}>
                                 <MenuPopover
