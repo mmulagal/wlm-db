@@ -13,8 +13,8 @@ import {
     FsxwSnapshotCalculationRespType,
     ManualStorageSavingsRequestBodyType,
     StorageSavingsMetricsCalculationsResponseType,
-    StorageSavingsRequestBodyType,
-    StorageSavingsResponseType
+    StorageSavingsRequestBodyType
+    // StorageSavingsResponseType
 } from '../routes/types/storage-savings.types';
 import {
     formatManualStorageSavingsCalculationMetrics,
@@ -213,24 +213,32 @@ async function aoagStorageSavingsCalculations(
             compute,
             license,
             ebs: {
-                iops: allEbsDetails.iops,
-                throughput: allEbsDetails.throughput,
-                capacity: allEbsDetails.capacity,
-                clones: ebs.clones,
-                snapshots: ebs.snapshots,
+                iops: allEbsDetails?.iops,
+                throughput: allEbsDetails?.throughput,
+                capacity: allEbsDetails?.capacity,
+                clones: ebs?.clones,
+                snapshots: ebs?.snapshots,
                 total:
-                    allEbsDetails.iops + allEbsDetails.throughput + allEbsDetails.capacity + ebs.clones + ebs.snapshots
+                    allEbsDetails && ebs
+                        ? allEbsDetails.iops +
+                          allEbsDetails.throughput +
+                          allEbsDetails.capacity +
+                          ebs.clones +
+                          ebs.snapshots
+                        : 0
             },
             fsx,
             totalSummary: {
                 existing:
-                    allEbsDetails.iops +
-                    allEbsDetails.throughput +
-                    allEbsDetails.capacity +
-                    ebs.clones +
-                    ebs.snapshots +
-                    existingComputeMonthlyPrice! +
-                    existingLicenseMonthlyPrice!,
+                    allEbsDetails && ebs
+                        ? allEbsDetails.iops +
+                          allEbsDetails.throughput +
+                          allEbsDetails.capacity +
+                          ebs.clones +
+                          ebs.snapshots +
+                          existingComputeMonthlyPrice! +
+                          existingLicenseMonthlyPrice!
+                        : 0,
                 recommended: fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
             },
             ...(singleFsxCalculationData && {
@@ -348,7 +356,8 @@ async function retrieveComputeAndLicenseCost(
     region: string,
     ec2HostDetails: DiscoverResponseInfoType,
     monthlySqlByolCost?: number,
-    partnerNodeDetails?: DiscoverResponseInfoType[]
+    partnerNodeDetails?: DiscoverResponseInfoType[],
+    isFsxwCalcs: boolean = false
 ): Promise<ComputeLicenseCostType> {
     logger.info('Retrieving compute and license cost', { accountId, credentialsId, region, ec2HostDetails });
 
@@ -359,7 +368,8 @@ async function retrieveComputeAndLicenseCost(
         region,
         ec2HostDetails,
         monthlySqlByolCost,
-        partnerNodeDetails
+        partnerNodeDetails,
+        isFsxwCalcs
     );
     const {
         existingCompute: {
@@ -444,7 +454,7 @@ async function performStorageSavingsCalculations(
     region: string,
     instanceId: string,
     params: StorageSavingsRequestBodyType
-): Promise<StorageSavingsResponseType> {
+) {
     logger.info('Performing storage savings calculations ', { accountId, credentialsId, region, instanceId, params });
 
     const {
@@ -452,6 +462,88 @@ async function performStorageSavingsCalculations(
     } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
+    const isFsxwInstancePresent = sqlServerInstances?.some(sqlServerInstance =>
+        sqlServerInstance?.storage?.some(storage => storage.type === FileSystemTypes.FSXW)
+    );
+    if (isFsxwInstancePresent) {
+        const [{ sqlServerDeploymentType }] = ec2HostDetails?.sqlServerInstances || [];
+        const fileSystemsIds = sqlServerInstances
+            ?.map(
+                sqlServerInstance =>
+                    sqlServerInstance?.storage?.find(storage => storage.type === FileSystemTypes.FSXW)?.id
+            )
+            .filter((id): id is string => id !== undefined);
+
+        if (!fileSystemsIds.length) {
+            throw createError(
+                HttpErrorCodes.NOT_FOUND,
+                `No FSXW instances found for the provided instance: ${instanceId}`
+            );
+        }
+
+        const marketingPromise = invokeMarketingApi(
+            accountId,
+            credentialsId,
+            region,
+            '',
+            [],
+            params,
+            instanceId,
+            fileSystemsIds
+        );
+        const recommendationPromise = retrieveComputeAndLicenseCost(
+            accountId,
+            credentialsId,
+            region,
+            ec2HostDetails,
+            undefined,
+            undefined,
+            true
+        );
+        const [{ compute, license }, { fsx, single, multi, fsxw }] = await Promise.all([
+            recommendationPromise,
+            marketingPromise
+        ]);
+
+        const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
+
+        const singleFsxCalculationData = single?.fsx_calculation
+            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+            : undefined;
+
+        const multiFsxCalculationData = multi?.fsx_calculation
+            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+            : undefined;
+
+        return {
+            compute,
+            license,
+            ...(singleFsxCalculationData && {
+                single: {
+                    fsxCalculation: singleFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        singleFsxCalculationData.totalStorageCapacity,
+                        sqlServerDeploymentType!
+                    )
+                }
+            }),
+            ...(multiFsxCalculationData && {
+                multi: {
+                    fsxCalculation: multiFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        multiFsxCalculationData.totalStorageCapacity,
+                        sqlServerDeploymentType!
+                    )
+                }
+            }),
+            fsx,
+            fsxw,
+            totalSummary: {
+                existing: fsxw ? fsxw.total + existingComputeLicensePrice : existingComputeLicensePrice,
+                recommended: fsx.total + existingComputeLicensePrice // TODO : Check : recommended compute and license price is same as existing
+            }
+        };
+    }
 
     const ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
 
@@ -509,7 +601,7 @@ async function performStorageSavingsCalculations(
         ebs,
         fsx,
         totalSummary: {
-            existing: Number(ebs.total || 0) + existingComputeLicensePrice,
+            existing: Number(ebs?.total || 0) + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
         },
         ...(singleFsxCalculationData && {
@@ -553,6 +645,60 @@ async function getStorageSavingsCalculationMetrics(
     } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
+    const isFsxwInstancePresent = sqlServerInstances?.some(sqlServerInstance =>
+        sqlServerInstance?.storage?.some(storage => storage.type === FileSystemTypes.FSXW)
+    );
+    if (isFsxwInstancePresent) {
+        const fileSystemsIds = sqlServerInstances
+            ?.map(
+                sqlServerInstance =>
+                    sqlServerInstance?.storage?.find(storage => storage.type === FileSystemTypes.FSXW)?.id
+            )
+            .filter((id): id is string => id !== undefined);
+
+        if (!fileSystemsIds.length) {
+            throw createError(
+                HttpErrorCodes.NOT_FOUND,
+                `No FSXW instances found for the provided instance: ${instanceId}`
+            );
+        }
+        const { single, multi, fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation } =
+            await formatStorageSavingsCalculationMetrics(
+                accountId,
+                credentialsId,
+                region,
+                [],
+                params,
+                '',
+                instanceId,
+                fileSystemsIds
+            );
+
+        const {
+            compute: { existing: existingComputeCalculation, recommended: recommendedComputeCalculation },
+            license: { existing: existingLicenseCalculation, recommended: recommendedLicenseCalculation }
+        } = await retrieveComputeAndLicenseCost(
+            accountId,
+            credentialsId,
+            region,
+            ec2HostDetails,
+            undefined,
+            undefined,
+            true
+        );
+        return {
+            recommendedComputeCalculation,
+            recommendedLicenseCalculation,
+            existingComputeCalculation,
+            existingLicenseCalculation,
+            single,
+            multi,
+            fsxwCalculation,
+            fsxwCloneCalculation,
+            fsxwSnapshotCalculation
+        };
+    }
+
     const ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
     if (!ebsVolumeIds.length) {
         throw createError(HttpErrorCodes.NOT_FOUND, `No EBS volumes found for the provided instance: ${instanceId}`);
