@@ -303,10 +303,6 @@ const HOST_AND_SQL_INFO_PS1 = [
         }
 
         $windowsClusterNodes = $clusterNodes | ConvertTo-Json -Depth 1
-
-        $clusterDetailsResponse['nodeIps'] =  (Get-ClusterNetworkInterface | select-object -ExpandProperty Address)   
-
- 
         $clusterDetailsResponse['windowsClusterNodes'] = $windowsClusterNodes
                    
         If (Get-ClusterResource -ErrorAction SilentlyContinue | ? { $_.ResourceType -eq "SQL Server Availability Group" }) {
@@ -370,7 +366,6 @@ const HOST_AND_SQL_INFO_PS1 = [
       if ($clusterDetails['isClustered']) {
         $responseObject['windowsClusterName'] = $clusterDetails['name']
         $responseObject['windowsClusterNodes'] = $clusterDetails['windowsClusterNodes']
-        $responseObject['nodeIps'] = $clusterDetails['nodeIps']
         $sqlNodes = (Get-ClusterOwnerNode -ResourceType "SQL Server Availability Group" -ErrorAction SilentlyContinue).OwnerNodes.NodeName
       }
         
