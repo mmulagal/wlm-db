@@ -544,7 +544,9 @@ const EstimatedCost = () => {
                         </div>
 
                         <div id="estimated-cost" className={styles.note}>
-                            <ActionRequiredIcon />
+                            <div>
+                                <ActionRequiredIcon />
+                            </div>
                             <Typography variant="Regular_14">{GENERAL.EC_NOTE}</Typography>
                         </div>
                     </div>
