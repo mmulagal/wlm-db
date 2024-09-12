@@ -453,7 +453,7 @@ const EstimatedCost = () => {
                                 </Typography>
                                 <div className={styles.secondRow}>
                                     <Typography variant="Regular_14">
-                                        {GENERAL.TYPE}: {GENERAL.EBS}
+                                        {GENERAL.TYPE}: {GENERAL.ELASTIC_BLOCK_STORE}
                                     </Typography>
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
@@ -462,7 +462,7 @@ const EstimatedCost = () => {
                                     </div>
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
-                                            {GENERAL.TYPE}:
+                                            {GENERAL.VOLUME_TYPE}:
                                             {' ' + data?.data?.ebsStorage?.ebsBreakdownByVolumeType?.[0]?.volumeType}
                                         </Typography>
                                     </div>
