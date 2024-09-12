@@ -168,6 +168,14 @@
                 }
             }
         }
+
+        .darkThemeThirdRow {
+            svg {
+                path {
+                    fill: var(--content-background);
+                }
+            }
+        }
     }
 
     .refresh {
