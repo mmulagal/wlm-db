@@ -372,6 +372,8 @@ export const GENERAL = {
     STORAGE: 'Storage',
     OTHER: 'Other',
     TYPE: 'Type',
+    VOLUME_TYPE: 'Volume type',
+    ELASTIC_BLOCK_STORE: 'Elastic Block Store (EBS)',
     SIZE: 'Size',
     ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
     EC_NOTE:
