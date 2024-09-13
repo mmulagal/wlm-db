@@ -14,7 +14,6 @@ import {
     ManualStorageSavingsRequestBodyType,
     StorageSavingsMetricsCalculationsResponseType,
     StorageSavingsRequestBodyType
-    // StorageSavingsResponseType
 } from '../routes/types/storage-savings.types';
 import {
     formatManualStorageSavingsCalculationMetrics,
