@@ -1387,7 +1387,6 @@ async function validateCredentials(
             const bucketname = getArtifactsRegionBucketName(region);
             const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
             const moduleNames = `
-  'AWS.Tools.Common',
   'AWS.Tools.SimpleSystemsManagement'
 `;
             command += `${copyPowerShellModule(copyPSModuleS3SignedUrl, moduleNames)};\n`;
