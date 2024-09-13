@@ -343,16 +343,12 @@ const validateSQLInstanceConnectivity = (
 ) => ` 
         $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
 
-        $CommonmodulePath = (Get-Module -Name 'AWS.Tools.Common' -ListAvailable).Path
-        if($CommonmodulePath -is [System.Array]) {
-            $CommonmodulePath = $CommonmodulePath[0]
-        }
         $ssmmodulePath = (Get-Module -Name 'AWS.Tools.SimpleSystemsManagement' -ListAvailable).Path
         if($ssmmodulePath -is [System.Array]) {
             $ssmmodulePath = $ssmmodulePath[0]
         }
         
-        Import-Module -Name $CommonmodulePath, $ssmmodulePath
+        Import-Module -Name $ssmmodulePath
 
     if ($responseObject -eq $null) {
         $responseObject = @{}
