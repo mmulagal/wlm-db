@@ -206,6 +206,53 @@ async function invokeMarketingApi(
 
         const { clonedCopiesCount, monthlyChangeRatePercentage } = params;
         region = STORAGE_SERVICE_DEFAULT_REGION;
+
+        if (fileSystemsIds && fileSystemsIds.length > 0) {
+            const marketingRequestBody = getMarketingApiManualModeRequestBody(region, {
+                clonedCopiesCount,
+                sqlServerDeploymentType,
+                monthlyChangeRatePercentage,
+                snapshotFrequency: 'Daily',
+                sqlServerEdition: 'Enterprise',
+                ec2Instances: [
+                    {
+                        ec2InstanceDescription: 'Primary',
+                        ec2InstanceType: 'm5.large',
+                        isPrimary: true,
+                        fsxw: {
+                            storageAmount: 640000000000,
+                            deploymentType: 'Single',
+                            volumeIops: 600,
+                            throughput: 32,
+                            storageVolumeType: 'SSD'
+                        }
+                    }
+                ]
+            }) as ManualModeMarketingRequestBody;
+
+            const {
+                fsxw,
+                fsx,
+                fsx_calculation,
+                fsxw_cost_calculation,
+                fsx_cost_calculation_no_snapshot,
+                fsx_snapshot_cost_calculation,
+                fsx_clone_cost_calculation
+            } = await getManualModeStorageSavings<ManualModeFsxwComparisonResponse>(accountId, marketingRequestBody);
+
+            return {
+                fsxw,
+                fsx,
+                [sqlServerDeploymentType === 'FCI' ? 'multi' : 'single']: {
+                    fsxw_cost_calculation,
+                    fsx_calculation,
+                    fsx_cost_calculation_no_snapshot,
+                    fsx_snapshot_cost_calculation,
+                    fsx_clone_cost_calculation
+                }
+            };
+        }
+
         let volumes = [
             {
                 volumeType: 'io2',
