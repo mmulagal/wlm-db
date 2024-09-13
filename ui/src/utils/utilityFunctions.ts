@@ -1444,7 +1444,7 @@ export const removeOldApisError = (data: any) => {
 };
 
 // This function will create post payload for register credential API (registerResourceCredentials)
-export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string) => {
+export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string, rowData: any) => {
     const state = store.getState();
     const isInventoryV2 = state?.auth?.isInventoryV2;
     let detectManageUserName = '';
@@ -1479,7 +1479,14 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
             password: detectOntapPassword
         });
     }
-    return { credentials: credList };
+
+    // Logic to add clusterNodesIpAddress for FCI only. This is for resourec-credentials API.
+    if (rowData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+        let addresses = rowData?.windowsClusterNodes?.map((obj: { Address: string; Node: string }) => obj?.Address);
+        return { credentials: credList, clusterNodesIpAddress: addresses };
+    } else {
+        return { credentials: credList };
+    }
 };
 
 export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => {

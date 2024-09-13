@@ -285,7 +285,7 @@ const UndetectedHosts = () => {
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
                     instanceId: rowData?.instanceID,
-                    payload: createDetectHostPayload(sqlServerInstance, fsxId)
+                    payload: createDetectHostPayload(sqlServerInstance, fsxId, rowData)
                 });
                 if (result && !result?.error) {
                     if (result?.data?.sqlServerError || result?.data?.fsxnError) {

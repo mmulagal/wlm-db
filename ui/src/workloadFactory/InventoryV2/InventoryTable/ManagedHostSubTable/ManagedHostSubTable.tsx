@@ -249,7 +249,7 @@ const ManagedHostSubTable = ({
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
                     instanceId: hostData?.ec2InstanceId,
-                    payload: createDetectHostPayload(sqlServerInstance, fsxId)
+                    payload: createDetectHostPayload(sqlServerInstance, fsxId, rowData)
                 });
                 if (result && !result?.error) {
                     if (result?.data?.sqlServerError || result?.data?.fsxnError) {
