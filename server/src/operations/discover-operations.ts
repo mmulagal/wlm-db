@@ -692,7 +692,7 @@ async function makeSsmCall(
 
 function prepareParametersToStore(instanceIds: string[], credentials: DiscoverCredentialsType[]) {
     logger.debug('prepare parameters to store', { instanceIds });
-    logger.info(instanceIds);
+
     return credentials.reduce((acc: SSMParamterObject[], { resourceId, resourceType, username, password }) => {
         if (resourceType === RESOURCESTYPE.MSSQL) {
             const sqlItem = acc.find(el => el.value.sql);
