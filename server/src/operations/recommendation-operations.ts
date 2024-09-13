@@ -929,23 +929,34 @@ async function getSqlInstanceLicenseRecommendations(
                     }
                 }
 
-                // instance recommendation logic
-                ({ computeFinding, recommendedCompute } = await handleInstanceRecommendation(
-                    accountId,
-                    credentialsId,
-                    region,
-                    instanceIdToUseForRecommendations,
-                    nodeInstances,
-                    ebsVolumeIds,
-                    sqlServerDeploymentType,
-                    recommendedSqlLicenseType,
-                    ec2InstanceType,
-                    nodeInstanceTypes.length,
-                    recommendedInstanceHourlyPrice, // license type is already identified, so use the price for the recommended license type which is essentially existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit || byolHourlyPrice
-                    recommendedInstanceHourlyPriceWithoutLicense,
-                    awsLicenseIncluded,
-                    monthlySqlByolCostPerHost
-                ));
+                // instance recommendation logic, applicable only for ebs storage savings calculations
+                ({ computeFinding, recommendedCompute } = !isFsxwCalcs
+                    ? await handleInstanceRecommendation(
+                          accountId,
+                          credentialsId,
+                          region,
+                          instanceIdToUseForRecommendations,
+                          nodeInstances,
+                          ebsVolumeIds,
+                          sqlServerDeploymentType,
+                          recommendedSqlLicenseType,
+                          ec2InstanceType,
+                          nodeInstanceTypes.length,
+                          recommendedInstanceHourlyPrice, // license type is already identified, so use the price for the recommended license type which is essentially existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit || byolHourlyPrice
+                          recommendedInstanceHourlyPriceWithoutLicense,
+                          awsLicenseIncluded,
+                          monthlySqlByolCostPerHost
+                      )
+                    : {
+                          computeFinding,
+                          recommendedCompute: getExistingAsRecommended(
+                              nodeInstanceTypes.length,
+                              ec2InstanceType,
+                              existingInstanceHourlyPrice,
+                              existingInstanceHourlyPriceWithoutLicense,
+                              'No Instance change recommended'
+                          )
+                      });
                 existingCompute.finding = computeFinding;
                 recommendedInstanceHourlyPrice = recommendedCompute.price;
                 recommendedInstanceHourlyPriceWithoutLicense = recommendedCompute.baseInstancePrice;
@@ -994,20 +1005,31 @@ async function getSqlInstanceLicenseRecommendations(
                         'BYOL License is not supported for the provided SQL server edition.'
                     );
                 }
-                ({ computeFinding, recommendedCompute } = await handleInstanceRecommendation(
-                    accountId,
-                    credentialsId,
-                    region,
-                    instanceIdToUseForRecommendations,
-                    nodeInstances,
-                    ebsVolumeIds,
-                    sqlServerDeploymentType,
-                    'NA',
-                    ec2InstanceType,
-                    nodeInstanceTypes.length,
-                    existingInstanceHourlyPriceWithoutLicense,
-                    existingInstanceHourlyPriceWithoutLicense
-                ));
+                ({ computeFinding, recommendedCompute } = !isFsxwCalcs
+                    ? await handleInstanceRecommendation(
+                          accountId,
+                          credentialsId,
+                          region,
+                          instanceIdToUseForRecommendations,
+                          nodeInstances,
+                          ebsVolumeIds,
+                          sqlServerDeploymentType,
+                          'NA',
+                          ec2InstanceType,
+                          nodeInstanceTypes.length,
+                          existingInstanceHourlyPriceWithoutLicense,
+                          existingInstanceHourlyPriceWithoutLicense
+                      )
+                    : {
+                          computeFinding,
+                          recommendedCompute: getExistingAsRecommended(
+                              nodeInstanceTypes.length,
+                              ec2InstanceType,
+                              existingInstanceHourlyPriceWithoutLicense,
+                              existingInstanceHourlyPriceWithoutLicense,
+                              'No Instance change recommended'
+                          )
+                      });
                 existingCompute = {
                     finding: computeFinding,
                     price: existingInstanceHourlyPriceWithoutLicense, // could be undefined if the pricing information is not available for a certain instance type

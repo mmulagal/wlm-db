@@ -466,7 +466,18 @@ async function performStorageSavingsCalculations(
         sqlServerInstance?.storage?.some(storage => storage.type === FileSystemTypes.FSXW)
     );
     if (isFsxwInstancePresent) {
-        const [{ sqlServerDeploymentType }] = ec2HostDetails?.sqlServerInstances || [];
+        const { sqlServerDeploymentType } =
+            sqlServerInstances?.find(sqlServerInstance =>
+                sqlServerInstance?.storage?.map(storage => storage.type).includes(FileSystemTypes.FSXW)
+            ) || {};
+
+        if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                'FSXW Storage savings calculations for AOAG deployments are not supported'
+            );
+        }
+
         const fileSystemsIds = sqlServerInstances
             ?.map(
                 sqlServerInstance =>
@@ -485,7 +496,7 @@ async function performStorageSavingsCalculations(
             accountId,
             credentialsId,
             region,
-            '',
+            sqlServerDeploymentType!,
             [],
             params,
             instanceId,
@@ -505,7 +516,7 @@ async function performStorageSavingsCalculations(
             marketingPromise
         ]);
 
-        const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
+        const existingComputeLicensePrice = Number(compute?.existing?.instanceMonthlyPrice || 0);
 
         const singleFsxCalculationData = single?.fsx_calculation
             ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
@@ -540,7 +551,7 @@ async function performStorageSavingsCalculations(
             fsxw,
             totalSummary: {
                 existing: fsxw ? fsxw.total + existingComputeLicensePrice : existingComputeLicensePrice,
-                recommended: fsx.total + existingComputeLicensePrice // TODO : Check : recommended compute and license price is same as existing
+                recommended: fsx.total + existingComputeLicensePrice // recommended computeLicense price is same as existing
             }
         };
     }
@@ -649,6 +660,18 @@ async function getStorageSavingsCalculationMetrics(
         sqlServerInstance?.storage?.some(storage => storage.type === FileSystemTypes.FSXW)
     );
     if (isFsxwInstancePresent) {
+        const { sqlServerDeploymentType } =
+            sqlServerInstances?.find(sqlServerInstance =>
+                sqlServerInstance?.storage?.map(storage => storage.type).includes(FileSystemTypes.FSXW)
+            ) || {};
+
+        if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                'FSXW Storage savings calculations for AOAG deployments are not supported'
+            );
+        }
+
         const fileSystemsIds = sqlServerInstances
             ?.map(
                 sqlServerInstance =>
@@ -669,7 +692,7 @@ async function getStorageSavingsCalculationMetrics(
                 region,
                 [],
                 params,
-                '',
+                sqlServerDeploymentType!,
                 instanceId,
                 fileSystemsIds
             );
