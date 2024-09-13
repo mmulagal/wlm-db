@@ -27,7 +27,8 @@ import {
     sleep,
     getArtifactsRegionBucketName,
     derivePropertiesFromARN,
-    isDemo
+    isDemo,
+    decompressSSMResponse
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -458,7 +459,7 @@ async function getHostAndSqlInfoFromPsOutput(
     const ssmTargetSqlServerInstancesInfo: SqlServerInstanceInfoType[] = [];
 
     try {
-        const powerShellScriptOutput = ssmResponse?.StandardOutputContent || '';
+        const powerShellScriptOutput = await decompressSSMResponse(ssmResponse?.StandardOutputContent || '');
 
         if (powerShellScriptOutput.length > 0) {
             if (powerShellScriptOutput?.includes('failureInfo')) {
