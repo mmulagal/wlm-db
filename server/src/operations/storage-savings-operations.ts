@@ -461,14 +461,11 @@ async function performStorageSavingsCalculations(
     } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
-    const isFsxwInstancePresent = sqlServerInstances?.some(sqlServerInstance =>
+    const fsxwInstances = sqlServerInstances?.filter(sqlServerInstance =>
         sqlServerInstance?.storage?.some(storage => storage.type === FileSystemTypes.FSXW)
     );
-    if (isFsxwInstancePresent) {
-        const { sqlServerDeploymentType } =
-            sqlServerInstances?.find(sqlServerInstance =>
-                sqlServerInstance?.storage?.map(storage => storage.type).includes(FileSystemTypes.FSXW)
-            ) || {};
+    if (fsxwInstances && fsxwInstances.length > 0) {
+        const [{ sqlServerDeploymentType }] = fsxwInstances;
 
         if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
             throw createError(
@@ -477,12 +474,11 @@ async function performStorageSavingsCalculations(
             );
         }
 
-        const fileSystemsIds = sqlServerInstances
-            ?.map(
-                sqlServerInstance =>
-                    sqlServerInstance?.storage?.find(storage => storage.type === FileSystemTypes.FSXW)?.id
+        const fileSystemsIds = compact(
+            fsxwInstances.flatMap(fsxwInstance =>
+                fsxwInstance.storage?.flatMap(storage => (storage.type === FileSystemTypes.FSXW ? [storage.id] : []))
             )
-            .filter((id): id is string => id !== undefined);
+        );
 
         if (!fileSystemsIds.length) {
             throw createError(
@@ -655,14 +651,11 @@ async function getStorageSavingsCalculationMetrics(
     } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
-    const isFsxwInstancePresent = sqlServerInstances?.some(sqlServerInstance =>
+    const fsxwInstances = sqlServerInstances?.filter(sqlServerInstance =>
         sqlServerInstance?.storage?.some(storage => storage.type === FileSystemTypes.FSXW)
     );
-    if (isFsxwInstancePresent) {
-        const { sqlServerDeploymentType } =
-            sqlServerInstances?.find(sqlServerInstance =>
-                sqlServerInstance?.storage?.map(storage => storage.type).includes(FileSystemTypes.FSXW)
-            ) || {};
+    if (fsxwInstances && fsxwInstances.length > 0) {
+        const [{ sqlServerDeploymentType }] = fsxwInstances;
 
         if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
             throw createError(
@@ -671,12 +664,11 @@ async function getStorageSavingsCalculationMetrics(
             );
         }
 
-        const fileSystemsIds = sqlServerInstances
-            ?.map(
-                sqlServerInstance =>
-                    sqlServerInstance?.storage?.find(storage => storage.type === FileSystemTypes.FSXW)?.id
+        const fileSystemsIds = compact(
+            fsxwInstances.flatMap(fsxwInstance =>
+                fsxwInstance.storage?.flatMap(storage => (storage.type === FileSystemTypes.FSXW ? [storage.id] : []))
             )
-            .filter((id): id is string => id !== undefined);
+        );
 
         if (!fileSystemsIds.length) {
             throw createError(
