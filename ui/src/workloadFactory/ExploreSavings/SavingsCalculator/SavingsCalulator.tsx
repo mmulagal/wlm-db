@@ -93,6 +93,14 @@ const SavingsCalculator = () => {
             });
         }, 10);
     };
+
+    const setManualBreadcrumbTitle = () => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+            return 'Custom configuration for EBS';
+        } else {
+            return 'Custom configuration for FSx for Windows';
+        }
+    };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
@@ -111,7 +119,7 @@ const SavingsCalculator = () => {
                                     title:
                                         savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                                         savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                            ? 'Explore savings manually'
+                                            ? setManualBreadcrumbTitle()
                                             : selectedServerName
                                 }
                             ]}
