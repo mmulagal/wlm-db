@@ -481,6 +481,13 @@ async function calculatePrice(
             regionCode: compute.regionCode,
             ebsResourceInfo: ebsRootVolumes
         };
+    } else {
+        const hasRootVolume = ebsStorage.ebsResourceInfo?.some(
+            ({ id, volumeType }) => id.includes(EBS_ROOT_VOLUME) && volumeType === 'gp3'
+        );
+        if (!hasRootVolume) {
+            ebsStorage.ebsResourceInfo = [...ebsStorage.ebsResourceInfo, ...ebsRootVolumes];
+        }
     }
 
     const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));
@@ -550,13 +557,6 @@ async function calculatePrice(
     }[] = [];
     let totalEbsStorageCost = 0;
     if (!isEmpty(ebsStorage)) {
-        const hasRootVolume = ebsStorage.ebsResourceInfo?.some(
-            ({ id, volumeType }) => id.includes(EBS_ROOT_VOLUME) && volumeType === 'gp3'
-        );
-        if (!hasRootVolume) {
-            ebsStorage.ebsResourceInfo = [...ebsStorage.ebsResourceInfo, ...ebsRootVolumes];
-        }
-
         ebsStorage.ebsResourceInfo.forEach(ebsResource => {
             const rate = productRates[`ebsStorage-${ebsResource.volumeType}`];
             const size =
