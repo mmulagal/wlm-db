@@ -1,4 +1,5 @@
 import { SqlServerDeploymentModel } from '../../../utils/consts';
+import { compressResponse } from './common-templates';
 
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
 const IS_PS7_AVAILABLE: string = 'isPS7Available';
@@ -88,6 +89,7 @@ Possible causes for unavailability of SQL Server details:
 const HOST_AND_SQL_INFO_PS1 = [
     `
   $ErrorActionPreference = "Stop"
+  $ProgressPreference = 'SilentlyContinue'
 
   Function TestIfInterfaceNameMatchesWithDriveId {
     param (
@@ -328,6 +330,23 @@ const HOST_AND_SQL_INFO_PS1 = [
     $clusterDetails = GetClusterDetails
     $SMBConnections = GetSMBConnections
   
+    $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+    $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "60"} -Method PUT -Uri 'http://169.254.169.254/latest/api/token'
+    $instanceType = (Invoke-WebRequest -Headers @{"X-aws-ec2-metadata-token" = $token} -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
+    $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
+    $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
+
+    if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
+      $credsFromParameterStore = $null
+      try {
+        [string]$apiToken = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri http://169.254.169.254/latest/api/token
+        $ec2InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $apiToken} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+        $credsFromParameterStore = (Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json
+      } catch {
+        $responseObject['failureInfo'] += $_
+      }
+    }
+  
     $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
       $responseObject = @{}
       $instanceSectionStartTime = Get-Date
@@ -392,32 +411,16 @@ const HOST_AND_SQL_INFO_PS1 = [
           } catch {
             $responseObject['windowsAuthentication'] = $False
 
-            
-            $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
-            $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
-            $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
-            $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
-
-            if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
-              $sqlCredential = $null
+            if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
               try {
-                [string]$apiToken = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri http://169.254.169.254/latest/api/token
-                $ec2InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $apiToken} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
-                $sqlCredential = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json).sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
+                $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
+                $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
+                $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
+                if ($? -eq $False) {
+                  $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
+                }
               } catch {
                 $responseObject['failureInfo'] += $_
-              }
-
-              if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                try {
-                  $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
-                  $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
-                  if ($? -eq $False) {
-                    $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
-                  }
-                } catch {
-                  $responseObject['failureInfo'] += $_
-                }
               }
             }
           }
@@ -449,7 +452,13 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
       Echo $responseObject
     }
-    Echo $instancesInfoList | ConvertTo-Json
+    $response = $instancesInfoList | ConvertTo-Json
+    if([string]::IsNullOrEmpty($response)) {
+      Write-Information "Failed to compress the response because the response is either null or empty. $response"
+      return $response
+    }
+    ${compressResponse}
+    return (Deflate-String $response)
   } catch {
     # Prevent any possible errors from clobbering JSON output
     $responseObject['failureInfo'] += "Exception: $_\`n"
@@ -490,6 +499,7 @@ const CLUSTER_NETWORK_IP_INFO_PS1 = [
 // For now, we copy only the scripts that are needed to create a database.
 const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
     `
+    $ProgressPreference = 'SilentlyContinue'
     $ErrorActionPreference = "Stop"
     $responseObject = @{}
     $scriptStartTime = Get-Date
@@ -570,6 +580,7 @@ const GET_MISSING_RESOURCE_DETAILS = [
 
 const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL: string) => [
     `
+  $ProgressPreference = 'SilentlyContinue'
   Set-Variable -Option Constant -Name MODULE_INSTALL_STATE_FILE -Value 'NtapPsModuleInstallInProgressFile'
   Set-Variable -Option Constant -Name NTAP_WF_MODULE_INSTALL_JOB -Value 'NtapWfModuleInstallJob'
   
