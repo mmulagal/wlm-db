@@ -106,6 +106,27 @@ function New-ScheduledTask {
     }
 }
 
+function Remove-ScheduledTask {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$taskName
+    )
+
+    try {
+        # Check if the task exists
+        if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) {
+            Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
+            Write-Output "Scheduled task $taskName removed successfully"
+        }
+        else {
+            Write-Output "Scheduled task $taskName does not exist"
+        }
+    }
+    catch {
+        Write-Error "Failed to remove scheduled task: $_"
+    }
+}
+
 # Invoke the function with the SYSTEM user
 New-ScheduledTask -taskName "wlmdbsqlsetup" -argument "$wlmdb_sql_setup_command" -userName "SYSTEM"
 
@@ -450,6 +471,8 @@ try {
     )
     Invoke-Commands -commands $cleanup -logFile "C:\cfn\tflogs\cleanup.log"
     Write-Output "Completed the Cleanup"
+    # Invoke the function to remove the task
+    Remove-ScheduledTask -taskName "wlmdbsqlsetup"
     Write-Output "Sql Setup Completed Successfully: $deployment_name"
     Stop-Transcript
     

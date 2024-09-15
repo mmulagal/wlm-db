@@ -28,10 +28,6 @@ resource "aws_fsx_ontap_file_system" "fsx_ontap_fs" {
   route_table_ids                 = local.fsx_is_multi_zone_deployment ? [var.preferred_route_table_id, var.standby_route_table_id] : null
   throughput_capacity             = var.fsx_volume_throughput_capacity
 
-  # disk_iops_configuration {
-  #   iops = local.fsx_is_provision_mode_automatic ? null : var.fsx_disk_iops // may hav to remove this if it does not work as expected
-  #   mode = local.fsx_is_provision_mode_automatic ? "AUTOMATIC" : "USER_PROVISIONED"
-  # }
   dynamic "disk_iops_configuration" {
     for_each = var.fsx_disk_iops != 3 ? [1] : []
     content {

@@ -97,7 +97,7 @@ resource "aws_instance" "validation_node" {
   # user_data = data.template_file.user_data.rendered
   user_data = local.user_data
 
-  # instance_initiated_shutdown_behavior = "terminate" // enable this once we add sudo shutdown -h now in user data so this will get terminated
+  instance_initiated_shutdown_behavior = "stop" // enable this once we add sudo shutdown -h now in user data so this will get terminated
 
   timeouts {
     create = "30m"

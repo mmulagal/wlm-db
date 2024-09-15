@@ -14,13 +14,6 @@ variable "enable_cloudwatch_log_feature" {
   type        = bool
   default     = "false"
 }
-
-variable "log_group_name" {
-  description = "A name for the log group."
-  type        = string
-  default     = "SQLDLOG"
-}
-
 variable "unique_id" {
   description = "Automation execution unique ID."
   type        = string
