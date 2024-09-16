@@ -1076,6 +1076,7 @@ export const GENERAL = {
         'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
         'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
+    ALL_ES_FSXW_AOAG_ROWS: 'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
         'The attempt to manage the SQL Server instance ',

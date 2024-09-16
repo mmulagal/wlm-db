@@ -218,6 +218,101 @@
             ]
         },
         {
+            "ec2InstanceId": "i-0756aefb9a361daa91",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "rranga-ec2",
+            "ec2UsageOperation": "RunInstances:0006",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "EAGLE1",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.1000.6",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-3UTIH781",
+                    "serverGuid": "0A63AA51-6120-48A4-AF08-18EF0B68E84C",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH781"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXW",
+                            "id": "vol-0c73fa01e4e64ba60"
+                        }
+                    ],
+                    "deploymentTypes": []
+                },
+                {
+                    "sqlServerInstance": "NEO1",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.1000.6",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-3UTIH781",
+                    "serverGuid": "78D8D6A3-E93F-43CC-9BD7-501D832831BA",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH781"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "AOAG",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXW",
+                            "id": "vol-0c73fa01e4e64ba60"
+                        }
+                    ],
+                    "deploymentTypes": []
+                },
+                {
+                    "sqlServerInstance": "MSSQLSERVER1",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4115.5",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "EC2AMAZ-3UTIH781",
+                    "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH781"
+                    ],
+                    "nodeIps": [],
+                    "sqlServerDeploymentType": "AOAG",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXW",
+                            "id": "vol-0c73fa01e4e64ba60"
+                        }
+                    ],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
             "ec2InstanceId": "i-0d9afbdd87c7bc4a5",
             "ec2InstanceType": "m5.large",
             "ssmState": "connected",
