@@ -84,6 +84,24 @@
     .keyField {
         width: 371px;
     }
+
+    .noticeText {
+        margin-top: 6px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+
+        svg {
+            width: 16px;
+            height: 16px;
+            position: relative;
+            margin-top: 4px;
+            path {
+                fill: #518bec;
+            }
+        }
+    }
 }
 
 @media screen and (max-width: 1500px) {
@@ -101,6 +119,9 @@
                     width: 580px;
                 }
             }
+        }
+        .noticeText {
+            width: 456px;
         }
     }
 }
