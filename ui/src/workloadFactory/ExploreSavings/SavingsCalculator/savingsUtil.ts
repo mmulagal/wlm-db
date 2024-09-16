@@ -2027,14 +2027,13 @@ export const checkIfByolFieldRequired = (
  */
 export const checkIfEbsProtected = () => { 
     const state = store.getState();
-    const { snapshotLoading, selectedHostDetails } = state.exploreSavings;
+    const { selectedHostDetails } = state.exploreSavings;
+    const perfMssqlInstancesData = state.inventoryV2.perfMssqlInstancesData;
     if (selectedHostDetails?.sqlServerInstances?.length > 0) {
         let unprotected: boolean = false;
-        let hasProtection: boolean = false;
         let protectedVal: boolean = false;
         selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
             if (perRow?.protection) {
-                hasProtection = true;
                 if (perRow?.protection?.isAwsBackupEnabled?.ebs) {
                     protectedVal = true;
                 } else {
@@ -2042,14 +2041,14 @@ export const checkIfEbsProtected = () => {
                 }
             } 
         });
+
         if (protectedVal) {
             return EBS_PROTECTED_OPTIONS.PROTECTED;
         }else if (unprotected) {
             return EBS_PROTECTED_OPTIONS.UNPROTECTED;
-        } else if (!selectedHostDetails?.loading && hasProtection) {
+        } else if (!selectedHostDetails?.loading && perfMssqlInstancesData?.[selectedHostDetails?.id] && !perfMssqlInstancesData?.[selectedHostDetails?.id]?.loading) {
             return EBS_PROTECTED_OPTIONS.UNKNOWN;
-        }
-        
+        };
     };
     return '';
 };

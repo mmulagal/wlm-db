@@ -184,17 +184,17 @@ const SavingsCalculatorApi = () => {
 
     useEffect(() => {
         // If the selected instance is EBS protected, set the snapshot frequency to daily. It is only for EBS Automatic mode.
-        if (selectedHostDetails && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+        if (selectedHostDetails && Object.keys(selectedHostDetails).length !== 0 && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
             const isProtectionData: any = checkIfEbsProtected();
             if (isProtectionData === EBS_PROTECTED_OPTIONS.PROTECTED) {
+                dispatch(setSnapshotLoading(false));
                 dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[2]));
             } else if (isProtectionData === EBS_PROTECTED_OPTIONS.UNPROTECTED) {
+                dispatch(setSnapshotLoading(false));
                 dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[0]));
             } else if (isProtectionData === EBS_PROTECTED_OPTIONS.UNKNOWN) {
-                dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
-            }
-            if (isProtectionData !== ''){
                 dispatch(setSnapshotLoading(false));
+                dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
             }
         };
     }, [selectedHostDetails]);
@@ -202,16 +202,19 @@ const SavingsCalculatorApi = () => {
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
             // If selected snapshot frequency has some value than trigger TCO APIs else call instance api ti get protection.
-            const isProtectionData = checkIfEbsProtected();
-            if (isProtectionData !== '' || selectedSnapshotFrequency) {
-                dispatch(setDisableState(false));
-                triggerRefreshApi();
-            } else {
-                dispatch(setSnapshotLoading(true));
-                // This is similar to expand row in inventory. It will call instance API to get protection data.
-                addInstanceIdToGetPerf(selectedHostDetails, dispatch);
-            }
+            if (selectedHostDetails && Object.keys(selectedHostDetails).length !== 0) {
+                const isProtectionData = checkIfEbsProtected();
+                if (isProtectionData !== '' || selectedSnapshotFrequency) {
+                    dispatch(setDisableState(false));
+                    triggerRefreshApi();
+                } else {
+                    dispatch(setSnapshotLoading(true));
+                    // This is similar to expand row in inventory. It will call instance API to get protection data.
+                    addInstanceIdToGetPerf(selectedHostDetails, dispatch);
+                }
+            };
         } else {
+            dispatch(setSnapshotLoading(false));
             dispatch(setDisableState(false));
             triggerRefreshApi();
         }
