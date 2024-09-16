@@ -116,7 +116,7 @@ interface SsmTargetsInfo {
     };
 }
 
-interface FsxInstanceConfig {
+interface FsxServerConfig {
     deploymentType: string | undefined;
     subnetIds: string[] | undefined;
     fileSystemStorageType?: string;
@@ -257,7 +257,7 @@ async function getHostAndSqlServerInfo(
         logger.info(`API1Performance: Time taken by describe FSxFS/SVM: ${api1EndTime - api1StartTime}ms`);
 
         const endPointIpWithFsxInfo = new Map<string, FSxInfo>();
-        const fsIdWithFsxInstanceConfig = new Map<string, FsxInstanceConfig>();
+        const fsIdWithFsxInfo = new Map<string, FsxServerConfig>();
         api1StartTime = performance.now();
         svmList.StorageVirtualMachines?.forEach(async elem => {
             const fsId = elem.FileSystemId;
@@ -311,7 +311,7 @@ async function getHostAndSqlServerInfo(
 
         fsxList.forEach(({ FileSystemId, OntapConfiguration, WindowsConfiguration, SubnetIds, StorageType }) => {
             if (FileSystemId) {
-                fsIdWithFsxInstanceConfig.set(FileSystemId, {
+                fsIdWithFsxInfo.set(FileSystemId, {
                     deploymentType: isEmpty(OntapConfiguration)
                         ? WindowsConfiguration?.DeploymentType
                         : OntapConfiguration?.DeploymentType,
@@ -348,7 +348,7 @@ async function getHostAndSqlServerInfo(
                         target,
                         commandId!,
                         endPointIpWithFsxInfo,
-                        fsIdWithFsxInstanceConfig,
+                        fsIdWithFsxInfo,
                         subnetListMap,
                         ebsVolumeToAvailabilityZoneMap
                     );
@@ -394,7 +394,7 @@ async function getHostAndSqlInfoFromPsOutput(
     ssmTarget: SsmTargetsInfo,
     commandId: string,
     endPointIpWithFsxInfo: Map<string, FSxInfo>,
-    fsIdWithFsxInstanceConfig: Map<string, FsxInstanceConfig>,
+    fsIdWithFsxInfo: Map<string, FsxServerConfig>,
     subnetListMap: Map<string | undefined, string | undefined>,
     ebsVolumeToAvailabilityZoneMap: Map<string | undefined, string | undefined>
 ): Promise<SqlServerInstanceInfoType[]> {
@@ -404,7 +404,7 @@ async function getHostAndSqlInfoFromPsOutput(
         ssmTarget,
         commandId,
         endPointIpWithFsxInfo,
-        fsIdWithFsxInstanceConfig,
+        fsIdWithFsxInfo,
         subnetListMap
     });
     const commandInvocationParam = {
@@ -530,7 +530,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
 
                             const { deploymentType, subnetIds, fileSystemStorageType } =
-                                fsIdWithFsxInstanceConfig.get(fsxId!) || {};
+                                fsIdWithFsxInfo.get(fsxId!) || {};
 
                             storageTypes.push({
                                 type: STORAGE_TYPE.FSXN,
@@ -565,7 +565,7 @@ async function getHostAndSqlInfoFromPsOutput(
                                     fsxId,
                                     svmId
                                 } = endPointIpWithFsxInfo.get(matchedEndpoint) || {};
-                                const { fileSystemStorageType } = fsIdWithFsxInstanceConfig.get(fsxId!) || {};
+                                const { fileSystemStorageType } = fsIdWithFsxInfo.get(fsxId!) || {};
                                 if (fsxType === FileSystemType.WINDOWS) {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXW,
@@ -583,7 +583,7 @@ async function getHostAndSqlInfoFromPsOutput(
                                     });
                                 }
 
-                                const { deploymentType, subnetIds } = fsIdWithFsxInstanceConfig.get(fsxId!) || {};
+                                const { deploymentType, subnetIds } = fsIdWithFsxInfo.get(fsxId!) || {};
                                 deploymentTypes.push({
                                     type: deploymentType,
                                     zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
