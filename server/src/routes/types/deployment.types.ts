@@ -172,6 +172,30 @@ const CollationListQueryString = Type.Object({
     version: Type.Number()
 });
 
+const TerraformSetupRequestBody = Type.Object({
+    networkConfiguration: CFNetworkConfiguration,
+    ec2Configuration: EC2Configuration,
+    adConfiguration: ADConfiguration,
+    fsxConfiguration: FSXConfiguration,
+    sqlConfiguration: SQLConfiguration,
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
+    tags: Type.Optional(
+        Type.Array(
+            Type.Object({
+                key: Type.String(),
+                value: Type.String()
+            })
+        )
+    ),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String())
+});
+
+const TerraformSetupResponse = Type.Object({
+    url: Type.String()
+});
+
 type DeploymentStatusObjectParamsType = Static<typeof DeploymentStatusObjectParams>;
 
 const DeploymentStatusListResponse = Type.Array(DeploymentStatusResponse);
@@ -185,6 +209,7 @@ type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
 type CloudFormationStaticTemplateResponseType = Static<typeof CloudFormationStaticTemplateResponse>;
 type CloudFormationDeploymentResponseType = Static<typeof CloudFormationDeploymentResponse>;
+type TerraformSetupResponseType = Static<typeof TerraformSetupResponse>;
 
 export {
     CloudFormationTemplateRequestBody,
@@ -211,5 +236,8 @@ export {
     MissingPermission,
     FsxAvailableRegionsForThroughputListResponse,
     CollationListResponse,
-    CollationListQueryString
+    CollationListQueryString,
+    TerraformSetupResponse,
+    TerraformSetupResponseType,
+    TerraformSetupRequestBody
 };

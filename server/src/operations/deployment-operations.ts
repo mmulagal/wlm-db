@@ -18,7 +18,8 @@ import {
     FSXConfigurationType,
     SQLConfigurationType,
     CloudFormationDeploymentResponseType,
-    CloudFormationStaticTemplateResponseType
+    CloudFormationStaticTemplateResponseType,
+    TerraformSetupResponseType
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
@@ -101,7 +102,7 @@ import {
     getWindowsServerBaseAmi,
     enableVpcDnsAttributes
 } from './aws/ec2-operations';
-import uploadTemplates from './template-operations';
+import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
@@ -113,6 +114,7 @@ import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
 import { describeSubnets, getAmis } from '../lib/aws/ec2';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
+import { createAndUploadTheTerraformZipFile, uploadTerraformModules, uploadTFVarsFile } from './terraform-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -163,19 +165,19 @@ async function formatTemplateParameters(
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              true,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          )
+            fsxConfiguration.databaseSize,
+            true,
+            sqlConfiguration.sqlDeploymentMode,
+            fsxConfiguration.fsxVolThroughput,
+            fsxConfiguration.fsxIOPS
+        )
         : generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              false,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          );
+            fsxConfiguration.databaseSize,
+            false,
+            sqlConfiguration.sqlDeploymentMode,
+            fsxConfiguration.fsxVolThroughput,
+            fsxConfiguration.fsxIOPS
+        );
 
     const { roleName = '', providerAccountId = '' } = credentialsId
         ? await getRoleDetails(credentialsId)
@@ -185,8 +187,8 @@ async function formatTemplateParameters(
     const validationAmiImage = sqlConfiguration.isCustomAmi
         ? sqlConfiguration.sqlAmiId
         : credentialsId && region
-        ? await getWindowsServerBaseAmi(credentialsId!, region!)
-        : '';
+            ? await getWindowsServerBaseAmi(credentialsId!, region!)
+            : '';
 
     const availabilityZones =
         sqlConfiguration.sqlDeploymentMode === STANDALONE
@@ -195,8 +197,8 @@ async function formatTemplateParameters(
     const validationNodeInstanceType = sqlConfiguration.isCustomAmi
         ? CUSTOM_AMI_VALIDATION_INSTANCE_TYPE
         : credentialsId && region
-        ? await getValidationNodeInstanceType(credentialsId!, region, availabilityZones)
-        : VALIDATION_NODE_INSTANCETYPE.T2MICRO;
+            ? await getValidationNodeInstanceType(credentialsId!, region, availabilityZones)
+            : VALIDATION_NODE_INSTANCETYPE.T2MICRO;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
@@ -498,27 +500,103 @@ async function getCloudformationTemplate(
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
     });
-    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${
-        region ? `--region ${region}` : ''
-    }`;
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${region ? `--region ${region}` : ''
+        }`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
     templateParameters.forEach(e => {
-        urlParams += `&param_${e.ParameterKey}=${
-            e.ParameterValue ? encodeURIComponent(e.ParameterValue) : e.ParameterValue
-        }`;
+        urlParams += `&param_${e.ParameterKey}=${e.ParameterValue ? encodeURIComponent(e.ParameterValue) : e.ParameterValue
+            }`;
     });
 
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
-        region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
-    }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
+        }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
 
     return {
         url: signedTemplateURL,
         template: masterTemplateContents || '',
         cliCommand: cloudFormationCli
     };
+}
+
+async function getTerraformSetup(networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    adConfiguration: ADConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    triggeredFrom: string,
+    tags?: Array<{ key: string; value: string }>,
+    credentialsId?: string,
+    region?: string
+): Promise<TerraformSetupResponseType> {
+    logger.info('Get terraform setup', {
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        adConfiguration,
+        fsxConfiguration,
+        sqlConfiguration,
+        triggeredFrom,
+        tags,
+        enableCloudWatch,
+        topicArn
+    });
+
+    const { workloadInstanceType } = ec2Configuration;
+    const { sqlServerName, sqlAmiName } = sqlConfiguration;
+    const { databaseSize } = fsxConfiguration;
+    const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
+    // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
+    const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+
+    try {
+        const { stackName: deploymentName, templateParameters } = await formatTemplateParameters(
+            networkConfiguration,
+            ec2Configuration,
+            adConfiguration,
+            fsxConfiguration,
+            sqlConfiguration,
+            topicArn,
+            enableCloudWatch,
+            metrics,
+            credentialsId,
+            region,
+            true
+        );
+
+        logger.debug(`Deployment ${deploymentName} parameters ${JSON.stringify(templateParameters)}.`);
+
+        region = !isEmpty(region) ? region : DEFAULT_AWS_REGION;
+
+        const customTerraformModulesPath: string = `${WLMDB}/${deploymentName}/terraform`;
+
+        const initializationScriptURLs = await uploadTerraformModules(
+            region as string,
+            DatabaseTypes.MS_SQL_SERVER,
+            deploymentName,
+            tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+            customTerraformModulesPath
+        );
+        logger.debug('Terraform modules uploaded successfully', initializationScriptURLs);
+
+        const tfVarsSignedUrl = await uploadTFVarsFile(region as string, DatabaseTypes.MS_SQL_SERVER, deploymentName, customTerraformModulesPath, templateParameters, initializationScriptURLs, metrics);
+        logger.debug('Terraform vars file signed url', tfVarsSignedUrl);
+
+        const terraformZipS3SignedURL = await createAndUploadTheTerraformZipFile(region as string, DatabaseTypes.MS_SQL_SERVER, deploymentName, customTerraformModulesPath, tfVarsSignedUrl);
+
+        logger.debug('Terraform zip file signed url', terraformZipS3SignedURL);
+
+        return {
+            url: terraformZipS3SignedURL
+        };
+    } catch (err: any) {
+        logger.error('Error while getting terraform setup', err);
+        throw createError(500, 'Error while getting terraform setup');
+    }
 }
 
 async function deployStackOrCreateTemplateURL(
@@ -655,21 +733,21 @@ async function deployStackOrCreateTemplateURL(
                 missingPermissions: {
                     implicitlyDenied: !blockedBySCP
                         ? [
-                              {
-                                  service: IAM,
-                                  action: SIMULATE_IAM_POLICY,
-                                  reason: PERMISSION_DENIAL_POSSIBLE_REASONS.MISSING
-                              }
-                          ]
+                            {
+                                service: IAM,
+                                action: SIMULATE_IAM_POLICY,
+                                reason: PERMISSION_DENIAL_POSSIBLE_REASONS.MISSING
+                            }
+                        ]
                         : [],
                     explicitlyDenied: blockedBySCP
                         ? [
-                              {
-                                  service: IAM,
-                                  action: SIMULATE_IAM_POLICY,
-                                  reason: PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_SCP
-                              }
-                          ]
+                            {
+                                service: IAM,
+                                action: SIMULATE_IAM_POLICY,
+                                reason: PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_SCP
+                            }
+                        ]
                         : []
                 }
             };
@@ -733,19 +811,19 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              true,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          )
+            fsxConfiguration.databaseSize,
+            true,
+            sqlConfiguration.sqlDeploymentMode,
+            fsxConfiguration.fsxVolThroughput,
+            fsxConfiguration.fsxIOPS
+        )
         : generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              false,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          );
+            fsxConfiguration.databaseSize,
+            false,
+            sqlConfiguration.sqlDeploymentMode,
+            fsxConfiguration.fsxVolThroughput,
+            fsxConfiguration.fsxIOPS
+        );
 
     const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
 
@@ -820,15 +898,12 @@ async function createCloudFormationTemplateForUserDeployment(
     const adUsernameDetails = splitDomainUsername(adConfiguration.domainUsername);
     const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername);
     const sqlUsernameDetails = splitDomainUsername(sqlConfiguration.serviceAccountName);
-    templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.DomainAdminUser}=${
-        adUsernameDetails?.username || adConfiguration.domainUsername
-    }`;
-    templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.FSxAdminUsername}=${
-        fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
-    }`;
-    templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName}=${
-        sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName
-    }`;
+    templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.DomainAdminUser}=${adUsernameDetails?.username || adConfiguration.domainUsername
+        }`;
+    templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.FSxAdminUsername}=${fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+        }`;
+    templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName}=${sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName
+        }`;
 
     // Get the volume size of an ami.. Set to minimum value of 100 if its lesser than that
     const {
@@ -1207,5 +1282,6 @@ export {
     getCloudformationTemplate,
     deployStackOrCreateTemplateURL,
     getFSXAvailableRegionsForThrougput,
-    getCollationDetailsForDeployment
+    getCollationDetailsForDeployment,
+    getTerraformSetup
 };

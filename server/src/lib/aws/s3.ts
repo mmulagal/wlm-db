@@ -6,6 +6,7 @@ import {
     GetBucketLifecycleConfigurationCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { createReadStream } from 'fs';
 import getLogger from '../../utils/logger';
 import { MASTER_TEMPLATE_PATH, S3_BUCKET_SIGNED_URL_EXPIRY, SECRETS } from '../../utils/consts';
 
@@ -27,14 +28,19 @@ async function getPreSignedUrl(region: string, bucketname: string, key?: string)
     return getSignedUrl(s3, command, { expiresIn: S3_BUCKET_SIGNED_URL_EXPIRY });
 }
 
-async function putObjectBucket(region: string, bucketName: string, objectName: string, objectData: string) {
+async function putObjectBucket(region: string, bucketName: string, objectName: string, objectData: string, filePath?: string) {
     logger.info('Uploading to bucket ', { region, bucketName, objectName });
 
     const s3 = new S3Client({ region });
+    // If objectData is not provided, then read the file from filePath
+    let fileStream;;
+    if (!objectData && filePath) {
+        fileStream = createReadStream(filePath);
+    }
     const command = new PutObjectCommand({
         Bucket: bucketName,
         Key: objectName,
-        Body: objectData
+        Body: objectData || fileStream
     });
 
     const response = await s3.send(command);
