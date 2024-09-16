@@ -583,3 +583,9 @@ export const BXP_MESSAGES = {
     SERVICE_LOCATION_CHANGE: 'SERVICE:LOCATION-CHANGE',
     SERVICE_ON_READY: 'SERVICE:ON-READY'
 };
+
+export const EBS_PROTECTED_OPTIONS = {
+    PROTECTED: 'Protected',
+    UNPROTECTED: 'Unprotected',
+    UNKNOWN: 'Unknown'
+}
