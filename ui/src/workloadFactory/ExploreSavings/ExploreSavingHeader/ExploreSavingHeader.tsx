@@ -1,11 +1,11 @@
-import { DsButton, DsTypography } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
 import { ReactComponent as ExploreSaving } from '../../../assets/explore-saving.svg';
 import { ReactComponent as ExploreSaving1600 } from '../../../assets/exploreSaving1600.svg';
 import { ReactComponent as ExploreSaving1440 } from '../../../assets/exploreSaving1440.svg';
 import styles from './ExploreSavingHeader.module.scss';
-import ExploreSavingsTable from '../ExploreSavingsTable/ExploreSavingsTable';
+
 import { GENERAL } from '../../../utils/appConstants';
-import { useAppSelector } from '../../../store/storeHooks';
+
 import ExploreSavingsTableV2 from '../ExploreSavingsTableV2/ExploreSavingsTableV2';
 import { handleManualTCOEBS, handleManualTCOFSXW } from '../ExploreSavingsUtils';
 import { useDispatch } from 'react-redux';
@@ -13,7 +13,6 @@ import useResize from '../../../common/hooks/useResize';
 import { useNavigate } from 'react-router-dom';
 
 const ExploreSavingHeader = () => {
-    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const dispatch = useDispatch();
     const windowSize = useResize();
     const navigate = useNavigate();
@@ -68,8 +67,7 @@ const ExploreSavingHeader = () => {
                             </div>
                         </div>
                     </div>
-                    {!isInventoryV2 && <ExploreSavingsTable />}
-                    {isInventoryV2 && <ExploreSavingsTableV2 />}
+                    <ExploreSavingsTableV2 />
                 </div>
             )}
             {windowSize.width > 1471 && windowSize.width <= 1823 && (
@@ -119,8 +117,7 @@ const ExploreSavingHeader = () => {
                             </div>
                         </div>
                     </div>
-                    {!isInventoryV2 && <ExploreSavingsTable />}
-                    {isInventoryV2 && <ExploreSavingsTableV2 />}
+                    <ExploreSavingsTableV2 />
                 </div>
             )}
             {windowSize.width <= 1470 && (
@@ -169,8 +166,8 @@ const ExploreSavingHeader = () => {
                             </div>
                         </div>
                     </div>
-                    {!isInventoryV2 && <ExploreSavingsTable />}
-                    {isInventoryV2 && <ExploreSavingsTableV2 />}
+
+                    <ExploreSavingsTableV2 />
                 </div>
             )}
         </>

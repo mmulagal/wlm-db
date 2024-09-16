@@ -24,7 +24,6 @@ import { ReactComponent as RSS_White } from '../../../assets/ic_rss_white.svg';
 import { ReactComponent as Menu } from '../../../assets/ic_menu.svg';
 import { useDispatch } from 'react-redux';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
-import DatabaseHostOverview from '../../ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
     setDashboardRefresh,
@@ -726,7 +725,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && (
                         <DatabaseHostOverviewV2 refreshTime={refreshTime} refreshPage={refreshPage} />
                     )}
-                    {selectedHeaderTab === WLF_TABS.OVERVIEW && !isInventoryV2 && <DatabaseHostOverview />}
+
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>
                             <div className={styles.sandboxSection}>
