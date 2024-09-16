@@ -1454,7 +1454,7 @@ async function getDatabaseInstanceTopology(
         accountId,
         credentialsId,
         activeNodeInstanceId,
-        databaseInstances.instance_name
+        databaseInstances.database_instance_name
     );
 
     const {
@@ -1488,6 +1488,7 @@ async function getDatabaseInstanceTopology(
         let subnetIds;
         let availabilityZones: Array<string> | undefined;
         let fileSystemTags;
+        let fileSystemStorageType;
         try {
             if (fileSystemId || fsxwId) {
                 const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId || fsxwId] });
@@ -1501,7 +1502,8 @@ async function getDatabaseInstanceTopology(
                     } = {},
                     Lifecycle: fileSystemStatus,
                     StorageCapacity: fileSystemStorageCapacity,
-                    SubnetIds: subnetIds
+                    SubnetIds: subnetIds,
+                    StorageType: fileSystemStorageType
                 } = fileSystem);
 
                 fileSystemName = fileSystemTags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
@@ -1526,7 +1528,8 @@ async function getDatabaseInstanceTopology(
             ...(fileSystemStatus && { fileSystemStatus }),
             ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
-            ...(availabilityZones && { availabilityZones })
+            ...(availabilityZones && { availabilityZone: availabilityZones }),
+            ...(fileSystemStorageType && { fileSystemStorageType })
         };
     }
     return topologyData;
