@@ -427,6 +427,19 @@ export const getDiscoveredHostDeployment = (host: any) => {
     return type;
 };
 
+export const getAzType = (deploymentType: string | undefined) => {
+    if (!deploymentType) {
+        return '';
+    };
+    const singleAzPattern = /^SINGLE_AZ_\d+$/i;
+    const multiAzPattern = /^MULTI_AZ_\d+$/i;
+    return singleAzPattern.test(deploymentType)
+        ? GENERAL.SINGLE_AZ
+        : multiAzPattern.test(deploymentType)
+        ? GENERAL.MULTI_AZ
+        : deploymentType;
+};
+
 export const formatHostData = (val: any) => {
     // Protection text added to enable filter
     let protectionText = '';
@@ -445,20 +458,10 @@ export const formatHostData = (val: any) => {
     // AZ Type - Single AZ or Multi AZ
     let azType = '';
     if (val?.topology?.fileSystemDeploymentMode) {
-        azType =
-            val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                ? GENERAL.SINGLE_AZ
-                : val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                ? GENERAL.MULTI_AZ
-                : '';
+        azType = getAzType(val?.topology?.fileSystemDeploymentMode);
     } else {
         const deploymentType = val?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
-        azType =
-            deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                ? GENERAL.SINGLE_AZ
-                : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                ? GENERAL.MULTI_AZ
-                : '';
+        azType = getAzType(deploymentType);
     }
 
     // server installation mode
