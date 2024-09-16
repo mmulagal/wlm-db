@@ -31,20 +31,17 @@ import ManualTCOFields from './ManualTCOFields/ManualTCOFields';
 import ManualEC2 from './ManualEC2/ManualEC2';
 import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
-import { useGetManualStorageSavingsMutation, useGetManualViewCalculationsMutation } from '../../../utils/apiService';
 
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
 import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
+import WindowFileServer from './WindowFileServer/WindowFileServer';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
     // const [disableState, setDisableState] = useState(false);
     const [isMutliFsx, setIsMutliFsx] = useState(false);
-
-    const [getManualStorageSavingsApi] = useGetManualStorageSavingsMutation();
-    const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
 
     const {
         savingsCalculatorFrom,
@@ -96,6 +93,14 @@ const SavingsCalculator = () => {
             });
         }, 10);
     };
+
+    const setManualBreadcrumbTitle = () => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+            return 'Custom configuration for EBS';
+        } else {
+            return 'Custom configuration for FSx for Windows';
+        }
+    };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
@@ -114,7 +119,7 @@ const SavingsCalculator = () => {
                                     title:
                                         savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                                         savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                            ? 'Explore savings manually'
+                                            ? setManualBreadcrumbTitle()
                                             : selectedServerName
                                 }
                             ]}
@@ -135,13 +140,15 @@ const SavingsCalculator = () => {
                                     : styles.firstContainer
                             }
                         >
-                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO && (
+                            {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
                                 <>
                                     <SavingsHeader />
                                     <SavingsSelection printState={printState} />
                                     <SavingsSelectedHost />
                                     <InstanceInformation />
-                                    <SelectedVolumeSummary />
+                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && <SelectedVolumeSummary />}
+                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && <WindowFileServer />}
                                 </>
                             )}
                             {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (

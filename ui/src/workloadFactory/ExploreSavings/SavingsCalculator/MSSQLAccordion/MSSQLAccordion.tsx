@@ -43,7 +43,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         selectedHostDetails,
         viewCalculationsLoading,
         selectedManualDeploymentModel,
-        savingsCalculatorFrom
+        savingsCalculatorFrom,
+        selectedManualRegion
     } = useAppSelector(state => state.exploreSavings);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { setDialog, closeDialog } = useDialog();
@@ -53,7 +54,10 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const [storageType, setStorageType] = useState('');
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
+        ) {
             setStorageType(GENERAL.FSX_FOR_WINDOWS);
         } else {
             setStorageType(GENERAL.EBS);
@@ -61,7 +65,15 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     }, [savingsCalculatorFrom]);
 
     useEffect(() => {
-        const selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
+        let selectedRegion = '';
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
+        ) {
+            selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
+        } else {
+            selectedRegion = selectedManualRegion?.data?.regionName + ' | ' + selectedManualRegion?.data?.regionCode;
+        }
         if (storageSavingsResponse?.single) {
             setFsxData({
                 ...storageSavingsResponse?.single?.fsxCalculation,
@@ -155,7 +167,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                     selectedHostDetails?.loading ||
                     disableState ||
                     viewCalculationsLoading ||
-                    isMutliFsx
+                    isMutliFsx ||
+                    !storageSavingsResponse
                 }
                 disabledReason={isMutliFsx ? GENERAL.ES_MULTI_FSX_DISABLE_MSG : ''}
                 isExpanded={printState}
@@ -183,7 +196,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                         selectedHostDetails?.loading ||
                                         viewCalculationsLoading ||
                                         isMutliFsx ||
-                                        disableState
+                                        disableState ||
+                                        !storageSavingsResponse
                                     }
                                     onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                                 >
@@ -202,7 +216,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                     storageSavingsLoading ||
                                     selectedHostDetails?.loading ||
                                     viewCalculationsLoading ||
-                                    disableState
+                                    disableState ||
+                                    !storageSavingsResponse
                                 }
                                 onClick={() => handleCreateClick()}
                             >

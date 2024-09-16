@@ -2,6 +2,7 @@ import { Dispatch } from 'redux';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import {
     formatFractionalNumber,
+    formatFractionalNumberForCost,
     formatSizeTwoPrecision,
     generateOptionType,
     removePasswordInConfig
@@ -25,66 +26,62 @@ import {
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
-    const { recommendedTargetInstance, selectedHostDetails } = state.exploreSavings;
-    const checkBYOLTooltip = selectedHostDetails?.sqlLicenseIncluded ? false : true;
+    const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom } = state.exploreSavings;
+    const checkBYOLTooltip = checkIfByolFieldRequired(selectedHostDetails, false, savingsCalculatorFrom);
     return [
         {
             type: 'Capacity',
             fsx: calculatedResponse?.fsx?.capacity
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.capacity, 2)}`
                 : '$0',
             ebs: calculatedResponse?.ebs?.capacity
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.capacity, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.ebs?.capacity, 2)}`
                 : '$0'
         },
         {
             type: 'IOPS',
             fsx: calculatedResponse?.fsx?.iops
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.iops, 2)}`
                 : '$0',
             ebs: calculatedResponse?.ebs?.iops
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.iops, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.ebs?.iops, 2)}`
                 : '$0'
         },
         {
             type: 'Throughput',
             fsx: calculatedResponse?.fsx?.throughput
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.throughput, 2)}`
                 : '$0',
             ebs: calculatedResponse?.ebs?.throughput
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.throughput, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.ebs?.throughput, 2)}`
                 : '$0'
         },
         {
             type: 'Snapshots',
             fsx: calculatedResponse?.fsx?.snapshots
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.snapshots, 2)}`
                 : '$0',
             ebs: calculatedResponse?.ebs?.snapshots
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.snapshots, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.ebs?.snapshots, 2)}`
                 : '$0'
         },
         {
             type: 'Clones',
             fsx: calculatedResponse?.fsx?.clones
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.clones, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.clones, 2)}`
                 : '$0',
             ebs: calculatedResponse?.ebs?.clones
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.clones, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.ebs?.clones, 2)}`
                 : '$0'
         },
         {
             type: 'Compute',
             isTooltip: recommendedTargetInstance ? GENERAL.COMPUTE_RECOMMENDED_TOOLTIP : '',
             fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
-                ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)
-                  ).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)}`
                 : '$0',
             ebs: calculatedResponse?.compute?.existing?.computeMonthlyPrice
-                ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)
-                  ).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)}`
                 : '$0'
         },
         {
@@ -93,25 +90,19 @@ export const comparisonData = (calculatedResponse: any) => {
                 ? 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL Server license-included AMIs. SQL license costs for SQL on Elastic Block Store are based on the Enterprise license with BYOL. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.'
                 : 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
             fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
-                ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)
-                  ).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)}`
                 : '$0',
             ebs: calculatedResponse?.license?.existing?.licenseMonthlyPrice
-                ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)
-                  ).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)}`
                 : '$0'
         },
         {
             type: 'Total summary',
             fsx: calculatedResponse?.totalSummary?.recommendedTotal
-                ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.totalSummary?.recommendedTotal, 2)
-                  ).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.totalSummary?.recommendedTotal, 2)}`
                 : '$0',
             ebs: calculatedResponse?.totalSummary?.existing
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.totalSummary?.existing, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.totalSummary?.existing, 2)}`
                 : '$0'
         }
     ];
@@ -124,60 +115,57 @@ export const comparisonDataFsxw = (calculatedResponse: any) => {
         {
             type: 'Capacity',
             fsx: calculatedResponse?.fsx?.capacity
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.capacity, 2)}`
                 : '$0',
             fsxw: calculatedResponse?.fsxw?.capacity
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.capacity, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsxw?.capacity, 2)}`
                 : '$0'
         },
         {
             type: 'IOPS',
             fsx: calculatedResponse?.fsx?.iops
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.iops, 2)}`
                 : '$0',
             fsxw: calculatedResponse?.fsxw?.iops
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.iops, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsxw?.iops, 2)}`
                 : '$0'
         },
         {
             type: 'Throughput',
             fsx: calculatedResponse?.fsx?.throughput
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.throughput, 2)}`
                 : '$0',
             fsxw: calculatedResponse?.fsxw?.throughput
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.throughput, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsxw?.throughput, 2)}`
                 : '$0'
         },
         {
             type: 'Snapshots',
             fsx: calculatedResponse?.fsx?.snapshots
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.snapshots, 2)}`
                 : '$0',
             fsxw: calculatedResponse?.fsxw?.snapshots
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.snapshots, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsxw?.snapshots, 2)}`
                 : '$0'
         },
         {
             type: 'Clones',
             fsx: calculatedResponse?.fsx?.clones
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.clones, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.clones, 2)}`
                 : '$0',
             fsxw: calculatedResponse?.fsxw?.clones
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsxw?.clones, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsxw?.clones, 2)}`
                 : '$0'
         },
         {
             type: 'Compute',
-            isTooltip: recommendedTargetInstance ? GENERAL.COMPUTE_RECOMMENDED_TOOLTIP : '',
             fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
                 ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)
-                  ).toLocaleString()}`
+                      formatFractionalNumberForCost(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)
+                  )}`
                 : '$0',
             fsxw: calculatedResponse?.compute?.existing?.computeMonthlyPrice
-                ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)
-                  ).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)}`
                 : '$0'
         },
         {
@@ -185,25 +173,19 @@ export const comparisonDataFsxw = (calculatedResponse: any) => {
             isTooltip:
                 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
             fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
-                ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)
-                  ).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)}`
                 : '$0',
             fsxw: calculatedResponse?.license?.existing?.licenseMonthlyPrice
-                ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)
-                  ).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)}`
                 : '$0'
         },
         {
             type: 'Total summary',
             fsx: calculatedResponse?.totalSummary?.recommendedTotal
-                ? `$${Number(
-                      formatFractionalNumber(calculatedResponse?.totalSummary?.recommendedTotal, 2)
-                  ).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.totalSummary?.recommendedTotal, 2)}`
                 : '$0',
             fsxw: calculatedResponse?.totalSummary?.existing
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.totalSummary?.existing, 2)).toLocaleString()}`
+                ? `$${formatFractionalNumberForCost(calculatedResponse?.totalSummary?.existing, 2)}`
                 : '$0'
         }
     ];
@@ -328,8 +310,10 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
     } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
         deploymentModelValue = selectedManualDeploymentModel?.value;
         storageType = GENERAL.EBS;
-    } else {
+    } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
         storageType = GENERAL.EBS;
+    } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+        storageType = GENERAL.FSX_FOR_WINDOWS;
     }
     return {
         Ec2InstanceCalculation:
@@ -695,7 +679,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Savings from compression & deduplication',
                 value: `${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}%`,
-                text: ``
+                text: `Based on a typical DB workload, ${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}% of Savings from compression and deduplication is our recommendation`
             },
             {
                 label: 'Pricing calculations'
@@ -771,7 +755,10 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
     const state = store.getState();
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
     let deploymentModelValue = selectedDeploymentModel;
-    if (savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO) {
+    if (
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+    ) {
         deploymentModelValue = selectedManualDeploymentModel?.value;
     }
     return {
@@ -1218,7 +1205,10 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
     const { selectedManualDeploymentModel, savingsCalculatorFrom } = state.exploreSavings;
     let deploymentModelValue = selectedDeploymentModel;
 
-    if (savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO) {
+    if (
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+    ) {
         deploymentModelValue = selectedManualDeploymentModel?.value;
     }
 
@@ -1460,24 +1450,24 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
                 text: ``
             },
             {
-                label: 'FSx for windows storage cost for clone',
+                label: 'FSx for Windows File Server storage cost for clone',
                 value: `$${viewCalculation.fsxwCloneCalculation.capacity}`,
-                text: `FSx for windows storage cost of primary dbs volumes not including replica dbs volumes`
+                text: `FSx for Windows File Server storage cost of primary dbs volumes not including replica dbs volumes`
             },
             {
-                label: 'FSx for windows iops cost for clone',
+                label: 'FSx for Windows File Server IOPS cost for clone',
                 value: `$${viewCalculation.fsxwCloneCalculation.iops}`,
-                text: `FSx for windows iops cost of primary dbs volumes not including replica dbs volumes`
+                text: `FSx for Windows File Server IOPS cost of primary dbs volumes not including replica dbs volumes`
             },
             {
-                label: 'FSx for windows throughput cost for clone',
+                label: 'FSx for Windows File Server throughput cost for clone',
                 value: `$${viewCalculation.fsxwCloneCalculation.throughput}`,
-                text: `FSx for windows throughput cost of primary dbs volumes not including replica dbs volumes`
+                text: `FSx for Windows File Server throughput cost of primary dbs volumes not including replica dbs volumes`
             },
             {
                 label: 'Clones total monthly cost',
                 value: `$${viewCalculation.fsxwCloneCalculation.totalCloneMonthlyCost}`,
-                text: `Number of Cloned copies (${viewCalculation.fsxwCloneCalculation.clonedCopiesCount}) x (primary FSx for windows storage cost ($${viewCalculation.fsxwCloneCalculation.capacity}) + primary FSx for windows iops cost ($${viewCalculation.fsxwCloneCalculation.iops}) + primary FSx for windows throughput cost ($${viewCalculation.fsxwCloneCalculation.throughput}))`
+                text: `Number of Cloned copies (${viewCalculation.fsxwCloneCalculation.clonedCopiesCount}) x (FSx for Windows File Server storage cost ($${viewCalculation.fsxwCloneCalculation.capacity}) + FSx for Windows File Server IOPS cost ($${viewCalculation.fsxwCloneCalculation.iops}) + FSx for Windows File Server throughput cost ($${viewCalculation.fsxwCloneCalculation.throughput}))`
             }
         ],
         totalMonthlyCost: [
@@ -1996,4 +1986,35 @@ export const generateManualStorageSavingsPayload = () => {
     payloadObj.sqlServerEdition = setSQLServerEdition(selectedManualServerEdition?.value);
     payloadObj.ec2Instances = createInstances(state);
     return payloadObj;
+};
+
+export const checkIfByolFieldRequired = (
+    selectedHostDetails: any,
+    isByolField: boolean,
+    savingsCalculatorFrom: string | null
+) => {
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+        return false;
+    }
+    let serverEdition: any = [];
+    selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
+        if (perRow?.databaseServer?.serverEdition && !serverEdition.includes(perRow?.databaseServer?.serverEdition)) {
+            serverEdition.push(perRow?.databaseServer?.serverEdition);
+        }
+    });
+    const sqlEdition = serverEdition.join(',').toLowerCase();
+    const licenseIncluded = selectedHostDetails?.sqlLicenseIncluded;
+    // BYOL field should be disabled for sql edition (evaluation/express/developer) and if sql license included is true
+    if (
+        licenseIncluded ||
+        sqlEdition.includes('evaluation') ||
+        sqlEdition.includes('express') ||
+        sqlEdition.includes('developer')
+    ) {
+        return false;
+    } else if (licenseIncluded !== undefined && !licenseIncluded) {
+        return true;
+    } else {
+        return isByolField;
+    }
 };

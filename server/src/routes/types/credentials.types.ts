@@ -2,7 +2,7 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 
 const CredentialsResponse = Type.Array(
     Type.Object({
-        credentialsId: Type.String(),
+        credentialsId: Type.String({ format: 'uuid' }),
         name: Type.String(),
         arn: Type.String(),
         providerAccountId: Type.String()

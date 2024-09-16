@@ -372,6 +372,8 @@ export const GENERAL = {
     STORAGE: 'Storage',
     OTHER: 'Other',
     TYPE: 'Type',
+    VOLUME_TYPE: 'Volume type',
+    ELASTIC_BLOCK_STORE: 'Elastic Block Store (EBS)',
     SIZE: 'Size',
     ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
     EC_NOTE:
@@ -716,7 +718,8 @@ export const GENERAL = {
     MANAGE_HOST: 'Manage host',
     DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 / 2'],
     FAILED_TO_DETECT_HOST: 'Failed to detect host',
-    DETECT_FAILED_WITH_NO_STORAGE: 'Unable to move to unmanaged hosts tab as storage could not be identified',
+    DETECT_FAILED_WITH_NO_STORAGE:
+        'Unable to identify attached storage. For SQL user authentication, reload the inventory page and try to manage again.',
     DONE: 'Done',
     DETECT: 'Detect',
     SSM_CONNECTIVITY: 'SSM connectivity',
@@ -892,6 +895,8 @@ export const GENERAL = {
     SOURCE_HOST: 'Source database host',
     SOURCE_INSTANCE: 'Source database instance',
     SOURCE_DATABASE: 'Source database',
+    MOUNT_NOTICE:
+        'Notice: When cloning a SQL database that has multiple data and/or log files, workload factory clones all files under the auto-assigned or defined drive letter.',
     AUTO_ASSIGN_MOUNT_POINT: 'Auto-assign mount point',
     DEFINE_MOUNT_POINT_PATH: 'Define mount point path',
     VOLUME_MOUNT_POINT_UNDER_PATH: 'Volume mount point under path',
@@ -976,15 +981,15 @@ export const GENERAL = {
     EXPORT_PDF: 'Export PDF',
     ES_COST_SAVINGS: 'Cost savings',
     ES_SAVINGS_PERCENTAGE: 'Percentage savings',
-    ES_HEADING: 'Explore savings of selected host',
+    ES_HEADING: 'Detected host cost analysis',
     ES_HEADER:
-        'Automatically explore savings by selecting a Microsoft SQL Server host and then click "Explore savings". We\'ll calculate your potential savings with FSx for ONTAP storage for your database workloads.',
+        'You can identify potential savings by automatically comparing your database workloads to SQL Server using FSx for ONTAP file systems. Choose a SQL Server host and explore savings.',
     ES_SAVINGS: 'Explore savings',
-    MANUAL_EXLORE_SAVINGS: 'Manual explore savings',
-    EXPLORE_SAVING_MANUALLY: 'Explore savings Manually with EBS',
-    EXPLORE_SAVING_MANUALLY_FSX: 'Explore savings manually with FSx for Windows File Server',
+    MANUAL_EXLORE_SAVINGS: 'Custom configuration cost analysis',
+    EXPLORE_SAVING_MANUALLY: 'Analyze custom configuration for EBS',
+    EXPLORE_SAVING_MANUALLY_FSX: 'Analyze custom configuration for FSx for Windows',
     MANUAL_EXPLORE_SAVINGS_CONTENT:
-        'Alternatively, select "Explore savings manually". You\'ll  provide Microsoft SQL Server configuration details to get an accurate cost estimate comparison.',
+        'You can adjust SQL Server, infrastructure, and storage settings to analyze for potential savings between your environment and SQL Server using FSx for ONTAP.',
     INSTANCE_INFORMATION: 'Instance information:',
     ES_SAVE_CONFIG: 'Save configuration',
     ES_SAVE_CONFIG_DESC:
@@ -1011,6 +1016,7 @@ export const GENERAL = {
     CATEGORY_POINT_ONE: 'Microsoft SQL server on FSx for ONTAP',
     CATEGORY_POINT_TWO: 'Microsoft SQL server on Amazon Elastic Block Store (EBS)',
     FSXW_CATEGORY: 'Microsoft SQL Server on FSx for Windows File Server',
+    WINDOW_FILE_SERVER_DETAILS: 'Windows file server details:',
     VIEW_CALC_TEXT:
         'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
@@ -1059,14 +1065,18 @@ export const GENERAL = {
     FSXN_MANAGE_SUPPORTED: 'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be managed.',
     MANAGE_DISABLE_FOR_UNDETECTED:
         'This instance is currently undetected. To manege the instance, expand the database host name, and then select "detect" from the menu.',
+    NO_UNMANAGED_TO_MANAGE:
+        'All SQL Server instances on this host are either managed or undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
         'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+    ALL_FSXN_MANAGED_TEXT:
+        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
     ALL_UNDETECT_TEXT:
         'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
         'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
-    ES_FSXW_NOT_SUPPORTED: 'Explore savings for FSx for Windows is not supported.',
+    ALL_ES_FSXW_AOAG_ROWS: 'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
         'The attempt to manage the SQL Server instance ',
@@ -1158,7 +1168,8 @@ export const CODE_VIEWER = {
     DELETE: 'Delete',
     CREATION_DATE: 'Creation date:',
     DEPLOYMENT: 'Deployment:',
-    CREATE_DATABASE: 'Create database'
+    CREATE_DATABASE: 'Create database',
+    TERRAFORM: 'Terraform'
 };
 
 export const CHATBOT_FIELD_MAPPING: any = {

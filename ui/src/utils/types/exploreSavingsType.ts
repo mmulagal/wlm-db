@@ -17,6 +17,7 @@ export interface ExploreSavingsSliceEntities {
     selectedManualDeploymentType: any;
     disableState: boolean;
     requestedPayload: any;
+    requestedRegion: any;
     selectedSnapshotFrequency: any;
     secondaryVolumeFilledStatus: boolean;
     numberOfClonedCopies: number | any;
@@ -239,6 +240,7 @@ export interface ViewCalculationsInterface {
         monthlyCostForStorageCapacity?: number | string;
         totalDefaultProvisionedIops?: number | string;
         additionalUserProvisionedIops?: number | string;
+        sumOfDefaultAndAdditionalProvisionedIops?: number | string;
         billedIops?: number | string;
         totalMonthlyCostForProvisionedSsdIops?: number | string;
         fsxwIopsPrice?: number | string;

@@ -7,13 +7,13 @@ const router = require('express').Router();
 router.get(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/database-hosts`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, DatabaseHostsV2);
-    }, 10000);
+    }, 2000);
 });
 
 router.get(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/mssql/instances`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, MssqlInstancesV2);
-    }, 7000);
+    }, 15000);
 });
 
 router.post(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/mssql`, async (req: {}, res: any) => {

@@ -74,7 +74,17 @@ const API_PATH_HEALTH: string = '/health';
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
-const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt', '/pricing', '/cloudformation/template'];
+const AUDIT_EXCLUDE_LIST = [
+    '/batch',
+    '/prompt',
+    '/pricing',
+    '/cloudformation/template',
+    '/storage-savings',
+    '/manual-storage-savings',
+    '/calculations',
+    '/v1/mssql/credentials',
+    '/sandboxes-meta-update'
+];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
@@ -124,6 +134,12 @@ enum DeploymentState {
     INITIALIZING = 'Initializing',
     SUCCESS = 'Success',
     FAILED = 'Failed'
+}
+
+enum AuditStatus {
+    PENDING = 'pending',
+    SUCCESS = 'success',
+    FAILED = 'failed'
 }
 
 enum RouteTags {
@@ -296,7 +312,8 @@ const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Micr
 enum FileSystemTypes {
     EBS = 'EBS',
     FSXONTAP = 'FSx for ONTAP',
-    FSXWINDOWS = 'FSx for Windows'
+    FSXWINDOWS = 'FSx for Windows',
+    FSXW = 'FSXW'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -1126,6 +1143,7 @@ const FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL = '5h';
 const FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL = '1h';
 const DBCREATE_RELATIVE_PATH = `${WLMDB}/scripts/dbcreate.zip`;
 const PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/aws_ssm.zip`;
+const PREPARE_PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/dependent-packages.zip`;
 const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
 const DEFAULT_MSSQL_INSTANCE_NAME = '$env:computername';
 
@@ -1188,6 +1206,8 @@ const TCO_FEATURE = 'TCO';
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const TIMELINE_SERVICE_NAME = 'WF-Databases';
+
+const EBS_ROOT_VOLUME = 'ROOT_VOLUME';
 
 export {
     WLMDB,
@@ -1477,5 +1497,8 @@ export {
     TCO_FEATURE,
     CURRENT_SCRIPT_VERSION,
     AWS_SSM_PARAMETER,
-    TIMELINE_SERVICE_NAME
+    TIMELINE_SERVICE_NAME,
+    AuditStatus,
+    PREPARE_PSMODULES_RELATIVE_PATH,
+    EBS_ROOT_VOLUME
 };

@@ -12,10 +12,12 @@ import {
     EbsCostCalculationType,
     EbsSnapshotCalculationType,
     ManualStorageSavingsRequestBodyType,
+    StorageSavingsCalculationsMetricsType,
     StorageSavingsRequestBodyType
 } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes, sizeInGigaBytes } from '../../utils/utils';
 import {
+    AutomaticModeMarketingRequestBody,
     EbsCostCalculation,
     FsxCalculation,
     FsxCostCalculations,
@@ -40,9 +42,20 @@ function getMonthlyCloneCountFromFrequency(cloneRefreshFrequency: string) {
 function getMarketingApiRequestBody(
     ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
-    sqlServerDeploymentType: string
+    sqlServerDeploymentType: string,
+    fileSystemsIds?: string[]
 ) {
     const { snapshotFrequency, cloneRefreshFrequency, clonedCopiesCount, monthlyChangeRatePercentage } = params || {};
+
+    if (fileSystemsIds && fileSystemsIds.length > 0) {
+        return {
+            useCase: 'Low-latency',
+            fileSystemsIds,
+            snapshotFreq: snapshotFrequency,
+            cloneEnvs: clonedCopiesCount,
+            monthlyChangeRate: monthlyChangeRatePercentage
+        };
+    }
 
     const monthlyCloneCount = getMonthlyCloneCountFromFrequency(cloneRefreshFrequency!);
     return {
@@ -184,7 +197,8 @@ async function invokeMarketingApi(
     sqlServerDeploymentType: string,
     ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
-    instanceId?: string
+    instanceId?: string,
+    fileSystemsIds?: string[]
 ) {
     // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -192,6 +206,53 @@ async function invokeMarketingApi(
 
         const { clonedCopiesCount, monthlyChangeRatePercentage } = params;
         region = STORAGE_SERVICE_DEFAULT_REGION;
+
+        if (fileSystemsIds && fileSystemsIds.length > 0) {
+            const marketingRequestBody = getMarketingApiManualModeRequestBody(region, {
+                clonedCopiesCount,
+                sqlServerDeploymentType,
+                monthlyChangeRatePercentage,
+                snapshotFrequency: 'Daily',
+                sqlServerEdition: 'Enterprise',
+                ec2Instances: [
+                    {
+                        ec2InstanceDescription: 'Primary',
+                        ec2InstanceType: 'm5.large',
+                        isPrimary: true,
+                        fsxw: {
+                            storageAmount: 640000000000,
+                            deploymentType: 'Single',
+                            volumeIops: 600,
+                            throughput: 32,
+                            storageVolumeType: 'SSD'
+                        }
+                    }
+                ]
+            }) as ManualModeMarketingRequestBody;
+
+            const {
+                fsxw,
+                fsx,
+                fsx_calculation,
+                fsxw_cost_calculation,
+                fsx_cost_calculation_no_snapshot,
+                fsx_snapshot_cost_calculation,
+                fsx_clone_cost_calculation
+            } = await getManualModeStorageSavings<ManualModeFsxwComparisonResponse>(accountId, marketingRequestBody);
+
+            return {
+                fsxw,
+                fsx,
+                [sqlServerDeploymentType === 'FCI' ? 'multi' : 'single']: {
+                    fsxw_cost_calculation,
+                    fsx_calculation,
+                    fsx_cost_calculation_no_snapshot,
+                    fsx_snapshot_cost_calculation,
+                    fsx_clone_cost_calculation
+                }
+            };
+        }
+
         let volumes = [
             {
                 volumeType: 'io2',
@@ -266,11 +327,16 @@ async function invokeMarketingApi(
             })
         };
     }
-    const { gp2, gp3, io1, io2, st1, fsx, ebs, single, multi } = await getStorageSavings(
+    const { gp2, gp3, io1, io2, st1, fsx, ebs, single, multi, fsxw } = await getStorageSavings(
         accountId,
         credentialsId,
         region,
-        getMarketingApiRequestBody(ebsVolumeIds, params, sqlServerDeploymentType)
+        getMarketingApiRequestBody(
+            ebsVolumeIds,
+            params,
+            sqlServerDeploymentType,
+            fileSystemsIds
+        ) as AutomaticModeMarketingRequestBody
     );
 
     return {
@@ -278,7 +344,8 @@ async function invokeMarketingApi(
         ebs,
         fsx,
         single,
-        multi
+        multi,
+        fsxw
     };
 }
 
@@ -438,12 +505,12 @@ function derivePropertiesBasedOnDeploymentType(
 ) {
     const {
         fsx_cost_calculation_no_snapshot: {
+            provisionedThroughputCapacity: suggestedFsxnThroughputCapacity,
             desiredStorageCapacityGB: { size: desiredStorageCapacitySize, unit: desiredStorageCapacityUnit },
             numberOfVolumes,
             FSXnCapacityPrice: { price: fsxnCapacityPriceWithoutSnapshot, unit: fsxnCapacityUnitWithoutSnapshot },
             percentageOfDataOnSSDStorage,
             maxSSDTierSizeGB: { size: maxSsdTierSize, unit: maxSsdTierSizeUnit },
-            throughputCapacity: suggestedFsxnThroughputCapacity,
             maxThroughput,
             FSXnThroughputPrice: fsxnThroughputPrice,
             provisionedSSDIOPS: provisionedSsdIops,
@@ -644,8 +711,9 @@ async function formatStorageSavingsCalculationMetrics(
     ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
     sqlServerDeploymentType: string,
-    instanceId?: string
-) {
+    instanceId?: string,
+    fileSystemsIds?: string[]
+): Promise<StorageSavingsCalculationsMetricsType> {
     logger.debug('Formatting storage savings calculation metrics', {
         accountId,
         credentialsId,
@@ -659,7 +727,8 @@ async function formatStorageSavingsCalculationMetrics(
         ebsClassification: { gp2, gp3, io1, st1, io2 } = {},
         ebs,
         single,
-        multi
+        multi,
+        fsxw
     } = await invokeMarketingApi(
         accountId,
         credentialsId,
@@ -667,8 +736,31 @@ async function formatStorageSavingsCalculationMetrics(
         sqlServerDeploymentType,
         ebsVolumeIds,
         params,
-        instanceId
+        instanceId,
+        fileSystemsIds
     );
+
+    if (fileSystemsIds && fileSystemsIds.length > 0) {
+        const fsxwCostCalculation = single?.fsxw_cost_calculation || multi?.fsxw_cost_calculation;
+        let fsxwCalculation;
+        let fsxwCloneCalculation;
+        let fsxwSnapshotCalculation;
+        if (fsxw && fsxwCostCalculation) {
+            ({ fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation } = deriveFsxCostCalculation(
+                fsxw,
+                fsxwCostCalculation,
+                params.clonedCopiesCount,
+                params.monthlyChangeRatePercentage
+            ));
+        }
+        return {
+            ...(single && { single: derivePropertiesBasedOnDeploymentType(single, params) }),
+            ...(multi && { multi: derivePropertiesBasedOnDeploymentType(multi, params) }),
+            fsxwCalculation,
+            fsxwCloneCalculation,
+            fsxwSnapshotCalculation
+        };
+    }
 
     const ebsCalculationBreakdown = {
         ...(gp2 && {

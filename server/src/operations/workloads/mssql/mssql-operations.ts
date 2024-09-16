@@ -22,7 +22,8 @@ import {
     DISK_UTILISATION,
     MEMORY_UTILISATION,
     INSTANCE_GUID,
-    DATABASES_COUNT_V2
+    DATABASES_COUNT_V2,
+    SERVER_VERSION
 } from './queries';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -54,7 +55,8 @@ import {
     getDatabaseInstanceName,
     generateHash,
     sqlResponseParsing,
-    getOriginalDatabaseInstanceName
+    getOriginalDatabaseInstanceName,
+    isDemo
 } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { getResources } from '../../database/database-operations';
@@ -69,6 +71,7 @@ import { getParameter } from '../../../lib/aws/ssm';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
@@ -96,29 +99,36 @@ async function getDatabasesCount(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceNames: string[] = [],
-    isSqlAuth: boolean = false
+    isSqlAuthEnabled: boolean = false
 ) {
-    logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId, isSqlAuth);
+    logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId, isSqlAuthEnabled);
 
-    let sqlInstanceName;
-    let isSingleInstance = false;
-    if (isEmpty(instanceNames)) {
-        sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
-        instanceNames = [sqlInstanceName];
-        isSingleInstance = true;
+    let commands = [sqlQueryExecutionWithAuth(instanceNames, DATABASES_COUNT_V2, isSqlAuthEnabled)];
+    if (isDemoFlow) {
+        commands = [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES_COUNT_V2, false)];
     }
-
-    const commands = [sqlQueryExecutionWithAuth(instanceNames, DATABASES_COUNT_V2, isSqlAuth)];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
     logger.debug('Fetching databases count response', response);
-    const parsedResponse = response ? sqlResponseParsing(response) : {};
-    return isSingleInstance ? parsedResponse[sqlInstanceName!]?.[0] : parsedResponse;
+    let parsedResponse = response ? sqlResponseParsing(response) : {};
+
+    if (isDemoFlow) {
+        parsedResponse = instanceNames.reduce((result: { [key: string]: any }, name) => {
+            result[name] = parsedResponse.MSSQLSERVER;
+            return result;
+        }, {});
+    }
+
+    return parsedResponse;
 }
 
-async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: string, instanceName?: string) {
-    logger.info('Get databases summary for resource:', resourceId);
+async function getDataBasesSummary(
+    resourceId: string,
+    activeNodeInstanceId?: string,
+    instanceName?: string,
+    sqlAuthEnabled = false
+) {
+    logger.info('Get databases summary for resource:', resourceId, sqlAuthEnabled);
 
     const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
     if (!credentialsId || !region || !node1InstanceId) {
@@ -139,23 +149,19 @@ async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: st
     }
 
     try {
-        let dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId, instanceName);
-        dbCount = dbCount?.totalCount || 0;
+        sqlAuthEnabled = isDemoFlow ? false : sqlAuthEnabled;
+        const sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
 
-        const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
-        const batchQueries: string[] = [];
-        for (let i = 0, offset = 0; i < rowscount; i++) {
-            batchQueries.push(`sqlcmd -S "${instanceName}" -Q "${DATABASES(offset, DB_ROWS_COUNT)}" -y 0`);
-            offset += DB_ROWS_COUNT;
-        }
-
-        const responses = await Promise.map(
-            batchQueries,
-            async query => callSsmExecution(credentialsId, region, [query], activeNodeInstanceId!),
-            { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+        // Changing the logic, as ssm response compression would take care of long responses.
+        const commands = sqlQueryExecution(sqlInstanceName, instanceName, DATABASES, sqlAuthEnabled);
+        const dbSummary = await callSsmExecution(
+            credentialsId,
+            region,
+            [commands],
+            activeNodeInstanceId,
+            undefined,
+            false
         );
-        const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
-        // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
         const cleanDBSummanry = sqlResponseParsing(dbSummary);
 
         return { databases: cleanDBSummanry };
@@ -169,32 +175,22 @@ async function getAllResourceUtilisationDetails(
     credentialsId: string,
     region: string,
     activeNodeInstanceId?: string,
-    instanceName?: string,
     instanceNames: string[] = [],
-    isSqlAuth: boolean = false
+    isSqlAuthEnabled: boolean = false
 ) {
     logger.info('Get system resources utilization for resource:', {
         credentialsId,
         region,
         activeNodeInstanceId,
-        instanceName,
-        isSqlAuth
+        isSqlAuthEnabled
     });
 
-    if (!activeNodeInstanceId || (!instanceName && isEmpty(instanceNames))) {
+    if (!activeNodeInstanceId || isEmpty(instanceNames)) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get active instance information');
     }
     logger.info('Fetching resources utilization from primary', credentialsId, region, activeNodeInstanceId);
 
-    let sqlInstanceName;
-    let isSingleInstance = false;
-    if (instanceName && isEmpty(instanceNames)) {
-        sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
-        instanceNames = [sqlInstanceName];
-        isSingleInstance = true;
-    }
-
-    const commands = [RESOURCE_UTILIZATION(instanceNames)];
+    const commands = [RESOURCE_UTILIZATION(instanceNames, isSqlAuthEnabled)];
     const resurceUtilizationData = await callSsmExecution(
         credentialsId,
         region,
@@ -208,33 +204,41 @@ async function getAllResourceUtilisationDetails(
     const instancesResponse: { [key: string]: any } = {};
 
     instanceNames.forEach(iName => {
-        const [cpuUtilization] = sqlResponseParsing(parsedResourceUtilizationData?.[iName]?.cpu) ?? [];
-        const [dbSizeData] = sqlResponseParsing(parsedResourceUtilizationData?.[iName]?.dbSize) ?? [];
-        const [diskData] = sqlResponseParsing(parsedResourceUtilizationData?.[iName]?.disk) ?? [];
-        const [memoryUtilization] = sqlResponseParsing(parsedResourceUtilizationData?.[iName]?.memory) ?? [];
+        if (
+            parsedResourceUtilizationData?.[iName] &&
+            !(
+                typeof parsedResourceUtilizationData?.[iName] === 'string' &&
+                parsedResourceUtilizationData?.[iName].includes('error')
+            )
+        ) {
+            const [cpuUtilization] = sqlResponseParsing(parsedResourceUtilizationData?.[iName]?.cpu) ?? [];
+            const [dbSizeData] = sqlResponseParsing(parsedResourceUtilizationData?.[iName]?.dbSize) ?? [];
+            const [diskData] = sqlResponseParsing(parsedResourceUtilizationData?.[iName]?.disk) ?? [];
+            const [memoryUtilization] = sqlResponseParsing(parsedResourceUtilizationData?.[iName]?.memory) ?? [];
 
-        let diskError = '';
-        if (isEmpty(dbSizeData) || isEmpty(diskData)) {
-            diskError = `Disk utilisation data is empty for instance ${activeNodeInstanceId}. Disk utilisation data is empty for instance.`;
-            logger.error(diskError);
+            let diskError = '';
+            if (isEmpty(dbSizeData) || isEmpty(diskData)) {
+                diskError = `Disk utilisation data is empty for instance ${activeNodeInstanceId}. Disk utilisation data is empty for instance.`;
+                logger.error(diskError);
+            }
+
+            const diskUtilization: UtilisationResponseBodyInterface = {
+                used: dbSizeData?.TotalSize?.toString() || '0',
+                total: diskData?.total?.toString() || '0',
+                remaining: Number.isNaN(Number(diskData.total) - dbSizeData.TotalSize)
+                    ? '0'
+                    : (Number(diskData.total) - dbSizeData.TotalSize).toString(),
+                percentUsed: Number.isNaN(Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)))
+                    ? '0'
+                    : Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)).toString(),
+                error: diskError
+            };
+
+            instancesResponse[iName] = { cpuUtilization, diskUtilization, memoryUtilization };
         }
-
-        const diskUtilization: UtilisationResponseBodyInterface = {
-            used: dbSizeData?.TotalSize?.toString() || '0',
-            total: diskData?.total?.toString() || '0',
-            remaining: Number.isNaN(Number(diskData.total) - dbSizeData.TotalSize)
-                ? '0'
-                : (Number(diskData.total) - dbSizeData.TotalSize).toString(),
-            percentUsed: Number.isNaN(Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)))
-                ? '0'
-                : Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)).toString(),
-            error: diskError
-        };
-
-        instancesResponse[iName] = { cpuUtilization, diskUtilization, memoryUtilization };
     });
 
-    return isSingleInstance ? instancesResponse[sqlInstanceName!] : instancesResponse;
+    return instancesResponse;
 }
 
 async function getAllResourceUtilisation(resourceId: string, metricType?: string) {
@@ -253,7 +257,15 @@ async function getAllResourceUtilisation(resourceId: string, metricType?: string
         node1InstanceId,
         node2InstanceId!
     );
-    return getAllResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId, instanceName);
+
+    const sqlServerInstanceName = getOriginalDatabaseInstanceName(instanceName);
+    const { [sqlServerInstanceName]: response } = await getAllResourceUtilisationDetails(
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        [sqlServerInstanceName]
+    );
+    return response;
 }
 
 function resourceUtilisationQuery(metricType: string) {
@@ -433,7 +445,13 @@ async function getServerSummary(resourceId: string) {
         node2InstanceId!
     );
     if (credentialsId && region && activeNodeInstanceId) {
-        const response = await getServerDetails(credentialsId, region, activeNodeInstanceId, instanceName);
+        const sqlServerInstanceName = getOriginalDatabaseInstanceName(instanceName);
+        const { [sqlServerInstanceName]: response } = await getServerDetails(
+            credentialsId,
+            region,
+            activeNodeInstanceId,
+            [sqlServerInstanceName]
+        );
         return {
             ...response,
             serverId: resourceId
@@ -444,78 +462,82 @@ async function getServerDetails(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_INSTANCE_NAME,
     instanceNames: string[] = [],
-    isSqlAuth: boolean = false
+    isSqlAuthEnabled: boolean = false
 ) {
-    logger.info('Get details of SQL Server database:', { credentialsId, region, activeNodeInstanceId, isSqlAuth });
+    logger.info('Get details of SQL Server database:', {
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        isSqlAuthEnabled
+    });
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
 
-    let sqlInstanceName;
-    let isSingleInstance = false;
-    if (instanceName && !instanceNames?.length) {
-        sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
-        instanceNames = [sqlInstanceName];
-        isSingleInstance = true;
-    }
-
-    const command = [sqlQueryExecutionWithAuth(instanceNames, SERVER_DETAILS, isSqlAuth)];
+    const command = [sqlQueryExecutionWithAuth(instanceNames, SERVER_DETAILS, isSqlAuthEnabled)];
     const serverAllDetails = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
 
     const instancesResponse: { [key: string]: any } = {};
     const parsedResponse = serverAllDetails ? sqlResponseParsing(serverAllDetails) : {};
 
     instanceNames.forEach((iname: any) => {
-        let [
-            {
-                serverDetails,
-                ServerEdition,
-                isClustered,
+        const instanceParsedResponse = parsedResponse[iname];
+        if (
+            instanceParsedResponse &&
+            !(typeof instanceParsedResponse === 'string' && instanceParsedResponse.includes('error'))
+        ) {
+            let [
+                {
+                    serverDetails,
+                    ServerEdition,
+                    isClustered,
+                    activeNode,
+                    clusterName,
+                    numberOfConnections,
+                    clusterNodesInfo,
+                    totalCount,
+                    ServerCollation
+                }
+            ] = instanceParsedResponse || [{}];
+            const serverInfo = serverDetails ? serverDetails?.replaceAll('\r\n', '').split('\t') : '';
+            const activeConnections = numberOfConnections;
+            const serverStatus = serverInfo ? ServerState.UP : ServerState.DOWN;
+
+            let standbyNode: string = '';
+            if (isClustered && clusterNodesInfo) {
+                const [node1, node2] = clusterNodesInfo;
+
+                if (node1?.is_current_owner) {
+                    activeNode = node1?.NodeName;
+                    standbyNode = node2?.NodeName;
+                } else {
+                    activeNode = node2?.NodeName;
+                    standbyNode = node1?.NodeName;
+                }
+            }
+
+            instancesResponse[iname] = {
+                serverVersion: serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim(),
+                serverEdition: `SQL Server ${ServerEdition?.split(':')?.[0] || 'Standard Edition'}`,
+                serverEngine: '', // sending empty string to support blueXP endpoint
+                serverStatus,
+                activeConnections,
+                deploymentModel: isClustered
+                    ? SqlServerDeploymentModel.SQL_FCI
+                    : SqlServerDeploymentModel.SQL_STANDALONE,
                 activeNode,
-                clusterName,
-                numberOfConnections,
-                clusterNodesInfo,
-                totalCount,
-                ServerCollation
-            }
-        ] = parsedResponse[iname] || [{}];
-        const serverInfo = serverDetails ? serverDetails?.replaceAll('\r\n', '').split('\t') : '';
-        const activeConnections = numberOfConnections;
-        const serverStatus = serverInfo ? ServerState.UP : ServerState.DOWN;
-
-        let standbyNode: string = '';
-        if (isClustered && clusterNodesInfo) {
-            const [node1, node2] = clusterNodesInfo;
-
-            if (node1?.is_current_owner) {
-                activeNode = node1?.NodeName;
-                standbyNode = node2?.NodeName;
-            } else {
-                activeNode = node2?.NodeName;
-                standbyNode = node1?.NodeName;
-            }
+                ...(isClustered ? { standbyNode, clusterName } : {}),
+                operatingSystem: serverDetails.match('Windows Server \\d+')?.[0] || '',
+                nodeNames: standbyNode ? [activeNode!, standbyNode!] : [activeNode!],
+                dbCount: totalCount,
+                collation: ServerCollation
+            };
         }
-
-        instancesResponse[iname] = {
-            serverVersion: serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim(),
-            serverEdition: `SQL Server ${ServerEdition?.split(':')?.[0] || 'Standard Edition'}`,
-            serverEngine: '', // sending empty string to support blueXP endpoint
-            serverStatus,
-            activeConnections,
-            deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
-            activeNode,
-            ...(isClustered ? { standbyNode, clusterName } : {}),
-            operatingSystem: serverDetails.match('Windows Server \\d+')?.[0] || '',
-            nodeNames: standbyNode ? [activeNode!, standbyNode!] : [activeNode!],
-            dbCount: totalCount,
-            collation: ServerCollation
-        };
     });
 
-    return isSingleInstance ? instancesResponse[sqlInstanceName!] : instancesResponse;
+    return instancesResponse;
 }
 
 async function getSqlServerDetails(
@@ -676,25 +698,19 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 const parsedResponse = sqlResponseParsing(response);
 
                 const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
-
-                // Check if instance has SSM parameter store
-                const parameterKey = `${SSM_PARAM_PREFIX}${nodeId}`;
-                let ssmParameter;
-                if (hasCache(AWS_SSM_PARAMETER, parameterKey)) {
-                    ssmParameter = readFromCacheByKey(AWS_SSM_PARAMETER, parameterKey) as string;
-                } else {
-                    ssmParameter = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${nodeId}`);
-                    if (ssmParameter) {
-                        writeToCache(AWS_SSM_PARAMETER, parameterKey, ssmParameter, '60s');
-                    }
-                }
-                const { sql = {} } = ssmParameter ? JSON.parse(ssmParameter) : {};
+                const sql = await getSQLAuthFromSSMParameterStore(credentialsId, region, nodeId);
 
                 instancesDetails.forEach(obj => {
                     (obj as any).isDefault = !obj.instanceName.includes('$');
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
                     obj.sqlAuthEnabled = !isEmpty(sql)
-                        ? Boolean(sql?.find((e: { sqlinstancename: string }) => e.sqlinstancename === obj.instanceName))
+                        ? Boolean(
+                              sql?.find(
+                                  ({ sqlinstancename }: { sqlinstancename: string }) =>
+                                      sqlinstancename &&
+                                      sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase()
+                              )
+                          )
                         : false;
                 });
                 let isDefaultInstance = true;
@@ -768,29 +784,25 @@ async function getNativeSQLProtection(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceNames: string[] = [],
-    isSqlAuth: boolean = false
+    isSqlAuthEnabled: boolean = false
 ) {
-    logger.info('Fetch SQL native protection status', { credentialsId, region, activeNodeInstanceId, isSqlAuth });
+    logger.info('Fetch SQL native protection status', {
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        isSqlAuthEnabled
+    });
 
     try {
         if (!credentialsId || !region || !activeNodeInstanceId) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
 
-        let sqlInstanceName;
-        let isSingleInstance = false;
-        if (instanceName && !instanceNames?.length) {
-            sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
-            instanceNames = [sqlInstanceName];
-            isSingleInstance = true;
-        }
-
         const response = await callSsmExecution(
             credentialsId,
             region,
-            [sqlQueryExecutionWithAuth(instanceNames, NATIVE_SQL_BACKUPS, isSqlAuth)],
+            [sqlQueryExecutionWithAuth(instanceNames, NATIVE_SQL_BACKUPS, isSqlAuthEnabled)],
             activeNodeInstanceId
         );
 
@@ -798,11 +810,7 @@ async function getNativeSQLProtection(
         const parsedResponse = attempt(JSON.parse, cleanedResponse);
 
         logger.debug('SQL native protection status', parsedResponse);
-        return parsedResponse instanceof Error
-            ? undefined
-            : isSingleInstance
-            ? parsedResponse[sqlInstanceName!]?.[0]?.backupCount
-            : parsedResponse;
+        return parsedResponse instanceof Error ? undefined : parsedResponse;
     } catch (err) {
         logger.error('Error getting SQL native protection status', { err });
     }
@@ -812,87 +820,83 @@ async function getPerformanceMetrics(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceNames: string[] = [],
-    isSqlAuth: boolean = false
+    isSqlAuthEnabled: boolean = false
 ) {
     logger.info('Fetch SQL server performance metrics (assessment, latency, IOPS, throughput) for resource', {
         credentialsId,
         region,
         activeNodeInstanceId,
-        isSqlAuth
+        isSqlAuthEnabled
     });
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
     }
 
-    let sqlInstanceName;
-    let isSingleInstance = false;
-    if (instanceName && !instanceNames?.length) {
-        sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
-        instanceNames = [sqlInstanceName];
-        isSingleInstance = true;
+    let commands = [sqlQueryExecutionWithAuth(instanceNames, PERFORMANCE_METRICS_WITH_LATENCY, isSqlAuthEnabled)];
+    if (isDemoFlow) {
+        commands = [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], PERFORMANCE_METRICS_WITH_LATENCY, false)];
     }
 
-    const commands = [sqlQueryExecutionWithAuth(instanceNames, PERFORMANCE_METRICS_WITH_LATENCY, isSqlAuth)];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId, undefined, false);
 
     logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
 
-    const parsedResponse = response ? sqlResponseParsing(response) : {};
+    let parsedResponse = response ? sqlResponseParsing(response) : {};
+    if (isDemoFlow) {
+        parsedResponse = instanceNames.reduce((result: { [key: string]: any }, name) => {
+            result[name] = parsedResponse;
+            return result;
+        }, {});
+    }
     if (response) {
         const instancesResponse: { [key: string]: any } = {};
         instanceNames.forEach(instance => {
-            const [instanceParedResponse] = parsedResponse[instance];
-            logger.info(instanceParedResponse);
-            instancesResponse[instance] = {
-                assessment: instanceParedResponse.assessment,
-                latency: {
-                    read: instanceParedResponse.READ_LATENCY,
-                    write: instanceParedResponse.WRITE_LATENCY,
-                    serverIo: instanceParedResponse.SERVER_IO_LATENCY
-                },
-                iops: { read: instanceParedResponse.READ_IOPS, write: instanceParedResponse.WRITE_IOPS },
-                throughput: {
-                    read: instanceParedResponse.READ_THROUGHPUT,
-                    write: instanceParedResponse.WRITE_THROUGHPUT
-                }
-            };
+            if (
+                parsedResponse?.[instance] &&
+                !(typeof parsedResponse?.[instance] === 'string' && parsedResponse?.[instance].includes('error'))
+            ) {
+                const [instanceParsedResponse] = parsedResponse[instance];
+                instancesResponse[instance] = {
+                    assessment: instanceParsedResponse.assessment,
+                    latency: {
+                        read: instanceParsedResponse.READ_LATENCY,
+                        write: instanceParsedResponse.WRITE_LATENCY,
+                        serverIo: instanceParsedResponse.SERVER_IO_LATENCY
+                    },
+                    iops: { read: instanceParsedResponse.READ_IOPS, write: instanceParsedResponse.WRITE_IOPS },
+                    throughput: {
+                        read: instanceParsedResponse.READ_THROUGHPUT,
+                        write: instanceParsedResponse.WRITE_THROUGHPUT
+                    }
+                };
+            }
         });
 
-        return isSingleInstance ? instancesResponse[sqlInstanceName!] : instancesResponse;
+        return instancesResponse;
     }
 }
 
 async function getNativeSQLBackedupDatabases(
     resourceId: string,
     activeNodeInstanceId?: string,
-    instanceName?: string,
     instanceNames: string[] = [],
-    isSqlAuth: boolean = false
+    isSqlAuthEnabled: boolean = false
 ) {
-    logger.info('Fetch SQL native protection status', { resourceId, isSqlAuth });
+    logger.info('Fetch SQL native protection status', { resourceId, isSqlAuthEnabled });
 
     try {
         const [credentialsId, region] = await getResourceDetails(resourceId);
 
-        if (!credentialsId || !region || !activeNodeInstanceId || (!instanceName && !instanceNames?.length)) {
+        if (!credentialsId || !region || !activeNodeInstanceId || isEmpty(instanceNames)) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
-        }
-
-        let sqlInstanceName;
-        let isSingleInstance = false;
-        if (instanceName && !instanceNames?.length) {
-            sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
-            instanceNames = [sqlInstanceName];
-            isSingleInstance = true;
         }
 
         const response = await callSsmExecution(
             credentialsId,
             region,
-            [sqlQueryExecutionWithAuth(instanceNames, SQL_BACKUPS, isSqlAuth)],
+            [sqlQueryExecutionWithAuth(instanceNames, SQL_BACKUPS, isSqlAuthEnabled)],
             activeNodeInstanceId
         );
 
@@ -900,11 +904,7 @@ async function getNativeSQLBackedupDatabases(
         const parsedResponse = attempt(JSON.parse, cleanedResponse);
 
         logger.debug('SQL native protection status', parsedResponse);
-        return parsedResponse instanceof Error
-            ? undefined
-            : isSingleInstance
-            ? parsedResponse[sqlInstanceName!]
-            : parsedResponse;
+        return parsedResponse instanceof Error ? undefined : parsedResponse;
     } catch (err) {
         logger.error('Error getting SQL native protection status', { err });
     }
@@ -1082,7 +1082,11 @@ async function checkDatabaseExists(
         region,
         databaseHostId,
         databaseName,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        instanceName,
+        executableInstanceName,
+        sqlInstanceId,
+        sqlAuthEnabled
     });
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -1120,7 +1124,7 @@ async function checkDatabaseExists(
             ? sqlResponseParsing(checkDatabaseExistsResponse)
             : {};
 
-        if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length) {
+        if (!isEmpty(parsedDatabaseExistsResponse)) {
             return true;
         }
         return false;
@@ -1135,13 +1139,21 @@ async function getSqlServerVersion(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+    executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlAuthEnabled: boolean = false
 ) {
-    logger.info('Get SQL server version:', { credentialsId, region, activeNodeInstanceId, instanceName });
-    const command = [`sqlcmd -S "${instanceName}"-Q "SELECT @@VERSION" -y 0`];
+    logger.info('Get SQL server version:', {
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        executableInstanceName,
+        sqlAuthEnabled
+    });
+    const instanceName = getOriginalDatabaseInstanceName(executableInstanceName);
+    const command = [sqlQueryExecution(instanceName, executableInstanceName, SERVER_VERSION, sqlAuthEnabled)];
     const sqlServerVersionResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
-    const serverInfo = sqlServerVersionResponse ? sqlServerVersionResponse?.replaceAll('\r\n', '').split('\t') : ''; // const sqlServerVersion: parsedSqlSeverVersionResponse[0].substring(0, serverInfo[0].indexOf('(')).trim(),
-    const sqlServerVersion = serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim();
+    const { version = '' } = sqlServerVersionResponse ? sqlResponseParsing(sqlServerVersionResponse) : {}; // const sqlServerVersion: parsedSqlSeverVersionResponse[0].substring(0, serverInfo[0].indexOf('(')).trim(),
+    const sqlServerVersion = version ? version.substring(0, version.indexOf('(')).trim() : '';
 
     return sqlServerVersion;
 }
@@ -1208,8 +1220,21 @@ async function getActiveSqlNodeAndInstanceDetails(
             const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId], accountId);
-                instanceDetails?.forEach((obj: { instanceName: string }) => {
+                const sql = await getSQLAuthFromSSMParameterStore(credentialsId, region, nodeId);
+
+                instanceDetails?.forEach((obj: { instanceName: string; sqlAuthEnabled: boolean }) => {
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
+                    obj.sqlAuthEnabled = isDemoFlow
+                        ? false
+                        : !isEmpty(sql)
+                        ? Boolean(
+                              sql?.find(
+                                  ({ sqlinstancename }: { sqlinstancename: string }) =>
+                                      sqlinstancename &&
+                                      sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase()
+                              )
+                          )
+                        : false;
                 });
                 if (instanceDetails) {
                     const matchingInstance = instanceDetails.find(
@@ -1253,21 +1278,52 @@ async function getActiveNodeAndInstanceDetails(
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
     const { database_instance_name: instanceName } = databaseInstanceDetails;
 
-    const activeNodeResponse = await getActiveSqlNodeAndInstanceDetails(
-        accountId,
-        credentialsId,
-        region,
-        [node1InstanceId, ...(node2InstanceId ? [node2InstanceId] : [])],
-        instanceName,
-        resourceId,
-        resourceName || ''
-    );
+    const activeNodeResponse: { nodeId: string; matchingInstance: any; standbyNodeInstanceId?: string } =
+        await getActiveSqlNodeAndInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            [node1InstanceId, ...(node2InstanceId ? [node2InstanceId] : [])],
+            instanceName,
+            resourceId,
+            resourceName || ''
+        );
     if (!activeNodeResponse) {
         const errorMessage = `${node1InstanceId} , ${node2InstanceId} are not in active state for resource id: ${resourceId}, resource name : ${resourceName} `;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
+    const { nodeId: activeNodeInstanceId } = activeNodeResponse;
+    const standbyNodeInstanceId = node2InstanceId
+        ? node1InstanceId === activeNodeInstanceId
+            ? node2InstanceId
+            : node1InstanceId
+        : undefined;
+    activeNodeResponse.standbyNodeInstanceId = standbyNodeInstanceId;
+
     return activeNodeResponse;
+}
+
+async function getSQLAuthFromSSMParameterStore(credentialsId: string, region: string, nodeId: string) {
+    // Check if instance has SSM parameter store
+    const parameterKey = `${SSM_PARAM_PREFIX}${nodeId}`;
+    let ssmParameter;
+    if (hasCache(AWS_SSM_PARAMETER, parameterKey)) {
+        ssmParameter = readFromCacheByKey(AWS_SSM_PARAMETER, parameterKey) as string;
+    } else {
+        ssmParameter = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${nodeId}`);
+        if (ssmParameter) {
+            writeToCache(AWS_SSM_PARAMETER, parameterKey, ssmParameter, '60s');
+        }
+    }
+
+    let sql = [];
+    try {
+        ({ sql = [] } = JSON.parse(ssmParameter ?? '{}'));
+    } catch (error) {
+        logger.error('Error parsing SSM parameter store', { error }, { ssmParameter });
+    }
+    return sql;
 }
 
 export {

@@ -56,7 +56,6 @@ const ManualTCOFields = () => {
     //Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        console.log(getManualRegionsList?.manualRegionsData);
         //@ts-ignore
         const sortedRegionsData = regionsSort(getManualRegionsList?.manualRegionsData?.regions || []);
         sortedRegionsData?.map((val, idx: number) => {
@@ -171,7 +170,7 @@ const ManualTCOFields = () => {
                         }}
                         isSearchable={generateRegionList.length > 5}
                         options={generateRegionList}
-                        className={styles.widthRegionSet}
+                        className={`${styles.widthRegionSet} savings-calculator-input-fields`}
                     />
                 </div>
 
@@ -189,7 +188,7 @@ const ManualTCOFields = () => {
                         }}
                         isSearchable={generateDeploymentModelList.length > 5}
                         options={generateDeploymentModelList}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
 
                     <SelectField
@@ -203,7 +202,7 @@ const ManualTCOFields = () => {
                         }}
                         isSearchable={generateSQLEditionList.length > 5}
                         options={generateSQLEditionList}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 </div>
 
@@ -215,7 +214,7 @@ const ManualTCOFields = () => {
                             dispatch(setMonthlyChangeRate(numVal));
                         }}
                         value={monthlyChangeRate ? monthlyChangeRate : ''}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
                         error={errorForChangeRate()}
                     />
@@ -230,7 +229,7 @@ const ManualTCOFields = () => {
                         }}
                         isSearchable={generateSnapshotFrequency.length > 5}
                         options={generateSnapshotFrequency}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 </div>
 
@@ -242,7 +241,7 @@ const ManualTCOFields = () => {
                             dispatch(setNumberOfClonedCopies(numVal));
                         }}
                         value={numberOfClonedCopies}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         error={errorForClonedCopiesCount()}
                     />
 
@@ -254,7 +253,7 @@ const ManualTCOFields = () => {
                         }}
                         isOptional={true}
                         value={machineDesc}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 </div>
             </div>

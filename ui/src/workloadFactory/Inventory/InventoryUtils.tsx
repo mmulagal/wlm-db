@@ -1,6 +1,11 @@
 import { Button, DsFlashingDotsLoader, DsTypography, Popover, TooltipInfo, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../utils/appConstants';
-import { formatFractionalNumber, getDiscoveredHostDeployment, isAwsBackupEnabled } from '../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    getAzType,
+    getDiscoveredHostDeployment,
+    isAwsBackupEnabled
+} from '../../utils/utilityFunctions';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
 import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
@@ -72,7 +77,7 @@ export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) =>
                     <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
                         {EstimatedCostPopover({ ...costData, totalCost: totalCost })}
                     </TooltipInfo>
-                    <Typography variant="Regular_14">{`$ ${formatFractionalNumber(totalCost, 2)}`}</Typography>
+                    <Typography variant="Regular_14">{`$${formatFractionalNumber(totalCost, 2)}`}</Typography>
                 </div>
             )}
             {rowData?.loading && <DsFlashingDotsLoader />}
@@ -199,13 +204,7 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
             {deploymentType && (
                 <div className={styles.azColText}>
                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
-                    <Typography variant="Regular_14">
-                        {deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                            ? GENERAL.SINGLE_AZ
-                            : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                            ? GENERAL.MULTI_AZ
-                            : ''}
-                    </Typography>
+                    <Typography variant="Regular_14">{getAzType(deploymentType)}</Typography>
                 </div>
             )}
             {!deploymentType && GENERAL.NOT_AVAILABLE}

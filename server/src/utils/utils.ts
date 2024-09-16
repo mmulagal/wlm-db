@@ -2,12 +2,15 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
-import { attempt, trimEnd, trimStart, camelCase } from 'lodash-es';
+import { attempt, trimEnd, trimStart, camelCase, isEmpty } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import numeral from 'numeral';
+import isBase64 from 'is-base64';
+import { inflateRaw } from 'node:zlib';
+import { promisify } from 'util';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -503,7 +506,8 @@ function getArtifactsRegionBucketName(region: string) {
 
 function sqlResponseParsing(response: string) {
     try {
-        const cleanResponse = response.replaceAll('\r\n', '');
+        // Some responses have \\r\\n in them, so repeating this step twice to remove all of them
+        const cleanResponse = response.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
         const jsonResponse = JSON.parse(cleanResponse);
         return jsonResponse;
     } catch (error) {
@@ -606,9 +610,27 @@ function isDemo() {
 }
 
 function getOriginalDatabaseInstanceName(instanceName: string | undefined): string {
-    return !instanceName || instanceName === DEFAULT_INSTANCE_NAME || instanceName === DEFAULT_MSSQL_INSTANCE_NAME
-        ? DEFAULT_INSTANCE_NAME
-        : instanceName?.split('\\')?.[1];
+    return instanceName?.split('\\')?.[1] || DEFAULT_INSTANCE_NAME;
+}
+
+async function decompressSSMResponse(response: string) {
+    logger.debug('Decompressing SSM response', { response });
+
+    response = response.replaceAll('\r\n', '');
+    if (isDemo() || isEmpty(response) || !isBase64(response)) {
+        return response;
+    }
+
+    try {
+        const buffer = Buffer.from(response, 'base64');
+
+        const inflateRawPromise = promisify(inflateRaw);
+        const result = await inflateRawPromise(buffer);
+        return result.toString();
+    } catch (err) {
+        logger.error('Error decompressing SSM response', err);
+        throw createError('Error decompressing SSM response');
+    }
 }
 
 export {
@@ -648,5 +670,6 @@ export {
     getMonthlyPriceFromHourlyPrice,
     getDatabaseInstanceName,
     isDemo,
-    getOriginalDatabaseInstanceName
+    getOriginalDatabaseInstanceName,
+    decompressSSMResponse
 };

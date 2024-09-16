@@ -5,13 +5,13 @@
     box-shadow: 2px 2px 6px 0px var(--border);
     width: 83.75%;
     max-width: 1607px;
-    height: 224px;
+    height: 288px;
 
     .topPart {
         display: flex;
 
         .contentSection {
-            padding: 25px 64px 0 64px;
+            padding: 40px 64px 0 64px;
             display: flex;
             gap: 48px;
 
@@ -20,14 +20,14 @@
             .leftSide {
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                gap: 16px;
                 width: 45.77%;
             }
 
             .rightSide {
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                gap: 16px;
                 width: 43.77%;
             }
 
@@ -57,7 +57,7 @@
     }
 }
 
-@media screen and (min-width: 1429px) and (max-width: 1823px) {
+@media screen and (min-width: 1471px) and (max-width: 1823px) {
     .exploreSavingsHeader {
         height: 336px;
 
@@ -79,7 +79,7 @@
     }
 }
 
-@media screen and (max-width: 1428px) {
+@media screen and (max-width: 1470px) {
     .exploreSavingsHeader {
         height: 436px;
         width: 1128px;

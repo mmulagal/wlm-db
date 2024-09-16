@@ -47,10 +47,11 @@ import {
     INSTANCE_GUID,
     ENTERPRISE_CHECK_QUERY,
     DATABASES_COUNT_V2,
-    NATIVE_SQL_BACKUPS
+    NATIVE_SQL_BACKUPS,
+    DATABASES,
+    GET_SANDBOXES
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
-    GET_SANDBOX_DETAILS,
     createVolumeClone,
     getDbMappedOntapVolumes,
     createClonedDb,
@@ -63,10 +64,10 @@ import {
     checkDatabaseIntegrityScript,
     getSnapshotsToClone,
     readExtendedPropertiesOfSandbox,
-    getConnectionInfo
+    getConnectionInfo,
+    invokeVirtualMountScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
-import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
-import { DEFAULT_INSTANCE_NAME } from '../../../../src/utils/consts';
+import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../../src/utils/consts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -87,7 +88,7 @@ const dbCountParams = {
 };
 
 const dbCountParamasV2 = {
-    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES_COUNT_V2)]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES_COUNT_V2, false)]
 };
 
 const dbSummaryParams1 = {
@@ -209,7 +210,7 @@ const getOntapSnapshotCountParams = {
 };
 
 const getOntapMappedVolumesParams = {
-    commands: [getMappedOntapVolumesScript('test-fsx', DEFAULT_AWS_REGION)]
+    commands: [getMappedOntapVolumesScript('test-fsx', DEFAULT_AWS_REGION, '$false', [DEFAULT_INSTANCE_NAME])]
 };
 
 const getStorageParams = {
@@ -225,7 +226,7 @@ const getStorageParams = {
 // };
 
 const getPerformanceWithLatencyMetrics = {
-    commands: [`sqlcmd -S "$env:computername" -Q "${PERFORMANCE_METRICS_WITH_LATENCY}" -y 0`]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], PERFORMANCE_METRICS_WITH_LATENCY, false)]
 };
 
 const getServerInstallDate = {
@@ -251,7 +252,7 @@ const getHostAndSqlServerInfo = {
 // };
 
 const getDefaultDriveLetters = {
-    commands: [GET_DEFAULT_DRIVES('$env:computername')]
+    commands: [GET_DEFAULT_DRIVES(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, true)]
 };
 
 const getActiveNodeDriveDetailsStandalone = {
@@ -298,7 +299,7 @@ const checkDBExists = {
 };
 
 const serverDetails = {
-    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SERVER_DETAILS)]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SERVER_DETAILS, false)]
 };
 
 const clusterNetwokIpInfo = {
@@ -306,7 +307,7 @@ const clusterNetwokIpInfo = {
 };
 
 const resourceUtilization = {
-    commands: [RESOURCE_UTILIZATION(['MSSQLSERVER'])]
+    commands: [RESOURCE_UTILIZATION(['MSSQLSERVER'], false)]
 };
 
 const getCollationDetails = {
@@ -318,7 +319,7 @@ const getOntapSandboxVolumeSavingsParams = {
 };
 
 const getSandboxDetails = {
-    commands: [GET_SANDBOX_DETAILS(['$env:computername'])]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], GET_SANDBOXES, false)]
 };
 
 const instanceDetails = {
@@ -333,9 +334,8 @@ const cloneVolumeCommand = {
         createVolumeClone(
             'test-fsx',
             'us-east-1',
-            'wlmdb_sqlsvm_1714090636810',
-            JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
-            JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
+            JSON.stringify({ volumeName: 'wlmdb_sqldata_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
+            JSON.stringify({ volumeName: 'wlmdb_sqllog_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
             ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
             'target-svm',
             'testdb'
@@ -345,16 +345,39 @@ const cloneVolumeCommand = {
 
 const invokeVirtualMountCommand = {
     commands: [
-        `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve -InstanceName MSSQLSERVER -IsDefaultInstance true`
+        invokeVirtualMountScript(
+            'test-clone',
+            JSON.stringify([
+                {
+                    filePath: 'D:\\MSSQL\\data\\testdb_data.mdf',
+                    folderName: 'D:\\MSSQL\\data',
+                    lun: 'lWB44?VEq9vf'
+                },
+                {
+                    filePath: 'E:\\MSSQL\\log\\testdb_log.ldf',
+                    folderName: 'E:\\MSSQL\\log',
+                    lun: 'lWB44?VEq9ve'
+                }
+            ]),
+            'MSSQLSERVER',
+            true,
+            'Sandbox'
+        )
     ]
 };
 
 const createCloneDbCommand = {
     commands: [
-        createClonedDb('testdb', '$env:computername', [
-            'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
-            'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
-        ])
+        createClonedDb(
+            'testdb',
+            'MSSQLSERVER',
+            '$env:computername',
+            ['S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf'],
+            ['L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'],
+            '',
+            '',
+            false
+        )
     ]
 };
 
@@ -362,14 +385,14 @@ const addExtendedPropertiesCommand = {
     commands: [
         addExtendedProperties(
             'testdb',
-            DEFAULT_INSTANCE_NAME,
+            'MSSQLSERVER',
             '$env:computername',
             {
                 tag: 'demo',
                 cloned_by: 'netapp_wf',
                 source: 'resource|instance|testdb'
             },
-            true
+            false
         )
     ]
 };
@@ -408,14 +431,13 @@ const detachDbAndRemoveAccessPathCommand = {
 
 const deleteExtendedPropertiesCommand = {
     commands: [
-        deleteExtendedPropertiesScript('test-db', DEFAULT_INSTANCE_NAME, '$env:computername', [
-            'cloned_by',
-            'source',
-            'createdAt',
-            'updatedAt',
-            'tag',
-            'accountId'
-        ])
+        deleteExtendedPropertiesScript(
+            'test-db',
+            DEFAULT_INSTANCE_NAME,
+            '$env:computername',
+            ['cloned_by', 'source', 'createdAt', 'updatedAt', 'tag', 'accountId'],
+            false
+        )
     ]
 };
 
@@ -468,6 +490,10 @@ const getConnectionInforCommand = {
 
 const checkScriptUpdate = {
     commands: [READ_SCRIPT_VERSION]
+};
+
+const dbSummary = {
+    commands: [sqlQueryExecution(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, DATABASES, false)]
 };
 
 ssmMock
@@ -602,7 +628,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getConnectionInforCommand })
     .resolves(listSendCommandCommandResponse.getConnectionInfoCommand)
     .on(SendCommandCommand, { Parameters: checkScriptUpdate })
-    .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand);
+    .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand)
+    .on(SendCommandCommand, { Parameters: dbSummary })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -740,7 +768,11 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkSrciptUpdateCommand'
     })
-    .resolves(getCommandInvocationResponse.checkScriptUpdateResp);
+    .resolves(getCommandInvocationResponse.checkScriptUpdateResp)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryCommand'
+    })
+    .resolves(getCommandInvocationResponse.dbSummaryResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

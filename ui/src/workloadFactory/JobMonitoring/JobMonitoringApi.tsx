@@ -84,7 +84,6 @@ const JobMonitoringApi = () => {
     );
 
     useEffect(() => {
-        dispatch(setJobsListLoading(jmJobsListLoading));
         if (!jmJobsListLoading) {
             let oldList = jobsList || [];
             let newList = jmJobsList?.items || [];
@@ -92,8 +91,11 @@ const JobMonitoringApi = () => {
             dispatch(setJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             if (!jmJobsList?.nextToken) {
+                dispatch(setJobsListLoading(false));
                 setSkipJobListApiCall(true);
             }
+        } else {
+            dispatch(setJobsListLoading(true));
         }
     }, [jmJobsList, jmJobsListLoading]);
 

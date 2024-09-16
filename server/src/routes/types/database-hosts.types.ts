@@ -36,13 +36,13 @@ type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 const CreateDatabaseParams = Type.Object({
     accountId: Type.String({ minLength: 7 }),
     databaseHostId: Type.String({ minLength: 10 }),
-    credentialsId: Type.String(),
+    credentialsId: Type.String({ format: 'uuid' }),
     region: Type.String()
 });
 
 const CreateDatabaseParamsV2 = Type.Object({
     accountId: Type.String({ description: 'Workload Factory account ID', minLength: 7 }),
-    credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1 }),
+    credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1, format: 'uuid' }),
     region: Type.String({ description: 'AWS region of the database host', minLength: 1 }),
     databaseHostId: Type.String({ description: 'Workload Factory resource ID', minLength: 10 }),
     databaseInstanceName: Type.String({ description: 'SQL Server instance name' })
@@ -364,14 +364,14 @@ type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
 const DatabaseHostsParamsWithRegion = Type.Object({
     accountId: Type.String(),
-    credentialsId: Type.String(),
+    credentialsId: Type.String({ format: 'uuid' }),
     region: Type.String()
 });
 
 const DatabaseHostSummaryParamsWithRegion = Type.Object({
     accountId: Type.String({ minLength: 1 }),
     databaseHostId: Type.String({ minLength: 1 }),
-    credentialsId: Type.String(),
+    credentialsId: Type.String({ format: 'uuid' }),
     region: Type.String()
 });
 type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
@@ -490,7 +490,7 @@ const DatabaseHostInstanceDetailsResponse = Type.Object({
     databaseInstanceId: Type.Optional(Type.String({ description: 'Id of SQL server instance.' })),
     instanceName: Type.String({ description: 'Name of SQL server instance.' }),
     isManaged: Type.Optional(
-        Type.Boolean({ description: 'Boolean to indicate if SQL server instance is managed by WFDB.', default: false })
+        Type.Boolean({ description: 'Boolean to indicate if SQL server instance is managed by WFDB.' })
     ),
     instanceState: Type.Optional(
         Type.String({ description: 'State of SQL server instance.', enum: [ServerState.UP, ServerState.DOWN] })
