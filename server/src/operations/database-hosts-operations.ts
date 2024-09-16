@@ -2103,7 +2103,7 @@ async function getDatabaseDetails(
                 name: database.databaseName,
                 size: database.databaseSize,
                 status: database.databaseStatus,
-                collation: database.collationName,
+                collation: database.collationName ?? '',
                 type: MSSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
                     ? MSSQL_DATABASE_TYPES.SYSTEM
                     : MSSQL_DATABASE_TYPES.USER,
