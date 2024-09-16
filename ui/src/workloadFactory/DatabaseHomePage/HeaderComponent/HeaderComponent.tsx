@@ -589,14 +589,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                 case 'links':
                                                     postBlueXPMessage({
                                                         type: BlueXPListeners.navigate,
-                                                        payload: { pathname: './fsxhome/links', replace: true }
+                                                        payload: { pathname: '../fsxhome/links', replace: true }
                                                     });
 
                                                     break;
                                                 case 'workLoadFactoryCredentials':
                                                     postBlueXPMessage({
                                                         type: BlueXPListeners.navigate,
-                                                        payload: { pathname: './fsxhome/credentials', replace: true }
+                                                        payload: { pathname: '../fsxhome/credentials', replace: true }
                                                     });
 
                                                     break;
@@ -620,14 +620,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                 case 'subscribeToRss':
                                                     postBlueXPMessage({
                                                         type: BlueXPListeners.navigate,
-                                                        payload: { pathname: './links', replace: true }
+                                                        payload: { pathname: '../links', replace: true }
                                                     });
 
                                                     break;
                                                 case 'feedback':
                                                     postBlueXPMessage({
                                                         type: BlueXPListeners.navigate,
-                                                        payload: { pathname: './fsxhome/feedback', replace: true }
+                                                        payload: { pathname: '../fsxhome/feedback', replace: true }
                                                     });
 
                                                     break;
