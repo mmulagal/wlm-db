@@ -565,6 +565,10 @@ export const formatViewCalcData = (
                 additionalUserProvisionedIops: formatNumbers(
                     viewCalculationsResponse?.fsxwCalculation?.additionalUserProvisionedIops
                 ),
+                sumOfDefaultAndAdditionalProvisionedIops: formatNumbers(
+                    Number(viewCalculationsResponse?.fsxwCalculation?.totalDefaultProvisionedIops || 0) +
+                        Number(viewCalculationsResponse?.fsxwCalculation?.additionalUserProvisionedIops || 0)
+                ),
                 billedIops: formatNumbers(viewCalculationsResponse?.fsxwCalculation?.billedIops),
                 totalMonthlyCostForProvisionedSsdIops: formatNumberWithCustomComma(
                     viewCalculationsResponse?.fsxwCalculation?.totalMonthlyCostForProvisionedSsdIops

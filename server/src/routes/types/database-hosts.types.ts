@@ -490,7 +490,7 @@ const DatabaseHostInstanceDetailsResponse = Type.Object({
     databaseInstanceId: Type.Optional(Type.String({ description: 'Id of SQL server instance.' })),
     instanceName: Type.String({ description: 'Name of SQL server instance.' }),
     isManaged: Type.Optional(
-        Type.Boolean({ description: 'Boolean to indicate if SQL server instance is managed by WFDB.', default: false })
+        Type.Boolean({ description: 'Boolean to indicate if SQL server instance is managed by WFDB.' })
     ),
     instanceState: Type.Optional(
         Type.String({ description: 'State of SQL server instance.', enum: [ServerState.UP, ServerState.DOWN] })

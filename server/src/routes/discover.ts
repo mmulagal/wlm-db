@@ -81,10 +81,17 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         async request => {
             const {
                 params: { accountId, credentialsId, region, instanceId },
-                body: { credentials }
+                body: { credentials, clusterNodesIpAddress }
             } = request;
 
-            return validateAndStoreDiscoveredParameters(accountId, credentialsId, region, instanceId, credentials);
+            return validateAndStoreDiscoveredParameters(
+                accountId,
+                credentialsId,
+                region,
+                instanceId,
+                credentials,
+                clusterNodesIpAddress
+            );
         }
     );
 

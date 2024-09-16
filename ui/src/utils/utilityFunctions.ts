@@ -427,6 +427,19 @@ export const getDiscoveredHostDeployment = (host: any) => {
     return type;
 };
 
+export const getAzType = (deploymentType: string | undefined) => {
+    if (!deploymentType) {
+        return '';
+    };
+    const singleAzPattern = /^SINGLE_AZ_\d+$/i;
+    const multiAzPattern = /^MULTI_AZ_\d+$/i;
+    return singleAzPattern.test(deploymentType)
+        ? GENERAL.SINGLE_AZ
+        : multiAzPattern.test(deploymentType)
+        ? GENERAL.MULTI_AZ
+        : deploymentType;
+};
+
 export const formatHostData = (val: any) => {
     // Protection text added to enable filter
     let protectionText = '';
@@ -445,20 +458,10 @@ export const formatHostData = (val: any) => {
     // AZ Type - Single AZ or Multi AZ
     let azType = '';
     if (val?.topology?.fileSystemDeploymentMode) {
-        azType =
-            val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                ? GENERAL.SINGLE_AZ
-                : val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                ? GENERAL.MULTI_AZ
-                : '';
+        azType = getAzType(val?.topology?.fileSystemDeploymentMode);
     } else {
         const deploymentType = val?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
-        azType =
-            deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                ? GENERAL.SINGLE_AZ
-                : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                ? GENERAL.MULTI_AZ
-                : '';
+        azType = getAzType(deploymentType);
     }
 
     // server installation mode
@@ -1444,7 +1447,7 @@ export const removeOldApisError = (data: any) => {
 };
 
 // This function will create post payload for register credential API (registerResourceCredentials)
-export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string) => {
+export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string, rowData: any) => {
     const state = store.getState();
     const isInventoryV2 = state?.auth?.isInventoryV2;
     let detectManageUserName = '';
@@ -1479,7 +1482,14 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
             password: detectOntapPassword
         });
     }
-    return { credentials: credList };
+
+    // Logic to add clusterNodesIpAddress for FCI only. This is for resourec-credentials API.
+    if (rowData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+        let addresses = rowData?.windowsClusterNodes?.map((obj: { Address: string; Node: string }) => obj?.Address);
+        return { credentials: credList, clusterNodesIpAddress: addresses };
+    } else {
+        return { credentials: credList };
+    }
 };
 
 export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => {

@@ -774,6 +774,8 @@ const createClonedDb = (
             .join('\n')}
 
         # Rename the actual files to the new name
+
+        $newFiles = @()
         ${[...dataFileList, ...logFileList]
             .map(file => {
                 // replace mdf, ndf, ldf with epoch.mdf etc
@@ -782,6 +784,20 @@ const createClonedDb = (
                 Rename-Item -Path "${file}" -NewName "${newFileName}"`;
             })
             .join('\n')}
+
+        
+        # Update ACL for the new files
+
+        $sqlService = (Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (${instanceName})'})
+
+        if ($sqlService -ne $null) {
+            $newFiles | ForEach-Object {
+                $Acl = Get-Acl $_
+                $Ar = New-Object System.Security.AccessControl.FileSystemAccessRule($sqlService.StartName, "FullControl", "Allow")
+                $Acl.SetAccessRule($Ar)
+                Set-Acl $_ $Acl
+            }
+        }
         
         Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET ONLINE" -InstanceName "${executableInstanceName}"
     } catch {

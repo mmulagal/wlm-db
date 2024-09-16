@@ -680,7 +680,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Savings from compression & deduplication',
                 value: `${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}%`,
-                text: ``
+                text: `Based on a typical DB workload, ${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}% of Savings from compression and deduplication is our recommendation`
             },
             {
                 label: 'Pricing calculations'
@@ -1451,24 +1451,24 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
                 text: ``
             },
             {
-                label: 'FSx for windows storage cost for clone',
+                label: 'FSx for Windows File Server storage cost for clone',
                 value: `$${viewCalculation.fsxwCloneCalculation.capacity}`,
-                text: `FSx for windows storage cost of primary dbs volumes not including replica dbs volumes`
+                text: `FSx for Windows File Server storage cost of primary dbs volumes not including replica dbs volumes`
             },
             {
-                label: 'FSx for windows iops cost for clone',
+                label: 'FSx for Windows File Server IOPS cost for clone',
                 value: `$${viewCalculation.fsxwCloneCalculation.iops}`,
-                text: `FSx for windows iops cost of primary dbs volumes not including replica dbs volumes`
+                text: `FSx for Windows File Server IOPS cost of primary dbs volumes not including replica dbs volumes`
             },
             {
-                label: 'FSx for windows throughput cost for clone',
+                label: 'FSx for Windows File Server throughput cost for clone',
                 value: `$${viewCalculation.fsxwCloneCalculation.throughput}`,
-                text: `FSx for windows throughput cost of primary dbs volumes not including replica dbs volumes`
+                text: `FSx for Windows File Server throughput cost of primary dbs volumes not including replica dbs volumes`
             },
             {
                 label: 'Clones total monthly cost',
                 value: `$${viewCalculation.fsxwCloneCalculation.totalCloneMonthlyCost}`,
-                text: `Number of Cloned copies (${viewCalculation.fsxwCloneCalculation.clonedCopiesCount}) x (primary FSx for windows storage cost ($${viewCalculation.fsxwCloneCalculation.capacity}) + primary FSx for windows iops cost ($${viewCalculation.fsxwCloneCalculation.iops}) + primary FSx for windows throughput cost ($${viewCalculation.fsxwCloneCalculation.throughput}))`
+                text: `Number of Cloned copies (${viewCalculation.fsxwCloneCalculation.clonedCopiesCount}) x (FSx for Windows File Server storage cost ($${viewCalculation.fsxwCloneCalculation.capacity}) + FSx for Windows File Server IOPS cost ($${viewCalculation.fsxwCloneCalculation.iops}) + FSx for Windows File Server throughput cost ($${viewCalculation.fsxwCloneCalculation.throughput}))`
             }
         ],
         totalMonthlyCost: [
