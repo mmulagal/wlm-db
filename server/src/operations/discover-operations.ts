@@ -116,9 +116,10 @@ interface SsmTargetsInfo {
     };
 }
 
-interface DeployType {
+interface FsxInstanceConfig {
     deploymentType: string | undefined;
     subnetIds: string[] | undefined;
+    fileSystemStorageType?: string;
 }
 
 interface FSxInfo {
@@ -256,7 +257,7 @@ async function getHostAndSqlServerInfo(
         logger.info(`API1Performance: Time taken by describe FSxFS/SVM: ${api1EndTime - api1StartTime}ms`);
 
         const endPointIpWithFsxInfo = new Map<string, FSxInfo>();
-        const fsIdWithDeploymentType = new Map<string, DeployType>();
+        const fsIdWithFsxInstanceConfig = new Map<string, FsxInstanceConfig>();
         api1StartTime = performance.now();
         svmList.StorageVirtualMachines?.forEach(async elem => {
             const fsId = elem.FileSystemId;
@@ -308,13 +309,14 @@ async function getHostAndSqlServerInfo(
                 );
             });
 
-        fsxList.forEach(({ FileSystemId, OntapConfiguration, WindowsConfiguration, SubnetIds }) => {
+        fsxList.forEach(({ FileSystemId, OntapConfiguration, WindowsConfiguration, SubnetIds, StorageType }) => {
             if (FileSystemId) {
-                fsIdWithDeploymentType.set(FileSystemId, {
+                fsIdWithFsxInstanceConfig.set(FileSystemId, {
                     deploymentType: isEmpty(OntapConfiguration)
                         ? WindowsConfiguration?.DeploymentType
                         : OntapConfiguration?.DeploymentType,
-                    subnetIds: SubnetIds
+                    subnetIds: SubnetIds,
+                    fileSystemStorageType: StorageType
                 });
             }
         });
@@ -346,7 +348,7 @@ async function getHostAndSqlServerInfo(
                         target,
                         commandId!,
                         endPointIpWithFsxInfo,
-                        fsIdWithDeploymentType,
+                        fsIdWithFsxInstanceConfig,
                         subnetListMap,
                         ebsVolumeToAvailabilityZoneMap
                     );
@@ -392,7 +394,7 @@ async function getHostAndSqlInfoFromPsOutput(
     ssmTarget: SsmTargetsInfo,
     commandId: string,
     endPointIpWithFsxInfo: Map<string, FSxInfo>,
-    fsIdWithDeploymentType: Map<string, DeployType>,
+    fsIdWithFsxInstanceConfig: Map<string, FsxInstanceConfig>,
     subnetListMap: Map<string | undefined, string | undefined>,
     ebsVolumeToAvailabilityZoneMap: Map<string | undefined, string | undefined>
 ): Promise<SqlServerInstanceInfoType[]> {
@@ -402,7 +404,7 @@ async function getHostAndSqlInfoFromPsOutput(
         ssmTarget,
         commandId,
         endPointIpWithFsxInfo,
-        fsIdWithDeploymentType,
+        fsIdWithFsxInstanceConfig,
         subnetListMap
     });
     const commandInvocationParam = {
@@ -527,14 +529,16 @@ async function getHostAndSqlInfoFromPsOutput(
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
 
+                            const { deploymentType, subnetIds, fileSystemStorageType } =
+                                fsIdWithFsxInstanceConfig.get(fsxId!) || {};
+
                             storageTypes.push({
                                 type: STORAGE_TYPE.FSXN,
                                 id: fsxId!,
                                 svmId,
-                                protocol: STORAGE_PROTOCOLS.ISCSI
+                                protocol: STORAGE_PROTOCOLS.ISCSI,
+                                fileSystemStorageType
                             });
-
-                            const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
 
                             deploymentTypes.push({
                                 type: deploymentType,
@@ -561,22 +565,25 @@ async function getHostAndSqlInfoFromPsOutput(
                                     fsxId,
                                     svmId
                                 } = endPointIpWithFsxInfo.get(matchedEndpoint) || {};
+                                const { fileSystemStorageType } = fsIdWithFsxInstanceConfig.get(fsxId!) || {};
                                 if (fsxType === FileSystemType.WINDOWS) {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXW,
                                         id: fsxId,
-                                        protocol: STORAGE_PROTOCOLS.SMB
+                                        protocol: STORAGE_PROTOCOLS.SMB,
+                                        fileSystemStorageType
                                     });
                                 } else {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXN,
                                         id: fsxId,
                                         svmId,
-                                        protocol: STORAGE_PROTOCOLS.SMB
+                                        protocol: STORAGE_PROTOCOLS.SMB,
+                                        fileSystemStorageType
                                     });
                                 }
 
-                                const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
+                                const { deploymentType, subnetIds } = fsIdWithFsxInstanceConfig.get(fsxId!) || {};
                                 deploymentTypes.push({
                                     type: deploymentType,
                                     zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
