@@ -36,6 +36,7 @@ import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
 import {
+    checkForAllAOAG,
     getPartnerNodeEc2InstanceId,
     handleManageNotification,
     handleManageTriggerNotification,
@@ -390,6 +391,23 @@ const InventoryTable = () => {
                     width="320px"
                     height="100px"
                 >
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for all FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
+        if (
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+            !checkForAllUnDetectInstance &&
+            checkForAllAOAG(rowData)
+        ) {
+            return (
+                <TooltipComponent title={GENERAL.ALL_ES_FSXW_AOAG_ROWS} placement="bottom" width="340px" height="70px">
                     <div id="inventory-table-option" className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
