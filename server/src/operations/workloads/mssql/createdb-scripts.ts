@@ -49,6 +49,11 @@ $ErrorActionPreference = "Stop"
 
 $FilePaths = $FilePathString.Split(',')
 $FSxCredStore = "/netapp/wlmdb/$FileSystemId"
+$connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet -Count 1
+if ($connection -eq $False) {
+    # Set the registry key to disable certificate revocation check in case of private subnet
+    Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
+}
 $credobject = (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
 
 $username = $credobject.fsx.username
@@ -129,7 +134,6 @@ if ($IsClustered -ne "false") {
 
 # Get FSx certificate
 $isprivatesubnet = $False
-$connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet
 if ($connection -eq $False) {
     $isprivatesubnet = $True
     $restcert = ''

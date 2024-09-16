@@ -2,7 +2,7 @@
 // Assumes that the following variables are defined in the script:
 //  - $FSxID: FSx ID
 //  - $FSxRegion: FSx region
-const ontapRestRequest = (skipCertificateCheck = false) => `
+const ontapRestRequest = `
         Add-Type @"
             using System.Net;
             using System.Security.Cryptography.X509Certificates;
@@ -17,6 +17,11 @@ const ontapRestRequest = (skipCertificateCheck = false) => `
         [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+        $connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet -Count 1
+        if ($connection -eq $False) {
+            # Set the registry key to disable certificate revocation check in case of private subnet
+            Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
+        }
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
@@ -26,11 +31,6 @@ const ontapRestRequest = (skipCertificateCheck = false) => `
         $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
 
         $isprivatesubnet = $False
-        $connection = ${
-            skipCertificateCheck
-                ? '$False'
-                : 'Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet'
-        }
         if ($connection -eq $False) {
             $isprivatesubnet = $True
             $regionCertificate = ''

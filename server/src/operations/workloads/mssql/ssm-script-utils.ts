@@ -2,7 +2,7 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../uti
 
 /* eslint-disable no-useless-escape */
 
-import { SCRIPT_VERSON_FILE } from './const';
+import { GOOGLE_DNS, SCRIPT_VERSON_FILE } from './const';
 import { compressResponse, ontapRestRequest } from './common-templates';
 
 const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string, instanceName: string = DEFAULT_INSTANCE_NAME) => ` 
@@ -374,6 +374,11 @@ const validateSQLInstanceConnectivity = (
                 FOR JSON PATH
 "@
 
+            $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
+            if ($connection -eq $False) {
+                # Set the registry key to disable certificate revocation check in case of private subnet
+                Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
+            }
             $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
             $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
             $sqlList = $credobject.sql
@@ -437,28 +442,8 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
 
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-        $FSxUserName = $SsmParameter.fsx.username
-        $FSxPassword = $SsmParameter.fsx.password
-        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-
-        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        $tempfileObject = New-TemporaryFile
-        $tempfile = $tempfileObject.FullName
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
-        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
-        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
-
-        $Params = @{
-            "URI"         = 'https://management.' + $FSxID + '.fsx.' + $FSxRegion + '.amazonaws.com/api/cluster?fields=version'
-            "Method"      = "GET"
-            "Headers"     = @{"Authorization" = 'Basic ' + $FSxCredentialsInBase64 }
-            "ContentType" = "application/json"
-        }
-
-        $ontapresult = Invoke-RestMethod @Params -Certificate $regionCertificateificate
+        ${ontapRestRequest}
+        Invoke-ONTAPRequest -ApiEndPoint '/cluster?fields=version'
 
         $responseObject.add('ontapconnectivity', $True)
     } catch {
@@ -520,7 +505,7 @@ const getMappedOntapVolumesScript = (
             }
         }
 
-        ${ontapRestRequest()}
+        ${ontapRestRequest}
 
         $instanceRespones = @{}
         $sqlInstances | ForEach-Object {
@@ -942,7 +927,7 @@ const restGetUtilForOntap = (
         $APIQueryFilter = '${apiQueryFilter}'
         $ApiQueryFields = '${apiQueryFields}'
 
-        ${ontapRestRequest()}
+        ${ontapRestRequest}
      
         $responseObject = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
     } catch {
@@ -1032,6 +1017,11 @@ const readSsmParameter = (instance: string) =>
         if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
             try {
             $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
+            $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
+            if ($connection -eq $False) {
+                # Set the registry key to disable certificate revocation check in case of private subnet
+                Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
+            }
             $sqlCredentials = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json)
             } catch {
                 $sqlCredentials = $null
@@ -1173,6 +1163,11 @@ const getSqlCredentials = (sqlAuthEnabled: boolean) => `
         if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
             try {
                 $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
+                $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
+                if ($connection -eq $False) {
+                    # Set the registry key to disable certificate revocation check in case of private subnet
+                    Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
+                }
                 $sqlCredentials = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json)
             } catch {
                 $sqlCredentials = $null
