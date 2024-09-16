@@ -265,7 +265,7 @@ const Chatbot = () => {
 
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
         notificationMsg = setTimeout(() => {
-            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigateToCanvas('/');
+            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
         }, 3000);
     };
 
