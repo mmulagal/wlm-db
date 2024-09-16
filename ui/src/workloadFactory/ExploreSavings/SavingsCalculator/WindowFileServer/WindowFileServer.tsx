@@ -23,8 +23,8 @@ const WindowFileServer = () => {
             },
             {
                 label: 'Total storage amount',
-                value: selectedHostDetails?.allocatedCapacityText || GENERAL.NOT_AVAILABLE,
-                loading: selectedHostDetails?.loading
+                value: viewCalculationsResponse?.fsxwCalculation?.desiredStorageCapacity || GENERAL.NOT_AVAILABLE,
+                loading: viewCalculationsLoading
             },
             {
                 label: 'Total provisioned IOPS',

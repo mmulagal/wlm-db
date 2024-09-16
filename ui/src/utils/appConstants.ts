@@ -895,6 +895,8 @@ export const GENERAL = {
     SOURCE_HOST: 'Source database host',
     SOURCE_INSTANCE: 'Source database instance',
     SOURCE_DATABASE: 'Source database',
+    MOUNT_NOTICE:
+        'Notice: When cloning a SQL database that has multiple data and/or log files, workload factory clones all files under the auto-assigned or defined drive letter.',
     AUTO_ASSIGN_MOUNT_POINT: 'Auto-assign mount point',
     DEFINE_MOUNT_POINT_PATH: 'Define mount point path',
     VOLUME_MOUNT_POINT_UNDER_PATH: 'Volume mount point under path',
@@ -1074,6 +1076,7 @@ export const GENERAL = {
         'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
         'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
+    ALL_ES_FSXW_AOAG_ROWS: 'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
         'The attempt to manage the SQL Server instance ',
@@ -1165,7 +1168,8 @@ export const CODE_VIEWER = {
     DELETE: 'Delete',
     CREATION_DATE: 'Creation date:',
     DEPLOYMENT: 'Deployment:',
-    CREATE_DATABASE: 'Create database'
+    CREATE_DATABASE: 'Create database',
+    TERRAFORM: 'Terraform'
 };
 
 export const CHATBOT_FIELD_MAPPING: any = {

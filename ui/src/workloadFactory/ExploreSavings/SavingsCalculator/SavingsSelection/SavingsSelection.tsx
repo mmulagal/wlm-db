@@ -48,6 +48,12 @@ const SavingsSelection = ({ printState }: any) => {
         existingInstanceType: ''
     });
 
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+            setMonthlyChangeRateNo(3);
+        }
+    }, [savingsCalculatorFrom]);
+
     // Debounce variable
     const [clonedText, setClonedText] = useSearchDebounce(1000);
     const [changeRateText, setChangeRateText] = useSearchDebounce(1000);
@@ -184,7 +190,7 @@ const SavingsSelection = ({ printState }: any) => {
     }, [instanceTypeData.options]);
 
     useEffect(() => {
-        if (!selectedCloneRefresh) {
+        if (!selectedCloneRefresh && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
             dispatch(setSelectedCloneRefresh(generateCloneRefresh[0]));
         }
     }, [generateCloneRefresh]);
@@ -259,18 +265,20 @@ const SavingsSelection = ({ printState }: any) => {
                         error={errorForClonedCopiesCount()}
                     />
                 )}
-                <SelectField
-                    label={GENERAL.ES_CLONE_REFRESH_FREQUENCY}
-                    isClearable={false}
-                    isDisabled={loading}
-                    defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
-                    onChange={(selectedOptions: any): void => {
-                        dispatch(setSelectedCloneRefresh(selectedOptions));
-                    }}
-                    isSearchable={generateCloneRefresh.length > 5}
-                    options={generateCloneRefresh}
-                    className={`${styles.widthSet} savings-calculator-input-fields`}
-                />
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                    <SelectField
+                        label={GENERAL.ES_CLONE_REFRESH_FREQUENCY}
+                        isClearable={false}
+                        isDisabled={loading}
+                        defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
+                        onChange={(selectedOptions: any): void => {
+                            dispatch(setSelectedCloneRefresh(selectedOptions));
+                        }}
+                        isSearchable={generateCloneRefresh.length > 5}
+                        options={generateCloneRefresh}
+                        className={`${styles.widthSet} savings-calculator-input-fields`}
+                    />
+                )}
             </div>
 
             <div className={`${styles.secondRow} ${styles.infoCenter}`}>
