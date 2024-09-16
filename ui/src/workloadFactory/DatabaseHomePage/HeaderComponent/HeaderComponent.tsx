@@ -22,7 +22,6 @@ import { ReactComponent as ExternalLinkWhite } from '../../../assets/ic_external
 import { ReactComponent as RSS } from '../../../assets/ic_rss.svg';
 import { ReactComponent as RSS_White } from '../../../assets/ic_rss_white.svg';
 import { ReactComponent as Menu } from '../../../assets/ic_menu.svg';
-import Inventory from '../../Inventory/Inventory';
 import { useDispatch } from 'react-redux';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostOverview from '../../ResourcePage/ResourceHomePage/DatabaseHostOverview';
@@ -681,7 +680,6 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <DatabaseHomePage />
                         </div>
                     )}
-                    {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && isInventoryV2 && (
                         <>
                             <div className={styles.inventoryHeaderSection}>
@@ -754,7 +752,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         </>
                     )}
                     {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
-                    {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
+
                     {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
                 </div>
             </div>
