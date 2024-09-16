@@ -39,8 +39,8 @@ interface ProductOutput {
     output: GetProductsCommandOutput;
 }
 
-const DEFAULT_EBS_STORAGE = 100; // 100GB
-const DEFAULT_EBS_VOL_TYPE = 'gp3';
+const ROOT_EBS_STORAGE_SIZE = 100; // 100GB
+const ROOT_EBS_VOL_TYPE = 'gp3';
 
 const AWS_PRICING_FORMAT_VERSION = {
     FormatVersion: 'aws_v1'
@@ -472,8 +472,8 @@ async function calculatePrice(
 
     const ebsRootVolumes = new Array(compute.sqlDeploymentMode === FCI ? 2 : 1).fill(null).map((_, index) => ({
         id: `${EBS_ROOT_VOLUME}${index + 1}`,
-        volumeType: DEFAULT_EBS_VOL_TYPE,
-        size: DEFAULT_EBS_STORAGE
+        volumeType: ROOT_EBS_VOL_TYPE,
+        size: ROOT_EBS_STORAGE_SIZE
     }));
 
     if (isEmpty(ebsStorage)) {
@@ -482,9 +482,8 @@ async function calculatePrice(
             ebsResourceInfo: ebsRootVolumes
         };
     } else {
-        const hasRootVolume = ebsStorage.ebsResourceInfo?.some(
-            ({ id, volumeType }) => id.includes(EBS_ROOT_VOLUME) && volumeType === 'gp3'
-        );
+        // If ebsStorage is not empty, add the root volumes to the existing ebsResourceInfo
+        const hasRootVolume = ebsStorage.ebsResourceInfo?.some(({ id }) => id.includes(EBS_ROOT_VOLUME));
         if (!hasRootVolume) {
             ebsStorage.ebsResourceInfo = [...ebsStorage.ebsResourceInfo, ...ebsRootVolumes];
         }
@@ -561,7 +560,7 @@ async function calculatePrice(
             const rate = productRates[`ebsStorage-${ebsResource.volumeType}`];
             const size =
                 ebsResource.id.includes(EBS_ROOT_VOLUME) && ebsResource.size <= 100
-                    ? DEFAULT_EBS_STORAGE
+                    ? ROOT_EBS_STORAGE_SIZE
                     : ebsResource.size;
             const cost = calculateEbsCost(ebsResource.volumeType, size, ebsResource.iops, ebsResource.throughput, rate);
             totalEbsStorageCost += cost;
