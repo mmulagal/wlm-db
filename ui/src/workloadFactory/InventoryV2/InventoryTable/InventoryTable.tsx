@@ -36,7 +36,7 @@ import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
 import {
-    checkForAllAOAG,
+    addInstanceIdToGetPerf,
     getPartnerNodeEc2InstanceId,
     handleManageNotification,
     handleManageTriggerNotification,
@@ -303,25 +303,25 @@ const InventoryTable = () => {
         );
     };
 
-    const addInstanceIdToGetPerf = (rowData: any) => {
-        // First check if this is already opened or closed. If this data is already available or not.
-        if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
-            // If this has unmanaged rows or not ?
-            let unmanagedRows = rowData?.sqlServerInstances?.filter(
-                (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
-            );
-            if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
-                let instanceList = [];
-                instanceList.push(rowData?.ec2InstanceId);
-                const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
-                if (partnerData && partnerData?.length > 0) {
-                    instanceList.push(partnerData?.[0]?.id);
-                }
-                dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
-            }
-            // This has to be called even if any row is becoming unmanaged row or managed row
-        }
-    };
+    // const addInstanceIdToGetPerf = (rowData: any) => {
+    //     // First check if this is already opened or closed. If this data is already available or not.
+    //     if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
+    //         // If this has unmanaged rows or not ?
+    //         let unmanagedRows = rowData?.sqlServerInstances?.filter(
+    //             (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
+    //         );
+    //         if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
+    //             let instanceList = [];
+    //             instanceList.push(rowData?.ec2InstanceId);
+    //             const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
+    //             if (partnerData && partnerData?.length > 0) {
+    //                 instanceList.push(partnerData?.[0]?.id);
+    //             }
+    //             dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
+    //         }
+    //         // This has to be called even if any row is becoming unmanaged row or managed row
+    //     }
+    // };
 
     const lastColJSX = (
         rowData: any,
@@ -568,7 +568,7 @@ const InventoryTable = () => {
                                 onClick={(e: any) => {
                                     e.stopPropagation();
                                     expandTableRow(updateRowState, rowData, currentRowState, rowsState);
-                                    addInstanceIdToGetPerf(rowData);
+                                    addInstanceIdToGetPerf(rowData, dispatch);
                                 }}
                             />
                         </div>
