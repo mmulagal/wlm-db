@@ -438,7 +438,8 @@ async function getMappedOntapVolumes(
     fileSystemId: string,
     isSystemDatabase: boolean,
     activeNodeInstanceId?: string,
-    instanceName?: string
+    instanceNames?: string[],
+    isSqlAuthEnabled = false
 ) {
     logger.info('Get ontap volumes mapped to data drive of all databases in a server', {
         credentialsId,
@@ -446,7 +447,7 @@ async function getMappedOntapVolumes(
         fileSystemId,
         activeNodeInstanceId,
         isSystemDatabase,
-        instanceName
+        isSqlAuthEnabled
     });
 
     try {
@@ -457,7 +458,13 @@ async function getMappedOntapVolumes(
         // retrieve the mapped volumes for system databases alone when isSystemDatabase is true otherwise includes user dbs also
         const psIsSystemDatabase = isSystemDatabase ? '$true' : '$false';
 
-        const command = getMappedOntapVolumesScript(fileSystemId, region, instanceName, psIsSystemDatabase);
+        const command = getMappedOntapVolumesScript(
+            fileSystemId,
+            region,
+            psIsSystemDatabase,
+            instanceNames,
+            isSqlAuthEnabled
+        );
 
         const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId!);
 
@@ -467,12 +474,25 @@ async function getMappedOntapVolumes(
         parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
         logger.debug({ parsedResponse });
 
-        const { volumeDBMap, volumes } = parsedResponse;
-        if (volumes && !isEmpty(volumes?.records)) {
-            const volumeUuids = volumes.records.map(({ uuid }: { uuid: string }) => uuid);
-            return { volumeUuids, volumeDBMap };
-        }
-        return { volumeUuids: [], volumeDBMap: {} };
+        const instancesResponse: { [key: string]: any } = {};
+        instanceNames?.forEach((iName: string) => {
+            if (
+                parsedResponse?.[iName] &&
+                !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
+            ) {
+                const { volumeDBMap, volumes } = parsedResponse?.[iName] ?? {};
+                if (volumes && !isEmpty(volumes?.records)) {
+                    const volumeUuids = volumes.records.map(({ uuid }: { uuid: string }) => uuid);
+                    instancesResponse[iName] = { volumeUuids, volumeDBMap };
+                } else {
+                    instancesResponse[iName] = { volumeUuids: [], volumeDBMap: {} };
+                }
+            } else {
+                logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);
+            }
+        });
+
+        return instancesResponse;
     } catch (err) {
         logger.error('Failed executing SSM script to get ontap mapped volumes', { err });
     }

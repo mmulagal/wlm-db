@@ -59,6 +59,9 @@ const databaseHomeSlice = createSlice({
         addJobsSummary: (state, action: PayloadAction<any>) => {
             state.getJobsSummary = action.payload;
         },
+        addJobsSummaryLoading: (state, action: PayloadAction<any>) => {
+            state.getJobsSummary.jobsSummaryLoading = action.payload;
+        },
         addDatabaseHostsList: (state, action: PayloadAction<any>) => {
             state.databaseHostsList = action.payload;
         },
@@ -83,6 +86,7 @@ const databaseHomeSlice = createSlice({
 export const {
     selectedTabSelection,
     addJobsSummary,
+    addJobsSummaryLoading,
     addDatabaseHostsList,
     addAggregateHostsCountData,
     addAggregatedProtectionDbCount,

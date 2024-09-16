@@ -9,6 +9,7 @@ import { getCostAndUsage, getTagsfromCostExplorer } from '../../lib/aws/cost-exp
 import getLogger from '../../utils/logger';
 import { BILLING, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
 import { ResourceDetails } from '../../utils/common-types';
+import { getFsxStorageCapacity } from './fsx-operations';
 
 const logger = getLogger();
 async function calculateBilling(
@@ -33,23 +34,41 @@ async function calculateBilling(
         tagValue.push(node2InstanceId);
     }
 
-    const ec2Input = ec2InputForCostExplorer(region, startTimeFormat, currenTimeFormat, tagValue);
-
-    const fsxInput = fsxInputForCostExplorer(region, startTimeFormat, currenTimeFormat, fileSystemId);
-
+    const fsxnIds = Array.isArray(fileSystemId) ? fileSystemId : [fileSystemId];
     try {
-        const [ec2CostExplorerResponse, fsxCostExplorerResponse] = await Promise.all([
-            getCostAndUsage(region, ec2Input, credentialsId),
-            getCostAndUsage(region, fsxInput, credentialsId)
-        ]);
-        // Extract the cost from the response
+        const ec2Input = ec2InputForCostExplorer(region, startTimeFormat, currenTimeFormat, tagValue);
+        const ec2CostExplorerpromise = getCostAndUsage(region, ec2Input, credentialsId);
+
+        const fsxnCostBreakdownById: { id: any; cost: number; size: number }[] = [];
+        let totalFsxnCost = 0;
+
+        const fsxnPromises = fsxnIds.map(async fsxnId => {
+            const fsxInput = fsxInputForCostExplorer(region, startTimeFormat, currenTimeFormat, fsxnId);
+            const fsxStorageCapacityPromise = getFsxStorageCapacity(credentialsId, region, fsxnId);
+            const fsxnCostExplorerPromise = getCostAndUsage(region, fsxInput, credentialsId);
+
+            const [fsxStorageCapacity, fsxnCostExplorerResponse] = await Promise.all([
+                fsxStorageCapacityPromise,
+                fsxnCostExplorerPromise
+            ]);
+
+            const fsxnCost = calculateCostfromCostExplorerResponse(fsxnCostExplorerResponse);
+            fsxnCostBreakdownById.push({
+                id: fsxnId,
+                cost: fsxnCost!,
+                size: (fsxStorageCapacity && fsxStorageCapacity.storage) || 0
+            });
+            totalFsxnCost += fsxnCost!;
+        });
+
+        const [ec2CostExplorerResponse] = await Promise.all([ec2CostExplorerpromise, ...fsxnPromises]);
         const ec2Cost = calculateCostfromCostExplorerResponse(ec2CostExplorerResponse);
-        const fsxCost = calculateCostfromCostExplorerResponse(fsxCostExplorerResponse);
 
         return {
             compute: ec2Cost!,
             storage: {
-                fsxn: fsxCost!
+                fsxn: totalFsxnCost,
+                fsxnBreakDownById: fsxnCostBreakdownById
             },
             estimationType: BILLING,
             connectivity: 0, // Since we are not creating tag on resource other than ec2 and fsx

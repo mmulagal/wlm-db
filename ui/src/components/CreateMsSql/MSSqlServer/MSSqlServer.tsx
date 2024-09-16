@@ -1,7 +1,5 @@
 import MSSqlAccordions from './MSSqlAccordions';
 
-import CloudFormation from '../CloudFormation/CloudFormation';
-
 import SelectConfig from '../SelectConfig/SelectConfig';
 import { useAppSelector } from '../../../store/storeHooks';
 
@@ -14,7 +12,6 @@ const MSSqlServer = () => {
             <MSSqlAccordions />
             {isWorkloadFactory && <div style={{ marginBottom: '32px' }} />}
             {/* Accordions end here */}
-            {!isWorkloadFactory && <CloudFormation />}
         </>
     );
 };

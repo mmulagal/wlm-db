@@ -2,6 +2,7 @@
     "name": "Databases",
     "id": "databases",
     "to": "/databases",
+    "bluexpTo": "/fsxdb/marketing",
     "hasMenuItem": true,
     "hasPolicies": true,
     "apiDocUrl": "<%=process.env.SWAGGER%>",
@@ -21,8 +22,23 @@
         "description": "Detect your existing database estate on AWS, assess potential cost savings by moving to FSx for ONTAP, deploy databases end-to-end with built-in best practices for optimization, and automate thin cloning for CI/CD pipelines.",
         "primaryCtaLabel": "Deploy database host",
         "primaryCtaTo": "/databases/add-working-environment/database-services/mssql/create",
+        "primaryCtaBluexpTo": "/fsxdb/add-working-environment/database-services/mssql/create",
         "secondaryCtaLabel": "Go to Databases inventory",
         "secondaryCtaTo": "/databases/inventory",
+        "secondaryCtaBluexpTo": "/fsxdb/inventory",
+        "primaryCtaDropdownLabel": "Explore savings",
+        "primaryCtaDropdownTo": [
+            {
+                "label": "Microsoft SQL Server on EBS",
+                "to": "/databases/exploreSavingsEBS",
+                "bluexpTo": "/fsxdb/exploreSavingsEBS"
+            },
+            {
+                "label": "Microsoft SQL Server on FSx for Windows",
+                "to": "/databases/exploreSavingsFsxW",
+                "bluexpTo": "/fsxdb/exploreSavingsFsxW"
+            }
+        ],
         "isComingSoon": false,
         "dataUrl": "/wlmdb/v1/status"
     },

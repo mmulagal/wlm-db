@@ -24,7 +24,10 @@ export const TableLayout = ({ data }: any) => {
                 marginBottom: 3,
                 marginTop: 14
             };
-        } else if (data.label === 'Single Availability Zone total monthly cost') {
+        } else if (
+            data.label === 'Single Availability Zone total monthly cost' ||
+            data.label === 'Multi Availability Zone total monthly cost'
+        ) {
             return {
                 backgroundColor: 'var(--table-header-background)',
                 height: 112,

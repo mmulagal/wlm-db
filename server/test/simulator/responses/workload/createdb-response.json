@@ -98,6 +98,8 @@
         "defaultLogDrive": "L"
     },
     "getInstanceLevelDriveInfo": {
+        "defaultDataDrive": "D",
+        "defaultLogDrive": "L",
         "existingDriveInfo": [
             {
                 "driveLetter": "L",
@@ -190,6 +192,7 @@
                 "isClusteredWithSelectedInstance": true
             }
         ],
-        "availableDriveLetters": []
+        "availableDriveLetters": ["G", "I", "K", "M", "N", "O", "P", "U", "X"],
+        "fsxStorageCapacity": 38482906972160
     }
 }

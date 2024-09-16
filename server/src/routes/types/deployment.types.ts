@@ -49,25 +49,6 @@ const SQLConfiguration = Type.Object({
     isCustomAmi: Type.Optional(Type.Boolean({ default: false }))
 });
 
-// Cloud formation template creation Request and Response
-const CloudFormationTemplateRequestBody = Type.Object({
-    networkConfiguration: CFNetworkConfiguration,
-    ec2Configuration: EC2Configuration,
-    adConfiguration: ADConfiguration,
-    fsxConfiguration: FSXConfiguration,
-    sqlConfiguration: SQLConfiguration,
-    topicArn: Type.Optional(Type.String()),
-    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
-    tags: Type.Optional(
-        Type.Array(
-            Type.Object({
-                key: Type.String(),
-                value: Type.String()
-            })
-        )
-    )
-});
-
 const CloudFormationTemplateHeader = Type.Object({
     'triggered-from': Type.String({
         enum: ['wizard-advanced', 'wizard-quick', 'chatbot', 'rest-api'],
@@ -95,6 +76,12 @@ const CloudFormationStaticTemplateRequestBody = Type.Object({
     credentialsId: Type.Optional(Type.String()),
     region: Type.Optional(Type.String())
 });
+
+// Cloud formation template creation Request and Response
+const CloudFormationTemplateRequestBody = Type.Omit(CloudFormationStaticTemplateRequestBody, [
+    'credentialsId',
+    'region'
+]);
 
 const MissingPermission = Type.Object({
     service: Type.String(),
@@ -132,7 +119,7 @@ const DeploymentStatusResponse = Type.Object({
 
 const DeploymentStatusObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 }),
-    credentialsId: Type.String({ minLength: 1 }),
+    credentialsId: Type.String({ minLength: 1, format: 'uuid' }),
     region: Type.String({ minLength: 1 }),
     stackName: Type.String({ minLength: 1 })
 });

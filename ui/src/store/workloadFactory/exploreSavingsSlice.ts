@@ -38,6 +38,11 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
         instanceTypeLoading: false,
         instanceTypeError: null
     },
+    getManualRegionsList: {
+        manualRegionsData: null,
+        manualRegionsLoading: false,
+        manualRegionsError: null
+    },
     volumeFilledStatus: false,
     secondaryVolumeFilledStatus: false,
     manualTCOVolumeTypes: {
@@ -107,6 +112,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     },
     recommendedTargetInstance: '',
     requestedPayload: {},
+    requestedRegion: '',
     disableState: false,
     selectedManualDeploymentType: null,
     selectedManualStorageType: null,
@@ -144,6 +150,9 @@ const exploreSavingsSlice = createSlice({
         setRequestedPayload: (state, action: PayloadAction<any>) => {
             state.requestedPayload = action.payload;
         },
+        setRequestedRegion: (state, action: PayloadAction<any>) => {
+            state.requestedPayload = action.payload;
+        },
         setVolumeFilledStatus: (state, action: PayloadAction<any>) => {
             state.volumeFilledStatus = action.payload;
         },
@@ -155,6 +164,12 @@ const exploreSavingsSlice = createSlice({
         },
         setInstanceLoading: (state, action: PayloadAction<any>) => {
             state.getManualInstanceTypeList.instanceTypeLoading = action.payload;
+        },
+        addManualRegionsList: (state, action: PayloadAction<any>) => {
+            state.getManualRegionsList.manualRegionsData = action.payload;
+        },
+        setManualRegionsLoading: (state, action: PayloadAction<any>) => {
+            state.getManualRegionsList.manualRegionsLoading = action.payload;
         },
         setVolumeTypeOperation(state, action: PayloadAction<any>) {
             state.manualTCOVolumeTypes[action.payload.type][action.payload.mode] = action.payload.value;
@@ -353,6 +368,11 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualRegion = null;
             state.selectedManualDeploymentModel = null;
             state.selectedManualServerEdition = null;
+            state.getManualInstanceTypeList = {
+                instanceTypeData: {},
+                instanceTypeLoading: false,
+                instanceTypeError: null
+            };
             state.selectedManualInstanceType = null;
             state.selectedSecondaryManualInstanceType = null;
             state.monthlyBYOLCost = '';
@@ -383,6 +403,9 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setRequestedRegion,
+    addManualRegionsList,
+    setManualRegionsLoading,
     setSelectedManualFSXIOPS,
     setSelectedManualFSXThroughput,
     setSelectedManualStorageCapacityUnit,

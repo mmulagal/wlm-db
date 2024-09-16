@@ -16,6 +16,7 @@ import {
     FORM_OPTIONS,
     FSXN_STORAGE_PROTOCOLS,
     FSX_DEPLOYMENT_MODE,
+    GIB_IN_BYTE,
     JM_DOWNLOAD,
     JOBS_REPORT,
     JOB_MONITORING_STATUS,
@@ -26,7 +27,8 @@ import {
     REGIONS_CODE_LIST,
     SQL_DATABASE,
     SQL_DEPLOYMENT_MODE,
-    STATUS_CONST
+    STATUS_CONST,
+    WLF_TABS
 } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
@@ -346,12 +348,56 @@ export const generateRandomDBName = () => {
     return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
 };
 
+export function formatNumberWithCustomComma(number: any, roundOffRequired: boolean = true) {
+    let roundOffNumber;
+    if (roundOffRequired) {
+        if (Number(number) < 1) {
+            roundOffNumber = number;
+        } else {
+            roundOffNumber = Math.round(Number(number));
+        }
+    } else {
+        roundOffNumber = number;
+    }
+
+    // Convert the number to a string and remove any existing commas
+    let numStr = roundOffNumber.toString().replace(/,/g, '');
+
+    let formattedNumber;
+
+    // Add commas to the number
+    if (Number(numStr) > 1) {
+        formattedNumber = numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    } else {
+        formattedNumber = Number(numStr).toFixed(2);
+    }
+
+    return formattedNumber;
+}
+
 export const formatFractionalNumber = (value: number | undefined, precision: number = 1) => {
     if (Number.isNaN(value)) {
         return 0;
     }
     if (value && typeof value === 'number' && !Number.isInteger(value)) {
         return value.toFixed(precision);
+    }
+    return value;
+};
+
+export const formatFractionalNumberForCost = (
+    value: number | undefined,
+    precision: number = 1,
+    roundOffRequired: boolean = true
+) => {
+    if (Number.isNaN(value)) {
+        return 0;
+    }
+    if (value && typeof value === 'number' && !Number.isInteger(value)) {
+        const numberForFormat = value.toFixed(precision);
+        let formattedNumber = formatNumberWithCustomComma(numberForFormat, roundOffRequired);
+
+        return formattedNumber;
     }
     return value;
 };
@@ -381,6 +427,19 @@ export const getDiscoveredHostDeployment = (host: any) => {
     return type;
 };
 
+export const getAzType = (deploymentType: string | undefined) => {
+    if (!deploymentType) {
+        return '';
+    };
+    const singleAzPattern = /^SINGLE_AZ_\d+$/i;
+    const multiAzPattern = /^MULTI_AZ_\d+$/i;
+    return singleAzPattern.test(deploymentType)
+        ? GENERAL.SINGLE_AZ
+        : multiAzPattern.test(deploymentType)
+        ? GENERAL.MULTI_AZ
+        : deploymentType;
+};
+
 export const formatHostData = (val: any) => {
     // Protection text added to enable filter
     let protectionText = '';
@@ -399,20 +458,10 @@ export const formatHostData = (val: any) => {
     // AZ Type - Single AZ or Multi AZ
     let azType = '';
     if (val?.topology?.fileSystemDeploymentMode) {
-        azType =
-            val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                ? GENERAL.SINGLE_AZ
-                : val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                ? GENERAL.MULTI_AZ
-                : '';
+        azType = getAzType(val?.topology?.fileSystemDeploymentMode);
     } else {
         const deploymentType = val?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
-        azType =
-            deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                ? GENERAL.SINGLE_AZ
-                : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                ? GENERAL.MULTI_AZ
-                : '';
+        azType = getAzType(deploymentType);
     }
 
     // server installation mode
@@ -1398,7 +1447,7 @@ export const removeOldApisError = (data: any) => {
 };
 
 // This function will create post payload for register credential API (registerResourceCredentials)
-export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string) => {
+export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string, rowData: any) => {
     const state = store.getState();
     const isInventoryV2 = state?.auth?.isInventoryV2;
     let detectManageUserName = '';
@@ -1433,7 +1482,14 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
             password: detectOntapPassword
         });
     }
-    return { credentials: credList };
+
+    // Logic to add clusterNodesIpAddress for FCI only. This is for resourec-credentials API.
+    if (rowData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+        let addresses = rowData?.windowsClusterNodes?.map((obj: { Address: string; Node: string }) => obj?.Address);
+        return { credentials: credList, clusterNodesIpAddress: addresses };
+    } else {
+        return { credentials: credList };
+    }
 };
 
 export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => {
@@ -1575,4 +1631,70 @@ export const isSmbProtocol = (protocolList: Array<string> | undefined) => {
 
 export const isClusteredWithSelectedInstance = (val: any) => {
     return 'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
+};
+
+export const setTabInfoFOrBXP = (tab: string) => {
+    switch (tab) {
+        case '/fsxdb/dashboard':
+            return WLF_TABS.DASHBOARD;
+        case '/fsxdb/inventory':
+            return WLF_TABS.INVENTORY;
+        case '/fsxdb/sandbox':
+            return WLF_TABS.SANDBOXES;
+        case '/fsxdb/exploreSaving':
+            return WLF_TABS.EXPLORE_SAVINGS;
+        case '/fsxdb/exploreSavingsEBS':
+            return WLF_TABS.EXPLORE_SAVINGS_EBS;
+        case '/fsxdb/exploreSavingsFsxW':
+            return WLF_TABS.EXPLORE_SAVINGS_FsxW;
+        case '/fsxdb/jobMonitoring':
+            return WLF_TABS.JOB_MONITORING;
+        default:
+            return WLF_TABS.DASHBOARD;
+    }
+};
+
+export const apiDOCURL = () => {
+    if (navigator.userAgent.includes('Chrome')) {
+        if (
+            !window.location ||
+            !window.location.ancestorOrigins ||
+            !window.location.ancestorOrigins.length ||
+            window.location.ancestorOrigins[0].includes('staging')
+        ) {
+            return 'https://staging.console.workloads.netapp.com/api-doc';
+        } else {
+            return 'https://console.workloads.netapp.com/api-doc';
+        }
+    } else {
+        if (document.referrer.includes('staging')) {
+            return 'https://staging.console.workloads.netapp.com/api-doc';
+        } else {
+            return 'https://console.workloads.netapp.com/api-doc';
+        }
+    }
+};
+
+export const updateSizeInGib = (data: any): any => {
+    if (Array.isArray(data)) {
+        return data.map(item => updateSizeInGib(item));
+    } else if (typeof data === 'object' && data !== null) {
+        const updatedData: any = {};
+        for (const key in data) {
+            if (key === 'size') {
+                if (typeof data[key] === 'object') {
+                    updatedData[key] = {};
+                    for (const subKey in data[key]) {
+                        updatedData[key][subKey] = data[key][subKey] / GIB_IN_BYTE;
+                    }
+                } else {
+                    updatedData[key] = data[key] / GIB_IN_BYTE;
+                }
+            } else {
+                updatedData[key] = updateSizeInGib(data[key]);
+            }
+        }
+        return updatedData;
+    }
+    return data;
 };

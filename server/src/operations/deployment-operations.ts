@@ -47,7 +47,6 @@ import {
     DOMAIN_ADMIN_PASSWORD,
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE,
     TEMPLATE_FSX_PASSWORD,
     TEMPLATE_METRICS,
     TRIGGERED_FROM,
@@ -80,7 +79,9 @@ import {
     EBS_VOLUME_SIZE,
     EBS_DEFAULT_VOLUME_SIZE,
     TEMPLATE_PRIVATESUBNET1_CIDRBLOCK,
-    TEMPLATE_PRIVATESUBNET2_CIDRBLOCK
+    TEMPLATE_PRIVATESUBNET2_CIDRBLOCK,
+    AuditStatus,
+    FCI
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -111,6 +112,7 @@ import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
 import { describeSubnets, getAmis } from '../lib/aws/ec2';
+import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -122,6 +124,13 @@ async function getSubnetsCidr(
     sqlConfiguration: SQLConfigurationType
 ) {
     logger.info('Fetch cidr block for subnets', credentialsId, region);
+
+    if (
+        isEmpty(networkConfiguration.privateSubnet1Id) ||
+        (sqlConfiguration.sqlDeploymentMode === FCI && isEmpty(networkConfiguration.privateSubnet2Id))
+    ) {
+        return { privateSubnet1Cidr: '', privateSubnet2Cidr: '' };
+    }
 
     const subnetIds =
         sqlConfiguration.sqlDeploymentMode === STANDALONE
@@ -542,36 +551,36 @@ async function deployStackOrCreateTemplateURL(
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
 
-    // Here 120 & 133120 is in GiB
-    if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > DATABASE_MAX_LUN_SIZE_IN_GIB) {
-        throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
-    }
-
-    if (!sqlCollation) {
-        throw createError(412, 'Please provide the collation information');
-    }
-
-    // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
-    if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
-        // FSX 4gbps throughput capacity supported regions
-        const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
-        const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
-        if (!regionExists) {
-            throw createError(
-                412,
-                `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
-            );
-        }
-        // check ssd and iops size
-        if (fsxIOPS !== FSX_IOPS) {
-            throw createError(412, 'Supported Fsxn IOPs should be 160000');
-        }
-    }
-
     // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
     let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
+        // Here 120 & 133120 is in GiB
+        if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > DATABASE_MAX_LUN_SIZE_IN_GIB) {
+            throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
+        }
+
+        if (!sqlCollation) {
+            throw createError(412, 'Please provide the collation information');
+        }
+
+        // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
+        if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
+            // FSX 4gbps throughput capacity supported regions
+            const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
+            const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
+            if (!regionExists) {
+                throw createError(
+                    412,
+                    `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
+                );
+            }
+            // check ssd and iops size
+            if (fsxIOPS !== FSX_IOPS) {
+                throw createError(412, 'Supported Fsxn IOPs should be 160000');
+            }
+        }
+
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
@@ -599,7 +608,7 @@ async function deployStackOrCreateTemplateURL(
                     explicitlyDenied: permissions.explicitlyDenied
                 }
             };
-
+            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             logger.error(errMsg);
             return responseWithPermissions;
         }
@@ -665,11 +674,16 @@ async function deployStackOrCreateTemplateURL(
                 }
             };
             logger.error(errMsg);
+            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             return responseWithPermissions;
         }
+        const errorMsg = `Error while deploying stack. ${err?.message}`;
+        logger.error(errorMsg, err);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
+
         throw createError(
             err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while deploying stack ${err}.`
+            `Error while deploying stack ${errorMsg}.`
         );
     }
 }
@@ -701,21 +715,20 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
         networkConfiguration,
-        sqlConfiguration.sqlDeploymentMode,
-        Boolean(fsxConfiguration.fsxFileSystemId)
+        sqlConfiguration.sqlDeploymentMode
     );
 
     if (vpcValidationCheck.isViolated) {
-        let errorMessage;
+        let errorMessage = '';
         if (vpcValidationCheck.violationMessage !== undefined) {
             errorMessage = vpcValidationCheck.violationMessage;
         } else if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
             errorMessage = STANDALONE_NETWORK_VIOLATION_MESSAGE;
-        } else {
-            errorMessage = FCI_NETWORK_VIOLATION_MESSAGE;
         }
-        logger.error('VPC validation error:', errorMessage);
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+        if (!isEmpty(errorMessage)) {
+            logger.error('VPC validation error:', errorMessage);
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage!);
+        }
     }
 
     const derivedParams = fsxConfiguration.fsxFileSystemId
@@ -938,8 +951,7 @@ async function deployCloudFormationTemplate(
 
     const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
         networkConfiguration,
-        sqlConfiguration.sqlDeploymentMode,
-        Boolean(fsxConfiguration.fsxFileSystemId)
+        sqlConfiguration.sqlDeploymentMode
     );
 
     if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {

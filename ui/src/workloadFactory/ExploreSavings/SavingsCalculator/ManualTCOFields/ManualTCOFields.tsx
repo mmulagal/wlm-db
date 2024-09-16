@@ -31,7 +31,7 @@ const ManualTCOFields = () => {
         savingsCalculatorFrom
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedRegion } = useAppSelector(state => state.headers);
-    const { regionsData } = useAppSelector(state => state.headers.getRegions);
+    const { getManualRegionsList } = useAppSelector(state => state.exploreSavings);
 
     const [textSearch, setTextSearch] = useSearchDebounce(500);
 
@@ -46,17 +46,25 @@ const ManualTCOFields = () => {
         dispatch(setSelectedMonthlyBYOLCost(textSearch));
     }, [textSearch]);
 
+    //Setting monthly data rate change for FsxW
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+            dispatch(setMonthlyChangeRate(3));
+        }
+    }, [savingsCalculatorFrom]);
+
     //Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        const sortedRegionsData = regionsSort(regionsData?.regions || []);
+        //@ts-ignore
+        const sortedRegionsData = regionsSort(getManualRegionsList?.manualRegionsData?.regions || []);
         sortedRegionsData?.map((val, idx: number) => {
             const regionValue = val.regionCode + ' | ' + val.regionName;
             const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
         });
         return options;
-    }, [regionsData]);
+    }, [getManualRegionsList]);
 
     useEffect(() => {
         if (!selectedManualRegion) {
@@ -143,26 +151,6 @@ const ManualTCOFields = () => {
         }
     };
 
-    const setRegionDefaultValue = (list: any) => {
-        //@ts-ignore
-        const simplifiedRegions = generateRegionList.map(item => item?.data?.regionCode);
-
-        const foundRegion = simplifiedRegions.indexOf(headerSelectedRegion?.data?.regionCode);
-
-        return [list[foundRegion]];
-    };
-
-    const setManualRegionSelected = (list: any) => {
-        if (selectedManualRegion) {
-            if (selectedManualRegion?.data?.regionCode === headerSelectedRegion?.data?.regionCode) {
-                return selectedManualRegion;
-            } else {
-                return setRegionDefaultValue(list);
-            }
-        } else {
-            return setRegionDefaultValue(list);
-        }
-    };
     return (
         <div className={styles.manualTCOFields}>
             <DsTypography variant="Regular_14">
@@ -176,13 +164,13 @@ const ManualTCOFields = () => {
                     <SelectField
                         label={GENERAL.REGION}
                         isClearable={false}
-                        defaultValue={setManualRegionSelected(generateRegionList)}
+                        value={selectedManualRegion}
                         onChange={(selectedOptions: any): void => {
                             dispatch(setSelectedRegionFromManualTCO(selectedOptions));
                         }}
                         isSearchable={generateRegionList.length > 5}
                         options={generateRegionList}
-                        className={styles.widthRegionSet}
+                        className={`${styles.widthRegionSet} savings-calculator-input-fields`}
                     />
                 </div>
 
@@ -200,7 +188,7 @@ const ManualTCOFields = () => {
                         }}
                         isSearchable={generateDeploymentModelList.length > 5}
                         options={generateDeploymentModelList}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
 
                     <SelectField
@@ -214,7 +202,7 @@ const ManualTCOFields = () => {
                         }}
                         isSearchable={generateSQLEditionList.length > 5}
                         options={generateSQLEditionList}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 </div>
 
@@ -226,7 +214,7 @@ const ManualTCOFields = () => {
                             dispatch(setMonthlyChangeRate(numVal));
                         }}
                         value={monthlyChangeRate ? monthlyChangeRate : ''}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
                         error={errorForChangeRate()}
                     />
@@ -241,7 +229,7 @@ const ManualTCOFields = () => {
                         }}
                         isSearchable={generateSnapshotFrequency.length > 5}
                         options={generateSnapshotFrequency}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 </div>
 
@@ -253,7 +241,7 @@ const ManualTCOFields = () => {
                             dispatch(setNumberOfClonedCopies(numVal));
                         }}
                         value={numberOfClonedCopies}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         error={errorForClonedCopiesCount()}
                     />
 
@@ -265,7 +253,7 @@ const ManualTCOFields = () => {
                         }}
                         isOptional={true}
                         value={machineDesc}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 </div>
             </div>

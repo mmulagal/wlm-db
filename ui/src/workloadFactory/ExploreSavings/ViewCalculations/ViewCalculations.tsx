@@ -23,6 +23,7 @@ import FsxwSazCalculation from './FSxWCalculation/FsxwSazCalculation/FsxwSazCalc
 import ClonesFsxwCalculation from './FSxWCalculation/ClonesFsxwCalculation/ClonesFsxwCalculation';
 import TotalMonthlyCostFsxwCalculation from './FSxWCalculation/TotalMonthlyCostFsxwCalculation/TotalMonthlyCostFsxwCalculation';
 import ShadowCopyFsxwCalculation from './FSxWCalculation/ShadowCopyFsxwCalculation/ShadowCopyFsxwCalculation';
+import FsxwMazCalculation from './FSxWCalculation/FsxwMazCalculation/FsxwMazCalculation';
 
 const ViewCalculations = () => {
     const dispatch = useDispatch();
@@ -91,7 +92,8 @@ const ViewCalculations = () => {
                             <TotalMonthlyCostOntapCalculation />
                         </div>
 
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (
+                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) && (
                             <div>
                                 <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
                                     {GENERAL.MS_EBS_CALCULATION}
@@ -103,13 +105,18 @@ const ViewCalculations = () => {
                                 <TotalMonthlyCostEbsCalculation />
                             </div>
                         )}
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW && (
+                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
                             <div>
                                 <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
                                     {GENERAL.MS_FSXW_CALCULATION}
                                 </DsTypography>
                                 <InstancesFsxwCalculation />
-                                <FsxwSazCalculation />
+                                {viewCalculationsResponse?.azType === FSX_AZ_TYPE.SINGLE ? (
+                                    <FsxwSazCalculation />
+                                ) : (
+                                    <FsxwMazCalculation />
+                                )}
                                 <ShadowCopyFsxwCalculation />
                                 <ClonesFsxwCalculation />
                                 <TotalMonthlyCostFsxwCalculation />

@@ -12,8 +12,13 @@
         height: 56px;
         width: 100%;
         display: flex;
-        gap: 80px;
+        justify-content: space-between;
         background-color: var(--content-background);
+
+        .withWorkLoad {
+            display: flex;
+            gap: 80px;
+        }
 
         .firstRow {
             padding: 12px 0 0 40px;
@@ -132,6 +137,42 @@
                 .active {
                     border-bottom: 2px solid var(--text-button-primary);
                     color: var(--text-button-primary);
+                    font-weight: 600 !important;
+                }
+
+                .blueXPHeaderClass {
+                    color: var(--text-button-primary);
+                    font-weight: 400;
+                }
+            }
+        }
+
+        .thirdRow {
+            margin-right: 40px;
+            margin-top: 16px;
+
+            .menuPopOverHide {
+                position: relative;
+                top: -26px;
+
+                [class*='menuIcon'] {
+                    color: var(--content-background);
+                }
+
+                [class*='selected'] {
+                    border: none;
+                }
+
+                [class*='menuIcon']:hover {
+                    border: none;
+                }
+            }
+        }
+
+        .darkThemeThirdRow {
+            svg {
+                path {
+                    fill: #fff;
                 }
             }
         }
@@ -335,6 +376,11 @@
                             outline: none !important;
                         }
                     }
+                }
+
+                .selectContainer {
+                    width: 168px;
+                    --menu-max-height: 280px;
                 }
             }
         }

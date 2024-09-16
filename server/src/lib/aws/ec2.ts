@@ -45,7 +45,9 @@ import {
     DescribeInstanceTypesCommand,
     _InstanceType,
     GetInstanceTypesFromInstanceRequirementsCommandInput,
-    GetInstanceTypesFromInstanceRequirementsCommand
+    GetInstanceTypesFromInstanceRequirementsCommand,
+    paginateDescribeVolumes,
+    Volume
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -170,8 +172,8 @@ async function describeRegions(
     return response;
 }
 
-async function describeInstanceTypes(credentialsId: string, region: string) {
-    logger.info('Describe AWS instance types:', { credentialsId, region });
+async function describeInstanceTypes(region: string, credentialsId?: string) {
+    logger.info('Describe AWS instance types:', { region, credentialsId });
 
     const client = await getEC2Client(region, credentialsId);
 
@@ -383,6 +385,25 @@ async function getInstanceTypesFromInstanceRequirementsCommand(
     return resp;
 }
 
+async function paginateDescribeEbsVolumes(
+    credentialsId: string,
+    region: string,
+    params: DescribeVolumesCommandInput
+): Promise<Volume[]> {
+    logger.info('Paginate describe EBS volumes', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const volumeList = [];
+    for await (const { Volumes } of paginateDescribeVolumes({ client: ec2 }, params)) {
+        if (Volumes?.length) {
+            volumeList.push(...Volumes);
+        }
+    }
+
+    return volumeList;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -405,5 +426,6 @@ export {
     modifyVpcAttributes,
     describeInstanceTypeOfferings,
     describeSnapshots,
-    getInstanceTypesFromInstanceRequirementsCommand
+    getInstanceTypesFromInstanceRequirementsCommand,
+    paginateDescribeEbsVolumes
 };

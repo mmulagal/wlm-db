@@ -15,7 +15,7 @@ import {
     ACCOUNT_ID,
     API_PATH_HEALTH,
     API_TITLE,
-    // AUDIT_EXCLUDE_LIST,
+    AUDIT_EXCLUDE_LIST,
     HEADERS,
     REQUEST_ID,
     USER_TOKEN,
@@ -23,7 +23,8 @@ import {
     WORKSPACE_ID,
     JWKS_FULL_NAME,
     WLMDB,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    BXP
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import {
@@ -45,11 +46,11 @@ import deploymentJobsRoutes from './routes/jobs';
 import serviceStatusRoutes from './routes/service-status';
 import discoverRoutes from './routes/discover';
 import storageSavingsRoutes from './routes/storage-savings';
-// import {
-//     createAuditGroup,
-//     updateAuditGroup,
-//     updateAuditGroupResponse
-// } from './operations/cloud-manager/audit-operations';
+import {
+    createAuditGroup,
+    updateAuditGroup,
+    updateAuditGroupResponse
+} from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import resourceRoutes from './routes/resource';
 import initiateSecrets from './utils/secret';
@@ -60,7 +61,8 @@ import chatbotRoutes from './routes/chatbot';
 import {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
-    failLongRunningResourcePrepareJobs
+    failLongRunningResourcePrepareJobs,
+    updateInstanceRecommendationPreferences
 } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
 import { resetCache } from './utils/cache';
@@ -262,11 +264,13 @@ const app = fastify({
                     if (xNetappCacheControl === 'no-cache') {
                         resetCache(SSM_COMMAND_CACHE_TYPE);
                     }
-                    // Don't update audit record until BXP integration decision is made.
-                    // const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
-                    // if (!requestUrl) {
-                    //     createAuditGroup(request, reply);
-                    // }
+
+                    if (xNetappReferer === BXP) {
+                        const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+                        if (!requestUrl) {
+                            createAuditGroup(request, _reply);
+                        }
+                    }
                     done();
                 });
             } else {
@@ -307,16 +311,17 @@ const app = fastify({
         }
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
 
-        // Don't update audit record until BXP integration decision is made.
-        // const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
-        // // Don't update audit record on invalid route
-        // if (!request.is404) {
-        //     if (!requestUrl && reply.statusCode !== 202) {
-        //         updateAuditGroup(request, reply, payload);
-        //     } else if (request.url.includes('cloudformation/stack')) {
-        //         updateAuditGroupResponse(request, payload);
-        //     }
-        // }
+        if (request.headers[HEADERS.X_NETAPP_REFERER] === BXP) {
+            const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+            // Don't update audit record on invalid route
+            if (!request.is404) {
+                if (!requestUrl && reply.statusCode !== 202) {
+                    updateAuditGroup(request, reply, payload);
+                } else if (request.url.includes('cloudformation/stack')) {
+                    updateAuditGroupResponse(request, payload);
+                }
+            }
+        }
         return payload;
     });
 
@@ -345,6 +350,7 @@ try {
         purgeOlderJobs();
         failLongRunningDeploymentJobs();
         failLongRunningResourcePrepareJobs();
+        updateInstanceRecommendationPreferences();
     }
 } catch (error) {
     logger.error('Failed to initialize cron jobs', error);

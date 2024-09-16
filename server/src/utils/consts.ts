@@ -74,7 +74,17 @@ const API_PATH_HEALTH: string = '/health';
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
-const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt', '/pricing'];
+const AUDIT_EXCLUDE_LIST = [
+    '/batch',
+    '/prompt',
+    '/pricing',
+    '/cloudformation/template',
+    '/storage-savings',
+    '/manual-storage-savings',
+    '/calculations',
+    '/v1/mssql/credentials',
+    '/sandboxes-meta-update'
+];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
@@ -124,6 +134,12 @@ enum DeploymentState {
     INITIALIZING = 'Initializing',
     SUCCESS = 'Success',
     FAILED = 'Failed'
+}
+
+enum AuditStatus {
+    PENDING = 'pending',
+    SUCCESS = 'success',
+    FAILED = 'failed'
 }
 
 enum RouteTags {
@@ -296,7 +312,8 @@ const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Micr
 enum FileSystemTypes {
     EBS = 'EBS',
     FSXONTAP = 'FSx for ONTAP',
-    FSXWINDOWS = 'FSx for Windows'
+    FSXWINDOWS = 'FSx for Windows',
+    FSXW = 'FSXW'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -619,12 +636,6 @@ const STANDALONE_NETWORK_VIOLATION_MESSAGE =
 const FCI_NETWORK_EMPTY_VIOLATION_MESSAGE =
     'For FCI deployment, private subnet 1 Id, route table 1 Id, private subnet 2 Id and route table 2 Id cannot be empty.';
 
-const FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE =
-    'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.';
-
-const FCI_NETWORK_VIOLATION_MESSAGE =
-    'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.';
-
 const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
 const CONFIG_NOT_FOUND = (configId: string) => `Saved config ${configId} not found.`;
 
@@ -934,6 +945,7 @@ const SSM_COMMAND_CACHE_TYPE = 'SSM_COMMAND';
 const REQUEST_IN_PROGRESS_TYPE = 'REQUEST_IN_PROGRESS';
 const AWS_PRICING_TYPE = 'AWS_PRICING';
 const AWS_FSX_TYPE = 'AWS_FSX';
+const AWS_SSM_PARAMETER = 'AWS_SSM_PARAMETER';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -1131,6 +1143,7 @@ const FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL = '5h';
 const FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL = '1h';
 const DBCREATE_RELATIVE_PATH = `${WLMDB}/scripts/dbcreate.zip`;
 const PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/aws_ssm.zip`;
+const PREPARE_PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/dependent-packages.zip`;
 const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
 const DEFAULT_MSSQL_INSTANCE_NAME = '$env:computername';
 
@@ -1188,6 +1201,13 @@ const WIN_SQL_EC2_USAGE_OPERATION = ['RunInstances:0102', 'RunInstances:0006', '
 const DEMO_STANADLONE_SQL_SERVER_ID = 'f4b7c5d3-e1f6-4g2a-9c4l';
 
 const DEMO_STANADLONE_INSTANCE_ID = 'i-c5x3z1a7s9d2f3g';
+
+const TCO_FEATURE = 'TCO';
+const CURRENT_SCRIPT_VERSION = '1.0.0';
+
+const TIMELINE_SERVICE_NAME = 'WF-Databases';
+
+const EBS_ROOT_VOLUME = 'ROOT_VOLUME';
 
 export {
     WLMDB,
@@ -1371,8 +1391,6 @@ export {
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     DEPLOYMENT_JOBS_LIST_FILTER,
     DATABASE_TYPE,
@@ -1475,5 +1493,12 @@ export {
     TEMPLATE_PRIVATESUBNET2_CIDRBLOCK,
     WIN_SQL_EC2_USAGE_OPERATION,
     DEMO_STANADLONE_INSTANCE_ID,
-    DEMO_STANADLONE_SQL_SERVER_ID
+    DEMO_STANADLONE_SQL_SERVER_ID,
+    TCO_FEATURE,
+    CURRENT_SCRIPT_VERSION,
+    AWS_SSM_PARAMETER,
+    TIMELINE_SERVICE_NAME,
+    AuditStatus,
+    PREPARE_PSMODULES_RELATIVE_PATH,
+    EBS_ROOT_VOLUME
 };

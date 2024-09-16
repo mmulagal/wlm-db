@@ -1,0 +1,39 @@
+{{ if and (not .Values.global.demoEnv) ( .Values.global.istioEnabled) }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: merged-wlmdb-vs
+  namespace: wlmdb
+spec:
+  gateways:
+    - istio-ingress/istio-api
+  hosts:
+    - {{ .Values.global.bluexpDomain }}
+  http:
+    - match:
+        - headers:
+            x-simulator:
+              exact: 'true'
+          uri:
+            regex: '\/wlmdb.*'
+        - headers:
+            x-simulator:
+              exact: 'true'
+          uri:
+            regex: '\/accounts\/.*\/wlmdb\/v.*'
+      route:
+        - destination:
+            host: wlmdb.wlmdb-demo.svc.cluster.local
+            port:
+              number: 8085
+    - match:
+        - uri:
+            regex: '\/wlmdb.*'
+        - uri:
+            regex: '\/accounts\/.*\/wlmdb\/v.*'
+      route:
+        - destination:
+            host: wlmdb.wlmdb.svc.cluster.local
+            port:
+              number: 8085
+{{ end }}

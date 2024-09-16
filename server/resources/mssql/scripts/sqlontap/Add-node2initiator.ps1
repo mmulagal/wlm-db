@@ -27,11 +27,14 @@ $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
 $ErrorActionPreference = "Stop"
-$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+
+$ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+. "$ScriptsPath\common\InvokeRetryCommand.ps1" 
+$SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
 $username = $SsmParameter.fsx.username
 $password = $SsmParameter.fsx.password
 $fsxadmincreds = (New-Object PSCredential($username,(ConvertTo-SecureString $password -AsPlainText -Force)))
-$fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
+$fslist = Invoke-WithRetry -Command { Get-FSXFileSystem -FileSystemId $FileSystemId }
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
 $nodeiqn = (Get-InitiatorPort).NodeAddress
 

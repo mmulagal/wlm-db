@@ -313,7 +313,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                         setVolumeValue(numVal);
                     }}
                     value={volumeValue === null ? defaultVolumeVal : volumeValue}
-                    className={styles.deploymentModelWidth}
+                    className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     error={handleVolumeError()}
                 />
 
@@ -324,7 +324,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                         setStorageAmountValue(numVal);
                     }}
                     value={storageAmountValue === null ? defaultStorageAmountValue : storageAmountValue}
-                    className={styles.deploymentModelWidth}
+                    className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     info={type === 'io2' ? 'Maximum capacity allowed: 64 TiB.' : 'Maximum capacity allowed: 16 TiB.'}
                     error={handleStorageCapacityLimit()}
                 />
@@ -338,7 +338,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                         title="Provisioned IOPS per volume"
                         disabledReason={GENERAL.IOPS_DISABLE_TOOLTIP}
                         isDisabled
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 ) : (
                     <TextField
@@ -349,7 +349,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                         }}
                         isDisabled={IOPSDisable}
                         value={iopsValue === null ? defaultIOPSValue : iopsValue}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         error={handleIOPSError()}
                     />
                 )}
@@ -358,7 +358,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                         title="Throughput MB/s-default"
                         disabledReason={GENERAL.THROUGHPUT_DISABLE_TOOLTIP}
                         isDisabled
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 ) : (
                     <TextField
@@ -369,7 +369,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                         }}
                         isDisabled={throughPutDisable}
                         value={throughputValue === null ? defaultThroughputValue : throughputValue}
-                        className={styles.deploymentModelWidth}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         error={handleThroughputError()}
                     />
                 )}

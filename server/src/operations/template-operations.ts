@@ -140,6 +140,7 @@ async function updateTemplateUrls(
             ScriptUnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
             ScriptVerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
             ScriptValidation: decodeURI(signedUrls.get('ScriptValidation')?.url || ''),
+            ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
             ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
             OpenSSL: decodeURI(signedUrls.get('OpenSSL')?.url || '')
         });

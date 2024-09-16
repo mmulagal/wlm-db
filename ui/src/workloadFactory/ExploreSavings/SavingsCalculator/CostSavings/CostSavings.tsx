@@ -6,7 +6,11 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    formatFractionalNumberForCost,
+    formatNumberWithCustomComma
+} from '../../../../utils/utilityFunctions';
 import useResize from '../../../../common/hooks/useResize';
 
 type CS = {
@@ -20,6 +24,7 @@ const CostSavings = ({ disableState }: CS) => {
     const [savings, setSavings] = useState<any>(0);
     const [savingsPer, setSavingsPer] = useState<any>(0);
     const [costZeroCase, setCostZeroCase] = useState(false);
+    const [savingsCalculated, setSavingsCalculated] = useState(false);
 
     useEffect(() => {
         const fsxTotal = storageSavingsResponse?.totalSummary?.recommendedTotal
@@ -30,6 +35,7 @@ const CostSavings = ({ disableState }: CS) => {
             : 0;
         if (storageSavingsResponse && fsxTotal && ebsTotal && fsxTotal <= ebsTotal) {
             setSavings(ebsTotal - fsxTotal);
+            setSavingsCalculated(true);
             const percent = 100 * ((ebsTotal - fsxTotal) / ebsTotal);
             setSavingsPer(percent);
             setCostZeroCase(false);
@@ -49,7 +55,10 @@ const CostSavings = ({ disableState }: CS) => {
                     {disableState ? <CostSavingsDisabledImage /> : <CostSavingsImage />}
                 </div>
                 <div className={costZeroCase ? `${styles.textContent} ${styles.changeWidth}` : styles.textContent}>
-                    <div className={styles.topValue}>
+                    <div
+                        className={`${styles.topValue} ${savings !== 0 ? 'es-nonzero-cost-savings' : ''}`}
+                        id={savingsCalculated ? 'es-cost-savings' : ''}
+                    >
                         <DsTypography
                             variant="Regular_16"
                             className={
@@ -67,7 +76,9 @@ const CostSavings = ({ disableState }: CS) => {
                             }}
                         >
                             {/* {!storageSavingsLoading && savings} */}
-                            {!storageSavingsLoading && !costZeroCase && Number(savings).toLocaleString()}
+                            {!storageSavingsLoading &&
+                                !costZeroCase &&
+                                formatNumberWithCustomComma(Number(savings), true).toLocaleString()}
                             {!storageSavingsLoading && costZeroCase && Number(0).toLocaleString()}
                         </DsTypography>
                     </div>
@@ -134,7 +145,7 @@ const CostSavings = ({ disableState }: CS) => {
                                 color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                             }}
                         >
-                            {!storageSavingsLoading && formatFractionalNumber(savingsPer, 0)}
+                            {!storageSavingsLoading && formatFractionalNumberForCost(savingsPer, 0, false)}
                         </DsTypography>
                         <DsTypography
                             variant="Regular_16"

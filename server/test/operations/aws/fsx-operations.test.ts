@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/fsx-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/aws/ssm-scope';
@@ -9,7 +8,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/cloud-manager/fsx-core-scope';
 
-import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
+import { DEFAULT_AWS_REGION, DEFAULT_INSTANCE_NAME } from '../../../src/utils/consts';
 import {
     getFSxFileSystemsList,
     getOntapVolumesSnapshotCount,
@@ -65,9 +64,11 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
-            false
+            false,
+            undefined,
+            [DEFAULT_INSTANCE_NAME]
         );
-        expect(response).toEqual(fsxResponse.volumeMap);
+        expect(response?.[DEFAULT_INSTANCE_NAME]).toEqual(fsxResponse.volumeMap);
     });
 
     it('Tag Ec2 instance', async () => {

@@ -143,6 +143,8 @@ export const API_ERRORS = {
     POWERSHELL_7: 'PowerShell 7 is required for managing the resource'
 };
 
+export const WLF_TO_PROTECT_NAVIGATE = '../add-working-environment/database-services/mssql/postgress';
+
 export const STATUS_CONST = {
     UP: 'Up',
     DOWN: 'Down',
@@ -179,6 +181,7 @@ export const MAX_SAVED_CONFIG = 100;
 export const WLF_TO_FORM_NAVIGATE = '../add-working-environment/database-services/mssql/create';
 
 export const FORM_TO_WLF_NAVIGATE = '../databases';
+export const FORM_TO_WLF_NAVIGATE_BLUEXP = '../fsxdb';
 
 export const RECOMMENDED_TEMPLATES = {
     DEV_ID: '0',
@@ -551,7 +554,8 @@ export const FSX_AZ_TYPE = {
 
 export const SAVINGS_CALC_MODE = {
     MANUAL_EBS: 'Manual_EBS',
-    AUTO: 'Auto',
+    AUTO_EBS: 'Auto_EBS',
+    AUTO_FSXW: 'Auto_FSXW',
     MANUAL_FSXW: 'Manual_FSXW'
 };
 
@@ -568,4 +572,14 @@ export const FINDINGS = {
 export const TCO_MANUAL_DEPLOYMENT_TYPE = {
     SINGLE: 'Single availability zone',
     MULTI: 'Multi availability zone'
+};
+
+export const BXP_MESSAGES = {
+    SERVICE_READY: 'SERVICE:READY',
+    SERVICE_NAVIGATE: 'SERVICE:NAVIGATE',
+    SERVICE_SHOW_WIZARD: 'SERVICE:OPEN-WIZARD',
+    SERVICE_HIDE_WIZARD: 'SERVICE:CLOSE-WIZARD',
+    SERVICE_CONNECTOR_CHANGE: 'SERVICE:CONNECTOR-CHANGE',
+    SERVICE_LOCATION_CHANGE: 'SERVICE:LOCATION-CHANGE',
+    SERVICE_ON_READY: 'SERVICE:ON-READY'
 };

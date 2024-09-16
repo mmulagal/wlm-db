@@ -2,12 +2,15 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
-import { attempt, trimEnd, trimStart, camelCase } from 'lodash-es';
+import { attempt, trimEnd, trimStart, camelCase, isEmpty } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import numeral from 'numeral';
+import isBase64 from 'is-base64';
+import { inflateRaw } from 'node:zlib';
+import { promisify } from 'util';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -21,7 +24,6 @@ import {
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
     subJobDescriptions,
     SqlServerDeploymentModel,
     ARTIFACT_BUCKET_NAME,
@@ -30,7 +32,8 @@ import {
     FSX_VOL_THROUGHPUT,
     FSX_STORAGE_MIN_CAPACITY_IN_GIB,
     HOURS_IN_MONTH,
-    DEFAULT_MSSQL_INSTANCE_NAME
+    DEFAULT_MSSQL_INSTANCE_NAME,
+    DEFAULT_INSTANCE_NAME
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -260,11 +263,7 @@ function getSubjectFromBearerToken() {
     return decodedToken?.payload.sub;
 }
 
-function isNetworkConfigurationViolated(
-    networkConfiguration: CFNetworkConfigurationType,
-    deploymentMode: string,
-    isExistingFSx: boolean
-) {
+function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigurationType, deploymentMode: string) {
     const noViolation = { isViolated: false };
 
     if (deploymentMode === STANDALONE) {
@@ -290,13 +289,6 @@ function isNetworkConfigurationViolated(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return noViolation;
-    }
-
-    if (!isExistingFSx && networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id) {
-        return {
-            isViolated: true,
-            violationMessage: FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
-        };
     }
     return noViolation;
 }
@@ -514,7 +506,8 @@ function getArtifactsRegionBucketName(region: string) {
 
 function sqlResponseParsing(response: string) {
     try {
-        const cleanResponse = response.replaceAll('\r\n', '');
+        // Some responses have \\r\\n in them, so repeating this step twice to remove all of them
+        const cleanResponse = response.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
         const jsonResponse = JSON.parse(cleanResponse);
         return jsonResponse;
     } catch (error) {
@@ -599,6 +592,9 @@ function getMonthlyPriceFromHourlyPrice(hourlyPrice?: number) {
     }
 }
 
+// This is for generating instance name that can be executed in the local machine.
+// For the default instance name 'MSSQLSERVER' - "$env:COMPUTERNAME"
+// For the custom instance name - "$env:COMPUTERNAME\\$instanceName"
 function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true) {
     logger.info('Generate database instance name', { instanceName, isDefault });
 
@@ -611,6 +607,30 @@ function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true
 
 function isDemo() {
     return process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
+}
+
+function getOriginalDatabaseInstanceName(instanceName: string | undefined): string {
+    return instanceName?.split('\\')?.[1] || DEFAULT_INSTANCE_NAME;
+}
+
+async function decompressSSMResponse(response: string) {
+    logger.debug('Decompressing SSM response', { response });
+
+    response = response.replaceAll('\r\n', '');
+    if (isDemo() || isEmpty(response) || !isBase64(response)) {
+        return response;
+    }
+
+    try {
+        const buffer = Buffer.from(response, 'base64');
+
+        const inflateRawPromise = promisify(inflateRaw);
+        const result = await inflateRawPromise(buffer);
+        return result.toString();
+    } catch (err) {
+        logger.error('Error decompressing SSM response', err);
+        throw createError('Error decompressing SSM response');
+    }
 }
 
 export {
@@ -649,5 +669,7 @@ export {
     convertToBytes,
     getMonthlyPriceFromHourlyPrice,
     getDatabaseInstanceName,
-    isDemo
+    isDemo,
+    getOriginalDatabaseInstanceName,
+    decompressSSMResponse
 };

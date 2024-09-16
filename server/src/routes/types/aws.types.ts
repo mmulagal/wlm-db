@@ -3,7 +3,7 @@ import { Type, Static } from '@fastify/type-provider-typebox';
 // AWS request parameters
 const AwsParams = Type.Object({
     accountId: Type.String(),
-    credentialsId: Type.String()
+    credentialsId: Type.String({ format: 'uuid' })
 });
 
 // AWS request parameters wth region

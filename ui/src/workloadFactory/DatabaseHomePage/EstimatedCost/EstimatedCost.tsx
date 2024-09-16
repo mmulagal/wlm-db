@@ -6,6 +6,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import EstimatedCostDialogContent from './EstimatedCostDialogContent/EstimatedCostDialogContent';
 import { useEffect, useState } from 'react';
+import { formatNumberWithCustomComma } from '../../../utils/utilityFunctions';
 
 type EstimatedCostProps = {
     hostData: any;
@@ -64,7 +65,7 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                     <FlashingDotsLoader />
                 ) : (
                     <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                        $ {hostData?.totalCost}
+                        ${formatNumberWithCustomComma(hostData?.totalCost)}
                     </Typography>
                 )}
             </div>

@@ -14,7 +14,6 @@ import {
     isEbsAwsBackupEnabled,
     getInstanceDetailsByPrivateIp
 } from '../../../src/operations/aws/ec2-operations';
-import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
@@ -56,7 +55,7 @@ describe('EC2 Operations', () => {
     });
 
     it('should return a lsist EC2 instance types forn specific region', async () => {
-        const resp = await getInstanceTypes(credentialsId, 'us-east-1');
+        const resp = await getInstanceTypes('us-east-1', credentialsId);
         expect(resp.instanceTypes).toBeDefined();
     });
 

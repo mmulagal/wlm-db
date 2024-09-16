@@ -1,5 +1,4 @@
 import { afterAll, beforeAll } from 'vitest';
-import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
@@ -85,13 +84,10 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get databases count', async () => {
-        const resp = await getDatabasesCount(
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            ACTIVE_INSTANCE_ID,
-            DEFAULT_MSSQL_INSTANCE_NAME
-        );
-        expect(resp.totalCount).toEqual(8);
+        const resp = await getDatabasesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, [
+            DEFAULT_INSTANCE_NAME
+        ]);
+        expect(resp?.[DEFAULT_INSTANCE_NAME]?.[0]?.totalCount).toEqual(8);
     });
 
     it('Get resource details ', async () => {
@@ -120,13 +116,11 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get MSSQL native backups count ', async () => {
-        const resp = await getNativeSQLProtection(
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            ACTIVE_INSTANCE_ID,
-            DEFAULT_MSSQL_INSTANCE_NAME
-        );
-        expect(resp).toEqual(4);
+        const resp = await getNativeSQLProtection(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, [
+            DEFAULT_INSTANCE_NAME
+        ]);
+        const response = resp?.[DEFAULT_INSTANCE_NAME]?.[0]?.backupCount;
+        expect(response).toEqual(4);
     });
 
     it('Discover MSSQL server ', async () => {
@@ -168,23 +162,29 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get MSSQL instance id ', async () => {
-        const resp = await getMssqlInstanceGuid(CREDENTIALS_ID, DEFAULT_AWS_REGION, DEFAULT_MSSQL_INSTANCE_NAME, [
-            ACTIVE_INSTANCE_ID,
-            STANDBY_INSTANCE_ID
-        ]);
+        const resp = await getMssqlInstanceGuid(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            DEFAULT_MSSQL_INSTANCE_NAME,
+            [ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID]
+        );
         expect(resp).toEqual('FAC00473-3CB5-46A4-A145-64CC07C35655');
     });
 
     it('Get database instances details', async () => {
-        const resp = await getAllInstanceDetails(CREDENTIALS_ID, DEFAULT_AWS_REGION, [
-            ACTIVE_INSTANCE_ID,
-            STANDBY_INSTANCE_ID
-        ]);
+        const resp = await getAllInstanceDetails(
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            [ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID],
+            ACCOUNT_ID
+        );
         expect(resp[0]).toEqual(mssqlResponse.mssqlServerInstanceDetails);
     });
 
     it('Get active instance', async () => {
         const resp = await getActiveSqlNodeAndInstanceDetails(
+            ACCOUNT_ID,
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             [ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID],

@@ -3,7 +3,7 @@ import config from 'config';
 import randomize from 'randomatic';
 
 import { STORAGE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { FileSystem, FileSystemType } from '@aws-sdk/client-fsx';
+import { FileSystemType } from '@aws-sdk/client-fsx';
 import { attempt, compact, uniqBy, isEmpty, cloneDeep } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
@@ -16,13 +16,19 @@ import {
     upsertDatabaseInstance
 } from '../lib/database/db';
 import { getResources } from './database/database-operations';
-import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
+import {
+    describeInstance,
+    paginateDescribeEbsVolumes,
+    paginatedDescribeSubnets,
+    paginatedDescribeVpcs
+} from '../lib/aws/ec2';
 import {
     getResourceNameFromTags,
     sleep,
     getArtifactsRegionBucketName,
     derivePropertiesFromARN,
-    isDemo
+    isDemo,
+    decompressSSMResponse
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -42,14 +48,15 @@ import {
     SSM_PARAMETERS_BASE_PATH,
     SqlServerDeploymentModel,
     RESOURCE_SOURCE,
-    DBCREATE_RELATIVE_PATH,
     STORAGE_PROTOCOLS,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES,
     PSMODULES_RELATIVE_PATH,
     DatabaseTypes,
     OFFLINE,
     SQL_SERVICE_STATE,
-    NOT_AVAILABLE
+    NOT_AVAILABLE,
+    PREPARE_PSMODULES_RELATIVE_PATH,
+    SINGLE_AZ
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -59,7 +66,6 @@ import {
     UNAVAILABLE_PS_MODULES,
     GET_MISSING_RESOURCE_DETAILS,
     IS_DATABASE_CREATE_POSSIBLE,
-    COPY_SCIRPTS_TO_MANAGE_RESOURCE,
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
     REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     FAILURE_INFO,
@@ -90,6 +96,7 @@ import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
+import { copyScriptsToHost } from './resource-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -235,10 +242,15 @@ async function getHostAndSqlServerInfo(
           call will come with a new nextToken.
         */
         api1StartTime = performance.now();
-        const [fsxList, svmList, subnetList] = await Promise.all([
+        const [fsxList, svmList, subnetList, ebsVolumeList] = await Promise.all([
             describeFSxFileSystems(credentialsId, region),
             describeFSxStorageVirtualMachines(credentialsId, region),
-            paginatedDescribeSubnets(credentialsId, region, {})
+            paginatedDescribeSubnets(credentialsId, region, {}),
+            paginateDescribeEbsVolumes(credentialsId, region, {
+                Filters: [
+                    { Name: 'attachment.instance-id', Values: ssmConnectedNodes.map(target => target.ec2InstanceId) }
+                ]
+            })
         ]);
         api1EndTime = performance.now();
         logger.info(`API1Performance: Time taken by describe FSxFS/SVM: ${api1EndTime - api1StartTime}ms`);
@@ -270,12 +282,6 @@ async function getHostAndSqlServerInfo(
                     type: FileSystemType.ONTAP
                 });
             }
-            const { OntapConfiguration, SubnetIds } =
-                fsxList.find((fsx: FileSystem) => fsx?.FileSystemId === fsId) || {};
-            fsIdWithDeploymentType.set(fsId!, {
-                deploymentType: OntapConfiguration?.DeploymentType,
-                subnetIds: SubnetIds!
-            });
         });
 
         // Fetch windows mount points from FSxW
@@ -302,10 +308,22 @@ async function getHostAndSqlServerInfo(
                 );
             });
 
+        fsxList.forEach(({ FileSystemId, OntapConfiguration, WindowsConfiguration, SubnetIds }) => {
+            if (FileSystemId) {
+                fsIdWithDeploymentType.set(FileSystemId, {
+                    deploymentType: isEmpty(OntapConfiguration)
+                        ? WindowsConfiguration?.DeploymentType
+                        : OntapConfiguration?.DeploymentType,
+                    subnetIds: SubnetIds
+                });
+            }
+        });
+
         api1EndTime = performance.now();
         logger.info(`API1Performance: Endpoint/FSx/Deployment map creation time: ${api1EndTime - api1StartTime}ms`);
 
         const subnetListMap = new Map(subnetList?.map(subnet => [subnet.SubnetId, subnet.AvailabilityZone]));
+        const ebsVolumeToAvailabilityZoneMap = new Map(ebsVolumeList?.map(vol => [vol.VolumeId, vol.AvailabilityZone]));
 
         // PowerShell execution would take some time, so we wait for a second before triggering polling.
         //
@@ -329,7 +347,8 @@ async function getHostAndSqlServerInfo(
                         commandId!,
                         endPointIpWithFsxInfo,
                         fsIdWithDeploymentType,
-                        subnetListMap
+                        subnetListMap,
+                        ebsVolumeToAvailabilityZoneMap
                     );
                     const dbInfoEndTime = performance.now();
                     logger.info(
@@ -374,7 +393,8 @@ async function getHostAndSqlInfoFromPsOutput(
     commandId: string,
     endPointIpWithFsxInfo: Map<string, FSxInfo>,
     fsIdWithDeploymentType: Map<string, DeployType>,
-    subnetListMap: Map<string | undefined, string | undefined>
+    subnetListMap: Map<string | undefined, string | undefined>,
+    ebsVolumeToAvailabilityZoneMap: Map<string | undefined, string | undefined>
 ): Promise<SqlServerInstanceInfoType[]> {
     logger.info('Get host and SQL server details from PowerShell output', {
         credentialsId,
@@ -439,7 +459,7 @@ async function getHostAndSqlInfoFromPsOutput(
     const ssmTargetSqlServerInstancesInfo: SqlServerInstanceInfoType[] = [];
 
     try {
-        const powerShellScriptOutput = ssmResponse?.StandardOutputContent || '';
+        const powerShellScriptOutput = await decompressSSMResponse(ssmResponse?.StandardOutputContent || '');
 
         if (powerShellScriptOutput.length > 0) {
             if (powerShellScriptOutput?.includes('failureInfo')) {
@@ -455,6 +475,17 @@ async function getHostAndSqlInfoFromPsOutput(
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
             }
+
+            responseInJson.forEach((item: { [key: string]: any }) => {
+                try {
+                    if (item.hasOwnProperty('windowsClusterNodes')) {
+                        item.windowsClusterNodes = JSON.parse(item.windowsClusterNodes);
+                        item.nodeIps = item.windowsClusterNodes.map(({ Address }: { Address: string }) => Address);
+                    }
+                } catch (error) {
+                    logger.error('Error parsing windowsClusterNodes:', error);
+                }
+            });
 
             for (const sqlServerInstanceInfo of responseInJson) {
                 // If an SQL Server version is unknown, default to 2015, which
@@ -476,14 +507,22 @@ async function getHostAndSqlInfoFromPsOutput(
                     }
 
                     for (const di of driveInfo) {
-                        const ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
+                        let ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
                         const volIdRegex = /^(vol)([a-zA-Z0-9]+)/; // volumeId derived from SerialNumberOrScsiTarget is of the format,vol012ab34ed, but, AWS ebs volume IDs are always in vol-012ab34ed format, so we need to convert it to the correct format.
                         if (ebsVolumeId) {
+                            ebsVolumeId = volIdRegex.test(ebsVolumeId)
+                                ? ebsVolumeId.replace(volIdRegex, '$1-$2')
+                                : ebsVolumeId;
                             storageTypes.push({
                                 type: STORAGE_TYPE.EBS,
-                                id: volIdRegex.test(ebsVolumeId)
-                                    ? ebsVolumeId.replace(volIdRegex, '$1-$2')
-                                    : ebsVolumeId // convert the volumeId to the correct format.
+                                id: ebsVolumeId
+                            });
+                            const ebsAvailabilityZone = ebsVolumeToAvailabilityZoneMap.get(ebsVolumeId);
+                            deploymentTypes.push({
+                                ...(ebsAvailabilityZone && {
+                                    zones: [ebsAvailabilityZone],
+                                    type: SINGLE_AZ
+                                })
                             });
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
@@ -514,26 +553,35 @@ async function getHostAndSqlInfoFromPsOutput(
 
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
                             const targets = di?.SmbSharePath ? di.SmbSharePath.toLowerCase() : '';
-                            const matchedEndpoints = fsxEndpoints.filter(value =>
-                                targets.includes(value.toLowerCase())
-                            );
+                            const matchedEndpoint = fsxEndpoints.find(value => targets.includes(value.toLowerCase()));
 
-                            if (!isEmpty(matchedEndpoints)) {
-                                const fsxType = endPointIpWithFsxInfo.get(matchedEndpoints[0])?.type;
+                            if (matchedEndpoint) {
+                                const {
+                                    type: fsxType,
+                                    fsxId,
+                                    svmId
+                                } = endPointIpWithFsxInfo.get(matchedEndpoint) || {};
                                 if (fsxType === FileSystemType.WINDOWS) {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXW,
-                                        id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
+                                        id: fsxId,
                                         protocol: STORAGE_PROTOCOLS.SMB
                                     });
                                 } else {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXN,
-                                        id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
-                                        svmId: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.svmId,
+                                        id: fsxId,
+                                        svmId,
                                         protocol: STORAGE_PROTOCOLS.SMB
                                     });
                                 }
+
+                                const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
+                                deploymentTypes.push({
+                                    type: deploymentType,
+                                    zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
+                                    ids: subnetIds?.join()
+                                });
                             }
                         }
                     }
@@ -654,8 +702,8 @@ async function makeSsmCall(
     return commandId;
 }
 
-function prepareParametersToStore(instanceId: string, credentials: DiscoverCredentialsType[]) {
-    logger.debug('prepare parameters to store', { instanceId });
+function prepareParametersToStore(instanceIds: string[], credentials: DiscoverCredentialsType[]) {
+    logger.debug('prepare parameters to store', { instanceIds });
 
     return credentials.reduce((acc: SSMParamterObject[], { resourceId, resourceType, username, password }) => {
         if (resourceType === RESOURCESTYPE.MSSQL) {
@@ -668,18 +716,20 @@ function prepareParametersToStore(instanceId: string, credentials: DiscoverCrede
                     password
                 });
             } else {
-                acc.push({
-                    path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                    value: {
-                        sql: [
-                            {
-                                sqlinstancename: resourceId,
-                                username,
-                                password
-                            }
-                        ]
-                    }
-                });
+                instanceIds.forEach(instanceId =>
+                    acc.push({
+                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                        value: {
+                            sql: [
+                                {
+                                    sqlinstancename: resourceId,
+                                    username,
+                                    password
+                                }
+                            ]
+                        }
+                    })
+                );
             }
         } else if (resourceType === RESOURCESTYPE.FSX) {
             acc.push({
@@ -721,7 +771,8 @@ async function validateAndStoreDiscoveredParameters(
     credentialsId: string,
     region: string,
     instanceId: string,
-    credentials: DiscoverCredentialsType[]
+    credentials: DiscoverCredentialsType[],
+    clusterNodesIpAddress?: string[]
 ) {
     logger.info('Validate and store SSM parameters', { accountId, credentialsId, region, instanceId });
 
@@ -744,12 +795,24 @@ async function validateAndStoreDiscoveredParameters(
             throw new Error('Credentials cannot be empty');
         }
 
+        let instanceIds = [instanceId];
+        if (clusterNodesIpAddress && !isEmpty(clusterNodesIpAddress)) {
+            try {
+                const clusterNodeDetails =
+                    (await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNodesIpAddress)) || [];
+                instanceIds = clusterNodeDetails.map(e => e.ec2InstanceId);
+            } catch (error) {
+                logger.error('Error while generating resource id for SSM parameter: ', error);
+            }
+        }
+
         const detectResponse = await validateCredentials(
             credentialsId,
             region,
             instanceId,
             fsxCredentials,
-            sqlCredentials
+            sqlCredentials,
+            instanceIds
         );
 
         if (!detectResponse?.requiredModuleError && fsxCredentials && !detectResponse?.fsxnError) {
@@ -1259,7 +1322,7 @@ async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlRespo
 async function rewriteOrDeleteSSMParameter(
     credentialsId: string,
     region: string,
-    instanceId: string,
+    instanceIds: string[],
     paramesToDelete: string[],
     instancesToBeDeleted: string[],
     fsxCredentials: DiscoverCredentialsType,
@@ -1268,7 +1331,7 @@ async function rewriteOrDeleteSSMParameter(
     logger.info('Calling rewriteOrDeleteSSMParameter', {
         credentialsId,
         region,
-        instanceId,
+        instanceIds,
         paramesToDelete,
         instancesToBeDeleted,
         fsxCredentials,
@@ -1276,12 +1339,12 @@ async function rewriteOrDeleteSSMParameter(
     });
     if (sqlCredentials.length === instancesToBeDeleted.length) {
         // Delete the parameter store all credentials are invalid
-        paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+        instanceIds.forEach(instanceId => paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`));
         await deleteSSMParameter(credentialsId, region, paramesToDelete);
     } else {
         // Rewrite parameter store after removing invalid credentials
         const latestSqlCredentials = sqlCredentials.filter(e => !instancesToBeDeleted.includes(e.resourceId));
-        const creds = prepareParametersToStore(instanceId, [
+        const creds = prepareParametersToStore(instanceIds, [
             ...(fsxCredentials ? [fsxCredentials] : []),
             ...latestSqlCredentials
         ]);
@@ -1294,24 +1357,26 @@ async function validateCredentials(
     region: string,
     instanceId: string,
     fsxCredentials: DiscoverCredentialsType | undefined,
-    sqlCredentials: DiscoverCredentialsType[]
+    sqlCredentials: DiscoverCredentialsType[],
+    instanceIds: string[]
 ) {
-    logger.info('Validate credentials', { instanceId, fsxCredentials, sqlCredentials });
+    logger.info('Validate credentials', { instanceId, fsxCredentials, sqlCredentials, instanceIds });
 
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
+
+    const ssmParameters = [`${SSM_PARAM_PREFIX}${fsxCredentials?.resourceId}`];
+    instanceIds.forEach(instance => ssmParameters.push(`${SSM_PARAM_PREFIX}${instance}`));
+
     if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
         const errorMessage = `Unable to validate the credentials through SSM, for host ${instanceId}`;
         logger.error(errorMessage);
 
-        await deleteSSMParameter(credentialsId, region, [
-            `${SSM_PARAM_PREFIX}${fsxCredentials?.resourceId}`,
-            `${SSM_PARAM_PREFIX}${instanceId}`
-        ]);
+        await deleteSSMParameter(credentialsId, region, ssmParameters);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
     const newSqlCredentials = cloneDeep(sqlCredentials);
-    await verifyAndCreateCredentials(credentialsId, region, instanceId, fsxCredentials, newSqlCredentials);
+    await verifyAndCreateCredentials(credentialsId, region, instanceId, fsxCredentials, newSqlCredentials, instanceIds);
 
     let parsedResponse;
 
@@ -1323,7 +1388,6 @@ async function validateCredentials(
             const bucketname = getArtifactsRegionBucketName(region);
             const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
             const moduleNames = `
-  'AWS.Tools.Common',
   'AWS.Tools.SimpleSystemsManagement'
 `;
             command += `${copyPowerShellModule(copyPSModuleS3SignedUrl, moduleNames)};\n`;
@@ -1381,7 +1445,7 @@ async function validateCredentials(
             await rewriteOrDeleteSSMParameter(
                 credentialsId,
                 region,
-                instanceId,
+                instanceIds,
                 paramesToDelete,
                 instancesToBeDeleted,
                 fsxCredentials!,
@@ -1405,7 +1469,7 @@ async function validateCredentials(
         await rewriteOrDeleteSSMParameter(
             credentialsId,
             region,
-            instanceId,
+            instanceIds,
             paramesToDelete,
             instancesToBeDeleted,
             fsxCredentials!,
@@ -1424,7 +1488,8 @@ async function verifyAndCreateCredentials(
     region: string,
     instanceId: string,
     fsxCredentials: DiscoverCredentialsType | undefined,
-    sqlCredentials: DiscoverCredentialsType[]
+    sqlCredentials: DiscoverCredentialsType[],
+    instanceIds: string[]
 ) {
     logger.info('Verify and create credentials', { instanceId, fsxCredentials, sqlCredentials });
 
@@ -1444,7 +1509,7 @@ async function verifyAndCreateCredentials(
         const existingParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
         if (!existingParameters) {
             const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
-            setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), instanceId]);
+            setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), ...instanceIds]);
         } else {
             const { sql } = JSON.parse(existingParameters);
             if (sql) {
@@ -1460,10 +1525,11 @@ async function verifyAndCreateCredentials(
         }
     }
 
-    const creds = prepareParametersToStore(instanceId, [
+    const creds = prepareParametersToStore(instanceIds, [
         ...(fsxCredentials ? [fsxCredentials] : []),
         ...sqlCredentials
     ]);
+
     await ssmPutParameters(credentialsId, region, creds);
 }
 
@@ -1513,14 +1579,17 @@ async function verifyAndAddFSxOntapCredentials(
                 );
             }
 
-            const preparedCreds = prepareParametersToStore('', [
-                {
-                    resourceId: fsxNId,
-                    resourceType: RESOURCESTYPE.FSX,
-                    username: credentials?.userName,
-                    password: credentials?.password
-                }
-            ]);
+            const preparedCreds = prepareParametersToStore(
+                [''],
+                [
+                    {
+                        resourceId: fsxNId,
+                        resourceType: RESOURCESTYPE.FSX,
+                        username: credentials?.userName,
+                        password: credentials?.password
+                    }
+                ]
+            );
 
             await ssmPutParameters(credentialsId, region, preparedCreds);
         }
@@ -1638,27 +1707,14 @@ async function prepareDbScriptsForManage(
     });
 
     try {
-        // Get signed url for dbcreate.zip
-        const bucketname = getArtifactsRegionBucketName(region);
-        const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
+        const copyScriptResponse = await copyScriptsToHost(accountId, credentialsId, region, ec2InstanceId);
 
-        // Copy scripts to the EC2 instance
-        const ssmScriptsCopyResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-            ec2InstanceId,
-            accountId,
-            false,
-            (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
-        );
+        logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${copyScriptResponse}`);
 
-        logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);
-
-        if (ssmScriptsCopyResponse?.includes('failureInfo')) {
-            const responseInJson = JSON.parse(ssmScriptsCopyResponse);
+        if (copyScriptResponse?.includes('failureInfo')) {
+            const responseInJson = JSON.parse(copyScriptResponse);
             logger.error(
-                `Unable to prepare instance '${ec2InstanceId}'. Reason: failed to copy database operation artifacts. Error: ${ssmScriptsCopyResponse}`
+                `Unable to prepare instance '${ec2InstanceId}'. Reason: failed to copy database operation artifacts. Error: ${copyScriptResponse}`
             );
 
             jobStatusRecord = {
@@ -1709,10 +1765,14 @@ async function preparePsModulesForManage(
     });
 
     try {
+        // Get signed url for dependent-packages.zip to install the ps modules
+        const bucketname = getArtifactsRegionBucketName(region);
+        const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PREPARE_PSMODULES_RELATIVE_PATH);
+
         const ssmPsModuleInstallResponse = await callSsmExecution(
             credentialsId,
             region,
-            INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT),
+            INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT, copyPSModuleS3SignedUrl),
             ec2InstanceId,
             accountId,
             false,
@@ -1949,13 +2009,6 @@ async function manageSqlServerV2(
                         );
                     }
 
-                    // Temporary check until manage of sql auth is supported
-                    if (windowsAuthentication === false) {
-                        throw Error(
-                            'Managing SQL Server instance is not possible. Check if the SQL Server service is running or windows authentication is enabled'
-                        );
-                    }
-
                     if (isEmpty(storageInfo)) {
                         throw Error('SQL Server instance is not hosted on storage of type FSx for NetApp.');
                     }
@@ -2109,7 +2162,7 @@ async function unmanageDatabaseInstance(
         // When all database instances are removed, the EC2 ceases to be a
         // managed resource, since  we aren't managing any SQL Server instance.
         // So we need to remove the EC2 resource from wlmdb.resource table.
-        if (postDeleteDatabaseInstances.length <= 0) {
+        if (postDeleteDatabaseInstances.length <= 0 && !isDemoFlow) {
             deleteResource(accountId, resourceId, credentialsId);
         }
     }

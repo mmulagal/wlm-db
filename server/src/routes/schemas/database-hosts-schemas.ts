@@ -86,7 +86,7 @@ const DatabasesCreateSchema = {
     description: 'Create a new user database in a server',
     body: CreateDatabseRequestBody,
     response: {
-        200: DatabasesCreateResponse
+        202: DatabasesCreateResponse
     }
 };
 
@@ -120,7 +120,7 @@ const CreateSandboxSchema = {
     description: 'Create sandbox in same or alternate host',
     body: CreateSandboxBody,
     response: {
-        200: {
+        202: {
             jobId: Type.String()
         }
     }
@@ -231,7 +231,7 @@ const DeleteSandboxSchema = {
     summary: 'Delete sandbox',
     description: 'Delete sandbox within a database host',
     response: {
-        200: {
+        202: {
             jobId: Type.String()
         }
     }
