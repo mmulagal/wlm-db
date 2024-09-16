@@ -50,21 +50,21 @@ if (!(Test-Path -Path $logDir)) {
 
 Start-Transcript -Path "$logDir\instance.initializer.ps1.txt" -Append
 
-$script_verify_signature = ""
-$script_unzip_archive = ""
-$script_common = ""
-$script_sqlfci = ""
-$script_sqlontap = ""
-$script_dbcreate = ""
-$dsc = ""
-$power_shell = ""
-$amazon_launch_wizard_for_cfn = ""
-$amazon_launch_wizard_for_ssm = ""
-$sqlspcu = ""
-$dependent_packages = ""
-$artifacts_signatures = ""
-$open_ssl = ""
-$sql_setup = ""
+$script_verify_signature = "{{script_verify_signature}}"
+$script_unzip_archive = "{{script_unzip_archive}}"
+$script_common = "{{script_common}}"
+$script_sqlfci = "{{script_sqlfci}}"
+$script_sqlontap = "{{script_sqlontap}}"
+$script_dbcreate = "{{script_dbcreate}}"
+$dsc = "{{dsc}}"
+$power_shell = "{{power_shell}}"
+$amazon_launch_wizard_for_cfn = "{{amazon_launch_wizard_for_cfn}}"
+$amazon_launch_wizard_for_ssm = "{{amazon_launch_wizard_for_ssm}}"
+$sqlspcu = "{{sqlspcu}}"
+$dependent_packages = "{{dependent_packages}}"
+$artifacts_signatures = "{{artifacts_signatures}}"
+$open_ssl = "{{open_ssl}}"
+$sql_setup = "{{script_sql_setup}}"
 
 function Get-InstanceId {
     try {
@@ -219,6 +219,7 @@ try {
         # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\Installer\dependent-packages.zip -SignatureFilePath C:\cfn\signig_files\dependent-packages.sig -PubFilePath C:\cfn\signig_files\dependent-packages.pub -ResourceID SqlNode -Stackname $deployment_name"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer"; UseExecutionPolicy = $false }
     )
+
     Invoke-Commands -commands $commands
     Write-Output "Completed verifying the signatures and extracting the files"
   

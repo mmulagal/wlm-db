@@ -45,13 +45,13 @@ Start-Transcript -Path "$logDir\instance.initializer.ps1.txt" -Append
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
 $progressPreference = "silentlyContinue"
-$verify_signature = "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/scripts/Verify-Signature.ps1?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20240905%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20240905T233806Z&X-Amz-Expires=604800&X-Amz-Signature=db5fae6c9cf224c947451c989eec28e52ff0cc3caffe9557df9a7bff57880367&X-Amz-SignedHeaders=host&x-id=GetObject"
-$unzip_archive = "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/scripts/Unzip-Archive.ps1?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20240905%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20240905T233806Z&X-Amz-Expires=604800&X-Amz-Signature=69a7516f466f5e6ee3f45d174faffbba4e3b3b5c2c43656492e08d0846431d3c&X-Amz-SignedHeaders=host&x-id=GetObject"
-$aws_launch_wizard_for_fcn = "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/modules/AWSLaunchWizardForCFN.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20240905%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20240905T233806Z&X-Amz-Expires=604800&X-Amz-Signature=caacd9c598f914988fe09f7f0324afb3a054501579f227bfbd2c76a1e1c731e5&X-Amz-SignedHeaders=host&x-id=GetObject"
-$validation_zip = "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/scripts/validation.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20240905%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20240905T233806Z&X-Amz-Expires=604800&X-Amz-Signature=546231a97f07c63126d9c58eb40dc360d4095f2e21cba7714725f85741350a62&X-Amz-SignedHeaders=host&x-id=GetObject"
-$common_zip = "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/scripts/common.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20240905%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20240905T233806Z&X-Amz-Expires=604800&X-Amz-Signature=b421ae7e5926e723eabbf4e8a28bb2bb717cfd7ed8e6e61a7944f5b393619c1b&X-Amz-SignedHeaders=host&x-id=GetObject"
-$signing_files_zip = "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/signig_files.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20240905%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20240905T233806Z&X-Amz-Expires=604800&X-Amz-Signature=a9f3abaa6e8499ddb60e900c343259cd467850657cca0cdd1a8a8f4b6a5c1caf&X-Amz-SignedHeaders=host&x-id=GetObject"
-$open_ssl_win64_zip = "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/OpenSSL-Win64.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20240905%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20240905T233806Z&X-Amz-Expires=604800&X-Amz-Signature=2d994a2fca3b8d777992360cb29d4be6df82c44d4112171dd4536a0da09f3a00&X-Amz-SignedHeaders=host&x-id=GetObject"
+$verify_signature = "{{verify_signature}}"
+$unzip_archive = "{{unzip_archive}}"
+$aws_launch_wizard_for_fcn = "{{aws_launch_wizard_for_fcn}}"
+$validation_zip = "{{validation_zip}}"
+$common_zip = "{{common_zip}}"
+$signing_files_zip = "{{signing_files_zip}}"
+$open_ssl_win64_zip = "{{open_ssl_win64_zip}}"
 
 function Get-InstanceId {
     try {
@@ -303,6 +303,8 @@ try {
     New-EC2Tag -Region "$region" -ResourceId "$instance_id" -Tag @{ Key = "user_data"; Value = "completed" }
     Write-Output "Instance tagged successfully"
     Write-Output "Validation completed successfully"
+    # Shutdown command
+    shutdown /s /t 60
 }
 catch {
     New-EC2Tag -Region "$region" -ResourceId "$instance_id" -Tag @{ Key = "user_data"; Value = "failed" }
