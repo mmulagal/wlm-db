@@ -21,7 +21,7 @@ const internalUpdateRecommendationPreferenceSchema = {
 const getStorageSavingsSchema = {
     tags: [RouteTags.STORAGE_SAVINGS],
     summary: 'Storage savings calculations for MSSQL server',
-    description: 'Calculates the storage savings for MSSQL server if FSx is used instead of EBS or FSxW',
+    description: 'Calculates the storage savings for MSSQL server if FSxN is used instead of EBS or FSxW',
     params: StorageSavingsRequestParams,
     body: StorageSavingsRequestBody,
     response: {
@@ -33,7 +33,7 @@ const getStorageSavingsCalculationMetricsSchema = {
     tags: [RouteTags.STORAGE_SAVINGS],
     summary: 'Storage savings calculation metrics for MSSQL server',
     description:
-        'Retrieves the calculation metrics for storage savings in MSSQL server if FSx is used instead of EBS or FSxW',
+        'Retrieves the calculation metrics for storage savings in MSSQL server if FSxN is used instead of EBS or FSxW',
     params: StorageSavingsRequestParams,
     body: StorageSavingsRequestBody,
     response: {
@@ -44,7 +44,8 @@ const getStorageSavingsCalculationMetricsSchema = {
 const getManualStorageSavingsSchema = {
     tags: [RouteTags.STORAGE_SAVINGS],
     summary: 'Manual mode storage savings calculations for MSSQL server',
-    description: 'Calculates the storage savings for MSSQL server if FSx is used instead of EBS or FSxW in manual mode',
+    description:
+        'Calculates the storage savings for MSSQL server if FSxN is used instead of EBS or FSxW in manual mode',
     params: ManualStorageSavingsRequestParams,
     body: ManualStorageSavingsRequestBody,
     response: {
@@ -56,7 +57,7 @@ const getManualStorageSavingsCalculationMetricsSchema = {
     tags: [RouteTags.STORAGE_SAVINGS],
     summary: 'Manual mode storage savings calculation metrics for MSSQL server',
     description:
-        'Retrieves the calculation metrics for storage savings in MSSQL server if FSx is used instead of EBS or FSxW in manual mode',
+        'Retrieves the calculation metrics for storage savings in MSSQL server if FSxN is used instead of EBS or FSxW in manual mode',
     params: ManualStorageSavingsRequestParams,
     body: ManualStorageSavingsRequestBody,
     response: {
