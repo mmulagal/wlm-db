@@ -69,7 +69,7 @@ resource "aws_instance" "sql_node" {
   user_data = local.user_data
 
   timeouts {
-    create = "120m"
+    create = "90m"
   }
   tags = {
     Name = var.sql_fsx_server_net_bios_name
@@ -116,24 +116,3 @@ resource "null_resource" "wait_for_tag" {
   EOF
   }
 }
-
-// subnet check in vpc
-# data "aws_vpc" "selected" {
-#   id = var.vpc_id
-# }
-
-# data "aws_subnet" "selected" {
-#   for_each = toset(var.subnet_ids)
-# }
-
-# locals {
-#   all_subnets_in_vpc = alltrue([
-#     for subnet in data.aws_subnet.selected : subnet.vpc_id == data.aws_vpc.selected.id
-#   ])
-# }
-
-# output "all_subnets_in_vpc" {
-#   value       = local.all_subnets_in_vpc
-#   description = "Are all subnets in the VPC?"
-# }
-

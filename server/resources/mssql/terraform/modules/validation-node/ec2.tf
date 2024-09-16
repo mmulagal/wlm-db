@@ -94,10 +94,9 @@ resource "aws_instance" "validation_node" {
     network_interface_id = aws_network_interface.validation_node_ni.id
   }
 
-  # user_data = data.template_file.user_data.rendered
   user_data = local.user_data
 
-  instance_initiated_shutdown_behavior = "stop" // enable this once we add sudo shutdown -h now in user data so this will get terminated
+  instance_initiated_shutdown_behavior = "terminate" // enable this once we add sudo shutdown -h now in user data so this will get terminated
 
   timeouts {
     create = "30m"
@@ -148,11 +147,3 @@ resource "null_resource" "wait_for_tag" {
   EOF
   }
 }
-
-# resource "null_resource" "validation_node1_wait_condition" {
-#   count = var.validation_node_perform_ad_check ? 1 : 0
-
-#   provisioner "local-exec" {
-#     command = "sleep 2700"
-#   }
-# }
