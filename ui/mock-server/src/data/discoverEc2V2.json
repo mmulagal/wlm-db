@@ -258,7 +258,7 @@
                     ],
                     "deploymentTypes": [
                         {
-                            "type": "SINGLE_AZ_1",
+                            "type": "Single_AZ_1",
                             "zones": [
                                 "ap-southeast-1c"
                             ]
@@ -838,7 +838,15 @@
                             "id": "vol-0f1ae0046501426a3"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
+                        }
+                    ]
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -865,7 +873,15 @@
                             "id": "vol-058229dab6d33d374"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
+                        }
+                    ]
                 }
             ]
         },

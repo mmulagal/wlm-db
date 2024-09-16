@@ -129,7 +129,10 @@ const ExploreSavingsTableV2 = () => {
             accessor: 'storageType',
             id: '3',
             width: '160px',
-            filterOptions: 'auto',
+            filterOptions: [
+                { label: GENERAL.EBS, value: GENERAL.EBS },
+                { label: GENERAL.FSX_FOR_WINDOWS, value: GENERAL.FSX_FOR_WINDOWS }
+            ],
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
