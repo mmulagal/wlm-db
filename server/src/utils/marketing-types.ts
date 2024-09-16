@@ -252,6 +252,7 @@ interface FsxCostCalculations {
     fsx_cost_calculation_no_snapshot: FsxNoSnapshotCalculation;
     fsx_snapshot_cost_calculation: FsxSnapshotCalculation;
     fsx_clone_cost_calculation: FsxCloneCalculation;
+    fsxw_cost_calculation?: FsxwCostCalculation;
 }
 interface CalculateEbsComparisonResponse {
     gp2?: {
@@ -274,7 +275,7 @@ interface CalculateEbsComparisonResponse {
         ebs: StorageSummary;
         ebs_cost_calculation: EbsCostCalculation;
     };
-    ebs: {
+    ebs?: {
         capacity: number;
         iops: number;
         throughput: number;
@@ -292,6 +293,14 @@ interface CalculateEbsComparisonResponse {
     };
     single?: FsxCostCalculations;
     multi?: FsxCostCalculations;
+    fsxw?: {
+        capacity: number;
+        iops: number;
+        throughput: number;
+        snapshots: number;
+        clones: number;
+        total: number;
+    };
 }
 
 interface InstanceEbsData {
@@ -343,6 +352,16 @@ interface MarketingRequestBody {
         ssdStorage: number;
         savings: number;
     };
+    fileSystemsIds?: string[];
+}
+
+interface AutomaticModeMarketingRequestBodyFsxW {
+    useCase: string;
+    fileSystemsIds: string[];
+    deduplicationSavings?: number;
+    snapshotFreq?: string;
+    cloneEnvs?: number;
+    monthlyChangeRate?: number;
 }
 
 interface ManualModeMarketingRequestBodyEBS {
@@ -521,6 +540,8 @@ type ManualModeComparisionResponse = ManualModeEbsComparisonResponse | ManualMod
 
 type ManualModeMarketingRequestBody = ManualModeMarketingRequestBodyFsxW | ManualModeMarketingRequestBodyEBS;
 
+type AutomaticModeMarketingRequestBody = AutomaticModeMarketingRequestBodyFsxW | MarketingRequestBody;
+
 export {
     StorageSummary,
     EbsCostCalculation,
@@ -540,5 +561,6 @@ export {
     StorageInstanceResponse,
     ManualModeFsxwComparisonResponse,
     FsxwCostCalculation,
-    ManualModeComparisionResponse
+    ManualModeComparisionResponse,
+    AutomaticModeMarketingRequestBody
 };

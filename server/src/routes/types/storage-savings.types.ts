@@ -425,6 +425,18 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
     fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp)
 });
 
+const StorageSavingsCalculationsMetrics = Type.Object({
+    ebs: Type.Optional(StorageMetrics),
+    ebsCalculation: Type.Optional(EBSCostCalculationResp),
+    ebsCloneCalculation: Type.Optional(EBSCloneCostCalculationResp),
+    ebsSnapshotCalculation: Type.Optional(EBSSnapshotCalculationResp),
+    single: Type.Optional(FsxCalculationResp),
+    multi: Type.Optional(FsxCalculationResp),
+    fsxwCalculation: Type.Optional(FsxwCalculationResp),
+    fsxwSnapshotCalculation: Type.Optional(FsxwSnapshotCalculationResp),
+    fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp)
+});
+
 type EbsCloneCalculationType = Static<typeof EbsCloneCalculation>;
 type EbsSnapshotCalculationType = Static<typeof EbsSnapshotCalculation>;
 type EbsCostCalculationType = Static<typeof EbsCostCalculation>;
@@ -477,6 +489,7 @@ const ComputeLicenseCost = Type.Object({
 type ComputeLicenseCostType = Static<typeof ComputeLicenseCost>;
 
 type StorageSavingsMetricsCalculationsResponseType = Static<typeof StorageSavingsCalculationsMetricsResponse>;
+type StorageSavingsCalculationsMetricsType = Static<typeof StorageSavingsCalculationsMetrics>;
 
 type ComputeDetailsType = Static<typeof ComputeDetails>;
 type LicenseDetailsType = Static<typeof LicenseDetails>;
@@ -514,5 +527,6 @@ export {
     FsxCalculationRespType,
     EBSCostCalculationRespType,
     EBSCloneCostCalculationRespType,
-    EBSSnapshotCalculationRespType
+    EBSSnapshotCalculationRespType,
+    StorageSavingsCalculationsMetricsType
 };

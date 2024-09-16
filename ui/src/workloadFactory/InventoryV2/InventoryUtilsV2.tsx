@@ -27,7 +27,12 @@ import {
     SQLServerInstancesDiscovered,
     StatusObjInterface
 } from '../../utils/types/inventoryV2Types';
-import { formatFractionalNumber, formatSizeOnePrecision, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    formatSizeOnePrecision,
+    formatSizeTwoPrecision,
+    getAzType
+} from '../../utils/utilityFunctions';
 
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
@@ -246,14 +251,6 @@ export const getAllocatedCapacity = (row: ManagedHostsRowInterface | undefined) 
     }
 };
 
-export const getFileSystemDeploymentMode = (val: string | undefined) => {
-    return val === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-        ? GENERAL.SINGLE_AZ
-        : val === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-        ? GENERAL.MULTI_AZ
-        : val;
-};
-
 export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) => {
     let storagePercent = 0;
     let storageSavingsText: string = '';
@@ -342,9 +339,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     statusColText: isManagedRow?.[0]?.isManaged
                         ? INVENTORY_STATUS.MANAGED
                         : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED,
-                    fileSystemDeploymentMode: getFileSystemDeploymentMode(
-                        perRow?.databaseInstanceTopology?.fileSystemDeploymentMode
-                    ),
+                    fileSystemDeploymentMode: getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
                     fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType,
                     protection: perRow?.protection,
                     performance: perRow?.performance,
@@ -877,7 +872,7 @@ export const formatDiscoverInstanceData = (
             // databaseCount: 0,
             databaseCount: perRow?.databaseCount,
             statusColText: statusObj ? statusObj?.[0]?.status : INVENTORY_STATUS.UNDETECTED,
-            fileSystemDeploymentMode: getFileSystemDeploymentMode(perRow?.deploymentTypes?.[0]?.type || ''),
+            fileSystemDeploymentMode: getAzType(perRow?.deploymentTypes?.[0]?.type || ''),
             fileSystemType: getDiscoverFileSystemType(perRow),
             storage: perRow?.storage,
             fsxId: statusObj?.[0]?.fsxId,
@@ -1360,7 +1355,7 @@ export const updateSqlServerInstancesForBothNodes = (
                 databaseServer: perRow?.databaseServer,
                 fileSystemDeploymentMode:
                     instRow?.fileSystemDeploymentMode ||
-                    getFileSystemDeploymentMode(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
+                    getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
             };
         });
     }
@@ -1419,7 +1414,7 @@ export const updateSqlServerInstancesForUnmanaged = (
                         isManagedHost && statusObj?.[0]?.status ? statusObj?.[0]?.status : instRow?.statusColText,
                     fileSystemDeploymentMode:
                         instRow?.fileSystemDeploymentMode ||
-                        getFileSystemDeploymentMode(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
+                        getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
                 };
             } else {
                 const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
@@ -1502,7 +1497,7 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
         if (removeSecNodeDiscoveredList.includes(key)) {
             return;
         }
-        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
+        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && item?.isDetected) {
             nonFsxnStorageList.push(item);
         }
     });
@@ -1864,4 +1859,13 @@ export const getPartnerNodeEc2InstanceId = (error: string) => {
     }
 
     return null;
+};
+
+export const checkForAllAOAG = (rowData: any) => {
+    // If all instance have AOAG than ES is disabled for it
+    return rowData?.sqlServerInstances?.every((item: any) => {
+        return (
+            !item?.sqlServerDeploymentType || item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+        );
+    });
 };

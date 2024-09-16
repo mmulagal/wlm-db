@@ -342,17 +342,14 @@ const validateSQLInstanceConnectivity = (
     sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => ` 
         $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
+        $ProgressPreference = 'SilentlyContinue'
 
-        $CommonmodulePath = (Get-Module -Name 'AWS.Tools.Common' -ListAvailable).Path
-        if($CommonmodulePath -is [System.Array]) {
-            $CommonmodulePath = $CommonmodulePath[0]
-        }
         $ssmmodulePath = (Get-Module -Name 'AWS.Tools.SimpleSystemsManagement' -ListAvailable).Path
         if($ssmmodulePath -is [System.Array]) {
             $ssmmodulePath = $ssmmodulePath[0]
         }
         
-        Import-Module -Name $CommonmodulePath, $ssmmodulePath
+        Import-Module -Name $ssmmodulePath
 
     if ($responseObject -eq $null) {
         $responseObject = @{}
@@ -420,6 +417,7 @@ const validateSQLInstanceConnectivity = (
 `;
 
 const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
+    $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
@@ -495,6 +493,7 @@ const getMappedOntapVolumesScript = (
     sqlAuthEnabled: boolean = false
 ) => `
     $WarningPreference = 'SilentlyContinue';
+    $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
@@ -929,6 +928,7 @@ const restGetUtilForOntap = (
     apiQueryFields: string
 ) => `
     $WarningPreference = 'SilentlyContinue';
+    $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
@@ -962,6 +962,7 @@ const restGetUtilForOntap = (
 const INSTANCE_DETAILS = 'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*)"} | Select-Object @{Name=\'instanceName\'; Expression={$_.Name}}, @{Name=\'instanceState\'; Expression={$_.State}} | ConvertTo-Json';
 
 const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
+    $ProgressPreference = 'SilentlyContinue'
     $s3SignedUrl = '${s3SignedURL}'
     $moduleNames = ${modules}
 
@@ -1019,6 +1020,7 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
 
 const readSsmParameter = (instance: string) =>
     `
+        $ProgressPreference = 'SilentlyContinue'
         $sqlCredential = @{}
         $serverInstanceName = "${instance}"
 
@@ -1158,6 +1160,7 @@ const validateSQLInstanceCredentials = `
 `;
 
 const getSqlCredentials = (sqlAuthEnabled: boolean) => `
+    $ProgressPreference = 'SilentlyContinue'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
     $sqlCredentials = $null
     if ($sqlAuthEnabled) {

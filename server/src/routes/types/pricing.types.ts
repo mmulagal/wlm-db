@@ -85,19 +85,14 @@ const FsxnCostBreakdown = Type.Object({
     capacityCost: Type.Number(),
     operationalCost: Type.Number(),
     size: Type.Optional(
-        Type.Object(
-            {
-                data: Type.Optional(Type.Number()),
-                log: Type.Optional(Type.Number()),
-                tempdb: Type.Optional(Type.Number()),
-                quorum: Type.Optional(Type.Number()),
-                buffer: Type.Optional(Type.Number()),
-                total: Type.Number()
-            },
-            {
-                description: 'All the sizes are in GiB'
-            }
-        )
+        Type.Object({
+            data: Type.Optional(Type.Number()),
+            log: Type.Optional(Type.Number()),
+            tempdb: Type.Optional(Type.Number()),
+            quorum: Type.Optional(Type.Number()),
+            buffer: Type.Optional(Type.Number()),
+            total: Type.Number()
+        })
     )
 });
 

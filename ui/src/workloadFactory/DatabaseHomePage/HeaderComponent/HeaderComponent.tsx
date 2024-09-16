@@ -18,12 +18,12 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as BlueXPDatabase } from '../../../assets/blueXPDatabase.svg';
 import { ReactComponent as ExternalLink } from '../../../assets/ic_external_link.svg';
+import { ReactComponent as ExternalLinkWhite } from '../../../assets/ic_external_link_white.svg';
 import { ReactComponent as RSS } from '../../../assets/ic_rss.svg';
+import { ReactComponent as RSS_White } from '../../../assets/ic_rss_white.svg';
 import { ReactComponent as Menu } from '../../../assets/ic_menu.svg';
-import Inventory from '../../Inventory/Inventory';
 import { useDispatch } from 'react-redux';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
-import DatabaseHostOverview from '../../ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
     setDashboardRefresh,
@@ -95,6 +95,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const toShowPostgress = localStorage.getItem('postgress');
 
@@ -360,19 +361,19 @@ const HeaderComponent = ({ tab }: Tab) => {
                 id: 'apiHub',
                 displayName: 'API Hub',
                 tagAdded: true,
-                tag: <ExternalLink />
+                tag: isDarkTheme ? <ExternalLinkWhite /> : <ExternalLink />
             },
             {
                 id: 'monitoringGitHubRepository',
                 displayName: 'Monitoring GitHub repository',
                 tagAdded: true,
-                tag: <ExternalLink />
+                tag: isDarkTheme ? <ExternalLinkWhite /> : <ExternalLink />
             },
             {
                 id: 'subscribeToRss',
                 displayName: 'Subscribe to RSS',
                 tagAdded: true,
-                tag: <RSS />
+                tag: isDarkTheme ? <RSS_White /> : <RSS />
             },
             {
                 id: 'feedback',
@@ -568,7 +569,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                     </div>
 
                     {!isWorkloadFactory && (
-                        <div className={styles.thirdRow}>
+                        <div
+                            className={isDarkTheme ? `${styles.thirdRow} ${styles.darkThemeThirdRow}` : styles.thirdRow}
+                        >
                             <Menu />
                             <div className={styles.menuPopOverHide}>
                                 <MenuPopover
@@ -676,7 +679,6 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <DatabaseHomePage />
                         </div>
                     )}
-                    {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && isInventoryV2 && (
                         <>
                             <div className={styles.inventoryHeaderSection}>
@@ -723,7 +725,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && (
                         <DatabaseHostOverviewV2 refreshTime={refreshTime} refreshPage={refreshPage} />
                     )}
-                    {selectedHeaderTab === WLF_TABS.OVERVIEW && !isInventoryV2 && <DatabaseHostOverview />}
+
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>
                             <div className={styles.sandboxSection}>
@@ -749,7 +751,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         </>
                     )}
                     {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
-                    {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
+
                     {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
                 </div>
             </div>

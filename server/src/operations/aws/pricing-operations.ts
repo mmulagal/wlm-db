@@ -10,7 +10,7 @@ import {
     PricingServiceResponseType
 } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
-import { calculateFsxnStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
+import { calculateFsxnStorageCapacity } from '../../utils/utils';
 import {
     DEFAULT_AWS_REGION,
     FCI,
@@ -518,17 +518,17 @@ async function calculatePrice(
                 totalFsxnCost = totalFsxnCost + fsxnStorageCost + fsxnOperationalCost;
                 const sizeData = fsxnDiskSizes
                     ? {
-                          data: sizeInGigaBytes(fsxnDiskSizes?.FSxDataVolumeSize),
-                          log: sizeInGigaBytes(fsxnDiskSizes?.FSxLogVolumeSize),
-                          tempdb: sizeInGigaBytes(fsxnDiskSizes?.FSxTempDbVolumeSize),
-                          buffer: sizeInGigaBytes(fsxnDiskSizes?.FSxBufferVolumeSize),
-                          total: fsxnDiskSizes?.FSxStorageCapacity,
+                          data: numeral(`${fsxnDiskSizes?.FSxDataVolumeSize}MiB`).value() || 0,
+                          log: numeral(`${fsxnDiskSizes?.FSxLogVolumeSize}MiB`).value() || 0,
+                          tempdb: numeral(`${fsxnDiskSizes?.FSxTempDbVolumeSize}MiB`).value() || 0,
+                          buffer: numeral(`${fsxnDiskSizes?.FSxBufferVolumeSize}MiB`).value() || 0,
+                          total: numeral(`${fsxnDiskSizes?.FSxStorageCapacity}GiB`).value() || 0,
                           ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
-                              quorum: sizeInGigaBytes(fsxnDiskSizes?.FSxQuorumVolumeSize)
+                              quorum: numeral(`${fsxnDiskSizes?.FSxQuorumVolumeSize}MB`).value() || 0
                           })
                       }
                     : {
-                          total: fsxResource.storageCapacity || 0
+                          total: numeral(`${fsxResource.storageCapacity}GiB`).value() || 0
                       };
                 fsxnCostBreakdownById.push({
                     id: fsxResource.id!,
@@ -590,7 +590,7 @@ async function calculatePrice(
                     id: fsxResource.id!,
                     capacityCost: fsxwStorageCost,
                     operationalCost: fsxwOperationalCost,
-                    size: fsxResource.storageCapacity || 0
+                    size: numeral(`${fsxResource.storageCapacity}GiB`).value() || 0
                 });
             })
         );
