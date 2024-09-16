@@ -143,27 +143,10 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             const response = getCollationDetailsForDeployment(accountId, mssqlVersion);
             return reply.send(response);
         })
-    server
-        .post(
-            `${API_TERRAFORM_PREFIX_PATH}`,
-            { schema: TerraformSetupSchema },
-            async (request, reply) => {
-                const {
-                    headers: { 'triggered-from': triggeredFrom },
-                    body: {
-                        networkConfiguration,
-                        ec2Configuration,
-                        adConfiguration,
-                        fsxConfiguration,
-                        sqlConfiguration,
-                        topicArn,
-                        enableCloudWatch,
-                        tags,
-                        credentialsId,
-                        region
-                    }
-                } = request;
-                const response = await getTerraformSetup(
+        .post(`${API_TERRAFORM_PREFIX_PATH}`, { schema: TerraformSetupSchema }, async (request, reply) => {
+            const {
+                headers: { 'triggered-from': triggeredFrom },
+                body: {
                     networkConfiguration,
                     ec2Configuration,
                     adConfiguration,
@@ -171,12 +154,24 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     sqlConfiguration,
                     topicArn,
                     enableCloudWatch,
-                    triggeredFrom,
                     tags,
                     credentialsId,
                     region
-                );
-                return reply.send(response);
-            }
-        );
+                }
+            } = request;
+            const response = await getTerraformSetup(
+                networkConfiguration,
+                ec2Configuration,
+                adConfiguration,
+                fsxConfiguration,
+                sqlConfiguration,
+                topicArn,
+                enableCloudWatch,
+                triggeredFrom,
+                tags,
+                credentialsId,
+                region
+            );
+            return reply.send(response);
+        });
 }
