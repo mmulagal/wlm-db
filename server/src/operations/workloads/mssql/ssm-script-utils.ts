@@ -899,6 +899,7 @@ const getMappedOntapVolumesScript = (
                 $responseObject = @{}
                 $responseObject.add('volumes', $processedRecords)
                 $responseObject.add('volumeDBMap', $volumeDBMap)
+                $responseObject.add('lunNames', $lunResult.LunNames)
                 $instanceRespones[$serverInstanceName] = $responseObject
             } catch {
                 Write-Information "An error occurred while processing the records: $_.Exception.Message"
