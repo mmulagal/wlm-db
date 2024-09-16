@@ -4,10 +4,10 @@ import getLogger from '../../utils/logger';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import {
     CalculateEbsComparisonResponse,
-    MarketingRequestBody,
     ManualModeMarketingRequestBody,
     StorageInstanceResponse,
-    StorageVolumesResponse
+    StorageVolumesResponse,
+    AutomaticModeMarketingRequestBody
 } from '../../utils/marketing-types';
 
 const logger = getLogger();
@@ -16,12 +16,17 @@ async function getStorageSavings(
     accountId: string,
     credentialsId: string,
     region: string,
-    params: MarketingRequestBody
+    params: AutomaticModeMarketingRequestBody
 ) {
     logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region, params });
 
+    let url = `accounts/${accountId}/marketing/v2/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`;
+    if (params?.fileSystemsIds) {
+        url = `accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/fsxw/auto/calculate`;
+    }
+
     const response = await gotInstanceForInternalRequest
-        .post(`accounts/${accountId}/marketing/v2/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {
+        .post(url, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
                 [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
