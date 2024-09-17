@@ -37,6 +37,9 @@ Parameters:
   FSxDataVolumeName:
     Description: The name of the volume for SQL Server data.
     Type: String
+  FSxDataVolumeName:
+    Description: The name of the volume for SQL Server data.
+    Type: String
   FSxLogVolumeName:
     Description: The name of the volume for the SQL Server log.
     Type: String
@@ -55,12 +58,9 @@ Parameters:
     Type: String
     NoEcho: true
     Default: netapp1!
-  # FSXMgmtIp:
-  #   Description: Management IP for the FSx for ONTAP file system.
-  #   Type: String
-  # FSXNFSIP:
-  #   Description: NFS IP for the FSx for ONTAP file system.
-  #   Type: String
+  FSxSVMId:
+    Description: ID of the FSx Storage Virtual Machine
+    Type: String
   FSxAggrName:
     Description: Aggregate FSx for ONTAP file system.
     Type: String
@@ -119,7 +119,7 @@ Resources:
             echo "Setting up the environment..."
             fsxusername=${FSXUsername}
             fsxpassword=${FSXPassword}
-            
+            fsxsvmid=${FSxSVMId}
             fsxsvmname=${PGSQLSvmName}
             fsxaggrname=${FSxAggrName}
             fsxdatamountpoint=/${FSxDataVolumeName}
@@ -131,20 +131,10 @@ Resources:
             psql_svcs=postgresql
             dbname=testDB
 
-            svm_id=aws fsx describe-storage-virtual-machines --query "StorageVirtualMachines[?Name==$fsxsvmname].StorageVirtualMachineId" --filter "Name=file-system-id,Values=${FSxFileSystemId}"
-            fsxMgmtIp=management.${FSxFileSystemId}.fsx.${AWS::Region}.amazonaws.com
-            fsxNFSIP=${svm_id}.${FSxFileSystemId}.fsx.${AWS::Region}.amazonaws.com
+            echo $fsxsvmid
 
-            echo "fsxusername=${FSXUsername}"
-            echo "fsxpassword=${FSXPassword}"
-            echo $fsxMgmtIp
-            echo $fsxNFSIP
-            echo "fsxsvmname=${PGSQLSvmName}"
-            echo "fsxaggrname=${FSxAggrName}"
-            echo "fsxdatamountpoint=/${FSxDataVolumeName}"
-            echo "fsxlogmountpoint=/${FSxLogVolumeName}"
-            echo "fsxdatavolumename=${FSxDataVolumeName}"
-            echo "fsxlogvolumename=${FSxLogVolumeName}"
+            fsxMgmtIp=management.${FSxFileSystemId}.fsx.${AWS::Region}.amazonaws.com
+            fsxNFSIP=$fsxsvmid.${FSxFileSystemId}.fsx.${AWS::Region}.amazonaws.com
 
             # Function to check the status of the previous command and exit on failure
             check_status() {
