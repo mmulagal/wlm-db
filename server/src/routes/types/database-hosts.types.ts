@@ -601,6 +601,31 @@ const DatabaseQueryString = Type.Object({
     nextToken: Type.Optional(Type.String())
 });
 
+const ParameterDriftResponse = Type.Object({
+    name: Type.String(),
+    type: Type.String(),
+    parameters: Type.Array(
+        Type.Optional(
+            Type.Object({
+                name: Type.String(),
+                current: Type.String(),
+                recommended: Type.String(),
+                isOptimised: Type.Boolean(),
+                severity: Type.String(),
+                recommendation: Type.String()
+            })
+        )
+    )
+});
+type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
+
+const DriftAssessmentResponse = Type.Object({
+    storage: Type.Object({
+        configuration: Type.Array(Type.Optional(ParameterDriftResponse))
+    })
+});
+type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -681,5 +706,8 @@ export {
     DatabaseInstanceTopologyType,
     DatabaseHostInstanceSummaryParams,
     DatabaseHostOptionalInstanceSummaryParams,
-    DatabaseQueryString
+    DatabaseQueryString,
+    DriftAssessmentResponse,
+    DriftAssessmentResponseType,
+    ParameterDriftResponseType
 };

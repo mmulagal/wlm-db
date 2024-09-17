@@ -28,7 +28,8 @@ import {
     DatabaseHostInstanceSummaryParams,
     DatabaseHostInstanceSummaryResponse,
     DatabaseHostOptionalInstanceSummaryParams,
-    DatabaseQueryString
+    DatabaseQueryString,
+    DriftAssessmentResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -326,6 +327,16 @@ const GetSandboxSnapshotsSchema = {
     }
 };
 
+const DriftAssessment = {
+    ...resourceRequest,
+    summary: 'Get database instance parameters drift from recommended settings',
+    description: 'Get database instance parameters drift from recommended settings',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    response: {
+        200: DriftAssessmentResponse
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -351,5 +362,6 @@ export {
     DatabasesListSchemaV2,
     GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
-    GetCollationDetailsSchemaV2
+    GetCollationDetailsSchemaV2,
+    DriftAssessment
 };

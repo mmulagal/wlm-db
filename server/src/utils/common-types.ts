@@ -196,6 +196,19 @@ interface InstanceDetails {
     sqlAuthEnabled?: boolean;
 }
 
+interface WorkloadInstance {
+    name: string;
+    type: string;
+    region: string;
+    sqlAuthEnabled: boolean;
+    fsxFileSystem: string;
+    activeNodeInstanceid: string;
+    mappedVolumeNames?: string[];
+    mappedVolumesUuids?: string[];
+    mappedLunNames?: string[];
+    mappedLunUuids?: string[];
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -213,5 +226,6 @@ export {
     databaseInstanceMetadata,
     Sandbox,
     DatabaseInstance,
-    InstanceDetails
+    InstanceDetails,
+    WorkloadInstance
 };

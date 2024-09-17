@@ -1,3 +1,4 @@
+import { WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import { PERFORMANCE_METRICS_WITH_LATENCY } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
@@ -97,21 +98,14 @@ function Test-IscsiSessions {
 
 `;
 
-const STORAGE_CONFIGURATION_ASSESSMENT = (
-    instance: string,
-    region: string,
-    sqlAuthEnabled: boolean,
-    filesystem: string,
-    volumeUuids: string[],
-    lunNames: string[]
-) =>
+const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     `
     $DriftAssessmentData = @{}
-    $sqlInstance = "${instance}"
-    $FSxID = "${filesystem}"
-    $FSxRegion = "${region}"
+    $sqlInstance = "${instanceRecord.name}"
+    $FSxID = "${instanceRecord.fsxFileSystem}"
+    $FSxRegion = "${instanceRecord.region}"
   
-    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
     $sqlCredential = @{'useSqlAuth' = $False}
 
     # Build sql instance service name
@@ -121,7 +115,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (
     }
 
     $APIEndpoint = '/storage/volumes'
-    $APIQueryFilter = "uuid=${volumeUuids.join('|')}"
+    $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
     $ApiQueryFields = "fields=autosize,space,snapshot_policy,tiering,guarantee"
     
     ${ontapRestRequest(true)}
@@ -136,25 +130,28 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (
         # Using PSCustomObject
         $perVolRow = [PSCustomObject]@{
             name = $perVolumeData.name
-            thin_provision = $perVolumeData.guarantee.honored
-            space_guarantee = $perVolumeData.guarantee.type
-            autosize = ($($perVolumeData.autosize) | ConvertTo-Json)
-            autosize_mode = $perVolumeData.autosize.mode
-            fractional_reserve = $perVolumeData.space.fractional_reserve
-            snapshot_policy = $perVolumeData.snapshot_policy.name
-            snapshot_reserve_percent = $perVolumeData.space.snapshot.reserve_percent
-            snapshot_autodelete = $perVolumeData.space.snapshot.autodelete.enabled
-            tiering_policy = $perVolumeData.tiering.policy
-            tiering_min_cooling_days = $perVolumeData.tiering.min_cooling_days
-            #space_mgmt_try_first = ''
-            #read_realloc = ''
+            'thin-provision' = $perVolumeData.guarantee.honored
+            'space-guarantee' = $perVolumeData.guarantee.type
+            'autosize-mode' = $perVolumeData.autosize.mode
+            'fractional-reserve' = $perVolumeData.space.fractional_reserve
+            'snapshot-policy' = $perVolumeData.snapshot_policy.name
+            'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
+            'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
+            'tiering-policy' = $perVolumeData.tiering.policy
+            'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
+        }
+        if($perVolumeData.autosize.mode -ne 'off') {
+            $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "on"
+        }
+        else {
+            $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "off"
         }
         $VolumeList += $($perVolRow)
     }
     
     # Lun details
     $APIEndpoint = '/storage/luns'
-    $APIQueryFilter = "name=${lunNames.join('|')}"
+    $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
     $ApiQueryFields = "fields=space,os_type"
     
     $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
@@ -167,9 +164,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (
         # Using PSCustomObject
         $perLunRow = [PSCustomObject]@{
             name = $($perLunData.name)
-            os_type = $($perLunData.os_type)
-            space_reservation_enabled = $($perLunData.space.guarantee.requested)
-            space_allocation_allocated = $($perLunData.space.scsi_thin_provisioning_support_enabled)
+            'os-type' = $($perLunData.os_type)
+            'space-reservation-enabled' = $($perLunData.space.guarantee.requested)
+            'space-allocation-allocated' = $($perLunData.space.scsi_thin_provisioning_support_enabled)
         }
         $LunsList += $($perLunRow)
     }
@@ -187,9 +184,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (
     $DriftAssessmentData['volumes'] = $($VolumeList)
     $DriftAssessmentData['luns'] = $($LunsList)
     $DriftAssessmentData['os'] = @{
-                                    mpioStatus = "$MpioStatus";
-                                    loadBalancingPolicy = "$LoadBalancingPolicy";
-                                    sessions = "$SessionCount";
+                                    'mpio-enabled' = "$MpioStatus";
+                                    'mpio-load-balance-policy' = "$LoadBalancingPolicy";
+                                    'mpio-iscsi-count' = "$SessionCount";
 }
 
     $response = $DriftAssessmentData | ConvertTo-Json -Depth 5

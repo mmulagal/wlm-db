@@ -35,7 +35,8 @@ import {
     DatabasesListSchemaV2,
     GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
-    GetCollationDetailsSchemaV2
+    GetCollationDetailsSchemaV2,
+    DriftAssessment
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -52,6 +53,7 @@ import {
     checkDatabaseIntegrity,
     getSandboxSnapshots
 } from '../operations/sandbox-operations';
+import { driftAssessment } from '../operations/drift-assessment';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_PREFIX_PATH_V2 = '/v2/credentials/:credentialsId/regions/:region';
@@ -467,6 +469,23 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     region,
                     forSandbox,
                     undefined,
+                    databaseInstanceId
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment`,
+            { schema: DriftAssessment },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
+                } = request;
+                const response = await driftAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
                     databaseInstanceId
                 );
                 return reply.send(response);
