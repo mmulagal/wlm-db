@@ -15,6 +15,7 @@ import {
     DB_DEPLOYMENT_MODEL,
     DB_EDITIONS,
     DB_VERSIONS,
+    EBS_PROTECTED_OPTIONS,
     GIB_IN_BYTE,
     OS_VERSIONS_LIST,
     SAVINGS_CALC_MODE,
@@ -2017,4 +2018,37 @@ export const checkIfByolFieldRequired = (
     } else {
         return isByolField;
     }
+};
+
+/**
+ * This function will check if TCO selected host has protection data or not.
+ * @param data 
+ * @returns Protected/Unprotected/Unknown
+ */
+export const checkIfEbsProtected = () => { 
+    const state = store.getState();
+    const { selectedHostDetails } = state.exploreSavings;
+    const perfMssqlInstancesData = state.inventoryV2.perfMssqlInstancesData;
+    if (selectedHostDetails?.sqlServerInstances?.length > 0) {
+        let unprotected: boolean = false;
+        let protectedVal: boolean = false;
+        selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
+            if (perRow?.protection) {
+                if (perRow?.protection?.isAwsBackupEnabled?.ebs) {
+                    protectedVal = true;
+                } else {
+                    unprotected = true;
+                }
+            } 
+        });
+
+        if (protectedVal) {
+            return EBS_PROTECTED_OPTIONS.PROTECTED;
+        }else if (unprotected) {
+            return EBS_PROTECTED_OPTIONS.UNPROTECTED;
+        } else if (!selectedHostDetails?.loading && perfMssqlInstancesData?.[selectedHostDetails?.id] && !perfMssqlInstancesData?.[selectedHostDetails?.id]?.loading) {
+            return EBS_PROTECTED_OPTIONS.UNKNOWN;
+        };
+    };
+    return '';
 };

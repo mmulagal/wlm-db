@@ -13,6 +13,8 @@ router.get(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/database-h
 router.get(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/mssql/instances`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, MssqlInstancesV2);
+
+        // generateResponse(res, 400, {'error': 'error'});
     }, 15000);
 });
 

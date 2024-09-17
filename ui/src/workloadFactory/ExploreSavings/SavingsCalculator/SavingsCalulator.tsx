@@ -58,11 +58,15 @@ const SavingsCalculator = () => {
 
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
-        dispatch(
-            setViewCalculationsResponse(
-                formatViewCalcData(viewCalculationsApiResponse || {}, selectedDeploymentModel, monthlyChangeRate)
-            )
-        );
+        if (viewCalculationsApiResponse) {
+            dispatch(
+                setViewCalculationsResponse(
+                    formatViewCalcData(viewCalculationsApiResponse, selectedDeploymentModel, monthlyChangeRate)
+                )
+            );
+        } else {
+            dispatch(setViewCalculationsResponse(null));
+        }
     }, [recommendedTargetInstance]);
 
     useEffect(() => {

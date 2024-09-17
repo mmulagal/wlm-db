@@ -64,6 +64,7 @@ export interface ExploreSavingsSliceEntities {
     manualTCOVolumeTypes: any;
     volumeFilledStatus: boolean;
     recommendedTargetInstance: string;
+    snapshotLoading: boolean;
 }
 
 export interface StorageSavingsInterface {

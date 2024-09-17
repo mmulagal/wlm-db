@@ -9,9 +9,8 @@ import { FINDINGS, SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 const InstanceInformation = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
-    const { savingsCalculatorFrom, storageSavingsResponse, storageSavingsLoading }: any = useAppSelector(
-        state => state.exploreSavings
-    );
+    const { savingsCalculatorFrom, storageSavingsResponse, storageSavingsLoading, snapshotLoading }: any =
+        useAppSelector(state => state.exploreSavings);
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     const [tableData, setTableData] = useState([]);
@@ -141,7 +140,7 @@ const InstanceInformation = () => {
             id: '3',
             width: '192px',
             renderCell: (cellData: any, rowData: any) => {
-                return !storageSavingsLoading ? (
+                return !storageSavingsLoading && !snapshotLoading ? (
                     <>
                         {rowData.details === 'Instance type' &&
                             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
