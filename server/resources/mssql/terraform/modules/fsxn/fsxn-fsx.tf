@@ -7,8 +7,6 @@ locals {
 }
 
 resource "aws_fsx_ontap_file_system" "fsx_ontap_fs" {
-  # file_system_type   = "ONTAP"
-
   // Create the fsx only when its new
   count = local.fsx_is_existing ? 0 : 1
 

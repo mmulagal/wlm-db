@@ -46,20 +46,8 @@ variable "s3_endpoint_exists" {
   default     = false
 }
 
-variable "cloudformation_endpoint_exists" {
-  description = "Boolean to convey if a Cloudformation endpoint exists in the vpc."
-  type        = bool
-  default     = false
-}
-
 variable "ssm_endpoint_exists" {
   description = "Boolean to convey if a SSM endpoint exists in the vpc."
-  type        = bool
-  default     = false
-}
-
-variable "sqs_endpoint_exists" {
-  description = "Boolean to convey if a SQS endpoint exists in the vpc."
   type        = bool
   default     = false
 }

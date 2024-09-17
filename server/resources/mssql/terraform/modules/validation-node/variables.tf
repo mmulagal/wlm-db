@@ -61,7 +61,7 @@ variable "enable_cloudwatch_log_feature" {
   type        = bool
 }
 
-variable "deployment_name" { # parent_stack_name
+variable "deployment_name" {
   description = "The name of the parent deployment"
   type        = string
 }

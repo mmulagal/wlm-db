@@ -1,8 +1,3 @@
-variable "parent_stack_name" {
-  description = "Stack name for the parent CloudFormation stack."
-  type        = string
-}
-
 variable "ec2_role_name" {
   description = "EC2 instance role name."
   type        = string

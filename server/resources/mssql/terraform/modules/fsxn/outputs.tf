@@ -7,22 +7,22 @@ output "fsx_fs_logical_id" {
 #For SVM
 output "fsx_svm_logical_id" {
   description = "Logical ID of the storage virtual machine"
-  value       = aws_fsx_ontap_storage_virtual_machine.fsxsvm01.id
+  value       = aws_fsx_ontap_storage_virtual_machine.fsx_svm_01.id
 }
 
 output "fsx_svm_arn" {
   description = "ARN of the storage virtual machine"
-  value       = aws_fsx_ontap_storage_virtual_machine.fsxsvm01.arn
+  value       = aws_fsx_ontap_storage_virtual_machine.fsx_svm_01.arn
 }
 
 output "fsx_svm_id" {
   description = "System generated ID of the storage virtual machine"
-  value       = aws_fsx_ontap_storage_virtual_machine.fsxsvm01.id
+  value       = aws_fsx_ontap_storage_virtual_machine.fsx_svm_01.id
 }
 
 output "fsx_svm_uuid" {
   description = "System generated UUID of the storage virtual machine"
-  value       = aws_fsx_ontap_storage_virtual_machine.fsxsvm01.uuid
+  value       = aws_fsx_ontap_storage_virtual_machine.fsx_svm_01.uuid
 }
 
 output "fsx_fs_resource_arn" {

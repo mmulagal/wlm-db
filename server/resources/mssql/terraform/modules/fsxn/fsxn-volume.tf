@@ -4,7 +4,7 @@ resource "aws_fsx_ontap_volume" "fsx_data_volume" {
   security_style             = "NTFS"
   size_in_megabytes          = var.fsx_data_volume_size
   storage_efficiency_enabled = true
-  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.fsxsvm01.id
+  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.fsx_svm_01.id
   ontap_volume_type          = "RW"
   volume_type                = "ONTAP"
   tiering_policy {
@@ -19,7 +19,7 @@ resource "aws_fsx_ontap_volume" "fsx_log_volume" {
   security_style             = "NTFS"
   size_in_megabytes          = var.fsx_log_volume_size
   storage_efficiency_enabled = true
-  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.fsxsvm01.id
+  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.fsx_svm_01.id
   ontap_volume_type          = "RW"
   volume_type                = "ONTAP"
   tiering_policy {
@@ -34,7 +34,7 @@ resource "aws_fsx_ontap_volume" "fsx_temp_db_volume" {
   security_style             = "NTFS"
   size_in_megabytes          = var.fsx_temp_db_volume_size
   storage_efficiency_enabled = true
-  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.fsxsvm01.id
+  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.fsx_svm_01.id
   ontap_volume_type          = "RW"
   volume_type                = "ONTAP"
   tiering_policy {
@@ -51,7 +51,7 @@ resource "aws_fsx_ontap_volume" "fsx_cluster_quorum_volume" {
   security_style             = "NTFS"
   size_in_megabytes          = var.fsx_cluster_quorum_volume_size
   storage_efficiency_enabled = true
-  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.fsxsvm01.id
+  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.fsx_svm_01.id
   ontap_volume_type          = "RW"
   volume_type                = "ONTAP"
   tiering_policy {

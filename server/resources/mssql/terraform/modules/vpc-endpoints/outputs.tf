@@ -5,15 +5,6 @@ output "https_security_group_id" {
 output "s3_endpoint_id" {
   value = aws_vpc_endpoint.s3_endpoint[*].id
 }
-
-output "cloudformation_endpoint_id" {
-  value = aws_vpc_endpoint.cloudformation_endpoint[*].id
-}
-
-output "sqs_endpoint_id" {
-  value = aws_vpc_endpoint.sqs_endpoint[*].id
-}
-
 output "ssm_endpoint_id" {
   value = aws_vpc_endpoint.ssm_endpoint[*].id
 }

@@ -12,14 +12,10 @@ terraform {
 }
 
 locals {
-  use_aws_directory_service_ee  = var.ad_scenario_type == "AWS_MANAGED_AD" ? true : false
   new_ontap_fsx                 = var.fsx_file_system_id == "" ? true : false
   existing_ontap_fsx            = local.new_ontap_fsx ? false : true
-  exclude_notification          = var.notification_arn == "" ? true : false
-  include_notification          = local.exclude_notification ? false : true
   is_standalone                 = var.sql_deployment_mode == "standalone" ? true : false
   is_failover_cluster           = local.is_standalone ? false : true
-  should_send_saas_notification = var.role_credentials_id == "" ? false : true
   fsx_is_single_zone_deployment = var.deployment_mode == "SINGLE_AZ_1" ? true : false
 }
 
@@ -46,9 +42,7 @@ module "vpc-endpoints" {
   s3_endpoint_route_tables = var.s3_endpoint_route_tables
 
   s3_endpoint_exists              = var.s3_endpoint_exists
-  cloudformation_endpoint_exists  = var.cloudformation_endpoint_exists
   ssm_endpoint_exists             = var.ssm_endpoint_exists
-  sqs_endpoint_exists             = var.sqs_endpoint_exists
   cloudwatch_logs_endpoint_exists = var.cloudwatch_logs_endpoint_exists
   fsx_endpoint_exists             = var.fsx_endpoint_exists
   ec2_endpoint_exists             = var.ec2_endpoint_exists
@@ -146,7 +140,6 @@ module "ec2" {
   sql_collation              = var.sql_collation
 
   sql_node_initialization_s3_url = var.sql_node_initialization_s3_url
-  parent_stack_name              = var.deployment_name
   sql_node_aws_location          = var.aws_location
   route_table_id                 = var.route_table1_id
   ebs_volume_size                = var.ebs_volume_size

@@ -22,7 +22,6 @@ account_id                    = "account-aHP3esT5"
 cloud_provider_account_id     = 464262061435
 role_credentials_id           = "0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8"
 wlmdb_aws_account_id          = 464262061435 # number
-jwt_token                     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 metrics                       = "triggered-from:rest-api,instance-type:m5.large,sql-version:2016,database-size:200,sql-host-name:sqldbspb9e,deployed-from:wlmdb"
 
 s3_endpoint_route_tables        = ""              # s3_gateway_endpoint_route_tables
@@ -31,9 +30,7 @@ private_subnet2_cidrblock       = ""              #private_subnet2_cidr_block
 encrypted_fsx_password          = "Netapp123"     # fsx_encrypted_password
 ebs_volume_size                 = 100             # number
 s3_endpoint_exists              = true            # is_s3_endpoint_created
-cloudformation_endpoint_exists  = true            # is_cloudformation_endpoint_created
 ssm_endpoint_exists             = true            # is_ssm_endpoint_created
-sqs_endpoint_exists             = true            # is_sqs_endpoint_created
 cloudwatch_logs_endpoint_exists = true            # is_cloudwatch_logs_endpoint_created
 fsx_endpoint_exists             = true            # is_fsx_endpoint_created
 ec2_endpoint_exists             = true            # is_ec2_endpoint_created
@@ -81,7 +78,6 @@ enable_cloud_watch_log_feature = true # enable_cloud_watch_log
 mssql_media_bucket_name        = "LaunchWizard-sqlha"
 mssql_media_path_key           = "launchwizardscripts/sqlmedia/sqlserver.iso"
 
-s3_artifacts_url                      = ""
 validation_node_initialization_s3_url = ""
 sql_node_initialization_s3_url        = ""
 fsx_encryption_key                    = ""

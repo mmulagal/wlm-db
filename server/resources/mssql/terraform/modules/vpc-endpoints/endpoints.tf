@@ -3,9 +3,7 @@ data "aws_region" "current" {}
 locals {
   single_zone = var.standby_subnet1_id == null || var.standby_subnet1_id == "" ? true : false
 
-  create_cloudformation_endpoint  = var.cloudformation_endpoint_exists == false
   create_ssm_endpoint             = var.ssm_endpoint_exists == false
-  create_sqs_endpoint             = var.sqs_endpoint_exists == false
   create_s3_endpoint              = var.s3_endpoint_exists == false
   create_cloudwatch_logs_endpoint = var.cloudwatch_logs_endpoint_exists == false
   create_fsx_endpoint             = var.fsx_endpoint_exists == false
@@ -14,9 +12,7 @@ locals {
   create_ssm_messages_endpoint    = var.ssm_messages_endpoint_exists == false
 
   create_sg = anytrue([
-    local.create_cloudformation_endpoint,
     local.create_ssm_endpoint,
-    local.create_sqs_endpoint,
     local.create_s3_endpoint,
     local.create_cloudwatch_logs_endpoint,
     local.create_fsx_endpoint,
@@ -24,7 +20,6 @@ locals {
     local.create_ec2_messages_endpoint,
     local.create_ssm_messages_endpoint
   ])
-  #notifications to be added here using notificationArns
 }
 
 resource "aws_security_group" "https_security_group" {
@@ -49,25 +44,6 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
   route_table_ids   = split(",", var.s3_endpoint_route_tables)
 }
 
-resource "aws_vpc_endpoint" "cloudformation_endpoint" {
-  count               = local.create_cloudformation_endpoint ? 1 : 0
-  vpc_id              = var.vpc_id
-  vpc_endpoint_type   = "Interface"
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.cloudformation"
-  subnet_ids          = local.single_zone ? [var.preferred_subnet1_id] : [var.preferred_subnet1_id, var.standby_subnet1_id]
-  private_dns_enabled = true
-  security_group_ids  = [aws_security_group.https_security_group[0].id]
-}
-
-resource "aws_vpc_endpoint" "sqs_endpoint" {
-  count               = local.create_sqs_endpoint ? 1 : 0
-  vpc_id              = var.vpc_id
-  vpc_endpoint_type   = "Interface"
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.sqs"
-  subnet_ids          = local.single_zone ? [var.preferred_subnet1_id] : [var.preferred_subnet1_id, var.standby_subnet1_id]
-  private_dns_enabled = true
-  security_group_ids  = [aws_security_group.https_security_group[0].id]
-}
 resource "aws_vpc_endpoint" "ssm_endpoint" {
   count               = local.create_ssm_endpoint ? 1 : 0
   vpc_id              = var.vpc_id
