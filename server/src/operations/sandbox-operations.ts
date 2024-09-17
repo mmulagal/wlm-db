@@ -505,9 +505,6 @@ async function createSandbox(
         );
 
         logger.info({ srcDetails, destDetails });
-        if (process.env.NODE_ENV !== 'test') {
-            throw createError('FAILED');
-        }
         if (isDemo()) {
             srcDetails.databaseInstanceName = srcDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
             destDetails.databaseInstanceName = destDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
