@@ -771,6 +771,7 @@ const createVolumeClone = (
 const createClonedDb = (
     dbName: string,
     instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlServiceName: string = DEFAULT_INSTANCE_NAME,
     dataFileList: string[] = [],
     logFileList: string[] = [],
     logPrefix: string = '',
@@ -779,6 +780,7 @@ const createClonedDb = (
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
     $logPrefix = '${logPrefix}'
+    $sqlServiceName = '${sqlServiceName}'
 
     Start-Transcript -Path "C:\\cfn\\log\\sqlserver_create_db_$dbname.log.txt" -Append | Out-Null
 
@@ -827,16 +829,31 @@ const createClonedDb = (
             .join('\n')}
 
         # Rename the actual files to the new name
+        $newFiles = @()
         ${[...dataFileList, ...logFileList]
             .map(file => {
                 // replace mdf, ndf, ldf with epoch.mdf etc
                 const newFileName = file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`);
                 return `$newFiles += '${newFileName}'
-                Rename-Item -Path "${file}" -NewName "${newFileName}"`;
+                Rename-Item -Path "${file}" -NewName "${newFileName}"
+                $newFiles += '${newFileName}'`;
             })
             .join('\n')}
 
         sqlcmd -S "${instanceName}"  -Q "ALTER DATABASE $dbname SET ONLINE" -y 0
+
+        # Update ACL for the new files
+
+        $sqlService = Get-WmiObject -Class Win32_Service -Filter "Name=$sqlServiceName"
+
+        $newFiles | ForEach-Object {
+            $newFile = $_
+            $Acl = Get-Acl $_
+            $Ar = New-Object System.Security.AccessControl.FileSystemAccessRule($sqlService.StartName, "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow")
+            $Acl.SetAccessRule($Ar)
+            Set-Acl $_ $Acl
+        }
+        
 
     } catch {
         Write-Error "$logPrefix $($_.Exception.Message)"

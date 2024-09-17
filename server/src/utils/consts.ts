@@ -1262,6 +1262,10 @@ const PGSQL_TEMPLATES_ASSETS = [
     {
         name: 'ValidationTemplate',
         url: 'templates/vpc-ad-validation.yaml'
+    },
+    {
+        name: 'SQLStandaloneTemplate',
+        url: 'templates/standalone-deployment.yaml'
     }
 ];
 

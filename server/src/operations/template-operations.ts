@@ -310,6 +310,68 @@ async function updatePgTemplateUrls(
             url: valSignedUrl,
             location: customValidationTemplatePath
         });
+    } else if (
+        templateType === TEMPLATE_TYPES.ENDPOINT ||
+        templateType === TEMPLATE_TYPES.NEWFSX ||
+        templateType === TEMPLATE_TYPES.EXISTINGFSX
+    ) {
+        let staticTemplatePath;
+        if (templateType === TEMPLATE_TYPES.NEWFSX) {
+            staticTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXNewTemplate');
+        } else if (templateType === TEMPLATE_TYPES.EXISTINGFSX) {
+            staticTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXExistingTemplate');
+        }
+        const customTemplatePath: string = `${WLMDB}/${stackName}/${staticTemplatePath!.url}`;
+        await putObjectBucket(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, customTemplatePath, source);
+        const signedUrl = await getPreSignedUrl(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customTemplatePath
+        );
+        signedUrls.set(staticTemplatePath!.name, {
+            name: staticTemplatePath!.name,
+            url: signedUrl,
+            location: customTemplatePath
+        });
+    } else if (templateType === TEMPLATE_TYPES.SQLSTANDALONE) {
+        const contents = template({});
+        // const contents = template({
+        //     DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
+        //     PowerShell: decodeURI(signedUrls.get('PowerShell')?.url || ''),
+
+        //     Sqlspcu: decodeURI(signedUrls.get('Sqlspcu')?.url || ''),
+        //     AmazonLaunchWizardForCFN: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
+        //     AmazonLaunchWizardForSSM: decodeURI(signedUrls.get('AmazonLaunchWizardForSSM')?.url || ''),
+
+        //     ScriptVerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
+        //     ScriptUnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
+        //     ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
+
+        //     ScriptSQLFCI: decodeURI(signedUrls.get('ScriptSQLFCI')?.url || ''),
+        //     ScriptSQLONTAP: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
+        //     ScriptDBCREATE: decodeURI(signedUrls.get('ScriptDBCREATE')?.url || ''),
+        //     DependentPackages: decodeURI(signedUrls.get('DependentPackages')?.url || ''),
+        //     ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
+        //     OpenSSL: decodeURI(signedUrls.get('OpenSSL')?.url || '')
+        // });
+        const standAloneTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
+        const customStandAloneTemplatePath: string = `${WLMDB}/${stackName}/${standAloneTemplatePath!.url}`;
+        await putObjectBucket(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customStandAloneTemplatePath,
+            contents
+        );
+        const standAloneSignedUrl = await getPreSignedUrl(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customStandAloneTemplatePath
+        );
+        signedUrls.set(standAloneTemplatePath!.name, {
+            name: standAloneTemplatePath!.name,
+            url: standAloneSignedUrl,
+            location: customStandAloneTemplatePath
+        });
     }
 }
 
@@ -348,7 +410,7 @@ async function uploadTemplates(
             updatePgTemplateUrls(region, template.location, signedUrls, template.name, stackName)
         );
         await Promise.all(promises).then(() =>
-            updateTemplateUrls(
+            updatePgTemplateUrls(
                 region,
                 PGSQL_MASTER_TEMPLATE_DISTRIBUTION.location,
                 signedUrls,

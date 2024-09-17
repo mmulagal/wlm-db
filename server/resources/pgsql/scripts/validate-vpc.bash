@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Set args as variables
+subnet=$1
+region=$2
+Stackname=$3
+ResourceId=$4
+
+echo "subnet: $subnet, region: $region, Stackname: $Stackname, ResourceId: $ResourceId"
+
 # Get instance ID
 instanceId=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 
@@ -35,7 +43,7 @@ done
 if [ $failed = true ]; then
     FailureReason="Failed to connect to AWS Cloud Formation endpoint. Check if the security group allows HTTPS(443) tcp port and subnet is associated with the endpoint."
     echo "{\"status\": \"Failed\", \"reason\": \"$FailureReason\"}" | jq -c .
-    cfn-signal.exe -e 1 -r "$FailureReason" "$WaitHandler"
+    cfn-signal -e 1 -r "$FailureReason"
     aws cloudformation signal-resource --stack-name "$Stackname" --status FAILURE --logical-resource-id "$ResourceID" --unique-id "$instanceId"
     exit 1
 else

@@ -156,15 +156,18 @@ Resources:
                     files:
                         /home/ec2-user/cfn/scripts/validate-vpc.bash:
                             source: {{{ ScriptValidation }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
                 Finalize:
                     commands:
                         a-validate-vpc:
                             command: !Sub 
-                                - '/home/ec2-user/cfn/scripts/validate-vpc.bash -subnet ${subnetId} -region ${AWS::Region} -Stackname ${AWS::StackName} -ResourceID ValidationNode1'
+                                - '/home/ec2-user/cfn/scripts/validate-vpc.bash ${subnetId} ${AWS::Region} ${AWS::StackName} ValidationNode1'
                                 - subnetId: !Ref 'SubnetID'
                             waitAfterCompletion: '0'
                         e-signal-resource:
-                            command: !Sub 'cfn-signal -e %ERRORLEVEL% --resource ValidationNode1
+                            command: !Sub 'cfn-signal -e $? --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
                             waitAfterCompletion: '0'
         Properties:

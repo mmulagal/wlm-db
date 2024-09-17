@@ -1180,7 +1180,8 @@ async function createCloneDb(
         parentJobId,
         destDetails,
         mountPaths,
-        collation
+        collation,
+        fileSuffix
     );
 
     let status: string = JOBSTATUS.IN_PROGRESS;
@@ -1203,19 +1204,23 @@ async function createCloneDb(
             createCloneDbScript(
                 destDetails.database,
                 destDetails.instanceName,
-                mountPaths.dataPath,
-                mountPaths.logPath,
-                `Sandbox:${destDetails.database}:`,
-                fileSuffix
+                JSON.stringify(mountPaths.dataPath),
+                mountPaths.logPath
+                // `Sandbox:${destDetails.database}:`,
+                // fileSuffix
             )
         ];
 
         if (isDemoFlow) {
             command = [
-                createCloneDbScript('testdb', DEFAULT_MSSQL_INSTANCE_NAME, [
-                    'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
-                    'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
-                ])
+                createCloneDbScript(
+                    'testdb',
+                    DEFAULT_MSSQL_INSTANCE_NAME,
+                    JSON.stringify([
+                        'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
+                        'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
+                    ])
+                )
             ];
         }
 
