@@ -94,13 +94,11 @@ variable "validation_node_initialization_s3_url" {
 variable "validation_node1_wait_handler" {
   description = "The wait handler for the validation node"
   type        = string
-  default     = "test"
 }
 
 variable "key_pair_private_key_path" {
   description = "The path to the private key of the key pair"
   type        = string
-  default     = "/Users/sathish/Downloads/occm_qa.pem"
 }
 variable "sql_deployment_mode" {
   description = "The deployment mode of SQL"

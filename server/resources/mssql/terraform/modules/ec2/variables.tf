@@ -1,31 +1,26 @@
 variable "ec2_role_name" {
   description = "EC2 instance role name."
   type        = string
-  default     = "AmazonEC2RoleForLaunchWizard"
 }
 
 variable "enable_cloudwatch_log_feature" {
   description = "Enable AWS CloudWatch logging."
   type        = bool
-  default     = "false"
 }
 variable "unique_id" {
   description = "Automation execution unique ID."
   type        = string
-  default     = "SQL123"
 }
 
 variable "ami_id" {
   description = "ID of the AMI to use."
   type        = string
-  default     = "ami-06c634c2148dc0856"
 }
 
 # not used
 variable "byol_ami" {
   description = "Whether the AMI is license included or bring your own license."
   type        = string
-  default     = "false"
 }
 
 variable "key_pair_name" {
@@ -59,7 +54,6 @@ variable "vpc_cidr" {
 variable "sql_fsx_server_net_bios_name" {
   description = "NetBIOS name of the SQL Server (up to 15 characters)."
   type        = string
-  default     = "SqlFSx1"
   validation {
     condition     = can(regex("[a-zA-Z0-9\\-]+", var.sql_fsx_server_net_bios_name))
     error_message = "The NetBIOS name must contain only alphanumeric characters and hyphens."
@@ -69,7 +63,6 @@ variable "sql_fsx_server_net_bios_name" {
 variable "domain_admin_user" {
   description = "User name for the account that will be used as Domain Administrator. This is separate from the default 'Administrator' account."
   type        = string
-  default     = "admin"
   validation {
     condition     = can(regex("([a-zA-Z0-9]+(\\.|_|-|@)*)+", var.domain_admin_user))
     error_message = "The user name must contain only alphanumeric characters, periods, underscores, hyphens, or at signs."
@@ -98,7 +91,6 @@ variable "domain_member_sg_id" {
 variable "workload_instance_type" {
   description = "EC2 instance type for the workload instances."
   type        = string
-  default     = "m5.large"
 }
 
 variable "mssql_media_bucket_name" {
@@ -109,18 +101,15 @@ variable "mssql_media_bucket_name" {
 variable "mssql_media_path_key" {
   description = "The S3 bucket key from where the SQL Server media can be downloaded. This string can include numbers, lowercase letters, uppercase letters, hyphens (-), and a forward slash (/)."
   type        = string
-  default     = "launchwizardscripts/sqlmedia/sqlserver.iso"
 }
 
 variable "sql_admin_accounts" {
   description = "User name for the SQL Server DB service account administrator. It can be the AD domain admin or other local or domain users."
   type        = string
-  default     = "sqlsa"
 }
 variable "number_of_nodes" {
   description = "The number of SQL Server nodes to create."
   type        = string
-  default     = "1"
 }
 
 variable "route_table_id" {
@@ -131,31 +120,26 @@ variable "route_table_id" {
 variable "sql_svm_name" {
   description = "Name of the storage virtual machine (SVM) that will host the SQL Server workload."
   type        = string
-  default     = "SQLVM"
 }
 
 variable "sql_igroup_name" {
   description = "igroup name for the SQL Server."
   type        = string
-  default     = "SQLIQN"
 }
 
 variable "fsx_data_volume_name" {
   description = "The name of the volume for SQL Server data."
   type        = string
-  default     = "SQLData"
 }
 
 variable "fsx_log_volume_name" {
   description = "The name of the volume for the SQL Server log."
   type        = string
-  default     = "SQLLog"
 }
 
 variable "fsx_temp_db_volume_name" {
   description = "The name of the volume for the tempdb system database."
   type        = string
-  default     = "SQLTempDb"
 }
 
 variable "fsx_data_lun_size" {
@@ -186,7 +170,6 @@ variable "sql_collation" {
 variable "fsx_volume_snapshot_policy" {
   description = "Snapshot policy for the volume. Can be either daily_weekretention or none."
   type        = string
-  default     = "daily_weekretention"
   validation {
     condition     = contains(["daily_weekretention", "none"], var.fsx_volume_snapshot_policy)
     error_message = "The snapshot policy must be either 'daily_weekretention' or 'none'."
@@ -207,7 +190,6 @@ variable "subnet_ids" {
 variable "sql_node_key_pair_private_key_path" {
   description = "The path to the private key of the key pair"
   type        = string
-  default     = "/Users/sathish/Downloads/occm_qa.pem"
 }
 
 variable "sql_node_aws_location" {
