@@ -37,6 +37,7 @@ import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
 import {
     addInstanceIdToGetPerf,
+    checkForAllAOAG,
     getPartnerNodeEc2InstanceId,
     handleManageNotification,
     handleManageTriggerNotification,
@@ -49,8 +50,7 @@ import store from '../../../store/store';
 import {
     setInProgressInstances,
     setInventoryExpandedRowHostData,
-    setInventoryTableData,
-    setUnManagedPerfInstanceIdsList
+    setInventoryTableData
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 

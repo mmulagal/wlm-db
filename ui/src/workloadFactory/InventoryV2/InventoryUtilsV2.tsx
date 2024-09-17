@@ -1882,3 +1882,12 @@ export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
         // This has to be called even if any row is becoming unmanaged row or managed row
     }
 };
+
+export const checkForAllAOAG = (rowData: any) => {
+    // If all instance have AOAG than ES is disabled for it
+    return rowData?.sqlServerInstances?.every((item: any) => {
+        return (
+            !item?.sqlServerDeploymentType || item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+        );
+    });
+};
