@@ -1,9 +1,13 @@
-import { createHostConfigData, listHostConfigData, removeHostConfigData } from '../../../src/lib/database/database-instance-config';
+import {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData,
+    removeDatabaseInstanceConfigData
+} from '../../../src/lib/database/database-instance-config';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID } from '../../utils/consts';
 
-describe('Host config data operations', () => {
-    it('should create Host config data records', async () => {
-        const hostConfigDataRecords = [
+describe('database instance config operations', () => {
+    it('should create database instance config records', async () => {
+        const DatabaseInstanceConfigDataRecords = [
             {
                 resource_id: 'i-1234567890abcdef0',
                 account_id: ACCOUNT_ID,
@@ -85,13 +89,13 @@ describe('Host config data operations', () => {
                 config_data_type: 'PERFORMANCE'
             }
         ];
-        const resp = await createHostConfigData(hostConfigDataRecords);
+        const resp = await createDatabaseInstanceConfigData(DatabaseInstanceConfigDataRecords);
         expect(resp.count).toEqual(2);
-        await removeHostConfigData(undefined, ACCOUNT_ID);
+        await removeDatabaseInstanceConfigData(undefined, ACCOUNT_ID);
     });
 
-    it('should list Host config data records', async () => {
-        const hostConfigDataRecords = [
+    it('should list database instance config records', async () => {
+        const DatabaseInstanceConfigDataRecords = [
             {
                 resource_id: 'i-1234567890abcdef0',
                 account_id: ACCOUNT_ID,
@@ -173,14 +177,14 @@ describe('Host config data operations', () => {
                 config_data_type: 'PERFORMANCE'
             }
         ];
-        await createHostConfigData(hostConfigDataRecords);
-        const resp = await listHostConfigData(ACCOUNT_ID);
+        await createDatabaseInstanceConfigData(DatabaseInstanceConfigDataRecords);
+        const resp = await listDatabaseInstanceConfigData(ACCOUNT_ID);
         expect(resp.length).toEqual(2);
-        await removeHostConfigData(undefined, ACCOUNT_ID);
+        await removeDatabaseInstanceConfigData(undefined, ACCOUNT_ID);
     });
 
-    it('should remove Host config data records', async () => {
-        const hostConfigDataRecords = [
+    it('should remove database instance config records', async () => {
+        const DatabaseInstanceConfigDataRecords = [
             {
                 resource_id: 'i-1234567890abcdef0',
                 account_id: ACCOUNT_ID,
@@ -262,10 +266,10 @@ describe('Host config data operations', () => {
                 config_data_type: 'PERFORMANCE'
             }
         ];
-        await createHostConfigData(hostConfigDataRecords);
-        const resp = await listHostConfigData(ACCOUNT_ID);
+        await createDatabaseInstanceConfigData(DatabaseInstanceConfigDataRecords);
+        const resp = await listDatabaseInstanceConfigData(ACCOUNT_ID);
         const configIds = resp.map(config => config.id);
-        const removeResp = await removeHostConfigData(configIds);
+        const removeResp = await removeDatabaseInstanceConfigData(configIds);
         expect(removeResp.count).toBeGreaterThan(1);
     });
 });

@@ -3,7 +3,7 @@ import { prisma } from '../../utils/prisma-utils';
 
 const logger = getLogger();
 
-interface HostConfigData {
+interface DatabaseInstanceConfigData {
     account_id: string;
     credentials_id: string;
     region: string;
@@ -14,15 +14,15 @@ interface HostConfigData {
     config_data: object;
     config_data_type: string;
 }
-async function createHostConfigData(records: HostConfigData[]) {
-    logger.info('Creating host config data', { records });
+async function createDatabaseInstanceConfigData(records: DatabaseInstanceConfigData[]) {
+    logger.info('Creating database instance config data', { records });
 
     return prisma.client.database_instance_config_data.createMany({
         data: records
     });
 }
 
-async function listHostConfigData(
+async function listDatabaseInstanceConfigData(
     accountId?: string,
     region?: string,
     credentialsId?: string,
@@ -30,7 +30,7 @@ async function listHostConfigData(
     databaseInstanceId?: string,
     configDataType?: string
 ) {
-    logger.info('Listing host config data', {
+    logger.info('Listing database instance config data', {
         accountId,
         region,
         credentialsId,
@@ -51,7 +51,7 @@ async function listHostConfigData(
     });
 }
 
-async function removeHostConfigData(
+async function removeDatabaseInstanceConfigData(
     id?: string[],
     accountId?: string,
     region?: string,
@@ -59,7 +59,14 @@ async function removeHostConfigData(
     resourceId?: string,
     databaseInstanceId?: string
 ) {
-    logger.info('Removing host config data', { id, accountId, region, credentialsId, resourceId, databaseInstanceId });
+    logger.info('Removing database instance config data', {
+        id,
+        accountId,
+        region,
+        credentialsId,
+        resourceId,
+        databaseInstanceId
+    });
 
     return prisma.client.database_instance_config_data.deleteMany({
         where: {
@@ -75,4 +82,4 @@ async function removeHostConfigData(
     });
 }
 
-export { createHostConfigData, listHostConfigData, removeHostConfigData };
+export { createDatabaseInstanceConfigData, listDatabaseInstanceConfigData, removeDatabaseInstanceConfigData };
