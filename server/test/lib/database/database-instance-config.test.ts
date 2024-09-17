@@ -1,4 +1,4 @@
-import { createHostConfigData, listHostConfigData, removeHostConfigData } from '../../../src/lib/database/host_config';
+import { createHostConfigData, listHostConfigData, removeHostConfigData } from '../../../src/lib/database/database-instance-config';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID } from '../../utils/consts';
 
 describe('Host config data operations', () => {

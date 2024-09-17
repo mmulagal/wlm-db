@@ -132,7 +132,7 @@ model database_instances {
   storage_protocol                  String?           @db.VarChar(30)
   fsx_svm_id                        Json     
   metadata                          Json?             @default("{}")
-  host_config_data                  host_config_data[]
+  database_instance_config_data                  database_instance_config_data[]
 
   resource resource @relation(fields: [account_id, credentials_id, region, resource_id], references: [account_id, credentials_id, region, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_region_resource_id")
 
@@ -158,7 +158,7 @@ model tracked_ec2 {
   @@index([account_id], name: "k_wlmdb_tracked_ec2_account_id")
 }
 
-model host_config_data{
+model database_instance_config_data{
   id                        String   @id @default(uuid()) @db.VarChar(40)
   account_id                String   @db.VarChar(30)
   credentials_id            String   @db.VarChar(80)
@@ -172,10 +172,10 @@ model host_config_data{
 
   database_instances database_instances @relation(fields: [account_id, credentials_id, resource_id, database_instance_id], references: [account_id, credentials_id, resource_id, database_instance_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_database_instances_unique_criteria")
 
-  @@unique([account_id, credentials_id, resource_id, database_instance_id, timestamp, config_data_type], name: "uk_wlmdb_host_config_data", map: "uk_wlmdb_host_config_data")
-  @@index([account_id], name: "k_wlmdb_host_config_data_account_id")
-  @@index([credentials_id], map: "k_wlmdb_host_config_data_credentials_id")
-  @@index([resource_id], map: "k_wlmdb_host_config_data_resource_id")
+  @@unique([account_id, credentials_id, resource_id, database_instance_id, timestamp, config_data_type], name: "uk_wlmdb_database_instance_config_data", map: "uk_wlmdb_database_instance_config_data")
+  @@index([account_id], name: "k_wlmdb_database_instance_config_data_account_id")
+  @@index([credentials_id], map: "k_wlmdb_database_instance_config_data_credentials_id")
+  @@index([resource_id], map: "k_wlmdb_database_instance_config_data_resource_id")
 }
 
 enum JOBSTATUS {

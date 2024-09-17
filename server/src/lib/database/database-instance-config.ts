@@ -17,7 +17,7 @@ interface HostConfigData {
 async function createHostConfigData(records: HostConfigData[]) {
     logger.info('Creating host config data', { records });
 
-    return prisma.client.host_config_data.createMany({
+    return prisma.client.database_instance_config_data.createMany({
         data: records
     });
 }
@@ -39,7 +39,7 @@ async function listHostConfigData(
         configDataType
     });
 
-    return prisma.client.host_config_data.findMany({
+    return prisma.client.database_instance_config_data.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
             ...(region && { region }),
@@ -61,7 +61,7 @@ async function removeHostConfigData(
 ) {
     logger.info('Removing host config data', { id, accountId, region, credentialsId, resourceId, databaseInstanceId });
 
-    return prisma.client.host_config_data.deleteMany({
+    return prisma.client.database_instance_config_data.deleteMany({
         where: {
             OR: [
                 ...(id ? [{ id: { in: id } }] : []),
