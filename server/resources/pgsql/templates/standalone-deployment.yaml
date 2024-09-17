@@ -119,8 +119,7 @@ Resources:
             echo "Setting up the environment..."
             fsxusername=${FSXUsername}
             fsxpassword=${FSXPassword}
-            fsxMgmtIp=management.${FSxFileSystemId}.fsx.${AWS::Region}.amazonaws.com
-            fsxNFSIP=intercluster.${FSxFileSystemId}.fsx.${AWS::Region}.amazonaws.com
+            
             fsxsvmname=${PGSQLSvmName}
             fsxaggrname=${FSxAggrName}
             fsxdatamountpoint=/${FSxDataVolumeName}
@@ -128,9 +127,24 @@ Resources:
             fsxdatavolumename=${FSxDataVolumeName}
             fsxlogvolumename=${FSxLogVolumeName}
             psql_data_default=/var/lib/pgsql/14/data
-            archive_dir=/pglog/logs/archived_logs
+            archive_dir=/$fsxlogvolumename/logs/archived_logs
             psql_svcs=postgresql
             dbname=testDB
+
+            svm_id=aws fsx describe-storage-virtual-machines --query "StorageVirtualMachines[?Name==$fsxsvmname].StorageVirtualMachineId" --filter "Name=file-system-id,Values=${FSxFileSystemId}"
+            fsxMgmtIp=management.${FSxFileSystemId}.fsx.${AWS::Region}.amazonaws.com
+            fsxNFSIP=${svm_id}.${FSxFileSystemId}.fsx.${AWS::Region}.amazonaws.com
+
+            echo "fsxusername=${FSXUsername}"
+            echo "fsxpassword=${FSXPassword}"
+            echo $fsxMgmtIp
+            echo $fsxNFSIP
+            echo "fsxsvmname=${PGSQLSvmName}"
+            echo "fsxaggrname=${FSxAggrName}"
+            echo "fsxdatamountpoint=/${FSxDataVolumeName}"
+            echo "fsxlogmountpoint=/${FSxLogVolumeName}"
+            echo "fsxdatavolumename=${FSxDataVolumeName}"
+            echo "fsxlogvolumename=${FSxLogVolumeName}"
 
             # Function to check the status of the previous command and exit on failure
             check_status() {
@@ -190,31 +204,34 @@ Resources:
             export PATH=$PATH:/usr/bin
 
             # Create directories
-            sudo mkdir -p /pgdata /pglog
+            sudo mkdir -p /$fsxdatavolumename /$fsxlogvolumename
             check_status "Failed to create directories"
 
+            
+            
             # Mount NFS volumes
-            sudo mount -t nfs $fsxNFSIP:$fsxdatamountpoint /pgdata
+            echo "sudo mount -t nfs $fsxNFSIP:$fsxdatamountpoint /$fsxdatavolumename"
+            sudo mount -t nfs $fsxNFSIP:$fsxdatamountpoint /$fsxdatavolumename
             check_status "Failed to mount data volume"
 
-            sudo mount -t nfs $fsxNFSIP:$fsxlogmountpoint /pglog
+            sudo mount -t nfs $fsxNFSIP:$fsxlogmountpoint /$fsxlogvolumename
             check_status "Failed to mount log volume"
 
             # Set permissions for directories
-            sudo chmod 0700 /pgdata /pglog
-            sudo chown -R postgres:postgres /pgdata /pglog
+            sudo chmod 0700 /$fsxdatavolumename /$fsxlogvolumename
+            sudo chown -R postgres:postgres /$fsxdatavolumename /$fsxlogvolumename
             check_status "Failed to set permissions"
 
-            # Remove existing contents of /pgdata directory
-            sudo rm -rf /pgdata/*
+            # Remove existing contents of /$fsxdatavolumename directory
+            sudo rm -rf /$fsxdatavolumename/*
 
             # Initialize the database cluster on the FSxN mounted volume
-            sudo -u postgres /usr/bin/initdb -D /pgdata
+            sudo -u postgres /usr/bin/initdb -D /$fsxdatavolumename
             check_status "Failed to initialize PostgreSQL database cluster on FSxN volume"
 
             # Update PostgreSQL configuration to use the new data and log directories
-            sudo sed -i "s|^#data_directory =.*|data_directory = '/pgdata'|" /pgdata/postgresql.conf
-            sudo sed -i "s|^#log_directory =.*|log_directory = '/pglog'|" /pgdata/postgresql.conf
+            sudo sed -i "s|^#data_directory =.*|data_directory = '/$fsxdatavolumename'|" /$fsxdatavolumename/postgresql.conf
+            sudo sed -i "s|^#log_directory =.*|log_directory = '/$fsxlogvolumename'|" /$fsxlogvolumename/postgresql.conf
             check_status "Failed to update PostgreSQL configuration"
 
             # Initialize database
@@ -236,14 +253,14 @@ Resources:
             
 
             # Switch to postgres user and move wal logs to log volume
-            sudo chown -R postgres:postgres /pgdata/pg_wal
+            sudo chown -R postgres:postgres /$fsxdatavolumename/pg_wal
             # Ensure the target directory is empty
-            sudo rm -rf /pglog/pg_wal
-            sudo -u postgres mv /pgdata/pg_wal /pglog/pg_wal
+            sudo rm -rf /$fsxlogvolumename/pg_wal
+            sudo -u postgres mv /$fsxdatavolumename/pg_wal /$fsxlogvolumename/pg_wal
             check_status "Failed to move WAL logs"
 
             # Create soft link to moved wal dir
-            sudo -u postgres ln -s /pglog/pg_wal /pgdata/pg_wal
+            sudo -u postgres ln -s /$fsxlogvolumename/pg_wal /$fsxdatavolumename/pg_wal
             check_status "Failed to create soft link for WAL logs"
 
             # Create postgresql archive log dir
@@ -260,7 +277,7 @@ Resources:
 
             # Verify the data directory
             data_directory=$(sudo -u postgres /usr/bin/psql -t -c "SHOW data_directory;" | xargs)
-            if [ "$data_directory" = "/pgdata" ]; then
+            if [ "$data_directory" = "/$fsxdatavolumename" ]; then
                 echo "PostgreSQL data directory is correctly set to the FSxN mounted volume: $data_directory"
             else
                 echo "Error: PostgreSQL data directory is not set to the FSxN mounted volume. Current data directory: $data_directory"
@@ -301,6 +318,19 @@ Resources:
     Properties:
       GroupDescription: Allow access to the Workload instances
       VpcId: !Ref VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.0.0/16  # Replace with Subnet CIDR
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          CidrIp: 10.0.0.0/16  # Replace with Subnet CIDR
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp:  10.0.0.0/16 # Replace with Subnet CIDR
 
 Outputs:
   SqlNodeIp:
