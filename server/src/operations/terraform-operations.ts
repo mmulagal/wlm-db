@@ -1,6 +1,7 @@
 import createError from 'http-errors';
 import Handlebars from 'handlebars';
-import { readFileSync, createWriteStream, promises as fsPromises } from 'fs';
+import { readFileSync, createWriteStream, rmdir } from 'fs';
+import { mkdir, writeFile } from 'fs/promises';
 import { copy } from 'fs-extra';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import archiver from 'archiver';
@@ -15,7 +16,6 @@ import {
     TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS,
     TEMPLATE_TYPES,
     CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING,
-    TERRAFORM_SQL_TFVARS_ASSETS,
     TERRAFORM_FOLDER_PATH
 } from '../utils/consts';
 import getLogger from '../utils/logger';
@@ -41,25 +41,31 @@ async function uploadTerraformModules(
 
     // here getting all the assets signed urls for the scripts and other resources
     // then upating the initializer scripts for validation and sql standalone node with the signed urls and uploading them to s3
-    if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
-        const signedUrls = await generateSignedUrls(region, resourceType);
-        const promises = TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION.map(async template =>
-            uploadInitializerScripts(region, resourceType, deploymentName, signedUrls, template.name, template.location)
-        );
+    try {
+        if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
+            const signedUrls = await generateSignedUrls(region, resourceType);
+            const promises = TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION.map(async template =>
+                uploadInitializerScripts(
+                    region,
+                    resourceType,
+                    deploymentName,
+                    signedUrls,
+                    template.name,
+                    template.location
+                )
+            );
 
-        return Promise.all(promises)
-            .then(data => {
-                logger.info('Initializer scripts uploaded successfully', data);
-                return data;
-            })
-            .catch(error => {
-                logger.error('Error while uploading initializer scripts', error);
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error while uploading initializer scripts');
-            });
+            const data = await Promise.all(promises);
+            logger.info('Initializer scripts uploaded successfully', data);
+            return data;
+        }
+        // Yet to Implement
+        logger.error('Resource type not found');
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Resource type not found');
+    } catch (err: any) {
+        logger.error('Error while uploading initializer scripts', err);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error while uploading initializer scripts');
     }
-    // Yet to Implement
-    logger.error('Resource type not found');
-    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Resource type not found');
 }
 
 async function uploadInitializerScripts(
@@ -80,7 +86,7 @@ async function uploadInitializerScripts(
         initializerPath
     );
 
-    let signedURLList = {};
+    let signedURLDetail = {};
 
     try {
         if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
@@ -114,7 +120,7 @@ async function uploadInitializerScripts(
                     SIGNED_TEMPLATES_BUCKET_NAME,
                     customValidationInitializerTemplatePath
                 );
-                signedURLList = {
+                signedURLDetail = {
                     name: 'validation_node_initialization_s3_url',
                     url: validationInitializerS3ignedURL,
                     location: customValidationInitializerTemplatePath
@@ -140,6 +146,12 @@ async function uploadInitializerScripts(
                     open_ssl: decodeURI(signedUrls.get('OpenSSL')?.url || ''),
                     script_sql_setup: decodeURI(signedUrls.get('ScriptSqlSetup')?.url || '')
                 });
+                await processTemplate(
+                    deploymentName,
+                    'SQLStandaloneInitializerTemplate',
+                    contents,
+                    'sql_node_initialization_s3_url'
+                );
                 const SQLStandaloneInitializerTemplate = TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS.find(
                     asset => asset.name === 'SQLStandaloneInitializerTemplate'
                 );
@@ -158,7 +170,7 @@ async function uploadInitializerScripts(
                     SIGNED_TEMPLATES_BUCKET_NAME,
                     customSQLStandaloneInitializerTemplatePath
                 );
-                signedURLList = {
+                signedURLDetail = {
                     name: 'sql_node_initialization_s3_url',
                     url: sqlStandaloneInitializerS3ignedURL,
                     location: customSQLStandaloneInitializerTemplatePath
@@ -167,7 +179,7 @@ async function uploadInitializerScripts(
                 // Yet to implement for FCI
                 logger.error('Initializer script not found');
             }
-            return signedURLList;
+            return signedURLDetail;
         }
     } catch (error: any) {
         logger.error('Error while uploading initializer scripts', error);
@@ -175,7 +187,31 @@ async function uploadInitializerScripts(
     }
 }
 
-async function uploadTFVarsFile(
+async function processTemplate(deploymentName: string, templateName: string, contents: string, urlName: string) {
+    logger.info('Processing template', templateName, contents, deploymentName, urlName);
+
+    const initializerTemplate = TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS.find(asset => asset.name === templateName);
+
+    const customInitializerTemplatePath: string = `${WLMDB}/${deploymentName}/${initializerTemplate!.url}`;
+    await putObjectBucket(
+        TEMPLATE_BUCKET_REGION,
+        SIGNED_TEMPLATES_BUCKET_NAME,
+        customInitializerTemplatePath,
+        contents
+    );
+    const initializerS3ignedURL = await getPreSignedUrl(
+        TEMPLATE_BUCKET_REGION,
+        SIGNED_TEMPLATES_BUCKET_NAME,
+        customInitializerTemplatePath
+    );
+    return {
+        name: urlName,
+        url: initializerS3ignedURL,
+        location: customInitializerTemplatePath
+    };
+}
+
+async function createTFVarsFile(
     region: string,
     resourceType: DatabaseTypes,
     deploymentName: string,
@@ -184,14 +220,7 @@ async function uploadTFVarsFile(
     initializationScriptURLs: any,
     metrics: string
 ) {
-    logger.info(
-        'Uploading terraform vars file',
-        region,
-        resourceType,
-        deploymentName,
-        templatePath,
-        templateParameters
-    );
+    logger.info('Creating terraform vars file', region, resourceType, deploymentName, templatePath, templateParameters);
     if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         // This will create the terraform variable with the values of proper types like string, number & boolean
         const tfVariables = {
@@ -234,35 +263,17 @@ async function uploadTFVarsFile(
         for (const [key, value] of Object.entries(tfVariables)) {
             terraformVariableString += `${key} = "${value}"\n`;
         }
-        const SQLStandaloneTfVarsTemplate = TERRAFORM_SQL_TFVARS_ASSETS.find(
-            asset => asset.name === 'StandaloneTfvars'
-        );
 
-        const customSQLStandaloneTFVarsTemplatePath: string = `${WLMDB}/${deploymentName}/${
-            SQLStandaloneTfVarsTemplate!.url
-        }`;
-        await putObjectBucket(
-            TEMPLATE_BUCKET_REGION,
-            SIGNED_TEMPLATES_BUCKET_NAME,
-            customSQLStandaloneTFVarsTemplatePath,
-            terraformVariableString
-        );
-        const sqlStandaloneTFVarsS3ignedURL = await getPreSignedUrl(
-            TEMPLATE_BUCKET_REGION,
-            SIGNED_TEMPLATES_BUCKET_NAME,
-            customSQLStandaloneTFVarsTemplatePath
-        );
         // Write the Terraform variables to a local file as well.. can be decided whether to use it from local or s3
         const dirPath = `./resources/mssql/${deploymentName}/terraform`;
         const localTfVarsPath = `${dirPath}/terraform.tfvars`;
-        await fsPromises.mkdir(dirPath, { recursive: true });
-        await fsPromises.writeFile(localTfVarsPath, terraformVariableString);
+        await mkdir(dirPath, { recursive: true });
+        await writeFile(localTfVarsPath, terraformVariableString);
 
         // Copy all files from the source directory to the destination directory
         const sourceDir = TERRAFORM_FOLDER_PATH;
         const destDir = dirPath;
-        await copy(sourceDir, destDir);
-        return sqlStandaloneTFVarsS3ignedURL;
+        return copy(sourceDir, destDir);
     }
     // Yet to Implement
     logger.error('Resource type not found');
@@ -273,23 +284,15 @@ async function createAndUploadTheTerraformZipFile(
     region: string,
     resourceType: DatabaseTypes,
     deploymentName: string,
-    templatePath: string,
-    tfVarsSignedUrl: string
+    templatePath: string
 ) {
-    logger.info(
-        'Creating and uploading the terraform zip file',
-        region,
-        resourceType,
-        deploymentName,
-        templatePath,
-        tfVarsSignedUrl
-    );
+    logger.info('Creating and uploading the terraform zip file', region, resourceType, deploymentName, templatePath);
 
     if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         const archiveFolder = `./resources/mssql/${deploymentName}/terraform.zip`;
         const folderToBeZipped = `./resources/mssql/${deploymentName}/terraform`;
         await createArchive(archiveFolder, folderToBeZipped);
-        const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform//terraform.zip`;
+        const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform/terraform.zip`;
         await putObjectBucket(
             TEMPLATE_BUCKET_REGION,
             SIGNED_TEMPLATES_BUCKET_NAME,
@@ -297,7 +300,7 @@ async function createAndUploadTheTerraformZipFile(
             '',
             archiveFolder
         );
-        await fsPromises.rmdir(`./resources/mssql/${deploymentName}`, { recursive: true });
+        await rmdir(`./resources/mssql/${deploymentName}`, { recursive: true });
         return getPreSignedUrl(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, customSQLStandaloneTFPath);
     }
     // Yet to Implement
@@ -306,6 +309,8 @@ async function createAndUploadTheTerraformZipFile(
 }
 
 async function createArchive(archiveFolder: string, source: string): Promise<void> {
+    logger.info('Creating archive', archiveFolder, source);
+
     return new Promise((resolve, reject) => {
         // Create a file to stream archive data to
         const output = createWriteStream(archiveFolder);
@@ -321,12 +326,8 @@ async function createArchive(archiveFolder: string, source: string): Promise<voi
         });
 
         archive.on('warning', (err: any) => {
-            if (err.code === 'ENOENT') {
-                logger.error(err);
-                reject(err);
-            } else {
-                reject(err);
-            }
+            logger.error(err);
+            reject(err);
         });
 
         archive.on('error', (err: any) => {
@@ -344,4 +345,4 @@ async function createArchive(archiveFolder: string, source: string): Promise<voi
     });
 }
 
-export { uploadTerraformModules, uploadInitializerScripts, uploadTFVarsFile, createAndUploadTheTerraformZipFile };
+export { uploadTerraformModules, uploadInitializerScripts, createTFVarsFile, createAndUploadTheTerraformZipFile };

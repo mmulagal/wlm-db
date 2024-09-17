@@ -114,7 +114,7 @@ import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
 import { describeSubnets, getAmis } from '../lib/aws/ec2';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
-import { createAndUploadTheTerraformZipFile, uploadTerraformModules, uploadTFVarsFile } from './terraform-operations';
+import { createAndUploadTheTerraformZipFile, uploadTerraformModules, createTFVarsFile } from './terraform-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -587,7 +587,7 @@ async function getTerraformSetup(
         );
         logger.debug('Terraform modules uploaded successfully', initializationScriptURLs);
 
-        const tfVarsSignedUrl = await uploadTFVarsFile(
+        await createTFVarsFile(
             region as string,
             DatabaseTypes.MS_SQL_SERVER,
             deploymentName,
@@ -596,14 +596,12 @@ async function getTerraformSetup(
             initializationScriptURLs,
             metrics
         );
-        logger.debug('Terraform vars file signed url', tfVarsSignedUrl);
 
         const terraformZipS3SignedURL = await createAndUploadTheTerraformZipFile(
             region as string,
             DatabaseTypes.MS_SQL_SERVER,
             deploymentName,
-            customTerraformModulesPath,
-            tfVarsSignedUrl
+            customTerraformModulesPath
         );
 
         logger.debug('Terraform zip file signed url', terraformZipS3SignedURL);

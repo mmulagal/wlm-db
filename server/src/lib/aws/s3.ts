@@ -35,7 +35,7 @@ async function putObjectBucket(
     objectData: string,
     filePath?: string
 ) {
-    logger.info('Uploading to bucket ', { region, bucketName, objectName });
+    logger.info('Uploading to bucket ', { region, bucketName, objectName, filePath });
 
     const s3 = new S3Client({ region });
     // If objectData is not provided, then read the file from filePath
