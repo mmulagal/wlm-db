@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import Handlebars from 'handlebars';
-import { readFileSync, createWriteStream, rmdir } from 'fs';
-import { mkdir, writeFile } from 'fs/promises';
+import { readFileSync, createWriteStream } from 'fs';
+import { mkdir, writeFile, rmdir } from 'fs/promises';
 import { copy } from 'fs-extra';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import archiver from 'archiver';
