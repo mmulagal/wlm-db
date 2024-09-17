@@ -1034,9 +1034,10 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, clonedBy: 
         
         Do {
             if ($null -eq $nextToken) {
-                $resp = Invoke-ONTAPRequest -ApiEndpoint "/api/storage/volumes?tiering.object_tags=cloned_by=$clonedByTagVal&fields=space.used_by_afs,space.physical_used,clone.*"
+                $resp = Invoke-ONTAPRequest -ApiEndpoint "/storage/volumes?tiering.object_tags=cloned_by=$clonedByTagVal&fields=space.used_by_afs,space.physical_used,clone.*"
             } else {
                 $nextToken = $nextToken -replace '/api', ''
+                Write-Information "Next Token: $nextToken"
                 $resp = Invoke-ONTAPRequest -ApiEndpoint $nextToken
             }
 
