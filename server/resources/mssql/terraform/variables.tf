@@ -66,6 +66,10 @@ variable "ad_scenario_type" {
 variable "domain_admin_password" {
   description = "The password of the domain admin"
   type        = string
+  validation {
+    condition     = var.domain_admin_password != ""
+    error_message = "The domain_admin_password variable must not be empty."
+  }
 }
 
 variable "domain_dns_name" {
@@ -347,6 +351,10 @@ variable "sql_ami_id" {
 variable "sql_service_account_password" {
   description = "The password of the SQL service account"
   type        = string
+  validation {
+    condition     = var.sql_service_account_password != ""
+    error_message = "The sql_service_account_password variable must not be empty."
+  }
 }
 
 variable "sql_collation" {
@@ -377,13 +385,6 @@ variable "key_pair_name" {
   type        = string
   default     = "occm_qa"
 }
-
-variable "notification_arn" { // can be removed
-  description = "The ARN for notifications"
-  type        = string
-  default     = ""
-}
-
 variable "enable_cloud_watch_log_feature" {
   description = "Is the CloudWatch log feature enabled?"
   type        = bool

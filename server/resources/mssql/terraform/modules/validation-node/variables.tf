@@ -75,16 +75,16 @@ variable "unique_id" {
 variable "ami" {
   description = "The ID of the AMI"
   type        = string
+  validation {
+    condition     = var.ami != ""
+    error_message = "The ami variable must not be empty."
+  }
 }
+
 variable "validation_node_instance_type" {
   description = "The instance type for the validation node"
   type        = string
 }
-
-# variable "purpose_tag" {
-#   description = "The purpose tag of the validation node"
-#   type        = string
-# }
 
 variable "validation_node_initialization_s3_url" {
   description = "Value of the validaton node initialization URL"

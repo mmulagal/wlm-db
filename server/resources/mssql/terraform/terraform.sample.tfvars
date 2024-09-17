@@ -73,8 +73,7 @@ sql_server_name                = "sqldcged5e" # change every time
 is_custom_ami                  = "false"
 workload_instance_type         = "m5.large"
 key_pair_name                  = "occm_qa" # ec2_instance_keypair
-notification_arn               = ""
-enable_cloud_watch_log_feature = true # enable_cloud_watch_log
+enable_cloud_watch_log_feature = true      # enable_cloud_watch_log
 mssql_media_bucket_name        = "LaunchWizard-sqlha"
 mssql_media_path_key           = "launchwizardscripts/sqlmedia/sqlserver.iso"
 
