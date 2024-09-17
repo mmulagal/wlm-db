@@ -556,6 +556,11 @@ Resources:
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
         PGSQLSvmName:
           Ref: PGSQLSvmName
+        FSxSVMId:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FSxSvmId"
+            - !GetAtt "ExistingFSxStack.Outputs.FSxSvmId"
         FSxDataVolumeName:
           Ref: FSxDataVolumeName
         FSxDataLunSize:
