@@ -102,29 +102,12 @@ async function uploadInitializerScripts(
                     signing_files_zip: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
                     open_ssl_win64_zip: decodeURI(signedUrls.get('OpenSSL')?.url || '')
                 });
-                const ValidationInitializerTemplate = TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS.find(
-                    asset => asset.name === 'ValidationInitializerTemplate'
+                signedURLDetail = await processTemplate(
+                    deploymentName,
+                    'ValidationInitializerTemplate',
+                    contents,
+                    'validation_node_initialization_s3_url'
                 );
-
-                const customValidationInitializerTemplatePath: string = `${WLMDB}/${deploymentName}/${
-                    ValidationInitializerTemplate!.url
-                }`;
-                await putObjectBucket(
-                    TEMPLATE_BUCKET_REGION,
-                    SIGNED_TEMPLATES_BUCKET_NAME,
-                    customValidationInitializerTemplatePath,
-                    contents
-                );
-                const validationInitializerS3ignedURL = await getPreSignedUrl(
-                    TEMPLATE_BUCKET_REGION,
-                    SIGNED_TEMPLATES_BUCKET_NAME,
-                    customValidationInitializerTemplatePath
-                );
-                signedURLDetail = {
-                    name: 'validation_node_initialization_s3_url',
-                    url: validationInitializerS3ignedURL,
-                    location: customValidationInitializerTemplatePath
-                };
             } else if (initializerName === TEMPLATE_TYPES.SQLSTANDALONE) {
                 const contents = template({
                     dsc: decodeURI(signedUrls.get('DSC')?.url || ''),
@@ -146,35 +129,12 @@ async function uploadInitializerScripts(
                     open_ssl: decodeURI(signedUrls.get('OpenSSL')?.url || ''),
                     script_sql_setup: decodeURI(signedUrls.get('ScriptSqlSetup')?.url || '')
                 });
-                await processTemplate(
+                signedURLDetail = await processTemplate(
                     deploymentName,
                     'SQLStandaloneInitializerTemplate',
                     contents,
                     'sql_node_initialization_s3_url'
                 );
-                const SQLStandaloneInitializerTemplate = TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS.find(
-                    asset => asset.name === 'SQLStandaloneInitializerTemplate'
-                );
-
-                const customSQLStandaloneInitializerTemplatePath: string = `${WLMDB}/${deploymentName}/${
-                    SQLStandaloneInitializerTemplate!.url
-                }`;
-                await putObjectBucket(
-                    TEMPLATE_BUCKET_REGION,
-                    SIGNED_TEMPLATES_BUCKET_NAME,
-                    customSQLStandaloneInitializerTemplatePath,
-                    contents
-                );
-                const sqlStandaloneInitializerS3ignedURL = await getPreSignedUrl(
-                    TEMPLATE_BUCKET_REGION,
-                    SIGNED_TEMPLATES_BUCKET_NAME,
-                    customSQLStandaloneInitializerTemplatePath
-                );
-                signedURLDetail = {
-                    name: 'sql_node_initialization_s3_url',
-                    url: sqlStandaloneInitializerS3ignedURL,
-                    location: customSQLStandaloneInitializerTemplatePath
-                };
             } else {
                 // Yet to implement for FCI
                 logger.error('Initializer script not found');
