@@ -1,9 +1,4 @@
 locals {
-  is_gov_region        = contains(["us-gov-west-1", "us-gov-east-1"], var.aws_location)
-  ad_check_enabled     = var.perform_ad_check == true
-  ad_check_not_enabled = var.perform_ad_check == false
-  create_new_role      = var.ec2_role_name == null
-  log_feature_enabled  = var.enable_cloudwatch_log_feature == true
   user_data = templatefile("${path.module}/user_data.ps1", {
     region                                = var.aws_location
     deployment_name                       = var.deployment_name
