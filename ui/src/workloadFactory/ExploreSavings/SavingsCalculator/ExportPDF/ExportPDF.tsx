@@ -87,7 +87,7 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
                 <>
                     <div
                         className={
-                            viewLoading || disableState
+                            viewLoading || disableState || !viewCalculationsResponse
                                 ? `${styles.insideContainer} ${styles.disabled}`
                                 : styles.insideContainer
                         }

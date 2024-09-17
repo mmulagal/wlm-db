@@ -28,7 +28,12 @@ import { setMssqlInstancesData as setMssqlInstancesDataV1 } from '../../../store
 import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { formatStorageSavingsRecommendedData, formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
 import { GENERAL } from '../../../utils/appConstants';
-import { EBS_PROTECTED_OPTIONS, INSTANCE_API_FIELDS, SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY } from '../../../utils/consts';
+import {
+    EBS_PROTECTED_OPTIONS,
+    INSTANCE_API_FIELDS,
+    SAVINGS_CALC_MODE,
+    SNAPSHOT_FREQUENCY
+} from '../../../utils/consts';
 import { addInstanceIdToGetPerf } from '../../InventoryV2/InventoryUtilsV2';
 import { checkIfEbsProtected } from './savingsUtil';
 
@@ -184,7 +189,11 @@ const SavingsCalculatorApi = () => {
 
     useEffect(() => {
         // If the selected instance is EBS protected, set the snapshot frequency to daily. It is only for EBS Automatic mode.
-        if (selectedHostDetails && Object.keys(selectedHostDetails).length !== 0 && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+        if (
+            selectedHostDetails &&
+            Object.keys(selectedHostDetails).length !== 0 &&
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+        ) {
             const isProtectionData: any = checkIfEbsProtected();
             if (isProtectionData === EBS_PROTECTED_OPTIONS.PROTECTED) {
                 dispatch(setSnapshotLoading(false));
@@ -196,7 +205,7 @@ const SavingsCalculatorApi = () => {
                 dispatch(setSnapshotLoading(false));
                 dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
             }
-        };
+        }
     }, [selectedHostDetails]);
 
     useEffect(() => {
@@ -212,13 +221,12 @@ const SavingsCalculatorApi = () => {
                     // This is similar to expand row in inventory. It will call instance API to get protection data.
                     addInstanceIdToGetPerf(selectedHostDetails, dispatch);
                 }
-            };
-        } else {
+            }
+        } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
             dispatch(setSnapshotLoading(false));
             dispatch(setDisableState(false));
             triggerRefreshApi();
         }
-        
     }, [
         selectedSnapshotFrequency,
         numberOfClonedCopies,
