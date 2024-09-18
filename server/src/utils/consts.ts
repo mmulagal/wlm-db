@@ -312,7 +312,8 @@ const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Micr
 enum FileSystemTypes {
     EBS = 'EBS',
     FSXONTAP = 'FSx for ONTAP',
-    FSXWINDOWS = 'FSx for Windows'
+    FSXWINDOWS = 'FSx for Windows',
+    FSXW = 'FSXW'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -1206,6 +1207,8 @@ const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const TIMELINE_SERVICE_NAME = 'WF-Databases';
 
+const EBS_ROOT_VOLUME = 'ROOT_VOLUME';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1496,5 +1499,6 @@ export {
     AWS_SSM_PARAMETER,
     TIMELINE_SERVICE_NAME,
     AuditStatus,
-    PREPARE_PSMODULES_RELATIVE_PATH
+    PREPARE_PSMODULES_RELATIVE_PATH,
+    EBS_ROOT_VOLUME
 };

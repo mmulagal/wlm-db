@@ -7,8 +7,10 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { renderAllocatedCapacity, renderInstanceListText, renderUnmanagedAZ } from '../../Inventory/InventoryUtils';
 import { onClickESHost } from '../ExploreSavingsUtils';
-import { WLF_TABS } from '../../../utils/consts';
+import { INVENTORY_ACTIONS, WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
+import { checkForAllAOAG } from '../../InventoryV2/InventoryUtilsV2';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -80,19 +82,40 @@ const ExploreSavingsTableV2 = () => {
             width: '181px',
             renderCell: (cellData: any, rowData: any) => {
                 //Check for all Explore Savings FSXW rows
-                return (
-                    <div
-                        className={styles.detectManage}
-                        onClick={() => {
-                            onClickESHost(dispatch, rowData);
-                        }}
-                        id="explore-savings-table-button"
-                    >
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {GENERAL.ES_SAVINGS}
-                        </Typography>
-                    </div>
-                );
+                if (
+                    rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+                    rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+                    checkForAllAOAG(rowData)
+                ) {
+                    return (
+                        <TooltipComponent
+                            title={GENERAL.ALL_ES_FSXW_AOAG_ROWS}
+                            placement="bottom"
+                            width="340px"
+                            height="70px"
+                        >
+                            <div className={styles.detectManageDisable} id="explore-savings-table-button">
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {GENERAL.ES_SAVINGS}
+                                </Typography>
+                            </div>
+                        </TooltipComponent>
+                    );
+                } else {
+                    return (
+                        <div
+                            className={styles.detectManage}
+                            onClick={() => {
+                                onClickESHost(dispatch, rowData);
+                            }}
+                            id="explore-savings-table-button"
+                        >
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                {GENERAL.ES_SAVINGS}
+                            </Typography>
+                        </div>
+                    );
+                }
             }
         };
     };
@@ -129,7 +152,10 @@ const ExploreSavingsTableV2 = () => {
             accessor: 'storageType',
             id: '3',
             width: '160px',
-            filterOptions: 'auto',
+            filterOptions: [
+                { label: GENERAL.EBS, value: GENERAL.EBS },
+                { label: GENERAL.FSX_FOR_WINDOWS, value: GENERAL.FSX_FOR_WINDOWS }
+            ],
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }

@@ -5,7 +5,7 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../uti
 import { SCRIPT_VERSON_FILE } from './const';
 import { compressResponse, ontapRestRequest } from './common-templates';
 
-const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string) => ` 
+const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string, instanceName: string = DEFAULT_INSTANCE_NAME) => ` 
 Function GetSMBMappedDrivesWithPath() {
     $DriveLetterPath = @{}
     $Errors = ''
@@ -42,8 +42,28 @@ Function GetSMBMappedDrivesWithPath() {
     return $DriveLetterPath.Keys 
   }
 
-$disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
 $deploymentType  = '${deploymentType}'
+$instanceName = '${instanceName}'
+
+$sqlDrives = New-Object System.Collections.ArrayList
+
+if ($deploymentType -eq 'FCI') {
+    $sqlResource = ${instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'}
+    $sqlgroup = Get-ClusterResource | Where-Object Name -eq "$sqlResource"
+    $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+    $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
+
+    foreach ($resource in $resourcegroup) {
+        $sqldisks = $resource.GetRelated("MSCluster_Disk")
+        foreach ($disk in $sqldisks) {
+            $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
+            $diskdrive = $diskpart.path
+            $sqlDrives.Add($diskdrive) | Out-Null
+        }
+    }
+}
+
+$disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
 $results = New-Object System.Collections.ArrayList
 
 foreach ($disk in $disks) {
@@ -59,9 +79,8 @@ foreach ($disk in $disks) {
                 FileSystem = $logicalDisk.FreeSpace
             }
 
-            if ($deploymentType -eq 'FCI') {
-                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object { $_.Name -eq $logicalDisk.VolumeName }
-                $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
+            if ($deploymentType -eq 'FCI' -and $sqlDrives -contains $logicalDisk.DeviceID) {
+                $logicalDiskObject = $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value "SQL Server ($instanceName)" -PassThru
             }
 
             [void]$results.Add($logicalDiskObject)
@@ -323,17 +342,14 @@ const validateSQLInstanceConnectivity = (
     sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => ` 
         $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
+        $ProgressPreference = 'SilentlyContinue'
 
-        $CommonmodulePath = (Get-Module -Name 'AWS.Tools.Common' -ListAvailable).Path
-        if($CommonmodulePath -is [System.Array]) {
-            $CommonmodulePath = $CommonmodulePath[0]
-        }
         $ssmmodulePath = (Get-Module -Name 'AWS.Tools.SimpleSystemsManagement' -ListAvailable).Path
         if($ssmmodulePath -is [System.Array]) {
             $ssmmodulePath = $ssmmodulePath[0]
         }
         
-        Import-Module -Name $CommonmodulePath, $ssmmodulePath
+        Import-Module -Name $ssmmodulePath
 
     if ($responseObject -eq $null) {
         $responseObject = @{}
@@ -401,6 +417,7 @@ const validateSQLInstanceConnectivity = (
 `;
 
 const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
+    $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
@@ -476,6 +493,7 @@ const getMappedOntapVolumesScript = (
     sqlAuthEnabled: boolean = false
 ) => `
     $WarningPreference = 'SilentlyContinue';
+    $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
@@ -910,6 +928,7 @@ const restGetUtilForOntap = (
     apiQueryFields: string
 ) => `
     $WarningPreference = 'SilentlyContinue';
+    $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
@@ -943,6 +962,7 @@ const restGetUtilForOntap = (
 const INSTANCE_DETAILS = 'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*)"} | Select-Object @{Name=\'instanceName\'; Expression={$_.Name}}, @{Name=\'instanceState\'; Expression={$_.State}} | ConvertTo-Json';
 
 const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
+    $ProgressPreference = 'SilentlyContinue'
     $s3SignedUrl = '${s3SignedURL}'
     $moduleNames = ${modules}
 
@@ -1000,6 +1020,7 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
 
 const readSsmParameter = (instance: string) =>
     `
+        $ProgressPreference = 'SilentlyContinue'
         $sqlCredential = @{}
         $serverInstanceName = "${instance}"
 
@@ -1139,6 +1160,7 @@ const validateSQLInstanceCredentials = `
 `;
 
 const getSqlCredentials = (sqlAuthEnabled: boolean) => `
+    $ProgressPreference = 'SilentlyContinue'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
     $sqlCredentials = $null
     if ($sqlAuthEnabled) {

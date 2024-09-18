@@ -5,6 +5,7 @@ import ebsStorageManualCalulationsResponse from '../../responses/cloud-manager/e
 import storageInstancesList from '../../responses/cloud-manager/storage-service-instance-list.json';
 import storageVolumesList from '../../responses/cloud-manager/storage-service-volumes-list.json';
 import fsxwStorageManualCalulationsResponse from '../../responses/cloud-manager/fsxw-storage-manual-calculation.json';
+import fsxwStorageAutomaticCalulationsResponse from '../../responses/cloud-manager/fsxw-storage-automatic-calculation.json';
 
 nock(`${WORKLOAD_FACTORY_ENDPOINT}`)
     .persist(true)
@@ -19,4 +20,6 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`)
     .get(/^\/accounts\/(.+)\/marketing\/v1\/credentials\/(.+)\/regions\/(.+)\/instances\/(.+)\/ebs-volumes$/)
     .reply(() => [200, storageVolumesList])
     .post(/^\/accounts\/(.+)\/marketing\/v1\/fsxw\/calculate$/)
-    .reply(() => [200, fsxwStorageManualCalulationsResponse]);
+    .reply(() => [200, fsxwStorageManualCalulationsResponse])
+    .post(/^\/accounts\/(.+)\/marketing\/v1\/credentials\/(.+)\/regions\/(.+)\/fsxw\/auto\/calculate$/)
+    .reply(() => [200, fsxwStorageAutomaticCalulationsResponse]);

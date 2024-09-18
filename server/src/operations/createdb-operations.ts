@@ -116,7 +116,7 @@ async function getDriveInfoFromNodes(
         activeNodeInstanceId,
         standbyNodeInstanceId
     });
-    const activeNodeDriveInfoCommand = [GET_ACTIVE_NODE_DRIVE_INFO(sqlDeploymentType)];
+    const activeNodeDriveInfoCommand = [GET_ACTIVE_NODE_DRIVE_INFO(sqlDeploymentType, instanceName)];
     const standbyNodeDriveListCommand = [GET_STANDBY_NODE_DRIVE_LIST];
 
     const existingDriveActiveNodePromise = callSsmExecution(
