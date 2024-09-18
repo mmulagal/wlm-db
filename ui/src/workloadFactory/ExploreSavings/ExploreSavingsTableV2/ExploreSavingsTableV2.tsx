@@ -81,7 +81,6 @@ const ExploreSavingsTableV2 = () => {
             isSticky: true,
             width: '181px',
             renderCell: (cellData: any, rowData: any) => {
-                console.log(rowData);
                 //Check for all Explore Savings FSXW rows
                 if (
                     rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
