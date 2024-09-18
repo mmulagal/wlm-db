@@ -571,7 +571,7 @@ const createVolumeClone = (
                 foreach ($vol in $_.volumes) {
                     $sourceSvm = $vol.svm
                 
-                    if ($sourceSvm -eq $targetSvm -and $svmProcessed -notcontains $sourceSvm) {
+                    if ($svmProcessed -notcontains $sourceSvm) {
                         if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
                             Write-Information "$logPrefix NetApp.ONTAP Module does not exist, installing it now"
 
@@ -1631,14 +1631,14 @@ try {
             }
             $lunProcessed += $serial
         }
-        $diskcount = $disklist.Number.Count
+
         if ($retry -gt 0) {
             Start-Sleep 20
         }
         $retry++
-    } until (($retry -eq 4) -Or ($diskcount -ge $1))
+    } until (($retry -eq 4) -Or ($disklist.Count -ge $1))
 
-    Write-Information "$LogPrefix Disk list count: $disklist.Count"
+    Write-Information "$LogPrefix Disk list count: $($disklist.Count)"
 
     #Adding Silently Continue for Set-Disk as warning caused output to have the string an API considered failure despite success
     #If warning is indeed serious the next step to initialize will fail and that will be caught
@@ -1701,7 +1701,7 @@ try {
         }
     }
 
-    Write-Information "$LogPrefix Disk Info count: $disksInfo.Count"
+    Write-Information "$LogPrefix Disk Info count: $($disksInfo.Count)"
 }
 catch {
     Write-Information "$LogPrefix Error: $($_.Exception)"
@@ -1751,7 +1751,7 @@ try {
             }
         }
 
-        Write-Information "$LogPrefix Cluster disks count: $clusterdisks.Count"
+        Write-Information "$LogPrefix Cluster disks count: $($clusterdisks.Count)"
 
         try {
             $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($InstanceName)")
