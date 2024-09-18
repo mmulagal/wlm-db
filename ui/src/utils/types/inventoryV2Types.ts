@@ -394,6 +394,7 @@ export interface DiscoveredStorageObj {
     id?: string | undefined;
     svmId?: string;
     protocol?: string;
+    fileSystemStorageType?: string;
 }
 
 export interface StatusObjInterface {

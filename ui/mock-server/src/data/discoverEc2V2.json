@@ -251,7 +251,8 @@
                     "storage": [
                         {
                             "type": "FSXW",
-                            "id": "vol-0c73fa01e4e64ba60"
+                            "id": "vol-0c73fa01e4e64ba60",
+                            "fileSystemStorageType": "SSD"
                         }
                     ],
                     "deploymentTypes": []
@@ -278,7 +279,8 @@
                     "storage": [
                         {
                             "type": "FSXW",
-                            "id": "vol-0c73fa01e4e64ba60"
+                            "id": "vol-0c73fa01e4e64ba60",
+                            "fileSystemStorageType": "SSD"
                         }
                     ],
                     "deploymentTypes": []
@@ -305,7 +307,8 @@
                     "storage": [
                         {
                             "type": "FSXW",
-                            "id": "vol-0c73fa01e4e64ba60"
+                            "id": "vol-0c73fa01e4e64ba60",
+                            "fileSystemStorageType": "SSD"
                         }
                     ],
                     "deploymentTypes": []
@@ -437,7 +440,8 @@
                     "storage": [
                         {
                             "type": "FSXW",
-                            "id": "vol-078ccd469b9235323"
+                            "id": "vol-078ccd469b9235323",
+                            "fileSystemStorageType": "SSD"
                         }
                     ],
                     "deploymentTypes": []
@@ -926,11 +930,13 @@
                     "storage": [
                         {
                             "type": "FSXW",
-                            "id": "vol-058229dab6d33d374"
+                            "id": "vol-058229dab6d33d374",
+                            "fileSystemStorageType": "SSD"
                         },
                         {
                             "type": "FSXW",
-                            "id": "vol-0f1ae0046501426a3"
+                            "id": "vol-0f1ae0046501426a3",
+                            "fileSystemStorageType": "SSD"
                         }
                     ],
                     "deploymentTypes": [
@@ -965,7 +971,8 @@
                     "storage": [
                         {
                             "type": "FSXW",
-                            "id": "vol-058229dab6d33d374"
+                            "id": "vol-058229dab6d33d374",
+                            "fileSystemStorageType": "SSD"
                         }
                     ],
                     "deploymentTypes": [
@@ -1441,7 +1448,8 @@
                         },
                         {
                             "type": "FSXW",
-                            "id": "vol-0f1ae0046501426a3"
+                            "id": "vol-0f1ae0046501426a3",
+                            "fileSystemStorageType": "SSD"
                         }
                     ],
                     "deploymentTypes": []

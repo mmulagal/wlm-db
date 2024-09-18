@@ -1076,7 +1076,10 @@ export const GENERAL = {
         'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
         'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
-    ALL_ES_FSXW_AOAG_ROWS: 'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
+    ALL_ES_FSXW_AOAG_ROWS:
+        'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
+    NON_SSD_FSXW_MSG:
+        'Explore Savings for FSx for Windows File Server is only supported for SSD file system storage type.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
         'The attempt to manage the SQL Server instance ',
@@ -1123,8 +1126,8 @@ export const GENERAL = {
     ES_SNAPSHOTS_DESC: 'Snapshot calculations are based on primary database volumes only and not on replicas.',
     ES_CLONES_DESC: 'Clone calculations are based on primary database volumes only and not on replicas.',
     ES_TOTAL_MONTHLY_COST: 'Total monthly cost',
-    ES_FSXN_MULTI: 'FSx for ONTAP - multi availability zone',
-    ES_FSXN_SINGLE: 'FSx for ONTAP - single availability zone',
+    ES_FSXN_MULTI: 'Multi availability zone',
+    ES_FSXN_SINGLE: 'Single availability zone',
     ES_FSXW_SINGLE: 'Single Availability Zone',
     ES_FSXW_MULTI: 'Multi Availability Zone',
     ES_FSXN_AZ_DESC:
