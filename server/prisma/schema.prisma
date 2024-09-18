@@ -165,14 +165,14 @@ model database_instance_config_data{
   region                    String   @db.VarChar(30)
   resource_id               String   @db.VarChar(255)
   database_instance_id      String   @db.VarChar(36)
-  timestamp                 DateTime @default(now())
+  creation_time                 DateTime @default(now())
   last_updated              DateTime @default(now())
   config_data                 Json?    @default("{}")
   config_data_type            String   @db.VarChar(255)@default("CONFIG")
 
   database_instances database_instances @relation(fields: [account_id, credentials_id, resource_id, database_instance_id], references: [account_id, credentials_id, resource_id, database_instance_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_database_instances_unique_criteria")
 
-  @@unique([account_id, credentials_id, resource_id, database_instance_id, timestamp, config_data_type], name: "uk_wlmdb_database_instance_config_data", map: "uk_wlmdb_database_instance_config_data")
+  @@unique([account_id, credentials_id, region, database_instance_id, creation_time, config_data_type], name: "uk_wlmdb_database_instance_config_data", map: "uk_wlmdb_database_instance_config_data")
   @@index([account_id], name: "k_wlmdb_database_instance_config_data_account_id")
   @@index([credentials_id], map: "k_wlmdb_database_instance_config_data_credentials_id")
   @@index([resource_id], map: "k_wlmdb_database_instance_config_data_resource_id")

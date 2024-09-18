@@ -14,7 +14,7 @@ describe('database instance config operations', () => {
                 credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                 region: 'us-east-1',
                 database_instance_id: 'sql-server-broker-uuid',
-                timestamp: new Date(),
+                creation_time: new Date(),
                 last_updated: new Date(),
                 config_data: {
                     volumes: [
@@ -54,7 +54,7 @@ describe('database instance config operations', () => {
                 credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                 region: 'us-east-1',
                 database_instance_id: 'sql-server-broker-uuid',
-                timestamp: new Date(),
+                creation_time: new Date(),
                 last_updated: new Date(),
                 config_data: {
                     volumes: [
@@ -102,7 +102,7 @@ describe('database instance config operations', () => {
                 credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                 region: 'us-east-1',
                 database_instance_id: 'sql-server-broker-uuid',
-                timestamp: new Date(),
+                creation_time: new Date(),
                 last_updated: new Date(),
                 config_data: {
                     volumes: [
@@ -142,7 +142,7 @@ describe('database instance config operations', () => {
                 credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                 region: 'us-east-1',
                 database_instance_id: 'sql-server-broker-uuid',
-                timestamp: new Date(),
+                creation_time: new Date(),
                 last_updated: new Date(),
                 config_data: {
                     volumes: [
@@ -191,7 +191,7 @@ describe('database instance config operations', () => {
                 credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                 region: 'us-east-1',
                 database_instance_id: 'sql-server-broker-uuid',
-                timestamp: new Date(),
+                creation_time: new Date(),
                 last_updated: new Date(),
                 config_data: {
                     volumes: [
@@ -231,7 +231,7 @@ describe('database instance config operations', () => {
                 credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                 region: 'us-east-1',
                 database_instance_id: 'sql-server-broker-uuid',
-                timestamp: new Date(),
+                creation_time: new Date(),
                 last_updated: new Date(),
                 config_data: {
                     volumes: [

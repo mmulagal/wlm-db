@@ -9,7 +9,7 @@ interface DatabaseInstanceConfigData {
     region: string;
     resource_id: string;
     database_instance_id: string;
-    timestamp: Date;
+    creation_time: Date;
     last_updated?: Date;
     config_data: object;
     config_data_type: string;
