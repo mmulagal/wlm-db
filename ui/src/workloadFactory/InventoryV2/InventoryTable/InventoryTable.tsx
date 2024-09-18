@@ -38,6 +38,7 @@ import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 import {
     addInstanceIdToGetPerf,
     checkForAllAOAG,
+    checkForAnySSD,
     getPartnerNodeEc2InstanceId,
     handleManageNotification,
     handleManageTriggerNotification,
@@ -387,6 +388,20 @@ const InventoryTable = () => {
         ) {
             return (
                 <TooltipComponent title={GENERAL.ALL_ES_FSXW_AOAG_ROWS} placement="bottom" width="340px" height="70px">
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        } else if (
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+            !checkForAnySSD(rowData)
+        ) {
+            return (
+                <TooltipComponent title={GENERAL.NON_SSD_FSXW_MSG} placement="bottom" width="360px" height="50px">
                     <div id="inventory-table-option" className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}

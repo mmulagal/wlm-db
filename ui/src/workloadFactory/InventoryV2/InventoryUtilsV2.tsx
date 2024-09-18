@@ -1891,3 +1891,14 @@ export const checkForAllAOAG = (rowData: any) => {
         );
     });
 };
+
+export const checkForAnySSD = (rowData: any) => {
+    for (const item of rowData?.sqlServerInstances || []) {
+        for (const perStorage of item?.storage || []) {
+            if (perStorage?.type === DETECT_HOST_VAR.FSXW && perStorage?.fileSystemStorageType === 'SSD') {
+                return true;
+            }
+        }
+    }
+    return false;
+};
