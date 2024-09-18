@@ -753,11 +753,11 @@ export const GENERAL = {
     EBS_INSTANCE_DETECT_SUCCESS_MSG: ['Instance ', ' detected successfully.'],
     FSX_DETECT_SUCCESS_MSG: [
         'Detected host management',
-        'Would you like to manage the detected host via workload factory?'
+        'Would you like to manage the detected host via Workload Factory?'
     ],
     FSX_INSTANCE_DETECT_SUCCESS_MSG: [
         'Detected instance management',
-        'Would you like to manage the detected instance via workload factory?'
+        'Would you like to manage the detected instance via Workload Factory?'
     ],
     FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.'],
     FSX_INSTANCE_AFTER_DETECT_OPTIONS: ['Yes, Manage instance via Workload Factory.', 'No.'],
@@ -896,7 +896,7 @@ export const GENERAL = {
     SOURCE_INSTANCE: 'Source database instance',
     SOURCE_DATABASE: 'Source database',
     MOUNT_NOTICE:
-        'Notice: When cloning a SQL database that has multiple data and/or log files, workload factory clones all files under the auto-assigned or defined drive letter.',
+        'Notice: When cloning a SQL database that has multiple data and/or log files, Workload Factory clones all files under the auto-assigned or defined drive letter.',
     AUTO_ASSIGN_MOUNT_POINT: 'Auto-assign mount point',
     DEFINE_MOUNT_POINT_PATH: 'Define mount point path',
     VOLUME_MOUNT_POINT_UNDER_PATH: 'Volume mount point under path',
