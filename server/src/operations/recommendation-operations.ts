@@ -769,7 +769,12 @@ async function getSqlInstanceLicenseRecommendations(
             let instanceIdToUseForRecommendations = instanceId;
 
             let nodeInstanceTypes = [ec2InstanceType];
-            if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT && nodeIps && nodeIps.length > 1) {
+            if (
+                (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ||
+                    (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT && isFsxwCalcs)) &&
+                nodeIps &&
+                nodeIps.length > 1
+            ) {
                 // in case of AOAG, we need to consider the smaller instance type for recommendations; as the AOAG is a combination of 2 or more instances
 
                 const clusterNodeDetails: NodeDetails[] =
