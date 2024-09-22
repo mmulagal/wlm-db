@@ -1,5 +1,4 @@
 .optimizeComponent {
-    margin-bottom: 40px;
     display: flex;
     gap: 16px;
 
@@ -18,6 +17,11 @@
                 display: flex;
                 gap: 6px;
             }
+        }
+
+        .bottomTextSection {
+            display: flex;
+            gap: 8px;
         }
     }
 }

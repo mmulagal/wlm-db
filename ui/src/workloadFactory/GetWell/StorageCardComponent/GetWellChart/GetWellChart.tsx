@@ -34,25 +34,25 @@ const GetWellChart = ({ startColor, endColor }: colorCodes) => {
         var mayBarChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+                labels: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
                 datasets: [
                     {
                         label: 'value',
-                        data: [70, 50, 70, 50, 70, 55, 45],
+                        data: [70, 50, 70, 50, 70, 55, 45, 55, 60, 35, 55, 58, 52],
                         borderColor: '#0BAFFC',
 
                         pointBackgroundColor: gradientStroke,
-                        pointHoverBackgroundColor: gradientStroke,
-                        pointHoverBorderColor: gradientStroke,
-                        pointBorderWidth: 1.2,
-                        pointBorderColor: 'white',
+                        // pointHoverBackgroundColor: gradientStroke,
+                        // pointHoverBorderColor: gradientStroke,
+                        // pointBorderWidth: 0,
+                        // pointBorderColor: 'white',
                         // pointHoverRadius: 10,
                         // pointHoverBorderWidth: 1,
-                        pointRadius: 5,
+                        pointRadius: 0,
                         fill: true,
                         backgroundColor: gradientBG,
-                        borderWidth: 3,
-                        tension: 0.1
+                        borderWidth: 2,
+                        tension: 0.2
                     }
                 ]
             },

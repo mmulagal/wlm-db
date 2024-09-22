@@ -1,14 +1,55 @@
 .getWell {
-    background-color: var(--main-background);
     width: 100%;
-    height: 100vh;
-    padding-top: 80px;
-    padding-left: 100px;
+    height: 100%;
+    background-color: var(--main-background);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .getWellSecondLevel {
+        width: 87.3%;
+        margin-top: 24px;
+        justify-content: center;
+
+        display: flex;
+        gap: 24px;
+    }
+
+    .sectionTwo {
+        width: 87.3%;
+        margin-top: 24px;
+        max-width: 1608px;
+
+        .filterComponent {
+            margin-bottom: 40px;
+
+            .filterHeader {
+                display: flex;
+                gap: 24px;
+
+                .items {
+                    display: flex;
+                    gap: 8px;
+                }
+            }
+        }
+
+        .header-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .accordionGroups {
+            display: flex;
+            gap: 24px;
+            flex-direction: column;
+        }
+    }
 
     .combineComponent {
         display: flex;
         flex-direction: column;
-        width: 1608px;
 
         .genericTag {
             width: max-content;
