@@ -256,18 +256,6 @@ const AvailabilityZone = () => {
         }
     };
 
-    useEffect(() => {
-        if (!isDemoMode && routeTable1 && routeTable2 && routeTable1 === routeTable2) {
-            dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: GENERAL.SAME_ROUTE_SUBNET_ERROR
-                })
-            );
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [routeTable1, routeTable2]);
-
     return (
         <div className={styles['availability-zone']}>
             <AccordionCard
