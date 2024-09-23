@@ -219,7 +219,12 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     </div>
 
                     {/* Accordion here */}
-                    <MSSQLAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
+                    <MSSQLAccordion
+                        printState={printState}
+                        disableState={disableState}
+                        isMutliFsx={isMutliFsx}
+                        statusCheck={statusCheck}
+                    />
                 </div>
 
                 {/* last section */}
