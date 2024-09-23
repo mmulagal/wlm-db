@@ -166,7 +166,6 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx, statusCheck }: a
                     storageSavingsLoading ||
                     selectedHostDetails?.loading ||
                     disableState ||
-                    !statusCheck ||
                     viewCalculationsLoading ||
                     isMutliFsx ||
                     !storageSavingsResponse
@@ -218,6 +217,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx, statusCheck }: a
                                     storageSavingsLoading ||
                                     selectedHostDetails?.loading ||
                                     viewCalculationsLoading ||
+                                    !statusCheck ||
                                     disableState ||
                                     !storageSavingsResponse
                                 }
