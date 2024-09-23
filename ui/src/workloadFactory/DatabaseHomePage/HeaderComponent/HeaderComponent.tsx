@@ -152,7 +152,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                 if (!isWorkloadFactory) {
                     postBlueXPMessage({
                         type: BlueXPListeners.navigate,
-                        payload: { pathname: './fsxdb/marketing', replace: true }
+                        payload: { pathname: '../fsxdb/marketing', replace: true }
                     });
                 } else {
                     postBlueXPMessage({
