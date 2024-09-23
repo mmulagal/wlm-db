@@ -433,7 +433,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         } else {
             postBlueXPMessage({
                 type: BlueXPListeners.navigate,
-                payload: { pathname: './fsxhome', replace: true }
+                payload: { pathname: '../fsxhome', replace: true }
             });
         }
     };
