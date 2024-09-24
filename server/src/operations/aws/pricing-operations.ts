@@ -396,7 +396,7 @@ function parseProductsResponse(response: GetProductsCommandOutput): {
     logger.debug('Parsing products response', response);
 
     const pricingDetails: { [metric: string]: { pricePerUnit: number; unit: string } } = {};
-    if (response.PriceList) {
+    if (response.PriceList && !isEmpty(response.PriceList)) {
         response.PriceList.forEach(priceItem => {
             const item = (priceItem as LazyJsonString).deserializeJSON();
             const { terms, product } = item;
@@ -497,12 +497,12 @@ async function calculatePrice(
         vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {}
     } = productRates;
 
-    const ec2Cost = calculateEc2Cost(ec2InstanceRate, compute?.sqlDeploymentMode);
+    const ec2Cost = ec2InstanceRate ? calculateEc2Cost(ec2InstanceRate, compute?.sqlDeploymentMode) : 0;
     const vpcCost = vpcRate ? getPriceUtil(vpcRate, HOURS_IN_MONTH, 1) : 0;
 
     let totalFsxnCost = 0;
     const fsxnCostBreakdownById: FsxnCostBreakdownType[] = [];
-    if (fsxnStorage) {
+    if (fsxnStorage && !isEmpty(productRates.fsxnStorage)) {
         await Promise.all(
             fsxnStorage.fsxnResourceInfo.map(async fsxResource => {
                 let fsxnStorageCost = 0;
@@ -555,7 +555,10 @@ async function calculatePrice(
         throughput: number | undefined;
     }[] = [];
     let totalEbsStorageCost = 0;
-    if (!isEmpty(ebsStorage)) {
+    if (
+        !isEmpty(ebsStorage) &&
+        !ebsStorage?.ebsResourceInfo?.some(e => isEmpty(productRates[`ebsStorage-${e.volumeType}`]))
+    ) {
         ebsStorage.ebsResourceInfo.forEach(ebsResource => {
             const rate = productRates[`ebsStorage-${ebsResource.volumeType}`];
             const size =
@@ -577,7 +580,7 @@ async function calculatePrice(
 
     let totalFsxwCost = 0;
     const fsxwCostBreakdownById: FsxwCostBreakdownType[] = [];
-    if (fsxwStorage) {
+    if (fsxwStorage && !isEmpty(productRates.fsxwStorage)) {
         await Promise.all(
             fsxwStorage.fsxwResourceInfo.map(async fsxResource => {
                 let fsxwStorageCost = 0;
@@ -593,6 +596,10 @@ async function calculatePrice(
                 });
             })
         );
+    }
+
+    if (isEmpty(compact([ec2Cost, vpcCost, totalFsxnCost, totalEbsStorageCost, totalFsxwCost]))) {
+        throw createError(404, 'Pricing details not found for the given input');
     }
 
     return {
