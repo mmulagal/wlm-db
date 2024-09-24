@@ -22,7 +22,8 @@ try {
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
     $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
-    #Check if DNS server is reachable              
+    #Check if DNS server is reachable   
+    $Failed = $false           
     $connection = Test-Connection -ComputerName $DNSIpAddresses -Quiet
     if (-Not($True -in $connection))
         {
@@ -37,6 +38,11 @@ try {
     $ADServersPrivateIPs = $DNSIpAddresses.split(",")
     $netIPConfiguration = Get-NetIPConfiguration
     Set-DnsClientServerAddress -InterfaceIndex $netIPConfiguration.InterfaceIndex -ServerAddresses $DNSIpAddresses
+    if ($Failed -ne $true) 
+        {
+            Write-Output @{ status = "Completed"; reason = "Done." } | ConvertTo-Json -Compress
+            Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
+        }
 }
 catch {
     $_ | Write-AWSLaunchWizardException
