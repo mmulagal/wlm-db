@@ -25,7 +25,7 @@ import TotalMonthlyCostFsxwCalculation from './FSxWCalculation/TotalMonthlyCostF
 import ShadowCopyFsxwCalculation from './FSxWCalculation/ShadowCopyFsxwCalculation/ShadowCopyFsxwCalculation';
 import FsxwMazCalculation from './FSxWCalculation/FsxwMazCalculation/FsxwMazCalculation';
 
-const ViewCalculations = () => {
+const ViewCalculations = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
     const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
     const { viewCalculationsResponse, savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
@@ -33,30 +33,50 @@ const ViewCalculations = () => {
     return (
         <div className={styles.viewCalculations}>
             <div className={styles.breadCrumb}>
-                <BreadCrumbs
-                    items={[
-                        {
-                            title: GENERAL.ES_SAVINGS,
-                            onClick: () => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
-                                dispatch(addExploreSavingsInitialData(null));
+                {statusCheck ? (
+                    <BreadCrumbs
+                        items={[
+                            {
+                                title: GENERAL.ES_SAVINGS,
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                    dispatch(addExploreSavingsInitialData(null));
+                                }
+                            },
+                            {
+                                title:
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+                                        ? 'Explore savings manually'
+                                        : selectedServerName,
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                                }
+                            },
+                            {
+                                title: GENERAL.VIEW_CALCS
                             }
-                        },
-                        {
-                            title:
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                    ? 'Explore savings manually'
-                                    : selectedServerName,
-                            onClick: () => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                        ]}
+                    />
+                ) : (
+                    <BreadCrumbs
+                        items={[
+                            {
+                                title:
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+                                        ? 'Explore savings manually'
+                                        : selectedServerName,
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                                }
+                            },
+                            {
+                                title: GENERAL.VIEW_CALCS
                             }
-                        },
-                        {
-                            title: GENERAL.VIEW_CALCS
-                        }
-                    ]}
-                />
+                        ]}
+                    />
+                )}
             </div>
 
             {/* Accordion section */}

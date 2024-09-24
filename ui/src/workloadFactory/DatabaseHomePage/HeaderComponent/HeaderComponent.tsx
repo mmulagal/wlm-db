@@ -789,7 +789,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                     )}
                     {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator statusCheck={statusChk} />}
 
-                    {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
+                    {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && (
+                        <ViewCalculations statusCheck={statusChk} />
+                    )}
                 </div>
             </div>
         )
