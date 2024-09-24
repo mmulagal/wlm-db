@@ -510,22 +510,22 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             },
             {
                 label: 'Minimum number of file systems required for storage capacity',
-                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForStorage}`,
+                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForStorage} file system(s)`,
                 text: `The greater of SSD storage GiB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) ÷ Max SSD tier size (${viewCalculation.fsxOntapCalculation.maxSsdTierSize}) `
             },
             {
                 label: 'Minimum number of file systems required for throughput capacity',
-                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForThroughputCapacity}`,
+                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForThroughputCapacity} file system(s)`,
                 text: `Suggested FSx for ONTAP throughput capacity (${viewCalculation.fsxOntapCalculation.suggestedFsxnThroughputCapacity} MB/s) ÷ max throughput (${viewCalculation.fsxOntapCalculation.maxThroughput} MB/s)`
             },
             {
                 label: 'Minimum number of file systems required for SSD IOPS',
-                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForSsdIops}`,
+                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForSsdIops} file system(s)`,
                 text: `Provisioned SSD (${viewCalculation.fsxOntapCalculation.provisionedSsdIops} IOPS) ÷ Maximum SSD (${viewCalculation.fsxOntapCalculation.maxSsdIops} IOPS)`
             },
             {
                 label: 'Required number of FSx for ONTAP file systems - fractional',
-                value: `${viewCalculation.fsxOntapCalculation.requiredNumOfFsxFractional}`,
+                value: `${viewCalculation.fsxOntapCalculation.requiredNumOfFsxFractional} file system(s)`,
                 text: ``
             },
             {
