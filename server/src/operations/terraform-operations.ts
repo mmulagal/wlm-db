@@ -17,11 +17,13 @@ import {
     CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING,
     TERRAFORM_FOLDER_PATH
 } from '../utils/consts';
+import { isDemo } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { generateSignedUrls } from './template-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
+const isDemoFlow = isDemo();
 
 interface TemplateDetails {
     name: string;
@@ -249,17 +251,19 @@ async function createAndUploadTheTerraformZipFile(
     logger.info('Creating and uploading the terraform zip file', region, resourceType, deploymentName, templatePath);
 
     if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
-        const archiveFolder = `./resources/mssql/${deploymentName}/terraform.zip`;
-        const folderToBeZipped = `./resources/mssql/${deploymentName}/terraform`;
-        await createArchive(archiveFolder, folderToBeZipped);
         const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform/terraform.zip`;
-        await putObjectBucket(
-            TEMPLATE_BUCKET_REGION,
-            SIGNED_TEMPLATES_BUCKET_NAME,
-            customSQLStandaloneTFPath,
-            '',
-            archiveFolder
-        );
+        if (!isDemoFlow) {
+            const archiveFolder = `./resources/mssql/${deploymentName}/terraform.zip`;
+            const folderToBeZipped = `./resources/mssql/${deploymentName}/terraform`;
+            await createArchive(archiveFolder, folderToBeZipped);
+            await putObjectBucket(
+                TEMPLATE_BUCKET_REGION,
+                SIGNED_TEMPLATES_BUCKET_NAME,
+                customSQLStandaloneTFPath,
+                '',
+                archiveFolder
+            );
+        }
         await rmdir(`./resources/mssql/${deploymentName}`, { recursive: true });
         const zipSignedURL = await getPreSignedUrl(
             TEMPLATE_BUCKET_REGION,
