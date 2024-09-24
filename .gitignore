@@ -15,3 +15,27 @@ coverage
 
 server/.env
 server/documentation.yaml
+
+# Ignore Terraform .tfstate files
+*.tfstate
+*.tfstate.*
+*.terraform.lock.hcl
+
+# Ignore Terraform .terraform directory
+.terraform/
+
+# Ignore crash log files
+crash.log
+
+# Ignore all .tfvars files, which are likely to contain sentitive data
+*.tfvars
+
+# Ignore override files as they are usually used for local settings
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
