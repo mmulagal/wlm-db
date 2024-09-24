@@ -1,39 +1,39 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [string]$region,
+    [string]$Region,
     [Parameter(Mandatory = $true)]
-    [string]$log_feature_enabled,
+    [string]$LogFeatureEnabled,
     [Parameter(Mandatory = $true)]
-    [string]$deployment_name,
+    [string]$DeploymentName,
     [Parameter(Mandatory = $true)]
-    [string]$sql_server_name,
+    [string]$SqlServerName,
     [Parameter(Mandatory = $true)]
-    [string]$sql_svm_name,
+    [string]$SqlSvmName,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_data_volume_name,
+    [string]$FsxDataVolumeName,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_log_volume_name,
+    [string]$FsxLogVolumeName,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_file_system_id,
+    [string]$FsxFileSystemId,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_temp_db_volume_name,
+    [string]$FsxTempDbVolumeName,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_data_lun_size,
+    [string]$FsxDataLunSize,
     [Parameter(Mandatory = $true)]
-    [string]$sql_igroup_name,
+    [string]$SqlIgroupName,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_volume_snapshot_policy,
+    [string]$FsxVolumeSnapshotPolicy,
     [Parameter(Mandatory = $true)]
-    [string]$ad_dns_ip_addresses,
+    [string]$AdDnsIpAddresses,
     [Parameter(Mandatory = $true)]
-    [string]$domain_dns_name,
+    [string]$DomainDnsName,
     [Parameter(Mandatory = $true)]
-    [string]$domain_admin_user,
+    [string]$DomainAdminUser,
     [Parameter(Mandatory = $true)]
-    [string]$sql_admin_accounts,
+    [string]$SqlAdminAccounts,
     [Parameter(Mandatory = $true)]
-    [string]$sql_collation
+    [string]$SqlCollation
 )
 
 Write-Output "Starting the initializer script from terraform"
@@ -41,36 +41,36 @@ $WarningPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
 
 # Define the log directory
-$logDir = "C:\cfn\log"
+$LogDir = "C:\cfn\log"
 
 # Check if the log directory exists, and create it if it does not
-if (!(Test-Path -Path $logDir)) {
-    New-Item -ItemType Directory -Path $logDir
+if (!(Test-Path -Path $LogDir)) {
+    New-Item -ItemType Directory -Path $LogDir
 }
 
-Start-Transcript -Path "$logDir\instance.initializer.ps1.txt" -Append
+Start-Transcript -Path "$LogDir\sql-instance.initializer.ps1.txt" -Append
 
-$script_verify_signature = "{{script_verify_signature}}"
-$script_unzip_archive = "{{script_unzip_archive}}"
-$script_common = "{{script_common}}"
-$script_sqlfci = "{{script_sqlfci}}"
-$script_sqlontap = "{{script_sqlontap}}"
-$script_dbcreate = "{{script_dbcreate}}"
-$dsc = "{{dsc}}"
-$power_shell = "{{power_shell}}"
-$amazon_launch_wizard_for_cfn = "{{amazon_launch_wizard_for_cfn}}"
-$amazon_launch_wizard_for_ssm = "{{amazon_launch_wizard_for_ssm}}"
-$sqlspcu = "{{sqlspcu}}"
-$dependent_packages = "{{dependent_packages}}"
-$artifacts_signatures = "{{artifacts_signatures}}"
-$open_ssl = "{{open_ssl}}"
-$sql_setup = "{{script_sql_setup}}"
+$ScriptVerifySignature = "{{ScriptVerifySignature}}"
+$ScriptUnzipArchive = "{{ScriptUnzipArchive}}"
+$ScriptCommon = "{{ScriptCommon}}"
+$ScriptSqlFci = "{{ScriptSqlFci}}"
+$ScriptSqlOntap = "{{ScriptSqlOntap}}"
+$ScriptDbCreate = "{{ScriptDbCreate}}"
+$Dsc = "{{Dsc}}"
+$PowerShell = "{{PowerShell}}"
+$AmazonLaunchWizardForCfn = "{{AmazonLaunchWizardForCfn}}"
+$AmazonLaunchWizardForSsm = "{{AmazonLaunchWizardForSsm}}"
+$SqlSpcu = "{{SqlSpcu}}"
+$DependentPackages = "{{DependentPackages}}"
+$ArtifactsSignatures = "{{ArtifactsSignatures}}"
+$OpenSsl = "{{OpenSsl}}"
+$SqlSetup = "{{SqlSetup}}"
 
 function Get-InstanceId {
     try {
         $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
-        $instance_id = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
-        return $instance_id
+        $InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+        return $InstanceId
     }
     catch {
         Write-Output "An error occurred while getting token: $_"
@@ -80,7 +80,7 @@ function Get-InstanceId {
 
 function Install-SSMAgent {
     param(
-        [string]$region
+        [string]$Region
     )
 
     try {
@@ -95,9 +95,9 @@ function Install-SSMAgent {
     }
     catch {
         $progressPreference = "silentlyContinue"
-        $ssmAgentUrl = "https://amazon-ssm-$region.s3.$region.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe"
-        Write-Output "Downloading SSM Agent from $ssmAgentUrl"
-        Invoke-WebRequest $ssmAgentUrl -OutFile "$env:USERPROFILE\Desktop\SSMAgent_latest.exe"
+        $SSMAgentUrl = "https://amazon-ssm-$Region.s3.$Region.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe"
+        Write-Output "Downloading SSM Agent from $SSMAgentUrl"
+        Invoke-WebRequest $SSMAgentUrl -OutFile "$env:USERPROFILE\Desktop\SSMAgent_latest.exe"
       
         Write-Output "Installing SSM Agent"
         Start-Process -FilePath "$env:USERPROFILE\Desktop\SSMAgent_latest.exe" -ArgumentList '/S'
@@ -132,6 +132,8 @@ function Invoke-WebRequestWithRetry {
     }
     catch {
         Write-Output "An error occurred while downloading file: $_"
+        Write-Error $_.Exception.Message
+        throw $_.Exception.Message
     }
 }
 
@@ -160,79 +162,79 @@ function Invoke-Commands {
             Write-Output "An error occurred while executing command $commandString"
             Write-Output $_
             Write-Error $_.Exception.Message
-            exit $LASTEXITCODE
+            throw $_.Exception.Message
         }
     }
 }
 
-$instance_id = Get-InstanceId
-Write-Output "Instance ID: $instance_id"
 try {
-    Install-SSMAgent -region "$region"
+    $InstanceId = Get-InstanceId
+    Write-Output "Instance ID: $InstanceId"
+    Install-SSMAgent -Region "$Region"
 
     # FetchResources
     Write-Output "Downloading the files"
-    $downloads = @{
-        "$script_verify_signature"      = "C:\\cfn\\scripts\\Verify-Signature.ps1"
-        "$script_unzip_archive"         = "C:\\cfn\\scripts\\Unzip-Archive.ps1"
-        "$script_common"                = "C:\\cfn\\scripts\\common.zip"
-        "$script_sqlfci"                = "C:\\cfn\\scripts\\sqlfci.zip"
-        "$script_sqlontap"              = "C:\\cfn\\scripts\\sqlontap.zip"
-        "$script_dbcreate"              = "C:\\cfn\\scripts\\dbcreate.zip"
-        "$dsc"                          = "C:\\cfn\\DSC.zip"
-        "$power_shell"                  = "C:\\cfn\\Installer\\powershell.zip"
-        "$amazon_launch_wizard_for_cfn" = "C:\\cfn\\modules\\AWSLaunchWizardForCFN.zip"
-        "$amazon_launch_wizard_for_ssm" = "C:\\cfn\\modules\\AWSLaunchWizardForSSM.zip"
-        "$sqlspcu"                      = "C:\\cfn\\Installer\\sqlspcu.zip"
-        "$dependent_packages"           = "C:\\cfn\\Installer\\dependent-packages.zip"
-        "$artifacts_signatures"         = "C:\\cfn\\signig_files.zip"
-        "$open_ssl"                     = "C:\\cfn\\OpenSSL-Win64.zip"
-        "$sql_setup"                    = "C:\\cfn\\scripts\\Sql-Setup.ps1"
+    $Downloads = @{
+        "$ScriptVerifySignature"    = "C:\\cfn\\scripts\\Verify-Signature.ps1"
+        "$ScriptUnzipArchive"       = "C:\\cfn\\scripts\\Unzip-Archive.ps1"
+        "$ScriptCommon"             = "C:\\cfn\\scripts\\common.zip"
+        "$ScriptSqlFci"             = "C:\\cfn\\scripts\\sqlfci.zip"
+        "$ScriptSqlOntap"           = "C:\\cfn\\scripts\\sqlontap.zip"
+        "$ScriptDbCreate"           = "C:\\cfn\\scripts\\dbcreate.zip"
+        "$Dsc"                      = "C:\\cfn\\DSC.zip"
+        "$PowerShell"               = "C:\\cfn\\Installer\\powershell.zip"
+        "$AmazonLaunchWizardForCfn" = "C:\\cfn\\modules\\AWSLaunchWizardForCFN.zip"
+        "$AmazonLaunchWizardForSsm" = "C:\\cfn\\modules\\AWSLaunchWizardForSSM.zip"
+        "$SqlSpcu"                  = "C:\\cfn\\Installer\\sqlspcu.zip"
+        "$DependentPackages"        = "C:\\cfn\\Installer\\dependent-packages.zip"
+        "$ArtifactsSignatures"      = "C:\\cfn\\signig_files.zip"
+        "$OpenSsl"                  = "C:\\cfn\\OpenSSL-Win64.zip"
+        "$SqlSetup"                 = "C:\\cfn\\scripts\\Sql-Setup.ps1"
     }
     $ProgressPreference = 'SilentlyContinue'
-    foreach ($uri in $downloads.Keys) {
-        Invoke-WebRequestWithRetry -Uri $uri -OutFile $downloads[$uri]
+    foreach ($uri in $Downloads.Keys) {
+        Invoke-WebRequestWithRetry -Uri $uri -OutFile $Downloads[$uri]
     }
     Write-Output "Downloaded the files successfully"
 
     #ScriptSignatureVerificationandExtract
     Write-Output "Starting to verify the signatures and extract the files"
-    $commands = @(
+    $Commands = @(
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\signig_files.zip -Destination C:\cfn"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\OpenSSL-Win64.zip -Destination C:\cfn"; UseExecutionPolicy = $false },
-        # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\common.zip -SignatureFilePath C:\cfn\signig_files\common.sig -PubFilePath C:\cfn\signig_files\common.pub -ResourceID SqlNode -Stackname $deployment_name"; UseExecutionPolicy = $false },
+        # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\common.zip -SignatureFilePath C:\cfn\signig_files\common.sig -PubFilePath C:\cfn\signig_files\common.pub -ResourceID SqlNode -Stackname $DeploymentName"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\scripts\common.zip -Destination C:\cfn\scripts"; UseExecutionPolicy = $false },
-        # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\DSC.zip -SignatureFilePath C:\cfn\signig_files\DSC.sig -PubFilePath C:\cfn\signig_files\DSC.pub -ResourceID SqlNode -Stackname $deployment_name"; UseExecutionPolicy = $false },
+        # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\DSC.zip -SignatureFilePath C:\cfn\signig_files\DSC.sig -PubFilePath C:\cfn\signig_files\DSC.pub -ResourceID SqlNode -Stackname $DeploymentName"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\DSC.zip -Destination C:\cfn"; UseExecutionPolicy = $false },
-        #@{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\sqlfci.zip -SignatureFilePath C:\cfn\signig_files\sqlfci.sig -PubFilePath C:\cfn\signig_files\sqlfci.pub -ResourceID SqlNode -Stackname $deployment_name"; UseExecutionPolicy = $false },
+        #@{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\sqlfci.zip -SignatureFilePath C:\cfn\signig_files\sqlfci.sig -PubFilePath C:\cfn\signig_files\sqlfci.pub -ResourceID SqlNode -Stackname $DeploymentName"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\scripts\sqlfci.zip -Destination C:\cfn\scripts"; UseExecutionPolicy = $false },
-        #@{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\sqlontap.zip -SignatureFilePath C:\cfn\signig_files\sqlontap.sig -PubFilePath C:\cfn\signig_files\sqlontap.pub -ResourceID SqlNode -Stackname $deployment_name"; UseExecutionPolicy = $false },
+        #@{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\sqlontap.zip -SignatureFilePath C:\cfn\signig_files\sqlontap.sig -PubFilePath C:\cfn\signig_files\sqlontap.pub -ResourceID SqlNode -Stackname $DeploymentName"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\scripts\sqlontap.zip -Destination C:\cfn\scripts"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\Installer\sqlspcu.zip -Destination C:\cfn"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer"; UseExecutionPolicy = $false },
-        # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dbcreate.zip -SignatureFilePath C:\cfn\signig_files\dbcreate.sig -PubFilePath C:\cfn\signig_files\dbcreate.pub -ResourceID SqlNode -Stackname $deployment_name"; UseExecutionPolicy = $false },
+        # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dbcreate.zip -SignatureFilePath C:\cfn\signig_files\dbcreate.sig -PubFilePath C:\cfn\signig_files\dbcreate.pub -ResourceID SqlNode -Stackname $DeploymentName"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\scripts\dbcreate.zip -Destination C:\cfn\scripts"; UseExecutionPolicy = $false },
         @{Command = "Copy-Item C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM -Type Directory) -Recurse"; UseExecutionPolicy = $false },
         @{Command = "Copy-Item C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM"; UseExecutionPolicy = $false },
         @{Command = "Copy-Item C:\cfn\scripts\dbcreate\* -Destination C:\SSM -Recurse"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\common\HideAllSSMScripts.ps1"; UseExecutionPolicy = $false },
-        # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\Installer\dependent-packages.zip -SignatureFilePath C:\cfn\signig_files\dependent-packages.sig -PubFilePath C:\cfn\signig_files\dependent-packages.pub -ResourceID SqlNode -Stackname $deployment_name"; UseExecutionPolicy = $false },
+        # @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\Installer\dependent-packages.zip -SignatureFilePath C:\cfn\signig_files\dependent-packages.sig -PubFilePath C:\cfn\signig_files\dependent-packages.pub -ResourceID SqlNode -Stackname $DeploymentName"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer"; UseExecutionPolicy = $false }
     )
 
-    Invoke-Commands -commands $commands
+    Invoke-Commands -commands $Commands
     Write-Output "Completed verifying the signatures and extracting the files"
   
     Write-Output "Invoking the sql setup script"
-    $sql_setup_command = @(
-        @{Command = "C:\cfn\scripts\Sql-Setup.ps1 -deployment_name '$deployment_name' -region '$region' -sql_server_name '$sql_server_name' -sql_svm_name '$sql_svm_name' -fsx_data_volume_name '$fsx_data_volume_name' -fsx_log_volume_name '$fsx_log_volume_name' -fsx_file_system_id '$fsx_file_system_id' -fsx_temp_db_volume_name '$fsx_temp_db_volume_name' -fsx_data_lun_size '$fsx_data_lun_size' -sql_igroup_name '$sql_igroup_name' -fsx_volume_snapshot_policy '$fsx_volume_snapshot_policy' -ad_dns_ip_addresses '$ad_dns_ip_addresses' -domain_dns_name '$domain_dns_name' -domain_admin_user '$domain_admin_user' -sql_admin_accounts '$sql_admin_accounts' -sql_collation '$sql_collation'  -instance_id '$instance_id' -log_feature_enabled '$log_feature_enabled'"; UseExecutionPolicy = $false }
+    $SqlSetupCommand = @(
+        @{Command = "C:\cfn\scripts\Sql-Setup.ps1 -DeploymentName '$DeploymentName' -Region '$Region' -SqlServerName '$SqlServerName' -SqlSvmName '$SqlSvmName' -FsxDataVolumeName '$FsxDataVolumeName' -FsxLogVolumeName '$FsxLogVolumeName' -FsxFileSystemId '$FsxFileSystemId' -FsxTempDbVolumeName '$FsxTempDbVolumeName' -FsxDataLunSize '$FsxDataLunSize' -SqlIgroupName '$SqlIgroupName' -FsxVolumeSnapshotPolicy '$FsxVolumeSnapshotPolicy' -AdDnsIpAddresses '$AdDnsIpAddresses' -DomainDnsName '$DomainDnsName' -DomainAdminUser '$DomainAdminUser' -SqlAdminAccounts '$SqlAdminAccounts' -SqlCollation '$SqlCollation'  -InstanceId '$InstanceId' -LogFeatureEnabled '$LogFeatureEnabled'"; UseExecutionPolicy = $false }
     )
-    $sql_setup_command | Format-List
-    Invoke-Commands -commands $sql_setup_command
+    $SqlSetupCommand | Format-List
+    Invoke-Commands -commands $SqlSetupCommand
     Write-Output "Completed with instance initializer script"
 }
 catch {
-    New-EC2Tag -Region "$region" -ResourceId "$instance_id" -Tag @{ Key = "user_data"; Value = "failed" }
+    New-EC2Tag -Region "$Region" -ResourceId "$InstanceId" -Tag @{ Key = "user_data"; Value = "failed" }
     Write-Output "An error occurred in instance initializer: $_.Exception.Message"
     exit 1
 }

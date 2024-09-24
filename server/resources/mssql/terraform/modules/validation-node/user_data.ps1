@@ -1,45 +1,69 @@
-
 <powershell>
 
 Write-Output "Starting user data script from terraform"
 $WarningPreference = 'SilentlyContinue';
 
-$region = "${region}"
-$deployment_name = "${deployment_name}"
-$validation_node_initialization_s3_url = "${validation_node_initialization_s3_url}"
-$dns_ip_addresses = "${dns_ip_addresses}"
-$domain_dns_name = "${domain_dns_name}"
-$subnet_id = "${subnet_id}"
-$domain_admin_user = "${domain_admin_user}"
-$validation_node1_wait_handler = "${validation_node1_wait_handler}"
-$is_custom_ami = "${is_custom_ami}"
-$perform_fsx_check = "${perform_fsx_check}"
-$fsx_file_system_id = "${fsx_file_system_id}"
-$log_group = "${log_group}_validation_node"
-$sql_deployment_mode = "${sql_deployment_mode}"
-$ssm_parameter_name = "/netapp/wlmdb/$deployment_name"
+$Region = "${region}"
+$DeploymentName = "${deployment_name}"
+$ValidationNodeInitializationS3Url = "${validation_node_initialization_s3_url}"
+$DnsIpAddresses = "${dns_ip_addresses}"
+$DomainDnsName = "${domain_dns_name}"
+$SubnetId = "${subnet_id}"
+$DomainAdminUser = "${domain_admin_user}"
+$ValidationNode1WaitHandler = "${validation_node1_wait_handler}"
+$IsCustomAmi = "${is_custom_ami}"
+$PerformFsxCheck = "${perform_fsx_check}"
+$FsxFileSystemId = "${fsx_file_system_id}"
+$LogGroup = "${log_group}_validation_node"
+$SqlDeploymentMode = "${sql_deployment_mode}"
 
-Write-Output "Deployment Name: $deployment_name"
+Write-Output "Deployment Name: $DeploymentName"
+
+$ScriptDir = "C:\cfn\scripts"
+# Check if the log directory exists, and create it if it does not
+if (!(Test-Path -Path $ScriptDir)) {
+    New-Item -ItemType Directory -Path $ScriptDir
+}
+
+function Get-InstanceId {
+    try {
+        $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+        #Write-Output "Successfully obtained the token."
+
+        $InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+        #Write-Output "Successfully obtained the instance ID: $InstanceId"
+        return $InstanceId
+    }
+    catch {
+        Write-Output "An error occurred while getting token: $_"
+        return $null
+    }
+}
+
+if (Get-Module -ListAvailable -Name AWSPowerShell) {
+    Write-Host "AWS PowerShell module is already installed."
+}
+else {
+    Write-Host "AWS PowerShell module is not installed."
+    Install-Module -Name AWSPowerShell -Scope CurrentUser
+}
 
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
-    $scriptDir = "C:\cfn\scripts"
+    $InstanceId = Get-InstanceId
+    Write-Output "Got the Instance ID: $InstanceId"
 
-    # Check if the script directory exists, and create it if it does not
-    if (!(Test-Path -Path $scriptDir)) {
-        New-Item -ItemType Directory -Path $scriptDir
-    }
-
-    Invoke-WebRequest -Uri $validation_node_initialization_s3_url -OutFile "$scriptDir\instance-initializer.ps1"  -ErrorAction Stop
+    Invoke-WebRequest -Uri $ValidationNodeInitializationS3Url -OutFile "$ScriptDir\Validation-Instance-Initializer.ps1"  -ErrorAction Stop
     
-    $command = "$scriptDir\instance-initializer.ps1 -region '$region' -deployment_name '$deployment_name' -validation_node_initialization_s3_url '$validation_node_initialization_s3_url' -dns_ip_addresses '$dns_ip_addresses' -domain_dns_name '$domain_dns_name' -subnet_id '$subnet_id' -domain_admin_user '$domain_admin_user' -validation_node1_wait_handler '$validation_node1_wait_handler' -is_custom_ami '$is_custom_ami' -perform_fsx_check '$perform_fsx_check' -log_group '$log_group' -sql_deployment_mode '$sql_deployment_mode' -ssm_parameter_name '$ssm_parameter_name'" 
-    if ($fsx_file_system_id -ne "") {
-        $command += " -fsx_file_system_id $fsx_file_system_id"
+    $Command = "$ScriptDir\Validation-Instance-Initializer.ps1 -Region '$Region' -DeploymentName '$DeploymentName' -DnsIpAddresses '$DnsIpAddresses' -DomainDnsName '$DomainDnsName' -SubnetId '$SubnetId' -DomainAdminUser '$DomainAdminUser' -ValidationNode1WaitHandler '$ValidationNode1WaitHandler' -IsCustomAmi '$IsCustomAmi' -PerformFsxCheck '$PerformFsxCheck' -LogGroup '$LogGroup' -SqlDeploymentMode '$SqlDeploymentMode'" 
+    if ($FsxFileSystemId -ne "") {
+        $Command += " -FsxFileSystemId $FsxFileSystemId"
     }
-    Write-Output "Executing command: $command"
-    Invoke-Expression -Command $command
+    Write-Output "Executing command: $Command"
+    Invoke-Expression -Command $Command
 }
 catch {
+    New-EC2Tag -Region "$Region" -ResourceId "$InstanceId" -Tag @{ Key = "user_data"; Value = "failed" }
     Write-Error "An error occurred while invoking the initializer script: $_"
     exit 1
 }

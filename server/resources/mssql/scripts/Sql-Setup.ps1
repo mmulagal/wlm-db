@@ -2,71 +2,71 @@
 
 param(
     [Parameter(Mandatory = $true)]
-    [string]$deployment_name,
+    [string]$DeploymentName,
     [Parameter(Mandatory = $true)]
-    [string]$region,
+    [string]$Region,
     [Parameter(Mandatory = $true)]
-    [string]$sql_server_name,
+    [string]$SqlServerName,
     [Parameter(Mandatory = $true)]
-    [string]$sql_svm_name,
+    [string]$SqlSvmName,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_data_volume_name,
+    [string]$FsxDataVolumeName,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_log_volume_name,
+    [string]$FsxLogVolumeName,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_file_system_id,
+    [string]$FsxFileSystemId,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_temp_db_volume_name,
+    [string]$FsxTempDbVolumeName,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_data_lun_size,
+    [string]$FsxDataLunSize,
     [Parameter(Mandatory = $true)]
-    [string]$sql_igroup_name,
+    [string]$SqlIgroupName,
     [Parameter(Mandatory = $true)]
-    [string]$fsx_volume_snapshot_policy,
+    [string]$FsxVolumeSnapshotPolicy,
     [Parameter(Mandatory = $true)]
-    [string]$ad_dns_ip_addresses,
+    [string]$AdDnsIpAddresses,
     [Parameter(Mandatory = $true)]
-    [string]$domain_dns_name,
+    [string]$DomainDnsName,
     [Parameter(Mandatory = $true)]
-    [string]$domain_admin_user,
+    [string]$DomainAdminUser,
     [Parameter(Mandatory = $true)]
-    [string]$sql_admin_accounts,
+    [string]$SqlAdminAccounts,
     [Parameter(Mandatory = $true)]
-    [string]$sql_collation,
+    [string]$SqlCollation,
     [Parameter(Mandatory = $false)]
-    [string]$instance_id,
+    [string]$InstanceId,
     [Parameter(Mandatory = $false)]
-    [string]$log_feature_enabled
+    [string]$LogFeatureEnabled
 )
 
 Write-Output "Starting the sql setup script from terraform"
 $WarningPreference = 'SilentlyContinue'
 
 # Define the log directory
-$logDir = "C:\cfn\log"
+$LogDir = "C:\cfn\log"
 
 # Check if the log directory exists, and create it if it does not
-if (!(Test-Path -Path $logDir)) {
-    New-Item -ItemType Directory -Path $logDir
+if (!(Test-Path -Path $LogDir)) {
+    New-Item -ItemType Directory -Path $LogDir
 }
 
 # Start the transcript
-Start-Transcript -Path "$logDir\Sql.Setup.ps1.txt" -Append
+Start-Transcript -Path "$LogDir\Sql.Setup.ps1.txt" -Append
 
 # Get ssm parameter
-$ssmParameter = Get-SSMParameter -Name "/netapp/wlmdb/$deployment_name" -WithDecryption $True
-$store = $ssmParameter.Value | ConvertFrom-Json
+$SsmParameter = Get-SSMParameter -Name "/netapp/wlmdb/$DeploymentName" -WithDecryption $True
+$Store = $SsmParameter.Value | ConvertFrom-Json
 
 # Get domain credentials
-$domain_net_bios_name = $domain_dns_name -replace '\.com$', ''
-$domain_admin_full_user = $domain_net_bios_name + '\' + $domain_admin_user
-$domain_password = $store.domain.password
-$domain_secure_password = ConvertTo-SecureString $domain_password -AsPlainText -Force
-$login_credential = New-Object System.Management.Automation.PSCredential($domain_admin_full_user, $domain_secure_password)
+$DomainNetBiosName = $DomainDnsName -replace '\.com$', ''
+$DomainAdminFullUser = $DomainNetBiosName + '\' + $DomainAdminUser
+$DomainPassword = $Store.domain.password
+$DomainSecurePassword = ConvertTo-SecureString $DomainPassword -AsPlainText -Force
+$LoginCredential = New-Object System.Management.Automation.PSCredential($DomainAdminFullUser, $DomainSecurePassword)
 
-$output_file_path = "C:\sqlsetupoutput1.txt"
-$wlmdb_sql_setup_command = "C:\cfn\scripts\Sql-Setup.ps1 -deployment_name '$deployment_name' -region '$region' -sql_server_name '$sql_server_name' -sql_svm_name '$sql_svm_name' -fsx_data_volume_name '$fsx_data_volume_name' -fsx_log_volume_name '$fsx_log_volume_name' -fsx_file_system_id '$fsx_file_system_id' -fsx_temp_db_volume_name '$fsx_temp_db_volume_name' -fsx_data_lun_size '$fsx_data_lun_size' -sql_igroup_name '$sql_igroup_name' -fsx_volume_snapshot_policy '$fsx_volume_snapshot_policy' -ad_dns_ip_addresses '$ad_dns_ip_addresses' -domain_dns_name '$domain_dns_name' -domain_admin_user '$domain_admin_user' -sql_admin_accounts '$sql_admin_accounts' -sql_collation '$sql_collation'  -instance_id '$instance_id' | Out-File '$output_file_path'"
-Write-Output $wlmdb_sql_setup_command
+$OutputFilePath = "C:\sqlsetupoutput1.txt"
+$WLMDBSqlSetupCommand = "C:\cfn\scripts\Sql-Setup.ps1 -DeploymentName '$DeploymentName' -Region '$Region' -SqlServerName '$SqlServerName' -SqlSvmName '$SqlSvmName' -FsxDataVolumeName '$FsxDataVolumeName' -FsxLogVolumeName '$FsxLogVolumeName' -FsxFileSystemId '$FsxFileSystemId' -FsxTempDbVolumeName '$FsxTempDbVolumeName' -FsxDataLunSize '$FsxDataLunSize' -SqlIgroupName '$SqlIgroupName' -FsxVolumeSnapshotPolicy '$FsxVolumeSnapshotPolicy' -AdDnsIpAddresses '$AdDnsIpAddresses' -DomainDnsName '$DomainDnsName' -DomainAdminUser '$DomainAdminUser' -SqlAdminAccounts '$SqlAdminAccounts' -SqlCollation '$SqlCollation'  -InstanceId '$InstanceId' -LogFeatureEnabled '$LogFeatureEnabled' | Out-File '$OutputFilePath'"
+Write-Output $WLMDBSqlSetupCommand
 
 
 function New-ScheduledTask {
@@ -103,6 +103,7 @@ function New-ScheduledTask {
     }
     catch {
         Write-Error "Failed to create scheduled task: $_"
+        throw $_.Exception.Message
     }
 }
 
@@ -127,21 +128,18 @@ function Remove-ScheduledTask {
     }
 }
 
-# Invoke the function with the SYSTEM user
-New-ScheduledTask -taskName "wlmdbsqlsetup" -argument "$wlmdb_sql_setup_command" -userName "SYSTEM"
-
 # Invoke the function with a different user
-#New-ScheduledTask -taskName "wlmdbsqlsetup2" -argument "$second_setup_command" -userName "$domain_admin_full_user" -password "$domain_secure_password"
+#New-ScheduledTask -taskName "wlmdbsqlsetup2" -argument "$second_setup_command" -userName "$DomainAdminFullUser" -password "$DomainSecurePassword"
 
-$configFilePath = "C:\Program Files\Amazon\SSM\Plugins\awsCloudWatch\AWS.EC2.Windows.CloudWatch.json"
-if (Test-Path -Path $configFilePath) {
+$ConfigFilePath = "C:\Program Files\Amazon\SSM\Plugins\awsCloudWatch\AWS.EC2.Windows.CloudWatch.json"
+if (Test-Path -Path $ConfigFilePath) {
     Write-Output "The CloudWatch Logs agent is already configured. Skipping configuration."
 }
 else {
     Write-Output "Configuring the CloudWatch Logs agent"
     # Define the JSON configuration
     try {
-        $LogFeatureEnabled = $log_feature_enabled -eq "true"
+        $LogFeatureEnabled = $LogFeatureEnabled -eq "true"
         if ($LogFeatureEnabled) {
             $config = @{
                 "IsEnabled"           = $true
@@ -175,9 +173,9 @@ else {
                             "Parameters" = @{
                                 "AccessKey" = ""
                                 "SecretKey" = ""
-                                "Region"    = $region
-                                "LogGroup"  = $deployment_name
-                                "LogStream" = $instance_id
+                                "Region"    = $Region
+                                "LogGroup"  = $DeploymentName
+                                "LogStream" = $InstanceId
                             }
                         },
                         @{
@@ -186,7 +184,7 @@ else {
                             "Parameters" = @{
                                 "AccessKey" = ""
                                 "SecretKey" = ""
-                                "Region"    = $region
+                                "Region"    = $Region
                                 "NameSpace" = "Windows/Default"
                             }
                         }
@@ -209,7 +207,7 @@ else {
         $json = $config | ConvertTo-Json -Depth 10
     
         # Write the JSON to the configuration file
-        $json | Out-File -FilePath $configFilePath
+        $json | Out-File -FilePath $ConfigFilePath
     }
     catch {
         Write-Output "An error occurred while configuring the CloudWatch Logs agent: $($_.Exception.Message)"
@@ -343,118 +341,121 @@ function Invoke-RemoteCommands {
 try {
     #InitialSetup
     Write-Output "Starting the initial setup"
-    Write-Output "deployment_name : $deployment_name"
+    Write-Output "deployment_name : $DeploymentName"
     $ProgressPreference = 'SilentlyContinue'
 
-    $setup_commands = @(
+    # Invoke the function with the SYSTEM user
+    New-ScheduledTask -taskName "wlmdbsqlsetup" -argument "$WLMDBSqlSetupCommand" -userName "SYSTEM"
+
+    $SetupCommands = @(
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\modules\AWSLaunchWizardForCFN.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\modules\AWSLaunchWizardForSSM.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\common\InitializeDisks.ps1"; UseExecutionPolicy = $false },
-        @{Command = "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID SqlNode -Stackname '$deployment_name'"; UseExecutionPolicy = $false },
+        @{Command = "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID SqlNode -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\sqlfci\LCM-Config.ps1"; UseExecutionPolicy = $false },
-        @{Command = "C:\cfn\scripts\common\Unjoin-Domain.ps1 -Parentstackname '$deployment_name'"; UseExecutionPolicy = $false },
+        @{Command = "C:\cfn\scripts\common\Unjoin-Domain.ps1 -Parentstackname '$DeploymentName'"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\common\Restart-Computer.ps1"; UseExecutionPolicy = $false },
-        @{Command = "C:\cfn\scripts\common\Rename-Computer.ps1 -NewName '$sql_server_name'"; UseExecutionPolicy = $false }
+        @{Command = "C:\cfn\scripts\common\Rename-Computer.ps1 -NewName '$SqlServerName'"; UseExecutionPolicy = $false }
         @{Command = "C:\cfn\scripts\common\Restart-Computer.ps1"; UseExecutionPolicy = $false }
     )
     # rename computer script does restart inside as well so we are not doing it here
-    Invoke-Commands -commands $setup_commands -logFile "C:\cfn\tflogs\setup_commands.log"
+    Invoke-Commands -commands $SetupCommands -logFile "C:\cfn\tflogs\SetupCommands.log"
     Write-Output "Completed the initial setup"̣̣
 
     # ontap configuration
     Write-Output "Starting ontap configuration"
-    $ontap_pre_req_commands = @(
+    $OntapPreReqCommands = @(
         @{Command = "C:\cfn\scripts\sqlontap\install-ONTAPprereqs.ps1"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\sqlontap\install-powershell7.ps1"; UseExecutionPolicy = $false }
     )
-    Invoke-Commands -commands $ontap_pre_req_commands -logFile "C:\cfn\tflogs\ontap_pre_req_commands.log"
+    Invoke-Commands -commands $OntapPreReqCommands -logFile "C:\cfn\tflogs\OntapPreReqCommands.log"
     Write-Output "Completed the ontap and powershell 7 installation"
 
     # Sleep for 10 seconds
-    #Start-Sleep -Seconds 10
+    Start-Sleep -Seconds 10
 
     # here restart requires as it says powershell 7 requires restart
     Write-Output "Starting Aws Tools Update"
-    $update_aws_tools_commands = @(
+    $UpdateAwsToolsCommand = @(
         @{
             Command            = "C:\\cfn\\scripts\\sqlontap\\Update-AWSToolsModules.ps1"
             UseExecutionPolicy = $false
         }
     )
-    Invoke-Commands -commands $update_aws_tools_commands -logFile "C:\cfn\tflogs\update_aws_tools_commands.log" -usePwsh $true
+    Invoke-Commands -commands $UpdateAwsToolsCommand -logFile "C:\cfn\tflogs\UpdateAwsToolsCommand.log" -usePwsh $true
     Write-Output "Completed Aws Tools Update"
 
-    $restart_command_three = @(
+    $ThirdRestartCommand = @(
         @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false }
     )
-    Invoke-Commands -commands $restart_command_three -logFile "C:\cfn\tflogs\restart_command_three.log"
+    Invoke-Commands -commands $ThirdRestartCommand -logFile "C:\cfn\tflogs\ThirdRestartCommand.log"
     
     Write-Output "Configuring ontap"
-    $configure_ontap_commands = @(
+    $ConfigureOntapCommands = @(
         @{
-            Command            = "`"C:\\cfn\\scripts\\sqlontap\\Configure-ONTAP.ps1 -Parentstackname '$deployment_name' -SQLVMName '$sql_svm_name' -FSxDataVolumeName '$fsx_data_volume_name' -FSxLogVolumeName '$fsx_log_volume_name' -FileSystemId '$fsx_file_system_id' -FSxTempDbVolumeName '$fsx_temp_db_volume_name' -FSxDataLunSize '$fsx_data_lun_size' -IGROUP '$sql_igroup_name' -SnapshotPolicy '$fsx_volume_snapshot_policy' -ResourceID SqlNode -Stackname '$deployment_name'`""
+            Command            = "`"C:\\cfn\\scripts\\sqlontap\\Configure-ONTAP.ps1 -Parentstackname '$DeploymentName' -SQLVMName '$SqlSvmName' -FSxDataVolumeName '$FsxDataVolumeName' -FSxLogVolumeName '$FsxLogVolumeName' -FileSystemId '$FsxFileSystemId' -FSxTempDbVolumeName '$FsxTempDbVolumeName' -FSxDataLunSize '$FsxDataLunSize' -IGROUP '$SqlIgroupName' -SnapshotPolicy '$FsxVolumeSnapshotPolicy' -ResourceID SqlNode -Stackname '$DeploymentName'`""
             UseExecutionPolicy = $false
         }
     )
-    Invoke-Commands -commands $configure_ontap_commands -logFile "C:\cfn\tflogs\configure_ontap_commands.log" -usePwsh $true
+    Invoke-Commands -commands $ConfigureOntapCommands -logFile "C:\cfn\tflogs\ConfigureOntapCommands.log" -usePwsh $true
     Write-Output "Completed ontap configuration"
 
     Write-Output "Initialize iscsi disks in ontap"
-    $ontap_commands = @(
-        @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$fsx_file_system_id' -SQLVMName '$sql_svm_name' -ResourceID SqlNode -Stackname '$deployment_name'"; UseExecutionPolicy = $false },
+    $InitializeOntapCommands = @(
+        @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$FsxFileSystemId' -SQLVMName '$SqlSvmName' -ResourceID SqlNode -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
         @{Command = "C:\\cfn\\scripts\\sqlontap\\Initialize-Iscsidisk.ps1 -IsFCI false"; UseExecutionPolicy = $false }
     )
-    Invoke-Commands -commands $ontap_commands -logFile "C:\cfn\tflogs\ontap_commands.log"
+    Invoke-Commands -commands $InitializeOntapCommands -logFile "C:\cfn\tflogs\InitializeOntapCommands.log"
     Write-Output "Completed initialize iscsi disks in ontap"
 
 
     Write-Output "Starting instance preparation"
     # here join-domain has restart inside the script also
-    $instance_prep_commands = @(
+    $InstancePreparationCommands = @(
         @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
         @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
-        @{Command = "C:\\cfn\\scripts\\sqlfci\\Add-DNSEntry.ps1 -ADServerPrivateIP '$ad_dns_ip_addresses' -DomainDNSName '$domain_dns_name'"; UseExecutionPolicy = $false },
-        @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$domain_dns_name'"; UseExecutionPolicy = $false },
-        @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$domain_dns_name' -Parentstackname '$deployment_name' -DomainAdminUser '$domain_admin_user'"; UseExecutionPolicy = $false },
-        @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$domain_admin_user' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
+        @{Command = "C:\\cfn\\scripts\\sqlfci\\Add-DNSEntry.ps1 -ADServerPrivateIP '$AdDnsIpAddresses' -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
+        @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
+        @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
+        @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$DomainAdminUser' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
     )
-    Invoke-Commands -commands $instance_prep_commands -logFile "C:\cfn\tflogs\instance_prep_commands.log"
+    Invoke-Commands -commands $InstancePreparationCommands -logFile "C:\cfn\tflogs\InstancePreparationCommands.log"
     Write-Output "Completed instance preparation"
 
     Write-Output "Starting instance prep continuation"
-    $instance_prep_continue_commands = @(
-        @{Command = "C:\\cfn\\scripts\\sqlfci\\Create-ADServiceAccount.ps1 -DomainAdminUser '$domain_admin_user' -DomainDNSName '$domain_dns_name' -ServiceAccountUser '$sql_admin_accounts' -Parentstackname '$deployment_name'"; UseExecutionPolicy = $false },
-        @{Command = "C:\\cfn\\scripts\\common\\Test-ADUser.ps1 -UserName '$sql_admin_accounts' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"; UseExecutionPolicy = $true }, # this has timeout of 30 minutes and runs in interval of 1 minute
-        @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$domain_dns_name\\$sql_admin_accounts' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
+    $IntancePreparationContinueCommands = @(
+        @{Command = "C:\\cfn\\scripts\\sqlfci\\Create-ADServiceAccount.ps1 -DomainAdminUser '$DomainAdminUser' -DomainDNSName '$DomainDnsName' -ServiceAccountUser '$SqlAdminAccounts' -Parentstackname '$DeploymentName'"; UseExecutionPolicy = $false },
+        @{Command = "C:\\cfn\\scripts\\common\\Test-ADUser.ps1 -UserName '$SqlAdminAccounts' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"; UseExecutionPolicy = $true }, # this has timeout of 30 minutes and runs in interval of 1 minute
+        @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$DomainDnsName\\$SqlAdminAccounts' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
     )
-    Invoke-RemoteCommands -commands $instance_prep_continue_commands -logFile "C:\cfn\tflogs\instance_prep_continue_commands.log" -Credential $login_credential
+    Invoke-RemoteCommands -commands $IntancePreparationContinueCommands -logFile "C:\cfn\tflogs\IntancePreparationContinueCommands.log" -Credential $LoginCredential
     Write-Output "Completed instance continuation"
 
 
     Write-Output "Starting sql reconfiguration"
-    $sql_included_configure = @(
+    $SqlReConfiguration = @(
         @{Command = "C:\\cfn\\DSC\\PostConfigDSC.ps1"; UseExecutionPolicy = $false },
-        @{Command = "C:\\cfn\\scripts\\common\\Reconfigure-SQL.ps1 -DomainAdminUser " + $domain_admin_user + " -SQLServiceAccount " + $sql_admin_accounts + " -Parentstackname " + $deployment_name + " -SqlCollation " + $sql_collation + " -NetBIOSName " + $sql_server_name; UseExecutionPolicy = $false }
+        @{Command = "C:\\cfn\\scripts\\common\\Reconfigure-SQL.ps1 -DomainAdminUser " + $DomainAdminUser + " -SQLServiceAccount " + $SqlAdminAccounts + " -Parentstackname " + $DeploymentName + " -SqlCollation " + $SqlCollation + " -NetBIOSName " + $SqlServerName; UseExecutionPolicy = $false }
     )
-    Invoke-RemoteCommands -commands $sql_included_configure -logFile "C:\cfn\tflogs\sql_included_configure.log" -Credential $login_credential
+    Invoke-RemoteCommands -commands $SqlReConfiguration -logFile "C:\cfn\tflogs\SqlReConfiguration.log" -Credential $LoginCredential
     Write-Output "Completed sql reconfiguration"
 
     Write-Output "Starting sql instance name & create fsx param"
-    $configure_sql = @(
-        @{Command = "C:\\cfn\\scripts\\common\\SetMaxDOP.ps1 -DomainAdminUser `"$domain_admin_user`" -Parentstackname `"$deployment_name`" -NetBIOSName `"$sql_server_name`""; UseExecutionPolicy = $false },
-        @{Command = "C:\\cfn\\scripts\\common\\Set-SQLInstanceName.ps1 -DomainAdminUser `"$domain_admin_user`" -Parentstackname `"$deployment_name`" -NetBIOSName `"$sql_server_name`""; UseExecutionPolicy = $false },
-        @{Command = "C:\\cfn\\scripts\\common\\Create-FsxParameter.ps1 -FSxID `"$fsx_file_system_id`" -Parentstackname `"$deployment_name`""; UseExecutionPolicy = $false }
+    $ConfigureSql = @(
+        @{Command = "C:\\cfn\\scripts\\common\\SetMaxDOP.ps1 -DomainAdminUser `"$DomainAdminUser`" -Parentstackname `"$DeploymentName`" -NetBIOSName `"$SqlServerName`""; UseExecutionPolicy = $false },
+        @{Command = "C:\\cfn\\scripts\\common\\Set-SQLInstanceName.ps1 -DomainAdminUser `"$DomainAdminUser`" -Parentstackname `"$DeploymentName`" -NetBIOSName `"$SqlServerName`""; UseExecutionPolicy = $false },
+        @{Command = "C:\\cfn\\scripts\\common\\Create-FsxParameter.ps1 -FSxID `"$FsxFileSystemId`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false }
     )
-    Invoke-RemoteCommands -commands $configure_sql -logFile "C:\cfn\tflogs\configure_sql.log" -Credential $login_credential
+    Invoke-RemoteCommands -commands $ConfigureSql -logFile "C:\cfn\tflogs\ConfigureSql.log" -Credential $LoginCredential
     Write-Output "Completed sql instance name & created fsx param"
 
-    $restart_command_five = @(
+    $FifthRestartCommand = @(
         @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false }
     )
-    Invoke-Commands -commands $restart_command_five -logFile "C:\cfn\tflogs\restart_command_five.log"
+    Invoke-Commands -commands $FifthRestartCommand -logFile "C:\cfn\tflogs\FifthRestartCommand.log"
 
     try {
-        New-EC2Tag -Region "$region" -ResourceId "$instance_id" -Tag @{ Key = "user_data"; Value = "completed" }
+        New-EC2Tag -Region "$Region" -ResourceId "$InstanceId" -Tag @{ Key = "user_data"; Value = "completed" }
         Write-Output "Instance tagged successfully"
     }
     catch {
@@ -463,27 +464,21 @@ try {
     }
     
     Write-Output "Starting the Cleanup"
-    $cleanup = @(
+    $Cleanup = @(
         @{Command = "C:\\cfn\\scripts\\common\\Disable-CredSSP.ps1"; UseExecutionPolicy = $true },
         # @{Command = "Remove-Item C:\\cfn\\scripts -Recurse -Force"; UseExecutionPolicy = $false },
         @{Command = "Remove-Item C:\\cfn\\DSC* -Force -Recurse"; UseExecutionPolicy = $false },
         @{Command = "Remove-Item C:\\cfn\\OpenSSL* -Force -Recurse"; UseExecutionPolicy = $false }
     )
-    Invoke-Commands -commands $cleanup -logFile "C:\cfn\tflogs\cleanup.log"
+    Invoke-Commands -commands $Cleanup -logFile "C:\cfn\tflogs\Cleanup.log"
     Write-Output "Completed the Cleanup"
     # Invoke the function to remove the task
     Remove-ScheduledTask -taskName "wlmdbsqlsetup"
-    Write-Output "Sql Setup Completed Successfully: $deployment_name"
+    Write-Output "Sql Setup Completed Successfully: $DeploymentName"
     Stop-Transcript
-    
-    # finalise
-    # $finalize = @(
-    #     @{Command="cfn-signal.exe -e $env:ERRORLEVEL --resource SqlNode --stack $env:AWS_StackName --region $env:AWS_Region"; UseExecutionPolicy=$false}
-    # )
-    # Invoke-Commands -commands $finalize -logFile "C:\cfn\tflogs\finalize.log"
 }
 catch {
-    New-EC2Tag -Region "$region" -ResourceId "$instance_id" -Tag @{ Key = "user_data"; Value = "failed" }
+    New-EC2Tag -Region "$Region" -ResourceId "$InstanceId" -Tag @{ Key = "user_data"; Value = "failed" }
     Write-Output "Instance tagged successfully"
     Write-Output "Error while doing sql setup: $_"
 }

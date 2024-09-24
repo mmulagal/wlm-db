@@ -55,23 +55,6 @@ resource "aws_security_group" "domain_member_sg" {
   }
 }
 
-resource "aws_launch_template" "disable_imdsv1" {
-  name = "disable_imdsv1"
-
-  block_device_mappings {
-    device_name = "/dev/sda1"
-
-    ebs {
-      volume_size = 8
-    }
-  }
-
-  metadata_options {
-    http_endpoint = "enabled"
-    http_tokens   = "required"
-  }
-}
-
 resource "aws_network_interface" "validation_node_ni" {
   subnet_id       = var.subnet_id
   security_groups = [aws_security_group.domain_member_sg.id]
@@ -98,7 +81,7 @@ resource "aws_instance" "validation_node" {
   }
 
   tags = {
-    Name = "ValidationNode1"
+    Name = "${var.deployment_name}-ValidationNode1"
   }
 }
 
@@ -110,7 +93,7 @@ resource "null_resource" "wait_for_tag" {
 
   provisioner "local-exec" {
     command = <<EOF
-    if [ "$(uname)" == "Darwin" ]; then
+   if [ "$(uname)" == "Darwin" ] || [ "$(uname)" == "Linux" ]; then
       while true; do
         tag=$(sh '${path.module}/check_tag.sh' '${aws_instance.validation_node.id}' '${var.aws_location}')
         if [ "$tag" = 'completed' ]; then

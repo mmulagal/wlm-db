@@ -24,14 +24,14 @@ locals {
   })
 }
 
-resource "aws_launch_template" "disable_imdsv1" {
-  name_prefix = "disable_imdsv1"
+# resource "aws_launch_template" "disable_imdsv1" {
+#   name_prefix = "disable_imdsv1"
 
-  metadata_options {
-    http_endpoint = "enabled"
-    http_tokens   = "required"
-  }
-}
+#   metadata_options {
+#     http_endpoint = "enabled"
+#     http_tokens   = "required"
+#   }
+# }
 
 resource "aws_iam_instance_profile" "launch_wizard_sql_fsx_profile" {
   name = "launch_wizard_sql_fsx_profile"
@@ -84,7 +84,7 @@ resource "null_resource" "wait_for_tag" {
 
   provisioner "local-exec" {
     command = <<EOF
-    if [ "$(uname)" == "Darwin" ]; then
+    if [ "$(uname)" == "Darwin" ] || [ "$(uname)" == "Linux" ]; then
       while true; do
         tag=$(sh '${path.module}/check_tag.sh' '${aws_instance.sql_node.id}' '${var.sql_node_aws_location}')
         if [ "$tag" = 'completed' ]; then

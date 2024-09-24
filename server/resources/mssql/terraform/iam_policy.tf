@@ -73,15 +73,6 @@ resource "aws_iam_role_policy" "ec2_iam_role_policy" {
         Resource = "*"
       },
       {
-        Sid    = "CloudFormationDeploymentStatement"
-        Effect = "Allow"
-        Action = [
-          "cloudformation:ListStacks",
-          "cloudformation:SignalResource"
-        ]
-        Resource = "arn:aws:cloudformation:*:*:stack/WLMDB*"
-      },
-      {
         Sid    = "SSMCreateStatement"
         Effect = "Allow"
         Action = [

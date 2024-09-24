@@ -65,7 +65,7 @@ module "validation-node" {
   perform_ad_check                      = true
   domain_dns_name                       = var.domain_dns_name
   domain_admin_user                     = var.domain_admin_user
-  perform_fsx_check                     = local.existing_ontap_fsx ? "true" : "false" // verify both ad n fsx check bool or string 
+  perform_fsx_check                     = local.existing_ontap_fsx ? "true" : "false"
   fsx_file_system_id                    = local.existing_ontap_fsx ? var.fsx_file_system_id : ""
   enable_cloudwatch_log_feature         = var.enable_cloud_watch_log_feature
   ami                                   = var.validation_ami
@@ -73,16 +73,15 @@ module "validation-node" {
   deployment_name                       = var.deployment_name
   unique_id                             = var.unique_id
   validation_node_initialization_s3_url = var.validation_node_initialization_s3_url
-  validation_node1_wait_handler         = "asdf"
+  validation_node1_wait_handler         = "wait"
   sql_deployment_mode                   = var.sql_deployment_mode
-  // notificaiton arn to be sent to the validation node
 }
 
 module "fsxn" {
   source = "./modules/fsxn"
 
   depends_on                     = [module.vpc-endpoints, module.validation-node]
-  fsx_file_system_id             = var.fsx_file_system_id // set this id to provision using existing fsx // add var.fsx_file_system_id
+  fsx_file_system_id             = var.fsx_file_system_id // set this id to provision using existing fsx
   deployment_mode                = var.deployment_mode
   vpc_id                         = var.vpc_id
   vpc_cidr                       = var.vpc_cidr
@@ -136,7 +135,7 @@ module "ec2" {
   ad_dns_ip_addresses        = element(split(",", var.dns_ip_addresses), 0)
   domain_dns_name            = var.domain_dns_name
   domain_admin_user          = var.domain_admin_user
-  sql_admin_accounts         = var.sql_service_account_name // find this is right or not
+  sql_admin_accounts         = var.sql_service_account_name
   sql_collation              = var.sql_collation
 
   sql_node_initialization_s3_url = var.sql_node_initialization_s3_url

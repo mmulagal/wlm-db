@@ -98,17 +98,8 @@ variable "mssql_media_bucket_name" {
   type        = string
 }
 
-variable "mssql_media_path_key" {
-  description = "The S3 bucket key from where the SQL Server media can be downloaded. This string can include numbers, lowercase letters, uppercase letters, hyphens (-), and a forward slash (/)."
-  type        = string
-}
-
 variable "sql_admin_accounts" {
   description = "User name for the SQL Server DB service account administrator. It can be the AD domain admin or other local or domain users."
-  type        = string
-}
-variable "number_of_nodes" {
-  description = "The number of SQL Server nodes to create."
   type        = string
 }
 
@@ -185,11 +176,6 @@ variable "subnet_ids" {
   description = "IDs of the subnets"
   type        = list(string)
   default     = []
-}
-
-variable "sql_node_key_pair_private_key_path" {
-  description = "The path to the private key of the key pair"
-  type        = string
 }
 
 variable "sql_node_aws_location" {

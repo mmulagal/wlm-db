@@ -96,10 +96,6 @@ variable "validation_node1_wait_handler" {
   type        = string
 }
 
-variable "key_pair_private_key_path" {
-  description = "The path to the private key of the key pair"
-  type        = string
-}
 variable "sql_deployment_mode" {
   description = "The deployment mode of SQL"
   type        = string
