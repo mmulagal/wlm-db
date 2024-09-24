@@ -986,9 +986,12 @@ async function getSqlInstanceLicenseRecommendations(
                           )
                       });
                 existingCompute.finding = computeFinding;
-                recommendedInstanceHourlyPrice = recommendedCompute.price;
-                recommendedInstanceHourlyPriceWithoutLicense = recommendedCompute.baseInstancePrice;
 
+                // applicable only in case of EBS storage savings calculations
+                if (!isFsxwCalcs) {
+                    recommendedInstanceHourlyPrice = recommendedCompute.price;
+                    recommendedInstanceHourlyPriceWithoutLicense = recommendedCompute.baseInstancePrice;
+                }
                 // sql license recommendation logic; applicable only if the current instance is enterprise edition(sqlServerEngineEdition === 3)
                 // it either returns SQL Ent or SQL Std
 
