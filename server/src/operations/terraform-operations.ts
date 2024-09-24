@@ -1,8 +1,7 @@
 import createError from 'http-errors';
 import Handlebars from 'handlebars';
 import { readFileSync, createWriteStream } from 'fs';
-import { mkdir, writeFile, rmdir } from 'fs/promises';
-import { copy } from 'fs-extra';
+import { mkdir, writeFile, rmdir, cp } from 'fs/promises';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import archiver from 'archiver';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
@@ -94,13 +93,13 @@ async function uploadInitializerScripts(
             const template = Handlebars.compile(source);
             if (initializerName === TEMPLATE_TYPES.VALIDATION) {
                 const contents = template({
-                    aws_launch_wizard_for_fcn: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
-                    unzip_archive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
-                    verify_signature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
-                    validation_zip: decodeURI(signedUrls.get('ScriptValidation')?.url || ''),
-                    common_zip: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
-                    signing_files_zip: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
-                    open_ssl_win64_zip: decodeURI(signedUrls.get('OpenSSL')?.url || '')
+                    AwsLaunchWizardForFcn: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
+                    UnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
+                    VerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
+                    ValidationZip: decodeURI(signedUrls.get('ScriptValidation')?.url || ''),
+                    CommonZip: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
+                    SigningFilesZip: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
+                    OpenSslWin64Zip: decodeURI(signedUrls.get('OpenSSL')?.url || '')
                 });
                 signedURLDetail = await processTemplate(
                     deploymentName,
@@ -110,24 +109,24 @@ async function uploadInitializerScripts(
                 );
             } else if (initializerName === TEMPLATE_TYPES.SQLSTANDALONE) {
                 const contents = template({
-                    dsc: decodeURI(signedUrls.get('DSC')?.url || ''),
-                    power_shell: decodeURI(signedUrls.get('PowerShell')?.url || ''),
+                    Dsc: decodeURI(signedUrls.get('DSC')?.url || ''),
+                    PowerShell: decodeURI(signedUrls.get('PowerShell')?.url || ''),
 
-                    sqlspcu: decodeURI(signedUrls.get('Sqlspcu')?.url || ''),
-                    amazon_launch_wizard_for_cfn: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
-                    amazon_launch_wizard_for_ssm: decodeURI(signedUrls.get('AmazonLaunchWizardForSSM')?.url || ''),
+                    SqlSpcu: decodeURI(signedUrls.get('Sqlspcu')?.url || ''),
+                    AmazonLaunchWizardForCfn: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
+                    AmazonLaunchWizardForSsm: decodeURI(signedUrls.get('AmazonLaunchWizardForSSM')?.url || ''),
 
-                    script_verify_signature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
-                    script_unzip_archive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
-                    script_common: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
+                    ScriptVerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
+                    ScriptUnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
+                    ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
 
-                    script_sqlfci: decodeURI(signedUrls.get('ScriptSQLFCI')?.url || ''),
-                    script_sqlontap: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
-                    script_dbcreate: decodeURI(signedUrls.get('ScriptDBCREATE')?.url || ''),
-                    dependent_packages: decodeURI(signedUrls.get('DependentPackages')?.url || ''),
-                    artifacts_signatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
-                    open_ssl: decodeURI(signedUrls.get('OpenSSL')?.url || ''),
-                    script_sql_setup: decodeURI(signedUrls.get('ScriptSqlSetup')?.url || '')
+                    ScriptSqlFci: decodeURI(signedUrls.get('ScriptSQLFCI')?.url || ''),
+                    ScriptSqlOntap: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
+                    ScriptDbCreate: decodeURI(signedUrls.get('ScriptDBCREATE')?.url || ''),
+                    DependentPackages: decodeURI(signedUrls.get('DependentPackages')?.url || ''),
+                    ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
+                    OpenSsl: decodeURI(signedUrls.get('OpenSSL')?.url || ''),
+                    SqlSetup: decodeURI(signedUrls.get('ScriptSqlSetup')?.url || '')
                 });
                 signedURLDetail = await processTemplate(
                     deploymentName,
@@ -233,7 +232,8 @@ async function createTFVarsFile(
         // Copy all files from the source directory to the destination directory
         const sourceDir = TERRAFORM_FOLDER_PATH;
         const destDir = dirPath;
-        return copy(sourceDir, destDir);
+        const result = await cp(sourceDir, destDir, { recursive: true });
+        return result;
     }
     // Yet to Implement
     logger.error('Resource type not found');
@@ -261,7 +261,12 @@ async function createAndUploadTheTerraformZipFile(
             archiveFolder
         );
         await rmdir(`./resources/mssql/${deploymentName}`, { recursive: true });
-        return getPreSignedUrl(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, customSQLStandaloneTFPath);
+        const zipSignedURL = await getPreSignedUrl(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customSQLStandaloneTFPath
+        );
+        return zipSignedURL;
     }
     // Yet to Implement
     logger.error('Resource type not found');
