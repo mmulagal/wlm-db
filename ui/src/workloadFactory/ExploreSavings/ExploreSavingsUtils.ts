@@ -456,7 +456,7 @@ export const formatViewCalcData = (
             capacityPoolStorage: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.capacityPoolStorage
             ),
-            capacityMonthlyCost: formatNumbers(
+            capacityMonthlyCost: formatNumberWithCustomComma(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.capacityMonthlyCost
             ),
             totalMonthlyCostForCapacity: formatNumberWithCustomComma(
