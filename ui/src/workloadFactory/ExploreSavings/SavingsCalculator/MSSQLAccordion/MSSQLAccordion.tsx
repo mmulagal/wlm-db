@@ -34,7 +34,7 @@ const TableLayout = ({ data }: any) => {
     );
 };
 
-const MSSQLAccordion = ({ printState, disableState, isMutliFsx, statusCheck }: any) => {
+const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const dispatch = useDispatch();
     const [saveConfigData] = useSaveConfigDataMutation();
     const {
@@ -194,7 +194,6 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx, statusCheck }: a
                                     isDisabled={
                                         storageSavingsLoading ||
                                         selectedHostDetails?.loading ||
-                                        !statusCheck ||
                                         viewCalculationsLoading ||
                                         isMutliFsx ||
                                         disableState ||
@@ -217,7 +216,6 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx, statusCheck }: a
                                     storageSavingsLoading ||
                                     selectedHostDetails?.loading ||
                                     viewCalculationsLoading ||
-                                    !statusCheck ||
                                     disableState ||
                                     !storageSavingsResponse
                                 }
