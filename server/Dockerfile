@@ -37,7 +37,9 @@ COPY prisma ./prisma/
 
 COPY patches ./patches/
 
-RUN chmod -R 766 ./resources/mssql/
+RUN chmod 777 ./resources/mssql/
+RUN chown -R netappuser:netappgroup ./resources/mssql/
+
 RUN npm ci --omit=dev
 
 # prisma generate command after every change to Prisma schema to update the generated Prisma Client code.
