@@ -17,7 +17,10 @@ const ontapRestRequest = `
         [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-        $connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet -Count 1
+        # If network type is determined in the upstream script, then it is not necessary to check the connection again
+        if ($connection -eq $null) {
+            $connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet -Count 1
+        }
         if ($connection -eq $False) {
             # Set the registry key to disable certificate revocation check in case of private subnet
             Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
