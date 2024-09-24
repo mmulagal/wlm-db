@@ -881,22 +881,22 @@ const MASTER_TEMPLATE_DISTRIBUTION = {
 const TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION = [
     {
         name: TEMPLATE_TYPES.VALIDATION,
-        location: './resources/mssql/terraform/modules/validation-node/Instance-initializer.ps1'
+        location: './resources/mssql/terraform/modules/validation-node/Validation-Instance-initializer.ps1'
     },
     {
         name: TEMPLATE_TYPES.SQLSTANDALONE,
-        location: './resources/mssql/terraform/modules/ec2/Instance-initializer.ps1'
+        location: './resources/mssql/terraform/modules/ec2/Sql-Instance-initializer.ps1'
     }
 ];
 
 const TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS = [
     {
         name: 'ValidationInitializerTemplate',
-        url: 'terraform/validation/Instance-initializer.ps1'
+        url: 'terraform/validation/Validation-Instance-initializer.ps1'
     },
     {
         name: 'SQLStandaloneInitializerTemplate',
-        url: 'terraform/standalone/Instance-initializer.ps1'
+        url: 'terraform/standalone/Sql-Instance-initializer.ps1'
     }
 ];
 
