@@ -363,7 +363,9 @@ Resources:
                             command: !Join
                                 - ''
                                 - - 'powershell.exe -Command "C:\cfn\scripts\validation\Update-DNSServers.ps1 -DNSIpAddresses '
+                                  - '"'
                                   - !Ref 'DNSIpAddresses'
+                                  - '"'
                                   - ' -Stackname '
                                   - !Ref 'AWS::StackName'
                                   - ' -ResourceID ValidationNode1'
