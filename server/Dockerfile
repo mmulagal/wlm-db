@@ -27,6 +27,7 @@ COPY resources/mssql/templates/standalone-deployment.yaml ./resources/mssql/temp
 COPY resources/mssql/templates/vpc-endpoints.yaml ./resources/mssql/templates/vpc-endpoints.yaml
 COPY resources/mssql/templates/fsx-new.yaml ./resources/mssql/templates/fsx-new.yaml
 COPY resources/mssql/templates/fsx-existing.yaml ./resources/mssql/templates/fsx-existing.yaml
+COPY resources/mssql/terraform ./resources/mssql/terraform/
 
 COPY dist/src ./
 
