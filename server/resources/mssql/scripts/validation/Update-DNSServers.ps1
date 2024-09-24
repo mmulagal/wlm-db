@@ -27,7 +27,7 @@ try {
     $connection = Test-Connection -ComputerName $DNSIpAddresses -Quiet
     if (-Not($True -in $connection))
         {
-            Failed = $true
+            $Failed = $true
             $FailureReason = '"{0}"' -f "Unable to reach DNS Servers $DNSIpAddresses"
             Write-Output @{status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress
             Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
