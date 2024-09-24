@@ -778,13 +778,18 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             pricingRequest.ebsStorage,
             pricingRequest.fsxwStorage
         );
+
+        const ebsBreakdownByVolumeType = pricingResponse.ebsStorage?.ebsBreakdownByVolumeType.filter(
+            e => !e.id?.includes(EBS_ROOT_VOLUME)
+        );
+
         return {
             compute: pricingResponse?.compute || 0,
             storage: {
                 fsxn: pricingResponse?.fsxnStorage?.fsxStorageCost,
                 fsxw: pricingResponse?.fsxwStorage?.fsxwStorageCost,
                 ebs: pricingResponse.ebsStorage?.ebsStorageCost,
-                ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
+                ebsBreakdownByVolumeType: isEmpty(ebsBreakdownByVolumeType) ? undefined : ebsBreakdownByVolumeType,
                 fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById.map(id => ({
                     ...id,
                     size: id.size!.total
