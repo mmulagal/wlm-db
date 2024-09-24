@@ -103,7 +103,14 @@ const MSSqlHeader = () => {
                         } else if (databaseHostEntryPoint === 'database') {
                             navigate('/databases');
                         } else {
-                            navigateToCanvas('/');
+                            if (isWorkloadFactory) {
+                                navigateToCanvas('/');
+                            } else {
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: '../../../../../fsxhome', replace: true }
+                                });
+                            }
                         }
                     }
                 }}
