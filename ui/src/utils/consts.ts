@@ -128,7 +128,9 @@ export const API_NAME = {
 
 export const FSX_DEPLOYMENT_MODE = {
     SINGLE_AZ_1: 'SINGLE_AZ_1',
-    MULTI_AZ_1: 'MULTI_AZ_1'
+    MULTI_AZ_1: 'MULTI_AZ_1',
+    SINGLE_AZ_2: 'SINGLE_AZ_2',
+    MULTI_AZ_2: 'MULTI_AZ_2'
 };
 
 export const SQL_DEPLOYMENT_MODE = {
@@ -588,4 +590,4 @@ export const EBS_PROTECTED_OPTIONS = {
     PROTECTED: 'Protected',
     UNPROTECTED: 'Unprotected',
     UNKNOWN: 'Unknown'
-}
+};

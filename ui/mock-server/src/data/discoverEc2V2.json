@@ -273,7 +273,7 @@
                         "EC2AMAZ-3UTIH781"
                     ],
                     "nodeIps": [],
-                    "sqlServerDeploymentType": "AOAG",
+                    "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [
@@ -301,7 +301,7 @@
                         "EC2AMAZ-3UTIH781"
                     ],
                     "nodeIps": [],
-                    "sqlServerDeploymentType": "AOAG",
+                    "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [

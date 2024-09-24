@@ -573,6 +573,8 @@ export const GENERAL = {
     FSXN_PRIMARY_SUBNET_ERROR:
         'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
     FSXN_DEPLOYMENT_MODE_ERROR: 'Deployment mode not supported.',
+    SINGLE_FSXN_DEPLOYMENT_MODE_ERROR: 'Single AZ 2 deployment type not supported.',
+    MULTI_FSXN_DEPLOYMENT_MODE_ERROR: 'Multi AZ 2 deployment type not supported.',
     FSXN_NOT_AVAILABLE: 'FSx for ONTAP file system is not in available state.',
     TAB_DASHBOARD: 'Dashboard',
     TAB_INVENTORY: 'Inventory',

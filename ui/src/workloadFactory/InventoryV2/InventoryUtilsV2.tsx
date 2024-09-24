@@ -1883,12 +1883,10 @@ export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
     }
 };
 
-export const checkForAllAOAG = (rowData: any) => {
-    // If all instance have AOAG than ES is disabled for it
-    return rowData?.sqlServerInstances?.every((item: any) => {
-        return (
-            !item?.sqlServerDeploymentType || item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
-        );
+export const checkForAnyAOAG = (rowData: any) => {
+    // If any instance have AOAG than ES is disabled for it
+    return rowData?.sqlServerInstances?.some((item: any) => {
+        return item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG;
     });
 };
 

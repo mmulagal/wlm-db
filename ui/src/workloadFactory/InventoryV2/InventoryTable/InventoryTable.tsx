@@ -37,7 +37,7 @@ import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
 import {
     addInstanceIdToGetPerf,
-    checkForAllAOAG,
+    checkForAnyAOAG,
     checkForAnySSD,
     getPartnerNodeEc2InstanceId,
     handleManageNotification,
@@ -380,11 +380,11 @@ const InventoryTable = () => {
             );
         }
 
-        //Check for all FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
+        //Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
         if (
             rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
             !checkForAllUnDetectInstance &&
-            checkForAllAOAG(rowData)
+            checkForAnyAOAG(rowData)
         ) {
             return (
                 <TooltipComponent title={GENERAL.ALL_ES_FSXW_AOAG_ROWS} placement="bottom" width="340px" height="70px">
