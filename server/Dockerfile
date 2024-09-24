@@ -37,8 +37,10 @@ COPY prisma ./prisma/
 
 COPY patches ./patches/
 
-RUN chmod 777 ./resources/mssql/
-RUN chown -R netappuser:netappgroup ./resources/mssql/
+# Switch to the root user to change the permissions
+USER root
+RUN chown -R netappuser:netappgroup ./resources/mssql
+USER netappuser
 
 RUN npm ci --omit=dev
 
