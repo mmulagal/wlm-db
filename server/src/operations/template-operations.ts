@@ -257,4 +257,4 @@ async function uploadTemplates(
     }
 }
 
-export default uploadTemplates;
+export { uploadTemplates, generateSignedUrls };
