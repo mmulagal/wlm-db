@@ -343,7 +343,7 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\common.zip -SignatureFilePath C:\cfn\signig_files\common.sig 
-                                    -PubFilePath C:\cfn\signig_files\common.pub -ResourceID SqlNode -Stackname '"
+                                    -PubFilePath C:\cfn\signig_files\common.pub -ResourceID ValidationNode1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -696,7 +696,7 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\common.zip -SignatureFilePath C:\cfn\signig_files\common.sig 
-                                    -PubFilePath C:\cfn\signig_files\common.pub -ResourceID SqlNode -Stackname '"
+                                    -PubFilePath C:\cfn\signig_files\common.pub -ResourceID ValidationNode2 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
