@@ -362,8 +362,7 @@ Resources:
                         a-update-DNS:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\validation\Update-DNSServers.ps1
-                                    -DNSIpAddresses '
+                                - - powershell.exe -Command "C:\cfn\scripts\validation\Update-DNSServers.ps1 -DNSIpAddresses '
                                   - !Ref 'DNSIpAddresses'
                                   - ' -Stackname '
                                   - !Ref 'AWS::StackName'
