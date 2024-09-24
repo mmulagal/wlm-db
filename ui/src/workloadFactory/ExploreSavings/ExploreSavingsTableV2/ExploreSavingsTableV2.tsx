@@ -10,7 +10,7 @@ import { onClickESHost } from '../ExploreSavingsUtils';
 import { INVENTORY_ACTIONS, WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
-import { checkForAllAOAG, checkForAnySSD } from '../../InventoryV2/InventoryUtilsV2';
+import { checkForAnyAOAG, checkForAnySSD } from '../../InventoryV2/InventoryUtilsV2';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -81,11 +81,11 @@ const ExploreSavingsTableV2 = () => {
             isSticky: true,
             width: '181px',
             renderCell: (cellData: any, rowData: any) => {
-                //Check for all Explore Savings FSXW rows
+                //Check for any Explore Savings FSXW rows that is AOAG
                 if (
                     rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
                     rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
-                    checkForAllAOAG(rowData)
+                    checkForAnyAOAG(rowData)
                 ) {
                     return (
                         <TooltipComponent

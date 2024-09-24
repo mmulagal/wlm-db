@@ -680,7 +680,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Savings from compression & deduplication',
                 value: `${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}%`,
-                text: `Based on a typical DB workload, ${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}% of Savings from compression and deduplication is our recommendation`
+                text: `NetApp recommends ${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}% savings from compression and deduplication based on a typical database workload.`
             },
             {
                 label: 'Pricing calculations'
@@ -1373,7 +1373,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Number of file systems required for storage capacity',
                 value: `${viewCalculation.fsxwCalculation.numberOfFileSystemsRequiredForStorageCapacity} file system(s)`,
-                text: `Effective provisioned storage capacity for FSx for Windows File Server  ÷ FSx for Windows File Server maximum capacity  = ${viewCalculation.fsxwCalculation.provisionedStorageCapacity} ÷ ${viewCalculation.fsxwCalculation.fsxwMaxCapacity}`
+                text: `Effective provisioned storage capacity for FSx for Windows File Server  ÷ FSx for Windows File Server maximum capacity  = ${viewCalculation.fsxwCalculation.provisionedStorageCapacity} GiB ÷ ${viewCalculation.fsxwCalculation.fsxwMaxCapacity}`
             },
             {
                 label: 'Number of file systems required for throughput capacity',
@@ -1418,7 +1418,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Desired shadow copy storage capacity',
                 value: `${viewCalculation.fsxwSnapshotCalculation.desiredSnapshotStorageCapacity}`,
-                text: ``
+                text: `Monthly change rate(${viewCalculation.monthlyChangeRate}%) x Total storage capacity (${viewCalculation.fsxwCalculation.desiredStorageCapacity})`
             },
             {
                 label: 'Deduplication savings',
@@ -2022,10 +2022,10 @@ export const checkIfByolFieldRequired = (
 
 /**
  * This function will check if TCO selected host has protection data or not.
- * @param data 
+ * @param data
  * @returns Protected/Unprotected/Unknown
  */
-export const checkIfEbsProtected = () => { 
+export const checkIfEbsProtected = () => {
     const state = store.getState();
     const { selectedHostDetails } = state.exploreSavings;
     const perfMssqlInstancesData = state.inventoryV2.perfMssqlInstancesData;
@@ -2039,16 +2039,20 @@ export const checkIfEbsProtected = () => {
                 } else {
                     unprotected = true;
                 }
-            } 
+            }
         });
 
         if (protectedVal) {
             return EBS_PROTECTED_OPTIONS.PROTECTED;
-        }else if (unprotected) {
+        } else if (unprotected) {
             return EBS_PROTECTED_OPTIONS.UNPROTECTED;
-        } else if (!selectedHostDetails?.loading && perfMssqlInstancesData?.[selectedHostDetails?.id] && !perfMssqlInstancesData?.[selectedHostDetails?.id]?.loading) {
+        } else if (
+            !selectedHostDetails?.loading &&
+            perfMssqlInstancesData?.[selectedHostDetails?.id] &&
+            !perfMssqlInstancesData?.[selectedHostDetails?.id]?.loading
+        ) {
             return EBS_PROTECTED_OPTIONS.UNKNOWN;
-        };
-    };
+        }
+    }
     return '';
 };
