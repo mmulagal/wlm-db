@@ -344,6 +344,11 @@ const validateSQLInstanceConnectivity = (
         $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
         $ProgressPreference = 'SilentlyContinue'
 
+        $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
+        if ($connection -ne $True) {
+            # Set the registry key to disable certificate revocation check in case of private subnet
+            Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
+        }
         $ssmmodulePath = (Get-Module -Name 'AWS.Tools.SimpleSystemsManagement' -ListAvailable).Path
         if($ssmmodulePath -is [System.Array]) {
             $ssmmodulePath = $ssmmodulePath[0]
@@ -374,11 +379,6 @@ const validateSQLInstanceConnectivity = (
                 FOR JSON PATH
 "@
 
-            $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
-            if ($connection -eq $False) {
-                # Set the registry key to disable certificate revocation check in case of private subnet
-                Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
-            }
             $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
             $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
             $sqlList = $credobject.sql
@@ -427,16 +427,17 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
         $responseObject = @{}
     }
 
-    $CommonmodulePath =  (Get-Module -Name 'AWS.Tools.Common' -ListAvailable).Path
-    if($CommonmodulePath -is [System.Array]) {
-        $CommonmodulePath = $CommonmodulePath[0]
+    $connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet -Count 1
+    if ($connection -ne $True) {
+        # Set the registry key to disable certificate revocation check in case of private subnet
+        Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
     }
     $ssmmodulePath =  (Get-Module -Name 'AWS.Tools.SimpleSystemsManagement' -ListAvailable).Path
     if($ssmmodulePath -is [System.Array]) {
         $ssmmodulePath = $ssmmodulePath[0]
     }
 
-    Import-Module -Name $CommonmodulePath, $ssmmodulePath
+    Import-Module -Name $ssmmodulePath
 
     try {
         $FSxID = '${fsxid}'
