@@ -1,5 +1,6 @@
 import { SqlServerDeploymentModel } from '../../../utils/consts';
 import { compressResponse } from './common-templates';
+import { GOOGLE_DNS } from './const';
 
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
 const IS_PS7_AVAILABLE: string = 'isPS7Available';
@@ -339,6 +340,11 @@ const HOST_AND_SQL_INFO_PS1 = [
     if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
       $credsFromParameterStore = $null
       try {
+        $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
+        if ($connection -eq $False) {
+            # Set the registry key to disable certificate revocation check in case of private subnet
+            Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
+        }
         [string]$apiToken = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri http://169.254.169.254/latest/api/token
         $ec2InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $apiToken} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
         $credsFromParameterStore = (Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json

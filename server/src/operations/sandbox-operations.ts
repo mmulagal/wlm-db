@@ -388,7 +388,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     accountId
                                 );
 
-                                if (response) {
+                                if (response && !response.includes('error')) {
                                     let { savedStorage, consumedStorage } = sqlResponseParsing(response);
 
                                     // Increase storage savings per sandbox for demo
