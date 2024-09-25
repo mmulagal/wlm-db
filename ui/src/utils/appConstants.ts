@@ -1129,8 +1129,8 @@ export const GENERAL = {
     ES_SNAPSHOTS_DESC: 'Snapshot calculations are based on primary database volumes only and not on replicas.',
     ES_CLONES_DESC: 'Clone calculations are based on primary database volumes only and not on replicas.',
     ES_TOTAL_MONTHLY_COST: 'Total monthly cost',
-    ES_FSXN_MULTI: 'Multi availability zone',
-    ES_FSXN_SINGLE: 'Single availability zone',
+    ES_FSXN_MULTI: 'Multi Availability Zone',
+    ES_FSXN_SINGLE: 'Single Availability Zone',
     ES_FSXW_SINGLE: 'Single Availability Zone',
     ES_FSXW_MULTI: 'Multi Availability Zone',
     ES_FSXN_AZ_DESC:

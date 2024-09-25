@@ -82,13 +82,13 @@ const ViewCalculations = ({ statusCheck }: any) => {
             {/* Accordion section */}
             <div className={styles.mainSection}>
                 <div className={styles.headingArea}>
-                    <div>
+                    <div className={styles.topHeading}>
                         <DsTypography variant="Semibold_24">{GENERAL.COST_CALCULATION}</DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginBottom: '4px' }}>
                             {GENERAL.VIEW_CALC_TEXT}
                         </DsTypography>
 
-                        <DsTypography variant="Regular_14" style={{ marginBottom: '24px', fontWeight: '500' }}>
+                        <DsTypography variant="Regular_14" style={{ marginBottom: '40px', fontWeight: '500' }}>
                             {GENERAL.VIEW_CAL_SECONDARY_TEXT}
                         </DsTypography>
                     </div>
