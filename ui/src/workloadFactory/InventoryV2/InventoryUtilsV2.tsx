@@ -237,18 +237,35 @@ export const getTotalCost = (estimatedUsageCost: EstimatedUsageCostInterface) =>
 };
 
 export const getAllocatedCapacity = (row: ManagedHostsRowInterface | undefined) => {
-    let allocatedCapacity = 0;
-    if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
-        row?.databaseInstancesSummary?.map(perRow => {
-            allocatedCapacity +=
-                (perRow?.storage?.fsxn?.size || 0) +
-                (perRow?.storage?.fsxw?.size || 0) +
-                (perRow?.storage?.ebs?.size || 0);
-        });
-        return allocatedCapacity;
-    } else {
-        return 0;
-    }
+    let fsxnCapacity = 0;
+    let fsxwCapacity = 0;
+    let ebsCapacity = 0;
+    let uniqueFsxnId: Array<String> = [];
+    let uniqueFsxwId: Array<String> = [];
+    let uniqueVolId: Array<String> = [];
+    row?.fsxnResourceInfo?.map((perFsx: any) => {
+        if (!uniqueFsxnId.includes(perFsx?.id)) {
+            fsxnCapacity += perFsx?.size || 0;
+            uniqueFsxnId.push(perFsx?.id);
+        }
+    });
+
+    row?.fsxwResourceInfo?.map((perFsxw: any) => {
+        if (!uniqueFsxwId.includes(perFsxw?.id)) {
+            fsxwCapacity += perFsxw?.size || 0;
+            uniqueFsxwId.push(perFsxw?.id);
+        }
+    });
+
+    row?.ebsResourceInfo?.map((perVol: any) => {
+        if (perVol?.id && !perVol?.id?.toLowerCase().includes('root_volume') && !uniqueVolId.includes(perVol?.id)) {
+            ebsCapacity += perVol?.size || 0;
+            uniqueVolId.push(perVol?.id);
+        }
+    });
+
+    let allocatedCapacity = fsxnCapacity + fsxwCapacity + ebsCapacity;
+    return allocatedCapacity;
 };
 
 export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) => {
@@ -1237,7 +1254,7 @@ export const getMergedAllocatedCapacity = (nodeList: Array<ManagedHostsRowInterf
 
     nodeList?.map(node => {
         node?.ebsResourceInfo?.map((perVol: any) => {
-            if (!uniqueVolId.includes(perVol?.id)) {
+            if (perVol?.id && !perVol?.id?.toLowerCase().includes('root_volume') && !uniqueVolId.includes(perVol?.id)) {
                 ebsCapacity += perVol?.size;
                 uniqueVolId.push(perVol?.id);
             }
@@ -1499,12 +1516,14 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
             return;
         }
         if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && item?.isDetected) {
-            if (item?.storageType === GENERAL.FSX_FOR_WINDOWS) {
-                if (checkForAnySSD(item) && !checkForAnyAOAG(item)) {
+            if (!checkForMixedStorageType(item)) {
+                if (item?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+                    if (checkForAnySSD(item) && !checkForAnyAOAG(item)) {
+                        nonFsxnStorageList.push(item);
+                    }
+                } else {
                     nonFsxnStorageList.push(item);
                 }
-            } else {
-                nonFsxnStorageList.push(item);
             }
         }
     });
@@ -1904,6 +1923,19 @@ export const checkForAnySSD = (rowData: any) => {
                 return true;
             }
         }
+    }
+    return false;
+};
+
+export const checkForMixedStorageType = (rowData: any) => {
+    let storageType: Array<String> = [];
+    for (const item of rowData?.sqlServerInstances || []) {
+        if (item?.fileSystemType && !storageType.includes(item?.fileSystemType)) {
+            storageType.push(item?.fileSystemType);
+        }
+    }
+    if (storageType.length > 1) {
+        return true;
     }
     return false;
 };

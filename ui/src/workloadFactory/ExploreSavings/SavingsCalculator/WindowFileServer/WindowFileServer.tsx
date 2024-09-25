@@ -14,7 +14,18 @@ const WindowFileServer = () => {
     const [tableData, setTableData] = useState<any>([]);
 
     useEffect(() => {
-        const deploymentType = selectedHostDetails?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
+        let deploymentType = '';
+        for (let instance of selectedHostDetails?.sqlServerInstances || []) {
+            for (let deployment of instance?.deploymentTypes || []) {
+                if (deployment?.type) {
+                    deploymentType = deployment?.type;
+                    break;
+                }
+            }
+            if (deploymentType) {
+                break;
+            }
+        }
         const deploymentTypeText = getAzType(deploymentType) || GENERAL.NOT_AVAILABLE;
         const dataValue = [
             {
@@ -34,7 +45,7 @@ const WindowFileServer = () => {
                 loading: viewCalculationsLoading
             },
             {
-                label: 'Total throughput',
+                label: 'Total throughput MB/s',
                 value: viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity
                     ? viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity + ' MB/s'
                     : GENERAL.NOT_AVAILABLE,
