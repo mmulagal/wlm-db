@@ -45,7 +45,7 @@ const WindowFileServer = () => {
                 loading: viewCalculationsLoading
             },
             {
-                label: 'Total throughput',
+                label: 'Total throughput MB/s',
                 value: viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity
                     ? viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity + ' MB/s'
                     : GENERAL.NOT_AVAILABLE,
