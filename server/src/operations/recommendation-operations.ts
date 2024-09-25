@@ -977,10 +977,10 @@ async function getSqlInstanceLicenseRecommendations(
                               nodeInstanceTypes.length,
                               ec2InstanceType,
                               ec2UsageOperation,
-                              existingLicenseType,
+                              recommendedSqlLicenseType,
                               existingInstanceTypesPricingDetails,
-                              existingInstanceHourlyPrice,
-                              existingInstanceHourlyPriceWithoutLicense,
+                              recommendedInstanceHourlyPrice,
+                              recommendedInstanceHourlyPriceWithoutLicense,
                               monthlySqlByolCostPerHost,
                               'No Instance change recommended'
                           )

@@ -512,6 +512,7 @@ async function performStorageSavingsCalculations(
         ]);
 
         const existingComputeLicensePrice = Number(compute?.existing?.instanceMonthlyPrice || 0);
+        const recommendedComputeLicensePrice = Number(compute?.recommended?.instanceMonthlyPrice || 0);
 
         const singleFsxCalculationData = single?.fsx_calculation
             ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
@@ -546,7 +547,7 @@ async function performStorageSavingsCalculations(
             fsxw,
             totalSummary: {
                 existing: fsxw ? fsxw.total + existingComputeLicensePrice : existingComputeLicensePrice,
-                recommended: fsx.total + existingComputeLicensePrice // recommended computeLicense price is same as existing
+                recommended: fsx.total + recommendedComputeLicensePrice // recommendedComputeLicensePrice is inclusive of recommended License price (for fsxw recommended compute price remains same as existing, but recommended license price can vary)
             }
         };
     }
