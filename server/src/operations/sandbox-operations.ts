@@ -49,7 +49,7 @@ import {
     getSqlServerVersion
 } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
-import { getDatabaseInstanceName, isDemo, sleep, sqlResponseParsing } from '../utils/utils';
+import { getDatabaseInstanceName, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
@@ -1508,14 +1508,19 @@ async function startCleanup(
             ];
         }
 
-        const resp = await callSsmExecution(
-            credentialsId,
-            region,
-            command,
-            destDetails.activeNodeInstanceId,
-            accountId,
-            false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+        const resp = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                command,
+                destDetails.activeNodeInstanceId,
+                accountId,
+                false,
+                CUSTOM_SSM_EXECUTION_TIMEOUT
+            ),
+            3,
+            5000
         );
 
         if (!resp) {
