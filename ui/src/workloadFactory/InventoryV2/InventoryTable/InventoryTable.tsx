@@ -384,6 +384,7 @@ const InventoryTable = () => {
         if (
             rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
             !checkForAllUnDetectInstance &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
             checkForAnyAOAG(rowData)
         ) {
             return (

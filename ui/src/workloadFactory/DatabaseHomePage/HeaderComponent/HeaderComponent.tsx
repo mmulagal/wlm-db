@@ -552,6 +552,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                         className={
                                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
                                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
                                             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                                                 ? `${
                                                       isWorkloadFactory
