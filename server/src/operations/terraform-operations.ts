@@ -4,7 +4,7 @@ import { readFileSync, createWriteStream } from 'fs';
 import { mkdir, writeFile, rmdir, cp } from 'fs/promises';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import archiver from 'archiver';
-import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
+import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     DatabaseTypes,
     HttpErrorCodes,
@@ -22,7 +22,6 @@ import getLogger from '../utils/logger';
 import { generateSignedUrls } from './template-operations';
 
 const logger = getLogger();
-const { getPreSignedUrl } = preSignedUrl;
 const isDemoFlow = isDemo();
 
 interface TemplateDetails {
@@ -95,13 +94,13 @@ async function uploadInitializerScripts(
             const template = Handlebars.compile(source);
             if (initializerName === TEMPLATE_TYPES.VALIDATION) {
                 const contents = template({
-                    AwsLaunchWizardForFcn: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
-                    UnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
-                    VerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
-                    ValidationZip: decodeURI(signedUrls.get('ScriptValidation')?.url || ''),
-                    CommonZip: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
-                    SigningFilesZip: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
-                    OpenSslWin64Zip: decodeURI(signedUrls.get('OpenSSL')?.url || '')
+                    AwsLaunchWizardForFcn: decodeURIComponent(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
+                    UnzipArchive: decodeURIComponent(signedUrls.get('ScriptUnzipArchive')?.url || ''),
+                    VerifySignature: decodeURIComponent(signedUrls.get('ScriptVerifySignature')?.url || ''),
+                    ValidationZip: decodeURIComponent(signedUrls.get('ScriptValidation')?.url || ''),
+                    CommonZip: decodeURIComponent(signedUrls.get('ScriptCommon')?.url || ''),
+                    SigningFilesZip: decodeURIComponent(signedUrls.get('ArtifactsSignatures')?.url || ''),
+                    OpenSslWin64Zip: decodeURIComponent(signedUrls.get('OpenSSL')?.url || '')
                 });
                 signedURLDetail = await processTemplate(
                     deploymentName,
@@ -111,24 +110,24 @@ async function uploadInitializerScripts(
                 );
             } else if (initializerName === TEMPLATE_TYPES.SQLSTANDALONE) {
                 const contents = template({
-                    Dsc: decodeURI(signedUrls.get('DSC')?.url || ''),
-                    PowerShell: decodeURI(signedUrls.get('PowerShell')?.url || ''),
+                    Dsc: decodeURIComponent(signedUrls.get('DSC')?.url || ''),
+                    PowerShell: decodeURIComponent(signedUrls.get('PowerShell')?.url || ''),
 
-                    SqlSpcu: decodeURI(signedUrls.get('Sqlspcu')?.url || ''),
-                    AmazonLaunchWizardForCfn: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
-                    AmazonLaunchWizardForSsm: decodeURI(signedUrls.get('AmazonLaunchWizardForSSM')?.url || ''),
+                    SqlSpcu: decodeURIComponent(signedUrls.get('Sqlspcu')?.url || ''),
+                    AmazonLaunchWizardForCfn: decodeURIComponent(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
+                    AmazonLaunchWizardForSsm: decodeURIComponent(signedUrls.get('AmazonLaunchWizardForSSM')?.url || ''),
 
-                    ScriptVerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
-                    ScriptUnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
-                    ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
+                    ScriptVerifySignature: decodeURIComponent(signedUrls.get('ScriptVerifySignature')?.url || ''),
+                    ScriptUnzipArchive: decodeURIComponent(signedUrls.get('ScriptUnzipArchive')?.url || ''),
+                    ScriptCommon: decodeURIComponent(signedUrls.get('ScriptCommon')?.url || ''),
 
-                    ScriptSqlFci: decodeURI(signedUrls.get('ScriptSQLFCI')?.url || ''),
-                    ScriptSqlOntap: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
-                    ScriptDbCreate: decodeURI(signedUrls.get('ScriptDBCREATE')?.url || ''),
-                    DependentPackages: decodeURI(signedUrls.get('DependentPackages')?.url || ''),
-                    ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
-                    OpenSsl: decodeURI(signedUrls.get('OpenSSL')?.url || ''),
-                    SqlSetup: decodeURI(signedUrls.get('ScriptSqlSetup')?.url || '')
+                    ScriptSqlFci: decodeURIComponent(signedUrls.get('ScriptSQLFCI')?.url || ''),
+                    ScriptSqlOntap: decodeURIComponent(signedUrls.get('ScriptSQLONTAP')?.url || ''),
+                    ScriptDbCreate: decodeURIComponent(signedUrls.get('ScriptDBCREATE')?.url || ''),
+                    DependentPackages: decodeURIComponent(signedUrls.get('DependentPackages')?.url || ''),
+                    ArtifactsSignatures: decodeURIComponent(signedUrls.get('ArtifactsSignatures')?.url || ''),
+                    OpenSsl: decodeURIComponent(signedUrls.get('OpenSSL')?.url || ''),
+                    SqlSetup: decodeURIComponent(signedUrls.get('ScriptSqlSetup')?.url || '')
                 });
                 signedURLDetail = await processTemplate(
                     deploymentName,
