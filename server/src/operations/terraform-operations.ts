@@ -4,7 +4,7 @@ import { readFileSync, createWriteStream } from 'fs';
 import { mkdir, writeFile, rmdir, cp } from 'fs/promises';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import archiver from 'archiver';
-import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
+import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     DatabaseTypes,
     HttpErrorCodes,
@@ -23,6 +23,8 @@ import { generateSignedUrls } from './template-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
+
+const { getPreSignedUrl } = preSignedUrl;
 
 interface TemplateDetails {
     name: string;
