@@ -107,5 +107,6 @@ export {
     putObjectBucket,
     putBucketLifecycleConfiguration,
     getBucketLifecycleConfiguration,
-    getObjectBucket
+    getObjectBucket,
+    getPreSignedUrl
 };
