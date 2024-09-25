@@ -574,7 +574,7 @@ async function getTerraformSetup(
 
         logger.debug(`Deployment ${deploymentName} parameters ${JSON.stringify(templateParameters)}.`);
 
-        region = !isEmpty(region) ? region : DEFAULT_AWS_REGION;
+        region = !isEmpty(region) ? region : TEMPLATE_BUCKET_REGION;
 
         const customTerraformModulesPath: string = `${WLMDB}/${deploymentName}/terraform`;
 
