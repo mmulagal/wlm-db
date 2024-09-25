@@ -56,13 +56,20 @@ export const setESInstanceData = (data: any, dispatch: any) => {
     if (data?.serverInstallationMode === GENERAL.AOAG) {
         serverInstallationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
     }
+
+    let serverVersion = '';
+    for (let instance of data?.sqlServerInstances || []) {
+        if (instance?.databaseServer?.serverVersion) {
+            serverVersion = instance.databaseServer.serverVersion;
+            break;
+        }
+    }
     dispatch(
         setSelectedHostDetails({
             ...data,
             recommendedInstance: {
                 serverInstallationMode: serverInstallationMode,
-                serverVersion:
-                    data?.databaseServer?.serverVersion || data?.sqlServerInstances?.[0]?.databaseServer?.serverVersion
+                serverVersion: data?.databaseServer?.serverVersion || serverVersion
             }
         })
     );
