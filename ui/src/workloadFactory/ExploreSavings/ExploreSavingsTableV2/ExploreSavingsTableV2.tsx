@@ -170,7 +170,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
             accessor: 'storageType',
             id: '3',
-            width: '160px',
+            width: '170px',
             filterOptions: [
                 { label: GENERAL.EBS, value: GENERAL.EBS },
                 { label: GENERAL.FSX_FOR_WINDOWS, value: GENERAL.FSX_FOR_WINDOWS }
@@ -204,7 +204,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_INSTANCE,
             accessor: 'instanceListText',
             id: '5',
-            width: '211px',
+            width: '191px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {

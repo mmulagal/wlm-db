@@ -1489,6 +1489,7 @@ export const getPerfUnmanagedData = (instanceId: string, instRow: any, partnerId
 };
 
 export const getExploreSavingsRows = (inventoryTableData: { [key: string]: InventoryTableData }) => {
+    // If ES row is disabled than it should come in inventory but not in explore savings table
     let nonFsxnStorageList: Array<InventoryTableData> = [];
     const state = store.getState();
     const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
@@ -1498,7 +1499,13 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
             return;
         }
         if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && item?.isDetected) {
-            nonFsxnStorageList.push(item);
+            if (item?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+                if (checkForAnySSD(item) && !checkForAnyAOAG(item)) {
+                    nonFsxnStorageList.push(item);
+                }
+            } else {
+                nonFsxnStorageList.push(item);
+            }
         }
     });
     return nonFsxnStorageList;
