@@ -1,7 +1,13 @@
 import { STORAGE_TYPE } from '@prisma/client';
 import randomize from 'randomatic';
 import numeral from 'numeral';
-import { DescribeInstancesCommandOutput, DescribeVolumesResult, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
+import {
+    DescribeInstancesCommandOutput,
+    DescribeVolumesResult,
+    DescribeVpcsCommandInput,
+    DeviceType,
+    Volume
+} from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listDatabaseInstances, listResources } from '../lib/database/db';
@@ -49,7 +55,8 @@ import {
     SQL_SERVICE_STATE,
     UNKNOWN,
     WIN_SQL_EC2_USAGE_OPERATION,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    EBS_ROOT_VOLUME
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -142,6 +149,7 @@ interface MappedOnTapVolumeResponse {
 type EstimationEc2Type = {
     resourceType: string;
     sqlSoftwareType: string;
+    [key: string]: string | number;
 };
 
 type EstimationFSxType = {
@@ -157,8 +165,8 @@ type EstimationFSxType = {
 type EstimationEbsType = {
     id: string;
     size: number;
-    throughput: number;
-    iops: number;
+    throughput?: number;
+    iops?: number;
     volumeType: string;
 }[];
 
@@ -720,8 +728,18 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
 
         const ec2ResourceInfo = ec2Info as EstimationEc2Type;
         const fsxnResourceInfo = fsxnInfo as EstimationFSxType;
-        const ebsResourceInfo = ebsInfo as EstimationEbsType;
+        let ebsResourceInfo = ebsInfo as EstimationEbsType;
         const fsxwResourceInfo = fsxwInfo as EstimationFSxType;
+
+        if (ec2ResourceInfo.rootVolumeId) {
+            const rootVolume = {
+                id: ec2ResourceInfo.rootVolumeId as string,
+                size: ec2ResourceInfo.size as number,
+                volumeType: ec2ResourceInfo.volumeType as string
+            };
+
+            ebsResourceInfo = isEmpty(ebsResourceInfo) ? [rootVolume] : [...ebsResourceInfo, rootVolume];
+        }
 
         const pricingRequest: PricingServiceRequestType = {
             compute: {
@@ -760,13 +778,18 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             pricingRequest.ebsStorage,
             pricingRequest.fsxwStorage
         );
+
+        const ebsBreakdownByVolumeType = pricingResponse.ebsStorage?.ebsBreakdownByVolumeType.filter(
+            e => !e.id?.includes(EBS_ROOT_VOLUME)
+        );
+
         return {
             compute: pricingResponse?.compute || 0,
             storage: {
                 fsxn: pricingResponse?.fsxnStorage?.fsxStorageCost,
                 fsxw: pricingResponse?.fsxwStorage?.fsxwStorageCost,
                 ebs: pricingResponse.ebsStorage?.ebsStorageCost,
-                ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
+                ebsBreakdownByVolumeType: isEmpty(ebsBreakdownByVolumeType) ? undefined : ebsBreakdownByVolumeType,
                 fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById.map(id => ({
                     ...id,
                     size: id.size!.total
@@ -794,12 +817,23 @@ async function getEc2ResourceInfo(
         InstanceIds: [activeNodeInstanceId]
     });
     logger.info('Estimation info for EC2:', ec2Info);
-    const {
-        Reservations: [
-            { Instances: [{ InstanceType: resourceType = undefined, ImageId: imageId = undefined } = {}] = [] } = {}
-        ] = []
-    } = ec2Info;
-    const amiInfo = await getAmis(credentialsId, region, { ImageIds: [imageId!] });
+    const { Reservations: [{ Instances: [instance] = [] } = {}] = [] } = ec2Info;
+    let getRootVolumePromise = Promise.resolve({});
+    if (instance.RootDeviceType === DeviceType.ebs) {
+        const rootEbsVolume = instance.BlockDeviceMappings?.find(
+            ({ DeviceName }) => DeviceName === instance.RootDeviceName
+        );
+        if (rootEbsVolume) {
+            const rootVolumeId = rootEbsVolume.Ebs?.VolumeId;
+            if (rootVolumeId) {
+                getRootVolumePromise = describeVolumes(credentialsId, region, { VolumeIds: [rootVolumeId] });
+            }
+        }
+    }
+    const [amiInfo, volumes] = await Promise.all([
+        getAmis(credentialsId, region, { ImageIds: [instance.ImageId!] }),
+        getRootVolumePromise
+    ]);
     logger.debug('Estimation info for AMI:', amiInfo);
 
     const { Images: [{ PlatformDetails: sqlPlatform = '' } = {}] = [] } = amiInfo;
@@ -820,9 +854,15 @@ async function getEc2ResourceInfo(
             sqlSoftwareType = CUSTOM;
     }
 
+    const [rootVolume] = (volumes as { Volumes: Volume[] }).Volumes || [];
     return {
-        resourceType: resourceType!,
-        sqlSoftwareType
+        resourceType: instance.InstanceType!,
+        sqlSoftwareType,
+        ...(rootVolume && {
+            rootVolumeId: `${EBS_ROOT_VOLUME}1`,
+            size: rootVolume.Size!,
+            volumeType: rootVolume.VolumeType!
+        })
     };
 }
 
@@ -1454,7 +1494,7 @@ async function getDatabaseInstanceTopology(
         accountId,
         credentialsId,
         activeNodeInstanceId,
-        databaseInstances.instance_name
+        databaseInstances.database_instance_name
     );
 
     const {
@@ -1488,6 +1528,7 @@ async function getDatabaseInstanceTopology(
         let subnetIds;
         let availabilityZones: Array<string> | undefined;
         let fileSystemTags;
+        let fileSystemStorageType;
         try {
             if (fileSystemId || fsxwId) {
                 const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId || fsxwId] });
@@ -1501,7 +1542,8 @@ async function getDatabaseInstanceTopology(
                     } = {},
                     Lifecycle: fileSystemStatus,
                     StorageCapacity: fileSystemStorageCapacity,
-                    SubnetIds: subnetIds
+                    SubnetIds: subnetIds,
+                    StorageType: fileSystemStorageType
                 } = fileSystem);
 
                 fileSystemName = fileSystemTags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
@@ -1526,7 +1568,8 @@ async function getDatabaseInstanceTopology(
             ...(fileSystemStatus && { fileSystemStatus }),
             ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
-            ...(availabilityZones && { availabilityZones })
+            ...(availabilityZones && { availabilityZone: availabilityZones }),
+            ...(fileSystemStorageType && { fileSystemStorageType })
         };
     }
     return topologyData;

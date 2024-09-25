@@ -35,7 +35,8 @@ const SavingsSelection = ({ printState }: any) => {
         recommendedTargetInstance,
         monthlyBYOLCost,
         selectedHostDetails,
-        savingsCalculatorFrom
+        savingsCalculatorFrom,
+        snapshotLoading
     } = useAppSelector(state => state.exploreSavings);
 
     const [isByolField, setIsByolField] = useState<boolean>(false);
@@ -125,7 +126,8 @@ const SavingsSelection = ({ printState }: any) => {
     }, []);
 
     useEffect(() => {
-        if (!selectedSnapshotFrequency) {
+        if (!selectedSnapshotFrequency && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+            // For FSxW default value is Daily.
             dispatch(setSelectedSnapshotFrequency(generateSnapshotFrequency[2]));
         }
     }, [generateSnapshotFrequency]);
@@ -225,9 +227,7 @@ const SavingsSelection = ({ printState }: any) => {
                     label={GENERAL.ES_SNAPSHOT_FREQUENCY}
                     isDisabled={loading}
                     isClearable={false}
-                    defaultValue={
-                        selectedSnapshotFrequency ? selectedSnapshotFrequency : [generateSnapshotFrequency[2]]
-                    }
+                    value={selectedSnapshotFrequency}
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedSnapshotFrequency(selectedOptions));
                     }}
@@ -236,34 +236,59 @@ const SavingsSelection = ({ printState }: any) => {
                         selectedSnapshotFrequency?.label === GENERAL.ES_NO_SNAPSHOT_STORAGE &&
                         GENERAL.TOOLTIP_MESSAGE_SNAPSHOT_FREQ
                     }
+                    isLoading={snapshotLoading}
                     isSearchable={generateSnapshotFrequency.length > 5}
                     options={generateSnapshotFrequency}
                     className={`${styles.widthSet} savings-calculator-input-fields`}
                 />
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ? (
+                    printState ? (
+                        <div className={styles.mockInput}>
+                            <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                                {GENERAL.NUMBER_OF_CLONED_COPIES}
+                            </DsTypography>
+                            <div className={styles.inputField}>{noOfClonedCopies}</div>
+                        </div>
+                    ) : (
+                        <TextField
+                            label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                            isDisabled={loading}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                setNoOfClonedCopies(numVal);
+                            }}
+                            value={noOfClonedCopies}
+                            className={`${styles.widthSet} savings-calculator-input-fields`}
+                            error={errorForClonedCopiesCount()}
+                        />
+                    )
+                ) : (
+                    ''
+                )}
             </div>
 
             <div className={styles.secondRow}>
-                {printState && (
-                    <div className={styles.mockInput}>
-                        <DsTypography variant="Regular_14" className={styles.mockLabel}>
-                            {GENERAL.NUMBER_OF_CLONED_COPIES}
-                        </DsTypography>
-                        <div className={styles.inputField}>{noOfClonedCopies}</div>
-                    </div>
-                )}
-                {!printState && (
-                    <TextField
-                        label={GENERAL.NUMBER_OF_CLONED_COPIES}
-                        isDisabled={loading}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            setNoOfClonedCopies(numVal);
-                        }}
-                        value={noOfClonedCopies}
-                        className={`${styles.widthSet} savings-calculator-input-fields`}
-                        error={errorForClonedCopiesCount()}
-                    />
-                )}
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+                    (printState ? (
+                        <div className={styles.mockInput}>
+                            <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                                {GENERAL.NUMBER_OF_CLONED_COPIES}
+                            </DsTypography>
+                            <div className={styles.inputField}>{noOfClonedCopies}</div>
+                        </div>
+                    ) : (
+                        <TextField
+                            label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                            isDisabled={loading}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                setNoOfClonedCopies(numVal);
+                            }}
+                            value={noOfClonedCopies}
+                            className={`${styles.widthSet} savings-calculator-input-fields`}
+                            error={errorForClonedCopiesCount()}
+                        />
+                    ))}
                 {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
                     <SelectField
                         label={GENERAL.ES_CLONE_REFRESH_FREQUENCY}

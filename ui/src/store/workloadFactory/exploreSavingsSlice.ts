@@ -119,7 +119,8 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     manualStorageCapacity: 2,
     selectedManualStorageCapacityUnit: null,
     selectedManualFSXIOPS: 6000,
-    selectedManualFSXThroughput: 128
+    selectedManualFSXThroughput: 128,
+    snapshotLoading: false
 };
 
 const exploreSavingsSlice = createSlice({
@@ -398,6 +399,9 @@ const exploreSavingsSlice = createSlice({
         },
         setRecommendedTargetInstance(state, action: PayloadAction<any>) {
             state.recommendedTargetInstance = action.payload;
+        },
+        setSnapshotLoading(state, action: PayloadAction<any>) {
+            state.snapshotLoading = action.payload;
         }
     }
 });
@@ -452,7 +456,8 @@ export const {
     setViewCalculationsApiResponse,
     setViewCalculationsLoading,
     setSavingsCalculatorFrom,
-    setRecommendedTargetInstance
+    setRecommendedTargetInstance,
+    setSnapshotLoading
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

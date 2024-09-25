@@ -4,6 +4,8 @@
     flex-direction: column;
 
     .firstRow {
+        display: flex;
+        gap: 24px;
         margin-top: 32px;
     }
 

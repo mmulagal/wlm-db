@@ -39,8 +39,8 @@ interface ProductOutput {
     output: GetProductsCommandOutput;
 }
 
-const DEFAULT_EBS_STORAGE = 100; // 100GB
-const DEFAULT_EBS_VOL_TYPE = 'gp3';
+const ROOT_EBS_STORAGE_SIZE = 100; // 100GB
+const ROOT_EBS_VOL_TYPE = 'gp3';
 
 const AWS_PRICING_FORMAT_VERSION = {
     FormatVersion: 'aws_v1'
@@ -396,7 +396,7 @@ function parseProductsResponse(response: GetProductsCommandOutput): {
     logger.debug('Parsing products response', response);
 
     const pricingDetails: { [metric: string]: { pricePerUnit: number; unit: string } } = {};
-    if (response.PriceList) {
+    if (response.PriceList && !isEmpty(response.PriceList)) {
         response.PriceList.forEach(priceItem => {
             const item = (priceItem as LazyJsonString).deserializeJSON();
             const { terms, product } = item;
@@ -472,8 +472,8 @@ async function calculatePrice(
 
     const ebsRootVolumes = new Array(compute.sqlDeploymentMode === FCI ? 2 : 1).fill(null).map((_, index) => ({
         id: `${EBS_ROOT_VOLUME}${index + 1}`,
-        volumeType: DEFAULT_EBS_VOL_TYPE,
-        size: DEFAULT_EBS_STORAGE
+        volumeType: ROOT_EBS_VOL_TYPE,
+        size: ROOT_EBS_STORAGE_SIZE
     }));
 
     if (isEmpty(ebsStorage)) {
@@ -481,6 +481,12 @@ async function calculatePrice(
             regionCode: compute.regionCode,
             ebsResourceInfo: ebsRootVolumes
         };
+    } else {
+        // If ebsStorage is not empty, add the root volumes to the existing ebsResourceInfo
+        const hasRootVolume = ebsStorage.ebsResourceInfo?.some(({ id }) => id.includes(EBS_ROOT_VOLUME));
+        if (!hasRootVolume) {
+            ebsStorage.ebsResourceInfo = [...ebsStorage.ebsResourceInfo, ...ebsRootVolumes];
+        }
     }
 
     const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));
@@ -491,12 +497,12 @@ async function calculatePrice(
         vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {}
     } = productRates;
 
-    const ec2Cost = calculateEc2Cost(ec2InstanceRate, compute?.sqlDeploymentMode);
+    const ec2Cost = ec2InstanceRate ? calculateEc2Cost(ec2InstanceRate, compute?.sqlDeploymentMode) : 0;
     const vpcCost = vpcRate ? getPriceUtil(vpcRate, HOURS_IN_MONTH, 1) : 0;
 
     let totalFsxnCost = 0;
     const fsxnCostBreakdownById: FsxnCostBreakdownType[] = [];
-    if (fsxnStorage) {
+    if (fsxnStorage && !isEmpty(productRates.fsxnStorage)) {
         await Promise.all(
             fsxnStorage.fsxnResourceInfo.map(async fsxResource => {
                 let fsxnStorageCost = 0;
@@ -549,19 +555,15 @@ async function calculatePrice(
         throughput: number | undefined;
     }[] = [];
     let totalEbsStorageCost = 0;
-    if (!isEmpty(ebsStorage)) {
-        const hasRootVolume = ebsStorage.ebsResourceInfo?.some(
-            ({ id, volumeType }) => id.includes(EBS_ROOT_VOLUME) && volumeType === 'gp3'
-        );
-        if (!hasRootVolume) {
-            ebsStorage.ebsResourceInfo = [...ebsStorage.ebsResourceInfo, ...ebsRootVolumes];
-        }
-
+    if (
+        !isEmpty(ebsStorage) &&
+        !ebsStorage?.ebsResourceInfo?.some(e => isEmpty(productRates[`ebsStorage-${e.volumeType}`]))
+    ) {
         ebsStorage.ebsResourceInfo.forEach(ebsResource => {
             const rate = productRates[`ebsStorage-${ebsResource.volumeType}`];
             const size =
                 ebsResource.id.includes(EBS_ROOT_VOLUME) && ebsResource.size <= 100
-                    ? DEFAULT_EBS_STORAGE
+                    ? ROOT_EBS_STORAGE_SIZE
                     : ebsResource.size;
             const cost = calculateEbsCost(ebsResource.volumeType, size, ebsResource.iops, ebsResource.throughput, rate);
             totalEbsStorageCost += cost;
@@ -578,7 +580,7 @@ async function calculatePrice(
 
     let totalFsxwCost = 0;
     const fsxwCostBreakdownById: FsxwCostBreakdownType[] = [];
-    if (fsxwStorage) {
+    if (fsxwStorage && !isEmpty(productRates.fsxwStorage)) {
         await Promise.all(
             fsxwStorage.fsxwResourceInfo.map(async fsxResource => {
                 let fsxwStorageCost = 0;
@@ -594,6 +596,10 @@ async function calculatePrice(
                 });
             })
         );
+    }
+
+    if (isEmpty(compact([ec2Cost, vpcCost, totalFsxnCost, totalEbsStorageCost, totalFsxwCost]))) {
+        throw createError(404, 'Pricing details not found for the given input');
     }
 
     return {

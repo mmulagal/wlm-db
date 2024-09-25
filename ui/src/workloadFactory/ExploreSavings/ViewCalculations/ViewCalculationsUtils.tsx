@@ -8,13 +8,10 @@ export const TableLayout = ({ data }: any) => {
             data.label === 'EC2 machines total cost' ||
             data.label === 'Single availability zone total monthly cost' ||
             data.label === 'Multi availability zone total monthly cost' ||
-            data.label === 'Total snapshot monthly cost' ||
             data.label === 'Total clones monthly cost' ||
-            data.label === 'Total monthly cost' ||
             data.label === 'Total EC2 machines cost' ||
             data.label === 'EBS total cost' ||
             data.label === 'Total snapshots cost' ||
-            data.label === 'Clones total monthly cost' ||
             data.label === 'Shadow copies total monthly cost'
         ) {
             return {
@@ -35,6 +32,19 @@ export const TableLayout = ({ data }: any) => {
                 marginBottom: 3,
                 marginTop: 14,
                 paddingTop: 20
+            };
+        } else if (
+            data.label === 'Total snapshot monthly cost' ||
+            data.label === 'Clones total monthly cost' ||
+            data.label === 'Total monthly cost'
+        ) {
+            return {
+                backgroundColor: 'var(--table-header-background)',
+                height: 92,
+                fontWeight: 490,
+                marginBottom: 3,
+                marginTop: 10,
+                paddingTop: 15
             };
         } else {
             return { backgroundColor: 'var(--main-background)', minHeight: 64, height: 64, marginBottom: 2 };

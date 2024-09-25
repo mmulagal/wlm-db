@@ -503,6 +503,8 @@ async function createSandbox(
             source,
             dest
         );
+
+        logger.info({ srcDetails, destDetails });
         if (isDemo()) {
             srcDetails.databaseInstanceName = srcDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
             destDetails.databaseInstanceName = destDetails.databaseInstanceName.replace(srcDetails.resourceName, '');
@@ -3236,7 +3238,7 @@ async function runSandboxPreValidations(
             sqlInstanceId: source.instance
         }),
         source.host === dest.host ? Promise.resolve([]) : listResources(accountId, dest.host),
-        source.instance === dest.instance
+        source.host === dest.host && source.instance === dest.instance
             ? Promise.resolve([])
             : listDatabaseInstances(accountId, {
                   credentialsId,
@@ -3249,7 +3251,7 @@ async function runSandboxPreValidations(
         destResourceDetail = srcResourceDetail;
     }
 
-    if (source.instance === dest.instance) {
+    if (source.host === dest.host && source.instance === dest.instance) {
         destInstanceDetail = srcInstanceDetail;
     }
 

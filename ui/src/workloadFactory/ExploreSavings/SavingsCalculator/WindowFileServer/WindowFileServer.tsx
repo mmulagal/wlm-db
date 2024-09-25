@@ -28,15 +28,16 @@ const WindowFileServer = () => {
             },
             {
                 label: 'Total provisioned IOPS',
-                value:
-                    viewCalculationsResponse?.fsxwCalculation?.sumOfDefaultAndAdditionalProvisionedIops ||
-                    GENERAL.NOT_AVAILABLE,
+                value: viewCalculationsResponse?.fsxwCalculation?.sumOfDefaultAndAdditionalProvisionedIops
+                    ? viewCalculationsResponse?.fsxwCalculation?.sumOfDefaultAndAdditionalProvisionedIops + ' IOPS'
+                    : GENERAL.NOT_AVAILABLE,
                 loading: viewCalculationsLoading
             },
             {
-                label: 'Total throughput MB/s',
-                value:
-                    viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity || GENERAL.NOT_AVAILABLE,
+                label: 'Total throughput',
+                value: viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity
+                    ? viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity + ' MB/s'
+                    : GENERAL.NOT_AVAILABLE,
                 loading: viewCalculationsLoading
             }
         ];

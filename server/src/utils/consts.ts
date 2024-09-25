@@ -793,6 +793,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'OpenSSL',
         url: `${WLMDB}/OpenSSL-Win64.zip`
+    },
+    {
+        name: 'ScriptSqlSetup',
+        url: `${WLMDB}/scripts/Sql-Setup.ps1`
     }
 ];
 
@@ -873,6 +877,101 @@ const SQL_TEMPLATES_DISTRIBUTION = [
 const MASTER_TEMPLATE_DISTRIBUTION = {
     name: TEMPLATE_TYPES.MASTER,
     location: './resources/mssql/templates/wlm-master.yaml'
+};
+
+const TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION = [
+    {
+        name: TEMPLATE_TYPES.VALIDATION,
+        location: './resources/mssql/terraform/modules/validation-node/Validation-Instance-initializer.ps1'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTANDALONE,
+        location: './resources/mssql/terraform/modules/ec2/Sql-Instance-initializer.ps1'
+    }
+];
+
+const TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS = [
+    {
+        name: 'ValidationInitializerTemplate',
+        url: 'terraform/validation/Validation-Instance-initializer.ps1'
+    },
+    {
+        name: 'SQLStandaloneInitializerTemplate',
+        url: 'terraform/standalone/Sql-Instance-initializer.ps1'
+    }
+];
+
+const TERRAFORM_FOLDER_PATH = './resources/mssql/terraform';
+
+const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: { [key: string]: { name: string; type: string } } = {
+    AccountId: { name: 'account_id', type: 'string' },
+    ADScenarioType: { name: 'ad_scenario_type', type: 'string' },
+    CfDeployRoleName: { name: 'tf_deploy_role_name', type: 'string' },
+    CloudProviderAccountId: { name: 'cloud_provider_account_id', type: 'string' },
+    CloudwatchLogsEndpointExists: { name: 'cloudwatch_logs_endpoint_exists', type: 'boolean' },
+    DeploymentMode: { name: 'deployment_mode', type: 'string' },
+    DNSIpAddresses: { name: 'dns_ip_addresses', type: 'string' },
+    DomainAdminPassword: { name: 'domain_admin_password', type: 'string' },
+    DomainAdminUser: { name: 'domain_admin_user', type: 'string' },
+    DomainDNSName: { name: 'domain_dns_name', type: 'string' },
+    DomainMemberSGID: { name: 'domain_member_sg_id', type: 'string' },
+    Ec2EndpointExists: { name: 'ec2_endpoint_exists', type: 'boolean' },
+    Ec2MessagesEndpointExists: { name: 'ec2_messages_endpoint_exists', type: 'boolean' },
+    EnableCloudWatchLogFeature: { name: 'enable_cloud_watch_log_feature', type: 'boolean' },
+    EncryptedFsxPassword: { name: 'encrypted_fsx_password', type: 'string' },
+    FileSystemEncryptionKeyId: { name: 'file_system_encryption_key_id', type: 'string' },
+    FSxAdminPassword: { name: 'fsx_admin_password', type: 'string' },
+    FSxAdminUsername: { name: 'fsx_admin_username', type: 'string' },
+    FSxDataLunSize: { name: 'fsx_data_lun_size', type: 'number' },
+    FSxDataVolumeName: { name: 'fsx_data_volume_name', type: 'string' },
+    FSxDataVolumeSize: { name: 'fsx_data_volume_size', type: 'number' },
+    FSxDiskIops: { name: 'fsx_disk_iops', type: 'number' },
+    FsxEndpointExists: { name: 'fsx_endpoint_exists', type: 'boolean' },
+    FSxFileSystemId: { name: 'fsx_file_system_id', type: 'string' },
+    FSxFileSystemName: { name: 'fsx_file_system_name', type: 'string' },
+    FSxLogVolumeName: { name: 'fsx_log_volume_name', type: 'string' },
+    FSxLogVolumeSize: { name: 'fsx_log_volume_size', type: 'number' },
+    FSxQuorumVolumeName: { name: 'fsx_quorum_volume_name', type: 'string' },
+    FSxQuorumVolumeSize: { name: 'fsx_quorum_volume_size', type: 'number' },
+    FSxStorageCapacity: { name: 'fsx_storage_capacity', type: 'number' },
+    FSxSvmName: { name: 'fsx_svm_name', type: 'string' },
+    FSxTempDbVolumeName: { name: 'fsx_temp_db_volume_name', type: 'string' },
+    FSxTempDbVolumeSize: { name: 'fsx_temp_db_volume_size', type: 'number' },
+    FsxVolumeSnapshotPolicy: { name: 'fsx_volume_snapshot_policy', type: 'string' },
+    FSxVolumeThroughputCapacity: { name: 'fsx_volume_throughput_capacity', type: 'number' },
+    IsCustomAmi: { name: 'is_custom_ami', type: 'boolean' },
+    KeyPairName: { name: 'key_pair_name', type: 'string' },
+    MSSQLMediaBucketName: { name: 'mssql_media_bucket_name', type: 'string' },
+    MSSQLMediaPathKey: { name: 'mssql_media_path_key', type: 'string' },
+    NodeNetBIOSNames: { name: 'node_net_bios_names', type: 'string' },
+    ONTAPSecurityGroupID: { name: 'ontap_security_group_id', type: 'string' },
+    PrivateSubnet1Cidrblock: { name: 'private_subnet1_cidrblock', type: 'string' },
+    PrivateSubnet1ID: { name: 'private_subnet1_id', type: 'string' },
+    PrivateSubnet2Cidrblock: { name: 'private_subnet2_cidrblock', type: 'string' },
+    PrivateSubnet2ID: { name: 'private_subnet2_id', type: 'string' },
+    role_credentials_id: { name: 'role_credentials_id', type: 'string' },
+    RouteTable1Id: { name: 'route_table1_id', type: 'string' },
+    RouteTable2Id: { name: 'route_table2_id', type: 'string' },
+    S3EndpointExists: { name: 's3_endpoint_exists', type: 'boolean' },
+    S3EndpointRouteTables: { name: 's3_endpoint_route_tables', type: 'string' },
+    SQLAMIID: { name: 'sql_ami_id', type: 'string' },
+    SqlCollation: { name: 'sql_collation', type: 'string' },
+    SQLDeploymentMode: { name: 'sql_deployment_mode', type: 'string' },
+    SQLigroupname: { name: 'sql_igroup_name', type: 'string' },
+    SqlServerName: { name: 'sql_server_name', type: 'string' },
+    SQLServiceAccountName: { name: 'sql_service_account_name', type: 'string' },
+    SQLServiceAccountPassword: { name: 'sql_service_account_password', type: 'string' },
+    SQLSvmName: { name: 'sql_svm_name', type: 'string' },
+    SsmEndpointExists: { name: 'ssm_endpoint_exists', type: 'boolean' },
+    SSMMessagesEndpointExists: { name: 'ssm_messages_endpoint_exists', type: 'boolean' },
+    UniqueID: { name: 'unique_id', type: 'string' },
+    ValidationAmi: { name: 'validation_ami', type: 'string' },
+    ValidationNodeInstanceType: { name: 'validation_node_instance_type', type: 'string' },
+    VPCCIDR: { name: 'vpc_cidr', type: 'string' },
+    VPCID: { name: 'vpc_id', type: 'string' },
+    WlmdbAwsAccountId: { name: 'wlmdb_aws_account_id', type: 'string' },
+    WorkloadInstanceType: { name: 'workload_instance_type', type: 'string' },
+    EBSVolumeSize: { name: 'ebs_volume_size', type: 'number' }
 };
 
 enum DATABASE_METRIC_TYPE {
@@ -1500,5 +1599,9 @@ export {
     TIMELINE_SERVICE_NAME,
     AuditStatus,
     PREPARE_PSMODULES_RELATIVE_PATH,
-    EBS_ROOT_VOLUME
+    EBS_ROOT_VOLUME,
+    TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION,
+    TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS,
+    CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING,
+    TERRAFORM_FOLDER_PATH
 };

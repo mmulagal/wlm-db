@@ -166,8 +166,6 @@ export const GENERAL = {
     DB_CREATE_SUCCESS_MSG: 'DB creation is in progress',
     PERMISSION_REQUIRED: 'Permissions required',
     CLOUDFORMATION_TEMPLATE_URL: ['CloudFormation template ', 'URL'],
-    SAME_ROUTE_SUBNET_ERROR:
-        'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.',
     //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
     GENERATED_SECURITY_GROUP: 'Create a new security group',
@@ -575,6 +573,8 @@ export const GENERAL = {
     FSXN_PRIMARY_SUBNET_ERROR:
         'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
     FSXN_DEPLOYMENT_MODE_ERROR: 'Deployment mode not supported.',
+    SINGLE_FSXN_DEPLOYMENT_MODE_ERROR: 'Single AZ 2 deployment type not supported.',
+    MULTI_FSXN_DEPLOYMENT_MODE_ERROR: 'Multi AZ 2 deployment type not supported.',
     FSXN_NOT_AVAILABLE: 'FSx for ONTAP file system is not in available state.',
     TAB_DASHBOARD: 'Dashboard',
     TAB_INVENTORY: 'Inventory',
@@ -753,11 +753,11 @@ export const GENERAL = {
     EBS_INSTANCE_DETECT_SUCCESS_MSG: ['Instance ', ' detected successfully.'],
     FSX_DETECT_SUCCESS_MSG: [
         'Detected host management',
-        'Would you like to manage the detected host via workload factory?'
+        'Would you like to manage the detected host via Workload Factory?'
     ],
     FSX_INSTANCE_DETECT_SUCCESS_MSG: [
         'Detected instance management',
-        'Would you like to manage the detected instance via workload factory?'
+        'Would you like to manage the detected instance via Workload Factory?'
     ],
     FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.'],
     FSX_INSTANCE_AFTER_DETECT_OPTIONS: ['Yes, Manage instance via Workload Factory.', 'No.'],
@@ -896,7 +896,7 @@ export const GENERAL = {
     SOURCE_INSTANCE: 'Source database instance',
     SOURCE_DATABASE: 'Source database',
     MOUNT_NOTICE:
-        'Notice: When cloning a SQL database that has multiple data and/or log files, workload factory clones all files under the auto-assigned or defined drive letter.',
+        'Notice: When cloning a SQL database that has multiple data and/or log files, Workload Factory clones all files under the auto-assigned or defined drive letter.',
     AUTO_ASSIGN_MOUNT_POINT: 'Auto-assign mount point',
     DEFINE_MOUNT_POINT_PATH: 'Define mount point path',
     VOLUME_MOUNT_POINT_UNDER_PATH: 'Volume mount point under path',
@@ -1016,7 +1016,7 @@ export const GENERAL = {
     CATEGORY_POINT_ONE: 'Microsoft SQL server on FSx for ONTAP',
     CATEGORY_POINT_TWO: 'Microsoft SQL server on Amazon Elastic Block Store (EBS)',
     FSXW_CATEGORY: 'Microsoft SQL Server on FSx for Windows File Server',
-    WINDOW_FILE_SERVER_DETAILS: 'Windows file server details:',
+    WINDOW_FILE_SERVER_DETAILS: 'FSx for Windows File Server:',
     VIEW_CALC_TEXT:
         'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
@@ -1076,7 +1076,10 @@ export const GENERAL = {
         'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
         'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
-    ALL_ES_FSXW_AOAG_ROWS: 'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
+    ALL_ES_FSXW_AOAG_ROWS:
+        'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
+    NON_SSD_FSXW_MSG:
+        'Explore Savings for FSx for Windows File Server is only supported for SSD file system storage type.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
         'The attempt to manage the SQL Server instance ',
@@ -1123,8 +1126,8 @@ export const GENERAL = {
     ES_SNAPSHOTS_DESC: 'Snapshot calculations are based on primary database volumes only and not on replicas.',
     ES_CLONES_DESC: 'Clone calculations are based on primary database volumes only and not on replicas.',
     ES_TOTAL_MONTHLY_COST: 'Total monthly cost',
-    ES_FSXN_MULTI: 'FSx for ONTAP - multi availability zone',
-    ES_FSXN_SINGLE: 'FSx for ONTAP - single availability zone',
+    ES_FSXN_MULTI: 'Multi availability zone',
+    ES_FSXN_SINGLE: 'Single availability zone',
     ES_FSXW_SINGLE: 'Single Availability Zone',
     ES_FSXW_MULTI: 'Multi Availability Zone',
     ES_FSXN_AZ_DESC:

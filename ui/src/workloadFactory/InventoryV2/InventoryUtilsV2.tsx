@@ -1,6 +1,6 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
-import { setFsxCredentialStatus } from '../../store/workloadFactory/inventoryV2Slice';
+import { setFsxCredentialStatus, setUnManagedPerfInstanceIdsList } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
@@ -1489,6 +1489,7 @@ export const getPerfUnmanagedData = (instanceId: string, instRow: any, partnerId
 };
 
 export const getExploreSavingsRows = (inventoryTableData: { [key: string]: InventoryTableData }) => {
+    // If ES row is disabled than it should come in inventory but not in explore savings table
     let nonFsxnStorageList: Array<InventoryTableData> = [];
     const state = store.getState();
     const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
@@ -1498,7 +1499,13 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
             return;
         }
         if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && item?.isDetected) {
-            nonFsxnStorageList.push(item);
+            if (item?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+                if (checkForAnySSD(item) && !checkForAnyAOAG(item)) {
+                    nonFsxnStorageList.push(item);
+                }
+            } else {
+                nonFsxnStorageList.push(item);
+            }
         }
     });
     return nonFsxnStorageList;
@@ -1861,11 +1868,42 @@ export const getPartnerNodeEc2InstanceId = (error: string) => {
     return null;
 };
 
-export const checkForAllAOAG = (rowData: any) => {
-    // If all instance have AOAG than ES is disabled for it
-    return rowData?.sqlServerInstances?.every((item: any) => {
-        return (
-            !item?.sqlServerDeploymentType || item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
+    // First check if this is already opened or closed. If this data is already available or not.
+    const state = store.getState();
+    const unManagedPerfInstanceIdsList = state.inventoryV2.unManagedPerfInstanceIdsList;
+    if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
+        // If this has unmanaged rows or not ?
+        let unmanagedRows = rowData?.sqlServerInstances?.filter(
+            (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
         );
+        if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
+            let instanceList = [];
+            instanceList.push(rowData?.ec2InstanceId);
+            const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
+            if (partnerData && partnerData?.length > 0) {
+                instanceList.push(partnerData?.[0]?.id);
+            }
+            dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
+        }
+        // This has to be called even if any row is becoming unmanaged row or managed row
+    }
+};
+
+export const checkForAnyAOAG = (rowData: any) => {
+    // If any instance have AOAG than ES is disabled for it
+    return rowData?.sqlServerInstances?.some((item: any) => {
+        return item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG;
     });
+};
+
+export const checkForAnySSD = (rowData: any) => {
+    for (const item of rowData?.sqlServerInstances || []) {
+        for (const perStorage of item?.storage || []) {
+            if (perStorage?.type === DETECT_HOST_VAR.FSXW && perStorage?.fileSystemStorageType === 'SSD') {
+                return true;
+            }
+        }
+    }
+    return false;
 };

@@ -10,7 +10,7 @@ import { onClickESHost } from '../ExploreSavingsUtils';
 import { INVENTORY_ACTIONS, WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
-import { checkForAllAOAG } from '../../InventoryV2/InventoryUtilsV2';
+import { checkForAnyAOAG, checkForAnySSD } from '../../InventoryV2/InventoryUtilsV2';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -81,11 +81,11 @@ const ExploreSavingsTableV2 = () => {
             isSticky: true,
             width: '181px',
             renderCell: (cellData: any, rowData: any) => {
-                //Check for all Explore Savings FSXW rows
+                //Check for any Explore Savings FSXW rows that is AOAG
                 if (
                     rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
                     rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
-                    checkForAllAOAG(rowData)
+                    checkForAnyAOAG(rowData)
                 ) {
                     return (
                         <TooltipComponent
@@ -93,6 +93,25 @@ const ExploreSavingsTableV2 = () => {
                             placement="bottom"
                             width="340px"
                             height="70px"
+                        >
+                            <div className={styles.detectManageDisable} id="explore-savings-table-button">
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {GENERAL.ES_SAVINGS}
+                                </Typography>
+                            </div>
+                        </TooltipComponent>
+                    );
+                } else if (
+                    rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+                    rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+                    !checkForAnySSD(rowData)
+                ) {
+                    return (
+                        <TooltipComponent
+                            title={GENERAL.NON_SSD_FSXW_MSG}
+                            placement="bottom"
+                            width="360px"
+                            height="50px"
                         >
                             <div className={styles.detectManageDisable} id="explore-savings-table-button">
                                 <Typography variant="Regular_14" className={styles.textStyle}>
@@ -151,7 +170,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
             accessor: 'storageType',
             id: '3',
-            width: '160px',
+            width: '170px',
             filterOptions: [
                 { label: GENERAL.EBS, value: GENERAL.EBS },
                 { label: GENERAL.FSX_FOR_WINDOWS, value: GENERAL.FSX_FOR_WINDOWS }
@@ -185,7 +204,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_INSTANCE,
             accessor: 'instanceListText',
             id: '5',
-            width: '211px',
+            width: '191px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {

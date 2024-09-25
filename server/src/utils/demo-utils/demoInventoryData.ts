@@ -503,7 +503,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         storage: [
                             {
                                 type: 'FSXW',
-                                id: fsxId
+                                id: fsxId,
+                                fileSystemStorageType: 'SSD'
                             }
                         ],
                         deploymentTypes: [

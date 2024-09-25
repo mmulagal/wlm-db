@@ -128,7 +128,9 @@ export const API_NAME = {
 
 export const FSX_DEPLOYMENT_MODE = {
     SINGLE_AZ_1: 'SINGLE_AZ_1',
-    MULTI_AZ_1: 'MULTI_AZ_1'
+    MULTI_AZ_1: 'MULTI_AZ_1',
+    SINGLE_AZ_2: 'SINGLE_AZ_2',
+    MULTI_AZ_2: 'MULTI_AZ_2'
 };
 
 export const SQL_DEPLOYMENT_MODE = {
@@ -582,4 +584,10 @@ export const BXP_MESSAGES = {
     SERVICE_CONNECTOR_CHANGE: 'SERVICE:CONNECTOR-CHANGE',
     SERVICE_LOCATION_CHANGE: 'SERVICE:LOCATION-CHANGE',
     SERVICE_ON_READY: 'SERVICE:ON-READY'
+};
+
+export const EBS_PROTECTED_OPTIONS = {
+    PROTECTED: 'Protected',
+    UNPROTECTED: 'Unprotected',
+    UNKNOWN: 'Unknown'
 };

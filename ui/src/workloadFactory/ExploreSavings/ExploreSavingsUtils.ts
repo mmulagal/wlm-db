@@ -31,7 +31,7 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
         dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_FSXW));
     }
 
-    dispatch(setDisableState(false));
+    dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(rowData?.id));
     dispatch(setSelectedDeploymentModel(deploymentModel));
@@ -456,7 +456,7 @@ export const formatViewCalcData = (
             capacityPoolStorage: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.capacityPoolStorage
             ),
-            capacityMonthlyCost: formatNumbers(
+            capacityMonthlyCost: formatNumberWithCustomComma(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.capacityMonthlyCost
             ),
             totalMonthlyCostForCapacity: formatNumberWithCustomComma(

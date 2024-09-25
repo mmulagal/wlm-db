@@ -15,6 +15,7 @@ import {
     DB_DEPLOYMENT_MODEL,
     DB_EDITIONS,
     DB_VERSIONS,
+    EBS_PROTECTED_OPTIONS,
     GIB_IN_BYTE,
     OS_VERSIONS_LIST,
     SAVINGS_CALC_MODE,
@@ -509,22 +510,22 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             },
             {
                 label: 'Minimum number of file systems required for storage capacity',
-                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForStorage}`,
+                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForStorage} file system(s)`,
                 text: `The greater of SSD storage GiB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) ÷ Max SSD tier size (${viewCalculation.fsxOntapCalculation.maxSsdTierSize}) `
             },
             {
                 label: 'Minimum number of file systems required for throughput capacity',
-                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForThroughputCapacity}`,
+                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForThroughputCapacity} file system(s)`,
                 text: `Suggested FSx for ONTAP throughput capacity (${viewCalculation.fsxOntapCalculation.suggestedFsxnThroughputCapacity} MB/s) ÷ max throughput (${viewCalculation.fsxOntapCalculation.maxThroughput} MB/s)`
             },
             {
                 label: 'Minimum number of file systems required for SSD IOPS',
-                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForSsdIops}`,
+                value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForSsdIops} file system(s)`,
                 text: `Provisioned SSD (${viewCalculation.fsxOntapCalculation.provisionedSsdIops} IOPS) ÷ Maximum SSD (${viewCalculation.fsxOntapCalculation.maxSsdIops} IOPS)`
             },
             {
                 label: 'Required number of FSx for ONTAP file systems - fractional',
-                value: `${viewCalculation.fsxOntapCalculation.requiredNumOfFsxFractional}`,
+                value: `${viewCalculation.fsxOntapCalculation.requiredNumOfFsxFractional} file system(s)`,
                 text: ``
             },
             {
@@ -679,7 +680,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Savings from compression & deduplication',
                 value: `${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}%`,
-                text: `Based on a typical DB workload, ${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}% of Savings from compression and deduplication is our recommendation`
+                text: `NetApp recommends ${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}% savings from compression and deduplication based on a typical database workload.`
             },
             {
                 label: 'Pricing calculations'
@@ -1372,7 +1373,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Number of file systems required for storage capacity',
                 value: `${viewCalculation.fsxwCalculation.numberOfFileSystemsRequiredForStorageCapacity} file system(s)`,
-                text: `Effective provisioned storage capacity for FSx for Windows File Server  ÷ FSx for Windows File Server maximum capacity  = ${viewCalculation.fsxwCalculation.provisionedStorageCapacity} ÷ ${viewCalculation.fsxwCalculation.fsxwMaxCapacity}`
+                text: `Effective provisioned storage capacity for FSx for Windows File Server  ÷ FSx for Windows File Server maximum capacity  = ${viewCalculation.fsxwCalculation.provisionedStorageCapacity} GiB ÷ ${viewCalculation.fsxwCalculation.fsxwMaxCapacity}`
             },
             {
                 label: 'Number of file systems required for throughput capacity',
@@ -1417,7 +1418,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Desired shadow copy storage capacity',
                 value: `${viewCalculation.fsxwSnapshotCalculation.desiredSnapshotStorageCapacity}`,
-                text: ``
+                text: `Monthly change rate(${viewCalculation.monthlyChangeRate}%) x Total storage capacity (${viewCalculation.fsxwCalculation.desiredStorageCapacity})`
             },
             {
                 label: 'Deduplication savings',
@@ -2017,4 +2018,41 @@ export const checkIfByolFieldRequired = (
     } else {
         return isByolField;
     }
+};
+
+/**
+ * This function will check if TCO selected host has protection data or not.
+ * @param data
+ * @returns Protected/Unprotected/Unknown
+ */
+export const checkIfEbsProtected = () => {
+    const state = store.getState();
+    const { selectedHostDetails } = state.exploreSavings;
+    const perfMssqlInstancesData = state.inventoryV2.perfMssqlInstancesData;
+    if (selectedHostDetails?.sqlServerInstances?.length > 0) {
+        let unprotected: boolean = false;
+        let protectedVal: boolean = false;
+        selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
+            if (perRow?.protection) {
+                if (perRow?.protection?.isAwsBackupEnabled?.ebs) {
+                    protectedVal = true;
+                } else {
+                    unprotected = true;
+                }
+            }
+        });
+
+        if (protectedVal) {
+            return EBS_PROTECTED_OPTIONS.PROTECTED;
+        } else if (unprotected) {
+            return EBS_PROTECTED_OPTIONS.UNPROTECTED;
+        } else if (
+            !selectedHostDetails?.loading &&
+            perfMssqlInstancesData?.[selectedHostDetails?.id] &&
+            !perfMssqlInstancesData?.[selectedHostDetails?.id]?.loading
+        ) {
+            return EBS_PROTECTED_OPTIONS.UNKNOWN;
+        }
+    }
+    return '';
 };
