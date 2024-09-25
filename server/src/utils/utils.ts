@@ -633,7 +633,7 @@ async function decompressSSMResponse(response: string) {
     }
 }
 
-const retryWithDelay = async (fn: any, retries: number, interval: number, finalErr = 'Retry failed') => {
+const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 'Retry failed') => {
     try {
         const resp = await fn();
         return resp;
