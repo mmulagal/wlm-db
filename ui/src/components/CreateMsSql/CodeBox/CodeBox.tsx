@@ -6,12 +6,12 @@ import { Typography, useDialog, Popover, Button } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useState, useRef, useEffect, useMemo } from 'react';
-import HighlighterWord from '../../../workloadFactory/DatabaseHomePage/Highlighter/Highlighter';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import {
     cfDownloadName,
     generateOptionType,
     getCredDetails,
+    handleDownloadTerraform,
     handleDownloadYAML
 } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
@@ -20,7 +20,7 @@ import CopyToClipboard from 'react-copy-to-clipboard';
 
 import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
-import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
+import { getBaseUrl, useGetTemplatesMutation, useGetTerraformSetupMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import {
     AWS_CLI_HIGHLIGHT_STRINGS,
@@ -48,6 +48,7 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import TerraformColor from '../Terraform/TerraformColor';
 
 const _ = require('lodash');
 
@@ -57,8 +58,11 @@ const CodeBox = () => {
     const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
 
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
+    const [terraformSetupResponse, setTerraformSetupResponse] = useState<any>(null);
     const [formData, setFormData] = useState<any>(null); // Saving form data on template API call
+    const [formDataTerraform, setFormDataTerraform] = useState<any>(null); // Saving form data on terraform setup API call
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
+    const [isTerraformDataLoading, setIsTerraformDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
     const [rightPanelMaskedHidePasswordResponse, setRightPanelMaskedHidePasswordResponse] = useState<any>('');
@@ -67,6 +71,7 @@ const CodeBox = () => {
     const dispatch = useDispatch();
 
     const [loadTemplateData] = useGetTemplatesMutation();
+    const [loadTerraformData] = useGetTerraformSetupMutation();
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
@@ -104,22 +109,22 @@ const CodeBox = () => {
         };
     });
 
-    const terraformUI = () => {
-        return (
-            <div className={styles.terraformContainer}>
-                <div>{GENERAL.TERRAFORM}</div>
-                <div>
-                    <ComingSoon />
-                </div>
-            </div>
-        );
-    };
+    // const terraformUI = () => {
+    //     return (
+    //         <div className={styles.terraformContainer}>
+    //             <div>{GENERAL.TERRAFORM}</div>
+    //             <div>
+    //                 <ComingSoon />
+    //             </div>
+    //         </div>
+    //     );
+    // };
 
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, terraformUI()];
+        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, CODE_VIEWER.TERRAFORM];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', idx === 3 ? true : false, '');
+            const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
         return options;
@@ -180,6 +185,13 @@ const CodeBox = () => {
                         <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
                     )}
                 </Typography>
+            );
+        }
+        if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+            return isTerraformDataLoading ? (
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_TERRAFORM} />
+            ) : (
+                <TerraformColor data={terraformSetupResponse} />
             );
         }
     };
@@ -249,6 +261,34 @@ const CodeBox = () => {
         });
     };
 
+    // This will call terraform setup API to get Terraform response for current payload.
+    const getTerraformSetupResponse = () => {
+        setIsTerraformDataLoading(true);
+        const actualData = mssqlFormData;
+        const credDetails = getCredDetails(actualData);
+        const changeObjectForm = {
+            mssqlForm: actualData
+        };
+        const resBody = createMssqlPayload(changeObjectForm);
+        if (credDetails?.credId) {
+            resBody.credentialsId = credDetails?.credId;
+        }
+        if (credDetails?.region) {
+            resBody.region = credDetails?.region;
+        }
+        loadTerraformData({ payload: resBody }).then((data: any) => {
+            if (data?.data) {
+                setTerraformSetupResponse(data?.data);
+                setIsTerraformDataLoading(false);
+                dispatch(setIsLoading(false));
+            } else {
+                setTerraformSetupResponse(null);
+                setIsTerraformDataLoading(false);
+                dispatch(setIsLoading(false));
+            }
+        });
+    };
+
     // After form update if user clicks on CF or CLI than get template data
     useEffect(() => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION || dropDownValue === CODE_VIEWER.AWS_CLI) {
@@ -256,6 +296,12 @@ const CodeBox = () => {
             if (!formData || !_.isEqual(mssqlFormData, formData)) {
                 setFormData(mssqlFormData);
                 getTemplateResponse();
+            }
+        }
+        if (dropDownValue === CODE_VIEWER.TERRAFORM && !isDemoMode) {
+            if (!formDataTerraform || !_.isEqual(mssqlFormData, formDataTerraform)) {
+                setFormDataTerraform(mssqlFormData);
+                getTerraformSetupResponse();
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -441,29 +487,55 @@ const CodeBox = () => {
                                         }}
                                     />
                                 ))}
-                            {dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (
-                                // Disabled copy button
-                                <div className={styles.menuItemDisabled}>
-                                    <Copy />
-                                </div>
-                            ) : (
-                                // Enabled copy button
-                                <Popover
-                                    popoverClass={styles['copy-popover']}
-                                    children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
-                                    container={
-                                        <CopyToClipboard text={copyResponseData()}>
-                                            <div
-                                                className={styles.menuItem}
-                                                id={UI_IDS.WIZARD_CODEBOX_COPY}
-                                                onClick={handleCopy}
-                                            >
-                                                <Copy />
-                                            </div>
-                                        </CopyToClipboard>
-                                    }
-                                />
-                            )}
+                            {dropDownValue === CODE_VIEWER.TERRAFORM &&
+                                (isTerraformDataLoading ? (
+                                    <div className={styles.menuItemDisabled}>
+                                        <Download />
+                                    </div>
+                                ) : (
+                                    <Download
+                                        onClick={() => {
+                                            handleDownloadTerraform(terraformSetupResponse?.url);
+                                            dispatch(clearNotifications());
+                                            const ele = (
+                                                <div>
+                                                    <div style={{ fontWeight: 400 }}>{GENERAL.TERRAFORM_DOWNLOAD}</div>
+                                                    <div style={{ fontWeight: 400 }}>{GENERAL.TERRAFORM_NOTICE}</div>
+                                                </div>
+                                            );
+                                            dispatch(
+                                                addNotification({
+                                                    notificationType: NOTIFICATION_TYPES.INFO,
+                                                    message: ele
+                                                })
+                                            );
+                                        }}
+                                    />
+                                ))}
+                            {dropDownValue !== CODE_VIEWER.TERRAFORM &&
+                                (dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (
+                                    // Disabled copy button
+                                    <div className={styles.menuItemDisabled}>
+                                        <Copy />
+                                    </div>
+                                ) : (
+                                    // Enabled copy button
+                                    <Popover
+                                        popoverClass={styles['copy-popover']}
+                                        children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
+                                        container={
+                                            <CopyToClipboard text={copyResponseData()}>
+                                                <div
+                                                    className={styles.menuItem}
+                                                    id={UI_IDS.WIZARD_CODEBOX_COPY}
+                                                    onClick={handleCopy}
+                                                >
+                                                    <Copy />
+                                                </div>
+                                            </CopyToClipboard>
+                                        }
+                                    />
+                                ))}
                         </div>
                     </div>
                 </div>
