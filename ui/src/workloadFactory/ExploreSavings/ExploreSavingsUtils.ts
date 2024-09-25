@@ -35,7 +35,7 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(rowData?.id));
     dispatch(setSelectedDeploymentModel(deploymentModel));
-    dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || GENERAL.ES_SERVER_NAME));
+    dispatch(setSelectedServerName(rowData?.name || GENERAL.ES_SERVER_NAME));
     setESInstanceData(rowData, dispatch);
 };
 

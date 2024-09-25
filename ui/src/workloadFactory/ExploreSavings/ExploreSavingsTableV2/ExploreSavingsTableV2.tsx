@@ -7,10 +7,8 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { renderAllocatedCapacity, renderInstanceListText, renderUnmanagedAZ } from '../../Inventory/InventoryUtils';
 import { onClickESHost } from '../ExploreSavingsUtils';
-import { INVENTORY_ACTIONS, WLF_TABS } from '../../../utils/consts';
+import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
-import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
-import { checkForAnyAOAG, checkForAnySSD } from '../../InventoryV2/InventoryUtilsV2';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -81,60 +79,19 @@ const ExploreSavingsTableV2 = () => {
             isSticky: true,
             width: '181px',
             renderCell: (cellData: any, rowData: any) => {
-                //Check for any Explore Savings FSXW rows that is AOAG
-                if (
-                    rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-                    rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
-                    checkForAnyAOAG(rowData)
-                ) {
-                    return (
-                        <TooltipComponent
-                            title={GENERAL.ALL_ES_FSXW_AOAG_ROWS}
-                            placement="bottom"
-                            width="340px"
-                            height="70px"
-                        >
-                            <div className={styles.detectManageDisable} id="explore-savings-table-button">
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {GENERAL.ES_SAVINGS}
-                                </Typography>
-                            </div>
-                        </TooltipComponent>
-                    );
-                } else if (
-                    rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-                    rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
-                    !checkForAnySSD(rowData)
-                ) {
-                    return (
-                        <TooltipComponent
-                            title={GENERAL.NON_SSD_FSXW_MSG}
-                            placement="bottom"
-                            width="360px"
-                            height="50px"
-                        >
-                            <div className={styles.detectManageDisable} id="explore-savings-table-button">
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {GENERAL.ES_SAVINGS}
-                                </Typography>
-                            </div>
-                        </TooltipComponent>
-                    );
-                } else {
-                    return (
-                        <div
-                            className={styles.detectManage}
-                            onClick={() => {
-                                onClickESHost(dispatch, rowData);
-                            }}
-                            id="explore-savings-table-button"
-                        >
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                {GENERAL.ES_SAVINGS}
-                            </Typography>
-                        </div>
-                    );
-                }
+                return (
+                    <div
+                        className={styles.detectManage}
+                        onClick={() => {
+                            onClickESHost(dispatch, rowData);
+                        }}
+                        id="explore-savings-table-button"
+                    >
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {GENERAL.ES_SAVINGS}
+                        </Typography>
+                    </div>
+                );
             }
         };
     };

@@ -195,10 +195,26 @@ export const renderUnmanagedHostName = (cellData: string, rowData: any, styles: 
 };
 
 export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) => {
-    const azList = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
-        ? rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones.join(',')
-        : '';
-    const deploymentType = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
+    let azList = '';
+    let deploymentType = '';
+
+    for (let instance of rowData?.sqlServerInstances || []) {
+        for (let deployment of instance?.deploymentTypes || []) {
+            if (deployment?.zones) {
+                azList = deployment.zones.join(',');
+            }
+            if (deployment?.type) {
+                deploymentType = deployment.type;
+            }
+            if (azList || deploymentType) {
+                break;
+            }
+        }
+        if (azList || deploymentType) {
+            break;
+        }
+    }
+
     return (
         <>
             {deploymentType && (

@@ -39,6 +39,7 @@ import {
     addInstanceIdToGetPerf,
     checkForAnyAOAG,
     checkForAnySSD,
+    checkForMixedStorageType,
     getPartnerNodeEc2InstanceId,
     handleManageNotification,
     handleManageTriggerNotification,
@@ -403,6 +404,18 @@ const InventoryTable = () => {
         ) {
             return (
                 <TooltipComponent title={GENERAL.NON_SSD_FSXW_MSG} placement="bottom" width="360px" height="50px">
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForMixedStorageType(rowData)) {
+            return (
+                <TooltipComponent title={GENERAL.MIXED_STORAGE_ES_MSG} placement="bottom" width="260px" height="50px">
                     <div id="inventory-table-option" className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}

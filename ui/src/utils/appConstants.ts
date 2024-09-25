@@ -1082,6 +1082,7 @@ export const GENERAL = {
         'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
     NON_SSD_FSXW_MSG:
         'Explore Savings for FSx for Windows File Server is only supported for SSD file system storage type.',
+    MIXED_STORAGE_ES_MSG: 'Explore Savings for mixed storage type is not supported.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
         'The attempt to manage the SQL Server instance ',

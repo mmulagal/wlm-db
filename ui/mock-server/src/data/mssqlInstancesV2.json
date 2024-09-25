@@ -42,7 +42,7 @@
           },
           "ebsResourceInfo":[
              {
-                "id":"vol-0a6714144d481b59f",
+                "id":"ROOT_VOLUME",
                 "size":53687091200,
                 "cost":6,
                 "volumeType":"gp2",
@@ -1685,6 +1685,13 @@
             "ebsResourceInfo":[
             {
                 "id":"vol-0c73fa01e4e64ba60",
+                "size":549755813888,
+                "cost":61.44,
+                "volumeType":"gp2",
+                "iops":1536
+            },
+            {
+                "id":"ROOT_VOLUME1",
                 "size":549755813888,
                 "cost":61.44,
                 "volumeType":"gp2",
