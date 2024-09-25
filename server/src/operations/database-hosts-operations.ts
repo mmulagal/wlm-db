@@ -882,7 +882,9 @@ async function getFsxResourceInfo(
             const storageCapacity = StorageCapacity || 0;
             const throughput = OntapConfiguration?.ThroughputCapacity || WindowsConfiguration?.ThroughputCapacity;
             const iops =
-                OntapConfiguration?.DiskIopsConfiguration?.Iops || WindowsConfiguration?.DiskIopsConfiguration?.Iops;
+                OntapConfiguration?.DiskIopsConfiguration?.Iops ||
+                WindowsConfiguration?.DiskIopsConfiguration?.Iops ||
+                0;
             const deploymentOption = OntapConfiguration?.DeploymentType || WindowsConfiguration?.DeploymentType;
 
             return {
