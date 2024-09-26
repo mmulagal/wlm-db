@@ -314,13 +314,13 @@ const GET_SANDBOXES = `${SET_NOCOUNT}
         AND l.name IS NOT NULL
         AND l.value IS NOT NULL ';
 
-    SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
+    SELECT (SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
     FROM (
         SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
         FROM #properties AS p1
     ) AS grouped_properties
     GROUP BY database_name, properties
-    ${FOR_JSON_PATH}
+    ${FOR_JSON_PATH}) as sandboxes
 `;
 
 export {
