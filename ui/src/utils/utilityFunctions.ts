@@ -354,7 +354,6 @@ export function formatNumberWithCustomComma(number: any, roundOffRequired: boole
         if (Number(number) < 1) {
             roundOffNumber = number;
         } else {
-            // roundOffNumber = number;
             roundOffNumber = Math.round(Number(number));
         }
     } else {
