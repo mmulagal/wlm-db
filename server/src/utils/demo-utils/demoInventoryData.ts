@@ -474,49 +474,6 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ]
             },
             {
-                ec2InstanceId: 'i-l2k4j6h8g0f3d5s',
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0006',
-                ssmState: 'connected',
-                ec2InstanceName: 'app-server-11',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
-                sqlServerInstances: [
-                    {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
-                        sqlServerProductYear: 2019,
-                        sqlServerInstance: 'MSSQLSERVER',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5h',
-                        isDefaultInstance: false,
-                        sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-UAT-01',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
-                        storage: [
-                            {
-                                type: 'FSXW',
-                                id: fsxId,
-                                fileSystemStorageType: 'SSD'
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
                 ec2InstanceId: 'i-0ab2e12971d543c14',
                 ec2InstanceType: 'm5.2xlarge',
                 ec2InstanceName: 'app-server-19',

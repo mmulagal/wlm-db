@@ -1846,7 +1846,11 @@ async function getDatabaseHostSummaryV2(
                             instanceType: 'm5.xlarge'
                         }));
                         nodeTopology.ec2Details = modifiedEc2Details;
-                    } else if (resourceDetail?.resource_name === 'app-server-14' && instanceResults?.length) {
+                    } else if (
+                        (resourceDetail?.resource_name === 'app-server-14' ||
+                            resourceDetail?.resource_name === 'app-server-19') &&
+                        instanceResults?.length
+                    ) {
                         instanceResults = instanceResults.map((item: any) => ({
                             ...item,
                             databaseServer: {
