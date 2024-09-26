@@ -114,7 +114,12 @@ import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
 import { describeSubnets, getAmis } from '../lib/aws/ec2';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
-import { createAndUploadTheTerraformZipFile, uploadTerraformModules, createTFVarsFile } from './terraform-operations';
+import {
+    createAndUploadTheTerraformZipFile,
+    uploadTerraformModules,
+    createTFVarsFile,
+    createRootModuleFile
+} from './terraform-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -587,7 +592,7 @@ async function getTerraformSetup(
         );
         logger.debug('Terraform modules uploaded successfully', initializationScriptURLs);
 
-        await createTFVarsFile(
+        const { terraformVariables } = await createTFVarsFile(
             region as string,
             DatabaseTypes.MS_SQL_SERVER,
             deploymentName,
@@ -597,6 +602,12 @@ async function getTerraformSetup(
             metrics
         );
 
+        const contents = await createRootModuleFile(
+            region as string,
+            DatabaseTypes.MS_SQL_SERVER,
+            deploymentName,
+            terraformVariables
+        );
         const terraformZipS3SignedURL = await createAndUploadTheTerraformZipFile(
             region as string,
             DatabaseTypes.MS_SQL_SERVER,
@@ -607,7 +618,8 @@ async function getTerraformSetup(
         logger.debug('Terraform zip file signed url', terraformZipS3SignedURL);
 
         return {
-            url: terraformZipS3SignedURL
+            url: terraformZipS3SignedURL,
+            template: contents || ''
         };
     } catch (err: any) {
         logger.error('Error while getting terraform setup', err);

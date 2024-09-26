@@ -50,21 +50,21 @@ if (!(Test-Path -Path $LogDir)) {
 
 Start-Transcript -Path "$LogDir\sql-instance.initializer.ps1.txt" -Append
 
-$ScriptVerifySignature = "{{ScriptVerifySignature}}"
-$ScriptUnzipArchive = "{{ScriptUnzipArchive}}"
-$ScriptCommon = "{{ScriptCommon}}"
-$ScriptSqlFci = "{{ScriptSqlFci}}"
-$ScriptSqlOntap = "{{ScriptSqlOntap}}"
-$ScriptDbCreate = "{{ScriptDbCreate}}"
-$Dsc = "{{Dsc}}"
-$PowerShell = "{{PowerShell}}"
-$AmazonLaunchWizardForCfn = "{{AmazonLaunchWizardForCfn}}"
-$AmazonLaunchWizardForSsm = "{{AmazonLaunchWizardForSsm}}"
-$SqlSpcu = "{{SqlSpcu}}"
-$DependentPackages = "{{DependentPackages}}"
-$ArtifactsSignatures = "{{ArtifactsSignatures}}"
-$OpenSsl = "{{OpenSsl}}"
-$SqlSetup = "{{SqlSetup}}"
+$ScriptVerifySignature = "{{{ScriptVerifySignature}}}"
+$ScriptUnzipArchive = "{{{ScriptUnzipArchive}}}"
+$ScriptCommon = "{{{ScriptCommon}}}"
+$ScriptSqlFci = "{{{ScriptSqlFci}}}"
+$ScriptSqlOntap = "{{{ScriptSqlOntap}}}"
+$ScriptDbCreate = "{{{ScriptDbCreate}}}"
+$Dsc = "{{{Dsc}}}"
+$PowerShell = "{{{PowerShell}}}"
+$AmazonLaunchWizardForCfn = "{{{AmazonLaunchWizardForCfn}}}"
+$AmazonLaunchWizardForSsm = "{{{AmazonLaunchWizardForSsm}}}"
+$SqlSpcu = "{{{SqlSpcu}}}"
+$DependentPackages = "{{{DependentPackages}}}"
+$ArtifactsSignatures = "{{{ArtifactsSignatures}}}"
+$OpenSsl = "{{{OpenSsl}}}"
+$SqlSetup = "{{{SqlSetup}}}"
 
 function Get-InstanceId {
     try {

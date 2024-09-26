@@ -35,7 +35,7 @@ describe('terraform operations', () => {
             'test-url',
             'test-metrics'
         );
-        expect(resp).toBeUndefined();
+        expect(resp).toBeDefined();
     });
 
     it('Create and upload the terraform zip file', async () => {

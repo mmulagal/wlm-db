@@ -15,7 +15,8 @@ import {
     TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS,
     TEMPLATE_TYPES,
     CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING,
-    TERRAFORM_FOLDER_PATH
+    TERRAFORM_FOLDER_PATH,
+    TERRAFORM_ROOT_MODULE_DISTRIBUTION
 } from '../utils/consts';
 import { isDemo } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -183,64 +184,95 @@ async function createTFVarsFile(
     metrics: string
 ) {
     logger.info('Creating terraform vars file', region, resourceType, deploymentName, templatePath, templateParameters);
-    if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
-        // This will create the terraform variable with the values of proper types like string, number & boolean
-        const tfVariables = {
-            aws_location: region,
-            creator_tag: deploymentName,
-            deployment_name: deploymentName,
-            role_credentials_id: '',
-            metrics,
-            fsx_encryption_key: ''
-        };
-        let terraformVariableString = '';
+    try {
+        if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
+            // This will create the terraform variable with the values of proper types like string, number & boolean
+            const tfVariables = {
+                aws_location: region,
+                creator_tag: deploymentName,
+                deployment_name: deploymentName,
+                role_credentials_id: '',
+                metrics,
+                fsx_encryption_key: ''
+            };
+            let terraformVariableString = '';
+            const terraformVariables: any = {};
 
-        templateParameters.forEach(e => {
-            if (e.ParameterKey) {
-                const terraformVariable = CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING[e.ParameterKey];
-                if (terraformVariable) {
-                    let value;
-                    switch (terraformVariable.type) {
-                        case 'boolean':
-                            value = e.ParameterValue?.toLowerCase() === 'true';
-                            break;
-                        case 'number':
-                            value = Number(e.ParameterValue);
-                            break;
-                        default:
-                            value = e.ParameterValue ? encodeURIComponent(e.ParameterValue) : '';
-                            break;
+            templateParameters.forEach(e => {
+                if (e.ParameterKey) {
+                    const terraformVariable = CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING[e.ParameterKey];
+                    if (terraformVariable) {
+                        let value;
+                        switch (terraformVariable.type) {
+                            case 'boolean':
+                                value = e.ParameterValue?.toLowerCase() === 'true';
+                                break;
+                            case 'number':
+                                value = Number(e.ParameterValue);
+                                break;
+                            default:
+                                value = e.ParameterValue ? decodeURIComponent(e.ParameterValue) : '';
+                                break;
+                        }
+                        terraformVariableString += `${terraformVariable.name} = ${
+                            terraformVariable.type === 'string' ? `"${value}"` : value
+                        }\n`;
+                        terraformVariables[terraformVariable.name] = value;
                     }
-                    terraformVariableString += `${terraformVariable.name} = ${
-                        terraformVariable.type === 'string' ? `"${value}"` : value
-                    }\n`;
                 }
+            });
+
+            for (const item of initializationScriptURLs) {
+                terraformVariableString += `${item.name} = "${item.url}"\n`;
+                terraformVariables[item.name] = item.url;
             }
-        });
 
-        for (const item of initializationScriptURLs) {
-            terraformVariableString += `${item.name} = "${item.url}"\n`;
+            for (const [key, value] of Object.entries(tfVariables)) {
+                terraformVariableString += `${key} = "${value}"\n`;
+                terraformVariables[key] = value;
+            }
+
+            // Write the Terraform variables to a local file as well.. can be decided whether to use it from local or s3
+            const dirPath = `./resources/mssql/${deploymentName}/terraform`;
+            const localTfVarsPath = `${dirPath}/terraform.tfvars`;
+            await mkdir(dirPath, { recursive: true });
+            await writeFile(localTfVarsPath, terraformVariableString);
+
+            // Copy all files from the source directory to the destination directory
+            const sourceDir = TERRAFORM_FOLDER_PATH;
+            const destDir = dirPath;
+            await cp(sourceDir, destDir, { recursive: true });
+            return { terraformVariables };
         }
-
-        for (const [key, value] of Object.entries(tfVariables)) {
-            terraformVariableString += `${key} = "${value}"\n`;
-        }
-
-        // Write the Terraform variables to a local file as well.. can be decided whether to use it from local or s3
-        const dirPath = `./resources/mssql/${deploymentName}/terraform`;
-        const localTfVarsPath = `${dirPath}/terraform.tfvars`;
-        await mkdir(dirPath, { recursive: true });
-        await writeFile(localTfVarsPath, terraformVariableString);
-
-        // Copy all files from the source directory to the destination directory
-        const sourceDir = TERRAFORM_FOLDER_PATH;
-        const destDir = dirPath;
-        const result = await cp(sourceDir, destDir, { recursive: true });
-        return result;
+        // Yet to Implement
+        logger.error('Resource type not found');
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Resource type not found');
+    } catch (err: any) {
+        logger.error('Error while creating tf vars file', err);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error while creating tf vars files');
     }
-    // Yet to Implement
-    logger.error('Resource type not found');
-    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Resource type not found');
+}
+
+async function createRootModuleFile(
+    region: string,
+    resourceType: DatabaseTypes,
+    deploymentName: string,
+    terraformVariables: any
+) {
+    logger.info('creating root module file', region, resourceType, deploymentName, terraformVariables);
+
+    try {
+        if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
+            const source = readFileSync(TERRAFORM_ROOT_MODULE_DISTRIBUTION.location).toString();
+            const template = Handlebars.compile(source);
+
+            const contents = template(terraformVariables);
+            return contents;
+        }
+    } catch (err: any) {
+        logger.error('Error while creating main.tf file', err);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error while creating main.tf tempalte file');
+    }
 }
 
 async function createAndUploadTheTerraformZipFile(
@@ -251,31 +283,36 @@ async function createAndUploadTheTerraformZipFile(
 ) {
     logger.info('Creating and uploading the terraform zip file', region, resourceType, deploymentName, templatePath);
 
-    if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
-        const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform/terraform.zip`;
-        if (!isDemoFlow) {
-            const archiveFolder = `./resources/mssql/${deploymentName}/terraform.zip`;
-            const folderToBeZipped = `./resources/mssql/${deploymentName}/terraform`;
-            await createArchive(archiveFolder, folderToBeZipped);
-            await putObjectBucket(
+    try {
+        if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
+            const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform/terraform.zip`;
+            if (!isDemoFlow) {
+                const archiveFolder = `./resources/mssql/${deploymentName}/terraform.zip`;
+                const folderToBeZipped = `./resources/mssql/${deploymentName}/terraform`;
+                await createArchive(archiveFolder, folderToBeZipped);
+                await putObjectBucket(
+                    TEMPLATE_BUCKET_REGION,
+                    SIGNED_TEMPLATES_BUCKET_NAME,
+                    customSQLStandaloneTFPath,
+                    '',
+                    archiveFolder
+                );
+            }
+            await rmdir(`./resources/mssql/${deploymentName}`, { recursive: true });
+            const zipSignedURL = await getPreSignedUrl(
                 TEMPLATE_BUCKET_REGION,
                 SIGNED_TEMPLATES_BUCKET_NAME,
-                customSQLStandaloneTFPath,
-                '',
-                archiveFolder
+                customSQLStandaloneTFPath
             );
+            return zipSignedURL;
         }
-        await rmdir(`./resources/mssql/${deploymentName}`, { recursive: true });
-        const zipSignedURL = await getPreSignedUrl(
-            TEMPLATE_BUCKET_REGION,
-            SIGNED_TEMPLATES_BUCKET_NAME,
-            customSQLStandaloneTFPath
-        );
-        return zipSignedURL;
+        // Yet to Implement
+        logger.error('Resource type not found');
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Resource type not found');
+    } catch (err: any) {
+        logger.error('Error while creating terraform zip file', err);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error while creating terraform zip file');
     }
-    // Yet to Implement
-    logger.error('Resource type not found');
-    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Resource type not found');
 }
 
 async function createArchive(archiveFolder: string, source: string): Promise<void> {
@@ -315,4 +352,10 @@ async function createArchive(archiveFolder: string, source: string): Promise<voi
     });
 }
 
-export { uploadTerraformModules, uploadInitializerScripts, createTFVarsFile, createAndUploadTheTerraformZipFile };
+export {
+    uploadTerraformModules,
+    uploadInitializerScripts,
+    createTFVarsFile,
+    createAndUploadTheTerraformZipFile,
+    createRootModuleFile
+};
