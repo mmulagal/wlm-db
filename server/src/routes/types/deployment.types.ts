@@ -193,7 +193,8 @@ const TerraformSetupRequestBody = Type.Object({
 });
 
 const TerraformSetupResponse = Type.Object({
-    url: Type.String()
+    url: Type.String(),
+    template: Type.String()
 });
 
 type DeploymentStatusObjectParamsType = Static<typeof DeploymentStatusObjectParams>;

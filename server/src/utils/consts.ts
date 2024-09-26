@@ -901,6 +901,11 @@ const TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS = [
     }
 ];
 
+const ROOT_MODULE_DISTRIBUTION = {
+    name: 'main',
+    location: './resources/mssql/templates/main.tf'
+};
+
 const TERRAFORM_FOLDER_PATH = './resources/mssql/terraform';
 
 const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: { [key: string]: { name: string; type: string } } = {
@@ -1603,5 +1608,6 @@ export {
     TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION,
     TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS,
     CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING,
-    TERRAFORM_FOLDER_PATH
+    TERRAFORM_FOLDER_PATH,
+    ROOT_MODULE_DISTRIBUTION
 };

@@ -42,13 +42,13 @@ Start-Transcript -Path "$LogDir\validation-instance.initializer.ps1.txt" -Append
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
 $progressPreference = "silentlyContinue"
 
-$VerifySignature = "{{VerifySignature}}"
-$UnzipArchive = "{{UnzipArchive}}"
-$AwsLaunchWizardForFcn = "{{AwsLaunchWizardForFcn}}"
-$ValidationZip = "{{ValidationZip}}"
-$CommonZip = "{{CommonZip}}"
-$SigningFilesZip = "{{SigningFilesZip}}"
-$OpenSslWin64Zip = "{{OpenSslWin64Zip}}"
+$VerifySignature = "{{{VerifySignature}}}"
+$UnzipArchive = "{{{UnzipArchive}}}"
+$AwsLaunchWizardForFcn = "{{{AwsLaunchWizardForFcn}}}"
+$ValidationZip = "{{{ValidationZip}}}"
+$CommonZip = "{{{CommonZip}}}"
+$SigningFilesZip = "{{{SigningFilesZip}}}"
+$OpenSslWin64Zip = "{{{OpenSslWin64Zip}}}"
 
 function Get-InstanceId {
     try {
