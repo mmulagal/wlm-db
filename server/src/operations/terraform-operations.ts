@@ -16,7 +16,7 @@ import {
     TEMPLATE_TYPES,
     CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING,
     TERRAFORM_FOLDER_PATH,
-    ROOT_MODULE_DISTRIBUTION
+    TERRAFORM_ROOT_MODULE_DISTRIBUTION
 } from '../utils/consts';
 import { isDemo } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -263,7 +263,7 @@ async function createRootModuleFile(
 
     try {
         if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
-            const source = readFileSync(ROOT_MODULE_DISTRIBUTION.location).toString();
+            const source = readFileSync(TERRAFORM_ROOT_MODULE_DISTRIBUTION.location).toString();
             const template = Handlebars.compile(source);
 
             const contents = template(terraformVariables);
