@@ -221,7 +221,7 @@ async function invokeMarketingApi(
                         isPrimary: true,
                         fsxw: {
                             storageAmount: 640000000000,
-                            deploymentType: 'Single',
+                            deploymentType: 'Multi',
                             volumeIops: 600,
                             throughput: 32,
                             storageVolumeType: 'SSD'
