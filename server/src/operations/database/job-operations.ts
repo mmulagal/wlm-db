@@ -206,21 +206,26 @@ async function getJobs(accountId: string, credentialsId: string, region: string,
 async function getJobDetails(accountId: string, credentialsId: string, region: string, jobId: string) {
     logger.info(' Get job details', { accountId, credentialsId, region, jobId });
 
-    const record = await listUniqueJob(accountId, credentialsId, region, jobId);
-    const [job] = trimAccountIdForDemo([record]);
-    job.subJobs = [];
+    try {
+        const record = await listUniqueJob(accountId, credentialsId, region, jobId);
+        const [job] = trimAccountIdForDemo([record]);
+        job.subJobs = [];
 
-    const formattedJob = formatJob(job);
-    const subJobsDbSchema = await getSubJobs(accountId, credentialsId, region, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
-    let subJobs = trimAccountIdForDemo(subJobsDbSchema);
-    subJobs = isEmpty(subJobs) ? [] : subJobs.map(formatJob);
+        const formattedJob = formatJob(job);
+        const subJobsDbSchema = await getSubJobs(accountId, credentialsId, region, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
+        let subJobs = trimAccountIdForDemo(subJobsDbSchema);
+        subJobs = isEmpty(subJobs) ? [] : subJobs.map(formatJob);
 
-    const response = {
-        ...formattedJob,
-        subJobs
-    };
+        const response = {
+            ...formattedJob,
+            subJobs
+        };
 
-    return response;
+        return response;
+    } catch (error) {
+        logger.error('Error while getting job details', error);
+        throw createError(404, `Job with ID ${jobId} not found in ${accountId}`);
+    }
 }
 
 async function getSubJobs(accountId: string, credentialsId: string, region: string, jobId: string) {
