@@ -127,7 +127,7 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
 };
 
 interface MappedOnTapVolumeResponse {
-    volumeUuids: string[];
+    volumeRecords: Record<string, string | number>[];
     volumeDBMap: any;
 }
 
@@ -2000,27 +2000,21 @@ async function getProtectionDetails(
         activeNodeInstanceId,
         instanceNames,
         isSqlAuthEnabled
-    )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {} }];
+    )) as MappedOnTapVolumeResponse[]) || [{ volumeRecords: [], volumeDBMap: {} }];
 
-    const volumeUuids =
+    const volumeRecords =
         Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeUuids)
+            ?.map(i => i?.volumeRecords)
             .flat() || [];
     const volumeDBMap =
         Object.values(instanceVolumeMapping)
             ?.map(i => i?.volumeDBMap)
             .flat() || {};
+    const volumeUuids = volumeRecords.map(volume => volume.uuid as string);
 
     const [awsBackup = {}, ontapBackup = {}] = await Promise.all([
         isFsxnAwsBackupEnabled(credentialsId, region, fileSystemId, volumeUuids, volumeDBMap, activeNodeInstanceId),
-        getOntapVolumesSnapshotCount(
-            credentialsId,
-            region,
-            fileSystemId,
-            volumeUuids,
-            volumeDBMap,
-            activeNodeInstanceId
-        )
+        getOntapVolumesSnapshotCount(credentialsId, region, fileSystemId, volumeRecords, volumeDBMap)
     ]);
 
     return { awsBackup, ontapBackup };
