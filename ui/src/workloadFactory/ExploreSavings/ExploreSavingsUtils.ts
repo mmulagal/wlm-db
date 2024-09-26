@@ -126,6 +126,7 @@ export const formatViewCalcInstance = (
                     instanceType: computeDetails?.[0]?.instanceType || instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
                     computeHourlyPrice: `$${formatNumberWithCustomComma(computeDetails?.[0]?.price)}`,
                     computeMonthlyPrice: `$${formatNumberWithCustomComma(computeDetails?.[0]?.computeMonthlyPrice)}`,
+                    instanceMonthlyPrice: `$${formatNumberWithCustomComma(computeDetails?.[0]?.instanceMonthlyPrice)}`,
                     sqlEdition:
                         licenseDetails?.sqlServerEdition ||
                         selectedHostDetails?.databaseServer?.serverEdition ||
@@ -140,6 +141,7 @@ export const formatViewCalcInstance = (
                     instanceType: computeDetails?.[0]?.instanceType || instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
                     computeHourlyPrice: `$${formatNumberWithCustomComma(computeDetails?.[0]?.price)}`,
                     computeMonthlyPrice: `$${formatNumberWithCustomComma(computeDetails?.[0]?.computeMonthlyPrice)}`,
+                    instanceMonthlyPrice: `$${formatNumberWithCustomComma(computeDetails?.[0]?.instanceMonthlyPrice)}`,
                     sqlEdition:
                         licenseDetails?.sqlServerEdition ||
                         selectedHostDetails?.databaseServer?.serverEdition ||
@@ -152,6 +154,9 @@ export const formatViewCalcInstance = (
                     computeHourlyPrice: `$${formatNumberWithCustomComma(computeDetails?.[1]?.price)}`,
                     computeMonthlyPrice: `$${formatNumberWithCustomComma(
                         Number(computeDetails?.[1]?.computeMonthlyPrice)
+                    )}`,
+                    instanceMonthlyPrice: `$${formatNumberWithCustomComma(
+                        Number(computeDetails?.[1]?.instanceMonthlyPrice)
                     )}`,
                     sqlEdition:
                         licenseDetails?.sqlServerEdition ||
@@ -228,14 +233,14 @@ export const formatViewCalcData = (
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.computeMonthlyPrice || 0
+                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
             );
         } else {
             cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.computeMonthlyPrice || 0
+                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
             );
             cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[1]?.computeMonthlyPrice || 0
+                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[1]?.instanceMonthlyPrice || 0
             );
         }
         cost += ebsViewCalculationData?.ebsSnapshotCalculation?.totalEbsSnapshotCostValue || 0;
@@ -251,14 +256,14 @@ export const formatViewCalcData = (
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.computeMonthlyPrice || 0
+                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
             );
         } else {
             cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.computeMonthlyPrice || 0
+                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
             );
             cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[1]?.computeMonthlyPrice || 0
+                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[1]?.instanceMonthlyPrice || 0
             );
         }
         cost += Number(viewCalculationsResponse?.fsxwCloneCalculation?.totalCloneMonthlyCost || 0);
@@ -281,14 +286,14 @@ export const formatViewCalcData = (
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.computeMonthlyPrice || 0
+                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
             );
         } else {
             cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.computeMonthlyPrice || 0
+                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
             );
             cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[1]?.computeMonthlyPrice || 0
+                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[1]?.instanceMonthlyPrice || 0
             );
         }
         return formatFractionalNumberForCost(cost, 2);
@@ -297,10 +302,10 @@ export const formatViewCalcData = (
     const totalFsxEc2MachineCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.computeMonthlyPrice || 0);
+            cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
         } else {
-            cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.computeMonthlyPrice || 0);
-            cost += Number(viewCalculationsResponse?.recommendedInstance?.[1]?.computeMonthlyPrice || 0);
+            cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
+            cost += Number(viewCalculationsResponse?.recommendedInstance?.[1]?.instanceMonthlyPrice || 0);
         }
         return formatFractionalNumberForCost(cost, 2);
     })();
@@ -308,10 +313,10 @@ export const formatViewCalcData = (
     const totalFsxCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.computeMonthlyPrice || 0);
+            cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
         } else {
-            cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.computeMonthlyPrice || 0);
-            cost += Number(viewCalculationsResponse?.recommendedInstance?.[1]?.computeMonthlyPrice || 0);
+            cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
+            cost += Number(viewCalculationsResponse?.recommendedInstance?.[1]?.instanceMonthlyPrice || 0);
         }
         cost += Number(viewCalculationsResponse?.fsxOntapCalculation?.totalThroughputAndIopsMonthly || 0);
         cost += Number(viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyStorageCharge || 0);
