@@ -384,10 +384,6 @@ const HeaderComponent = ({ tab }: Tab) => {
                 displayName: 'Subscribe to RSS',
                 tagAdded: true,
                 tag: isDarkTheme ? <RSS_White /> : <RSS />
-            },
-            {
-                id: 'feedback',
-                displayName: 'Feedback'
             }
         ];
     };
@@ -655,17 +651,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                             .focus();
                                                         break;
                                                     case 'subscribeToRss':
-                                                        postBlueXPMessage({
-                                                            type: BlueXPListeners.navigate,
-                                                            payload: { pathname: '../links', replace: true }
-                                                        });
-
-                                                        break;
-                                                    case 'feedback':
-                                                        postBlueXPMessage({
-                                                            type: BlueXPListeners.navigate,
-                                                            payload: { pathname: '../fsxhome/feedback', replace: true }
-                                                        });
+                                                        //@ts-ignore
+                                                        window
+                                                            .open(
+                                                                'https://docs.netapp.com/us-en/workload-relnotes/feed.xml',
+                                                                '_blank',
+                                                                'noopener'
+                                                            )
+                                                            .focus();
 
                                                         break;
                                                 }
