@@ -41,7 +41,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
-            fsxResponse.volumeMap.volumeUuids,
+            fsxResponse.volumeMap.volumeRecords.map(v => v.uuid),
             fsxResponse.volumeMap.volumeDBMap,
             `i-${faker.string.alpha(17)}`
         );
@@ -53,7 +53,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
-            fsxResponse.volumeMap.volumeUuids,
+            fsxResponse.volumeMap.volumeRecords,
             fsxResponse.volumeMap.volumeDBMap
         );
         expect(response.master).toBeTruthy();
