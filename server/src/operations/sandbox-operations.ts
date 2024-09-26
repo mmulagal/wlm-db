@@ -2726,6 +2726,8 @@ async function splitSandbox(
         startTime: Date.now()
     });
 
+    updateLongRunningAuditGroup(undefined, undefined, `${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`);
+
     performSplitOperation(accountId, credentialsId, region, job.id, srcDetails);
 
     return { jobId: job.id };
