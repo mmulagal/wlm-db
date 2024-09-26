@@ -307,6 +307,21 @@ const CodeBox = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dropDownValue]);
 
+    // After form update if user clicks on CF or CLI than get template data
+    useEffect(() => {
+        // For demo mode will not reset codebox option so it will call APIs again
+        if (isDemoMode) {
+            if (dropDownValue === CODE_VIEWER.CLOUDFORMATION || dropDownValue === CODE_VIEWER.AWS_CLI) {
+                // If user is switching between CF and CLI than no need to call template APi again
+                if (!formData || !_.isEqual(mssqlFormData, formData)) {
+                    setFormData(mssqlFormData);
+                    getTemplateResponse();
+                }
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mssqlFormData]);
+
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
     const getRestResponse = () => {
         setIsRightPanelDataLoading(true);
@@ -381,9 +396,12 @@ const CodeBox = () => {
 
     useEffect(() => {
         getRestResponse();
-        // Reset dropdown value to Rest API in case of form change
-        setDropdownValue(CODE_VIEWER.REST_API);
-        setFormData(null);
+        // For demo mode will not reset codebox option so it will call APIs again
+        if (!isDemoMode) {
+            // Reset dropdown value to Rest API in case of form change
+            setDropdownValue(CODE_VIEWER.REST_API);
+            setFormData(null);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mssqlFormData]);
 
