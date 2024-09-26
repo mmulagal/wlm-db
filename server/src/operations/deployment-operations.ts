@@ -195,7 +195,6 @@ async function formatTemplateParameters(
         ? await getWindowsServerBaseAmi(credentialsId!, region!)
         : '';
 
-    logger.info('validation ami id', validationAmiImage);
     const availabilityZones =
         sqlConfiguration.sqlDeploymentMode === STANDALONE
             ? [networkConfiguration.availabilityZone1!]
