@@ -2,7 +2,7 @@ import styles from './CodeBox.module.scss';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
 
-import { Typography, useDialog, Popover, Button } from '@netapp/design-system';
+import { Typography, useDialog, Popover, Button, DsTooltipInfo } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -49,6 +49,7 @@ import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import TerraformColor from '../Terraform/TerraformColor';
+import { downloadTerraformZip } from '../MockTerraformZip/MockTerraformZip';
 
 const _ = require('lodash');
 
@@ -471,8 +472,17 @@ const CodeBox = () => {
             <div className={styles.payloadContainer}>
                 <div className={styles.payloadHeader}>
                     <div className={styles.inputPart}>
-                        <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
+                        <Typography
+                            className={styles.codeboxHeader}
+                            variant="Regular_14"
+                            style={{ color: 'var(--white)' }}
+                        >
                             {dropDownValue}
+                            {dropDownValue === GENERAL.TERRAFORM && (
+                                <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                    {GENERAL.TERRAFORM_CODEBOX_TOOLTIP}
+                                </DsTooltipInfo>
+                            )}
                         </Typography>
                     </div>
                     <div className={styles.actionPopOver}>
@@ -513,7 +523,11 @@ const CodeBox = () => {
                                 ) : (
                                     <Download
                                         onClick={() => {
-                                            handleDownloadTerraform(terraformSetupResponse?.url);
+                                            if (isDemoMode) {
+                                                downloadTerraformZip();
+                                            } else {
+                                                handleDownloadTerraform(terraformSetupResponse?.url);
+                                            }
                                             dispatch(clearNotifications());
                                             const ele = (
                                                 <div>

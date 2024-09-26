@@ -482,6 +482,8 @@ export const GENERAL = {
     PROTECTION: 'protection',
     NUMBER_OF_EXECUTION: 'Number of Execution',
     TERRAFORM: 'Terraform',
+    TERRAFORM_CODEBOX_TOOLTIP:
+        'The code represents only variables module. For the rest of the modules it should be downloaded.',
     READ: 'Read',
     WRITE: 'Write',
     STORAGE_PERFORMANCE: 'Storage performance',
