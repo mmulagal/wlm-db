@@ -109,6 +109,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const [loadTemplateData] = useGetTemplatesMutation();
 
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+
     useEffect(() => {
         if (dropDownValue === 'CloudFormation') {
             setMenuItems([
@@ -323,7 +325,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                         credDetails.region || CRED_PLACEHOLDERS.REGION,
                         CRED_PLACEHOLDERS.TOKEN,
-                        res
+                        res,
+                        isWorkloadFactory
                     )}
                 />
             );
@@ -345,7 +348,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                         credDetails.region || CRED_PLACEHOLDERS.REGION,
                         CRED_PLACEHOLDERS.TOKEN,
-                        res1
+                        res1,
+                        isWorkloadFactory
                     )}
                 />
             );
@@ -383,7 +387,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         CRED_PLACEHOLDERS.CRED_ID,
                         CRED_PLACEHOLDERS.REGION,
                         CRED_PLACEHOLDERS.TOKEN,
-                        res
+                        res,
+                        isWorkloadFactory
                     )}
                 />
             );

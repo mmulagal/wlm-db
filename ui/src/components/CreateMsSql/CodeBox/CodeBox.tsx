@@ -78,6 +78,7 @@ const CodeBox = () => {
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     useEffect(() => {
         if (isLoadConfig) {
@@ -358,7 +359,8 @@ const CodeBox = () => {
                     credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                     credDetails.region || CRED_PLACEHOLDERS.REGION,
                     CRED_PLACEHOLDERS.TOKEN,
-                    res
+                    res,
+                    isWorkloadFactory
                 )}
             />
         );
@@ -391,7 +393,8 @@ const CodeBox = () => {
                     credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                     credDetails.region || CRED_PLACEHOLDERS.REGION,
                     CRED_PLACEHOLDERS.TOKEN,
-                    res
+                    res,
+                    isWorkloadFactory
                 )}
             />
         );
