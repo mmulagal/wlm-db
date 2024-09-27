@@ -68,11 +68,13 @@ const CloudFormationTemplateRequestBody = Type.Object({
     )
 });
 
+const PgSqlConfiguration = Type.Pick(SQLConfiguration, ['sqlAmiId', 'sqlAmiName', 'sqlDeploymentMode']);
+
 const PgSqlCloudFormationTemplateRequestBody = Type.Object({
     networkConfiguration: CFNetworkConfiguration,
     ec2Configuration: EC2Configuration,
     fsxConfiguration: FSXConfiguration,
-    sqlConfiguration: Type.Pick(SQLConfiguration, ['sqlAmiId', 'sqlAmiName', 'sqlDeploymentMode']),
+    sqlConfiguration: PgSqlConfiguration,
     tags: Type.Optional(
         Type.Array(
             Type.Object({
@@ -216,6 +218,7 @@ type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
 type CloudFormationStaticTemplateResponseType = Static<typeof CloudFormationStaticTemplateResponse>;
 type CloudFormationDeploymentResponseType = Static<typeof CloudFormationDeploymentResponse>;
+type PgSqlConfigurationType = Static<typeof PgSqlConfiguration>;
 
 export {
     CloudFormationTemplateRequestBody,
@@ -244,5 +247,7 @@ export {
     CollationListResponse,
     CollationListQueryString,
     PgSqlCloudFormationTemplateRequestBody,
-    PgSqlCloudFormationDeploymentResponse
+    PgSqlCloudFormationDeploymentResponse,
+    PgSqlConfiguration,
+    PgSqlConfigurationType
 };

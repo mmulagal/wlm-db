@@ -201,3 +201,4 @@ Resources:
                         echo "CF endpoint is reachable."
                         /opt/aws/bin/cfn-init -v -c config --stack ${AWS::StackName} --resource ValidationNode1 --region ${AWS::Region}
                     fi
+                    shutdown now

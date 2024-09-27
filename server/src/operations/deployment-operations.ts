@@ -18,7 +18,8 @@ import {
     FSXConfigurationType,
     SQLConfigurationType,
     CloudFormationDeploymentResponseType,
-    CloudFormationStaticTemplateResponseType
+    CloudFormationStaticTemplateResponseType,
+    PgSqlConfigurationType
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
@@ -83,7 +84,8 @@ import {
     TEMPLATE_PRIVATESUBNET2_CIDRBLOCK,
     PG_TEMPLATE_CONFIG_MAPPING,
     PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
-    PG_TEMPLATE_OPTIONAL_PARAMETERS
+    PG_TEMPLATE_OPTIONAL_PARAMETERS,
+    PGSQL_VERSION
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -1197,7 +1199,7 @@ async function deployPgSql(
     networkConfiguration: CFNetworkConfigurationType,
     ec2Configuration: EC2ConfigurationType,
     fsxConfiguration: FSXConfigurationType,
-    sqlConfiguration: Pick<SQLConfigurationType, 'sqlAmiName' | 'sqlAmiId' | 'sqlDeploymentMode'>,
+    sqlConfiguration: PgSqlConfigurationType,
     triggeredFrom: string,
     topicArn: string = ''
 ) {
@@ -1211,12 +1213,8 @@ async function deployPgSql(
         sqlConfiguration
     });
 
-    // const { workloadInstanceType } = ec2Configuration;
-    const {
-        // databaseSize,
-        fsxVolThroughput,
-        fsxIOPS
-    } = fsxConfiguration;
+    const { workloadInstanceType } = ec2Configuration;
+    const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
 
     if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
         // FSX 4gbps throughput capacity supported regions
@@ -1234,6 +1232,87 @@ async function deployPgSql(
         }
     }
 
+    let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:16,${DATABASE_SIZE}:${databaseSize}`;
+
+    try {
+        const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
+
+        // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
+        if (permissions.implicitlyDenied.length || permissions.explicitlyDenied.length) {
+            metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
+            // const response = await createCloudFormationTemplateForUserDeployment(
+            //     credentialsId,
+            //     region,
+            //     networkConfiguration,
+            //     ec2Configuration,
+            //     adConfiguration,
+            //     fsxConfiguration,
+            //     sqlConfiguration,
+            //     topicArn,
+            //     enableCloudWatch,
+            //     metrics,
+            //     tags
+            // );
+            const errMsg = MISSING_PERMISSIONS(permissions.implicitlyDenied, permissions.explicitlyDenied);
+
+            const responseWithPermissions: CloudFormationDeploymentResponseType = {
+                // ...response,
+                missingPermissions: {
+                    implicitlyDenied: permissions.implicitlyDenied || [],
+                    explicitlyDenied: permissions.explicitlyDenied
+                }
+            };
+
+            logger.error(errMsg);
+            return responseWithPermissions;
+        }
+        metrics += `,${DEPLOYED_FROM}:${WLMDB}`;
+        return await deployCfTemplateForPgSql(
+            credentialsId,
+            region,
+            networkConfiguration,
+            ec2Configuration,
+            fsxConfiguration,
+            sqlConfiguration,
+            topicArn,
+            false,
+            metrics
+        );
+    } catch (err: any) {
+        // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
+        if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
+            // metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
+            // const response = await createCloudFormationTemplateForUserDeployment(
+            //     credentialsId,
+            //     region,
+            //     networkConfiguration,
+            //     ec2Configuration,
+            //     adConfiguration,
+            //     fsxConfiguration,
+            //     sqlConfiguration,
+            //     topicArn,
+            //     enableCloudWatch,
+            //     metrics,
+            //     tags
+            // );
+        }
+    }
+
+    // return { stackName, templateParameters: templateParams };
+}
+
+async function deployCfTemplateForPgSql(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: PgSqlConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    metrics: string
+    // tags?: Array<{ key: string; value: string }>
+): Promise<{ cloudFormationStackId: string; cloudFormationUrl: string }> {
     const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
         networkConfiguration,
         STANDALONE,
@@ -1250,6 +1329,87 @@ async function deployPgSql(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
+    const { stackName, templateParameters: templateParams } = await formatPgSqlTemplateParameters(
+        networkConfiguration,
+        ec2Configuration,
+        fsxConfiguration,
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch,
+        metrics,
+        credentialsId,
+        region
+    );
+
+    const customMasterTemplatePath = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
+
+    const signedMasterTemplateUrl = await getPreSignedUrl(
+        TEMPLATE_BUCKET_REGION,
+        SIGNED_TEMPLATES_BUCKET_NAME,
+        customMasterTemplatePath
+    );
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParams);
+
+    logger.info('Template parameters in CF format', templateParamsInCfFormat);
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        region,
+        DatabaseTypes.PG_SQL,
+        stackName,
+        // tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        [],
+        customMasterTemplatePath,
+        templateParamsInCfFormat
+    );
+
+    logger.info('template params', templateParams);
+
+    const deployStackResponse = await createStack(
+        credentialsId,
+        region,
+        stackName,
+        signedMasterTemplateUrl,
+        templateParams,
+        DISABLE_ROLLBACK,
+        MASTER_STACK_TIMEOUT_MINUTES
+    );
+
+    // logger.info(`Stack ${stackName} response ${deployStackResponse}`);
+
+    const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
+
+    return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
+}
+
+async function formatPgSqlTemplateParameters(
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: PgSqlConfigurationType,
+    topicArn: string,
+    enableCloudWatch: boolean,
+    metrics: string,
+    credentialsId?: string,
+    region?: string,
+    skipPasswords?: boolean
+) {
+    logger.info('Format Postgres SQL template parameters', {
+        networkConfiguration,
+        ec2Configuration,
+        fsxConfiguration,
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch,
+        metrics,
+        credentialsId,
+        region,
+        skipPasswords
+    });
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generatePgDeploymentParams(
               fsxConfiguration.databaseSize,
@@ -1401,51 +1561,7 @@ async function deployPgSql(
         }
     });
 
-    const customMasterTemplatePath = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
-
-    const signedMasterTemplateUrl = await getPreSignedUrl(
-        TEMPLATE_BUCKET_REGION,
-        SIGNED_TEMPLATES_BUCKET_NAME,
-        customMasterTemplatePath
-    );
-
-    logger.info('Signed master url ', signedMasterTemplateUrl);
-
-    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
-    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParams);
-
-    logger.info('Template parameters in CF format', templateParamsInCfFormat);
-
-    // Generate Signed-url and upload to bucket
-    await uploadTemplates(
-        region,
-        DatabaseTypes.PG_SQL,
-        stackName,
-        // tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        [],
-        customMasterTemplatePath,
-        templateParamsInCfFormat
-    );
-
-    logger.info('template params', templateParams);
-
-    const deployStackResponse = await createStack(
-        credentialsId,
-        region,
-        stackName,
-        signedMasterTemplateUrl,
-        templateParams,
-        DISABLE_ROLLBACK,
-        MASTER_STACK_TIMEOUT_MINUTES
-    );
-
-    // logger.info(`Stack ${stackName} response ${deployStackResponse}`);
-
-    const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
-
-    return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
-
-    // return { stackName, templateParameters: templateParams };
+    return { stackName, templateParameters: templateParams };
 }
 
 export {

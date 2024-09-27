@@ -302,6 +302,8 @@ Resources:
             check_status "Failed to create pgvector extension"
 
             echo "pgvector installation complete."
+            # Signal the status from the instance
+            cfn-signal -e $? --resource SqlNode --stack ${AWS::StackName} --region ${AWS::Region}
 
   WorkloadSecurityGroup:
     Type: AWS::EC2::SecurityGroup
