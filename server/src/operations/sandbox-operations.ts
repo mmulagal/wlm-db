@@ -444,7 +444,7 @@ interface VolumeLunMap {
     parentVolume?: string;
     parentVolumeUuid?: string;
     parentSnapshot?: string;
-    splitEstimate?: string;
+    splitEstimate?: number;
 }
 
 interface VolumeLunMapping {
@@ -2045,9 +2045,18 @@ async function getSandboxSplitEstimate(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
     }
 
-    return [...parsedResp.data, ...parsedResp.log].map((record: { volumeName: string; splitEstimate: string }) => ({
+    const mappingData = [...parsedResp.data, ...parsedResp.log];
+
+    if (mappingData.some(vol => !vol.parentVolume)) {
+        throw createError(
+            HttpErrorCodes.VALIDATION_ERROR,
+            'The sandbox seems to be already split and hence cannot be altered.'
+        );
+    }
+
+    return mappingData.map((record: { volumeName: string; splitEstimate: number }) => ({
         name: record.volumeName,
-        splitEstimate: Number(record.splitEstimate || 0)
+        splitEstimate: record.splitEstimate || 0
     }));
 }
 
