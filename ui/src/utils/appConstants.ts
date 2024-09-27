@@ -1155,6 +1155,7 @@ export const CODE_VIEWER = {
     AWS_CLI: 'AWS CLI',
     VIEW_IN_AWS_CLOUD_FORMATION: 'View in AWS CloudFormation',
     DOWNLOAD_YAML: 'Download YAML file ',
+    DOWNLOAD_ZIP: 'Download ZIP file',
     RECOMMENDED_DEV: 'Dev/Test',
     RECOMMENDED_PROD: 'Production',
     NO_DATA_MSG: 'No data',
