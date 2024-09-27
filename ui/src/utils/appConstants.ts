@@ -10,7 +10,7 @@ export const SELECT_CONFIG = {
     CREATE: 'Create',
     CANCEL: 'Cancel',
     PREVIOUS: 'Previous',
-    WIZARD_HEADING: 'Create new Microsoft SQL server',
+    WIZARD_HEADING: 'Create new Microsoft SQL Server',
     LOAD_CONFIG: 'Load configuration',
     SAVE_CONFIG: 'Save configuration',
     SECURITY_GROUP: 'Security group',
@@ -76,7 +76,7 @@ export const GENERAL = {
     AWS_SETTINGS: 'AWS settings',
     LANDING_ZONE: 'Landing zone',
     VIEW_API_REQUEST: 'View API request',
-    LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
+    LOAD_CONFIG_HEADER: 'Load Microsoft SQL Server configuration',
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
     SAVE_CONFIG_HEADER: 'Save Microsoft SQL Server configuration',
@@ -136,9 +136,9 @@ export const GENERAL = {
     FOR_MORE_INFO: 'Learn more about the',
     HOW_TO_ADD_AWS_CRED: 'Learn how to add AWS credentials.',
     AWS_ACCOUNT_SUB_TEXT:
-        'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+        'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL Server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_WF:
-        'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+        'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL Server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_AUTOMATE:
         'Use BlueXP in automate mode by selecting credentials that grant BlueXP the AWS permissions required to deploy and manage resources in your AWS account.',
     AWS_ACCOUNT_SUB_TEXT_READ:
@@ -920,7 +920,7 @@ export const GENERAL = {
     ES_SNAPSHOT_FREQUENCY: 'Snapshot frequency',
     ES_NO_SNAPSHOT_STORAGE: 'No snapshot storage',
     ES_CLONE_REFRESH_FREQUENCY: 'Clone refresh frequency',
-    ES_TABLE_TITLE: 'Microsoft SQL server host',
+    ES_TABLE_TITLE: 'Microsoft SQL Server host',
     ES_SERVER_NAME: 'Server name',
     ES_TYPE: 'Type',
     ES_MSSQL_SERVER: 'Microsoft SQL Server on FSx for ONTAP',
@@ -1001,12 +1001,12 @@ export const GENERAL = {
     ES_SAVE_ERROR: 'This configuration can not be saved',
     MS_SQL_TWO_INSTANCES: 'Microsoft SQL Server EC2 instance - 2 instances',
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
-    SAVINGS_HEADER: 'Microsoft SQL server on Amazon Elastic Block Store (EBS) configuration.',
-    SAVINGS_HEADER_FSX: 'Microsoft SQL server on FSx for Windows configuration',
+    SAVINGS_HEADER: 'Microsoft SQL Server on Amazon Elastic Block Store (EBS) configuration.',
+    SAVINGS_HEADER_FSX: 'Microsoft SQL Server on FSx for Windows configuration',
     SAVINGS_MANUAL_TEXT:
-        ' Select a Microsoft SQL server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL server on FSx for ONTAP instead',
+        ' Select a Microsoft SQL Server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL Server on FSx for ONTAP instead',
     SAVINGS_MANUAL_FSXW_TEXT:
-        'Select Microsoft SQL Server, Amazon EC2, and Amazon FSx for Windows File Server settings to compare the cost of using Microsoft SQL server on FSx for ONTAP instead.',
+        'Select Microsoft SQL Server, Amazon EC2, and Amazon FSx for Windows File Server settings to compare the cost of using Microsoft SQL Server on FSx for ONTAP instead.',
     ES_NUMBER_OF_INSTANCE: 'Number of SQL instances',
     ES_HOST_NAME: 'Host name',
     ES_NUMBER_OF_VOLS: 'Number of volumes',
@@ -1017,12 +1017,12 @@ export const GENERAL = {
     SAVINGS_CALCULATOR: 'Savings calculator',
     TOTAL_MONTHLY_COST: 'Total monthly cost',
     TO_VIEW_STORAGE: 'To view storage cost savings, enter your configuration.',
-    CATEGORY_POINT_ONE: 'Microsoft SQL server on FSx for ONTAP',
-    CATEGORY_POINT_TWO: 'Microsoft SQL server on Amazon Elastic Block Store (EBS)',
+    CATEGORY_POINT_ONE: 'Microsoft SQL Server on FSx for ONTAP',
+    CATEGORY_POINT_TWO: 'Microsoft SQL Server on Amazon Elastic Block Store (EBS)',
     FSXW_CATEGORY: 'Microsoft SQL Server on FSx for Windows File Server',
     WINDOW_FILE_SERVER_DETAILS: 'FSx for Windows File Server:',
     VIEW_CALC_TEXT:
-        'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
+        'Learn how we calculated the estimated cost of Microsoft SQL Server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
     VIEW_CAL_SECONDARY_TEXT: 'All AWS prices mentioned in the calculations are AWS on-demand pricing.',
     COST_CALCULATION: 'Cost calculation',
@@ -1114,7 +1114,7 @@ export const GENERAL = {
     NOT_OPTIMIZED:
         "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use.",
     // Explore savings view calculations related consts
-    MS_EBS_CALCULATION: 'Microsoft SQL server on EBS calculation',
+    MS_EBS_CALCULATION: 'Microsoft SQL Server on EBS calculation',
     MS_FSXW_CALCULATION: 'Microsoft SQL on FSx for Windows File Server calculation',
     MS_ONTAP_CALCULATION: 'Microsoft SQL EC2 on FSx for ONTAP calculation',
     ES_CLONES: 'Clones',
@@ -1165,7 +1165,7 @@ export const CODE_VIEWER = {
     CODEBOX: 'Codebox',
     EXPAND: 'Expand',
     COLLAPSE: 'Collapse',
-    RECOMMENDED_TEMPLATES_HEADING: 'Recommended templates - Microsoft SQL server deployment',
+    RECOMMENDED_TEMPLATES_HEADING: 'Recommended templates - Microsoft SQL Server deployment',
     MY_TEMPLATES: 'My Templates',
     COPY: 'Copy',
     COPIED_TO_CLIPBOARD: 'Copied to clipboard',
