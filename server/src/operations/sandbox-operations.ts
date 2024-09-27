@@ -62,7 +62,7 @@ import {
 import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { getDriveInfo } from './createdb-operations';
-import { restGetUtilForOntap, sqlQueryExecution, sqlQueryExecutionWithAuth } from './workloads/mssql/ssm-script-utils';
+import { sqlQueryExecution, sqlQueryExecutionWithAuth } from './workloads/mssql/ssm-script-utils';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { GET_SANDBOXES } from './workloads/mssql/queries';
 
@@ -444,6 +444,7 @@ interface VolumeLunMap {
     parentVolume?: string;
     parentVolumeUuid?: string;
     parentSnapshot?: string;
+    splitEstimate?: number;
 }
 
 interface VolumeLunMapping {
@@ -2053,48 +2054,9 @@ async function getSandboxSplitEstimate(
         );
     }
 
-    // get the estimated split size
-    let estimateCommand = [
-        restGetUtilForOntap(
-            srcDetails.fsxId,
-            region,
-            '/storage/volumes',
-            `uuid=${mappingData.map(vol => vol.volumeUuid).join('|')}`,
-            'fields=clone.split_estimate'
-        )
-    ];
-
-    if (isDemoFlow) {
-        estimateCommand = [
-            restGetUtilForOntap(
-                'test-fsx',
-                'us-east-1',
-                '/storage/volumes',
-                'uuid=5c1075d2-03a0-11ef-a514-55070fbfcab1|5ace31ea-03a0-11ef-a514-55070fbfcab1',
-                'fields=clone.split_estimate'
-            )
-        ];
-    }
-
-    const estimateResp = await callSsmExecution(
-        credentialsId,
-        region,
-        estimateCommand,
-        srcDetails.activeNodeInstanceId,
-        accountId,
-        false
-    );
-
-    if (!estimateResp) {
-        logger.error('Failed to get volume split estimate', { databaseHostId });
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume split estimate');
-    }
-
-    const estimateParsedResp = sqlResponseParsing(estimateResp);
-
-    return estimateParsedResp.records.map((record: { name: string; clone: { split_estimate: string } }) => ({
-        name: record.name,
-        splitEstimate: record.clone.split_estimate || 0
+    return mappingData.map((record: { volumeName: string; splitEstimate: number }) => ({
+        name: record.volumeName,
+        splitEstimate: record.splitEstimate || 0
     }));
 }
 
