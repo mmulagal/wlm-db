@@ -651,7 +651,7 @@ async function deployStackOrCreateTemplateURL(
         tags,
         triggeredFrom
     });
-
+    updateLongRunningAuditGroup(undefined, undefined, sqlConfiguration?.sqlServerName);
     const { workloadInstanceType } = ec2Configuration;
     const { sqlServerName, sqlAmiName, sqlCollation } = sqlConfiguration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
