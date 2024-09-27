@@ -197,13 +197,26 @@ export const CURL_REQ_TEMPLATE = (
     credentialId: string,
     region: string,
     token: string,
-    payload: any
-) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
---header 'Authorization: Bearer ${token}' \\
---header 'Content-Type: application/json' \\
---data-raw '${payload}'
-`;
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
 
 export const CRED_PLACEHOLDERS = {
     ACCOUNT_ID: '<AccountId>',
@@ -318,27 +331,52 @@ export const CREATE_DB_CURL_REQ_TEMPLATE = (
     region: string,
     databaseHostId: any,
     token: string,
-    payload: any
-) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
---header 'Authorization: Bearer ${token}' \\
---header 'Content-Type: application/json' \\
---data-raw '${payload}'
-`;
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
 
 export const CREATE_SANDBOX_CURL_REQ_TEMPLATE = (
     baseUrl: string,
     credentialId: string,
     region: string,
     token: string,
-    payload: any
-) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandboxes' \\
---header 'Authorization: Bearer ${token}' \\
---header 'Content-Type: application/json' \\
---data-raw '${payload}'
-`;
-
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandboxes' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandboxes' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
 export const UPDATE_SANDBOX_CURL_REQ_TEMPLATE = (
     baseUrl: string,
     credentialId: string,
