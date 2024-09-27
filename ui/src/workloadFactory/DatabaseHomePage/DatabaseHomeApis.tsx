@@ -29,7 +29,7 @@ import {
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
 
-    const databaseHostsDataV1 = useAppSelector(state => state.inventory.getDatabaseHosts.databaseHostsData);
+    const databaseHostsDataV1 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsData);
     const databaseHostsDataV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsData);
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const { sandboxSavings } = useAppSelector(state => state.sandbox.getSandboxSavings);

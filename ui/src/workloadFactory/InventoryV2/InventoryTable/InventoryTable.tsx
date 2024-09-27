@@ -19,13 +19,6 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 
 import { collapseAllRows, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
-
-import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
-
-import {
-    renderAllocatedCapacity,
-    renderEstimatedCost
-} from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
@@ -44,7 +37,9 @@ import {
     updateInstanceStatus,
     renderInstanceListText,
     installModuleNotification,
-    renderCellData
+    renderCellData,
+    renderEstimatedCost,
+    renderAllocatedCapacity
 } from '../InventoryUtilsV2';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../utils/apiService';
@@ -52,7 +47,8 @@ import store from '../../../store/store';
 import {
     setInProgressInstances,
     setInventoryExpandedRowHostData,
-    setInventoryTableData
+    setInventoryTableData,
+    setManagedHostColState
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
@@ -72,7 +68,7 @@ const InventoryTable = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
-    const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
+    const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const { isDemoMode } = useAppSelector(state => state.auth);
 
     const [loading, setLoading] = useState(false);

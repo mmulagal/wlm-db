@@ -7,10 +7,10 @@ import { useCreateUserDBMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { WLF_TABS } from '../../../utils/consts';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './CreateNewUserFooter.module.scss';
 import { updateRefreshBlocked } from '../../../store/authSlice';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
 const CreateNewUserFooter = () => {
     const navigate = useNavigate();

@@ -1455,22 +1455,10 @@ export const removeOldApisError = (data: any) => {
 // This function will create post payload for register credential API (registerResourceCredentials)
 export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string, rowData: any) => {
     const state = store.getState();
-    const isInventoryV2 = state?.auth?.isInventoryV2;
-    let detectManageUserName = '';
-    let detectManagePassword = '';
-    let detectOntapUsername = '';
-    let detectOntapPassword = '';
-    if (isInventoryV2) {
-        detectManageUserName = state?.inventoryV2?.detectManageUserName;
-        detectManagePassword = state?.inventoryV2?.detectManagePassword;
-        detectOntapUsername = state?.inventoryV2?.detectOntapUsername;
-        detectOntapPassword = state?.inventoryV2?.detectOntapPassword;
-    } else {
-        detectManageUserName = state?.inventory?.detectManageUserName;
-        detectManagePassword = state?.inventory?.detectManagePassword;
-        detectOntapUsername = state?.inventory?.detectOntapUsername;
-        detectOntapPassword = state?.inventory?.detectOntapPassword;
-    }
+    let detectManageUserName = state?.inventoryV2?.detectManageUserName;
+    let detectManagePassword = state?.inventoryV2?.detectManagePassword;
+    let detectOntapUsername = state?.inventoryV2?.detectOntapUsername;
+    let detectOntapPassword = state?.inventoryV2?.detectOntapPassword;
     let credList = [];
     if (detectManageUserName && detectManagePassword) {
         credList.push({

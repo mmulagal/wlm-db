@@ -1,6 +1,6 @@
-import React, { Suspense, useEffect, useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
@@ -19,10 +19,10 @@ import CreateNewSandbox from './workloadFactory/Sandbox/CreateNewSandbox/CreateN
 import { BXP_MESSAGES, WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 import { useAppSelector } from './store/storeHooks';
-import { setSelectedHeaderTab } from './store/workloadFactory/inventorySlice';
 import { useRunOnce } from './common/hooks/useRunOnce';
 import { setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
+import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);

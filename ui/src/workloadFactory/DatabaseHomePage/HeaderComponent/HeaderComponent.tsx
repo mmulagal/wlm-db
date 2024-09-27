@@ -32,7 +32,6 @@ import { ReactComponent as RSS } from '../../../assets/ic_rss.svg';
 import { ReactComponent as RSS_White } from '../../../assets/ic_rss_white.svg';
 import { ReactComponent as Menu } from '../../../assets/ic_menu.svg';
 import { useDispatch } from 'react-redux';
-import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
     setDashboardRefresh,
@@ -79,6 +78,7 @@ import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice
 import { useNavigate } from 'react-router-dom';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { navigateToCanvas } from '../../../utils/appConfig';
+import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
 type Tab = {
     tab: string;
@@ -102,7 +102,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
-    const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
+    const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);

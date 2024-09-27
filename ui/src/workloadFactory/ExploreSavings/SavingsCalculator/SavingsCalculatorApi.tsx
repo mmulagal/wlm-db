@@ -24,7 +24,6 @@ import {
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../../store/store';
-import { setMssqlInstancesData as setMssqlInstancesDataV1 } from '../../../store/workloadFactory/inventorySlice';
 import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { formatStorageSavingsRecommendedData, formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
 import { GENERAL } from '../../../utils/appConstants';
@@ -253,7 +252,6 @@ const SavingsCalculatorApi = () => {
     // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance.
     const getMssqlData = async () => {
         const state = store.getState();
-        const mssqlInstancesDataV1 = state.inventory.mssqlInstancesData;
         const mssqlInstancesDataV2 = state.inventoryV2.mssqlInstancesData;
         let mssqlInstancesDataLoad: any = {};
         mssqlInstancesDataLoad[selectedInstanceId] = {
@@ -261,11 +259,7 @@ const SavingsCalculatorApi = () => {
             data: null,
             error: null
         };
-        if (isInventoryV2) {
-            dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataLoad }));
-        } else {
-            dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataLoad }));
-        }
+        dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataLoad }));
 
         try {
             let result: any;
@@ -289,31 +283,16 @@ const SavingsCalculatorApi = () => {
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    if (isInventoryV2) {
-                        if (mssqlInstancesDataV2[host?.id]) {
-                            mssqlInstancesDataRes[host?.id] = {
-                                loading: false,
-                                data: host,
-                                error: host?.errors,
-                                isManagedHost: false
-                            };
-                        }
-                    } else {
-                        if (mssqlInstancesDataV1[host?.id]) {
-                            mssqlInstancesDataRes[host?.id] = {
-                                loading: false,
-                                data: host,
-                                error: host?.errors,
-                                isManagedHost: false
-                            };
-                        }
+                    if (mssqlInstancesDataV2[host?.id]) {
+                        mssqlInstancesDataRes[host?.id] = {
+                            loading: false,
+                            data: host,
+                            error: host?.errors,
+                            isManagedHost: false
+                        };
                     }
                 });
-                if (isInventoryV2) {
-                    dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataRes }));
-                } else {
-                    dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataRes }));
-                }
+                dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataRes }));
             } else {
                 let mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[selectedInstanceId] = {
@@ -322,11 +301,7 @@ const SavingsCalculatorApi = () => {
                     error: result?.error?.data?.message,
                     isManagedHost: false
                 };
-                if (isInventoryV2) {
-                    dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
-                } else {
-                    dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataErr }));
-                }
+                dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
             }
         } catch (error) {
             let mssqlInstancesDataErr: any = {};
@@ -336,11 +311,7 @@ const SavingsCalculatorApi = () => {
                 error: error,
                 isManagedHost: false
             };
-            if (isInventoryV2) {
-                dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
-            } else {
-                dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataErr }));
-            }
+            dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
         }
     };
 

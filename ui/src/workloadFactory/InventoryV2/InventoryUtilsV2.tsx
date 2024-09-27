@@ -1,7 +1,7 @@
 import { Button, DsFlashingDotsLoader, DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
 import store from '../../store/store';
-import { setFsxCredentialStatus, setUnManagedPerfInstanceIdsList } from '../../store/workloadFactory/inventoryV2Slice';
+import { setFsxCredentialStatus, setSelectedHeaderTab, setUnManagedPerfInstanceIdsList } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
@@ -39,7 +39,6 @@ import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
 import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
-import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
 
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {

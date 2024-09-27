@@ -2,7 +2,6 @@ import { AccordionController, DsTypography } from '@netapp/design-system';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useDispatch } from 'react-redux';
 import styles from './ViewCalculations.module.scss';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { FSX_AZ_TYPE, SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -24,6 +23,7 @@ import ClonesFsxwCalculation from './FSxWCalculation/ClonesFsxwCalculation/Clone
 import TotalMonthlyCostFsxwCalculation from './FSxWCalculation/TotalMonthlyCostFsxwCalculation/TotalMonthlyCostFsxwCalculation';
 import ShadowCopyFsxwCalculation from './FSxWCalculation/ShadowCopyFsxwCalculation/ShadowCopyFsxwCalculation';
 import FsxwMazCalculation from './FSxWCalculation/FsxwMazCalculation/FsxwMazCalculation';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
 const ViewCalculations = ({ statusCheck }: any) => {
     const dispatch = useDispatch();

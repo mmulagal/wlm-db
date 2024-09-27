@@ -1,7 +1,6 @@
 import { useDispatch } from 'react-redux';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './SavingsCalculator.module.scss';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
 import { DsTypography } from '@netapp/design-system';
 import CostSavings from './CostSavings/CostSavings';
@@ -36,6 +35,7 @@ import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../Expl
 import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
 import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
 import WindowFileServer from './WindowFileServer/WindowFileServer';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
     const dispatch = useDispatch();

@@ -5,14 +5,12 @@ import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
-import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { createDetectHostPayload, formatSizeTwoPrecision, isSmbProtocol } from '../../../../utils/utilityFunctions';
-import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
@@ -26,6 +24,7 @@ import {
     setInProgressInstances,
     setInventoryTableData,
     setRadioValueDetect,
+    setSelectedHeaderTab,
     setUnManagedPerfInstanceIdsList,
     setValuesForForm
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -49,6 +48,7 @@ import { updateResourceId } from '../../../../store/authSlice';
 import {
     detectFieldsValidation,
     getProtectionText,
+    renderAllocatedCapacity,
     renderCellData,
     saveFsxInCredRegisteredObj,
     updateInstanceStatus
