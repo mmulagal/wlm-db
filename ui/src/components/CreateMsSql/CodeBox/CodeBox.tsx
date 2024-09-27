@@ -110,22 +110,27 @@ const CodeBox = () => {
         };
     });
 
-    // const terraformUI = () => {
-    //     return (
-    //         <div className={styles.terraformContainer}>
-    //             <div>{GENERAL.TERRAFORM}</div>
-    //             <div>
-    //                 <ComingSoon />
-    //             </div>
-    //         </div>
-    //     );
-    // };
+    const terraformUI = () => {
+        return (
+            <div className={styles.terraformContainer}>
+                <div>{GENERAL.TERRAFORM}</div>
+                <div>
+                    <ComingSoon />
+                </div>
+            </div>
+        );
+    };
 
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, CODE_VIEWER.TERRAFORM];
+        const arr = [
+            CODE_VIEWER.CLOUDFORMATION,
+            CODE_VIEWER.AWS_CLI,
+            CODE_VIEWER.REST_API,
+            isDemoMode ? CODE_VIEWER.TERRAFORM : terraformUI()
+        ];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+            const option = generateOptionType(val, val, '', idx === 3 && !isDemoMode, '');
             options.push(option);
         });
         return options;

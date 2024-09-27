@@ -58,6 +58,8 @@ import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import TerraformColor from '../../../components/CreateMsSql/Terraform/TerraformColor';
+import { downloadTerraformZip } from '../../../components/CreateMsSql/MockTerraformZip/MockTerraformZip';
 
 type ConfigType = {
     id?: string;
@@ -124,6 +126,18 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     id: 'downloadYaml',
                     displayName: CODE_VIEWER.DOWNLOAD_YAML,
                     disabled: !getRightPanelTemplateResponse(openKey) || isRightPanelTemplateLoading ? true : false
+                }
+            ]);
+        } else if (dropDownValue === GENERAL.TERRAFORM) {
+            setMenuItems([
+                {
+                    id: 'loadWizardOption',
+                    displayName: CODE_VIEWER.SIDEBAR_LOAD_WIZARD
+                },
+                {
+                    id: 'downloadZip',
+                    displayName: CODE_VIEWER.DOWNLOAD_ZIP,
+                    disabled: false
                 }
             ]);
         } else {
@@ -471,10 +485,15 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     //Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, terraformUI()];
+        const arr = [
+            CODE_VIEWER.CLOUDFORMATION,
+            CODE_VIEWER.AWS_CLI,
+            CODE_VIEWER.REST_API,
+            isDemoMode ? GENERAL.TERRAFORM : terraformUI()
+        ];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', idx === 3 ? true : false, '');
+            const option = generateOptionType(val, val, '', idx === 3 && !isDemoMode ? true : false, '');
             options.push(option);
         });
         return options;
@@ -532,6 +551,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     )}
                 </Typography>
             );
+        }
+        if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+            return <TerraformColor data={{}} />;
         }
     };
 
@@ -960,6 +982,27 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                         );
                                                     } else if (menuId === 'viewAwsCloudFormation') {
                                                         handleViewInAwsCloudFormation();
+                                                    } else if (menuId === 'downloadZip') {
+                                                        if (isDemoMode) {
+                                                            downloadTerraformZip();
+                                                        }
+                                                        dispatch(clearNotifications());
+                                                        const ele = (
+                                                            <div>
+                                                                <div style={{ fontWeight: 400 }}>
+                                                                    {GENERAL.TERRAFORM_DOWNLOAD}
+                                                                </div>
+                                                                <div style={{ fontWeight: 400 }}>
+                                                                    {GENERAL.TERRAFORM_NOTICE}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                        dispatch(
+                                                            addNotification({
+                                                                notificationType: NOTIFICATION_TYPES.INFO,
+                                                                message: ele
+                                                            })
+                                                        );
                                                     }
                                                 }
                                             }}
