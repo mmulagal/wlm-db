@@ -153,17 +153,29 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                 {/* Ends here */}
 
                 <div className={styles.bottomSection}>
-                    <SquareComponent value={'$' + hostData?.storageCost} color="var(--chart-9)" text={'Storage'} />
-                    <div className={styles.storageSeparator} />
-                    <SquareComponent value={'$' + hostData?.computeCost} color="var(--chart-1)" text={'Compute'} />
+                    <SquareComponent
+                        value={'$' + formatNumberWithCustomComma(hostData?.storageCost)}
+                        color="var(--chart-9)"
+                        text={'Storage'}
+                    />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={'$' + hostData?.connectivityCost}
+                        value={'$' + formatNumberWithCustomComma(hostData?.computeCost)}
+                        color="var(--chart-1)"
+                        text={'Compute'}
+                    />
+                    <div className={styles.storageSeparator} />
+                    <SquareComponent
+                        value={'$' + formatNumberWithCustomComma(hostData?.connectivityCost)}
                         color="var(--chart-3)"
                         text={'Connectivity'}
                     />
                     <div className={styles.storageSeparator} />
-                    <SquareComponent value={'$' + hostData?.otherCost} color="var(--chart-4)" text={'Other'} />
+                    <SquareComponent
+                        value={'$' + formatNumberWithCustomComma(hostData?.otherCost)}
+                        color="var(--chart-4)"
+                        text={'Other'}
+                    />
                 </div>
             </div>
         </div>
