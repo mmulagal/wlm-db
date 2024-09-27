@@ -23,12 +23,8 @@ import { collapseAllRows, expandTableRow, formatSizeTwoPrecision } from '../../.
 import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 
 import {
-    installModuleNotification,
     renderAllocatedCapacity,
-    renderCellData,
-    renderEstimatedCost,
-    renderInstanceListText,
-    renderVpcText
+    renderEstimatedCost
 } from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
@@ -43,8 +39,12 @@ import {
     getPartnerNodeEc2InstanceId,
     handleManageNotification,
     handleManageTriggerNotification,
+    renderVpcText,
     sortInventoryTableData,
-    updateInstanceStatus
+    updateInstanceStatus,
+    renderInstanceListText,
+    installModuleNotification,
+    renderCellData
 } from '../InventoryUtilsV2';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../utils/apiService';

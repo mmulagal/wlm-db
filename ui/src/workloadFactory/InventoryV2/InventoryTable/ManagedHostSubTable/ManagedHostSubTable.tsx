@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { createDetectHostPayload, formatSizeTwoPrecision, isSmbProtocol } from '../../../../utils/utilityFunctions';
-import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/InventoryUtils';
+import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
@@ -49,6 +49,7 @@ import { updateResourceId } from '../../../../store/authSlice';
 import {
     detectFieldsValidation,
     getProtectionText,
+    renderCellData,
     saveFsxInCredRegisteredObj,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';

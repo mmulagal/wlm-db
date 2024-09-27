@@ -5,10 +5,11 @@ import styles from './ExploreSavingsTableV2.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
-import { renderAllocatedCapacity, renderInstanceListText, renderUnmanagedAZ } from '../../Inventory/InventoryUtils';
+import { renderAllocatedCapacity } from '../../Inventory/InventoryUtils';
 import { onClickESHost } from '../ExploreSavingsUtils';
 import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
+import { renderInstanceListText, renderUnmanagedAZ } from '../../InventoryV2/InventoryUtilsV2';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();

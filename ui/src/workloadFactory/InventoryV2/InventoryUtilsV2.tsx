@@ -1,4 +1,5 @@
-import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
+import { Button, DsFlashingDotsLoader, DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
 import store from '../../store/store';
 import { setFsxCredentialStatus, setUnManagedPerfInstanceIdsList } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
@@ -9,7 +10,8 @@ import {
     INVENTORY_STATUS,
     PARTNER_NODE,
     PROTECTION_TEXT_STATUS,
-    SQL_DEPLOYMENT_MODE
+    SQL_DEPLOYMENT_MODE,
+    WLF_TABS
 } from '../../utils/consts';
 import {
     DatabaseInstanceDetailsInterface,
@@ -33,6 +35,12 @@ import {
     formatSizeTwoPrecision,
     getAzType
 } from '../../utils/utilityFunctions';
+import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
+import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
+//@ts-ignore
+import CopyToClipboard from 'react-copy-to-clipboard';
+import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
+import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
 
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
@@ -1938,4 +1946,207 @@ export const checkForMixedStorageType = (rowData: any) => {
         return true;
     }
     return false;
+};
+
+export const renderVpcText = (cellData: any, rowData: any, styles: any) => {
+    return (
+        <>
+            <div className={styles.ec2Container}>
+                <div className={styles.ssmOffline}>
+                    <Popover
+                        popoverClass={''}
+                        children={
+                            <>
+                                {rowData?.vpcIdAndNameText && (
+                                    <div className={styles.tooltipContainer}>
+                                        <DsTypography variant="Regular_14">{rowData?.vpcIdAndNameText}</DsTypography>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={'Copied'}
+                                            container={
+                                                <CopyToClipboard text={rowData?.vpcIdAndNameText}>
+                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                </CopyToClipboard>
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </>
+                        }
+                        trigger="hover"
+                        delayHide={200}
+                        interactive={true}
+                        isAppendedToBody={false}
+                        container={<TooltipIcon />}
+                    />
+                </div>
+                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                    {cellData || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            </div>
+        </>
+    );
+};
+
+export const renderInstanceListText = (cellData: any, rowData: any, styles: any) => {
+    let instanceList: any = cellData ? cellData.split(',') : null;
+    return (
+        <>
+            <div className={styles.ec2Container}>
+                <div className={styles.ssmOffline}>
+                    <Popover
+                        popoverClass={''}
+                        children={
+                            <>
+                                {instanceList && instanceList[0] && (
+                                    <div className={styles.tooltipContainer}>
+                                        <DsTypography variant="Regular_14">{instanceList[0]}</DsTypography>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={'Copied'}
+                                            container={
+                                                <CopyToClipboard text={instanceList[0]}>
+                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                </CopyToClipboard>
+                                            }
+                                        />
+                                    </div>
+                                )}
+                                {instanceList && instanceList[1] && (
+                                    <>
+                                        <div className={styles.ec2Separator} />
+                                        <div className={styles.tooltipContainer}>
+                                            <DsTypography variant="Regular_14">{instanceList[1]}</DsTypography>
+                                            <Popover
+                                                popoverClass={styles['copy-popover']}
+                                                children={'Copied'}
+                                                container={
+                                                    <CopyToClipboard text={instanceList[1]}>
+                                                        <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                    </CopyToClipboard>
+                                                }
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        }
+                        trigger="hover"
+                        delayHide={200}
+                        interactive={true}
+                        isAppendedToBody={false}
+                        container={<TooltipIcon />}
+                    />
+                </div>
+                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                    {rowData?.instanceNameListText || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            </div>
+
+            {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
+            {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const installModuleNotification = (styles: any, hostname: string, dispatch: any, initialMsg: any) => {
+    const prepareHostMsg = (
+        <div className={styles.notification}>
+            {initialMsg[0]}
+            <span className={styles.bold}>{hostname}</span>
+            {initialMsg[1]}
+            {
+                <>
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {initialMsg[2]}
+                    </Button>
+                </>
+            }
+            {initialMsg[3]}
+        </div>
+    );
+    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: prepareHostMsg }));
+};
+
+export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) => {
+    let azList = '';
+    let deploymentType = '';
+
+    for (let instance of rowData?.sqlServerInstances || []) {
+        for (let deployment of instance?.deploymentTypes || []) {
+            if (deployment?.zones) {
+                azList = deployment.zones.join(',');
+            }
+            if (deployment?.type) {
+                deploymentType = deployment.type;
+            }
+            if (azList || deploymentType) {
+                break;
+            }
+        }
+        if (azList || deploymentType) {
+            break;
+        }
+    }
+
+    return (
+        <>
+            {deploymentType && (
+                <div className={styles.azColText}>
+                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
+                    <DsTypography variant="Regular_14">{getAzType(deploymentType)}</DsTypography>
+                </div>
+            )}
+            {!deploymentType && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const renderCellData = (cellData: any, rowData: any, styles: any) => {
+    return (
+        <>
+            {cellData && (
+                <DsTypography variant="Regular_13" className={styles.colText}>
+                    {cellData}
+                </DsTypography>
+            )}
+            {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+            {!cellData && cellData !== 0 && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) => {
+    const costData = rowData?.estimatedUsageCost;
+    const totalCost = +rowData?.totalCost;
+    return (
+        <>
+            {costData && !rowData?.loading && (
+                <div className={styles.cost}>
+                    <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
+                        {EstimatedCostPopover({ ...costData, totalCost: totalCost })}
+                    </TooltipInfo>
+                    <DsTypography variant="Regular_14">{`$${formatFractionalNumber(totalCost, 2)}`}</DsTypography>
+                </div>
+            )}
+            {rowData?.loading && <DsFlashingDotsLoader />}
+            {!costData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const renderAllocatedCapacity = (cellData: any, rowData: any) => {
+    return (
+        <>
+            {!rowData?.loading && (cellData || cellData === 0 ? cellData : GENERAL.NOT_AVAILABLE)}
+            {rowData?.loading && <DsFlashingDotsLoader />}
+        </>
+    );
 };

@@ -57,7 +57,6 @@ import { setSelectedCredentials, setSelectedRegionData } from '../../../store/ms
 import { SAVINGS_CALC_MODE, WLF_TABS, WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
-import InventoryApis from '../../Inventory/InventoryApis';
 import DatabaseHomeApis from '../DatabaseHomeApis';
 import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
 import ExploreSavings from '../../ExploreSavings/ExploreSavings';
@@ -110,11 +109,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const toShowPostgress = localStorage.getItem('postgress');
 
     HeaderComponentApi();
-    if (isInventoryV2) {
-        InventoryApisV2();
-    } else {
-        InventoryApis();
-    }
+    InventoryApisV2();
     DatabaseHomeApis();
     JobMonitoringApi();
     SavingsCalculatorApi();
