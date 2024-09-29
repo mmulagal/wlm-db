@@ -1,5 +1,18 @@
 .headerComponent {
     height: 100%;
+    .exploreSavingHeader {
+        height: 56px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        background-color: var(--content-background);
+        padding: 0 40px;
+        align-items: center;
+
+        .closeIcon {
+            cursor: pointer;
+        }
+    }
     .extraSpace {
         height: 2px;
         width: auto;

@@ -37,7 +37,7 @@ import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
 import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
 import WindowFileServer from './WindowFileServer/WindowFileServer';
 
-const SavingsCalculator = () => {
+const SavingsCalculator = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
     // const [disableState, setDisableState] = useState(false);
@@ -109,26 +109,30 @@ const SavingsCalculator = () => {
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
                 <div className={styles.savingsCalculator} id="export-pdf">
-                    <div className={styles.breadCrumb}>
-                        <BreadCrumbs
-                            items={[
-                                {
-                                    title: GENERAL.ES_SAVINGS,
-                                    onClick: () => {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
-                                        dispatch(addExploreSavingsInitialData(null));
+                    {statusCheck ? (
+                        <div className={styles.breadCrumb}>
+                            <BreadCrumbs
+                                items={[
+                                    {
+                                        title: GENERAL.ES_SAVINGS,
+                                        onClick: () => {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                            dispatch(addExploreSavingsInitialData(null));
+                                        }
+                                    },
+                                    {
+                                        title:
+                                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+                                                ? setManualBreadcrumbTitle()
+                                                : selectedServerName
                                     }
-                                },
-                                {
-                                    title:
-                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                            ? setManualBreadcrumbTitle()
-                                            : selectedServerName
-                                }
-                            ]}
-                        />
-                    </div>
+                                ]}
+                            />
+                        </div>
+                    ) : (
+                        <div style={{ marginBottom: '40px' }}></div>
+                    )}
 
                     <div className={styles.savingsHeading}>
                         <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>

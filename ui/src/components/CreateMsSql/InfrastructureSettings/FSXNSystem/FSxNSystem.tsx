@@ -112,12 +112,20 @@ const FSxNSystem = () => {
                 } else {
                     return GENERAL.FSXN_SECONDARY_SUBNET_ERROR;
                 }
-            } else if (deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
+            } else if (
+                deploymentMode?.label === GENERAL.SINGLE_INSTANCE &&
+                fsxType &&
+                (fsxType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 || fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1)
+            ) {
                 if (fsxSubnets.some((val: string) => node1SubnetsList.includes(val))) {
                     return '';
                 } else {
                     return GENERAL.FSXN_PRIMARY_SUBNET_ERROR;
                 }
+            } else if (fsxType && fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_2) {
+                return GENERAL.MULTI_FSXN_DEPLOYMENT_MODE_ERROR;
+            } else if (fsxType && fsxType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_2) {
+                return GENERAL.SINGLE_FSXN_DEPLOYMENT_MODE_ERROR;
             } else {
                 return GENERAL.FSXN_DEPLOYMENT_MODE_ERROR;
             }

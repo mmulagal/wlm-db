@@ -1,3 +1,4 @@
+import { useAppSelector } from '../../store/storeHooks';
 import { getBaseUrl } from '../../utils/apiService';
 import { CRED_PLACEHOLDERS } from '../../utils/consts';
 import styles from './CodeBoxColor.module.scss';
@@ -11,6 +12,7 @@ type codeBoxTypes = {
 
 const CodeBoxColor = ({ credID, region, actualData, endpoint }: codeBoxTypes) => {
     const baseUrl = getBaseUrl();
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const valueCheckColor = (value: string | any) => {
         const isNum = /^\d+$/.test(value);
@@ -114,6 +116,7 @@ const CodeBoxColor = ({ credID, region, actualData, endpoint }: codeBoxTypes) =>
                     <span> \</span>
                 </div>
                 <div>{`--header 'Content-Type: application/json' \\`}</div>
+                {!isWorkloadFactory && <div>{`--header 'x-netapp-referer: BlueXP' \\`}</div>}
                 <div>{`--data-raw '{`}</div>
                 <div className={styles.marginFIfteen}>{renderProperties(actualData)}</div>
                 <div className={styles.marginFIfteen}>{`}'`}</div>

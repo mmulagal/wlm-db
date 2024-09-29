@@ -474,46 +474,61 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ]
             },
             {
-                ec2InstanceId: 'i-l2k4j6h8g0f3d5s',
-                ec2InstanceType: 'm5.large',
+                ec2InstanceId: 'i-0ab2e12971d543c14',
+                ec2InstanceType: 'm5.2xlarge',
+                ec2InstanceName: 'app-server-19',
                 ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
-                ec2InstanceName: 'app-server-11',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
-                        sqlServerProductYear: 2019,
+                        sqlServerVersion: '16.0.4015.1',
+                        sqlServerName: 'SQLServer-UAT-03',
+                        sqlServerNodes: ['sql-node1', 'sql-node2'],
+                        nodeIps: ['10.0.2.224', '10.0.18.80'],
+                        sqlServerDeploymentType: 'FCI',
                         sqlServerInstance: 'MSSQLSERVER',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5h',
-                        isDefaultInstance: false,
                         sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
+                        sqlServerProductYear: 2022,
+                        sqlServerEngineEdition: 3,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5h',
+                        isDefaultInstance: true,
                         windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-UAT-01',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
+                        windowsOsVersion: 'Microsoft Windows Server 2022',
+                        sqlServerAuthentication: false,
                         storage: [
                             {
                                 type: 'FSXW',
-                                id: fsxId
+                                id: 'fs-0948f9c267a5b9300',
+                                protocol: 'SMB',
+                                fileSystemStorageType: 'SSD'
                             }
                         ],
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-2', 'availability-zone-3']
+                            }
+                        ],
+                        databaseCount: 4,
+                        windowsClusterName: 'fsxwcluster03',
+                        windowsClusterNodes: [
+                            {
+                                Node: 'sql-node1',
+                                Address: '10.0.2.224'
+                            },
+                            {
+                                Node: 'sql-node2',
+                                Address: '10.0.18.80'
                             }
                         ]
                     }
-                ]
+                ],
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                }
             },
             {
                 ec2InstanceId: 'i-9m8n7b6v5c4x3z',

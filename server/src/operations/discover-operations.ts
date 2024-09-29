@@ -97,6 +97,7 @@ import { preSignedUrl } from '../lib/aws/s3';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
 import { copyScriptsToHost } from './resource-operations';
+import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -482,6 +483,10 @@ async function getHostAndSqlInfoFromPsOutput(
                 try {
                     if (item.hasOwnProperty('windowsClusterNodes')) {
                         item.windowsClusterNodes = JSON.parse(item.windowsClusterNodes);
+                        // DBS-3941 fix
+                        if (!Array.isArray(item.windowsClusterNodes)) {
+                            item.windowsClusterNodes = [item.windowsClusterNodes];
+                        }
                         item.nodeIps = item.windowsClusterNodes.map(({ Address }: { Address: string }) => Address);
                     }
                 } catch (error) {
@@ -1988,7 +1993,11 @@ async function manageSqlServerV2(
 
         for (const dbInst of databaseInstanceNameList) {
             const sqlInstanceInfo = sqlServerInstances?.find(sqlInst => sqlInst.sqlServerInstance === dbInst);
-
+            updateLongRunningAuditGroup(
+                undefined,
+                undefined,
+                `${sqlInstanceInfo?.sqlServerName}\\${databaseInstanceNameList.join(',')}`
+            );
             if (alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)) {
                 itemsStatus.push({
                     databaseInstanceName: dbInst,
@@ -2134,6 +2143,7 @@ async function unmanageDatabaseInstance(
 ) {
     logger.info('Unmanaging SQL Server instances', { accountId, credentialsId, resourceId, databaseInstanceList });
 
+    updateLongRunningAuditGroup(undefined, undefined, databaseInstanceList);
     const databaseInstanceResponse: {
         databaseInstanceId: string;
         status: string;
@@ -2146,10 +2156,22 @@ async function unmanageDatabaseInstance(
 
         const preDeleteDatabaseInstances = await listDatabaseInstances(accountId, { credentialsId, resourceId });
 
+        const instanceDetails = preDeleteDatabaseInstances.find(
+            item => item.database_instance_id === databaseInstanceList
+        );
+        const {
+            items: [resourceDetails]
+        } = await getResources(accountId, resourceId, credentialsId);
+
+        updateLongRunningAuditGroup(
+            undefined,
+            undefined,
+            `${resourceDetails?.resource_name}\\${instanceDetails?.database_instance_name}`
+        );
+
         await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
 
         const postDeleteDatabaseInstances = await listDatabaseInstances(accountId, { credentialsId, resourceId });
-
         databaseInstanceIds.forEach(databaseInstanceId => {
             if (preDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
                 if (postDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {

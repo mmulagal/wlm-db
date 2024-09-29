@@ -430,7 +430,7 @@ export const getDiscoveredHostDeployment = (host: any) => {
 export const getAzType = (deploymentType: string | undefined) => {
     if (!deploymentType) {
         return '';
-    };
+    }
     const singleAzPattern = /^SINGLE_AZ_\d+$/i;
     const multiAzPattern = /^MULTI_AZ_\d+$/i;
     return singleAzPattern.test(deploymentType)
@@ -905,6 +905,12 @@ export const handleDownloadYAML = (data: any, name = 'data') => {
 
     // Clean up by revoking the object URL.
     window.URL.revokeObjectURL(url);
+};
+
+export const handleDownloadTerraform = (url: string) => {
+    if (url) {
+        window.open(url, '_blank', 'noopener');
+    }
 };
 
 // To get credential id and region for saved config

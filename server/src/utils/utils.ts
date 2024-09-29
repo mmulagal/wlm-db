@@ -633,6 +633,22 @@ async function decompressSSMResponse(response: string) {
     }
 }
 
+const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 'Retry failed') => {
+    try {
+        const resp = await fn();
+        return resp;
+    } catch (err) {
+        logger.error('Retry failed with error', err);
+        if (retries <= 0) {
+            return Promise.reject(finalErr);
+        }
+
+        await sleep(interval);
+
+        return retryWithDelay(fn, retries - 1, interval, finalErr);
+    }
+};
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -671,5 +687,6 @@ export {
     getDatabaseInstanceName,
     isDemo,
     getOriginalDatabaseInstanceName,
-    decompressSSMResponse
+    decompressSSMResponse,
+    retryWithDelay
 };

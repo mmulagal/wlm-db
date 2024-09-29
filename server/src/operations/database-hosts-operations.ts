@@ -127,7 +127,7 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
 };
 
 interface MappedOnTapVolumeResponse {
-    volumeUuids: string[];
+    volumeRecords: Record<string, string | number>[];
     volumeDBMap: any;
 }
 
@@ -778,13 +778,18 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             pricingRequest.ebsStorage,
             pricingRequest.fsxwStorage
         );
+
+        const ebsBreakdownByVolumeType = pricingResponse.ebsStorage?.ebsBreakdownByVolumeType.filter(
+            e => !e.id?.includes(EBS_ROOT_VOLUME)
+        );
+
         return {
             compute: pricingResponse?.compute || 0,
             storage: {
                 fsxn: pricingResponse?.fsxnStorage?.fsxStorageCost,
                 fsxw: pricingResponse?.fsxwStorage?.fsxwStorageCost,
                 ebs: pricingResponse.ebsStorage?.ebsStorageCost,
-                ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
+                ebsBreakdownByVolumeType: isEmpty(ebsBreakdownByVolumeType) ? undefined : ebsBreakdownByVolumeType,
                 fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById.map(id => ({
                     ...id,
                     size: id.size!.total
@@ -877,7 +882,9 @@ async function getFsxResourceInfo(
             const storageCapacity = StorageCapacity || 0;
             const throughput = OntapConfiguration?.ThroughputCapacity || WindowsConfiguration?.ThroughputCapacity;
             const iops =
-                OntapConfiguration?.DiskIopsConfiguration?.Iops || WindowsConfiguration?.DiskIopsConfiguration?.Iops;
+                OntapConfiguration?.DiskIopsConfiguration?.Iops ||
+                WindowsConfiguration?.DiskIopsConfiguration?.Iops ||
+                0;
             const deploymentOption = OntapConfiguration?.DeploymentType || WindowsConfiguration?.DeploymentType;
 
             return {
@@ -1839,7 +1846,11 @@ async function getDatabaseHostSummaryV2(
                             instanceType: 'm5.xlarge'
                         }));
                         nodeTopology.ec2Details = modifiedEc2Details;
-                    } else if (resourceDetail?.resource_name === 'app-server-14' && instanceResults?.length) {
+                    } else if (
+                        (resourceDetail?.resource_name === 'app-server-14' ||
+                            resourceDetail?.resource_name === 'app-server-19') &&
+                        instanceResults?.length
+                    ) {
                         instanceResults = instanceResults.map((item: any) => ({
                             ...item,
                             databaseServer: {
@@ -1993,27 +2004,21 @@ async function getProtectionDetails(
         activeNodeInstanceId,
         instanceNames,
         isSqlAuthEnabled
-    )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {} }];
+    )) as MappedOnTapVolumeResponse[]) || [{ volumeRecords: [], volumeDBMap: {} }];
 
-    const volumeUuids =
+    const volumeRecords =
         Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeUuids)
+            ?.map(i => i?.volumeRecords)
             .flat() || [];
     const volumeDBMap =
         Object.values(instanceVolumeMapping)
             ?.map(i => i?.volumeDBMap)
             .flat() || {};
+    const volumeUuids = volumeRecords.map(volume => volume.uuid as string);
 
     const [awsBackup = {}, ontapBackup = {}] = await Promise.all([
         isFsxnAwsBackupEnabled(credentialsId, region, fileSystemId, volumeUuids, volumeDBMap, activeNodeInstanceId),
-        getOntapVolumesSnapshotCount(
-            credentialsId,
-            region,
-            fileSystemId,
-            volumeUuids,
-            volumeDBMap,
-            activeNodeInstanceId
-        )
+        getOntapVolumesSnapshotCount(credentialsId, region, fileSystemId, volumeRecords, volumeDBMap)
     ]);
 
     return { awsBackup, ontapBackup };

@@ -37,8 +37,9 @@ import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
 import {
     addInstanceIdToGetPerf,
-    checkForAllAOAG,
+    checkForAnyAOAG,
     checkForAnySSD,
+    checkForMixedStorageType,
     getPartnerNodeEc2InstanceId,
     handleManageNotification,
     handleManageTriggerNotification,
@@ -380,11 +381,12 @@ const InventoryTable = () => {
             );
         }
 
-        //Check for all FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
+        //Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
         if (
             rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
             !checkForAllUnDetectInstance &&
-            checkForAllAOAG(rowData)
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+            checkForAnyAOAG(rowData)
         ) {
             return (
                 <TooltipComponent title={GENERAL.ALL_ES_FSXW_AOAG_ROWS} placement="bottom" width="340px" height="70px">
@@ -402,6 +404,18 @@ const InventoryTable = () => {
         ) {
             return (
                 <TooltipComponent title={GENERAL.NON_SSD_FSXW_MSG} placement="bottom" width="360px" height="50px">
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForMixedStorageType(rowData)) {
+            return (
+                <TooltipComponent title={GENERAL.MIXED_STORAGE_ES_MSG} placement="bottom" width="260px" height="50px">
                     <div id="inventory-table-option" className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}

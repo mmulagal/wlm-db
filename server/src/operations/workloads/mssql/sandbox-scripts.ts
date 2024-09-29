@@ -207,7 +207,7 @@ const getDbMappedOntapVolumes = (
             return $responseObject
         }
     
-        ${ontapRestRequest(true)}
+        ${ontapRestRequest}
 
         Function Get-LunFromSerialNumber($responseObject) {
             Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
@@ -301,6 +301,7 @@ const getDbMappedOntapVolumes = (
                                 $_.Add('parentVolume', $volrecord.clone.parent_volume.name)
                                 $_.Add('parentVolumeUuid', $volrecord.clone.parent_volume.uuid)
                                 $_.Add('parentSnapshot', $volrecord.clone.parent_snapshot.name)
+                                $_.Add('splitEstimate', $volrecord.clone.split_estimate)
                             }
                         }
                     }
@@ -381,7 +382,7 @@ const createVolumeClone = (
         $epoch = (Get-Date -Date ((Get-Date).DateTime) -UFormat %s)
         $defaultSnapshot = 'netapp_wf_clone_' + $epoch
     
-        ${ontapRestRequest()}
+        ${ontapRestRequest}
 
         Function Get-IgroupName {
             $nodeiqn = (Get-InitiatorPort).NodeAddress
@@ -948,7 +949,7 @@ const cleanUpOntapResources = (
             throw $_.Exception.Message
         }
 
-        ${ontapRestRequest()}
+        ${ontapRestRequest}
         ${ontapJobStatusTemplate}
 
         $volumeIds | ForEach-Object {
@@ -1028,44 +1029,17 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, clonedBy: 
         $FSxRegion = '${fsxRegion}'
         $clonedByTagVal = '${clonedBy}'
 
-
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-        $FSxUserName = $SsmParameter.fsx.username
-        $FSxPassword = $SsmParameter.fsx.password
-        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-        
-        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        $tempfileObject = New-TemporaryFile
-        $tempfile = $tempfileObject.FullName
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
-        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
-        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
-     
-        Function Invoke-ONTAPGetRequest {
-            param(
-                [Parameter(Mandatory = $true)]
-                [string]$ApiEndpoint
-            )
-
-            $Params = @{
-                "URI"     = 'https://' + $FSxHostName + $ApiEndpoint
-                "Method"  = "GET"
-                "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
-                "ContentType" = "application/json"
-            }
-     
-            return Invoke-RestMethod @Params -Certificate $regionCertificateificate
-        }
+        ${ontapRestRequest}
 
         $nextToken = $null
         
         Do {
             if ($null -eq $nextToken) {
-                $resp = Invoke-ONTAPGetRequest -ApiEndpoint "/api/storage/volumes?tiering.object_tags=cloned_by=$clonedByTagVal&fields=space.used_by_afs,space.physical_used,clone.*"
+                $resp = Invoke-ONTAPRequest -ApiEndpoint "/storage/volumes?tiering.object_tags=cloned_by=$clonedByTagVal&fields=space.used_by_afs,space.physical_used,clone.*"
             } else {
-                $resp = Invoke-ONTAPGetRequest -ApiEndpoint $nextToken
+                $nextToken = $nextToken -replace '/api', ''
+                Write-Information "Next Token: $nextToken"
+                $resp = Invoke-ONTAPRequest -ApiEndpoint $nextToken
             }
 
             $cloneVolumes = $resp.records
@@ -1301,7 +1275,7 @@ const splitFlexCloneVolumes = (
     $responseObject = @{}
 
     try {
-        ${ontapRestRequest()}
+        ${ontapRestRequest}
         ${ontapJobStatusTemplate}
 
         Function Invoke-VolumeSplit {
@@ -1496,7 +1470,7 @@ const getSnapshotsToClone = (
     $responseObject = @{}
 
     try {
-        ${ontapRestRequest(true)}
+        ${ontapRestRequest}
 
         Function Get-VolumeSnapshots {
             write-Information "$logPrefix Getting volume snapshots"

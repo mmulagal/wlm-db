@@ -5,11 +5,13 @@ import js from 'react-syntax-highlighter/dist/esm//languages/prism/javascript';
 import jsx from 'react-syntax-highlighter/dist/esm//languages/prism/jsx';
 import yaml from 'react-syntax-highlighter/dist/esm//languages/prism/yaml';
 import bash from 'react-syntax-highlighter/dist/esm//languages/prism/bash';
+import hcl from 'react-syntax-highlighter/dist/esm//languages/prism/hcl';
 SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('javascript', js);
 SyntaxHighlighter.registerLanguage('jsx', jsx);
 SyntaxHighlighter.registerLanguage('yaml', yaml);
 SyntaxHighlighter.registerLanguage('bash', bash);
+SyntaxHighlighter.registerLanguage('hcl', hcl);
 const _ = require('lodash');
 
 const style = {
@@ -109,7 +111,7 @@ const style = {
         Opacity: '.7'
     },
     property: {
-        color: 'var(--chart-10)'
+        color: 'var(--info)'
     },
     tag: {
         color: 'var(--chart-10)'
@@ -117,6 +119,7 @@ const style = {
     boolean: {
         color: 'var(--warning)'
     },
+
     number: {
         color: 'var(--info)'
     },

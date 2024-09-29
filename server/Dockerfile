@@ -27,6 +27,8 @@ COPY resources/mssql/templates/standalone-deployment.yaml ./resources/mssql/temp
 COPY resources/mssql/templates/vpc-endpoints.yaml ./resources/mssql/templates/vpc-endpoints.yaml
 COPY resources/mssql/templates/fsx-new.yaml ./resources/mssql/templates/fsx-new.yaml
 COPY resources/mssql/templates/fsx-existing.yaml ./resources/mssql/templates/fsx-existing.yaml
+COPY resources/mssql/templates/main.tf ./resources/mssql/templates/main.tf
+COPY resources/mssql/terraform ./resources/mssql/terraform/
 
 COPY dist/src ./
 
@@ -35,6 +37,11 @@ COPY src/lib/chatbot/schemas/* ./lib/chatbot/schemas
 COPY prisma ./prisma/
 
 COPY patches ./patches/
+
+# Switch to the root user to change the permissions
+USER root
+RUN chown -R netappuser:netappgroup ./resources/mssql
+USER netappuser
 
 RUN npm ci --omit=dev
 
