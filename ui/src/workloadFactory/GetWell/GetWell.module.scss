@@ -97,4 +97,9 @@
             }
         }
     }
+
+    [class*='isExpanded'] {
+        max-height: 2500px !important;
+        overflow: hidden;
+    }
 }
