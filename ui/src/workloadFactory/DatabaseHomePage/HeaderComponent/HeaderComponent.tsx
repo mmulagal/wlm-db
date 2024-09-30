@@ -234,6 +234,13 @@ const HeaderComponent = ({ tab }: Tab) => {
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: './inventory',
+                replace: true
+            }
+        });
     };
 
     useEffect(() => {
