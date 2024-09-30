@@ -81,21 +81,11 @@ variable "route_table1_id" {
 variable "private_subnet2_id" {
   description = "The ID of the second private subnet"
   type        = string
-
-  validation {
-    condition     = var.sql_deployment_mode != "standalone" ? length(var.private_subnet2_id) > 0 : true
-    error_message = "The private_subnet2_id value must not be empty when sql_deployment_mode is FCI."
-  }
 }
 
 variable "route_table2_id" {
   description = "The ID of the second route table"
   type        = string
-
-  validation {
-    condition     = var.sql_deployment_mode != "standalone" ? length(var.route_table2_id) > 0 : true
-    error_message = "The route_table2_id value must not be empty when sql_deployment_mode is FCI."
-  }
 }
 
 variable "ad_scenario_type" {
@@ -380,11 +370,6 @@ variable "fsx_quorum_volume_name" {
   description = "The name of the FSx quorum volume"
   type        = string
   default     = ""
-
-  validation {
-    condition     = var.sql_deployment_mode == "standalone" || length(var.fsx_quorum_volume_name) > 0
-    error_message = "The fsx_quorum_volume_name value must not be empty when sql_deployment_mode is not standalone."
-  }
 }
 
 variable "fsx_quorum_volume_size" {
