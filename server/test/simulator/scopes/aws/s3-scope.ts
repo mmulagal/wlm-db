@@ -12,8 +12,12 @@ import sinon from 'sinon';
 import { mockClient } from 'aws-sdk-client-mock';
 import { preSignedUrl } from '../../../../src/lib/aws/s3';
 import s3GetObjectCommandResponse from '../../responses/aws/s3-get-object-command.json';
+import { DEFAULT_AWS_REGION, SECRETS } from '../../../../src/utils/consts';
 
 const s3Mock = mockClient(S3Client);
+
+SECRETS.SIGNURL_ACCESS_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+SECRETS.SIGNURL_SECRET_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 s3Mock.on(PutObjectCommand).resolves({});
 s3Mock.on(GetBucketLifecycleConfigurationCommand).resolves({});
