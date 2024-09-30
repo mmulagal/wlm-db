@@ -6,6 +6,7 @@ import TotalOptimizationScore from './TotalOptimizationScore/TotalOptimizationSc
 import OptimizationBreakdown from './OptimizationBreakdown/OptimizationBreakdown';
 import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import { ReactComponent as Light } from '../../assets/Light.svg';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { WLF_TABS } from '../../utils/consts';
@@ -453,7 +454,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -466,7 +472,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -479,7 +490,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -492,7 +508,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -519,7 +540,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -532,7 +558,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -545,7 +576,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -558,7 +594,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -583,9 +624,24 @@ const GetWell = () => {
                         <DsAccordion
                             id="9"
                             variant="Default"
-                            title={<Tag text={'Performance efficiency'} />}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    <Tag text={'Performance efficiency'} />
+                                    <Tag text={'Operational excellence'} />
+                                    <Tag text={'Cost optimization'} />
+                                    <Tag text={'Reliability'} />
+                                    <Tag text={'Security'} />
+                                </div>
+                            }
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>
+                                        View recommendation & optimization
+                                    </div>
+                                </div>
                             ]}
                             children={<RecommendationTable tableData={ontapConfigTableData} isLoading={false} />}
                         />
@@ -596,9 +652,24 @@ const GetWell = () => {
                         <DsAccordion
                             id="10"
                             variant="Default"
-                            title={<Tag text={'Performance efficiency'} />}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    <Tag text={'Performance efficiency'} />
+                                    <Tag text={'Operational excellence'} />
+                                    <Tag text={'Cost optimization'} />
+                                    <Tag text={'Reliability'} />
+                                    <Tag text={'Security'} />
+                                </div>
+                            }
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>
+                                        View recommendation & optimization
+                                    </div>
+                                </div>
                             ]}
                             children={<RecommendationTable tableData={operatingSystemTableData} isLoading={false} />}
                             style={{ marginBottom: '40px' }}
@@ -626,7 +697,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -639,7 +715,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div />}
                         />
@@ -652,7 +733,12 @@ const GetWell = () => {
                             variant="Default"
                             title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div />}
                             style={{ marginBottom: '40px' }}

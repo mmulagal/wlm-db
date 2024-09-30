@@ -1,3 +1,7 @@
 .getWellBar {
     width: 100%;
+
+    [class*='ProgressBar_Suc-progressbar'] {
+        background-color: var(--button-primary-bg-disabled) !important;
+    }
 }
