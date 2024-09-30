@@ -237,7 +237,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
             payload: {
-                pathname: './inventory',
+                pathname: `./${value}`,
                 replace: true
             }
         });
