@@ -1687,44 +1687,44 @@ export const handleURL = (value: string, isWorkloadFactory: boolean) => {
     if (isWorkloadFactory) {
         switch (value) {
             case 'Inventory':
-                path = 'inventory';
+                path = './inventory';
                 break;
             case 'Dashboard':
-                path = 'dashboard';
+                path = './dashboard';
                 break;
             case 'Sandboxes':
-                path = 'sandboxes';
+                path = './sandboxes';
                 break;
             case 'Explore savings':
-                path = 'explore-savings';
+                path = './explore-savings';
                 break;
             case 'Job monitoring':
-                path = 'job-monitoring';
+                path = './job-monitoring';
                 break;
         }
     } else {
         switch (value) {
             case 'Inventory':
-                path = 'fsxdb/inventory';
+                path = '../../fsxdb/inventory';
                 break;
             case 'Dashboard':
-                path = 'fsxdb/dashboard';
+                path = '../../fsxdb/dashboard';
                 break;
             case 'Sandboxes':
-                path = 'fsxdb/sandboxes';
+                path = '../../fsxdb/sandboxes';
                 break;
             case 'Explore savings':
-                path = 'fsxdb/explore-savings';
+                path = '../../fsxdb/explore-savings';
                 break;
             case 'Job monitoring':
-                path = 'fsxdb/job-monitoring';
+                path = '../../fsxdb/job-monitoring';
                 break;
         }
     }
     postBlueXPMessage({
         type: BlueXPListeners.navigate,
         payload: {
-            pathname: `./${path}`,
+            pathname: `${path}`,
             replace: true
         }
     });
