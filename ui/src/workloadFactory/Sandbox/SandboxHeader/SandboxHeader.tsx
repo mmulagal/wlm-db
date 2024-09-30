@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './SandboxHeader.module.scss';
 import { ReactComponent as Illustration } from '../../../assets/Illustration.svg';
-import { Button, DsTypography } from '@netapp/design-system';
+import { BlueXPListeners, Button, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import useResize from '../../../common/hooks/useResize';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,7 +32,19 @@ const SandboxHeader = () => {
                         </DsTypography>
                     </div>
                     <div className={styles.buttonHolder}>
-                        <Button variant="primary" onClick={() => navigate('../create-new-sandbox')}>
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                navigate('../create-new-sandbox');
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: {
+                                        pathname: `../create-new-sandbox`,
+                                        replace: true
+                                    }
+                                });
+                            }}
+                        >
                             {GENERAL.CREATE_SANDBOX}
                         </Button>
                         <Button variant="text" onClick={() => handleBanner()}>
@@ -59,7 +71,16 @@ const SandboxHeader = () => {
                             <Button
                                 variant="primary"
                                 style={{ height: '32px' }}
-                                onClick={() => navigate('../create-new-sandbox')}
+                                onClick={() => {
+                                    navigate('../create-new-sandbox');
+                                    postBlueXPMessage({
+                                        type: BlueXPListeners.navigate,
+                                        payload: {
+                                            pathname: `../create-new-sandbox`,
+                                            replace: true
+                                        }
+                                    });
+                                }}
                             >
                                 {GENERAL.CREATE_SANDBOX}
                             </Button>
@@ -88,7 +109,16 @@ const SandboxHeader = () => {
                             <Button
                                 variant="primary"
                                 style={{ height: '32px' }}
-                                onClick={() => navigate('../create-new-sandbox')}
+                                onClick={() => {
+                                    navigate('../create-new-sandbox');
+                                    postBlueXPMessage({
+                                        type: BlueXPListeners.navigate,
+                                        payload: {
+                                            pathname: `../create-new-sandbox`,
+                                            replace: true
+                                        }
+                                    });
+                                }}
                             >
                                 {GENERAL.CREATE_SANDBOX}
                             </Button>

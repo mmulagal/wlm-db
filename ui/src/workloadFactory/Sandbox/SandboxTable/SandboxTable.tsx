@@ -1,4 +1,13 @@
-import { Table, useTable, useDialog, TableTopBar, Button, DsTypography } from '@netapp/design-system';
+import {
+    Table,
+    useTable,
+    useDialog,
+    TableTopBar,
+    Button,
+    DsTypography,
+    postBlueXPMessage,
+    BlueXPListeners
+} from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './SandboxTable.module.scss';
@@ -126,6 +135,13 @@ const SandboxTable = () => {
                     onClick={() => {
                         dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                         dispatch(clearNotifications());
+                        postBlueXPMessage({
+                            type: BlueXPListeners.navigate,
+                            payload: {
+                                pathname: `../create-new-sandbox`,
+                                replace: true
+                            }
+                        });
                     }}
                 >
                     {GENERAL.JOB_MONITORING}.
