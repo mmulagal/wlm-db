@@ -9,6 +9,7 @@ import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { WLF_TABS } from '../../utils/consts';
+import RecommendationTable from './RecommendationTable/RecommendationTable';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -179,6 +180,133 @@ const GetWell = () => {
             }
         }
     };
+
+    const operatingSystemTableData: any = [
+        {
+            configuration: 'Multipath I/O (MPIO) Status',
+            value: 'Enabled',
+            status: 'Optimized',
+            severity: 'Critical',
+            tags: ['Operational excellence', 'Cost optimization'],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Multipath I/O (MPIO) Policy',
+            value: 'Round robin',
+            status: 'Not optimized',
+            severity: 'Critical',
+            tags: [],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Multipath I/O (MPIO) Sessions',
+            value: '5',
+            status: 'Not optimized',
+            severity: 'Critical',
+            tags: ['Operational excellence'],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'NTFS Allocation unit size',
+            value: '64K',
+            status: 'Not optimized',
+            severity: 'Critical',
+            tags: ['Cost optimization'],
+            recommendation: 'Recommendation text'
+        }
+    ];
+
+    const ontapConfigTableData: any = [
+        {
+            configuration: 'Thin provisioning',
+            value: 'Thin provisioning',
+            status: 'Optimized',
+            severity: 'Critical',
+            tags: ['Operational excellence', 'Cost optimization'],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Autosize',
+            value: 'Autosize',
+            status: 'Not optimized',
+            severity: 'Critical',
+            tags: [],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Autosize-mode',
+            value: 'Autosize-mode',
+            status: 'Not optimized',
+            severity: 'Critical',
+            tags: ['Operational excellence'],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Fractional reserve',
+            value: 'Fractional reserve',
+            status: 'Not optimized',
+            severity: 'Critical',
+            tags: ['Cost optimization'],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Snapshot copy reserve',
+            value: 'Snapshot copy reserve',
+            status: 'Not optimized',
+            severity: 'Critical',
+            tags: ['Operational excellence', 'Cost optimization'],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Snapshot autodelete',
+            value: 'Snapshot autodelete',
+            status: 'Not optimized',
+            severity: 'Warning',
+            tags: ['Operational excellence', 'Cost optimization'],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Space management',
+            value: 'Space management',
+            status: 'Not optimized',
+            severity: 'Warning',
+            tags: [],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Tiering policy',
+            value: 'Tiering policy',
+            status: 'Not optimized',
+            severity: 'Critical',
+            tags: ['Operational excellence'],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Tiering minimum colling days',
+            value: 'Tiering minimum colling days',
+            status: 'Not optimized',
+            severity: 'Warning',
+            tags: ['Cost optimization'],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Space reservation',
+            value: 'Space reservation',
+            status: 'Not optimized',
+            severity: 'Critical',
+            tags: ['Operational excellence', 'Cost optimization'],
+            recommendation: 'Recommendation text'
+        },
+        {
+            configuration: 'Space allocation',
+            value: 'Space allocation',
+            status: 'Not optimized',
+            severity: 'Critical',
+            tags: ['Operational excellence', 'Cost optimization'],
+            recommendation: 'Recommendation text'
+        }
+    ];
+
     return (
         <div className={styles.getWell}>
             <div className={commonStyles.commonBreadCrumb}>
@@ -404,7 +532,7 @@ const GetWell = () => {
                             headerActions={[
                                 <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                             ]}
-                            children={<div>Content here</div>}
+                            children={<RecommendationTable tableData={ontapConfigTableData} isLoading={false} />}
                         />
                     </div>
 
@@ -417,7 +545,7 @@ const GetWell = () => {
                             headerActions={[
                                 <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                             ]}
-                            children={<div>Content here</div>}
+                            children={<RecommendationTable tableData={operatingSystemTableData} isLoading={false} />}
                             style={{ marginBottom: '40px' }}
                         />
                     </div>
