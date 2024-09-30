@@ -10,7 +10,7 @@ export const SELECT_CONFIG = {
     CREATE: 'Create',
     CANCEL: 'Cancel',
     PREVIOUS: 'Previous',
-    WIZARD_HEADING: 'Create new Microsoft SQL server',
+    WIZARD_HEADING: 'Create new Microsoft SQL Server',
     LOAD_CONFIG: 'Load configuration',
     SAVE_CONFIG: 'Save configuration',
     SECURITY_GROUP: 'Security group',
@@ -76,7 +76,7 @@ export const GENERAL = {
     AWS_SETTINGS: 'AWS settings',
     LANDING_ZONE: 'Landing zone',
     VIEW_API_REQUEST: 'View API request',
-    LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
+    LOAD_CONFIG_HEADER: 'Load Microsoft SQL Server configuration',
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
     SAVE_CONFIG_HEADER: 'Save Microsoft SQL Server configuration',
@@ -136,9 +136,9 @@ export const GENERAL = {
     FOR_MORE_INFO: 'Learn more about the',
     HOW_TO_ADD_AWS_CRED: 'Learn how to add AWS credentials.',
     AWS_ACCOUNT_SUB_TEXT:
-        'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+        'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL Server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_WF:
-        'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+        'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL Server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_AUTOMATE:
         'Use BlueXP in automate mode by selecting credentials that grant BlueXP the AWS permissions required to deploy and manage resources in your AWS account.',
     AWS_ACCOUNT_SUB_TEXT_READ:
@@ -166,8 +166,6 @@ export const GENERAL = {
     DB_CREATE_SUCCESS_MSG: 'DB creation is in progress',
     PERMISSION_REQUIRED: 'Permissions required',
     CLOUDFORMATION_TEMPLATE_URL: ['CloudFormation template ', 'URL'],
-    SAME_ROUTE_SUBNET_ERROR:
-        'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.',
     //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
     GENERATED_SECURITY_GROUP: 'Create a new security group',
@@ -372,6 +370,8 @@ export const GENERAL = {
     STORAGE: 'Storage',
     OTHER: 'Other',
     TYPE: 'Type',
+    VOLUME_TYPE: 'Volume type',
+    ELASTIC_BLOCK_STORE: 'Elastic Block Store (EBS)',
     SIZE: 'Size',
     ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
     EC_NOTE:
@@ -482,6 +482,8 @@ export const GENERAL = {
     PROTECTION: 'protection',
     NUMBER_OF_EXECUTION: 'Number of Execution',
     TERRAFORM: 'Terraform',
+    TERRAFORM_CODEBOX_TOOLTIP:
+        'The code represents only variables module. For the rest of the modules it should be downloaded.',
     READ: 'Read',
     WRITE: 'Write',
     STORAGE_PERFORMANCE: 'Storage performance',
@@ -573,6 +575,8 @@ export const GENERAL = {
     FSXN_PRIMARY_SUBNET_ERROR:
         'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
     FSXN_DEPLOYMENT_MODE_ERROR: 'Deployment mode not supported.',
+    SINGLE_FSXN_DEPLOYMENT_MODE_ERROR: 'Single AZ 2 deployment type not supported.',
+    MULTI_FSXN_DEPLOYMENT_MODE_ERROR: 'Multi AZ 2 deployment type not supported.',
     FSXN_NOT_AVAILABLE: 'FSx for ONTAP file system is not in available state.',
     TAB_DASHBOARD: 'Dashboard',
     TAB_INVENTORY: 'Inventory',
@@ -698,6 +702,8 @@ export const GENERAL = {
     CF_COPIED: 'CloudFormation copied successfully.',
     CF_DOWNLOAD: 'CloudFormation downloaded successfully.',
     CF_NOTICE: 'Notice: access to the YAML configuration file expires after 7 days.',
+    TERRAFORM_DOWNLOAD: 'Terraform downloaded successfully',
+    TERRAFORM_NOTICE: 'Notice: access to zip file expires after 7 days',
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
     SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
     SSM_NO_CONNECTION: ['Workload Factory can’t connect to this host.', 'See troubleshooting SSM agent'],
@@ -716,7 +722,8 @@ export const GENERAL = {
     MANAGE_HOST: 'Manage host',
     DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 / 2'],
     FAILED_TO_DETECT_HOST: 'Failed to detect host',
-    DETECT_FAILED_WITH_NO_STORAGE: 'Unable to move to unmanaged hosts tab as storage could not be identified',
+    DETECT_FAILED_WITH_NO_STORAGE:
+        'Unable to identify attached storage. For SQL user authentication, reload the inventory page and try to manage again.',
     DONE: 'Done',
     DETECT: 'Detect',
     SSM_CONNECTIVITY: 'SSM connectivity',
@@ -750,11 +757,11 @@ export const GENERAL = {
     EBS_INSTANCE_DETECT_SUCCESS_MSG: ['Instance ', ' detected successfully.'],
     FSX_DETECT_SUCCESS_MSG: [
         'Detected host management',
-        'Would you like to manage the detected host via workload factory?'
+        'Would you like to manage the detected host via Workload Factory?'
     ],
     FSX_INSTANCE_DETECT_SUCCESS_MSG: [
         'Detected instance management',
-        'Would you like to manage the detected instance via workload factory?'
+        'Would you like to manage the detected instance via Workload Factory?'
     ],
     FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.'],
     FSX_INSTANCE_AFTER_DETECT_OPTIONS: ['Yes, Manage instance via Workload Factory.', 'No.'],
@@ -892,6 +899,8 @@ export const GENERAL = {
     SOURCE_HOST: 'Source database host',
     SOURCE_INSTANCE: 'Source database instance',
     SOURCE_DATABASE: 'Source database',
+    MOUNT_NOTICE:
+        'Notice: When cloning a SQL database that has multiple data and/or log files, Workload Factory clones all files under the auto-assigned or defined drive letter.',
     AUTO_ASSIGN_MOUNT_POINT: 'Auto-assign mount point',
     DEFINE_MOUNT_POINT_PATH: 'Define mount point path',
     VOLUME_MOUNT_POINT_UNDER_PATH: 'Volume mount point under path',
@@ -911,7 +920,7 @@ export const GENERAL = {
     ES_SNAPSHOT_FREQUENCY: 'Snapshot frequency',
     ES_NO_SNAPSHOT_STORAGE: 'No snapshot storage',
     ES_CLONE_REFRESH_FREQUENCY: 'Clone refresh frequency',
-    ES_TABLE_TITLE: 'Microsoft SQL server host',
+    ES_TABLE_TITLE: 'Microsoft SQL Server host',
     ES_SERVER_NAME: 'Server name',
     ES_TYPE: 'Type',
     ES_MSSQL_SERVER: 'Microsoft SQL Server on FSx for ONTAP',
@@ -976,15 +985,15 @@ export const GENERAL = {
     EXPORT_PDF: 'Export PDF',
     ES_COST_SAVINGS: 'Cost savings',
     ES_SAVINGS_PERCENTAGE: 'Percentage savings',
-    ES_HEADING: 'Explore savings of selected host',
+    ES_HEADING: 'Detected host cost analysis',
     ES_HEADER:
-        'Automatically explore savings by selecting a Microsoft SQL Server host and then click "Explore savings". We\'ll calculate your potential savings with FSx for ONTAP storage for your database workloads.',
+        'You can identify potential savings by automatically comparing your database workloads to SQL Server using FSx for ONTAP file systems. Choose a SQL Server host and explore savings.',
     ES_SAVINGS: 'Explore savings',
-    MANUAL_EXLORE_SAVINGS: 'Manual explore savings',
-    EXPLORE_SAVING_MANUALLY: 'Explore savings Manually with EBS',
-    EXPLORE_SAVING_MANUALLY_FSX: 'Explore savings manually with FSx for Windows File Server',
+    MANUAL_EXLORE_SAVINGS: 'Custom configuration cost analysis',
+    EXPLORE_SAVING_MANUALLY: 'Analyze custom configuration for EBS',
+    EXPLORE_SAVING_MANUALLY_FSX: 'Analyze custom configuration for FSx for Windows',
     MANUAL_EXPLORE_SAVINGS_CONTENT:
-        'Alternatively, select "Explore savings manually". You\'ll  provide Microsoft SQL Server configuration details to get an accurate cost estimate comparison.',
+        'You can adjust SQL Server, infrastructure, and storage settings to analyze for potential savings between your environment and SQL Server using FSx for ONTAP.',
     INSTANCE_INFORMATION: 'Instance information:',
     ES_SAVE_CONFIG: 'Save configuration',
     ES_SAVE_CONFIG_DESC:
@@ -992,12 +1001,12 @@ export const GENERAL = {
     ES_SAVE_ERROR: 'This configuration can not be saved',
     MS_SQL_TWO_INSTANCES: 'Microsoft SQL Server EC2 instance - 2 instances',
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
-    SAVINGS_HEADER: 'Microsoft SQL server on Amazon Elastic Block Store (EBS) configuration.',
-    SAVINGS_HEADER_FSX: 'Microsoft SQL server on FSx for Windows configuration',
+    SAVINGS_HEADER: 'Microsoft SQL Server on Amazon Elastic Block Store (EBS) configuration.',
+    SAVINGS_HEADER_FSX: 'Microsoft SQL Server on FSx for Windows configuration',
     SAVINGS_MANUAL_TEXT:
-        ' Select a Microsoft SQL server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL server on FSx for ONTAP instead',
+        ' Select a Microsoft SQL Server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL Server on FSx for ONTAP instead',
     SAVINGS_MANUAL_FSXW_TEXT:
-        'Select Microsoft SQL Server, Amazon EC2, and Amazon FSx for Windows File Server settings to compare the cost of using Microsoft SQL server on FSx for ONTAP instead.',
+        'Select Microsoft SQL Server, Amazon EC2, and Amazon FSx for Windows File Server settings to compare the cost of using Microsoft SQL Server on FSx for ONTAP instead.',
     ES_NUMBER_OF_INSTANCE: 'Number of SQL instances',
     ES_HOST_NAME: 'Host name',
     ES_NUMBER_OF_VOLS: 'Number of volumes',
@@ -1008,11 +1017,12 @@ export const GENERAL = {
     SAVINGS_CALCULATOR: 'Savings calculator',
     TOTAL_MONTHLY_COST: 'Total monthly cost',
     TO_VIEW_STORAGE: 'To view storage cost savings, enter your configuration.',
-    CATEGORY_POINT_ONE: 'Microsoft SQL server on FSx for ONTAP',
-    CATEGORY_POINT_TWO: 'Microsoft SQL server on Amazon Elastic Block Store (EBS)',
+    CATEGORY_POINT_ONE: 'Microsoft SQL Server on FSx for ONTAP',
+    CATEGORY_POINT_TWO: 'Microsoft SQL Server on Amazon Elastic Block Store (EBS)',
     FSXW_CATEGORY: 'Microsoft SQL Server on FSx for Windows File Server',
+    WINDOW_FILE_SERVER_DETAILS: 'FSx for Windows File Server:',
     VIEW_CALC_TEXT:
-        'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
+        'Learn how we calculated the estimated cost of Microsoft SQL Server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
     VIEW_CAL_SECONDARY_TEXT: 'All AWS prices mentioned in the calculations are AWS on-demand pricing.',
     COST_CALCULATION: 'Cost calculation',
@@ -1059,14 +1069,22 @@ export const GENERAL = {
     FSXN_MANAGE_SUPPORTED: 'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be managed.',
     MANAGE_DISABLE_FOR_UNDETECTED:
         'This instance is currently undetected. To manege the instance, expand the database host name, and then select "detect" from the menu.',
+    NO_UNMANAGED_TO_MANAGE:
+        'All SQL Server instances on this host are either managed or undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
         'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+    ALL_FSXN_MANAGED_TEXT:
+        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
     ALL_UNDETECT_TEXT:
         'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
         'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
-    ES_FSXW_NOT_SUPPORTED: 'Explore savings for FSx for Windows is not supported.',
+    ALL_ES_FSXW_AOAG_ROWS:
+        'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
+    NON_SSD_FSXW_MSG:
+        'Explore Savings for FSx for Windows File Server is only supported for SSD file system storage type.',
+    MIXED_STORAGE_ES_MSG: 'Explore Savings for mixed storage type is not supported.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
         'The attempt to manage the SQL Server instance ',
@@ -1096,7 +1114,7 @@ export const GENERAL = {
     NOT_OPTIMIZED:
         "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use.",
     // Explore savings view calculations related consts
-    MS_EBS_CALCULATION: 'Microsoft SQL server on EBS calculation',
+    MS_EBS_CALCULATION: 'Microsoft SQL Server on EBS calculation',
     MS_FSXW_CALCULATION: 'Microsoft SQL on FSx for Windows File Server calculation',
     MS_ONTAP_CALCULATION: 'Microsoft SQL EC2 on FSx for ONTAP calculation',
     ES_CLONES: 'Clones',
@@ -1113,9 +1131,10 @@ export const GENERAL = {
     ES_SNAPSHOTS_DESC: 'Snapshot calculations are based on primary database volumes only and not on replicas.',
     ES_CLONES_DESC: 'Clone calculations are based on primary database volumes only and not on replicas.',
     ES_TOTAL_MONTHLY_COST: 'Total monthly cost',
-    ES_FSXN_MULTI: 'FSx for ONTAP - multi availability zone',
-    ES_FSXN_SINGLE: 'FSx for ONTAP - single availability zone',
+    ES_FSXN_MULTI: 'Multi Availability Zone',
+    ES_FSXN_SINGLE: 'Single Availability Zone',
     ES_FSXW_SINGLE: 'Single Availability Zone',
+    ES_FSXW_MULTI: 'Multi Availability Zone',
     ES_FSXN_AZ_DESC:
         'FSx for ONTAP costs are based on primary database volumes only because these volumes and their replicas share a file system.',
     ES_EBS_DESC: 'Costs for EBS are based on all EC2 instances.',
@@ -1136,16 +1155,18 @@ export const CODE_VIEWER = {
     AWS_CLI: 'AWS CLI',
     VIEW_IN_AWS_CLOUD_FORMATION: 'View in AWS CloudFormation',
     DOWNLOAD_YAML: 'Download YAML file ',
+    DOWNLOAD_ZIP: 'Download ZIP file',
     RECOMMENDED_DEV: 'Dev/Test',
     RECOMMENDED_PROD: 'Production',
     NO_DATA_MSG: 'No data',
     LOADING_CLOUD_FORMATION: 'Loading CloudFormation code',
+    LOADING_TERRAFORM: 'Loading Terraform code',
     LOADING_REST_API: 'Loading REST API code',
     LOADING_AWS_CLI: 'Loading AWS CLI code',
     CODEBOX: 'Codebox',
     EXPAND: 'Expand',
     COLLAPSE: 'Collapse',
-    RECOMMENDED_TEMPLATES_HEADING: 'Recommended templates - Microsoft SQL server deployment',
+    RECOMMENDED_TEMPLATES_HEADING: 'Recommended templates - Microsoft SQL Server deployment',
     MY_TEMPLATES: 'My Templates',
     COPY: 'Copy',
     COPIED_TO_CLIPBOARD: 'Copied to clipboard',
@@ -1157,7 +1178,8 @@ export const CODE_VIEWER = {
     DELETE: 'Delete',
     CREATION_DATE: 'Creation date:',
     DEPLOYMENT: 'Deployment:',
-    CREATE_DATABASE: 'Create database'
+    CREATE_DATABASE: 'Create database',
+    TERRAFORM: 'Terraform'
 };
 
 export const CHATBOT_FIELD_MAPPING: any = {

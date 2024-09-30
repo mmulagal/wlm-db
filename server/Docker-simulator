@@ -6,6 +6,7 @@ ADD src ./src
 ADD test ./test
 ADD config ./config
 ADD resources/mssql/templates ./resources/mssql/templates
+ADD resources/mssql/terraform ./resources/mssql/terraform
 COPY package.json ./
 COPY package-lock.json ./
 
@@ -13,7 +14,13 @@ COPY __mocks__ ./__mocks__
 COPY prisma ./prisma/
 COPY patches ./patches/
 
+# Change the permissions of the /resources/mssql directory to give read and write access
+RUN chmod -R 766 ./resources/mssql
+
 RUN npm i
+
+# prisma generate command after every change to Prisma schema to update the generated Prisma Client code.
+RUN npx prisma generate
 
 # build mode - development or production
 ARG ARG_WLMDB_BUILD_MODE

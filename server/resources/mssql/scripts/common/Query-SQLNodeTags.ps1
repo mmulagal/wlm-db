@@ -16,7 +16,8 @@ try {
     #Query EC2 Tags for SQL nodes information
     $count = 0
     while ($count -le 15) {
-        . ..\InvokeRetryCommand.ps1
+        $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+        . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
         $result = Invoke-WithRetry -Command {
             Get-EC2Tag -Filter @{Name = "tag:CF-WLMDB-StackName"; Values = $StackName }
         }

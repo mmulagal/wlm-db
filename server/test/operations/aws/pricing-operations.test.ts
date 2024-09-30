@@ -1,4 +1,3 @@
-import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
@@ -45,6 +44,9 @@ describe('Pricing Operations', () => {
         const { compute, fsxnStorage, vpc, ebsStorage } = pricingRequest;
         const resp = await calculatePrice(compute, fsxnStorage, vpc, ebsStorage);
         expect(resp).toBeDefined();
+        expect(resp.ebsStorage?.ebsBreakdownByVolumeType).toEqual(
+            expect.arrayContaining([expect.objectContaining({ id: 'ROOT_VOLUME1' })])
+        ); // ROOT_VOLUME1 is always present if there's an ec2;
     });
 
     it('Calculate FSxWindows capacity price', async () => {

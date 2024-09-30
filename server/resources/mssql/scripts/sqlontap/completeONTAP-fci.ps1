@@ -42,7 +42,8 @@ $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token }
 try {
     #Function to find Subnet mask
 
-    . ..\common\InvokeRetryCommand.ps1
+    $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+    . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
     function Get-SubnetMask($subnetid) {
 
         $subnet = Invoke-WithRetry -Command { get-ec2subnet -SubnetId $subnetid }

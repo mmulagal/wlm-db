@@ -17,6 +17,7 @@ export interface ExploreSavingsSliceEntities {
     selectedManualDeploymentType: any;
     disableState: boolean;
     requestedPayload: any;
+    requestedRegion: any;
     selectedSnapshotFrequency: any;
     secondaryVolumeFilledStatus: boolean;
     numberOfClonedCopies: number | any;
@@ -63,6 +64,7 @@ export interface ExploreSavingsSliceEntities {
     manualTCOVolumeTypes: any;
     volumeFilledStatus: boolean;
     recommendedTargetInstance: string;
+    snapshotLoading: boolean;
 }
 
 export interface StorageSavingsInterface {
@@ -208,12 +210,54 @@ export interface ViewCalculationsInterface {
     };
     totalFsxEc2MachineCost?: number | string;
     totalEBSEc2MachineCost?: number | string;
+    totalFsxwEc2MachineCost?: number | string;
     fsxTotalCost?: number | string;
     ebsTotalCost?: number | string;
+    fsxwTotalCost?: number | string;
     ebsOnlyCost?: number | string;
     fsxSnapshotTotalCost?: number | string;
     totalAzCost?: number | string;
     azType?: string;
+    fsxwCloneCalculation?: {
+        clonedCopiesCount?: number | string;
+        capacity?: number | string;
+        iops?: number | string;
+        throughput?: number | string;
+        totalCloneMonthlyCost?: number | string;
+    };
+    fsxwSnapshotCalculation?: {
+        desiredSnapshotStorageCapacity?: number | string;
+        storageSavingSnapshot?: number | string;
+        provisionedStorageCapacityForFsxwSnapshot?: number | string;
+        totalMonthlyCostForFsxwSnapshotStorageCapacity?: number | string;
+    };
+    fsxwCalculation?: {
+        deduplicationSavings?: number | string;
+        fsxwSsdPrice?: { price: number | string };
+        totalMonthlyCost?: number | string;
+        desiredStorageCapacity?: number | string;
+        storageSavings?: number | string;
+        provisionedStorageCapacity?: number | string;
+        monthlyCostForStorageCapacity?: number | string;
+        totalDefaultProvisionedIops?: number | string;
+        additionalUserProvisionedIops?: number | string;
+        sumOfDefaultAndAdditionalProvisionedIops?: number | string;
+        billedIops?: number | string;
+        totalMonthlyCostForProvisionedSsdIops?: number | string;
+        fsxwIopsPrice?: number | string;
+        numberOfFileSystemsRequiredForStorageCapacity?: number | string;
+        fsxwMaxCapacity?: number | string;
+        numberOfFileSystemsRequiredForThroughputCapacity?: number | string;
+        fsxwMaxThroughput?: number | string;
+        throughput?: number | string;
+        requiredFractionalFileSystems?: number | string;
+        requiredFileSystems?: number | string;
+        fsxwMinThroughput?: number | string;
+        minThroughputCapacityRequired?: number | string;
+        provisionedThroughputCapacity?: number | string;
+        fsxwThroughputPrice?: number | string;
+        totalMonthlyCostForThroughputCapacity?: number | string;
+    };
 }
 
 export interface EBSSnapshotsCalculation {

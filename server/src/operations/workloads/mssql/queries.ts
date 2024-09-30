@@ -1,8 +1,7 @@
 const SET_NOCOUNT = 'SET NOCOUNT ON;';
 const FOR_JSON_PATH = 'FOR JSON PATH';
 
-const DATABASES = (offset: number, rowscount: number) =>
-    `${SET_NOCOUNT} SELECT databaseId = d.database_id,
+const DATABASES = `${SET_NOCOUNT} SELECT (SELECT databaseId = d.database_id,
             databaseName = d.name,
             creationDate = d.create_date,
             databaseStatus = d.state_desc,
@@ -12,7 +11,7 @@ const DATABASES = (offset: number, rowscount: number) =>
             rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
             databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))
             FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name
-            offset ${offset} rows fetch next ${rowscount} rows only ${FOR_JSON_PATH}`;
+            ${FOR_JSON_PATH}) as databases`;
 
 const DATABASES_COUNT = () =>
     `${SET_NOCOUNT} SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id ${FOR_JSON_PATH}`;
@@ -293,6 +292,37 @@ const ENTERPRISE_CHECK_QUERY = ` ${SET_NOCOUNT} IF(SELECT CASE WHEN CONVERT(sysn
 
 const DATABASES_COUNT_V2 = `${SET_NOCOUNT} SELECT COUNT(*) AS totalCount FROM sys.databases ${FOR_JSON_PATH}`;
 
+const SERVER_VERSION = `${SET_NOCOUNT} SELECT @@VERSION AS version ${FOR_JSON_PATH}`;
+
+const GET_SANDBOXES = `${SET_NOCOUNT}
+    DROP TABLE IF EXISTS #properties;
+
+    CREATE TABLE #properties (
+        database_name nvarchar(255),
+        name nvarchar(255),
+        value sql_variant
+    );
+
+    INSERT INTO #properties
+    EXEC sp_MSforeachdb '
+        USE [?];
+        SELECT database_name = DB_NAME(), l.name, l.value
+        FROM sys.databases d
+        OUTER APPLY fn_listextendedproperty(default, default, default, default, default, default, default) l
+        WHERE d.name = DB_NAME()
+        AND database_id > 4
+        AND l.name IS NOT NULL
+        AND l.value IS NOT NULL ';
+
+    SELECT (SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
+    FROM (
+        SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
+        FROM #properties AS p1
+    ) AS grouped_properties
+    GROUP BY database_name, properties
+    ${FOR_JSON_PATH}) as sandboxes
+`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -320,5 +350,7 @@ export {
     SERVER_DETAILS,
     INSTANCE_GUID,
     ENTERPRISE_CHECK_QUERY,
-    DATABASES_COUNT_V2
+    DATABASES_COUNT_V2,
+    SERVER_VERSION,
+    GET_SANDBOXES
 };

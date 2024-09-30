@@ -4,10 +4,16 @@ import { getHostAndSqlServerInfo } from './discover-operations';
 import { FileSystemTypes, HOURS_IN_MONTH, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
 import {
     ComputeLicenseCostType,
+    EBSCloneCostCalculationRespType,
+    EBSCostCalculationRespType,
+    EBSSnapshotCalculationRespType,
+    FsxCalculationRespType,
+    FsxwCalculationRespType,
+    FsxwCloneCalculationRespType,
+    FsxwSnapshotCalculationRespType,
     ManualStorageSavingsRequestBodyType,
     StorageSavingsMetricsCalculationsResponseType,
-    StorageSavingsRequestBodyType,
-    StorageSavingsResponseType
+    StorageSavingsRequestBodyType
 } from '../routes/types/storage-savings.types';
 import {
     formatManualStorageSavingsCalculationMetrics,
@@ -21,7 +27,12 @@ import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice } from '../
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { getSqlInstanceLicenseRecommendations, manualModeComputeLicenseDetails } from './recommendation-operations';
-import { ManualModeMarketingRequestBody, getManualModeStorageSavings } from '../lib/cloud-manager/marketing';
+import { getManualModeStorageSavings } from '../lib/cloud-manager/marketing';
+import {
+    ManualModeEbsComparisonResponse,
+    ManualModeFsxwComparisonResponse,
+    ManualModeMarketingRequestBody
+} from '../utils/marketing-types';
 
 const logger = getLogger();
 
@@ -201,24 +212,32 @@ async function aoagStorageSavingsCalculations(
             compute,
             license,
             ebs: {
-                iops: allEbsDetails.iops,
-                throughput: allEbsDetails.throughput,
-                capacity: allEbsDetails.capacity,
-                clones: ebs.clones,
-                snapshots: ebs.snapshots,
+                iops: allEbsDetails?.iops,
+                throughput: allEbsDetails?.throughput,
+                capacity: allEbsDetails?.capacity,
+                clones: ebs?.clones,
+                snapshots: ebs?.snapshots,
                 total:
-                    allEbsDetails.iops + allEbsDetails.throughput + allEbsDetails.capacity + ebs.clones + ebs.snapshots
+                    allEbsDetails && ebs
+                        ? allEbsDetails.iops +
+                          allEbsDetails.throughput +
+                          allEbsDetails.capacity +
+                          ebs.clones +
+                          ebs.snapshots
+                        : 0
             },
             fsx,
             totalSummary: {
                 existing:
-                    allEbsDetails.iops +
-                    allEbsDetails.throughput +
-                    allEbsDetails.capacity +
-                    ebs.clones +
-                    ebs.snapshots +
-                    existingComputeMonthlyPrice! +
-                    existingLicenseMonthlyPrice!,
+                    allEbsDetails && ebs
+                        ? allEbsDetails.iops +
+                          allEbsDetails.throughput +
+                          allEbsDetails.capacity +
+                          ebs.clones +
+                          ebs.snapshots +
+                          existingComputeMonthlyPrice! +
+                          existingLicenseMonthlyPrice!
+                        : 0,
                 recommended: fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
             },
             ...(singleFsxCalculationData && {
@@ -336,7 +355,8 @@ async function retrieveComputeAndLicenseCost(
     region: string,
     ec2HostDetails: DiscoverResponseInfoType,
     monthlySqlByolCost?: number,
-    partnerNodeDetails?: DiscoverResponseInfoType[]
+    partnerNodeDetails?: DiscoverResponseInfoType[],
+    isFsxwCalcs: boolean = false
 ): Promise<ComputeLicenseCostType> {
     logger.info('Retrieving compute and license cost', { accountId, credentialsId, region, ec2HostDetails });
 
@@ -347,7 +367,8 @@ async function retrieveComputeAndLicenseCost(
         region,
         ec2HostDetails,
         monthlySqlByolCost,
-        partnerNodeDetails
+        partnerNodeDetails,
+        isFsxwCalcs
     );
     const {
         existingCompute: {
@@ -432,7 +453,7 @@ async function performStorageSavingsCalculations(
     region: string,
     instanceId: string,
     params: StorageSavingsRequestBodyType
-): Promise<StorageSavingsResponseType> {
+) {
     logger.info('Performing storage savings calculations ', { accountId, credentialsId, region, instanceId, params });
 
     const {
@@ -440,6 +461,96 @@ async function performStorageSavingsCalculations(
     } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
+    const fsxwInstances = sqlServerInstances?.filter(sqlServerInstance =>
+        sqlServerInstance?.storage?.some(storage => storage.type === FileSystemTypes.FSXW)
+    );
+    if (fsxwInstances && fsxwInstances.length > 0) {
+        const [{ sqlServerDeploymentType }] = fsxwInstances;
+
+        if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                'FSXW Storage savings calculations for AOAG deployments are not supported'
+            );
+        }
+
+        const fileSystemsIds = compact(
+            fsxwInstances.flatMap(fsxwInstance =>
+                fsxwInstance.storage?.flatMap(storage => (storage.type === FileSystemTypes.FSXW ? [storage.id] : []))
+            )
+        );
+
+        if (!fileSystemsIds.length) {
+            throw createError(
+                HttpErrorCodes.NOT_FOUND,
+                `No FSXW instances found for the provided instance: ${instanceId}`
+            );
+        }
+
+        const marketingPromise = invokeMarketingApi(
+            accountId,
+            credentialsId,
+            region,
+            sqlServerDeploymentType!,
+            [],
+            params,
+            instanceId,
+            fileSystemsIds
+        );
+        const recommendationPromise = retrieveComputeAndLicenseCost(
+            accountId,
+            credentialsId,
+            region,
+            ec2HostDetails,
+            undefined,
+            undefined,
+            true
+        );
+        const [{ compute, license }, { fsx, single, multi, fsxw }] = await Promise.all([
+            recommendationPromise,
+            marketingPromise
+        ]);
+
+        const existingComputeLicensePrice = Number(compute?.existing?.instanceMonthlyPrice || 0);
+        const recommendedComputeLicensePrice = Number(compute?.recommended?.instanceMonthlyPrice || 0);
+
+        const singleFsxCalculationData = single?.fsx_calculation
+            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+            : undefined;
+
+        const multiFsxCalculationData = multi?.fsx_calculation
+            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+            : undefined;
+
+        return {
+            compute,
+            license,
+            ...(singleFsxCalculationData && {
+                single: {
+                    fsxCalculation: singleFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        singleFsxCalculationData.totalStorageCapacity,
+                        sqlServerDeploymentType!
+                    )
+                }
+            }),
+            ...(multiFsxCalculationData && {
+                multi: {
+                    fsxCalculation: multiFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        multiFsxCalculationData.totalStorageCapacity,
+                        sqlServerDeploymentType!
+                    )
+                }
+            }),
+            fsx,
+            fsxw,
+            totalSummary: {
+                existing: fsxw ? fsxw.total + existingComputeLicensePrice : existingComputeLicensePrice,
+                recommended: fsx.total + recommendedComputeLicensePrice // recommendedComputeLicensePrice is inclusive of recommended License price (for fsxw recommended compute price remains same as existing, but recommended license price can vary)
+            }
+        };
+    }
 
     const ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
 
@@ -497,7 +608,7 @@ async function performStorageSavingsCalculations(
         ebs,
         fsx,
         totalSummary: {
-            existing: Number(ebs.total || 0) + existingComputeLicensePrice,
+            existing: Number(ebs?.total || 0) + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
         },
         ...(singleFsxCalculationData && {
@@ -541,6 +652,68 @@ async function getStorageSavingsCalculationMetrics(
     } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
+    const fsxwInstances = sqlServerInstances?.filter(sqlServerInstance =>
+        sqlServerInstance?.storage?.some(storage => storage.type === FileSystemTypes.FSXW)
+    );
+    if (fsxwInstances && fsxwInstances.length > 0) {
+        const [{ sqlServerDeploymentType }] = fsxwInstances;
+
+        if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                'FSXW Storage savings calculations for AOAG deployments are not supported'
+            );
+        }
+
+        const fileSystemsIds = compact(
+            fsxwInstances.flatMap(fsxwInstance =>
+                fsxwInstance.storage?.flatMap(storage => (storage.type === FileSystemTypes.FSXW ? [storage.id] : []))
+            )
+        );
+
+        if (!fileSystemsIds.length) {
+            throw createError(
+                HttpErrorCodes.NOT_FOUND,
+                `No FSXW instances found for the provided instance: ${instanceId}`
+            );
+        }
+        const { single, multi, fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation } =
+            await formatStorageSavingsCalculationMetrics(
+                accountId,
+                credentialsId,
+                region,
+                [],
+                params,
+                sqlServerDeploymentType!,
+                instanceId,
+                fileSystemsIds
+            );
+
+        const {
+            compute: { existing: existingComputeCalculation, recommended: recommendedComputeCalculation },
+            license: { existing: existingLicenseCalculation, recommended: recommendedLicenseCalculation }
+        } = await retrieveComputeAndLicenseCost(
+            accountId,
+            credentialsId,
+            region,
+            ec2HostDetails,
+            undefined,
+            undefined,
+            true
+        );
+        return {
+            recommendedComputeCalculation,
+            recommendedLicenseCalculation,
+            existingComputeCalculation,
+            existingLicenseCalculation,
+            single,
+            multi,
+            fsxwCalculation,
+            fsxwCloneCalculation,
+            fsxwSnapshotCalculation
+        };
+    }
+
     const ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
     if (!ebsVolumeIds.length) {
         throw createError(HttpErrorCodes.NOT_FOUND, `No EBS volumes found for the provided instance: ${instanceId}`);
@@ -625,43 +798,81 @@ async function performManualModeStorageSavingsCalculations(
     });
     const marketingRequestBody = getMarketingApiManualModeRequestBody(region, params) as ManualModeMarketingRequestBody;
 
-    const { ebsTotal, fsx, single, multi } = await getManualModeStorageSavings(accountId, marketingRequestBody);
+    if (marketingRequestBody?.instances) {
+        const { ebsTotal, fsx, single, multi } = await getManualModeStorageSavings<ManualModeEbsComparisonResponse>(
+            accountId,
+            marketingRequestBody
+        );
+
+        const { compute, license } = await manualModeComputeLicenseDetails(region, params);
+
+        const singleFsxCalculationData = single?.fsx_calculation
+            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+            : undefined;
+        const multiFsxCalculationData = multi?.fsx_calculation
+            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+            : undefined;
+
+        return {
+            compute,
+            license,
+            ebs: ebsTotal,
+            fsx,
+            ...(singleFsxCalculationData && {
+                single: {
+                    fsxCalculation: singleFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        singleFsxCalculationData.totalStorageCapacity,
+                        params.sqlServerDeploymentType!
+                    )
+                }
+            }),
+            ...(multiFsxCalculationData && {
+                multi: {
+                    fsxCalculation: multiFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        multiFsxCalculationData.totalStorageCapacity,
+                        params.sqlServerDeploymentType!
+                    )
+                }
+            }),
+            totalSummary: {
+                existing:
+                    Number(ebsTotal.total || 0) +
+                    Number(compute?.existing?.computeMonthlyPrice || 0) +
+                    Number(license?.existing?.licenseMonthlyPrice || 0),
+                recommended:
+                    fsx.total +
+                    Number(compute?.recommended?.computeMonthlyPrice || 0) +
+                    Number(license?.recommended?.licenseMonthlyPrice || 0)
+            }
+        };
+    }
+
+    const resp = await getManualModeStorageSavings<ManualModeFsxwComparisonResponse>(accountId, marketingRequestBody);
+
+    const { fsx_calculation: fsxCalculation, fsx, fsxw } = resp;
+    const fsxCalculationData = fsxCalculation ? handleMarketingApiFsxCalculationObject(fsxCalculation) : undefined;
 
     const { compute, license } = await manualModeComputeLicenseDetails(region, params);
-
-    const singleFsxCalculationData = single?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
-        : undefined;
-    const multiFsxCalculationData = multi?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
-        : undefined;
 
     return {
         compute,
         license,
-        ebs: ebsTotal,
         fsx,
-        ...(singleFsxCalculationData && {
-            single: {
-                fsxCalculation: singleFsxCalculationData,
+        fsxw,
+        ...(fsxCalculationData && {
+            [params.sqlServerDeploymentType === 'FCI' ? 'multi' : 'single']: {
+                fsxCalculation: fsxCalculationData,
                 fsxBreakdown: fsxStorageCapacityBreakdown(
-                    singleFsxCalculationData.totalStorageCapacity,
-                    params.sqlServerDeploymentType!
-                )
-            }
-        }),
-        ...(multiFsxCalculationData && {
-            multi: {
-                fsxCalculation: multiFsxCalculationData,
-                fsxBreakdown: fsxStorageCapacityBreakdown(
-                    multiFsxCalculationData.totalStorageCapacity,
+                    fsxCalculationData.totalStorageCapacity,
                     params.sqlServerDeploymentType!
                 )
             }
         }),
         totalSummary: {
             existing:
-                Number(ebsTotal.total || 0) +
+                Number(fsxw.total || 0) +
                 Number(compute?.existing?.computeMonthlyPrice || 0) +
                 Number(license?.existing?.licenseMonthlyPrice || 0),
             recommended:
@@ -685,8 +896,36 @@ async function getManualModeStorageSavingsCalculationMetrics(
 
     const { compute, license } = await manualModeComputeLicenseDetails(region, params);
 
-    const { ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi } =
-        await formatManualStorageSavingsCalculationMetrics(accountId, region, params);
+    const resp = await formatManualStorageSavingsCalculationMetrics(accountId, region, params);
+
+    if (params.ec2Instances[0].fsxw) {
+        const { single, multi, fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation } = resp as {
+            single: FsxCalculationRespType;
+            multi: FsxCalculationRespType;
+            fsxwCalculation?: FsxwCalculationRespType;
+            fsxwSnapshotCalculation?: FsxwSnapshotCalculationRespType;
+            fsxwCloneCalculation?: FsxwCloneCalculationRespType;
+        };
+        return {
+            recommendedComputeCalculation: compute.recommended,
+            recommendedLicenseCalculation: license.recommended,
+            existingComputeCalculation: compute.existing,
+            existingLicenseCalculation: license.existing,
+            ...(single && { single }),
+            ...(multi && { multi }),
+            fsxwCalculation,
+            fsxwCloneCalculation,
+            fsxwSnapshotCalculation
+        };
+    }
+
+    const { ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi } = resp as {
+        single?: FsxCalculationRespType;
+        multi?: FsxCalculationRespType;
+        ebsCalculation?: EBSCostCalculationRespType;
+        ebsSnapshotCalculation?: EBSSnapshotCalculationRespType;
+        ebsCloneCalculation?: EBSCloneCostCalculationRespType;
+    };
 
     return {
         recommendedComputeCalculation: compute.recommended,
@@ -702,6 +941,7 @@ async function getManualModeStorageSavingsCalculationMetrics(
 }
 
 export {
+    getAoagPartnerNodesDetails,
     performStorageSavingsCalculations,
     getStorageSavingsCalculationMetrics,
     performManualModeStorageSavingsCalculations,

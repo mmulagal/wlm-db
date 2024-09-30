@@ -1,24 +1,25 @@
-import { DsButton, DsTypography } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
 import { ReactComponent as ExploreSaving } from '../../../assets/explore-saving.svg';
 import { ReactComponent as ExploreSaving1600 } from '../../../assets/exploreSaving1600.svg';
 import { ReactComponent as ExploreSaving1440 } from '../../../assets/exploreSaving1440.svg';
 import styles from './ExploreSavingHeader.module.scss';
-import ExploreSavingsTable from '../ExploreSavingsTable/ExploreSavingsTable';
+
 import { GENERAL } from '../../../utils/appConstants';
-import { useAppSelector } from '../../../store/storeHooks';
+
 import ExploreSavingsTableV2 from '../ExploreSavingsTableV2/ExploreSavingsTableV2';
 import { handleManualTCOEBS, handleManualTCOFSXW } from '../ExploreSavingsUtils';
 import { useDispatch } from 'react-redux';
 import useResize from '../../../common/hooks/useResize';
+import { useNavigate } from 'react-router-dom';
 
 const ExploreSavingHeader = () => {
-    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const dispatch = useDispatch();
     const windowSize = useResize();
+    const navigate = useNavigate();
 
     return (
         <>
-            {windowSize.width > 1715 && (
+            {windowSize.width > 1823 && (
                 <div className={styles.exploreSavingsHeader}>
                     <div className={styles.topPart}>
                         <div className={styles.svgContainer}>
@@ -49,14 +50,16 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch)}
+                                        onClick={() => handleManualTCOEBS(dispatch, navigate)}
+                                        style={{ marginTop: '12px' }}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-fsxW"
-                                        onClick={() => handleManualTCOFSXW(dispatch)}
+                                        onClick={() => handleManualTCOFSXW(dispatch, navigate)}
+                                        style={{ marginTop: '4px' }}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
@@ -64,11 +67,10 @@ const ExploreSavingHeader = () => {
                             </div>
                         </div>
                     </div>
-                    {!isInventoryV2 && <ExploreSavingsTable />}
-                    {isInventoryV2 && <ExploreSavingsTableV2 />}
+                    <ExploreSavingsTableV2 />
                 </div>
             )}
-            {windowSize.width > 1429 && windowSize.width <= 1715 && (
+            {windowSize.width > 1471 && windowSize.width <= 1823 && (
                 <div className={styles.exploreSavingsHeader}>
                     <div className={styles.topPart}>
                         <div className={styles.svgContainer}>
@@ -99,7 +101,7 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch)}
+                                        onClick={() => handleManualTCOEBS(dispatch, navigate)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
@@ -107,7 +109,7 @@ const ExploreSavingHeader = () => {
                                         className={styles.link}
                                         id="explore-savings-manually-fsxW"
                                         style={{ whiteSpace: 'unset' }}
-                                        onClick={() => handleManualTCOFSXW(dispatch)}
+                                        onClick={() => handleManualTCOFSXW(dispatch, navigate)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
@@ -115,11 +117,10 @@ const ExploreSavingHeader = () => {
                             </div>
                         </div>
                     </div>
-                    {!isInventoryV2 && <ExploreSavingsTable />}
-                    {isInventoryV2 && <ExploreSavingsTableV2 />}
+                    <ExploreSavingsTableV2 />
                 </div>
             )}
-            {windowSize.width <= 1428 && (
+            {windowSize.width <= 1470 && (
                 <div className={styles.exploreSavingsHeader}>
                     <div className={styles.topPart}>
                         <div className={styles.svgContainer}>
@@ -150,14 +151,14 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch)}
+                                        onClick={() => handleManualTCOEBS(dispatch, navigate)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-fsxW"
-                                        onClick={() => handleManualTCOFSXW(dispatch)}
+                                        onClick={() => handleManualTCOFSXW(dispatch, navigate)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
@@ -165,8 +166,8 @@ const ExploreSavingHeader = () => {
                             </div>
                         </div>
                     </div>
-                    {!isInventoryV2 && <ExploreSavingsTable />}
-                    {isInventoryV2 && <ExploreSavingsTableV2 />}
+
+                    <ExploreSavingsTableV2 />
                 </div>
             )}
         </>

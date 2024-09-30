@@ -23,8 +23,9 @@ import FsxwSazCalculation from './FSxWCalculation/FsxwSazCalculation/FsxwSazCalc
 import ClonesFsxwCalculation from './FSxWCalculation/ClonesFsxwCalculation/ClonesFsxwCalculation';
 import TotalMonthlyCostFsxwCalculation from './FSxWCalculation/TotalMonthlyCostFsxwCalculation/TotalMonthlyCostFsxwCalculation';
 import ShadowCopyFsxwCalculation from './FSxWCalculation/ShadowCopyFsxwCalculation/ShadowCopyFsxwCalculation';
+import FsxwMazCalculation from './FSxWCalculation/FsxwMazCalculation/FsxwMazCalculation';
 
-const ViewCalculations = () => {
+const ViewCalculations = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
     const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
     const { viewCalculationsResponse, savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
@@ -32,42 +33,62 @@ const ViewCalculations = () => {
     return (
         <div className={styles.viewCalculations}>
             <div className={styles.breadCrumb}>
-                <BreadCrumbs
-                    items={[
-                        {
-                            title: GENERAL.ES_SAVINGS,
-                            onClick: () => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
-                                dispatch(addExploreSavingsInitialData(null));
+                {statusCheck ? (
+                    <BreadCrumbs
+                        items={[
+                            {
+                                title: GENERAL.ES_SAVINGS,
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                    dispatch(addExploreSavingsInitialData(null));
+                                }
+                            },
+                            {
+                                title:
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+                                        ? 'Explore savings manually'
+                                        : selectedServerName,
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                                }
+                            },
+                            {
+                                title: GENERAL.VIEW_CALCS
                             }
-                        },
-                        {
-                            title:
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                    ? 'Explore savings manually'
-                                    : selectedServerName,
-                            onClick: () => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                        ]}
+                    />
+                ) : (
+                    <BreadCrumbs
+                        items={[
+                            {
+                                title:
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+                                        ? 'Explore savings manually'
+                                        : selectedServerName,
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                                }
+                            },
+                            {
+                                title: GENERAL.VIEW_CALCS
                             }
-                        },
-                        {
-                            title: GENERAL.VIEW_CALCS
-                        }
-                    ]}
-                />
+                        ]}
+                    />
+                )}
             </div>
 
             {/* Accordion section */}
             <div className={styles.mainSection}>
                 <div className={styles.headingArea}>
-                    <div>
+                    <div className={styles.topHeading}>
                         <DsTypography variant="Semibold_24">{GENERAL.COST_CALCULATION}</DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginBottom: '4px' }}>
                             {GENERAL.VIEW_CALC_TEXT}
                         </DsTypography>
 
-                        <DsTypography variant="Regular_14" style={{ marginBottom: '24px', fontWeight: '500' }}>
+                        <DsTypography variant="Regular_14" style={{ marginBottom: '40px', fontWeight: '500' }}>
                             {GENERAL.VIEW_CAL_SECONDARY_TEXT}
                         </DsTypography>
                     </div>
@@ -91,7 +112,8 @@ const ViewCalculations = () => {
                             <TotalMonthlyCostOntapCalculation />
                         </div>
 
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (
+                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) && (
                             <div>
                                 <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
                                     {GENERAL.MS_EBS_CALCULATION}
@@ -103,13 +125,18 @@ const ViewCalculations = () => {
                                 <TotalMonthlyCostEbsCalculation />
                             </div>
                         )}
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW && (
+                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
                             <div>
                                 <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
                                     {GENERAL.MS_FSXW_CALCULATION}
                                 </DsTypography>
                                 <InstancesFsxwCalculation />
-                                <FsxwSazCalculation />
+                                {viewCalculationsResponse?.azType === FSX_AZ_TYPE.SINGLE ? (
+                                    <FsxwSazCalculation />
+                                ) : (
+                                    <FsxwMazCalculation />
+                                )}
                                 <ShadowCopyFsxwCalculation />
                                 <ClonesFsxwCalculation />
                                 <TotalMonthlyCostFsxwCalculation />

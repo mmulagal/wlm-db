@@ -1,13 +1,4 @@
-import {
-    Button,
-    DsFlashingDotsLoader,
-    Popover,
-    Table,
-    TableTopBar,
-    Typography,
-    useDialog,
-    useTable
-} from '@netapp/design-system';
+import { Button, Popover, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
 
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -45,6 +36,10 @@ import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
 import {
+    addInstanceIdToGetPerf,
+    checkForAnyAOAG,
+    checkForAnySSD,
+    checkForMixedStorageType,
     getPartnerNodeEc2InstanceId,
     handleManageNotification,
     handleManageTriggerNotification,
@@ -57,8 +52,7 @@ import store from '../../../store/store';
 import {
     setInProgressInstances,
     setInventoryExpandedRowHostData,
-    setInventoryTableData,
-    setUnManagedPerfInstanceIdsList
+    setInventoryTableData
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
@@ -67,7 +61,6 @@ const InventoryTable = () => {
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
     const { setDialog, closeDialog } = useDialog();
@@ -79,7 +72,6 @@ const InventoryTable = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
-    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
     const { isDemoMode } = useAppSelector(state => state.auth);
 
@@ -312,31 +304,14 @@ const InventoryTable = () => {
         );
     };
 
-    const addInstanceIdToGetPerf = (rowData: any) => {
-        // First check if this is already opened or closed. If this data is already available or not.
-        if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
-            // If this has unmanaged rows or not ?
-            let unmanagedRows = rowData?.sqlServerInstances?.filter(
-                (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
-            );
-            if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
-                let instanceList = [];
-                instanceList.push(rowData?.ec2InstanceId);
-                const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
-                if (partnerData && partnerData?.length > 0) {
-                    instanceList.push(partnerData?.[0]?.id);
-                }
-                dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
-            }
-            // This has to be called even if any row is becoming unmanaged row or managed row
-        }
-    };
-
     const lastColJSX = (
         rowData: any,
         checkForAllManaged: boolean,
         checkForAllUnDetectInstance: boolean,
-        checkForAllUnManagedInstance: boolean
+        checkForAllUnDetectOrManageInstance: boolean,
+        checkForAllUnManagedInstance: boolean,
+        checkForAllFsxnManagedInstance: boolean,
+        checkForAllStorageType: boolean
     ) => {
         //Condition if installation mode is AOAG than disable manage
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
@@ -375,15 +350,10 @@ const InventoryTable = () => {
             );
         }
 
-        //Check for all Explore Savings undetected rows
-        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
+        //Check for all un-detect or managedinstances and storage type is N/A
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectOrManageInstance) {
             return (
-                <TooltipComponent
-                    title={GENERAL.ALL_ES_UNDETECTED_ROWS}
-                    placement="bottom"
-                    width="320px"
-                    height="100px"
-                >
+                <TooltipComponent title={GENERAL.NO_UNMANAGED_TO_MANAGE} placement="bottom" width="320px" height="90px">
                     <div className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
@@ -393,14 +363,98 @@ const InventoryTable = () => {
             );
         }
 
-        //Check for all Explore Savings FSXW rows
+        //Check for all Explore Savings undetected rows
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
+            return (
+                <TooltipComponent
+                    title={GENERAL.ALL_ES_UNDETECTED_ROWS}
+                    placement="bottom"
+                    width="320px"
+                    height="100px"
+                >
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
         if (
             rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-            checkForAllUnManagedInstance &&
-            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS
+            !checkForAllUnDetectInstance &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+            checkForAnyAOAG(rowData)
         ) {
             return (
-                <TooltipComponent title={GENERAL.ES_FSXW_NOT_SUPPORTED} placement="bottom" width="320px" height="50px">
+                <TooltipComponent title={GENERAL.ALL_ES_FSXW_AOAG_ROWS} placement="bottom" width="340px" height="70px">
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        } else if (
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+            !checkForAnySSD(rowData)
+        ) {
+            return (
+                <TooltipComponent title={GENERAL.NON_SSD_FSXW_MSG} placement="bottom" width="360px" height="50px">
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForMixedStorageType(rowData)) {
+            return (
+                <TooltipComponent title={GENERAL.MIXED_STORAGE_ES_MSG} placement="bottom" width="260px" height="50px">
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        //Condition if storage type is not known and it is still loading for manage case
+        if (
+            rowData?.action === INVENTORY_ACTIONS.MANAGE &&
+            !checkForAllManaged &&
+            checkForAllFsxnManagedInstance &&
+            rowData?.loading &&
+            !checkForAllStorageType
+        ) {
+            return (
+                <TooltipComponent
+                    title={GENERAL.INVENTORY_LOADING_DISABLED}
+                    placement="bottom"
+                    width="170px"
+                    height="33px"
+                >
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        } else if (
+            rowData?.action === INVENTORY_ACTIONS.MANAGE &&
+            !checkForAllManaged &&
+            checkForAllFsxnManagedInstance
+        ) {
+            //Condition if all fsxn are managed and remaining storage type is unmanaged
+            return (
+                <TooltipComponent title={GENERAL.ALL_FSXN_MANAGED_TEXT} placement="bottom" width="320px" height="93px">
                     <div className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
@@ -409,6 +463,7 @@ const InventoryTable = () => {
                 </TooltipComponent>
             );
         }
+
         //Normal use case to show dialog or move to explore savings
         if (
             rowData?.action &&
@@ -419,6 +474,11 @@ const InventoryTable = () => {
             return (
                 <div
                     className={styles.detectManage}
+                    id={
+                        rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS
+                            ? 'explore-savings-inventory-table'
+                            : 'inventory-table-option'
+                    }
                     onClick={() => {
                         if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
                             onClickESHost(dispatch, rowData);
@@ -440,7 +500,11 @@ const InventoryTable = () => {
             rowData.ssmState !== INVENTORY_STATUS.OFFLINE
         ) {
             return (
-                <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
+                <div
+                    className={styles.detectManageDisable}
+                    id="inventory-table-option"
+                    title={rowData?.detectOptionDisableMsg}
+                >
                     <Typography variant="Regular_14" className={styles.textStyle}>
                         {rowData?.action}
                     </Typography>
@@ -463,15 +527,33 @@ const InventoryTable = () => {
                 const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
                 );
+                const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
+                    (item: any) =>
+                        item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
+                        item?.statusColText === INVENTORY_STATUS.MANAGED
+                );
                 const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
                 );
-
+                const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
+                    return (
+                        (item?.statusColText === INVENTORY_STATUS.MANAGED &&
+                            item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
+                        (item?.statusColText !== INVENTORY_STATUS.MANAGED &&
+                            item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
+                    );
+                });
+                const checkForAllStorageType = rowData?.sqlServerInstances?.every(
+                    (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
+                );
                 return lastColJSX(
                     rowData,
                     checkForAllManaged,
                     checkForAllUnDetectInstance,
-                    checkForAllUnManagedInstance
+                    checkForAllUnDetectOrManageInstance,
+                    checkForAllUnManagedInstance,
+                    checkForAllFsxnManagedInstance,
+                    checkForAllStorageType
                 );
             }
         };
@@ -494,7 +576,7 @@ const InventoryTable = () => {
                                 onClick={(e: any) => {
                                     e.stopPropagation();
                                     expandTableRow(updateRowState, rowData, currentRowState, rowsState);
-                                    addInstanceIdToGetPerf(rowData);
+                                    addInstanceIdToGetPerf(rowData, dispatch);
                                 }}
                             />
                         </div>

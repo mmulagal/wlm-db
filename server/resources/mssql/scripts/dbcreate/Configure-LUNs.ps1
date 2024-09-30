@@ -31,9 +31,7 @@ $ErrorActionPreference = "Stop"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $FSxCredStore = "/netapp/wlmdb/$FileSystemId"
-
-. ..\common\InvokeRetryCommand.ps1
-$credobject = Invoke-WithRetry -Command { (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json }
+$credobject = (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
 
 $username = $credobject.fsx.username
 $password = $credobject.fsx.password
@@ -325,7 +323,6 @@ https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($vo
         "space-guarantee"              = "none"
         "space-mgmt-try-first"         = "volume_grow"
         "percent-snapshot-space"       = "0"
-        "read-realloc"                 = "on"
         "tiering-policy"               = "snapshot-only"
         "tiering-minimum-cooling-days" = "7"
         "snapshot-policy"              = "none"

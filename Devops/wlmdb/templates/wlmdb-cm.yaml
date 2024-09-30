@@ -12,6 +12,8 @@ data:
   NODE_ENV: {{ .Values.global.NODE_ENV }}
   KEY_ALIAS: alias/wlmdb-service
   TEMPLATE_BUCKET_NAME: {{ .Values.global.bucketName }}
+  REDIS_SCHEME: rediss
+  REDIS_ENDPOINT: {{ .Values.global.redisEndPoint }}
   {{ if eq .Values.global.environment "production" }}
   AUTH0_ENDPOINT: netapp-cloud-account.auth0.com
   CLOUD_MANAGER_ENDPOINT: api.bluexp.netapp.com

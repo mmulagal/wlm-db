@@ -1,6 +1,7 @@
 import { BASE_URL, generateResponse } from '../utils/appUtils';
 import StorageSavings from '../data/storageSavings.json';
 import ViewCalculations from '../data/viewCalculations.json';
+import ViewCalculationsFsxw from '../data/viewCalculationsFsxw.json';
 
 const router = require('express').Router();
 
@@ -23,14 +24,15 @@ router.post(
     `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/storage-savings/calculations`,
     async (req: {}, res: any) => {
         setTimeout(() => {
-            generateResponse(res, 200, ViewCalculations);
+            generateResponse(res, 200, ViewCalculationsFsxw);
         }, 5000);
     }
 );
 
 router.post(`${BASE_URL}/v1/regions/:region/manual-storage-savings/calculations`, async (req: {}, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, ViewCalculations);
+        // generateResponse(res, 200, ViewCalculations);
+        generateResponse(res, 200, ViewCalculationsFsxw);
     }, 5000);
 });
 

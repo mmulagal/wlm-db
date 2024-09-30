@@ -373,6 +373,13 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getTerraformSetup: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/terraform/setup`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1005,7 +1012,12 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const { useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
+export const {
+    useGetJobsSummaryQuery,
+    useLazyGetJobsSummaryQuery,
+    useGetTemplatesMutation,
+    useGetTerraformSetupMutation
+} = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 

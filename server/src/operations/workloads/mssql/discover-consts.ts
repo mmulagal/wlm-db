@@ -1,4 +1,6 @@
 import { SqlServerDeploymentModel } from '../../../utils/consts';
+import { compressResponse } from './common-templates';
+import { GOOGLE_DNS } from './const';
 
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
 const IS_PS7_AVAILABLE: string = 'isPS7Available';
@@ -88,6 +90,7 @@ Possible causes for unavailability of SQL Server details:
 const HOST_AND_SQL_INFO_PS1 = [
     `
   $ErrorActionPreference = "Stop"
+  $ProgressPreference = 'SilentlyContinue'
 
   Function TestIfInterfaceNameMatchesWithDriveId {
     param (
@@ -289,13 +292,21 @@ const HOST_AND_SQL_INFO_PS1 = [
 
     $clusterDetailsResponse['isClustered'] = $False
 
-    $clusterServiceStatus = (Get-Service -Name ClusSvc -ErrorAction SilentlyContinue).Status
+    $clusterServiceStatus = (Get-Service -Name "ClusSvc" -ErrorAction SilentlyContinue).Status
     if ($clusterServiceStatus -eq "Running") {
       $clusterDetailsResponse['isClustered'] = $True
       $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
       If ($clusterName) {
         $clusterDetailsResponse['name'] = $clusterName
-        $clusterDetailsResponse['windowsClusterNodes'] = (Get-ClusterNetworkInterface)
+        $clusterNodes = Get-ClusterNetworkInterface | ForEach-Object {
+          @{
+            "Address" = $_.Address
+            "Node" = $_.Node
+          }
+        }
+
+        $windowsClusterNodes = $clusterNodes | ConvertTo-Json -Depth 1
+        $clusterDetailsResponse['windowsClusterNodes'] = $windowsClusterNodes
                    
         If (Get-ClusterResource -ErrorAction SilentlyContinue | ? { $_.ResourceType -eq "SQL Server Availability Group" }) {
           $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
@@ -303,6 +314,9 @@ const HOST_AND_SQL_INFO_PS1 = [
           $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
         }
       }
+    }
+    else {
+      $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
     }
 
     return $clusterDetailsResponse
@@ -316,6 +330,28 @@ const HOST_AND_SQL_INFO_PS1 = [
     $MappedDrivesWithPath, $RegistryErrors = GetSMBMappedDrivesWithPath
     $clusterDetails = GetClusterDetails
     $SMBConnections = GetSMBConnections
+  
+    $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+    $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "60"} -Method PUT -Uri 'http://169.254.169.254/latest/api/token'
+    $instanceType = (Invoke-WebRequest -Headers @{"X-aws-ec2-metadata-token" = $token} -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
+    $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
+    $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
+
+    if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
+      $credsFromParameterStore = $null
+      try {
+        $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
+        if ($connection -eq $False) {
+            # Set the registry key to disable certificate revocation check in case of private subnet
+            Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
+        }
+        [string]$apiToken = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri http://169.254.169.254/latest/api/token
+        $ec2InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $apiToken} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+        $credsFromParameterStore = (Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json
+      } catch {
+        $responseObject['failureInfo'] += $_
+      }
+    }
   
     $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
       $responseObject = @{}
@@ -349,20 +385,19 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['sqlServerInstance'] = $instanceName
       $responseObject['sqlServerState'] = $sqlService.State
       $responseObject['windowsOsVersion'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
-      
+      $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = $clusterDetails['${SQL_SERVER_DEPLOYMENT_TYPE}']
+
       $sqlNodes = $null
       if ($clusterDetails['isClustered']) {
         $responseObject['windowsClusterName'] = $clusterDetails['name']
         $responseObject['windowsClusterNodes'] = $clusterDetails['windowsClusterNodes']
-        $sqlNodes = (Get-ClusterResource -ErrorAction SilentlyContinue -Name "SQL Server" | ? { $_.OwnerGroup -eq "SQL Server ($instanceName)" } | Get-ClusterOwnerNode).OwnerNodes.Name
+        $sqlNodes = (Get-ClusterOwnerNode -ResourceType "SQL Server Availability Group" -ErrorAction SilentlyContinue).OwnerNodes.NodeName
       }
         
       if ([string]::IsNullOrEmpty($sqlNodes)) {
         $responseObject['sqlServerNodes'] = hostname
-        $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
       } else {
         $responseObject['sqlServerNodes'] =  $sqlNodes
-        $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = $clusterDetails['${SQL_SERVER_DEPLOYMENT_TYPE}']
       }             
 
       if ($sqlService.State -eq "Running") {
@@ -381,36 +416,20 @@ const HOST_AND_SQL_INFO_PS1 = [
             }
           } catch {
             $responseObject['windowsAuthentication'] = $False
-
-            
-            $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
-            $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
-            $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
-            $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
-
-            if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
-              $sqlCredential = $null
-              try {
-                [string]$apiToken = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri http://169.254.169.254/latest/api/token
-                $ec2InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $apiToken} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
-                $sqlCredential = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json).sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
-              } catch {
-                $responseObject['failureInfo'] += $_
-              }
-
+            try {
+              $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
               if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                try {
                   $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
                   $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
                   if ($? -eq $False) {
                     $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
+                    }
                   }
-                } catch {
+                }
+                catch {
                   $responseObject['failureInfo'] += $_
                 }
-              }
             }
-          }
           
           if ($editionDBCountMachineInfoGuid) {
             $responseObject['sqlServerEdition'] = $editionDBCountMachineInfoGuid[0]
@@ -439,7 +458,13 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
       Echo $responseObject
     }
-    Echo $instancesInfoList | ConvertTo-Json
+    $response = $instancesInfoList | ConvertTo-Json
+    if([string]::IsNullOrEmpty($response)) {
+      Write-Information "Failed to compress the response because the response is either null or empty. $response"
+      return $response
+    }
+    ${compressResponse}
+    return (Deflate-String $response)
   } catch {
     # Prevent any possible errors from clobbering JSON output
     $responseObject['failureInfo'] += "Exception: $_\`n"
@@ -480,6 +505,7 @@ const CLUSTER_NETWORK_IP_INFO_PS1 = [
 // For now, we copy only the scripts that are needed to create a database.
 const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
     `
+    $ProgressPreference = 'SilentlyContinue'
     $ErrorActionPreference = "Stop"
     $responseObject = @{}
     $scriptStartTime = Get-Date
@@ -558,8 +584,9 @@ const GET_MISSING_RESOURCE_DETAILS = [
 `
 ];
 
-const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string) => [
+const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL: string) => [
     `
+  $ProgressPreference = 'SilentlyContinue'
   Set-Variable -Option Constant -Name MODULE_INSTALL_STATE_FILE -Value 'NtapPsModuleInstallInProgressFile'
   Set-Variable -Option Constant -Name NTAP_WF_MODULE_INSTALL_JOB -Value 'NtapWfModuleInstallJob'
   
@@ -570,24 +597,67 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string) => [
 
   try {
     $requiredModuleList = @(${requiredModules})
+    $s3SignedUrl = '${s3SignedURL}'
     $availableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
     $unavailableModuleList = $requiredModuleList | ? { $_ -NotIn $availableModuleList}
 
     If ($unavailableModuleList.Count -gt 0) {
-      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-     
-      If (-Not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
-        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-      }
-      
-      If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
-        If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
-          throw "Failed to install NuGet package provider. "
-        }
-      }
 
-      ForEach ($moduleName in $unavailableModuleList) {
-          Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+      #Check if private network
+      $isprivatesubnet = $True
+      try {
+        $connection =  Invoke-WebRequest www.powershellgallery.com -UseBasicParsing 
+        if($connection.StatusCode -ne "200") {
+          $isprivatesubnet = $True}
+        else {
+          $isprivatesubnet = $False} 
+      } catch {
+       $isprivatesubnet = $True
+       }
+      $responseObject['isprivatesubnet'] =  $isprivatesubnet
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+      If($isprivatesubnet -eq $False){
+     
+          If (-Not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          }
+          
+          If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
+            If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+              throw "Failed to install NuGet package provider. "
+            }
+          }
+
+          ForEach ($moduleName in $unavailableModuleList) {
+              Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+          }
+      }Else{
+          $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\dependent-packages.zip"
+          $Null = Expand-Archive -Path "$Env:Temp\\dependent-packages.zip" -DestinationPath $Env:Temp -Force
+          Unblock-File -Path "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
+          $destinationPath = "C:\\Program Files\\PackageManagement\\ProviderAssemblies"
+          $destinationPathExists = Test-Path -Path $destinationPath
+          if ($destinationPathExists -eq $False) {
+              New-Item -ItemType Directory -Path $destinationPath -Force
+          }
+
+          Copy-Item "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
+
+          $sourcelocation = "$Env:Temp\\dependent-packages\\aws"
+          Import-PackageProvider -Name NuGet
+          try {
+              Unregister-PSRepository -Name 'AWS'
+          }
+          catch {}
+          Register-PSRepository -Name 'AWS' -SourceLocation $sourcelocation -InstallationPolicy Trusted
+          ForEach ($moduleName in $unavailableModuleList) {
+              Install-Module -Name $moduleName -Repository 'AWS' -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+          } 
+          try{
+          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages" -Force -Recurse}catch{}
+          try{
+          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages.zip" -Force -Recurse}catch{}
       }
     }
   } catch {

@@ -5,7 +5,8 @@ param(
 )
 Import-Module -name AWSPowerShell
 try {
-  . ..\InvokeRetryCommand.ps1
+  $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+  . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
   Start-Transcript -Path C:\cfn\log\updatesecuritygroup.ps1.txt -Append
   #Update Security Group for Cluster communication
   $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"

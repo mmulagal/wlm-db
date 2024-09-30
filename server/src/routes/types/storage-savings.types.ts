@@ -34,28 +34,48 @@ const ManualModeInstances = Type.Array(
         ec2InstanceDescription: Type.String(),
         ec2InstanceType: Type.String(),
         isPrimary: Type.Boolean(),
-        volumes: Type.Array(
+        volumes: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    volumeType: Type.String(Type.String({ enum: ['gp2', 'gp3', 'io1', 'io2', 'st1'] })),
+                    volumeNumber: Type.Number({
+                        minimum: 1
+                    }),
+                    storageAmount: Type.Number({
+                        minimum: 1024 * 1024 * 1024, // 1 GB
+                        maximum: 16 * 1024 * 1024 * 1024 * 1024 // 16 TB
+                    }),
+                    volumeIops: Type.Optional(
+                        Type.Number({
+                            minimum: 100,
+                            maximum: 256000 // io2 supportes upto 256000 IOPS
+                        })
+                    ),
+                    throughput: Type.Optional(
+                        Type.Number({
+                            minimum: 125,
+                            maximum: 1000
+                        })
+                    )
+                })
+            )
+        ),
+        fsxw: Type.Optional(
             Type.Object({
-                volumeType: Type.String(Type.String({ enum: ['gp2', 'gp3', 'io1', 'io2', 'st1'] })),
-                volumeNumber: Type.Number({
-                    minimum: 1
-                }),
+                deploymentType: Type.String({ enum: ['Single', 'Multi'] }),
+                storageVolumeType: Type.String({ enum: ['SSD', 'HDD'] }),
                 storageAmount: Type.Number({
                     minimum: 1024 * 1024 * 1024, // 1 GB
-                    maximum: 16 * 1024 * 1024 * 1024 * 1024 // 16 TB
+                    maximum: 64 * 1024 * 1024 * 1024 * 1024 // 64 TB
                 }),
-                volumeIops: Type.Optional(
-                    Type.Number({
-                        minimum: 100,
-                        maximum: 256000 // io2 supportes upto 256000 IOPS
-                    })
-                ),
-                throughput: Type.Optional(
-                    Type.Number({
-                        minimum: 125,
-                        maximum: 1000
-                    })
-                )
+                volumeIops: Type.Number({
+                    minimum: 96,
+                    maximum: 400000
+                }),
+                throughput: Type.Number({
+                    minimum: 8,
+                    maximum: 12288
+                })
             })
         )
     })
@@ -154,7 +174,8 @@ const fsxCalculationData = Type.Object({
 const StorageSavingsResponse = Type.Object({
     compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
     license: Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense }),
-    ebs: StorageMetrics,
+    ebs: Type.Optional(StorageMetrics),
+    fsxw: Type.Optional(StorageMetrics),
     fsx: StorageMetrics,
     totalSummary: Type.Object({
         existing: Type.Number(),
@@ -307,6 +328,82 @@ const FsxCloneCalculation = Type.Object({
     totalCloneMonthlyCost: Type.Number()
 });
 
+const FsxwCalculationResp = Type.Object({
+    storageSavings: Type.Number(),
+    provisionedStorageCapacity: Type.Number(),
+    desiredStorageCapacity: Type.Number(),
+    deduplicationSavings: Type.Number(),
+    monthlyCostForStorageCapacity: Type.Number(),
+    totalDefaultProvisionedIops: Type.Number(),
+    additionalUserProvisionedIops: Type.Number(),
+    billedIops: Type.Number(),
+    totalMonthlyCostForProvisionedSsdIops: Type.Number(),
+    fsxwIopsPrice: Type.Number(),
+    numberOfFileSystemsRequiredForStorageCapacity: Type.Number(),
+    numberOfFileSystemsRequiredForThroughputCapacity: Type.Number(),
+    fsxwMaxThroughput: Type.Number(),
+    requiredFractionalFileSystems: Type.Number(),
+    requiredFileSystems: Type.Number(),
+    minThroughputCapacityRequired: Type.Number(),
+    provisionedThroughputCapacity: Type.Number(),
+    totalMonthlyCostForThroughputCapacity: Type.Number(),
+    totalMonthlyCost: Type.Number(),
+    fsxwSsdPrice: Type.Object({
+        price: Type.Number(),
+        unit: Type.String()
+    }),
+    fsxwMaxCapacity: Type.Number(),
+    throughput: Type.Number(),
+    fsxwMinThroughput: Type.Number(),
+    fsxwThroughputPrice: Type.Number()
+});
+
+const FsxwSnapshotCalculationResp = Type.Object({
+    desiredSnapshotStorageCapacity: Type.Number(),
+    storageSavingSnapshot: Type.Number(),
+    provisionedStorageCapacityForFsxwSnapshot: Type.Number(),
+    monthlyCostForFsxwSnapshotStorageCapacity: Type.Number(),
+    totalMonthlyCostForFsxwSnapshotStorageCapacity: Type.Number()
+});
+
+const FsxwCloneCalculationResp = Type.Object({
+    clonedCopiesCount: Type.Number(),
+    capacity: Type.Number(),
+    iops: Type.Number(),
+    throughput: Type.Number(),
+    totalCloneMonthlyCost: Type.Number()
+});
+
+const FsxCalculationResp = Type.Object({
+    fsxOntapCalculation: Type.Optional(FsxOntapCalculation),
+    fsxOntapSnapshotCalculation: Type.Optional(FsxOntapSnapshotCalculation),
+    fsxCloneCalculation: Type.Optional(FsxCloneCalculation)
+});
+
+const EBSCostCalculationResp = Type.Object({
+    gp2: Type.Optional(EbsCostCalculation),
+    gp3: Type.Optional(EbsCostCalculation),
+    io1: Type.Optional(EbsCostCalculation),
+    io2: Type.Optional(EbsCostCalculation),
+    st1: Type.Optional(EbsCostCalculation)
+});
+
+const EBSCloneCostCalculationResp = Type.Object({
+    gp2: Type.Optional(EbsCloneCalculation),
+    gp3: Type.Optional(EbsCloneCalculation),
+    io1: Type.Optional(EbsCloneCalculation),
+    io2: Type.Optional(EbsCloneCalculation),
+    st1: Type.Optional(EbsCloneCalculation)
+});
+
+const EBSSnapshotCalculationResp = Type.Object({
+    gp2: Type.Optional(EbsSnapshotCalculation),
+    gp3: Type.Optional(EbsSnapshotCalculation),
+    io1: Type.Optional(EbsSnapshotCalculation),
+    io2: Type.Optional(EbsSnapshotCalculation),
+    st1: Type.Optional(EbsSnapshotCalculation)
+});
+
 const StorageSavingsCalculationsMetricsResponse = Type.Object({
     recommendedComputeCalculation: ComputeCalculationObject,
     recommendedLicenseCalculation: LicenseCalculationObject,
@@ -318,41 +415,26 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
     // )),
     // ebsCloneCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsCloneCalculation)),
     // ebsSnapshotCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsSnapshotCalculation)),
-    ebsCalculation: Type.Object({
-        gp2: Type.Optional(EbsCostCalculation),
-        gp3: Type.Optional(EbsCostCalculation),
-        io1: Type.Optional(EbsCostCalculation),
-        io2: Type.Optional(EbsCostCalculation),
-        st1: Type.Optional(EbsCostCalculation)
-    }),
-    ebsCloneCalculation: Type.Object({
-        gp2: Type.Optional(EbsCloneCalculation),
-        gp3: Type.Optional(EbsCloneCalculation),
-        io1: Type.Optional(EbsCloneCalculation),
-        io2: Type.Optional(EbsCloneCalculation),
-        st1: Type.Optional(EbsCloneCalculation)
-    }),
-    ebsSnapshotCalculation: Type.Object({
-        gp2: Type.Optional(EbsSnapshotCalculation),
-        gp3: Type.Optional(EbsSnapshotCalculation),
-        io1: Type.Optional(EbsSnapshotCalculation),
-        io2: Type.Optional(EbsSnapshotCalculation),
-        st1: Type.Optional(EbsSnapshotCalculation)
-    }),
-    single: Type.Optional(
-        Type.Object({
-            fsxOntapCalculation: Type.Optional(FsxOntapCalculation),
-            fsxOntapSnapshotCalculation: Type.Optional(FsxOntapSnapshotCalculation),
-            fsxCloneCalculation: Type.Optional(FsxCloneCalculation)
-        })
-    ),
-    multi: Type.Optional(
-        Type.Object({
-            fsxOntapCalculation: Type.Optional(FsxOntapCalculation),
-            fsxOntapSnapshotCalculation: Type.Optional(FsxOntapSnapshotCalculation),
-            fsxCloneCalculation: Type.Optional(FsxCloneCalculation)
-        })
-    )
+    ebsCalculation: Type.Optional(EBSCostCalculationResp),
+    ebsCloneCalculation: Type.Optional(EBSCloneCostCalculationResp),
+    ebsSnapshotCalculation: Type.Optional(EBSSnapshotCalculationResp),
+    single: Type.Optional(FsxCalculationResp),
+    multi: Type.Optional(FsxCalculationResp),
+    fsxwCalculation: Type.Optional(FsxwCalculationResp),
+    fsxwSnapshotCalculation: Type.Optional(FsxwSnapshotCalculationResp),
+    fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp)
+});
+
+const StorageSavingsCalculationsMetrics = Type.Object({
+    ebs: Type.Optional(StorageMetrics),
+    ebsCalculation: Type.Optional(EBSCostCalculationResp),
+    ebsCloneCalculation: Type.Optional(EBSCloneCostCalculationResp),
+    ebsSnapshotCalculation: Type.Optional(EBSSnapshotCalculationResp),
+    single: Type.Optional(FsxCalculationResp),
+    multi: Type.Optional(FsxCalculationResp),
+    fsxwCalculation: Type.Optional(FsxwCalculationResp),
+    fsxwSnapshotCalculation: Type.Optional(FsxwSnapshotCalculationResp),
+    fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp)
 });
 
 type EbsCloneCalculationType = Static<typeof EbsCloneCalculation>;
@@ -407,9 +489,20 @@ const ComputeLicenseCost = Type.Object({
 type ComputeLicenseCostType = Static<typeof ComputeLicenseCost>;
 
 type StorageSavingsMetricsCalculationsResponseType = Static<typeof StorageSavingsCalculationsMetricsResponse>;
+type StorageSavingsCalculationsMetricsType = Static<typeof StorageSavingsCalculationsMetrics>;
 
 type ComputeDetailsType = Static<typeof ComputeDetails>;
 type LicenseDetailsType = Static<typeof LicenseDetails>;
+
+type FsxwCalculationRespType = Static<typeof FsxwCalculationResp>;
+type FsxwSnapshotCalculationRespType = Static<typeof FsxwSnapshotCalculationResp>;
+type FsxwCloneCalculationRespType = Static<typeof FsxwCloneCalculationResp>;
+
+type FsxCalculationRespType = Static<typeof FsxCalculationResp>;
+type EBSCostCalculationRespType = Static<typeof EBSCostCalculationResp>;
+type EBSCloneCostCalculationRespType = Static<typeof EBSCloneCostCalculationResp>;
+type EBSSnapshotCalculationRespType = Static<typeof EBSSnapshotCalculationResp>;
+
 export {
     EbsCostCalculationType,
     EbsCloneCalculationType,
@@ -427,5 +520,13 @@ export {
     StorageSavingsMetricsCalculationsResponseType,
     ComputeLicenseCostType,
     ComputeDetailsType,
-    LicenseDetailsType
+    LicenseDetailsType,
+    FsxwCalculationRespType,
+    FsxwSnapshotCalculationRespType,
+    FsxwCloneCalculationRespType,
+    FsxCalculationRespType,
+    EBSCostCalculationRespType,
+    EBSCloneCostCalculationRespType,
+    EBSSnapshotCalculationRespType,
+    StorageSavingsCalculationsMetricsType
 };

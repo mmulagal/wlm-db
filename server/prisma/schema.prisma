@@ -132,6 +132,7 @@ model database_instances {
   storage_protocol                  String?           @db.VarChar(30)
   fsx_svm_id                        Json     
   metadata                          Json?             @default("{}")
+  database_instance_config_data                  database_instance_config_data[]
 
   resource resource @relation(fields: [account_id, credentials_id, region, resource_id], references: [account_id, credentials_id, region, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_region_resource_id")
 
@@ -140,6 +141,41 @@ model database_instances {
   @@index([credentials_id], map: "k_wlmdb_database_instances_credentials_id")
   @@index([resource_id], map: "k_wlmdb_database_instances_resource_id")
   @@index([database_instance_name], map: "k_wlmdb_database_instances_database_instance_name")
+}
+
+model tracked_ec2 {
+  id                        String   @id @default(uuid()) @db.VarChar(40)
+  instance_id               String   @db.VarChar(30)
+  account_id                String   @db.VarChar(30)
+  credentials_id            String   @db.VarChar(80)
+  region                    String   @db.VarChar(30)
+  feature                   String   @db.VarChar(255)
+  cloud_provider_account_id String  @db.VarChar(80)
+  last_updated              DateTime @default(now())
+
+  @@unique([instance_id, credentials_id, account_id], name: "uk_wlmdb_tracked_ec2", map: "uk_wlmdb_tracked_ec2")
+  @@index([instance_id], map: "k_wlmdb_tracked_ec2_instance_id")
+  @@index([account_id], name: "k_wlmdb_tracked_ec2_account_id")
+}
+
+model database_instance_config_data{
+  id                        String   @id @default(uuid()) @db.VarChar(40)
+  account_id                String   @db.VarChar(30)
+  credentials_id            String   @db.VarChar(80)
+  region                    String   @db.VarChar(30)
+  resource_id               String   @db.VarChar(255)
+  database_instance_id      String   @db.VarChar(36)
+  creation_time                 DateTime @default(now())
+  last_updated              DateTime @default(now())
+  config_data                 Json?    @default("{}")
+  config_data_type            String   @db.VarChar(255)@default("CONFIG")
+
+  database_instances database_instances @relation(fields: [account_id, credentials_id, resource_id, database_instance_id], references: [account_id, credentials_id, resource_id, database_instance_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_database_instances_unique_criteria")
+
+  @@unique([account_id, credentials_id, region, database_instance_id, creation_time, config_data_type], name: "uk_wlmdb_database_instance_config_data", map: "uk_wlmdb_database_instance_config_data")
+  @@index([account_id], name: "k_wlmdb_database_instance_config_data_account_id")
+  @@index([credentials_id], map: "k_wlmdb_database_instance_config_data_credentials_id")
+  @@index([resource_id], map: "k_wlmdb_database_instance_config_data_resource_id")
 }
 
 enum JOBSTATUS {

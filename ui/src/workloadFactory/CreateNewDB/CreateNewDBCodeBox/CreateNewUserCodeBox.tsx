@@ -21,6 +21,7 @@ const CreateNewUserCodeBox = () => {
     const resourceId = useAppSelector(state => state.auth.resourceId);
     const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
     const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const createNewUser = useAppSelector(state => state.createNewUser);
 
@@ -61,7 +62,8 @@ const CreateNewUserCodeBox = () => {
                 selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
                 resourceId || CRED_PLACEHOLDERS.DATABASE_HOST_ID,
                 CRED_PLACEHOLDERS.TOKEN,
-                JSON.stringify(payload, null, 2)
+                JSON.stringify(payload, null, 2),
+                isWorkloadFactory
             );
             return restApiPayload;
         } else {

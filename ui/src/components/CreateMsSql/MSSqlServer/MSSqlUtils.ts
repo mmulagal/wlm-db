@@ -68,7 +68,8 @@ export const selectDefaultLicense = (amiData: any, dispatch: any) => {
         const data = {
             architecture: firstAmi?.architecture,
             amiVal: firstAmi?.imageId,
-            amiName: firstAmi?.name
+            amiName: firstAmi?.name,
+            ebsVolumeSize: firstAmi?.ebsVolumeSize
         };
         const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
         dispatch(setSelectedLicenseType(FORM_OPTIONS.LICENSE_AMI));

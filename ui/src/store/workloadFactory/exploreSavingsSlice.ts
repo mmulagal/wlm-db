@@ -112,13 +112,15 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     },
     recommendedTargetInstance: '',
     requestedPayload: {},
+    requestedRegion: '',
     disableState: false,
     selectedManualDeploymentType: null,
     selectedManualStorageType: null,
     manualStorageCapacity: 2,
     selectedManualStorageCapacityUnit: null,
     selectedManualFSXIOPS: 6000,
-    selectedManualFSXThroughput: 128
+    selectedManualFSXThroughput: 128,
+    snapshotLoading: false
 };
 
 const exploreSavingsSlice = createSlice({
@@ -147,6 +149,9 @@ const exploreSavingsSlice = createSlice({
             state.disableState = action.payload;
         },
         setRequestedPayload: (state, action: PayloadAction<any>) => {
+            state.requestedPayload = action.payload;
+        },
+        setRequestedRegion: (state, action: PayloadAction<any>) => {
             state.requestedPayload = action.payload;
         },
         setVolumeFilledStatus: (state, action: PayloadAction<any>) => {
@@ -364,6 +369,11 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualRegion = null;
             state.selectedManualDeploymentModel = null;
             state.selectedManualServerEdition = null;
+            state.getManualInstanceTypeList = {
+                instanceTypeData: {},
+                instanceTypeLoading: false,
+                instanceTypeError: null
+            };
             state.selectedManualInstanceType = null;
             state.selectedSecondaryManualInstanceType = null;
             state.monthlyBYOLCost = '';
@@ -389,11 +399,15 @@ const exploreSavingsSlice = createSlice({
         },
         setRecommendedTargetInstance(state, action: PayloadAction<any>) {
             state.recommendedTargetInstance = action.payload;
+        },
+        setSnapshotLoading(state, action: PayloadAction<any>) {
+            state.snapshotLoading = action.payload;
         }
     }
 });
 
 export const {
+    setRequestedRegion,
     addManualRegionsList,
     setManualRegionsLoading,
     setSelectedManualFSXIOPS,
@@ -442,7 +456,8 @@ export const {
     setViewCalculationsApiResponse,
     setViewCalculationsLoading,
     setSavingsCalculatorFrom,
-    setRecommendedTargetInstance
+    setRecommendedTargetInstance,
+    setSnapshotLoading
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

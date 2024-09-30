@@ -41,6 +41,7 @@ export interface InventoryTableData {
     totalInstance?: number;
     managedInstance?: number;
     serverInstallationMode?: string;
+    serverAllInstallationMode?: Array<string>;
     vpcId?: string;
     vpcName?: string;
     vpcCidr?: string;
@@ -393,6 +394,7 @@ export interface DiscoveredStorageObj {
     id?: string | undefined;
     svmId?: string;
     protocol?: string;
+    fileSystemStorageType?: string;
 }
 
 export interface StatusObjInterface {

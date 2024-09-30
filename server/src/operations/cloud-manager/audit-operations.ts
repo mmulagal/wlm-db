@@ -3,7 +3,16 @@ import { cloneDeep } from 'lodash-es';
 import randomize from 'randomatic';
 import getLogger from '../../utils/logger';
 import { getSubjectFromBearerToken, hideSecretsValues } from '../../utils/utils';
-import { AUDIT_GROUP, HTTP_DELETE, HTTP_POST, HTTP_PUT, REQUEST_ID, VERSION, WLMDB } from '../../utils/consts';
+import {
+    AUDIT_GROUP,
+    HTTP_DELETE,
+    HTTP_PATCH,
+    HTTP_POST,
+    HTTP_PUT,
+    REQUEST_ID,
+    TIMELINE_SERVICE_NAME,
+    VERSION
+} from '../../utils/consts';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import sendAudit from '../../lib/cloud-manager/audit';
 import validateSchema from '../../utils/schema-validation';
@@ -44,6 +53,8 @@ type HTTP_DELETE = typeof HTTP_DELETE;
 
 type RequestTypes = `${HTTP_POST | HTTP_PUT | HTTP_DELETE}`;
 
+const methods = [HTTP_POST, HTTP_PUT, HTTP_PATCH, HTTP_DELETE];
+
 type AUDIT_PENDING = typeof AUDIT_PENDING_STATUS;
 type AUDIT_SUCCESS = typeof AUDIT_SUCCESS_STATUS;
 type AUDIT_FAILED_ = typeof AUDIT_FAILED_STATUS;
@@ -55,7 +66,7 @@ function extractAuditHeaders(headers: RequestHeaders) {
     const { host, authorization } = headers;
     return {
         host,
-        referer: WLMDB,
+        referer: TIMELINE_SERVICE_NAME,
         authorization,
         userAgent: headers['user-agent'],
         workspaceId: headers['x-workspace-id']
@@ -72,7 +83,7 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
         body
     } = request;
 
-    if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(method as string)) {
+    if (methods.includes(method as string)) {
         const auditHeaders = extractAuditHeaders(headers as RequestHeaders);
 
         const actionParameters = {
@@ -99,8 +110,8 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
                 : schema?.description || 'internal',
             status: AUDIT_PENDING_STATUS,
             requestId: request.id,
-            serviceName: WLMDB,
-            referrer: url as string,
+            serviceName: TIMELINE_SERVICE_NAME,
+            referrer: url && url.length < 180 ? (url as string) : (url?.substring(0, 180) as string), // Here audit service has a limit of 191 characters for referrer
             version: VERSION,
             requestData: secureActionParameters,
             principalId: getSubjectFromBearerToken() as string
@@ -115,7 +126,7 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
 
 async function updateAuditGroupResponse(request: FastifyRequest, payload?: any) {
     logger.debug('Updating audit group response');
-    if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(request.raw.method as string)) {
+    if (methods.includes(request.raw.method as string)) {
         const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
         try {
             auditGroup.responseData = payload;
@@ -127,10 +138,11 @@ async function updateAuditGroupResponse(request: FastifyRequest, payload?: any) 
         }
     }
 }
+
 async function updateAuditGroup(request: FastifyRequest, reply: FastifyReply, payload?: any) {
     logger.debug('Updating audit group');
 
-    if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(request.raw.method as string)) {
+    if (methods.includes(request.raw.method as string)) {
         const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
 
         try {
@@ -169,7 +181,7 @@ async function createAuditRecord(
 ) {
     logger.debug('Sending audit record');
 
-    if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(requestType)) {
+    if (methods.includes(requestType)) {
         const clonedData = cloneDeep(actionParameters);
         const secureActionParameters = JSON.stringify(hideSecretsValues(clonedData));
 
@@ -179,7 +191,7 @@ async function createAuditRecord(
             status,
             recordId: parseInt(randomize('0', 2), 10),
             requestId: getAsyncLocalStorageResource(REQUEST_ID) || 'system',
-            serviceName: WLMDB,
+            serviceName: TIMELINE_SERVICE_NAME,
             data: secureActionParameters
         };
 
@@ -192,4 +204,33 @@ async function createAuditRecord(
     }
 }
 
-export { createAuditGroup, updateAuditGroupResponse, updateAuditGroup, createAuditRecord };
+async function updateLongRunningAuditGroup(
+    status?: AUDIT_STATUS,
+    message?: string,
+    resourceId?: string,
+    responseData?: any
+) {
+    logger.info('Updating long running audit group:', {
+        status,
+        message,
+        resourceId,
+        responseData
+    });
+
+    const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
+
+    if (auditGroup) {
+        logger.info('Updating long running audit group:', auditGroup);
+        auditGroup.status = status || auditGroup.status;
+        auditGroup.resourceId = resourceId || auditGroup.resourceId;
+        auditGroup.responseData = responseData ? JSON.stringify(responseData) : auditGroup.responseData;
+
+        if (status === AUDIT_FAILED_STATUS && message) {
+            auditGroup.errors = [message];
+        }
+
+        sendAudit({ json: { auditGroup } });
+    }
+}
+
+export { createAuditGroup, updateAuditGroupResponse, updateAuditGroup, createAuditRecord, updateLongRunningAuditGroup };

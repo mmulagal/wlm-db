@@ -1,6 +1,6 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
-import { setFsxCredentialStatus } from '../../store/workloadFactory/inventoryV2Slice';
+import { setFsxCredentialStatus, setUnManagedPerfInstanceIdsList } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
@@ -27,7 +27,12 @@ import {
     SQLServerInstancesDiscovered,
     StatusObjInterface
 } from '../../utils/types/inventoryV2Types';
-import { formatFractionalNumber, formatSizeOnePrecision, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    formatSizeOnePrecision,
+    formatSizeTwoPrecision,
+    getAzType
+} from '../../utils/utilityFunctions';
 
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
@@ -81,6 +86,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
     let totalInstanceCount = managedRow?.databaseInstanceDetails?.length || 0;
     let ssmState = getSsmState(managedRow);
     let allocatedCapacity = getAllocatedCapacity(managedRow);
+
     const result = {
         id: managedRow?.id,
         ec2InstanceId: managedRow?.nodeTopology?.ec2Details?.[0]?.id,
@@ -92,6 +98,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         totalInstance: totalInstanceCount,
         managedInstance: managedInstanceCount,
         serverInstallationMode: getInstallationMode(managedRow),
+        serverAllInstallationMode: getAllInstallationMode(managedRow),
         vpcId: managedRow?.nodeTopology?.vpcId,
         vpcName: managedRow?.nodeTopology?.vpcName,
         vpcCidr: managedRow?.nodeTopology?.vpcCidr,
@@ -109,6 +116,20 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         sqlServerInstances: formatInstanceData(managedRow)
     };
     return result;
+};
+
+export const getInstanceStatusForMixedCase = (managedHostRow: any) => {
+    let state = store.getState();
+    const discoveredHostData = state?.inventoryV2?.discoveredHosts?.discoveredHostData;
+    const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id;
+    if (ec2Id && discoveredHostData) {
+        let selectedEc2 = discoveredHostData?.filter((perHost: any) => perHost?.ec2InstanceId === ec2Id);
+        if (selectedEc2 && selectedEc2?.length > 0) {
+            let ssmState = getDiscoverSsmState(selectedEc2[0]);
+            return getDiscoveredPerInstanceStatus(selectedEc2[0], ssmState);
+        }
+    }
+    return [];
 };
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
@@ -171,6 +192,35 @@ export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) =
     }
 };
 
+export const getAllInstallationMode = (row: ManagedHostsRowInterface | undefined) => {
+    let installationMode: Array<string> = [];
+    if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
+        for (let i = 0; i < row?.databaseInstancesSummary?.length; i++) {
+            const val = row?.databaseInstancesSummary[i];
+            let perInstallationMode = '';
+            if (val?.sqlServerDeploymentType) {
+                perInstallationMode = val?.sqlServerDeploymentType;
+            } else if (val?.databaseInstanceTopology?.serverInstallationMode) {
+                perInstallationMode = val?.databaseInstanceTopology?.serverInstallationMode;
+            }
+
+            if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+                perInstallationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+            } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+                perInstallationMode = GENERAL.AOAG;
+            } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                perInstallationMode = GENERAL.STANDALONE;
+            }
+            if (!installationMode.includes(perInstallationMode)) {
+                installationMode.push(perInstallationMode);
+            }
+        }
+        return installationMode;
+    } else {
+        return '';
+    }
+};
+
 export const getTotalCost = (estimatedUsageCost: EstimatedUsageCostInterface) => {
     if (estimatedUsageCost) {
         return (
@@ -187,26 +237,35 @@ export const getTotalCost = (estimatedUsageCost: EstimatedUsageCostInterface) =>
 };
 
 export const getAllocatedCapacity = (row: ManagedHostsRowInterface | undefined) => {
-    let allocatedCapacity = 0;
-    if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
-        row?.databaseInstancesSummary?.map(perRow => {
-            allocatedCapacity +=
-                (perRow?.storage?.fsxn?.size || 0) +
-                (perRow?.storage?.fsxw?.size || 0) +
-                (perRow?.storage?.ebs?.size || 0);
-        });
-        return allocatedCapacity;
-    } else {
-        return 0;
-    }
-};
+    let fsxnCapacity = 0;
+    let fsxwCapacity = 0;
+    let ebsCapacity = 0;
+    let uniqueFsxnId: Array<String> = [];
+    let uniqueFsxwId: Array<String> = [];
+    let uniqueVolId: Array<String> = [];
+    row?.fsxnResourceInfo?.map((perFsx: any) => {
+        if (!uniqueFsxnId.includes(perFsx?.id)) {
+            fsxnCapacity += perFsx?.size || 0;
+            uniqueFsxnId.push(perFsx?.id);
+        }
+    });
 
-export const getFileSystemDeploymentMode = (val: string | undefined) => {
-    return val === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-        ? GENERAL.SINGLE_AZ
-        : val === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-        ? GENERAL.MULTI_AZ
-        : val;
+    row?.fsxwResourceInfo?.map((perFsxw: any) => {
+        if (!uniqueFsxwId.includes(perFsxw?.id)) {
+            fsxwCapacity += perFsxw?.size || 0;
+            uniqueFsxwId.push(perFsxw?.id);
+        }
+    });
+
+    row?.ebsResourceInfo?.map((perVol: any) => {
+        if (perVol?.id && !perVol?.id?.toLowerCase().includes('root_volume') && !uniqueVolId.includes(perVol?.id)) {
+            ebsCapacity += perVol?.size || 0;
+            uniqueVolId.push(perVol?.id);
+        }
+    });
+
+    let allocatedCapacity = fsxnCapacity + fsxwCapacity + ebsCapacity;
+    return allocatedCapacity;
 };
 
 export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) => {
@@ -244,18 +303,31 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
 };
 
 export const formatInstanceData = (row: ManagedHostsRowInterface) => {
+    const isAllManaged = row?.databaseInstanceDetails?.every(perRow => {
+        return perRow?.isManaged ? true : false;
+    });
+
+    let nonManagedStatus: any = [];
+    if (!isAllManaged) {
+        nonManagedStatus = getInstanceStatusForMixedCase(row);
+        // to call data for mixed case. use in statusColText for unmanaged case
+    }
+
     let instanceRows;
     if (row?.databaseInstanceDetails) {
         instanceRows = row?.databaseInstanceDetails?.map(perRow => {
             const isManagedRow = row?.databaseInstanceDetails?.filter(
                 per => per?.instanceName === perRow?.instanceName
             );
+            const statusObj = nonManagedStatus?.filter((per: StatusObjInterface) => per?.name === perRow?.instanceName);
             return {
                 ...perRow,
                 databaseInstanceId: perRow?.databaseInstanceId,
                 databaseInstanceName: perRow?.instanceName,
                 status: perRow?.instanceState,
-                statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED
+                statusColText: isManagedRow?.[0]?.isManaged
+                    ? INVENTORY_STATUS.MANAGED
+                    : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED
             };
         });
     }
@@ -266,6 +338,9 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             );
             const isManagedRow = row?.databaseInstanceDetails?.filter(
                 per => per?.instanceName === perRow?.databaseInstanceName
+            );
+            const statusObj = nonManagedStatus?.filter(
+                (per: StatusObjInterface) => per?.name === perRow?.databaseInstanceName
             );
             const allocatedCapacity =
                 (perRow?.storage?.fsxn?.size || 0) +
@@ -278,10 +353,10 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     databaseInstanceName: instRow?.databaseInstanceName,
                     status: perRow?.status,
                     databaseCount: perRow?.databaseCount,
-                    statusColText: isManagedRow?.[0]?.isManaged ? INVENTORY_STATUS.MANAGED : INVENTORY_STATUS.UNMANAGED,
-                    fileSystemDeploymentMode: getFileSystemDeploymentMode(
-                        perRow?.databaseInstanceTopology?.fileSystemDeploymentMode
-                    ),
+                    statusColText: isManagedRow?.[0]?.isManaged
+                        ? INVENTORY_STATUS.MANAGED
+                        : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED,
+                    fileSystemDeploymentMode: getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
                     fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType,
                     protection: perRow?.protection,
                     performance: perRow?.performance,
@@ -537,6 +612,7 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         totalInstance: totalInstanceCount,
         managedInstance: 0,
         serverInstallationMode: installationMode,
+        serverAllInstallationMode: getAllDiscoverInstallationMode(discoveredRow),
         vpcId: discoveredRow?.vpc?.id,
         vpcName: discoveredRow?.vpc?.name,
         vpcCidr: discoveredRow?.vpc?.cidrBlock,
@@ -600,6 +676,29 @@ export const getDiscoverInstallationMode = (row: DiscoverHostInterface) => {
         return installationMode;
     } else {
         return '';
+    }
+};
+
+export const getAllDiscoverInstallationMode = (row: DiscoverHostInterface) => {
+    let installationMode: Array<string> = [];
+    if (row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
+        for (let i = 0; i < row?.sqlServerInstances?.length; i++) {
+            const val = row?.sqlServerInstances[i];
+            let perInstallationMode = val?.sqlServerDeploymentType?.toLowerCase();
+            if (perInstallationMode === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+                perInstallationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+            } else if (perInstallationMode === SQL_DEPLOYMENT_MODE.AOAG) {
+                perInstallationMode = GENERAL.AOAG;
+            } else if (perInstallationMode === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                perInstallationMode = GENERAL.STANDALONE;
+            }
+            if (perInstallationMode && !installationMode.includes(perInstallationMode)) {
+                installationMode.push(perInstallationMode);
+            }
+        }
+        return installationMode;
+    } else {
+        return [];
     }
 };
 
@@ -728,7 +827,7 @@ export const getDiscoveredActions = (row: Array<StatusObjInterface>, installatio
     });
     if (!isFsxn && isStorage) {
         action = INVENTORY_ACTIONS.EXPLORE_SAVINGS;
-        actionDisable = isEbs ? (undetected?.length > 0 && unmanaged?.length === 0 ? true : false) : true;
+        actionDisable = undetected?.length > 0 && unmanaged?.length === 0 ? true : false;
     } else {
         action = INVENTORY_ACTIONS.MANAGE;
         if ((undetected?.length > 0 && unmanaged?.length > 0) || (undetected?.length === 0 && unmanaged?.length > 0)) {
@@ -790,7 +889,7 @@ export const formatDiscoverInstanceData = (
             // databaseCount: 0,
             databaseCount: perRow?.databaseCount,
             statusColText: statusObj ? statusObj?.[0]?.status : INVENTORY_STATUS.UNDETECTED,
-            fileSystemDeploymentMode: getFileSystemDeploymentMode(perRow?.deploymentTypes?.[0]?.type || ''),
+            fileSystemDeploymentMode: getAzType(perRow?.deploymentTypes?.[0]?.type || ''),
             fileSystemType: getDiscoverFileSystemType(perRow),
             storage: perRow?.storage,
             fsxId: statusObj?.[0]?.fsxId,
@@ -960,7 +1059,14 @@ export const updateInventoryDatawithInstancesRes = (
             serverInstallationMode: !inventoryRow?.serverInstallationMode
                 ? getInstallationMode(instanceRow?.data)
                 : inventoryRow?.serverInstallationMode,
-            sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow)
+            serverAllInstallationMode: !inventoryRow?.serverAllInstallationMode
+                ? getAllInstallationMode(instanceRow?.data)
+                : inventoryRow?.serverAllInstallationMode,
+            sqlServerInstances: updateSqlServerInstancesForUnmanaged(
+                instanceRow?.data,
+                inventoryRow,
+                instanceRow?.isManagedHost
+            )
         };
         if (instanceRow) {
             const allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data]);
@@ -1027,7 +1133,11 @@ export const updateInventoryDatawithInstancesRes = (
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 hasInstanceData: false,
                 sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
-                sqlServerInstances: updateSqlServerInstancesForUnmanaged(instanceRow?.data, inventoryRow),
+                sqlServerInstances: updateSqlServerInstancesForUnmanaged(
+                    instanceRow?.data,
+                    inventoryRow,
+                    instanceRow?.isManagedHost
+                ),
                 //For explore savings
                 ebsResourceInfo: instanceRow?.data?.ebsResourceInfo,
                 clusterNodeDetails: instanceRow?.data?.clusterNodeDetails
@@ -1144,7 +1254,7 @@ export const getMergedAllocatedCapacity = (nodeList: Array<ManagedHostsRowInterf
 
     nodeList?.map(node => {
         node?.ebsResourceInfo?.map((perVol: any) => {
-            if (!uniqueVolId.includes(perVol?.id)) {
+            if (perVol?.id && !perVol?.id?.toLowerCase().includes('root_volume') && !uniqueVolId.includes(perVol?.id)) {
                 ebsCapacity += perVol?.size;
                 uniqueVolId.push(perVol?.id);
             }
@@ -1262,7 +1372,7 @@ export const updateSqlServerInstancesForBothNodes = (
                 databaseServer: perRow?.databaseServer,
                 fileSystemDeploymentMode:
                     instRow?.fileSystemDeploymentMode ||
-                    getFileSystemDeploymentMode(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
+                    getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
             };
         });
     }
@@ -1271,18 +1381,33 @@ export const updateSqlServerInstancesForBothNodes = (
 
 export const updateSqlServerInstancesForUnmanaged = (
     instanceData: InstancesHostsRowInterface | undefined,
-    existingInstanceRow: InventoryTableData
+    existingInstanceRow: InventoryTableData,
+    isManagedHost: boolean | undefined
 ) => {
     let instanceRows;
     if (existingInstanceRow) {
         instanceRows = existingInstanceRow?.sqlServerInstances;
     }
     if (instanceData?.databaseInstancesSummary && instanceData?.databaseInstancesSummary?.length > 0) {
+        // To check if manage/unmanage/undetected mixed case
+        let nonManagedStatus: any = [];
+        if (isManagedHost) {
+            const isAllManaged = instanceData?.databaseInstanceDetails?.every(perRow => {
+                return perRow?.isManaged ? true : false;
+            });
+            if (!isAllManaged) {
+                nonManagedStatus = getInstanceStatusForMixedCase(instanceData);
+                // to call data for mixed case. use in statusColText for unmanaged case
+            }
+        }
         instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
             if (instRow?.statusColText !== INVENTORY_STATUS.MANAGED) {
                 const perRow = instanceData?.databaseInstancesSummary?.find(
                     (per: DatabaseInstancesSummaryInterface) =>
                         per?.databaseInstanceName === instRow?.databaseInstanceName
+                );
+                const statusObj = nonManagedStatus?.filter(
+                    (per: StatusObjInterface) => per?.name === instRow?.databaseInstanceName
                 );
                 const allocatedCapacity = instRow?.allocatedCapacity
                     ? instRow?.allocatedCapacity
@@ -1302,9 +1427,11 @@ export const updateSqlServerInstancesForUnmanaged = (
                     allocatedCapacity: allocatedCapacity,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                     databaseServer: instRow?.databaseServer || perRow?.databaseServer,
+                    statusColText:
+                        isManagedHost && statusObj?.[0]?.status ? statusObj?.[0]?.status : instRow?.statusColText,
                     fileSystemDeploymentMode:
                         instRow?.fileSystemDeploymentMode ||
-                        getFileSystemDeploymentMode(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
+                        getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
                 };
             } else {
                 const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
@@ -1379,6 +1506,7 @@ export const getPerfUnmanagedData = (instanceId: string, instRow: any, partnerId
 };
 
 export const getExploreSavingsRows = (inventoryTableData: { [key: string]: InventoryTableData }) => {
+    // If ES row is disabled than it should come in inventory but not in explore savings table
     let nonFsxnStorageList: Array<InventoryTableData> = [];
     const state = store.getState();
     const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
@@ -1387,8 +1515,16 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
         if (removeSecNodeDiscoveredList.includes(key)) {
             return;
         }
-        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-            nonFsxnStorageList.push(item);
+        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && item?.isDetected) {
+            if (!checkForMixedStorageType(item)) {
+                if (item?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+                    if (checkForAnySSD(item) && !checkForAnyAOAG(item)) {
+                        nonFsxnStorageList.push(item);
+                    }
+                } else {
+                    nonFsxnStorageList.push(item);
+                }
+            }
         }
     });
     return nonFsxnStorageList;
@@ -1749,4 +1885,57 @@ export const getPartnerNodeEc2InstanceId = (error: string) => {
     }
 
     return null;
+};
+
+export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
+    // First check if this is already opened or closed. If this data is already available or not.
+    const state = store.getState();
+    const unManagedPerfInstanceIdsList = state.inventoryV2.unManagedPerfInstanceIdsList;
+    if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
+        // If this has unmanaged rows or not ?
+        let unmanagedRows = rowData?.sqlServerInstances?.filter(
+            (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
+        );
+        if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
+            let instanceList = [];
+            instanceList.push(rowData?.ec2InstanceId);
+            const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
+            if (partnerData && partnerData?.length > 0) {
+                instanceList.push(partnerData?.[0]?.id);
+            }
+            dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
+        }
+        // This has to be called even if any row is becoming unmanaged row or managed row
+    }
+};
+
+export const checkForAnyAOAG = (rowData: any) => {
+    // If any instance have AOAG than ES is disabled for it
+    return rowData?.sqlServerInstances?.some((item: any) => {
+        return item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG;
+    });
+};
+
+export const checkForAnySSD = (rowData: any) => {
+    for (const item of rowData?.sqlServerInstances || []) {
+        for (const perStorage of item?.storage || []) {
+            if (perStorage?.type === DETECT_HOST_VAR.FSXW && perStorage?.fileSystemStorageType === 'SSD') {
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
+export const checkForMixedStorageType = (rowData: any) => {
+    let storageType: Array<String> = [];
+    for (const item of rowData?.sqlServerInstances || []) {
+        if (item?.fileSystemType && !storageType.includes(item?.fileSystemType)) {
+            storageType.push(item?.fileSystemType);
+        }
+    }
+    if (storageType.length > 1) {
+        return true;
+    }
+    return false;
 };

@@ -23,7 +23,7 @@ const InstancesFsxwCalculation = () => {
                 </DsTypography>
             );
         }
-        return <DsTypography variant="Regular_14">$274.48</DsTypography>;
+        return <DsTypography variant="Regular_14">${viewCalculationsResponse?.totalFsxwEc2MachineCost}</DsTypography>;
     };
     return (
         <div className={CommonStyles.exploreSavingsCalculation}>

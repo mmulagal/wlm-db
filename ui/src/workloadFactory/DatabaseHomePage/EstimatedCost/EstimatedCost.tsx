@@ -6,6 +6,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import EstimatedCostDialogContent from './EstimatedCostDialogContent/EstimatedCostDialogContent';
 import { useEffect, useState } from 'react';
+import { formatNumberWithCustomComma } from '../../../utils/utilityFunctions';
 
 type EstimatedCostProps = {
     hostData: any;
@@ -64,7 +65,7 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                     <FlashingDotsLoader />
                 ) : (
                     <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                        $ {hostData?.totalCost}
+                        ${formatNumberWithCustomComma(hostData?.totalCost)}
                     </Typography>
                 )}
             </div>
@@ -152,17 +153,29 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                 {/* Ends here */}
 
                 <div className={styles.bottomSection}>
-                    <SquareComponent value={'$' + hostData?.storageCost} color="var(--chart-9)" text={'Storage'} />
-                    <div className={styles.storageSeparator} />
-                    <SquareComponent value={'$' + hostData?.computeCost} color="var(--chart-1)" text={'Compute'} />
+                    <SquareComponent
+                        value={'$' + formatNumberWithCustomComma(hostData?.storageCost)}
+                        color="var(--chart-9)"
+                        text={'Storage'}
+                    />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={'$' + hostData?.connectivityCost}
+                        value={'$' + formatNumberWithCustomComma(hostData?.computeCost)}
+                        color="var(--chart-1)"
+                        text={'Compute'}
+                    />
+                    <div className={styles.storageSeparator} />
+                    <SquareComponent
+                        value={'$' + formatNumberWithCustomComma(hostData?.connectivityCost)}
                         color="var(--chart-3)"
                         text={'Connectivity'}
                     />
                     <div className={styles.storageSeparator} />
-                    <SquareComponent value={'$' + hostData?.otherCost} color="var(--chart-4)" text={'Other'} />
+                    <SquareComponent
+                        value={'$' + formatNumberWithCustomComma(hostData?.otherCost)}
+                        color="var(--chart-4)"
+                        text={'Other'}
+                    />
                 </div>
             </div>
         </div>

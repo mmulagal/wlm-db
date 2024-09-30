@@ -2,16 +2,16 @@ import styles from './CodeBox.module.scss';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
 
-import { Typography, useDialog, Popover, Button } from '@netapp/design-system';
+import { Typography, useDialog, Popover, Button, DsTooltipInfo } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useState, useRef, useEffect, useMemo } from 'react';
-import HighlighterWord from '../../../workloadFactory/DatabaseHomePage/Highlighter/Highlighter';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import {
     cfDownloadName,
     generateOptionType,
     getCredDetails,
+    handleDownloadTerraform,
     handleDownloadYAML
 } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
@@ -20,7 +20,7 @@ import CopyToClipboard from 'react-copy-to-clipboard';
 
 import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
-import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
+import { getBaseUrl, useGetTemplatesMutation, useGetTerraformSetupMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import {
     AWS_CLI_HIGHLIGHT_STRINGS,
@@ -48,6 +48,8 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import TerraformColor from '../Terraform/TerraformColor';
+import { downloadTerraformZip } from '../MockTerraformZip/MockTerraformZip';
 
 const _ = require('lodash');
 
@@ -57,8 +59,11 @@ const CodeBox = () => {
     const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
 
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
+    const [terraformSetupResponse, setTerraformSetupResponse] = useState<any>(null);
     const [formData, setFormData] = useState<any>(null); // Saving form data on template API call
+    const [formDataTerraform, setFormDataTerraform] = useState<any>(null); // Saving form data on terraform setup API call
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
+    const [isTerraformDataLoading, setIsTerraformDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
     const [rightPanelMaskedHidePasswordResponse, setRightPanelMaskedHidePasswordResponse] = useState<any>('');
@@ -67,11 +72,13 @@ const CodeBox = () => {
     const dispatch = useDispatch();
 
     const [loadTemplateData] = useGetTemplatesMutation();
+    const [loadTerraformData] = useGetTerraformSetupMutation();
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     useEffect(() => {
         if (isLoadConfig) {
@@ -116,10 +123,15 @@ const CodeBox = () => {
     };
 
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, terraformUI()];
+        const arr = [
+            CODE_VIEWER.CLOUDFORMATION,
+            CODE_VIEWER.AWS_CLI,
+            CODE_VIEWER.REST_API,
+            isDemoMode ? CODE_VIEWER.TERRAFORM : terraformUI()
+        ];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', idx === 3 ? true : false, '');
+            const option = generateOptionType(val, val, '', idx === 3 && !isDemoMode, '');
             options.push(option);
         });
         return options;
@@ -182,6 +194,13 @@ const CodeBox = () => {
                 </Typography>
             );
         }
+        if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+            return isTerraformDataLoading ? (
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_TERRAFORM} />
+            ) : (
+                <TerraformColor data={terraformSetupResponse} />
+            );
+        }
     };
 
     // To copy response based on dropdown selection
@@ -224,8 +243,12 @@ const CodeBox = () => {
             mssqlForm: actualData
         };
         const resBody = createMssqlPayload(changeObjectForm);
-        resBody.credentialsId = credDetails?.credId || '';
-        resBody.region = credDetails?.region || '';
+        if (credDetails?.credId) {
+            resBody.credentialsId = credDetails?.credId;
+        }
+        if (credDetails?.region) {
+            resBody.region = credDetails?.region;
+        }
         loadTemplateData({ payload: resBody }).then((data: any) => {
             if (data?.data) {
                 setRightPanelTemplateResponse(addEscapeInCli(data?.data));
@@ -245,6 +268,34 @@ const CodeBox = () => {
         });
     };
 
+    // This will call terraform setup API to get Terraform response for current payload.
+    const getTerraformSetupResponse = () => {
+        setIsTerraformDataLoading(true);
+        const actualData = mssqlFormData;
+        const credDetails = getCredDetails(actualData);
+        const changeObjectForm = {
+            mssqlForm: actualData
+        };
+        const resBody = createMssqlPayload(changeObjectForm);
+        if (credDetails?.credId) {
+            resBody.credentialsId = credDetails?.credId;
+        }
+        if (credDetails?.region) {
+            resBody.region = credDetails?.region;
+        }
+        loadTerraformData({ payload: resBody }).then((data: any) => {
+            if (data?.data) {
+                setTerraformSetupResponse(data?.data);
+                setIsTerraformDataLoading(false);
+                dispatch(setIsLoading(false));
+            } else {
+                setTerraformSetupResponse(null);
+                setIsTerraformDataLoading(false);
+                dispatch(setIsLoading(false));
+            }
+        });
+    };
+
     // After form update if user clicks on CF or CLI than get template data
     useEffect(() => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION || dropDownValue === CODE_VIEWER.AWS_CLI) {
@@ -254,8 +305,29 @@ const CodeBox = () => {
                 getTemplateResponse();
             }
         }
+        if (dropDownValue === CODE_VIEWER.TERRAFORM && !isDemoMode) {
+            if (!formDataTerraform || !_.isEqual(mssqlFormData, formDataTerraform)) {
+                setFormDataTerraform(mssqlFormData);
+                getTerraformSetupResponse();
+            }
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dropDownValue]);
+
+    // After form update if user clicks on CF or CLI than get template data
+    useEffect(() => {
+        // For demo mode will not reset codebox option so it will call APIs again
+        if (isDemoMode) {
+            if (dropDownValue === CODE_VIEWER.CLOUDFORMATION || dropDownValue === CODE_VIEWER.AWS_CLI) {
+                // If user is switching between CF and CLI than no need to call template APi again
+                if (!formData || !_.isEqual(mssqlFormData, formData)) {
+                    setFormData(mssqlFormData);
+                    getTemplateResponse();
+                }
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mssqlFormData]);
 
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
     const getRestResponse = () => {
@@ -287,7 +359,8 @@ const CodeBox = () => {
                     credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                     credDetails.region || CRED_PLACEHOLDERS.REGION,
                     CRED_PLACEHOLDERS.TOKEN,
-                    res
+                    res,
+                    isWorkloadFactory
                 )}
             />
         );
@@ -320,7 +393,8 @@ const CodeBox = () => {
                     credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                     credDetails.region || CRED_PLACEHOLDERS.REGION,
                     CRED_PLACEHOLDERS.TOKEN,
-                    res
+                    res,
+                    isWorkloadFactory
                 )}
             />
         );
@@ -331,9 +405,12 @@ const CodeBox = () => {
 
     useEffect(() => {
         getRestResponse();
-        // Reset dropdown value to Rest API in case of form change
-        setDropdownValue(CODE_VIEWER.REST_API);
-        setFormData(null);
+        // For demo mode will not reset codebox option so it will call APIs again
+        if (!isDemoMode) {
+            // Reset dropdown value to Rest API in case of form change
+            setDropdownValue(CODE_VIEWER.REST_API);
+            setFormData(null);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mssqlFormData]);
 
@@ -403,8 +480,17 @@ const CodeBox = () => {
             <div className={styles.payloadContainer}>
                 <div className={styles.payloadHeader}>
                     <div className={styles.inputPart}>
-                        <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
+                        <Typography
+                            className={styles.codeboxHeader}
+                            variant="Regular_14"
+                            style={{ color: 'var(--white)' }}
+                        >
                             {dropDownValue}
+                            {dropDownValue === GENERAL.TERRAFORM && (
+                                <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                    {GENERAL.TERRAFORM_CODEBOX_TOOLTIP}
+                                </DsTooltipInfo>
+                            )}
                         </Typography>
                     </div>
                     <div className={styles.actionPopOver}>
@@ -437,29 +523,59 @@ const CodeBox = () => {
                                         }}
                                     />
                                 ))}
-                            {dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (
-                                // Disabled copy button
-                                <div className={styles.menuItemDisabled}>
-                                    <Copy />
-                                </div>
-                            ) : (
-                                // Enabled copy button
-                                <Popover
-                                    popoverClass={styles['copy-popover']}
-                                    children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
-                                    container={
-                                        <CopyToClipboard text={copyResponseData()}>
-                                            <div
-                                                className={styles.menuItem}
-                                                id={UI_IDS.WIZARD_CODEBOX_COPY}
-                                                onClick={handleCopy}
-                                            >
-                                                <Copy />
-                                            </div>
-                                        </CopyToClipboard>
-                                    }
-                                />
-                            )}
+                            {dropDownValue === CODE_VIEWER.TERRAFORM &&
+                                (isTerraformDataLoading ? (
+                                    <div className={styles.menuItemDisabled}>
+                                        <Download />
+                                    </div>
+                                ) : (
+                                    <Download
+                                        onClick={() => {
+                                            if (isDemoMode) {
+                                                downloadTerraformZip();
+                                            } else {
+                                                handleDownloadTerraform(terraformSetupResponse?.url);
+                                            }
+                                            dispatch(clearNotifications());
+                                            const ele = (
+                                                <div>
+                                                    <div style={{ fontWeight: 400 }}>{GENERAL.TERRAFORM_DOWNLOAD}</div>
+                                                    <div style={{ fontWeight: 400 }}>{GENERAL.TERRAFORM_NOTICE}</div>
+                                                </div>
+                                            );
+                                            dispatch(
+                                                addNotification({
+                                                    notificationType: NOTIFICATION_TYPES.INFO,
+                                                    message: ele
+                                                })
+                                            );
+                                        }}
+                                    />
+                                ))}
+                            {dropDownValue !== CODE_VIEWER.TERRAFORM &&
+                                (dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (
+                                    // Disabled copy button
+                                    <div className={styles.menuItemDisabled}>
+                                        <Copy />
+                                    </div>
+                                ) : (
+                                    // Enabled copy button
+                                    <Popover
+                                        popoverClass={styles['copy-popover']}
+                                        children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
+                                        container={
+                                            <CopyToClipboard text={copyResponseData()}>
+                                                <div
+                                                    className={styles.menuItem}
+                                                    id={UI_IDS.WIZARD_CODEBOX_COPY}
+                                                    onClick={handleCopy}
+                                                >
+                                                    <Copy />
+                                                </div>
+                                            </CopyToClipboard>
+                                        }
+                                    />
+                                ))}
                         </div>
                     </div>
                 </div>

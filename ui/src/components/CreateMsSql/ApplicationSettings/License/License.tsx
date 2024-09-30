@@ -122,7 +122,8 @@ const License = () => {
             const data = {
                 architecture: val?.architecture,
                 amiVal: val?.imageId,
-                amiName: val?.name
+                amiName: val?.name,
+                ebsVolumeSize: val?.ebsVolumeSize
             };
             const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
             options.push(option);
@@ -139,7 +140,8 @@ const License = () => {
             const data = {
                 architecture: val?.architecture,
                 amiVal: val?.imageId,
-                amiName: val?.name
+                amiName: val?.name,
+                ebsVolumeSize: val?.ebsVolumeSize
             };
             const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
             options.push(option);

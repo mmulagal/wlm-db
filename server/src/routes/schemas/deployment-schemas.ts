@@ -15,7 +15,9 @@ import {
     CollationListResponse,
     CollationListQueryString,
     PgSqlCloudFormationTemplateRequestBody,
-    PgSqlCloudFormationDeploymentResponse
+    PgSqlCloudFormationDeploymentResponse,
+    TerraformSetupRequestBody,
+    TerraformSetupResponse
 } from '../types/deployment.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -57,7 +59,7 @@ const DeployTemplateSchema = {
     description: 'Deploy CloudFormation template to provision PGSQL',
     body: CloudFormationTemplateRequestBody,
     response: {
-        200: CloudFormationDeploymentResponse
+        202: CloudFormationDeploymentResponse
     }
 };
 
@@ -114,6 +116,18 @@ const CollationListSchema = {
     }
 };
 
+const TerraformSetupSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
+    summary: 'Create Terraform Setup',
+    headers: CloudFormationTemplateHeader,
+    description: 'Create Terraform Setup in URL for user deployment',
+    body: TerraformSetupRequestBody,
+    response: {
+        200: TerraformSetupResponse
+    }
+};
+
 export {
     DeployTemplateSchema,
     DeploymentStatusListSchema,
@@ -122,5 +136,6 @@ export {
     DeploymentSummaryListSchema,
     FsxAvailableRegionsForThroughputSchema,
     CollationListSchema,
-    PgSqlDeployTemplateSchema
+    PgSqlDeployTemplateSchema,
+    TerraformSetupSchema
 };

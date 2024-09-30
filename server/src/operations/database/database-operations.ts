@@ -22,6 +22,7 @@ import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '
 import getLogger from '../../utils/logger';
 import { CONFIG_NOT_FOUND, HttpErrorCodes, STACK_NOT_FOUND } from '../../utils/consts';
 import { ResourceDetails, DeploymentDetails } from '../../utils/common-types';
+import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
 const logger = getLogger();
 
@@ -49,6 +50,8 @@ async function getSavedConfig(accountId: string, id: string): Promise<FormConfig
 
 async function deleteSavedConfig(accountId: string, id: string): Promise<void> {
     logger.info('Delete saved config ', accountId, id);
+    const savedConfigs = await getSavedConfig(accountId, id);
+    updateLongRunningAuditGroup(undefined, undefined, savedConfigs?.name);
 
     try {
         await deleteConfig(accountId, id);
@@ -84,6 +87,7 @@ async function saveConfig(
     logger.info('Save config ', accountId);
     logger.debug('Save config data', data);
 
+    updateLongRunningAuditGroup(undefined, undefined, name);
     const { id, creation_time: configCreationTime } = await createConfig(accountId, {
         user,
         name,

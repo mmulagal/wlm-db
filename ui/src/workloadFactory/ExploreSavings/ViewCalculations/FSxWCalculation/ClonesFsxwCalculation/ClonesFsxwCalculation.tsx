@@ -23,14 +23,18 @@ const ClonesFsxwCalculation = () => {
                 </DsTypography>
             );
         }
-        return <DsTypography variant="Regular_14">$4.4</DsTypography>;
+        return (
+            <DsTypography variant="Regular_14">
+                ${viewCalculationsResponse?.fsxwCloneCalculation?.totalCloneMonthlyCost}
+            </DsTypography>
+        );
     };
 
     return (
         <div className={CommonStyles.exploreSavingsCalculation}>
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="15"
+                id="16"
                 title={<div>{GENERAL.ES_CLONES}</div>}
                 isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}

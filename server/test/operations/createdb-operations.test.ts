@@ -7,14 +7,13 @@ import {
     cleanUpDatabaseDeployment,
     getCollationDetails
 } from '../../src/operations/createdb-operations';
-import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../simulator/scopes/aws/fsx-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
-import { ACCOUNT_ID, DEFAULT_MSSQL_INSTANCE_NAME } from '../../src/utils/consts';
+import { ACCOUNT_ID, DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../src/utils/consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import createDbResponse from '../simulator/responses/workload/createdb-response.json';
 
@@ -99,23 +98,13 @@ afterAll(async () => {
 });
 
 describe('Create database operations', () => {
-    it('Get drive info for a database host', async () => {
-        const resp = await getDriveInfo(
-            ACCOUNT_ID,
-            '36E53042-04E8-40C9-AE69-26E56CB0D216',
-            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
-            'ap-southeast-1'
-        );
-        expect(resp).toEqual(createDbResponse.getDriveInfoResponseData);
-    });
-
     it('Get drive info for a database instance', async () => {
         const resp = await getDriveInfo(
             ACCOUNT_ID,
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',
-            true,
+            false,
             undefined,
             'D5A2D0E6-0AF2-4228-97E7-B627ACEE10E8'
         );
@@ -149,7 +138,7 @@ describe('Create database operations', () => {
             reqData.dataDrivePath,
             reqData.logDrivePath,
             'SQL_Latin1_General_CP1_CI_AS',
-            DEFAULT_MSSQL_INSTANCE_NAME,
+            { name: DEFAULT_INSTANCE_NAME, executableName: DEFAULT_MSSQL_INSTANCE_NAME, sqlAuthEnabled: false },
             reqData.serverNameWithHostName
         );
 

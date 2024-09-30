@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
@@ -22,20 +22,42 @@ import { useAppSelector } from './store/storeHooks';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventorySlice';
 import { useRunOnce } from './common/hooks/useRunOnce';
 import { setTabInfoFOrBXP } from './utils/utilityFunctions';
+import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const { statusData } = useAppSelector(state => state.headers.getStatus);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    //This code is only for BlueXP
     useRunOnce(() => {
         if (!isWorkloadFactory) {
             window.onmessage = (msg: any) => {
-                if (msg && msg?.data && msg?.data?.type === BXP_MESSAGES.SERVICE_LOCATION_CHANGE) {
-                    const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
-                    navigate('../fsxdb');
-                    dispatch(setSelectedHeaderTab(tabInfo));
+                if (
+                    msg &&
+                    msg?.data &&
+                    (msg?.data?.type === BXP_MESSAGES.SERVICE_LOCATION_CHANGE ||
+                        msg?.data?.type === BXP_MESSAGES.SERVICE_ON_READY)
+                ) {
+                    if (statusData && !statusData?.isActive) {
+                        postBlueXPMessage({
+                            type: BlueXPListeners.navigate,
+                            payload: { pathname: './fsxdb/marketing', replace: true }
+                        });
+                    } else {
+                        if (
+                            msg?.data?.payload?.pathname ===
+                            '/fsxdb/add-working-environment/database-services/mssql/create'
+                        ) {
+                            navigate('../fsxdb/add-working-environment/database-services/mssql/create');
+                        } else {
+                            const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
+                            navigate('../fsxdb');
+                            dispatch(setSelectedHeaderTab(tabInfo));
+                        }
+                    }
                 }
             };
         }
@@ -98,6 +120,10 @@ const Home = () => {
                                 element={<MainComponent />}
                             />
                             <Route
+                                path={`fsxdb/add-working-environment/database-services/:storage/create`}
+                                element={<MainComponent />}
+                            />
+                            <Route
                                 path={`add-working-environment/database-services/:storage/postgress`}
                                 element={<PostgressMainComponent />}
                             />
@@ -116,12 +142,21 @@ const Home = () => {
                                 path={'databases/inventory'}
                                 element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
                             />
+                            <Route path={'fsxdb/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                             <Route
                                 path={'databases/exploreSavingsEBS'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
                             <Route
+                                path={'fsxdb/exploreSavingsEBS'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                            />
+                            <Route
                                 path={'databases/exploreSavingsFsxW'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
+                            />
+                            <Route
+                                path={'fsxdb/exploreSavingsFsxW'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                             />
                             <Route path={'create-new-user'} element={<WizardComponent />} />

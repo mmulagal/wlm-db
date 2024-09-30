@@ -74,7 +74,17 @@ const API_PATH_HEALTH: string = '/health';
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
-const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt', '/pricing'];
+const AUDIT_EXCLUDE_LIST = [
+    '/batch',
+    '/prompt',
+    '/pricing',
+    '/cloudformation/template',
+    '/storage-savings',
+    '/manual-storage-savings',
+    '/calculations',
+    '/v1/mssql/credentials',
+    '/sandboxes-meta-update'
+];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
@@ -125,6 +135,12 @@ enum DeploymentState {
     INITIALIZING = 'Initializing',
     SUCCESS = 'Success',
     FAILED = 'Failed'
+}
+
+enum AuditStatus {
+    PENDING = 'pending',
+    SUCCESS = 'success',
+    FAILED = 'failed'
 }
 
 enum RouteTags {
@@ -291,7 +307,8 @@ const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Micr
 enum FileSystemTypes {
     EBS = 'EBS',
     FSXONTAP = 'FSx for ONTAP',
-    FSXWINDOWS = 'FSx for Windows'
+    FSXWINDOWS = 'FSx for Windows',
+    FSXW = 'FSXW'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -614,12 +631,6 @@ const STANDALONE_NETWORK_VIOLATION_MESSAGE =
 const FCI_NETWORK_EMPTY_VIOLATION_MESSAGE =
     'For FCI deployment, private subnet 1 Id, route table 1 Id, private subnet 2 Id and route table 2 Id cannot be empty.';
 
-const FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE =
-    'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.';
-
-const FCI_NETWORK_VIOLATION_MESSAGE =
-    'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.';
-
 const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
 const CONFIG_NOT_FOUND = (configId: string) => `Saved config ${configId} not found.`;
 
@@ -777,6 +788,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'OpenSSL',
         url: `${WLMDB}/OpenSSL-Win64.zip`
+    },
+    {
+        name: 'ScriptSqlSetup',
+        url: `${WLMDB}/scripts/Sql-Setup.ps1`
     }
 ];
 
@@ -859,6 +874,106 @@ const MASTER_TEMPLATE_DISTRIBUTION = {
     location: './resources/mssql/templates/wlm-master.yaml'
 };
 
+const TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION = [
+    {
+        name: TEMPLATE_TYPES.VALIDATION,
+        location: './resources/mssql/terraform/modules/validation-node/Validation-Instance-initializer.ps1'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTANDALONE,
+        location: './resources/mssql/terraform/modules/ec2/Sql-Instance-initializer.ps1'
+    }
+];
+
+const TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS = [
+    {
+        name: 'ValidationInitializerTemplate',
+        url: 'terraform/validation/Validation-Instance-initializer.ps1'
+    },
+    {
+        name: 'SQLStandaloneInitializerTemplate',
+        url: 'terraform/standalone/Sql-Instance-initializer.ps1'
+    }
+];
+
+const TERRAFORM_ROOT_MODULE_DISTRIBUTION = {
+    name: 'main',
+    location: './resources/mssql/templates/main.tf'
+};
+
+const TERRAFORM_FOLDER_PATH = './resources/mssql/terraform';
+
+const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: { [key: string]: { name: string; type: string } } = {
+    AccountId: { name: 'account_id', type: 'string' },
+    ADScenarioType: { name: 'ad_scenario_type', type: 'string' },
+    CfDeployRoleName: { name: 'tf_deploy_role_name', type: 'string' },
+    CloudProviderAccountId: { name: 'cloud_provider_account_id', type: 'string' },
+    CloudwatchLogsEndpointExists: { name: 'cloudwatch_logs_endpoint_exists', type: 'boolean' },
+    DeploymentMode: { name: 'deployment_mode', type: 'string' },
+    DNSIpAddresses: { name: 'dns_ip_addresses', type: 'string' },
+    DomainAdminPassword: { name: 'domain_admin_password', type: 'string' },
+    DomainAdminUser: { name: 'domain_admin_user', type: 'string' },
+    DomainDNSName: { name: 'domain_dns_name', type: 'string' },
+    DomainMemberSGID: { name: 'domain_member_sg_id', type: 'string' },
+    Ec2EndpointExists: { name: 'ec2_endpoint_exists', type: 'boolean' },
+    Ec2MessagesEndpointExists: { name: 'ec2_messages_endpoint_exists', type: 'boolean' },
+    EnableCloudWatchLogFeature: { name: 'enable_cloud_watch_log_feature', type: 'boolean' },
+    EncryptedFsxPassword: { name: 'encrypted_fsx_password', type: 'string' },
+    FileSystemEncryptionKeyId: { name: 'file_system_encryption_key_id', type: 'string' },
+    FSxAdminPassword: { name: 'fsx_admin_password', type: 'string' },
+    FSxAdminUsername: { name: 'fsx_admin_username', type: 'string' },
+    FSxDataLunSize: { name: 'fsx_data_lun_size', type: 'number' },
+    FSxDataVolumeName: { name: 'fsx_data_volume_name', type: 'string' },
+    FSxDataVolumeSize: { name: 'fsx_data_volume_size', type: 'number' },
+    FSxDiskIops: { name: 'fsx_disk_iops', type: 'number' },
+    FsxEndpointExists: { name: 'fsx_endpoint_exists', type: 'boolean' },
+    FSxFileSystemId: { name: 'fsx_file_system_id', type: 'string' },
+    FSxFileSystemName: { name: 'fsx_file_system_name', type: 'string' },
+    FSxLogVolumeName: { name: 'fsx_log_volume_name', type: 'string' },
+    FSxLogVolumeSize: { name: 'fsx_log_volume_size', type: 'number' },
+    FSxQuorumVolumeName: { name: 'fsx_quorum_volume_name', type: 'string' },
+    FSxQuorumVolumeSize: { name: 'fsx_quorum_volume_size', type: 'number' },
+    FSxStorageCapacity: { name: 'fsx_storage_capacity', type: 'number' },
+    FSxSvmName: { name: 'fsx_svm_name', type: 'string' },
+    FSxTempDbVolumeName: { name: 'fsx_temp_db_volume_name', type: 'string' },
+    FSxTempDbVolumeSize: { name: 'fsx_temp_db_volume_size', type: 'number' },
+    FsxVolumeSnapshotPolicy: { name: 'fsx_volume_snapshot_policy', type: 'string' },
+    FSxVolumeThroughputCapacity: { name: 'fsx_volume_throughput_capacity', type: 'number' },
+    IsCustomAmi: { name: 'is_custom_ami', type: 'boolean' },
+    KeyPairName: { name: 'key_pair_name', type: 'string' },
+    MSSQLMediaBucketName: { name: 'mssql_media_bucket_name', type: 'string' },
+    MSSQLMediaPathKey: { name: 'mssql_media_path_key', type: 'string' },
+    NodeNetBIOSNames: { name: 'node_net_bios_names', type: 'string' },
+    ONTAPSecurityGroupID: { name: 'ontap_security_group_id', type: 'string' },
+    PrivateSubnet1Cidrblock: { name: 'private_subnet1_cidrblock', type: 'string' },
+    PrivateSubnet1ID: { name: 'private_subnet1_id', type: 'string' },
+    PrivateSubnet2Cidrblock: { name: 'private_subnet2_cidrblock', type: 'string' },
+    PrivateSubnet2ID: { name: 'private_subnet2_id', type: 'string' },
+    role_credentials_id: { name: 'role_credentials_id', type: 'string' },
+    RouteTable1Id: { name: 'route_table1_id', type: 'string' },
+    RouteTable2Id: { name: 'route_table2_id', type: 'string' },
+    S3EndpointExists: { name: 's3_endpoint_exists', type: 'boolean' },
+    S3EndpointRouteTables: { name: 's3_endpoint_route_tables', type: 'string' },
+    SQLAMIID: { name: 'sql_ami_id', type: 'string' },
+    SqlCollation: { name: 'sql_collation', type: 'string' },
+    SQLDeploymentMode: { name: 'sql_deployment_mode', type: 'string' },
+    SQLigroupname: { name: 'sql_igroup_name', type: 'string' },
+    SqlServerName: { name: 'sql_server_name', type: 'string' },
+    SQLServiceAccountName: { name: 'sql_service_account_name', type: 'string' },
+    SQLServiceAccountPassword: { name: 'sql_service_account_password', type: 'string' },
+    SQLSvmName: { name: 'sql_svm_name', type: 'string' },
+    SsmEndpointExists: { name: 'ssm_endpoint_exists', type: 'boolean' },
+    SSMMessagesEndpointExists: { name: 'ssm_messages_endpoint_exists', type: 'boolean' },
+    UniqueID: { name: 'unique_id', type: 'string' },
+    ValidationAmi: { name: 'validation_ami', type: 'string' },
+    ValidationNodeInstanceType: { name: 'validation_node_instance_type', type: 'string' },
+    VPCCIDR: { name: 'vpc_cidr', type: 'string' },
+    VPCID: { name: 'vpc_id', type: 'string' },
+    WlmdbAwsAccountId: { name: 'wlmdb_aws_account_id', type: 'string' },
+    WorkloadInstanceType: { name: 'workload_instance_type', type: 'string' },
+    EBSVolumeSize: { name: 'ebs_volume_size', type: 'number' }
+};
+
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
     DISK = 'disk',
@@ -929,6 +1044,7 @@ const SSM_COMMAND_CACHE_TYPE = 'SSM_COMMAND';
 const REQUEST_IN_PROGRESS_TYPE = 'REQUEST_IN_PROGRESS';
 const AWS_PRICING_TYPE = 'AWS_PRICING';
 const AWS_FSX_TYPE = 'AWS_FSX';
+const AWS_SSM_PARAMETER = 'AWS_SSM_PARAMETER';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -1126,6 +1242,7 @@ const FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL = '5h';
 const FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL = '1h';
 const DBCREATE_RELATIVE_PATH = `${WLMDB}/scripts/dbcreate.zip`;
 const PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/aws_ssm.zip`;
+const PREPARE_PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/dependent-packages.zip`;
 const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
 const DEFAULT_MSSQL_INSTANCE_NAME = '$env:computername';
 
@@ -1184,6 +1301,7 @@ const DEMO_STANADLONE_SQL_SERVER_ID = 'f4b7c5d3-e1f6-4g2a-9c4l';
 
 const DEMO_STANADLONE_INSTANCE_ID = 'i-c5x3z1a7s9d2f3g';
 
+const TCO_FEATURE = 'TCO';
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const PGSQL_VERSION = 'pgsql-version';
@@ -1293,6 +1411,9 @@ const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
     privateSubnet2Id: 'PrivateSubnet2ID',
     routeTable2Id: 'RouteTable2Id'
 };
+const TIMELINE_SERVICE_NAME = 'WF-Databases';
+
+const EBS_ROOT_VOLUME = 'ROOT_VOLUME';
 
 export {
     WLMDB,
@@ -1476,8 +1597,6 @@ export {
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     DEPLOYMENT_JOBS_LIST_FILTER,
     DATABASE_TYPE,
@@ -1589,5 +1708,16 @@ export {
     PGSQL_TEMPLATES_ASSETS,
     PGSQL_MASTER_TEMPLATE_DISTRIBUTION,
     PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
-    PG_TEMPLATE_OPTIONAL_PARAMETERS
+    PG_TEMPLATE_OPTIONAL_PARAMETERS,
+    TCO_FEATURE,
+    AWS_SSM_PARAMETER,
+    TIMELINE_SERVICE_NAME,
+    AuditStatus,
+    PREPARE_PSMODULES_RELATIVE_PATH,
+    EBS_ROOT_VOLUME,
+    TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION,
+    TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS,
+    CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING,
+    TERRAFORM_FOLDER_PATH,
+    TERRAFORM_ROOT_MODULE_DISTRIBUTION
 };

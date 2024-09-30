@@ -36,13 +36,13 @@ type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 const CreateDatabaseParams = Type.Object({
     accountId: Type.String({ minLength: 7 }),
     databaseHostId: Type.String({ minLength: 10 }),
-    credentialsId: Type.String(),
+    credentialsId: Type.String({ format: 'uuid' }),
     region: Type.String()
 });
 
 const CreateDatabaseParamsV2 = Type.Object({
     accountId: Type.String({ description: 'Workload Factory account ID', minLength: 7 }),
-    credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1 }),
+    credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1, format: 'uuid' }),
     region: Type.String({ description: 'AWS region of the database host', minLength: 1 }),
     databaseHostId: Type.String({ description: 'Workload Factory resource ID', minLength: 10 }),
     databaseInstanceName: Type.String({ description: 'SQL Server instance name' })
@@ -175,13 +175,26 @@ const StoragePerStorageTypeResponse = Type.Object({
 });
 type StoragePerStorageTypeResponseType = Static<typeof StoragePerStorageTypeResponse>;
 
+const FsxResourceInfoResponse = Type.Optional(
+    Type.Array(
+        Type.Object({
+            id: Type.String(),
+            capacityCost: Type.Optional(Type.Number()),
+            operationalCost: Type.Optional(Type.Number()),
+            size: Type.Optional(Type.Number()),
+            cost: Type.Optional(Type.Number())
+        })
+    )
+);
+
 const UsageCostPerStorageTypeResponse = Type.Optional(
     Type.Object({
         compute: Type.Number({ description: 'Compute cost in dollars' }),
         storage: Type.Object({
             fsxn: Type.Optional(Type.Number({ description: 'FSX for NetApp ONTAP Storage  cost in dollars' })),
             fsxw: Type.Optional(Type.Number({ description: 'FSX for Windows Storage cost in dollars' })),
-            ebs: Type.Optional(Type.Number({ description: 'EBS Storage cost in dollars' }))
+            ebs: Type.Optional(Type.Number({ description: 'EBS Storage cost in dollars' })),
+            fsxnBreakDownById: Type.Optional(FsxResourceInfoResponse)
         }),
         connectivity: Type.Number({ description: 'Connectivity cost in dollars' }),
         others: Type.Number({
@@ -252,16 +265,6 @@ const EbsResourceInfoResponse = Type.Optional(
             throughput: Type.Optional(Type.Number()), // Optional for gp2 volumes
             iops: Type.Optional(Type.Number()), // Optional for st1
             volumeType: Type.String()
-        })
-    )
-);
-const FsxResourceInfoResponse = Type.Optional(
-    Type.Array(
-        Type.Object({
-            id: Type.String(),
-            capacityCost: Type.Number(),
-            operationalCost: Type.Number(),
-            size: Type.Optional(Type.Number())
         })
     )
 );
@@ -361,14 +364,14 @@ type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
 const DatabaseHostsParamsWithRegion = Type.Object({
     accountId: Type.String(),
-    credentialsId: Type.String(),
+    credentialsId: Type.String({ format: 'uuid' }),
     region: Type.String()
 });
 
 const DatabaseHostSummaryParamsWithRegion = Type.Object({
     accountId: Type.String({ minLength: 1 }),
     databaseHostId: Type.String({ minLength: 1 }),
-    credentialsId: Type.String(),
+    credentialsId: Type.String({ format: 'uuid' }),
     region: Type.String()
 });
 type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
@@ -487,7 +490,7 @@ const DatabaseHostInstanceDetailsResponse = Type.Object({
     databaseInstanceId: Type.Optional(Type.String({ description: 'Id of SQL server instance.' })),
     instanceName: Type.String({ description: 'Name of SQL server instance.' }),
     isManaged: Type.Optional(
-        Type.Boolean({ description: 'Boolean to indicate if SQL server instance is managed by WFDB.', default: false })
+        Type.Boolean({ description: 'Boolean to indicate if SQL server instance is managed by WFDB.' })
     ),
     instanceState: Type.Optional(
         Type.String({ description: 'State of SQL server instance.', enum: [ServerState.UP, ServerState.DOWN] })
@@ -520,7 +523,8 @@ const DatabaseInstanceTopology = Type.Object({
     ),
     fileSystemStorageCapacity: Type.Optional(Type.Number()),
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
-    availabilityZones: Type.Optional(Type.Array(Type.String()))
+    availabilityZones: Type.Optional(Type.Array(Type.String())),
+    fileSystemStorageType: Type.Optional(Type.String({ enum: ['SSD', 'HDD'] }))
 });
 
 type DatabaseInstanceTopologyType = Static<typeof DatabaseInstanceTopology>;
