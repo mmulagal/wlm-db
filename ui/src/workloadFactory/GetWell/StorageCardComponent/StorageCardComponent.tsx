@@ -1,10 +1,24 @@
 import { DsButton, DsTypography } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
+import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
+import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
+import { ReactComponent as OverProvisioned } from '../../../assets/over-provisioned.svg';
 import styles from './StorageCardComponent.module.scss';
 import GetWellChart from './GetWellChart/GetWellChart';
 import useResize from '../../../common/hooks/useResize';
 
 const StorageCardComponent = ({ cardData }: any) => {
+    const setImage = (value: string) => {
+        if (value.toLocaleLowerCase() === 'optimized') {
+            return <Optimized />;
+        } else if (value === 'Under-provisioned') {
+            return <UnderProvisioned />;
+        } else if (value === 'Over-provisioned') {
+            return <OverProvisioned />;
+        } else {
+            return <NotActive />;
+        }
+    };
     const windowSize = useResize();
     return (
         <div className={styles.storageCardComponent}>
@@ -17,9 +31,7 @@ const StorageCardComponent = ({ cardData }: any) => {
             {/* Section Two */}
             <div className={styles.commonSection}>
                 <div className={styles.statusTopSection}>
-                    <div className={styles.svgSection}>
-                        <NotActive />
-                    </div>
+                    <div className={styles.svgSection}>{setImage(cardData?.block_two?.value)}</div>
                     <DsTypography variant="Semibold_14">{cardData?.block_two?.value}</DsTypography>
                 </div>
                 <DsTypography variant="Regular_14">{cardData?.block_two?.type}</DsTypography>
