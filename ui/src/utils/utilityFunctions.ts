@@ -36,6 +36,7 @@ import { DatabaseHostItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
+import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -1679,6 +1680,54 @@ export const apiDOCURL = () => {
             return 'https://console.workloads.netapp.com/api-doc';
         }
     }
+};
+
+export const handleURL = (value: string, isWorkloadFactory: boolean) => {
+    let path = '';
+    if (isWorkloadFactory) {
+        switch (value) {
+            case 'Inventory':
+                path = 'inventory';
+                break;
+            case 'Dashboard':
+                path = 'dashboard';
+                break;
+            case 'Sandboxes':
+                path = 'sandboxes';
+                break;
+            case 'Explore savings':
+                path = 'explore-savings';
+                break;
+            case 'Job monitoring':
+                path = 'job-monitoring';
+                break;
+        }
+    } else {
+        switch (value) {
+            case 'Inventory':
+                path = 'fsxdb/inventory';
+                break;
+            case 'Dashboard':
+                path = 'fsxdb/dashboard';
+                break;
+            case 'Sandboxes':
+                path = 'fsxdb/sandboxes';
+                break;
+            case 'Explore savings':
+                path = 'fsxdb/explore-savings';
+                break;
+            case 'Job monitoring':
+                path = 'fsxdb/job-monitoring';
+                break;
+        }
+    }
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `./${path}`,
+            replace: true
+        }
+    });
 };
 
 export const updateSizeInGib = (data: any): any => {

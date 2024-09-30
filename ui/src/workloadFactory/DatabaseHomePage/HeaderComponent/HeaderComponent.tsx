@@ -19,6 +19,7 @@ import {
     checkValueSavedForRegion,
     generateOptionType,
     getCurrentDateTime,
+    handleURL,
     regionsSort,
     resetDBHomePageState
 } from '../../../utils/utilityFunctions';
@@ -234,13 +235,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
-        postBlueXPMessage({
-            type: BlueXPListeners.navigate,
-            payload: {
-                pathname: `./${value}`,
-                replace: true
-            }
-        });
+        handleURL(value, isWorkloadFactory);
     };
 
     useEffect(() => {
