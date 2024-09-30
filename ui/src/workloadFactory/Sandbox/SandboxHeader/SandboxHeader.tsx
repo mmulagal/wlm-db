@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './SandboxHeader.module.scss';
 import { ReactComponent as Illustration } from '../../../assets/Illustration.svg';
-import { BlueXPListeners, Button, DsTypography, postBlueXPMessage } from '@netapp/design-system';
+import { Button, DsTypography } from '@netapp/design-system';
 import useResize from '../../../common/hooks/useResize';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,13 +36,6 @@ const SandboxHeader = () => {
                             variant="primary"
                             onClick={() => {
                                 navigate('../create-new-sandbox');
-                                postBlueXPMessage({
-                                    type: BlueXPListeners.navigate,
-                                    payload: {
-                                        pathname: `../create-new-sandbox`,
-                                        replace: true
-                                    }
-                                });
                             }}
                         >
                             {GENERAL.CREATE_SANDBOX}
@@ -73,13 +66,6 @@ const SandboxHeader = () => {
                                 style={{ height: '32px' }}
                                 onClick={() => {
                                     navigate('../create-new-sandbox');
-                                    postBlueXPMessage({
-                                        type: BlueXPListeners.navigate,
-                                        payload: {
-                                            pathname: `../create-new-sandbox`,
-                                            replace: true
-                                        }
-                                    });
                                 }}
                             >
                                 {GENERAL.CREATE_SANDBOX}
@@ -111,13 +97,6 @@ const SandboxHeader = () => {
                                 style={{ height: '32px' }}
                                 onClick={() => {
                                     navigate('../create-new-sandbox');
-                                    postBlueXPMessage({
-                                        type: BlueXPListeners.navigate,
-                                        payload: {
-                                            pathname: `../create-new-sandbox`,
-                                            replace: true
-                                        }
-                                    });
                                 }}
                             >
                                 {GENERAL.CREATE_SANDBOX}
