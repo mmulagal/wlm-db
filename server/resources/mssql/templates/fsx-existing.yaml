@@ -109,7 +109,7 @@ Resources:
             #      ActiveDirectoryConfiguration: !Ref FSxADConfiguration
             Name: !Ref FSxSvmName
             FileSystemId: !Ref FSxFileSystemId
-            RootVolumeSecurityStyle: UNIX
+            RootVolumeSecurityStyle: NTFS
 
     FSxDataVolumeConfiguration:
         Type: AWS::FSx::Volume
@@ -117,7 +117,7 @@ Resources:
             Name: !Ref FSxDataVolumeName
             VolumeType: ONTAP
             OntapConfiguration:
-                SecurityStyle: UNIX
+                SecurityStyle: NTFS
                 SizeInMegabytes: !Ref FSxDataVolumeSize
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxDataVolumeName]]
@@ -133,7 +133,7 @@ Resources:
             Name: !Ref FSxLogVolumeName
             VolumeType: ONTAP
             OntapConfiguration:
-                SecurityStyle: UNIX
+                SecurityStyle: NTFS
                 SizeInMegabytes: !Ref FSxLogVolumeSize
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxLogVolumeName]]
@@ -149,7 +149,7 @@ Resources:
             Name: !Ref FSxTempDbVolumeName
             VolumeType: ONTAP
             OntapConfiguration:
-                SecurityStyle: UNIX
+                SecurityStyle: NTFS
                 SizeInMegabytes: !Ref FSxTempDbVolumeSize
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxTempDbVolumeName]]
@@ -166,7 +166,7 @@ Resources:
             Name: !Ref FSxClusterQuorumVolumeName
             VolumeType: ONTAP
             OntapConfiguration:
-                SecurityStyle: UNIX
+                SecurityStyle: NTFS
                 SizeInMegabytes: !Ref FSxClusterQuorumVolumeSize
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxClusterQuorumVolumeName]]

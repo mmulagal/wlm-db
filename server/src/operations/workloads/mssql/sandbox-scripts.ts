@@ -775,14 +775,14 @@ const createClonedDb = (
             .join('\n')}
 
         # Rename the actual files to the new name
+
         $newFiles = @()
         ${[...dataFileList, ...logFileList]
             .map(file => {
                 // replace mdf, ndf, ldf with epoch.mdf etc
                 const newFileName = file.replace(/(\.mdf|\.ndf|\.ldf)/, `${fileSuffix}$1`);
                 return `$newFiles += '${newFileName}'
-                Rename-Item -Path "${file}" -NewName "${newFileName}"
-                $newFiles += '${newFileName}'`;
+                Rename-Item -Path "${file}" -NewName "${newFileName}"`;
             })
             .join('\n')}
 
