@@ -641,7 +641,7 @@ const GetWell = () => {
                             headerActions={[
                                 <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                             ]}
-                            children={<RecommendationTable tableData={ontapConfigTableData} isLoading={false} />}
+                            children={<div />}
                         />
                     </div>
 
@@ -654,7 +654,7 @@ const GetWell = () => {
                             headerActions={[
                                 <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                             ]}
-                            children={<RecommendationTable tableData={operatingSystemTableData} isLoading={false} />}
+                            children={<div />}
                             style={{ marginBottom: '40px' }}
                         />
                     </div>
