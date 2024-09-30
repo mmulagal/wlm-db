@@ -347,6 +347,10 @@ const ManagedHostSubTable = ({
                     disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                     disableOption = true;
                 }
+                menu.push({
+                    id: 'optimize',
+                    displayName: 'Optimize'
+                });
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
@@ -480,6 +484,12 @@ const ManagedHostSubTable = ({
                                     } else if (toggleType === 'selectedOption') {
                                         menuOpenedRowDetail.current = null;
                                         setOpenedRow(null);
+
+                                        if (menuId === 'optimize') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            resourceAction(rowData);
+                                        }
 
                                         if (menuId === 'manage') {
                                             handleManageInstances(hostData, [rowData?.databaseInstanceName], false);

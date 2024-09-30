@@ -1,10 +1,17 @@
 import { DsAccordion, DsTypography } from '@netapp/design-system';
 import styles from './GetWell.module.scss';
+import commonStyles from '../../utils/CommonStyles.module.scss';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
 import TotalOptimizationScore from './TotalOptimizationScore/TotalOptimizationScore';
 import OptimizationBreakdown from './OptimizationBreakdown/OptimizationBreakdown';
+import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
+import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import { useDispatch } from 'react-redux';
+import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
+import { WLF_TABS } from '../../utils/consts';
 
 const GetWell = () => {
+    const dispatch = useDispatch();
     const cardData = {
         StorageTier: {
             block_one: {
@@ -174,6 +181,32 @@ const GetWell = () => {
     };
     return (
         <div className={styles.getWell}>
+            <div className={commonStyles.commonBreadCrumb}>
+                <BreadCrumbs
+                    items={[
+                        {
+                            title: 'Inventory',
+                            onClick: () => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                            }
+                        },
+                        {
+                            title: 'Host name'
+                        }
+                    ]}
+                />
+            </div>
+            <div className={styles.header}>
+                <div className={styles['header-top-section']}>
+                    <DsTypography className={styles.optimizeHeader} variant="Semibold_20">
+                        Optimize instance
+                    </DsTypography>
+                    <div className={styles.refreshIcon}>
+                        <RefreshIcon />
+                    </div>
+                </div>
+                <DsTypography variant="Semibold_16">instance name</DsTypography>
+            </div>
             <div className={styles.getWellSecondLevel}>
                 <TotalOptimizationScore />
                 <OptimizationBreakdown />

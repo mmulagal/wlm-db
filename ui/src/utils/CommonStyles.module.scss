@@ -160,3 +160,15 @@
         left: 15%;
     }
 }
+
+.commonBreadCrumb {
+    margin-top: 24px;
+    width: 100%;
+    position: relative;
+    left: 5%;
+
+    [class*='BreadCrumbs_bread-crumbs'] {
+        position: relative;
+        top: -3px;
+    }
+}

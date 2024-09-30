@@ -1,4 +1,4 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsButton, DsTypography } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import styles from './StorageCardComponent.module.scss';
 import GetWellChart from './GetWellChart/GetWellChart';
@@ -36,9 +36,24 @@ const StorageCardComponent = ({ cardData }: any) => {
                 <DsTypography variant="Regular_14">{cardData?.block_three?.type}</DsTypography>
             </div>
 
-            {/* Fourth Section */}
+            {/* Section 4 */}
+            <div className={styles.commonSection}>
+                <DsTypography variant="Semibold_14">{cardData?.block_four?.value}</DsTypography>
+                <DsTypography variant="Regular_14">{cardData?.block_four?.type}</DsTypography>
+            </div>
+
+            {/* 5 Section */}
             <div className={styles.fourthSection}>
                 <GetWellChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" />
+            </div>
+
+            <div className={styles.separator} />
+
+            {/* 6 section */}
+            <div className={styles.buttonSection}>
+                <DsButton variant="secondary" onClick={() => {}}>
+                    Options
+                </DsButton>
             </div>
         </div>
     );

@@ -80,6 +80,7 @@ import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice
 import { useNavigate } from 'react-router-dom';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { navigateToCanvas } from '../../../utils/appConfig';
+import GetWell from '../../GetWell/GetWell';
 
 type Tab = {
     tab: string;
@@ -757,6 +758,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && (
                         <DatabaseHostOverviewV2 refreshTime={refreshTime} refreshPage={refreshPage} />
                     )}
+
+                    {/* For optimize tab */}
+
+                    {selectedHeaderTab === WLF_TABS.OPTIMIZE && <GetWell />}
 
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>

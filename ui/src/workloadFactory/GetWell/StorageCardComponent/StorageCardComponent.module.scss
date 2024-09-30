@@ -43,4 +43,20 @@
         position: relative;
         top: 5px;
     }
+
+    .separator {
+        height: 56px;
+        border-right: 1px solid var(--border);
+        margin-left: -24px;
+    }
+
+    .buttonSection {
+        width: 170px;
+        display: flex;
+        justify-content: end;
+        [class*='dsButtons'] {
+            height: 32px !important;
+            min-width: 140px !important;
+        }
+    }
 }
