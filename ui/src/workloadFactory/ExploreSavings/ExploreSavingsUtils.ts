@@ -41,9 +41,6 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
 };
 
 export const handleManualTCOEBS = (dispatch: any, navigate: any, isWorkloadFactory: boolean) => {
-    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
-    dispatch(setDisableState(true));
-    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     postBlueXPMessage({
         type: BlueXPListeners.navigate,
         payload: {
@@ -55,12 +52,12 @@ export const handleManualTCOEBS = (dispatch: any, navigate: any, isWorkloadFacto
             replace: true
         }
     });
+    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
+    dispatch(setDisableState(true));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
 export const handleManualTCOFSXW = (dispatch: any, navigate: any, isWorkloadFactory: boolean) => {
-    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
-    dispatch(setDisableState(true));
-    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     postBlueXPMessage({
         type: BlueXPListeners.navigate,
         payload: {
@@ -72,6 +69,9 @@ export const handleManualTCOFSXW = (dispatch: any, navigate: any, isWorkloadFact
             replace: true
         }
     });
+    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
+    dispatch(setDisableState(true));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {
