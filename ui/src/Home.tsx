@@ -1,6 +1,6 @@
-import React, { Suspense, useEffect, useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
@@ -47,11 +47,8 @@ const Home = () => {
                             payload: { pathname: './fsxdb/marketing', replace: true }
                         });
                     } else {
-                        if (
-                            msg?.data?.payload?.pathname ===
-                            '/fsxdb/add-working-environment/database-services/mssql/create'
-                        ) {
-                            navigate('../fsxdb/add-working-environment/database-services/mssql/create');
+                        if (msg?.data?.payload?.pathname === '/fsxdb/mssql-deploy-wizard') {
+                            navigate('../fsxdb/mssql-deploy-wizard');
                         } else {
                             const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
                             navigate('../fsxdb');
