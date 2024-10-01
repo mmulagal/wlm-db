@@ -74,10 +74,7 @@ const Home = () => {
                 {isWorkloadFactory && (
                     <Suspense fallback={<MainComponent />}>
                         <Routes>
-                            <Route
-                                path={`add-working-environment/database-services/:storage/create`}
-                                element={<MainComponent />}
-                            />
+                            <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
                             <Route
                                 path={`add-working-environment/database-services/:storage/postgress`}
                                 element={<PostgressMainComponent />}
@@ -115,14 +112,8 @@ const Home = () => {
                 {!isWorkloadFactory && (
                     <Suspense fallback={<MainComponent />}>
                         <Routes>
-                            <Route
-                                path={`add-working-environment/database-services/:storage/create`}
-                                element={<MainComponent />}
-                            />
-                            <Route
-                                path={`fsxdb/add-working-environment/database-services/:storage/create`}
-                                element={<MainComponent />}
-                            />
+                            <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
+                            <Route path={`fsxdb/mssql-deploy-wizard`} element={<MainComponent />} />
                             <Route
                                 path={`add-working-environment/database-services/:storage/postgress`}
                                 element={<PostgressMainComponent />}
