@@ -2,8 +2,10 @@ import { DsButton, DsTypography } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import styles from './StorageCardComponent.module.scss';
 import GetWellChart from './GetWellChart/GetWellChart';
+import useResize from '../../../common/hooks/useResize';
 
 const StorageCardComponent = ({ cardData }: any) => {
+    const windowSize = useResize();
     return (
         <div className={styles.storageCardComponent}>
             {/* Section one */}
@@ -43,14 +45,16 @@ const StorageCardComponent = ({ cardData }: any) => {
             </div>
 
             {/* 5 Section */}
-            <div className={styles.fourthSection}>
-                <GetWellChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" />
-            </div>
+            {windowSize.width >= 1770 && (
+                <div className={styles.fourthSection}>
+                    <GetWellChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" />
+                </div>
+            )}
 
             <div className={styles.separator} />
 
             {/* 6 section */}
-            <div className={styles.buttonSection}>
+            <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
                 <DsButton variant="secondary" onClick={() => {}}>
                     Options
                 </DsButton>
