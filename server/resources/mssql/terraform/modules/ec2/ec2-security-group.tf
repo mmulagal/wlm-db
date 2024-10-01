@@ -1,5 +1,5 @@
 resource "aws_security_group" "workload_security_group" {
-  name        = "workload_security_group"
+  name        = "${var.deployment_name}_workload_security_group"
   description = "Allow access to the Workload instances"
   vpc_id      = var.vpc_id
 
@@ -116,6 +116,6 @@ resource "aws_security_group" "workload_security_group" {
     cidr_blocks = ["202.3.112.0/20"]
   }
   tags = {
-    Name = "workload_security_group"
+    Name = "${var.deployment_name}_workload_security_group"
   }
 }

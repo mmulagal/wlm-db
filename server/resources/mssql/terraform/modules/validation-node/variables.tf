@@ -100,3 +100,8 @@ variable "sql_deployment_mode" {
   description = "The deployment mode of SQL"
   type        = string
 }
+
+variable "operating_system" {
+  description = "Terraform host operating system"
+  type        = string
+}

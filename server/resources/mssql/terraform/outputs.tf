@@ -95,3 +95,11 @@ output "validation_instance_name" {
   description = "The name of the validation instance"
   value       = module.validation-node.instance_name
 }
+
+output "absolute_path" {
+  value = abspath(path.root)
+}
+
+output "operating_system" {
+  value = local.is_windows ? "Windows" : "Linux"
+}
