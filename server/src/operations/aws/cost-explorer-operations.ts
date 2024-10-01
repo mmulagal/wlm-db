@@ -1,17 +1,21 @@
 import {
     GetCostAndUsageCommandInput,
     GetCostAndUsageCommandOutput,
-    GetTagsCommandInput
+    GetTagsCommandInput,
+    ResultByTime
 } from '@aws-sdk/client-cost-explorer';
 import moment from 'moment';
 import { UsageCostResponseType } from '../../routes/types/database-hosts.types';
 import { getCostAndUsage, getTagsfromCostExplorer } from '../../lib/aws/cost-explorer';
 import getLogger from '../../utils/logger';
 import { BILLING, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
-import { ResourceDetails } from '../../utils/common-types';
+import { describeFSxFileSystems } from '../../lib/aws/fsx';
 import { getFsxStorageCapacity } from './fsx-operations';
 
 const logger = getLogger();
+const EC2_COMPUTE = 'Amazon Elastic Compute Cloud - Compute';
+const FSX = 'Amazon FSx';
+
 async function calculateBilling(
     credentialsId: string,
     region: string,
@@ -180,10 +184,8 @@ function calculateCostfromCostExplorerResponse(costExplorerResponse: GetCostAndU
     return response;
 }
 
-async function getCostAllocationTags(resourceDetail: ResourceDetails) {
+async function getCostAllocationTags(credentialsId: string, region: string) {
     logger.info(' Get cost allocation tag at account level');
-
-    const { region, credentials_id: credentialsId } = resourceDetail;
 
     try {
         const [startTimeFormat, currenTimeFormat] = getCostExplorerTimeRange();
@@ -202,4 +204,124 @@ async function getCostAllocationTags(resourceDetail: ResourceDetails) {
     }
 }
 
-export { calculateBilling, getCostExplorerTimeRange, getCostAllocationTags };
+async function getBillByResourceIds(
+    credentialsId: string,
+    region: string,
+    resourcesGroupedById: Map<string, string[]>
+) {
+    logger.info('Get billing by resource ids', { region });
+
+    const resourceIds: string[] = [...resourcesGroupedById.values()].flat();
+
+    const [startTimeFormat, currenTimeFormat] = getCostExplorerTimeRange();
+    const input: GetCostAndUsageCommandInput = {
+        TimePeriod: {
+            Start: startTimeFormat,
+            End: currenTimeFormat
+        },
+        Filter: {
+            And: [
+                {
+                    Dimensions: {
+                        Key: 'SERVICE',
+                        Values: [EC2_COMPUTE, FSX]
+                    }
+                },
+                {
+                    Dimensions: {
+                        Key: 'REGION',
+                        Values: [region]
+                    }
+                },
+                {
+                    Tags: {
+                        Key: WLMDB_COST_ALLOCATION_TAG,
+                        Values: resourceIds
+                    }
+                }
+            ]
+        },
+        Granularity: 'MONTHLY',
+        Metrics: ['UnblendedCost'],
+        GroupBy: [
+            {
+                Type: 'TAG',
+                Key: WLMDB_COST_ALLOCATION_TAG
+            }
+        ]
+    };
+
+    try {
+        const [costExplorerResponse, fileSystems] = await Promise.all([
+            getCostAndUsage(region, input, credentialsId),
+            describeFSxFileSystems(credentialsId, region)
+        ]);
+
+        const fileSystemStorageMap = new Map<string, number>();
+        fileSystems?.forEach(({ FileSystemId, StorageCapacity }) => {
+            if (FileSystemId && StorageCapacity) {
+                fileSystemStorageMap.set(FileSystemId, StorageCapacity);
+            }
+        });
+
+        const bills = new Map();
+        for (const [key, value] of resourcesGroupedById) {
+            const bill = costExplorerResponse.ResultsByTime?.reduce(billReducer.bind(null, value), {}) as Record<
+                string,
+                number
+            >;
+            const { fsxBill, ec2Bill, fsxnBreakDownById } = getBillByResourceId(bill, fileSystemStorageMap);
+
+            bills.set(key, {
+                compute: ec2Bill,
+                storage: {
+                    fsxn: fsxBill,
+                    fsxnBreakDownById
+                },
+                estimationType: BILLING,
+                connectivity: 0,
+                others: 0
+            });
+        }
+
+        return bills;
+    } catch (error) {
+        logger.error('Error while retrieving billing by resource ids', error);
+        throw error;
+    }
+}
+
+function billReducer(resourceList: string[], resources: Record<string, number>, { Groups = [] }: ResultByTime) {
+    Groups.forEach(({ Keys, Metrics }) => {
+        const key = Keys?.[0]?.split('$')?.[1];
+        if (key && resourceList.includes(key)) {
+            resources[key] = (resources[key] || 0) + Number(Metrics?.UnblendedCost?.Amount);
+        }
+    });
+    return resources;
+}
+
+function getBillByResourceId(resourceBill: Record<string, number>, fileSystemStorageMap: Map<string, number>) {
+    return Object.keys(resourceBill || {}).reduce(
+        (acc, curr) => {
+            if (/^fs-\w+$/.test(curr)) {
+                acc.fsxBill += Number(resourceBill?.[curr]);
+                acc.fsxnBreakDownById.push({
+                    id: curr,
+                    cost: resourceBill?.[curr] || 0,
+                    size: fileSystemStorageMap.get(curr) || 0
+                });
+            } else if (/^i-\w+$/.test(curr)) {
+                acc.ec2Bill += Number(resourceBill?.[curr]);
+            }
+            return acc;
+        },
+        { fsxBill: 0, ec2Bill: 0, fsxnBreakDownById: [] } as {
+            fsxBill: number;
+            ec2Bill: number;
+            fsxnBreakDownById: { [key: string]: string | number }[];
+        }
+    );
+}
+
+export { calculateBilling, getCostExplorerTimeRange, getCostAllocationTags, getBillByResourceIds };
