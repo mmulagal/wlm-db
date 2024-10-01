@@ -50,7 +50,7 @@ export const handleManualTCOEBS = (dispatch: any, navigate: any, isWorkloadFacto
             pathname: `${
                 isWorkloadFactory
                     ? './storage-saving-calculator?type=ebs&mode=manual'
-                    : '../../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
+                    : '../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
             }`,
             replace: true
         }
@@ -67,7 +67,7 @@ export const handleManualTCOFSXW = (dispatch: any, navigate: any, isWorkloadFact
             pathname: `${
                 isWorkloadFactory
                     ? './storage-saving-calculator?type=fsxw&mode=manual'
-                    : '../../fsxdb/storage-saving-calculator?type=fsxw&mode=manual'
+                    : '../fsxdb/storage-saving-calculator?type=fsxw&mode=manual'
             }`,
             replace: true
         }
