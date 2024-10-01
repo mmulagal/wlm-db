@@ -6,10 +6,12 @@ import TotalOptimizationScore from './TotalOptimizationScore/TotalOptimizationSc
 import OptimizationBreakdown from './OptimizationBreakdown/OptimizationBreakdown';
 import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import { ReactComponent as Light } from '../../assets/Light.svg';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { WLF_TABS } from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
+import Tag from '../../common/Tag/Tag';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -149,7 +151,7 @@ const GetWell = () => {
                 type: 'ONTAP configuration'
             },
             block_two: {
-                type: 'status',
+                type: 'Status',
                 value: 'Not optimized'
             },
             block_three: {
@@ -167,7 +169,7 @@ const GetWell = () => {
                 type: 'Configuration'
             },
             block_two: {
-                type: 'status',
+                type: 'Status',
                 value: 'optimized'
             },
             block_three: {
@@ -177,6 +179,60 @@ const GetWell = () => {
             block_four: {
                 type: 'Severity',
                 value: 'None'
+            }
+        },
+        Latency: {
+            block_one: {
+                value: 'Latency',
+                type: 'Storage performance '
+            },
+            block_two: {
+                type: 'Status',
+                value: 'Not optimized'
+            },
+            block_three: {
+                type: 'Latency',
+                value: '< 20 ms'
+            },
+            block_four: {
+                type: 'Severity',
+                value: 'Critical'
+            }
+        },
+        Throughput: {
+            block_one: {
+                value: 'Throughput',
+                type: 'Storage performance '
+            },
+            block_two: {
+                type: 'Status',
+                value: 'Not optimized'
+            },
+            block_three: {
+                type: 'Throughput',
+                value: '> 80%'
+            },
+            block_four: {
+                type: 'Severity',
+                value: 'Critical'
+            }
+        },
+        IOPS: {
+            block_one: {
+                value: 'IOPS',
+                type: 'Storage performance '
+            },
+            block_two: {
+                type: 'Status',
+                value: 'Not optimized'
+            },
+            block_three: {
+                type: 'Throughput',
+                value: '> 80%'
+            },
+            block_four: {
+                type: 'Severity',
+                value: 'Critical'
             }
         }
     };
@@ -396,9 +452,14 @@ const GetWell = () => {
                         <DsAccordion
                             id="1"
                             variant="Default"
-                            title={<div className={styles.genericTag}>Performance efficiency</div>}
+                            title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -409,9 +470,14 @@ const GetWell = () => {
                         <DsAccordion
                             id="2"
                             variant="Default"
-                            title={<div className={styles.genericTag}>Performance efficiency</div>}
+                            title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -422,9 +488,14 @@ const GetWell = () => {
                         <DsAccordion
                             id="3"
                             variant="Default"
-                            title={<div className={styles.genericTag}>Performance efficiency</div>}
+                            title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -435,9 +506,14 @@ const GetWell = () => {
                         <DsAccordion
                             id="4"
                             variant="Default"
-                            title={<div className={styles.genericTag}>Performance efficiency</div>}
+                            title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -462,9 +538,14 @@ const GetWell = () => {
                         <DsAccordion
                             id="5"
                             variant="Default"
-                            title={<div className={styles.genericTag}>Performance efficiency</div>}
+                            title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -475,9 +556,14 @@ const GetWell = () => {
                         <DsAccordion
                             id="6"
                             variant="Default"
-                            title={<div className={styles.genericTag}>Performance efficiency</div>}
+                            title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -488,9 +574,14 @@ const GetWell = () => {
                         <DsAccordion
                             id="7"
                             variant="Default"
-                            title={<div className={styles.genericTag}>Performance efficiency</div>}
+                            title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -501,9 +592,14 @@ const GetWell = () => {
                         <DsAccordion
                             id="8"
                             variant="Default"
-                            title={<div className={styles.genericTag}>Performance efficiency</div>}
+                            title={<Tag text={'Performance efficiency'} />}
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
                             ]}
                             children={<div>Content here</div>}
                         />
@@ -528,24 +624,123 @@ const GetWell = () => {
                         <DsAccordion
                             id="9"
                             variant="Default"
-                            title={<div className={styles.genericTag}>Performance efficiency</div>}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    <Tag text={'Performance efficiency'} />
+                                    <Tag text={'Operational excellence'} />
+                                    <Tag text={'Cost optimization'} />
+                                    <Tag text={'Reliability'} />
+                                    <Tag text={'Security'} />
+                                </div>
+                            }
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>
+                                        View recommendation & optimization
+                                    </div>
+                                </div>
                             ]}
                             children={<RecommendationTable tableData={ontapConfigTableData} isLoading={false} />}
                         />
                     </div>
 
-                    <div className={styles.combineComponent} style={{ marginBottom: '80px' }}>
+                    <div className={styles.combineComponent}>
                         <StorageCardComponent cardData={cardData.Configuartion} />
                         <DsAccordion
                             id="10"
                             variant="Default"
-                            title={<div className={styles.genericTag}>Performance efficiency</div>}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    <Tag text={'Performance efficiency'} />
+                                    <Tag text={'Operational excellence'} />
+                                    <Tag text={'Cost optimization'} />
+                                    <Tag text={'Reliability'} />
+                                    <Tag text={'Security'} />
+                                </div>
+                            }
                             headerActions={[
-                                <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>
+                                        View recommendation & optimization
+                                    </div>
+                                </div>
                             ]}
                             children={<RecommendationTable tableData={operatingSystemTableData} isLoading={false} />}
+                            style={{ marginBottom: '40px' }}
+                        />
+                    </div>
+                </div>
+
+                {/* Section four */}
+                <div className={styles['header-buttons']}>
+                    <DsTypography
+                        style={{
+                            padding: '0 0 8px'
+                        }}
+                        variant="Semibold_16"
+                    >
+                        Storage performance
+                    </DsTypography>
+                </div>
+
+                <div className={styles.accordionGroups}>
+                    <div className={styles.combineComponent}>
+                        <StorageCardComponent cardData={cardData.Latency} />
+                        <DsAccordion
+                            id="11"
+                            variant="Default"
+                            title={<Tag text={'Performance efficiency'} />}
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
+                            ]}
+                            children={<div>Content here</div>}
+                        />
+                    </div>
+
+                    <div className={styles.combineComponent}>
+                        <StorageCardComponent cardData={cardData.Throughput} />
+                        <DsAccordion
+                            id="12"
+                            variant="Default"
+                            title={<Tag text={'Performance efficiency'} />}
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
+                            ]}
+                            children={<div />}
+                        />
+                    </div>
+
+                    <div className={styles.combineComponent} style={{ marginBottom: '80px' }}>
+                        <StorageCardComponent cardData={cardData.IOPS} />
+                        <DsAccordion
+                            id="13"
+                            variant="Default"
+                            title={<Tag text={'Performance efficiency'} />}
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div>
+                                        <Light />
+                                    </div>
+                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
+                                </div>
+                            ]}
+                            children={<div />}
                             style={{ marginBottom: '40px' }}
                         />
                     </div>
