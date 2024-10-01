@@ -30,8 +30,8 @@
         "primaryCtaDropdownTo": [
             {
                 "label": "Microsoft SQL Server on EBS",
-                "to": "/databases/explore-saving-ebs",
-                "bluexpTo": "/fsxdb/explore-saving-ebs"
+                "to": "/databases/explore-savings-ebs",
+                "bluexpTo": "/fsxdb/explore-savings-ebs"
             },
             {
                 "label": "Microsoft SQL Server on FSx for Windows",
