@@ -50,7 +50,7 @@ export const handleManualTCOEBS = (dispatch: any, navigate: any, isWorkloadFacto
             pathname: `${
                 isWorkloadFactory
                     ? './storage-saving-calculator?type=ebs&mode=manual'
-                    : '../../fsxdb/storage-saving-calculator?type=efs&mode=manual'
+                    : '../../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
             }`,
             replace: true
         }
