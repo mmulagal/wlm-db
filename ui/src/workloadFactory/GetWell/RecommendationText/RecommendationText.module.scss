@@ -1,0 +1,23 @@
+.recommendationText {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 16px 0px 16px 0px;
+
+    .desc {
+        width: 1000px;
+    }
+
+    .values {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .seperator {
+        height: 20px;
+        border-right: 1px solid var(--border);
+        position: relative;
+    }
+} 

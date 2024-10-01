@@ -12,356 +12,11 @@ import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice
 import { WLF_TABS } from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
+import RecommendationText from './RecommendationText/RecommendationText';
+import { cardData, ontapConfigTableData, operatingSystemTableData, recommendendationTextData } from './GetWellUtils';
 
 const GetWell = () => {
     const dispatch = useDispatch();
-    const cardData = {
-        StorageTier: {
-            block_one: {
-                type: 'Storage sizing',
-                value: 'Storage tier'
-            },
-            block_two: {
-                type: 'status',
-                value: 'Optimized'
-            },
-            block_three: {
-                type: 'Capacity tier',
-                value: '0%'
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'None'
-            }
-        },
-        FileSystemHeadroom: {
-            block_one: {
-                value: 'File system headroom',
-                type: 'Storage tier'
-            },
-            block_two: {
-                type: 'status',
-                value: 'Under-provisioned'
-            },
-            block_three: {
-                type: 'File system headroom value',
-                value: '35%'
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'Critical'
-            }
-        },
-        TransactionLogDriveSize: {
-            block_one: {
-                value: 'Transaction log drive size',
-                type: 'Storage sizing'
-            },
-            block_two: {
-                type: 'status',
-                value: 'Over-provisioned'
-            },
-            block_three: {
-                type: 'Transaction log drive size value',
-                value: '100%'
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'Warning'
-            }
-        },
-        TempDBDriveSize: {
-            block_one: {
-                value: 'Temp DB drive size',
-                type: 'Storage sizing'
-            },
-            block_two: {
-                type: 'status',
-                value: 'Optimized'
-            },
-            block_three: {
-                type: 'TempDB drive size value',
-                value: '50%'
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'None'
-            }
-        },
-        UserDataFiles: {
-            block_one: {
-                value: 'User data files (.mdf)',
-                type: 'Storage layout'
-            },
-            block_two: {
-                type: 'status',
-                value: 'Optimized'
-            },
-            block_three: {
-                type: 'User data files',
-                value: 'Separate drive',
-                smallFont: true
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'None'
-            }
-        },
-        TransactionLogFiles: {
-            block_one: {
-                value: 'Transaction log files (.ldf)',
-                type: 'Storage layout'
-            },
-            block_two: {
-                type: 'status',
-                value: 'Optimized'
-            },
-            block_three: {
-                type: 'Transaction log files (.Ldf)',
-                value: 'Separate drive',
-                smallFont: true
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'None'
-            }
-        },
-        TempDBPlacement: {
-            block_one: {
-                value: 'TempDB placement',
-                type: 'Storage layout'
-            },
-            block_two: {
-                type: 'status',
-                value: 'Optimized'
-            },
-            block_three: {
-                type: 'TempDB placement',
-                value: 'Separate drive',
-                smallFont: true
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'None'
-            }
-        },
-        ONTAPConfiguartion: {
-            block_one: {
-                value: 'ONTAP configuration',
-                type: 'ONTAP configuration'
-            },
-            block_two: {
-                type: 'Status',
-                value: 'Not optimized'
-            },
-            block_three: {
-                type: 'Not-optimized values',
-                value: '20%'
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'Critical'
-            }
-        },
-        Configuartion: {
-            block_one: {
-                value: 'Operating system',
-                type: 'Configuration'
-            },
-            block_two: {
-                type: 'Status',
-                value: 'optimized'
-            },
-            block_three: {
-                type: 'Not-optimized values',
-                value: '0%'
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'None'
-            }
-        },
-        Latency: {
-            block_one: {
-                value: 'Latency',
-                type: 'Storage performance '
-            },
-            block_two: {
-                type: 'Status',
-                value: 'Not optimized'
-            },
-            block_three: {
-                type: 'Latency',
-                value: '< 20 ms'
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'Critical'
-            }
-        },
-        Throughput: {
-            block_one: {
-                value: 'Throughput',
-                type: 'Storage performance '
-            },
-            block_two: {
-                type: 'Status',
-                value: 'Not optimized'
-            },
-            block_three: {
-                type: 'Throughput',
-                value: '> 80%'
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'Critical'
-            }
-        },
-        IOPS: {
-            block_one: {
-                value: 'IOPS',
-                type: 'Storage performance '
-            },
-            block_two: {
-                type: 'Status',
-                value: 'Not optimized'
-            },
-            block_three: {
-                type: 'Throughput',
-                value: '> 80%'
-            },
-            block_four: {
-                type: 'Severity',
-                value: 'Critical'
-            }
-        }
-    };
-
-    const operatingSystemTableData: any = [
-        {
-            configuration: 'Multipath I/O (MPIO) Status',
-            value: 'Enabled',
-            status: 'Optimized',
-            severity: 'Critical',
-            tags: ['Operational excellence', 'Cost optimization'],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Multipath I/O (MPIO) Policy',
-            value: 'Round robin',
-            status: 'Not optimized',
-            severity: 'Critical',
-            tags: [],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Multipath I/O (MPIO) Sessions',
-            value: '5',
-            status: 'Not optimized',
-            severity: 'Critical',
-            tags: ['Operational excellence'],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'NTFS Allocation unit size',
-            value: '64K',
-            status: 'Not optimized',
-            severity: 'Critical',
-            tags: ['Cost optimization'],
-            recommendation: 'Recommendation text'
-        }
-    ];
-
-    const ontapConfigTableData: any = [
-        {
-            configuration: 'Thin provisioning',
-            value: 'Thin provisioning',
-            status: 'Optimized',
-            severity: 'Critical',
-            tags: ['Operational excellence', 'Cost optimization'],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Autosize',
-            value: 'Autosize',
-            status: 'Not optimized',
-            severity: 'Critical',
-            tags: [],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Autosize-mode',
-            value: 'Autosize-mode',
-            status: 'Not optimized',
-            severity: 'Critical',
-            tags: ['Operational excellence'],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Fractional reserve',
-            value: 'Fractional reserve',
-            status: 'Not optimized',
-            severity: 'Critical',
-            tags: ['Cost optimization'],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Snapshot copy reserve',
-            value: 'Snapshot copy reserve',
-            status: 'Not optimized',
-            severity: 'Critical',
-            tags: ['Operational excellence', 'Cost optimization'],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Snapshot autodelete',
-            value: 'Snapshot autodelete',
-            status: 'Not optimized',
-            severity: 'Warning',
-            tags: ['Operational excellence', 'Cost optimization'],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Space management',
-            value: 'Space management',
-            status: 'Not optimized',
-            severity: 'Warning',
-            tags: [],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Tiering policy',
-            value: 'Tiering policy',
-            status: 'Not optimized',
-            severity: 'Critical',
-            tags: ['Operational excellence'],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Tiering minimum colling days',
-            value: 'Tiering minimum colling days',
-            status: 'Not optimized',
-            severity: 'Warning',
-            tags: ['Cost optimization'],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Space reservation',
-            value: 'Space reservation',
-            status: 'Not optimized',
-            severity: 'Critical',
-            tags: ['Operational excellence', 'Cost optimization'],
-            recommendation: 'Recommendation text'
-        },
-        {
-            configuration: 'Space allocation',
-            value: 'Space allocation',
-            status: 'Not optimized',
-            severity: 'Critical',
-            tags: ['Operational excellence', 'Cost optimization'],
-            recommendation: 'Recommendation text'
-        }
-    ];
 
     return (
         <div className={styles.getWell}>
@@ -461,7 +116,7 @@ const GetWell = () => {
                                     <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                                 </div>
                             ]}
-                            children={<div>Content here</div>}
+                            children={<RecommendationText data={recommendendationTextData.StorageTier} />}
                         />
                     </div>
 
@@ -479,7 +134,7 @@ const GetWell = () => {
                                     <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                                 </div>
                             ]}
-                            children={<div>Content here</div>}
+                            children={<RecommendationText data={recommendendationTextData.FileSystemHeadroom} />}
                         />
                     </div>
 
@@ -497,7 +152,7 @@ const GetWell = () => {
                                     <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                                 </div>
                             ]}
-                            children={<div>Content here</div>}
+                            children={<RecommendationText data={recommendendationTextData.TransactionLogDriveSize} />}
                         />
                     </div>
 
@@ -515,7 +170,7 @@ const GetWell = () => {
                                     <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                                 </div>
                             ]}
-                            children={<div>Content here</div>}
+                            children={<RecommendationText data={recommendendationTextData.TransactionDBDriveSize} />}
                         />
                     </div>
                 </div>
@@ -547,7 +202,7 @@ const GetWell = () => {
                                     <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                                 </div>
                             ]}
-                            children={<div>Content here</div>}
+                            children={<RecommendationText data={recommendendationTextData.UserDataFileMdf} />}
                         />
                     </div>
 
@@ -565,7 +220,7 @@ const GetWell = () => {
                                     <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                                 </div>
                             ]}
-                            children={<div>Content here</div>}
+                            children={<RecommendationText data={recommendendationTextData.TransactionLogFiles} />}
                         />
                     </div>
 
@@ -583,25 +238,7 @@ const GetWell = () => {
                                     <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
                                 </div>
                             ]}
-                            children={<div>Content here</div>}
-                        />
-                    </div>
-
-                    <div className={styles.combineComponent}>
-                        <StorageCardComponent cardData={cardData.TempDBPlacement} />
-                        <DsAccordion
-                            id="8"
-                            variant="Default"
-                            title={<Tag text={'Performance efficiency'} />}
-                            headerActions={[
-                                <div className={styles.headerAction}>
-                                    <div>
-                                        <Light />
-                                    </div>
-                                    <div style={{ color: 'var(--text-button-primary)' }}>View recommendation</div>
-                                </div>
-                            ]}
-                            children={<div>Content here</div>}
+                            children={<RecommendationText data={recommendendationTextData.TempDBPlacement} />}
                         />
                     </div>
                 </div>
@@ -614,7 +251,7 @@ const GetWell = () => {
                         }}
                         variant="Semibold_16"
                     >
-                        ONTAP configuration
+                        Storage configuration
                     </DsTypography>
                 </div>
 

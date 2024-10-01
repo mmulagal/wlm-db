@@ -66,11 +66,14 @@ const StorageCardComponent = ({ cardData }: any) => {
             <div className={styles.separator} />
 
             {/* 6 section */}
-            <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
-                <DsButton variant="secondary" onClick={() => {}}>
-                    Options
-                </DsButton>
-            </div>
+            {cardData?.block_one?.value !== 'ONTAP configuration' &&
+                cardData?.block_one?.value !== 'Operating system' && (
+                    <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
+                        <DsButton variant="secondary" onClick={() => {}}>
+                            Optimize
+                        </DsButton>
+                    </div>
+                )}
         </div>
     );
 };
