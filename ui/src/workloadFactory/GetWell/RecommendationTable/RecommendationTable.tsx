@@ -68,9 +68,6 @@ const RecommendationTable = ({ tableData, isLoading }: any) => {
                                                     return <Tag text={perTag} />;
                                                 })}
                                             </div>
-                                            // <div>
-                                            //     <DsTypography variant="Regular_14">{cellData.join(', ')}</DsTypography>
-                                            // </div>
                                         }
                                         trigger="hover"
                                         delayHide={200}
