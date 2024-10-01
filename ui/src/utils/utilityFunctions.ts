@@ -1650,9 +1650,9 @@ export const setTabInfoFOrBXP = (tab: string) => {
             return WLF_TABS.SANDBOXES;
         case '/fsxdb/exploreSaving':
             return WLF_TABS.EXPLORE_SAVINGS;
-        case '/fsxdb/exploreSavingsEBS':
+        case '/fsxdb/explore-saving-ebs':
             return WLF_TABS.EXPLORE_SAVINGS_EBS;
-        case '/fsxdb/exploreSavingsFsxW':
+        case '/fsxdb/explore-savings-fsxw':
             return WLF_TABS.EXPLORE_SAVINGS_FsxW;
         case '/fsxdb/jobMonitoring':
             return WLF_TABS.JOB_MONITORING;
