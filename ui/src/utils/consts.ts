@@ -295,7 +295,9 @@ export const UI_IDS = {
     WIZARD_CODEBOX_AWS_CLI: 'wizard-codebox-aws-cli',
     DBP_CODEBOX_AWS_CLI: 'dbp-codebox-aws-cli',
     WIZARD_CODEBOX_CF: 'wizard-codebox-cf',
-    DBP_CODEBOX_CF: 'dbp-codebox-cf'
+    DBP_CODEBOX_CF: 'dbp-codebox-cf',
+    WIZARD_CODEBOX_TF: 'wizard-codebox-tf',
+    DBP_CODEBOX_TF: 'dbp-codebox-tf'
 };
 
 export const WLF_TABS = {

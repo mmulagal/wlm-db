@@ -111,27 +111,11 @@ const CodeBox = () => {
         };
     });
 
-    const terraformUI = () => {
-        return (
-            <div className={styles.terraformContainer}>
-                <div>{GENERAL.TERRAFORM}</div>
-                <div>
-                    <ComingSoon />
-                </div>
-            </div>
-        );
-    };
-
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [
-            CODE_VIEWER.CLOUDFORMATION,
-            CODE_VIEWER.AWS_CLI,
-            CODE_VIEWER.REST_API,
-            isDemoMode ? CODE_VIEWER.TERRAFORM : terraformUI()
-        ];
+        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, CODE_VIEWER.TERRAFORM];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', idx === 3 && !isDemoMode, '');
+            const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
         return options;
@@ -451,6 +435,8 @@ const CodeBox = () => {
             return UI_IDS.WIZARD_CODEBOX_AWS_CLI;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
             return UI_IDS.WIZARD_CODEBOX_REST_API;
+        } else if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+            return UI_IDS.WIZARD_CODEBOX_TF;
         }
     };
 
