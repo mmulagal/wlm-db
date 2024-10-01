@@ -22,13 +22,35 @@ import {
     formatNumberWithCustomComma
 } from '../../utils/utilityFunctions';
 
-export const onClickESHost = (dispatch: any, rowData: any) => {
+export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
     const deploymentModel = (() => {
         return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
     if (rowData?.storageType === GENERAL.EBS) {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: `${
+                    isWorkloadFactory
+                        ? './storage-saving-calculator?type=ebs&mode=auto'
+                        : '../fsxdb/storage-saving-calculator?type=ebs&mode=auto'
+                }`,
+                replace: true
+            }
+        });
         dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_EBS));
     } else {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: `${
+                    isWorkloadFactory
+                        ? './storage-saving-calculator?type=fsxw&mode=auto'
+                        : '../fsxdb/storage-saving-calculator?type=fsxw&mode=auto'
+                }`,
+                replace: true
+            }
+        });
         dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_FSXW));
     }
 
