@@ -98,11 +98,11 @@ const Home = () => {
                                 element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
                             />
                             <Route
-                                path={'databases/exploreSavingsEBS'}
+                                path={'databases/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
                             <Route
-                                path={'databases/exploreSavingsFsxW'}
+                                path={'databases/explore-savings-fsxw'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                             />
                             <Route path={'create-new-user'} element={<WizardComponent />} />
@@ -144,19 +144,19 @@ const Home = () => {
                             />
                             <Route path={'fsxdb/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                             <Route
-                                path={'databases/exploreSavingsEBS'}
+                                path={'databases/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
                             <Route
-                                path={'fsxdb/exploreSavingsEBS'}
+                                path={'fsxdb/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
                             <Route
-                                path={'databases/exploreSavingsFsxW'}
+                                path={'databases/explore-savings-fsxw'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                             />
                             <Route
-                                path={'fsxdb/exploreSavingsFsxW'}
+                                path={'fsxdb/explore-savings-fsxw'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                             />
                             <Route path={'create-new-user'} element={<WizardComponent />} />

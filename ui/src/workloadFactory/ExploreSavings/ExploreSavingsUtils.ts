@@ -1,3 +1,4 @@
+import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import store from '../../store/store';
 import {
     setDisableState,
@@ -39,16 +40,38 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
     setESInstanceData(rowData, dispatch);
 };
 
-export const handleManualTCOEBS = (dispatch: any, navigate: any) => {
+export const handleManualTCOEBS = (dispatch: any, navigate: any, isWorkloadFactory: boolean) => {
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${
+                isWorkloadFactory
+                    ? './storage-saving-calculator?type=ebs&mode=manual'
+                    : '../../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
+            }`,
+            replace: true
+        }
+    });
 };
 
-export const handleManualTCOFSXW = (dispatch: any, navigate: any) => {
+export const handleManualTCOFSXW = (dispatch: any, navigate: any, isWorkloadFactory: boolean) => {
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${
+                isWorkloadFactory
+                    ? './storage-saving-calculator?type=fsxw&mode=manual'
+                    : '../../fsxdb/storage-saving-calculator?type=fsxw&mode=manual'
+            }`,
+            replace: true
+        }
+    });
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {
