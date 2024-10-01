@@ -159,14 +159,7 @@ const Home = () => {
                                 path={'fsxdb/explore-savings-fsxw'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                             />
-                            <Route
-                                path={'fsxdb/storage-saving-calculator?type=ebs&mode=manual'}
-                                element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
-                            />
-                            <Route
-                                path={'fsxdb/storage-saving-calculator?type=fsxw&mode=manual'}
-                                element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
-                            />
+
                             <Route path={'create-new-user'} element={<WizardComponent />} />
                             <Route path={'job-monitor'} element={<JobMonitoring />} />
                             <Route path={'create-new-sandbox'} element={<CreateNewSandbox />} />
