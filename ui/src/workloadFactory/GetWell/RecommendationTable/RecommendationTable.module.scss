@@ -43,6 +43,11 @@
             }
         }
     }
+
+    .tags {
+        display: flex;
+        gap: 8px;
+    }
     
     [class*='Table-module_header-row'] {
         position: unset !important;

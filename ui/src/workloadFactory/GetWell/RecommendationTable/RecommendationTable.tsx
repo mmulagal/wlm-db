@@ -5,6 +5,7 @@ import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Active } from '../../../assets/success.svg';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
+import Tag from '../../../common/Tag/Tag';
 
 const RecommendationTable = ({ tableData, isLoading }: any) => {
     const ColDefs: ColumnProps[] = [
@@ -62,9 +63,14 @@ const RecommendationTable = ({ tableData, isLoading }: any) => {
                                     <Popover
                                         popoverClass={''}
                                         children={
-                                            <div>
-                                                <DsTypography variant="Regular_14">{cellData.join(', ')}</DsTypography>
+                                            <div className={styles.tags}>
+                                                {cellData?.map((perTag: string) => {
+                                                    return <Tag text={perTag} />;
+                                                })}
                                             </div>
+                                            // <div>
+                                            //     <DsTypography variant="Regular_14">{cellData.join(', ')}</DsTypography>
+                                            // </div>
                                         }
                                         trigger="hover"
                                         delayHide={200}
