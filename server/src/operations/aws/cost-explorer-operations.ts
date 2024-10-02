@@ -211,7 +211,7 @@ async function getBillByResourceIds(
 ) {
     logger.info('Get billing by resource ids', { region });
 
-    const resourceIds: string[] = [...resourcesGroupedById.values()].flat();
+    const awsResourcesList: string[] = [...resourcesGroupedById.values()].flat();
 
     const [startTimeFormat, currenTimeFormat] = getCostExplorerTimeRange();
     const input: GetCostAndUsageCommandInput = {
@@ -236,7 +236,7 @@ async function getBillByResourceIds(
                 {
                     Tags: {
                         Key: WLMDB_COST_ALLOCATION_TAG,
-                        Values: resourceIds
+                        Values: awsResourcesList
                     }
                 }
             ]
@@ -264,6 +264,82 @@ async function getBillByResourceIds(
             }
         });
 
+        /*
+        SDK response, ResultsByTime, is an array of objects, each object contains the cost of the resources for that time period.
+        We have two objects as the time period is for two months. We need to calculate the cost for each resource for the entire time period.
+        [
+            {
+                "Estimated": true,
+                "Groups": [
+                    {
+                        "Keys": [
+                            "wlmdb-cost-resource$fs-081a791ea94f61aa2"
+                        ],
+                        "Metrics": {
+                            "UnblendedCost": {
+                                "Amount": "44.51081049",
+                                "Unit": "USD"
+                            }
+                        }
+                    },
+                    {
+                        "Keys": [
+                            "wlmdb-cost-resource$i-023fe93bb9111004b"
+                        ],
+                        "Metrics": {
+                            "UnblendedCost": {
+                                "Amount": "66.627",
+                                "Unit": "USD"
+                            }
+                        }
+                    }
+                ],
+                "TimePeriod": {
+                    "End": "2024-10-01",
+                    "Start": "2024-09-01"
+                },
+                "Total": {}
+            },
+            {
+                "Estimated": true,
+                "Groups": [],
+                "TimePeriod": {
+                    "End": "2024-10-02",
+                    "Start": "2024-10-01"
+                },
+                "Total": {
+                    "UnblendedCost": {
+                        "Amount": "0",
+                        "Unit": "USD"
+                    }
+                }
+            }
+        ]
+        After reducing the array, we will have an object with the resource id as the key and the cost as the value.
+        {
+            "fs-081a791ea94f61aa2": 44.51081049,
+            "i-023fe93bb9111004b": 66.627
+        }
+        Now, we have to calculate the cost for each resource type, EC2 and FSx.
+        {
+            "compute": 66.627,
+            "storage": {
+                "fsxn": 44.51081049,
+                "fsxnBreakDownById": [
+                    {
+                        "id": "fs-081a791ea94f61aa2",
+                        "cost": 44.51081049,
+                        "size": 1200
+                    }
+                ]
+            },
+            "estimationType": "billing",
+            "connectivity": 0,
+            "others": 0
+        }
+        The final result will be a map with the resource id as the key and the cost as the value.
+        This exercise is done for every single database-host by iterating over the resourcesGroupedById map.
+        */
         const bills = new Map();
         for (const [key, value] of resourcesGroupedById) {
             const bill = costExplorerResponse.ResultsByTime?.reduce(billReducer.bind(null, value), {}) as Record<
