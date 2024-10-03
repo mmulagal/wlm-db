@@ -9,7 +9,6 @@ const SavingsSelectedHost = () => {
     const isDisabled = false;
     const { selectedHostDetails, selectedPartnerHostDetails, getPartnerHostDetailsLoading, savingsCalculatorFrom } =
         useAppSelector(state => state.exploreSavings);
-    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     const [totalVolume, setTotalVolume] = useState(0);
     const [hostname, setHostname] = useState('');
@@ -24,13 +23,8 @@ const SavingsSelectedHost = () => {
             volumeCount += selectedPartnerHostDetails?.ebsResourceInfo?.length;
         }
         setTotalVolume(volumeCount);
-        if (isInventoryV2) {
-            setHostname(selectedHostDetails?.name);
-            setNoOfInstances(selectedHostDetails?.totalInstance);
-        } else {
-            setHostname(selectedHostDetails?.databaseServer?.activeNode);
-            setNoOfInstances(selectedHostDetails?.totalInstance);
-        }
+        setHostname(selectedHostDetails?.name);
+        setNoOfInstances(selectedHostDetails?.totalInstance);
     }, [selectedHostDetails, selectedPartnerHostDetails]);
 
     return (

@@ -40,12 +40,7 @@ import {
     setHeaderSelectedRegion,
     setRefreshTime
 } from '../../../store/workloadFactory/headersSlice';
-import {
-    inventoryApi,
-    inventoryApiV2,
-    workloadFactoryResourceApi,
-    workloadFactoryResourceApiV2
-} from '../../../utils/apiService';
+import { inventoryApi, inventoryApiV2, workloadFactoryResourceApiV2 } from '../../../utils/apiService';
 import {
     setFromTime,
     setJobsList,
@@ -106,7 +101,6 @@ const HeaderComponent = ({ tab }: Tab) => {
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const toShowPostgress = localStorage.getItem('postgress');
 
     HeaderComponentApi();
@@ -274,12 +268,8 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
-            if (isInventoryV2) {
-                dispatch(workloadFactoryResourceApiV2.util.resetApiState());
-                dispatch(setIsResourceRefresh(true));
-            } else {
-                dispatch(workloadFactoryResourceApi.util.resetApiState());
-            }
+            dispatch(workloadFactoryResourceApiV2.util.resetApiState());
+            dispatch(setIsResourceRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));
             dispatch(setSubJobsData([]));
@@ -748,7 +738,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <DatabaseHomePage />
                         </div>
                     )}
-                    {selectedHeaderTab === WLF_TABS.INVENTORY && isInventoryV2 && (
+                    {selectedHeaderTab === WLF_TABS.INVENTORY && (
                         <>
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
@@ -791,7 +781,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             />
                         </>
                     )}
-                    {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && (
+                    {selectedHeaderTab === WLF_TABS.OVERVIEW && (
                         <DatabaseHostOverviewV2 refreshTime={refreshTime} refreshPage={refreshPage} />
                     )}
 
