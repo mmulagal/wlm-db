@@ -709,7 +709,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                     postBlueXPMessage({
                                                         type: BlueXPListeners.navigate,
                                                         payload: {
-                                                            pathname: '../databases/mssql-deploy-wizard',
+                                                            pathname: './mssql-deploy-wizard',
                                                             replace: true
                                                         }
                                                     });
