@@ -54,6 +54,12 @@
         .filterComponent {
             margin-bottom: 40px;
 
+            .filterHeaderStyle {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+            }
+
             .filterHeader {
                 display: flex;
                 gap: 24px;
@@ -61,6 +67,18 @@
                 .items {
                     display: flex;
                     gap: 8px;
+                }
+            }
+
+            .dropdownList {
+                display: flex;
+                gap: 52px;
+                .dropDown {
+                    width: 264px;
+
+                    [class*='dsTextFieldFrame'] {
+                        max-width: 264px !important;
+                    }
                 }
             }
         }
