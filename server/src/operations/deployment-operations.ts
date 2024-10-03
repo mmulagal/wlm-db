@@ -1359,9 +1359,35 @@ async function deployPgSql(
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
-        // if (permissions.implicitlyDenied.length || permissions.explicitlyDenied.length) {
-        metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
-        const response = await createCfTemplateForPgsqlDeployment(
+        if (permissions.implicitlyDenied.length || permissions.explicitlyDenied.length) {
+            metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
+            const response = await createCfTemplateForPgsqlDeployment(
+                credentialsId,
+                region,
+                networkConfiguration,
+                ec2Configuration,
+                fsxConfiguration,
+                sqlConfiguration,
+                topicArn,
+                false,
+                metrics,
+                []
+            );
+            const errMsg = MISSING_PERMISSIONS(permissions.implicitlyDenied, permissions.explicitlyDenied);
+
+            const responseWithPermissions: CloudFormationDeploymentResponseType = {
+                ...response,
+                missingPermissions: {
+                    implicitlyDenied: permissions.implicitlyDenied || [],
+                    explicitlyDenied: permissions.explicitlyDenied
+                }
+            };
+
+            logger.error(errMsg);
+            return responseWithPermissions;
+        }
+        metrics += `,${DEPLOYED_FROM}:${WLMDB}`;
+        return deployCfTemplateForPgSql(
             credentialsId,
             region,
             networkConfiguration,
@@ -1370,34 +1396,8 @@ async function deployPgSql(
             sqlConfiguration,
             topicArn,
             false,
-            metrics,
-            []
+            metrics
         );
-        const errMsg = MISSING_PERMISSIONS(permissions.implicitlyDenied, permissions.explicitlyDenied);
-
-        const responseWithPermissions: CloudFormationDeploymentResponseType = {
-            ...response,
-            missingPermissions: {
-                implicitlyDenied: permissions.implicitlyDenied || [],
-                explicitlyDenied: permissions.explicitlyDenied
-            }
-        };
-
-        logger.error(errMsg);
-        return responseWithPermissions;
-        // }
-        // metrics += `,${DEPLOYED_FROM}:${WLMDB}`;
-        // return deployCfTemplateForPgSql(
-        //     credentialsId,
-        //     region,
-        //     networkConfiguration,
-        //     ec2Configuration,
-        //     fsxConfiguration,
-        //     sqlConfiguration,
-        //     topicArn,
-        //     false,
-        //     metrics
-        // );
     } catch (err: any) {
         // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
         if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
@@ -1947,6 +1947,5 @@ export {
     getFSXAvailableRegionsForThrougput,
     getCollationDetailsForDeployment,
     deployPgSql,
-    getTerraformSetup,
-    deployCfTemplateForPgSql
+    getTerraformSetup
 };
