@@ -59,11 +59,11 @@ const StorageCardComponent = ({ cardData }: any) => {
             {/* 5 Section */}
             {windowSize.width >= 1770 && (
                 <div className={styles.fourthSection}>
-                    <GetWellChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" />
+                    {/* <GetWellChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" /> */}
                 </div>
             )}
 
-            <div className={styles.separator} />
+            {/* <div className={styles.separator} /> */}
 
             {/* 6 section */}
             {cardData?.block_one?.value !== 'ONTAP configuration' &&
