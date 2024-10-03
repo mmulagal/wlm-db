@@ -29,6 +29,9 @@ export interface InventorySliceData {
     removeSecNodeDiscoveredList: Array<string>;
     unManagedPerfInstanceIdsList: Array<string>;
     managedHostInstanceLoading: boolean;
+    selectedHeaderTab: string;
+    managedHostInitialColumns: any;
+    isRefreshed: boolean;
 }
 
 export interface InventoryTableData {

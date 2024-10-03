@@ -33,7 +33,6 @@ import { ReactComponent as RSS } from '../../../assets/ic_rss.svg';
 import { ReactComponent as RSS_White } from '../../../assets/ic_rss_white.svg';
 import { ReactComponent as Menu } from '../../../assets/ic_menu.svg';
 import { useDispatch } from 'react-redux';
-import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
     setDashboardRefresh,
@@ -58,7 +57,6 @@ import { setSelectedCredentials, setSelectedRegionData } from '../../../store/ms
 import { SAVINGS_CALC_MODE, WLF_TABS, WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
-import InventoryApis from '../../Inventory/InventoryApis';
 import DatabaseHomeApis from '../DatabaseHomeApis';
 import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
 import ExploreSavings from '../../ExploreSavings/ExploreSavings';
@@ -81,6 +79,7 @@ import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice
 import { useNavigate } from 'react-router-dom';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { navigateToCanvas } from '../../../utils/appConfig';
+import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
 type Tab = {
     tab: string;
@@ -104,18 +103,14 @@ const HeaderComponent = ({ tab }: Tab) => {
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
-    const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
+    const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const toShowPostgress = localStorage.getItem('postgress');
 
     HeaderComponentApi();
-    if (isInventoryV2) {
-        InventoryApisV2();
-    } else {
-        InventoryApis();
-    }
+    InventoryApisV2();
     DatabaseHomeApis();
     JobMonitoringApi();
     SavingsCalculatorApi();

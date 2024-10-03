@@ -8,7 +8,7 @@ import { GENERAL } from '../../../utils/appConstants';
 const ProtectionSection = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
 
-    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const databaseHostsLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
     const fullHostDataLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
     const [loading, setLoading] = useState(false);

@@ -78,8 +78,8 @@ import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsMsg';
 import store from '../../../store/store';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../../store/workloadFactory/headersSlice';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 const _ = require('lodash');
 
 type optionsType = {

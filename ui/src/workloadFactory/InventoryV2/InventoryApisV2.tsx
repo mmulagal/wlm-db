@@ -11,6 +11,7 @@ import {
     setIsDiscoveredHostData,
     setIsFullHostDataLoading,
     setIsManagedHostListLoading,
+    setIsRefreshed,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
     setRemoveSecNodeDiscoveredList,
@@ -37,7 +38,6 @@ import {
     getUnmanagedHostInstances,
     updateInstancesApiResponse
 } from './InventoryUtilsV2';
-import { setIsRefreshed } from '../../store/workloadFactory/inventorySlice';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../store/store';
 import { INSTANCE_API_FIELDS } from '../../utils/consts';
@@ -52,7 +52,7 @@ const InventoryApisV2 = () => {
     const mssqlInstancesData = useAppSelector(state => state.inventoryV2.mssqlInstancesData);
     const detectedInstanceId = useAppSelector(state => state.inventoryV2.detectedInstanceId);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
-    const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
+    const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
     const [runningPerfInstanceList, setRunningPerfInstanceList] = useState<Array<string>>([]);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);

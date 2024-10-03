@@ -8,7 +8,7 @@ import {
     setSelectedInstanceId,
     setSelectedServerName
 } from '../../store/workloadFactory/exploreSavingsSlice';
-import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
+import { setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import { FSX_AZ_TYPE, GIB_IN_BYTE, SAVINGS_CALC_MODE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import {

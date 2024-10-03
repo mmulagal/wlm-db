@@ -19,10 +19,10 @@ import CreateNewSandbox from './workloadFactory/Sandbox/CreateNewSandbox/CreateN
 import { BXP_MESSAGES, WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 import { useAppSelector } from './store/storeHooks';
-import { setSelectedHeaderTab } from './store/workloadFactory/inventorySlice';
 import { useRunOnce } from './common/hooks/useRunOnce';
 import { setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
+import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
