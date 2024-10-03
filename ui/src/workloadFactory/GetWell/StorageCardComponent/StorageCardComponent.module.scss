@@ -35,13 +35,17 @@
         border-right: 1px solid var(--border);
     }
 
+    // .fourthSection {
+    //     display: flex;
+    //     flex-direction: column;
+    //     height: 93px;
+    //     width: 330px;
+    //     position: relative;
+    //     top: 5px;
+    // }
+
     .fourthSection {
-        display: flex;
-        flex-direction: column;
-        height: 93px;
         width: 330px;
-        position: relative;
-        top: 5px;
     }
 
     .separator {

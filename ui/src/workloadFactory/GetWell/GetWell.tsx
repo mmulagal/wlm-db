@@ -9,12 +9,13 @@ import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as Light } from '../../assets/Light.svg';
 import { ReactComponent as Union } from '../../assets/Union.svg';
 import { useDispatch } from 'react-redux';
-import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
+
 import { WLF_TABS } from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
 import { cardData, ontapConfigTableData, operatingSystemTableData, recommendendationTextData } from './GetWellUtils';
+import { setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
 
 const GetWell = () => {
     const dispatch = useDispatch();
