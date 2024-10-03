@@ -704,7 +704,21 @@ const HeaderComponent = ({ tab }: Tab) => {
                                             variant="primary"
                                             onClick={() => {
                                                 dispatch(setDatabaseHostEntryPoint('database'));
-                                                navigate(WLF_TO_FORM_NAVIGATE);
+                                                // navigate(WLF_TO_FORM_NAVIGATE);
+                                                if (isWorkloadFactory) {
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: { pathname: '../mssql-deploy-wizard', replace: true }
+                                                    });
+                                                } else {
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: '../../fsxdb/mssql-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                }
                                             }}
                                             id={'deploy-button'}
                                         >
