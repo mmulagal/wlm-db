@@ -28,7 +28,6 @@ import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
 import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
-import inventorySlice from './workloadFactory/inventorySlice';
 import inventoryV2Slice from './workloadFactory/inventoryV2Slice';
 import headersSlice from './workloadFactory/headersSlice';
 import createNewUserSlice from './workloadFactory/createNewDBSlice';
@@ -57,7 +56,6 @@ const rootReducer = combineReducers({
     [jobMonitoringApi.reducerPath]: jobMonitoringApi.reducer,
     [jobMonitoringSlice.name]: jobMonitoringSlice.reducer,
     [inventoryV2Slice.name]: inventoryV2Slice.reducer,
-    [inventorySlice.name]: inventorySlice.reducer,
     [headersApi.reducerPath]: headersApi.reducer,
     [headersSlice.name]: headersSlice.reducer,
     [createNewUserSlice.name]: createNewUserSlice.reducer,

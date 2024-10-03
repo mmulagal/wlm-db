@@ -24,12 +24,9 @@ import {
     displayFormattedValue,
     generateRandomDBName,
     formatFractionalNumber,
-    mergeDatabaseHostsData,
     jobStatusPercent,
-    getHostStatusCount,
     getAggrProtection,
     getAggrStorageSavings,
-    getAggrCost,
     wrapContext,
     getWlmdbPayload,
     setRecommendedValues,
@@ -840,17 +837,6 @@ describe('formatFractionalNumber', () => {
     });
 });
 
-describe('mergeDatabaseHostsData', () => {
-    it('Return merged list', () => {
-        const result = mergeDatabaseHostsData(databaseHostItem);
-        expect(result.length).toEqual(4);
-    });
-    it('Should return null is empty list', () => {
-        const result = mergeDatabaseHostsData(null);
-        expect(result.length).toEqual(0);
-    });
-});
-
 describe('jobStatusPercent', () => {
     it('Return job status percent', () => {
         const jobSummaryResponse = {
@@ -868,18 +854,6 @@ describe('jobStatusPercent', () => {
         let jobSummaryResponse: any;
         const result = jobStatusPercent(jobSummaryResponse);
         expect(result).toBeNull();
-    });
-});
-
-describe('getHostStatusCount', () => {
-    it('Return host status data', () => {
-        const result = getHostStatusCount(mergeDatabaseHostsData(databaseHostItem));
-        expect(result?.totalDatabases).toEqual(20);
-        expect(result?.totalHosts).toEqual(4);
-        expect(result?.totalUpHosts).toEqual(1);
-        expect(result?.totalDownHosts).toEqual(1);
-        expect(result?.totalInitializingHosts).toEqual(1);
-        expect(result?.totalFailedHosts).toEqual(1);
     });
 });
 
@@ -902,22 +876,6 @@ describe('getAggrStorageSavings', () => {
         expect(result?.storageConsumes).toEqual('159.1 GiB');
         expect(result?.storageSavings).toEqual('10 GiB');
         expect(result?.storageSavingsPercent).toEqual(5.914706024034134);
-    });
-});
-
-describe('getAggrCost', () => {
-    it('Return aggr cost data with same fsx id and diff ec2 details', () => {
-        const result = getAggrCost(databaseHostItem);
-        expect(result?.storageCost).toEqual(200);
-        expect(result?.computeCost).toEqual(1400);
-        expect(result?.connectivityCost).toEqual(100);
-        expect(result?.otherCost).toEqual(48);
-        expect(result?.totalCost).toEqual(1748);
-        expect(result?.storageCostPercent).toEqual('11.4');
-        expect(result?.computeCostPercent).toEqual('80.1');
-        expect(result?.connectivityCostPercent).toEqual('5.7');
-        expect(result?.otherCostPercent).toEqual('2.7');
-        expect(result?.requireBillingPerm).toEqual(true);
     });
 });
 

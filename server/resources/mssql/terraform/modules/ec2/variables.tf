@@ -192,3 +192,8 @@ variable "deployment_name" {
   description = "The name of the parent deployment"
   type        = string
 }
+
+variable "operating_system" {
+  description = "Terraform host operating system"
+  type        = string
+}

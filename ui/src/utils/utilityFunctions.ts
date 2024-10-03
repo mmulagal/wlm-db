@@ -36,6 +36,7 @@ import { DatabaseHostItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
+import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -547,17 +548,6 @@ export const formatHostData = (val: any) => {
     return val;
 };
 
-export const mergeDatabaseHostsData = (hostsData: any) => {
-    if (!hostsData) {
-        return [];
-    }
-    const mergedList: any[] = [];
-    Object.keys(hostsData).map((key: string) => {
-        mergedList.push(formatHostData(hostsData[key]));
-    });
-    return mergedList;
-};
-
 export const jobStatusPercent = (data: JobsSummaryRes) => {
     if (!data) {
         return null;
@@ -574,35 +564,6 @@ export const jobStatusPercent = (data: JobsSummaryRes) => {
         inProgressPercent: inProgress ? (inProgress / totalJobs) * 100 : 0
     };
     return newData;
-};
-
-export const getHostStatusCount = (data: DatabaseHostItem[]) => {
-    let totalUpHosts = 0;
-    let totalInitializingHosts = 0;
-    let totalDownHosts = 0;
-    let totalFailedHosts = 0;
-    let totalDatabases = 0;
-
-    data?.map(val => {
-        if (val?.status === STATUS_CONST.UP) {
-            totalUpHosts += 1;
-        } else if (val?.status === STATUS_CONST.INITIALIZING) {
-            totalInitializingHosts += 1;
-        } else if (val?.status === STATUS_CONST.DOWN) {
-            totalDownHosts += 1;
-        } else if (val?.status === STATUS_CONST.FAILED) {
-            totalFailedHosts += 1;
-        }
-        totalDatabases += val?.databaseCount || 0;
-    });
-    return {
-        totalDatabases: totalDatabases,
-        totalHosts: data?.length || 0,
-        totalUpHosts: totalUpHosts,
-        totalInitializingHosts: totalInitializingHosts,
-        totalDownHosts: totalDownHosts,
-        totalFailedHosts: totalFailedHosts
-    };
 };
 
 export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryDatabaseItem[]) => {
@@ -700,81 +661,6 @@ export const getAggrStorageSavings = (
         storageConsumes: formatSizeOnePrecision(storageConsume),
         storageSavings: formatSizeOnePrecision(storageSavings),
         storageSavingsPercent: (storageSavings / totalConsume) * 100 || 0
-    };
-};
-
-export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[]) => {
-    let storageCost = 0;
-    let computeCost = 0;
-    let connectivityCost = 0;
-    let otherCost = 0;
-
-    let storageList: (string | undefined)[] = [];
-    let vpcList: (string | undefined)[] = [];
-    let requireBillingPerm = false;
-    let noDeploymentChk = true;
-
-    data?.map((val: any) => {
-        if (val?.estimatedUsageCost?.compute) {
-            computeCost += val.estimatedUsageCost.compute;
-        }
-
-        // If storage cost is already added than no need to add again based on FSXId
-        let fsxVal = '';
-        if (val?.topology?.fileSystemId) {
-            fsxVal = val.topology.fileSystemId;
-        }
-        if ((!fsxVal || !storageList.includes(fsxVal)) && val?.estimatedUsageCost?.storage?.fsxn) {
-            storageCost += val.estimatedUsageCost.storage?.fsxn;
-            if (fsxVal) {
-                storageList.push(fsxVal);
-            }
-        }
-
-        storageCost += val.estimatedUsageCost?.storage?.fsxw || 0;
-        storageCost += val.estimatedUsageCost?.storage?.ebs || 0;
-
-        // If connectivity cost is already added than no need to add again based on VPCId
-        let vpcVal = '';
-        if (val?.topology?.vpcId) {
-            vpcVal = val.topology.vpcId;
-        }
-        if ((!vpcVal || !vpcList.includes(vpcVal)) && val?.estimatedUsageCost?.connectivity) {
-            connectivityCost += val.estimatedUsageCost.connectivity;
-            if (vpcVal) {
-                vpcList.push(vpcVal);
-            }
-        }
-
-        if (val?.estimatedUsageCost?.others) {
-            otherCost += val.estimatedUsageCost.others;
-        }
-
-        if (val?.estimatedUsageCost?.estimationType === COSTING_TYPES.PRICING) {
-            requireBillingPerm = true;
-        }
-
-        if (
-            val?.estimatedUsageCost?.estimationType === COSTING_TYPES.PRICING ||
-            val?.estimatedUsageCost?.estimationType === COSTING_TYPES.BILLING
-        ) {
-            noDeploymentChk = false;
-        }
-    });
-
-    const totalCost = storageCost + computeCost + connectivityCost + otherCost;
-
-    return {
-        storageCost: formatFractionalNumber(storageCost, 2),
-        computeCost: formatFractionalNumber(computeCost, 2),
-        connectivityCost: formatFractionalNumber(connectivityCost, 2),
-        otherCost: formatFractionalNumber(otherCost, 2),
-        totalCost: formatFractionalNumber(totalCost, 2),
-        storageCostPercent: formatFractionalNumber((storageCost / totalCost) * 100),
-        computeCostPercent: formatFractionalNumber((computeCost / totalCost) * 100),
-        connectivityCostPercent: formatFractionalNumber((connectivityCost / totalCost) * 100),
-        otherCostPercent: formatFractionalNumber((otherCost / totalCost) * 100),
-        requireBillingPerm: requireBillingPerm || noDeploymentChk
     };
 };
 
@@ -1455,22 +1341,10 @@ export const removeOldApisError = (data: any) => {
 // This function will create post payload for register credential API (registerResourceCredentials)
 export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string, rowData: any) => {
     const state = store.getState();
-    const isInventoryV2 = state?.auth?.isInventoryV2;
-    let detectManageUserName = '';
-    let detectManagePassword = '';
-    let detectOntapUsername = '';
-    let detectOntapPassword = '';
-    if (isInventoryV2) {
-        detectManageUserName = state?.inventoryV2?.detectManageUserName;
-        detectManagePassword = state?.inventoryV2?.detectManagePassword;
-        detectOntapUsername = state?.inventoryV2?.detectOntapUsername;
-        detectOntapPassword = state?.inventoryV2?.detectOntapPassword;
-    } else {
-        detectManageUserName = state?.inventory?.detectManageUserName;
-        detectManagePassword = state?.inventory?.detectManagePassword;
-        detectOntapUsername = state?.inventory?.detectOntapUsername;
-        detectOntapPassword = state?.inventory?.detectOntapPassword;
-    }
+    let detectManageUserName = state?.inventoryV2?.detectManageUserName;
+    let detectManagePassword = state?.inventoryV2?.detectManagePassword;
+    let detectOntapUsername = state?.inventoryV2?.detectOntapUsername;
+    let detectOntapPassword = state?.inventoryV2?.detectOntapPassword;
     let credList = [];
     if (detectManageUserName && detectManagePassword) {
         credList.push({
@@ -1646,14 +1520,19 @@ export const setTabInfoFOrBXP = (tab: string) => {
         case '/fsxdb/inventory':
             return WLF_TABS.INVENTORY;
         case '/fsxdb/sandbox':
+        case '/fsxdb/sandboxes':
             return WLF_TABS.SANDBOXES;
         case '/fsxdb/exploreSaving':
+        case '/fsxdb/explore-savings':
             return WLF_TABS.EXPLORE_SAVINGS;
-        case '/fsxdb/exploreSavingsEBS':
+        case '/fsxdb/explore-savings-ebs':
             return WLF_TABS.EXPLORE_SAVINGS_EBS;
-        case '/fsxdb/exploreSavingsFsxW':
+        case '/fsxdb/explore-savings-fsxw':
             return WLF_TABS.EXPLORE_SAVINGS_FsxW;
+        case '/fsxdb/storage-saving-calculator':
+            return WLF_TABS.SAVINGS_CALCULATOR;
         case '/fsxdb/jobMonitoring':
+        case '/fsxdb/job-monitoring':
             return WLF_TABS.JOB_MONITORING;
         default:
             return WLF_TABS.DASHBOARD;
@@ -1679,6 +1558,54 @@ export const apiDOCURL = () => {
             return 'https://console.workloads.netapp.com/api-doc';
         }
     }
+};
+
+export const handleURL = (value: string, isWorkloadFactory: boolean) => {
+    let path = '';
+    if (isWorkloadFactory) {
+        switch (value) {
+            case 'Inventory':
+                path = './inventory';
+                break;
+            case 'Dashboard':
+                path = './dashboard';
+                break;
+            case 'Sandboxes':
+                path = './sandboxes';
+                break;
+            case 'Explore savings':
+                path = './explore-savings';
+                break;
+            case 'Job monitoring':
+                path = './job-monitoring';
+                break;
+        }
+    } else {
+        switch (value) {
+            case 'Inventory':
+                path = '../../fsxdb/inventory';
+                break;
+            case 'Dashboard':
+                path = '../../fsxdb/dashboard';
+                break;
+            case 'Sandboxes':
+                path = '../../fsxdb/sandboxes';
+                break;
+            case 'Explore savings':
+                path = '../../fsxdb/explore-savings';
+                break;
+            case 'Job monitoring':
+                path = '../../fsxdb/job-monitoring';
+                break;
+        }
+    }
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${path}`,
+            replace: true
+        }
+    });
 };
 
 export const updateSizeInGib = (data: any): any => {

@@ -32,7 +32,12 @@ const SandboxHeader = () => {
                         </DsTypography>
                     </div>
                     <div className={styles.buttonHolder}>
-                        <Button variant="primary" onClick={() => navigate('../create-new-sandbox')}>
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                navigate('../create-new-sandbox');
+                            }}
+                        >
                             {GENERAL.CREATE_SANDBOX}
                         </Button>
                         <Button variant="text" onClick={() => handleBanner()}>
@@ -59,7 +64,9 @@ const SandboxHeader = () => {
                             <Button
                                 variant="primary"
                                 style={{ height: '32px' }}
-                                onClick={() => navigate('../create-new-sandbox')}
+                                onClick={() => {
+                                    navigate('../create-new-sandbox');
+                                }}
                             >
                                 {GENERAL.CREATE_SANDBOX}
                             </Button>
@@ -88,7 +95,9 @@ const SandboxHeader = () => {
                             <Button
                                 variant="primary"
                                 style={{ height: '32px' }}
-                                onClick={() => navigate('../create-new-sandbox')}
+                                onClick={() => {
+                                    navigate('../create-new-sandbox');
+                                }}
                             >
                                 {GENERAL.CREATE_SANDBOX}
                             </Button>

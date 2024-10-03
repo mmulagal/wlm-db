@@ -9,7 +9,6 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         jobsSummaryLoading: false,
         jobsSummaryError: null
     },
-    databaseHostsList: null,
     aggregatedHostsCount: {
         totalDatabases: 0,
         totalHosts: 0,
@@ -62,9 +61,6 @@ const databaseHomeSlice = createSlice({
         addJobsSummaryLoading: (state, action: PayloadAction<any>) => {
             state.getJobsSummary.jobsSummaryLoading = action.payload;
         },
-        addDatabaseHostsList: (state, action: PayloadAction<any>) => {
-            state.databaseHostsList = action.payload;
-        },
         addAggregateHostsCountData: (state, action: PayloadAction<any>) => {
             state.aggregatedHostsCount = action.payload;
         },
@@ -87,7 +83,6 @@ export const {
     selectedTabSelection,
     addJobsSummary,
     addJobsSummaryLoading,
-    addDatabaseHostsList,
     addAggregateHostsCountData,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,

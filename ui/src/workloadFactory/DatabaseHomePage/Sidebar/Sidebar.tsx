@@ -19,6 +19,7 @@ import {
     formatDateWithTime,
     generateOptionType,
     getCredDetails,
+    handleDownloadTerraform,
     handleDownloadYAML,
     setRecommendedValues
 } from '../../../utils/utilityFunctions';
@@ -26,6 +27,7 @@ import {
     getBaseUrl,
     useGetConfigListQuery,
     useGetTemplatesMutation,
+    useGetTerraformSetupMutation,
     useLazyGetConfigDataQuery
 } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
@@ -96,6 +98,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<any>([]);
     const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
 
+    // For terraform response
+    const [terraformSetupResponse, setTerraformSetupResponse] = useState<any>({});
+    const [isTerraformDataLoading, setIsTerraformDataLoading] = useState(false);
+
     const [recommendedData, setRecommendedData] = useState<ConfigType[]>([]);
 
     const [disableCopy, setDisableCopy] = useState(true);
@@ -108,6 +114,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const [loadTemplateData] = useGetTemplatesMutation();
+    const [loadTerraformData] = useGetTerraformSetupMutation();
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
@@ -139,7 +146,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 {
                     id: 'downloadZip',
                     displayName: CODE_VIEWER.DOWNLOAD_ZIP,
-                    disabled: false
+                    disabled: !getTerraformSetupResponseById(openKey) || isTerraformDataLoading ? true : false
                 }
             ]);
         } else {
@@ -152,7 +159,13 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isRightPanelTemplateLoading, rightPanelTemplateResponse, dropDownValue]);
+    }, [
+        isRightPanelTemplateLoading,
+        rightPanelTemplateResponse,
+        isTerraformDataLoading,
+        terraformSetupResponse,
+        dropDownValue
+    ]);
 
     const { data: configDataList, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
 
@@ -235,6 +248,33 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    // This will call terraform setup API to get Terraform response for current payload.
+    const getTerraformSetupResponse = (payload: any, credDetails: any, id: any) => {
+        const data = getTerraformSetupResponseById(id);
+        if (data) {
+            setIsTerraformDataLoading(false);
+        } else {
+            if (credDetails?.credId) {
+                payload.credentialsId = credDetails?.credId;
+            }
+            if (credDetails?.region) {
+                payload.region = credDetails?.region;
+            }
+            loadTerraformData({ payload }).then((data: any) => {
+                if (data?.data) {
+                    setTerraformSetupResponse({ ...terraformSetupResponse, [id]: data?.data });
+                    setIsTerraformDataLoading(false);
+                    dispatch(setIsLoading(false));
+                } else {
+                    setTerraformSetupResponse(null);
+                    setIsTerraformDataLoading(false);
+                    dispatch(setIsLoading(false));
+                }
+            });
+        }
+        setIsTerraformDataLoading(true);
+    };
+
     // To save Rest API response
     const storeRightPanelRestResponse = (
         id: string,
@@ -292,6 +332,14 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    // To get terraform response
+    const getTerraformSetupResponseById = (id: string | undefined) => {
+        if (id) {
+            const result = terraformSetupResponse[id];
+            return result;
+        }
+    };
+
     const loadRestApi = (actualData: any, id: string, save: boolean) => {
         const baseUrl = getBaseUrl();
         // To get accountid, credid and region from saved config
@@ -306,6 +354,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         if (id === openKey) {
             setIsRightPanelDataLoading(false);
             getTemplateResponse(resBody, credDetails, id);
+            getTerraformSetupResponse(resBody, credDetails, id);
         }
         if (save) {
             const res = JSON.stringify(resBody, null, 2);
@@ -394,6 +443,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             );
             setIsRightPanelDataLoading(false);
             getTemplateResponse(resBody, {}, id);
+            getTerraformSetupResponse(resBody, {}, id);
             setCredDetailsData({});
             storeRightPanelRestResponse(id, actualData[0].data, highlightedString, highlightedString, resBody);
         } else {
@@ -477,28 +527,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         onClose();
     };
 
-    const terraformUI = () => {
-        return (
-            <div className={styles.terraformContainer}>
-                <div>{GENERAL.TERRAFORM}</div>
-                <div>
-                    <ComingSoon />
-                </div>
-            </div>
-        );
-    };
-
     //Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [
-            CODE_VIEWER.CLOUDFORMATION,
-            CODE_VIEWER.AWS_CLI,
-            CODE_VIEWER.REST_API,
-            isDemoMode ? GENERAL.TERRAFORM : terraformUI()
-        ];
+        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, GENERAL.TERRAFORM];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', idx === 3 && !isDemoMode ? true : false, '');
+            const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
         return options;
@@ -558,7 +592,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             );
         }
         if (dropDownValue === CODE_VIEWER.TERRAFORM) {
-            return <TerraformColor data={{}} />;
+            return isTerraformDataLoading ? (
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_TERRAFORM} />
+            ) : (
+                <TerraformColor data={getTerraformSetupResponseById(openKey)} />
+            );
         }
     };
 
@@ -677,6 +715,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             return UI_IDS.DBP_CODEBOX_AWS_CLI;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
             return UI_IDS.DBP_CODEBOX_REST_API;
+        } else if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+            return UI_IDS.DBP_CODEBOX_TF;
         }
     };
 
@@ -990,6 +1030,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                     } else if (menuId === 'downloadZip') {
                                                         if (isDemoMode) {
                                                             downloadTerraformZip();
+                                                        } else if (openKey) {
+                                                            handleDownloadTerraform(
+                                                                terraformSetupResponse[openKey]?.url
+                                                            );
                                                         }
                                                         dispatch(clearNotifications());
                                                         const ele = (

@@ -1,3 +1,4 @@
+import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import store from '../../store/store';
 import {
     setDisableState,
@@ -7,7 +8,7 @@ import {
     setSelectedInstanceId,
     setSelectedServerName
 } from '../../store/workloadFactory/exploreSavingsSlice';
-import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
+import { setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import { FSX_AZ_TYPE, GIB_IN_BYTE, SAVINGS_CALC_MODE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import {
@@ -21,13 +22,35 @@ import {
     formatNumberWithCustomComma
 } from '../../utils/utilityFunctions';
 
-export const onClickESHost = (dispatch: any, rowData: any) => {
+export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
     const deploymentModel = (() => {
         return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
     if (rowData?.storageType === GENERAL.EBS) {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: `${
+                    isWorkloadFactory
+                        ? './storage-saving-calculator?type=ebs&mode=auto'
+                        : '../fsxdb/storage-saving-calculator?type=ebs&mode=auto'
+                }`,
+                replace: true
+            }
+        });
         dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_EBS));
     } else {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: `${
+                    isWorkloadFactory
+                        ? './storage-saving-calculator?type=fsxw&mode=auto'
+                        : '../fsxdb/storage-saving-calculator?type=fsxw&mode=auto'
+                }`,
+                replace: true
+            }
+        });
         dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_FSXW));
     }
 
@@ -39,13 +62,35 @@ export const onClickESHost = (dispatch: any, rowData: any) => {
     setESInstanceData(rowData, dispatch);
 };
 
-export const handleManualTCOEBS = (dispatch: any, navigate: any) => {
+export const handleManualTCOEBS = (dispatch: any, navigate: any, isWorkloadFactory: boolean) => {
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${
+                isWorkloadFactory
+                    ? './storage-saving-calculator?type=ebs&mode=manual'
+                    : '../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
+            }`,
+            replace: true
+        }
+    });
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
-export const handleManualTCOFSXW = (dispatch: any, navigate: any) => {
+export const handleManualTCOFSXW = (dispatch: any, navigate: any, isWorkloadFactory: boolean) => {
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${
+                isWorkloadFactory
+                    ? './storage-saving-calculator?type=fsxw&mode=manual'
+                    : '../fsxdb/storage-saving-calculator?type=fsxw&mode=manual'
+            }`,
+            replace: true
+        }
+    });
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
