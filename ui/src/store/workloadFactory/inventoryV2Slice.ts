@@ -37,12 +37,20 @@ const initialInventoryV2State: InventorySliceData = {
     selectedHeaderTab: WLF_TABS.DASHBOARD,
     managedHostInitialColumns: initialColStateManagedHosts,
     isRefreshed: false,
+    optimizeFilterTags: [],
+    defaultFilterOptions: {}
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setDefaultFilterOptions: (state, action: PayloadAction<any>) => {
+            state.defaultFilterOptions = action.payload;
+        },
+        setOptimizeFilterTags: (state, action: PayloadAction<any>) => {
+            state.optimizeFilterTags = action.payload;
+        },
         setInventoryExpandedRowHostData: (state, action: PayloadAction<any>) => {
             state.inventoryExpandedRowHostData = action.payload;
         },
@@ -134,6 +142,8 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setDefaultFilterOptions,
+    setOptimizeFilterTags,
     setValuesForForm,
     setInventoryExpandedRowHostData,
     setInventoryTableData,

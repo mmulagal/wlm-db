@@ -315,7 +315,8 @@ export const WLF_TABS = {
     MANAGED_HOSTS: 'Managed hosts',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     UNDETECTED_HOSTS: 'Undetected hosts',
-    REDIRECT_COMPONENT: 'Redirect Component'
+    REDIRECT_COMPONENT: 'Redirect Component',
+    OPTIMIZE: 'Optimize'
 };
 
 export const DRIVE_LETTER_TYPE = {
