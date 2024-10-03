@@ -13,7 +13,9 @@ import {
     CloudFormationTemplateHeader,
     FsxAvailableRegionsForThroughputListResponse,
     CollationListResponse,
-    CollationListQueryString
+    CollationListQueryString,
+    TerraformSetupRequestBody,
+    TerraformSetupResponse
 } from '../types/deployment.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -101,6 +103,18 @@ const CollationListSchema = {
     }
 };
 
+const TerraformSetupSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
+    summary: 'Create Terraform Setup',
+    headers: CloudFormationTemplateHeader,
+    description: 'Create Terraform Setup in URL for user deployment',
+    body: TerraformSetupRequestBody,
+    response: {
+        200: TerraformSetupResponse
+    }
+};
+
 export {
     DeployTemplateSchema,
     DeploymentStatusListSchema,
@@ -108,5 +122,6 @@ export {
     CloudFormationTemplateSchema,
     DeploymentSummaryListSchema,
     FsxAvailableRegionsForThroughputSchema,
-    CollationListSchema
+    CollationListSchema,
+    TerraformSetupSchema
 };

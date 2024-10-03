@@ -1,12 +1,9 @@
-import { Button, useDialog, Typography, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
+import { Button, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import {
     FORM_TO_WLF_NAVIGATE,
     WLF_TABS,
-    PRODUCTION,
-    TIMELINE_PROD_LINK,
-    TIMELINE_STAGE_LINK,
     FORM_TO_WLF_NAVIGATE_BLUEXP
 } from '../../../../utils/consts';
 import {
@@ -21,7 +18,7 @@ import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { useNavigate } from 'react-router-dom';
 import { handleCreateSQLServer } from './createSqlServer';
-import { setIsRefreshed, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
+import { setIsRefreshed, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const MSSqlFooter = () => {
     const state = useAppSelector(state => state);

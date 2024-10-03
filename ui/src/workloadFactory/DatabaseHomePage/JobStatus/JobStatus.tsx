@@ -4,9 +4,9 @@ import JobDoughnutChart from './JobDoughnut/JobDoughnutChart';
 import { ReactComponent as JM_ARROW } from '../../../assets/ic_arrow_right_JM.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { useDispatch } from 'react-redux';
 import { WLF_TABS } from '../../../utils/consts';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
 const JobStatus = () => {
     const { jobsSummaryData, jobsSummaryLoading } = useAppSelector(state => state.databaseHome.getJobsSummary);

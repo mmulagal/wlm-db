@@ -97,6 +97,7 @@ import { preSignedUrl } from '../lib/aws/s3';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
 import { copyScriptsToHost } from './resource-operations';
+import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -116,9 +117,10 @@ interface SsmTargetsInfo {
     };
 }
 
-interface DeployType {
+interface FsxServerConfig {
     deploymentType: string | undefined;
     subnetIds: string[] | undefined;
+    fileSystemStorageType?: string;
 }
 
 interface FSxInfo {
@@ -256,7 +258,7 @@ async function getHostAndSqlServerInfo(
         logger.info(`API1Performance: Time taken by describe FSxFS/SVM: ${api1EndTime - api1StartTime}ms`);
 
         const endPointIpWithFsxInfo = new Map<string, FSxInfo>();
-        const fsIdWithDeploymentType = new Map<string, DeployType>();
+        const fsIdWithFsxInfo = new Map<string, FsxServerConfig>();
         api1StartTime = performance.now();
         svmList.StorageVirtualMachines?.forEach(async elem => {
             const fsId = elem.FileSystemId;
@@ -308,13 +310,14 @@ async function getHostAndSqlServerInfo(
                 );
             });
 
-        fsxList.forEach(({ FileSystemId, OntapConfiguration, WindowsConfiguration, SubnetIds }) => {
+        fsxList.forEach(({ FileSystemId, OntapConfiguration, WindowsConfiguration, SubnetIds, StorageType }) => {
             if (FileSystemId) {
-                fsIdWithDeploymentType.set(FileSystemId, {
+                fsIdWithFsxInfo.set(FileSystemId, {
                     deploymentType: isEmpty(OntapConfiguration)
                         ? WindowsConfiguration?.DeploymentType
                         : OntapConfiguration?.DeploymentType,
-                    subnetIds: SubnetIds
+                    subnetIds: SubnetIds,
+                    fileSystemStorageType: StorageType
                 });
             }
         });
@@ -346,7 +349,7 @@ async function getHostAndSqlServerInfo(
                         target,
                         commandId!,
                         endPointIpWithFsxInfo,
-                        fsIdWithDeploymentType,
+                        fsIdWithFsxInfo,
                         subnetListMap,
                         ebsVolumeToAvailabilityZoneMap
                     );
@@ -392,7 +395,7 @@ async function getHostAndSqlInfoFromPsOutput(
     ssmTarget: SsmTargetsInfo,
     commandId: string,
     endPointIpWithFsxInfo: Map<string, FSxInfo>,
-    fsIdWithDeploymentType: Map<string, DeployType>,
+    fsIdWithFsxInfo: Map<string, FsxServerConfig>,
     subnetListMap: Map<string | undefined, string | undefined>,
     ebsVolumeToAvailabilityZoneMap: Map<string | undefined, string | undefined>
 ): Promise<SqlServerInstanceInfoType[]> {
@@ -402,7 +405,7 @@ async function getHostAndSqlInfoFromPsOutput(
         ssmTarget,
         commandId,
         endPointIpWithFsxInfo,
-        fsIdWithDeploymentType,
+        fsIdWithFsxInfo,
         subnetListMap
     });
     const commandInvocationParam = {
@@ -480,6 +483,10 @@ async function getHostAndSqlInfoFromPsOutput(
                 try {
                     if (item.hasOwnProperty('windowsClusterNodes')) {
                         item.windowsClusterNodes = JSON.parse(item.windowsClusterNodes);
+                        // DBS-3941 fix
+                        if (!Array.isArray(item.windowsClusterNodes)) {
+                            item.windowsClusterNodes = [item.windowsClusterNodes];
+                        }
                         item.nodeIps = item.windowsClusterNodes.map(({ Address }: { Address: string }) => Address);
                     }
                 } catch (error) {
@@ -527,14 +534,16 @@ async function getHostAndSqlInfoFromPsOutput(
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
 
+                            const { deploymentType, subnetIds, fileSystemStorageType } =
+                                fsIdWithFsxInfo.get(fsxId!) || {};
+
                             storageTypes.push({
                                 type: STORAGE_TYPE.FSXN,
                                 id: fsxId!,
                                 svmId,
-                                protocol: STORAGE_PROTOCOLS.ISCSI
+                                protocol: STORAGE_PROTOCOLS.ISCSI,
+                                fileSystemStorageType
                             });
-
-                            const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
 
                             deploymentTypes.push({
                                 type: deploymentType,
@@ -561,22 +570,25 @@ async function getHostAndSqlInfoFromPsOutput(
                                     fsxId,
                                     svmId
                                 } = endPointIpWithFsxInfo.get(matchedEndpoint) || {};
+                                const { fileSystemStorageType } = fsIdWithFsxInfo.get(fsxId!) || {};
                                 if (fsxType === FileSystemType.WINDOWS) {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXW,
                                         id: fsxId,
-                                        protocol: STORAGE_PROTOCOLS.SMB
+                                        protocol: STORAGE_PROTOCOLS.SMB,
+                                        fileSystemStorageType
                                     });
                                 } else {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXN,
                                         id: fsxId,
                                         svmId,
-                                        protocol: STORAGE_PROTOCOLS.SMB
+                                        protocol: STORAGE_PROTOCOLS.SMB,
+                                        fileSystemStorageType
                                     });
                                 }
 
-                                const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
+                                const { deploymentType, subnetIds } = fsIdWithFsxInfo.get(fsxId!) || {};
                                 deploymentTypes.push({
                                     type: deploymentType,
                                     zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
@@ -1981,7 +1993,11 @@ async function manageSqlServerV2(
 
         for (const dbInst of databaseInstanceNameList) {
             const sqlInstanceInfo = sqlServerInstances?.find(sqlInst => sqlInst.sqlServerInstance === dbInst);
-
+            updateLongRunningAuditGroup(
+                undefined,
+                undefined,
+                `${sqlInstanceInfo?.sqlServerName}\\${databaseInstanceNameList.join(',')}`
+            );
             if (alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)) {
                 itemsStatus.push({
                     databaseInstanceName: dbInst,
@@ -2127,6 +2143,7 @@ async function unmanageDatabaseInstance(
 ) {
     logger.info('Unmanaging SQL Server instances', { accountId, credentialsId, resourceId, databaseInstanceList });
 
+    updateLongRunningAuditGroup(undefined, undefined, databaseInstanceList);
     const databaseInstanceResponse: {
         databaseInstanceId: string;
         status: string;
@@ -2139,10 +2156,22 @@ async function unmanageDatabaseInstance(
 
         const preDeleteDatabaseInstances = await listDatabaseInstances(accountId, { credentialsId, resourceId });
 
+        const instanceDetails = preDeleteDatabaseInstances.find(
+            item => item.database_instance_id === databaseInstanceList
+        );
+        const {
+            items: [resourceDetails]
+        } = await getResources(accountId, resourceId, credentialsId);
+
+        updateLongRunningAuditGroup(
+            undefined,
+            undefined,
+            `${resourceDetails?.resource_name}\\${instanceDetails?.database_instance_name}`
+        );
+
         await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
 
         const postDeleteDatabaseInstances = await listDatabaseInstances(accountId, { credentialsId, resourceId });
-
         databaseInstanceIds.forEach(databaseInstanceId => {
             if (preDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
                 if (postDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {

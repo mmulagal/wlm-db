@@ -373,6 +373,13 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getTerraformSetup: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/terraform/setup`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -576,63 +583,6 @@ export const inventoryApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getDatabaseHosts: builder.query({
-                query: ({ credentialId, region, nextToken = null }) => {
-                    if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
-                    } else {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation`;
-                    }
-                },
-                transformResponse: (response: any, meta, args) => {
-                    if (response) {
-                        response = {
-                            ...response,
-                            credentialId: args?.credentialId,
-                            regionId: args?.region
-                        };
-                    }
-                    return response;
-                }
-            }),
-            getDatabaseHostsFullData: builder.query({
-                query: ({ credentialId, regionId, nextToken = null }) => {
-                    if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
-                    } else {
-                        return `v1/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation`;
-                    }
-                },
-                transformResponse: (response: any, meta, args) => {
-                    if (response) {
-                        response = {
-                            ...response,
-                            credentialId: args?.credentialId,
-                            regionId: args?.regionId
-                        };
-                    }
-                    return response;
-                }
-            }),
-            getDatabaseHostsList: builder.query({
-                query: ({ credentialId, regionId, nextToken = null }) => {
-                    if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${regionId}/database-hosts?nextToken=${nextToken}`;
-                    } else {
-                        return `v1/credentials/${credentialId}/regions/${regionId}/database-hosts`;
-                    }
-                },
-                transformResponse: (response: any, meta, args) => {
-                    if (response) {
-                        response = {
-                            ...response,
-                            credentialId: args?.credentialId,
-                            regionId: args?.regionId
-                        };
-                    }
-                    return response;
-                }
-            }),
             getManagedHostData: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
@@ -677,17 +627,6 @@ export const inventoryApi = createApi({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/resources/file-systems/credentials-status?fsxids=${fsxIds}`
                 })
             }),
-            getHostsDetails: builder.query({
-                query: ({ regionId, credentialsId }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/discover/summary`
-                })
-            }),
-            manageHost: builder.mutation({
-                query: ({ credentialId, regionId, instanceId }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/manage`,
-                    method: 'POST'
-                })
-            }),
             registerResourceCredentials: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload }) => ({
                     url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/discover/resource-credentials`,
@@ -700,12 +639,6 @@ export const inventoryApi = createApi({
                     url: nextToken
                         ? `v1/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&nextToken=${nextToken}`
                         : `v1/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}`,
-                    method: 'GET'
-                })
-            }),
-            getMssqlResourceData: builder.mutation({
-                query: ({ credentialId, regionId, id }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/database-hosts/${id}?fields=topology,serverDetails,storage,performance,protection,usageEstimation`,
                     method: 'GET'
                 })
             }),
@@ -776,12 +709,6 @@ export const inventoryApiV2 = createApi({
                     url: nextToken
                         ? `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&fields=${fields}&nextToken=${nextToken}`
                         : `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&fields=${fields}`,
-                    method: 'GET'
-                })
-            }),
-            getMssqlResourceDataV2: builder.mutation({
-                query: ({ credentialId, regionId, id }) => ({
-                    url: `v2/credentials/${credentialId}/regions/${regionId}/database-hosts/${id}?fields=topology,serverDetails,storage,performance,protection,usageEstimation`,
                     method: 'GET'
                 })
             }),
@@ -1005,7 +932,12 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const { useGetJobsSummaryQuery, useLazyGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
+export const {
+    useGetJobsSummaryQuery,
+    useLazyGetJobsSummaryQuery,
+    useGetTemplatesMutation,
+    useGetTerraformSetupMutation
+} = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
@@ -1035,19 +967,11 @@ export const {
 } = createUserDbApi;
 
 export const {
-    useLazyGetDatabaseHostsFullDataQuery,
-    useLazyGetDatabaseHostsListQuery,
     useLazyGetManagedHostDataQuery,
-    useDiscoverHostsQuery,
     useLazyDiscoverHostsQuery,
-    useGetFsxCredentialStatusQuery,
     useLazyGetFsxCredentialStatusQuery,
-    useGetHostsDetailsQuery,
-    useManageHostMutation,
     useRegisterResourceCredentialsMutation,
     useGetMssqlInstanceDataMutation,
-    useGetMssqlResourceDataMutation,
-    useGetDatabaseHostsQuery,
     usePrepareHostMutation
 } = inventoryApi;
 
@@ -1055,7 +979,6 @@ export const {
     useLazyGetDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
     useGetMssqlInstanceDataV2Mutation,
-    useGetMssqlResourceDataV2Mutation,
     useUnmanageMssqlInstanceMutation,
     useManageMssqlInstanceMutation
 } = inventoryApiV2;

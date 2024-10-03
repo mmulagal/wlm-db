@@ -191,37 +191,75 @@ sqlServerEdition = Edition =	Installed product edition of the instance of SQL Se
     return sqlServerInstances.find(sqlServerInstance => sqlServerInstance.windowsAuthentication === true);
 }
 
+function getMachineDetails(
+    nodeInstances: NodeDetails[],
+    instanceTypesPricingDetails: Map<string, any>,
+    licenseType: string,
+    monthlySqlByolCost?: number
+) {
+    logger.info('Getting machine details', {
+        nodeInstances,
+        instanceTypesPricingDetails,
+        licenseType,
+        monthlySqlByolCost
+    });
+
+    const byolHourlyPricePerHost = monthlySqlByolCost ? monthlySqlByolCost / HOURS_IN_MONTH : undefined;
+    return nodeInstances.map(({ ec2InstanceType: instanceType, ec2UsageOperation = '' }) => {
+        const computeHourlyPrice = instanceTypesPricingDetails.get(instanceType)?.pricingDetails.NA?.pricePerUnit;
+        const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(computeHourlyPrice); // compute price is exclusive of license price
+
+        const nodeInstanceByolPrice =
+            byolHourlyPricePerHost && computeHourlyPrice ? computeHourlyPrice + byolHourlyPricePerHost : undefined;
+
+        const instanceHourlyPrice =
+            nodeInstanceByolPrice ||
+            instanceTypesPricingDetails.get(instanceType)?.pricingDetails[licenseType]?.pricePerUnit; // instance price is inclusive of license price (priority to BYOL price if available)
+        const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(instanceHourlyPrice);
+
+        const licenseMonthlyPrice = WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation)
+            ? computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
+                ? instanceMonthlyPrice - computeMonthlyPrice
+                : undefined
+            : monthlySqlByolCost || 0;
+
+        return {
+            instanceType,
+            price: instanceHourlyPrice,
+            basePrice: computeHourlyPrice,
+            computeMonthlyPrice,
+            instanceMonthlyPrice,
+            licenseMonthlyPrice,
+            hoursInMonth: HOURS_IN_MONTH,
+            licenseIncluded: monthlySqlByolCost ? false : WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation)
+        };
+    });
+}
 function getExistingAsRecommended(
     totalNodesCount: number,
     existingInstanceType: string,
+    ec2UsageOperation: string,
+    existingLicenseType: string,
+    existingInstanceTypesPricingDetails: Map<string, any>,
     existingInstanceHourlyPrice?: number,
     existingInstanceHourlyPriceWithoutLicense?: number,
+    monthlySqlByolCost?: number,
     message?: string
 ) {
-    const recommendedNodeInstanceTypes = Array(totalNodesCount).fill(existingInstanceType);
-    const rinstanceMonthlyPrice = existingInstanceHourlyPrice
-        ? getMonthlyPriceFromHourlyPrice(existingInstanceHourlyPrice)
-        : undefined;
-    const rcomputeMonthlyPrice = existingInstanceHourlyPriceWithoutLicense
-        ? getMonthlyPriceFromHourlyPrice(existingInstanceHourlyPriceWithoutLicense)
-        : undefined;
+    const recommendedNodeInstances = Array(totalNodesCount).fill({
+        ec2InstanceType: existingInstanceType,
+        ec2UsageOperation
+    });
     return {
         price: existingInstanceHourlyPrice,
         baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
-        instanceType: recommendedNodeInstanceTypes.join(', '),
-        machineDetails: recommendedNodeInstanceTypes.map(instanceType => ({
-            instanceType,
-            price: existingInstanceHourlyPrice,
-            basePrice: existingInstanceHourlyPriceWithoutLicense,
-            computeMonthlyPrice: rcomputeMonthlyPrice,
-            instanceMonthlyPrice: rinstanceMonthlyPrice,
-            licenseMonthlyPrice:
-                rcomputeMonthlyPrice !== undefined && rinstanceMonthlyPrice !== undefined
-                    ? rinstanceMonthlyPrice - rcomputeMonthlyPrice
-                    : undefined,
-            hoursInMonth: HOURS_IN_MONTH,
-            licenseIncluded: true // recommending an instance with the license included
-        })),
+        instanceType: recommendedNodeInstances.map(({ ec2InstanceType }) => ec2InstanceType).join(', '),
+        machineDetails: getMachineDetails(
+            recommendedNodeInstances,
+            existingInstanceTypesPricingDetails,
+            existingLicenseType,
+            monthlySqlByolCost
+        ),
         message,
         recommendationOptions: []
     };
@@ -237,10 +275,13 @@ async function handleInstanceRecommendation(
     sqlServerDeploymentType: string,
     recommendedSqlLicenseType: any,
     existingInstanceType: string,
+    existingLicenseType: string,
+    existingInstanceTypesPricingDetails: Map<string, any>,
     totalNodesCount: number,
     existingInstanceHourlyPrice?: number,
     existingInstanceHourlyPriceWithoutLicense?: number,
     isAwsLicenseIncluded: boolean = true,
+    ec2UsageOperation: string = '',
     monthlySqlByolCostPerHost?: number
 ) {
     logger.info('Handling instance recommendations', {
@@ -253,10 +294,13 @@ async function handleInstanceRecommendation(
         sqlServerDeploymentType,
         recommendedSqlLicenseType,
         existingInstanceType,
+        existingLicenseType,
+        existingInstanceTypesPricingDetails,
         existingInstanceHourlyPrice,
         existingInstanceHourlyPriceWithoutLicense,
         totalNodesCount,
         isAwsLicenseIncluded,
+        ec2UsageOperation,
         monthlySqlByolCostPerHost
     });
 
@@ -365,8 +409,12 @@ async function handleInstanceRecommendation(
             recommendedCompute = getExistingAsRecommended(
                 totalNodesCount,
                 existingInstanceType,
+                ec2UsageOperation,
+                existingLicenseType,
+                existingInstanceTypesPricingDetails,
                 existingInstanceHourlyPrice,
                 existingInstanceHourlyPriceWithoutLicense,
+                monthlySqlByolCostPerHost,
                 message
             );
         }
@@ -388,6 +436,9 @@ async function handleInstanceRecommendation(
         recommendedCompute = getExistingAsRecommended(
             totalNodesCount,
             existingInstanceType,
+            ec2UsageOperation,
+            existingLicenseType,
+            existingInstanceTypesPricingDetails,
             existingInstanceHourlyPrice,
             existingInstanceHourlyPriceWithoutLicense,
             error.message
@@ -718,7 +769,12 @@ async function getSqlInstanceLicenseRecommendations(
             let instanceIdToUseForRecommendations = instanceId;
 
             let nodeInstanceTypes = [ec2InstanceType];
-            if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT && nodeIps && nodeIps.length > 1) {
+            if (
+                (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ||
+                    (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT && isFsxwCalcs)) &&
+                nodeIps &&
+                nodeIps.length > 1
+            ) {
                 // in case of AOAG, we need to consider the smaller instance type for recommendations; as the AOAG is a combination of 2 or more instances
 
                 const clusterNodeDetails: NodeDetails[] =
@@ -816,9 +872,6 @@ async function getSqlInstanceLicenseRecommendations(
                           ) // returns SQL Ent or SQL Std
                         : { licenseFinding, recommendedLicenseType: existingLicenseType };
 
-                const byolHourlyPricePerHost = monthlySqlByolCostPerHost
-                    ? monthlySqlByolCostPerHost / HOURS_IN_MONTH
-                    : undefined;
                 const byolHourlyPrice = monthlySqlByolCost ? monthlySqlByolCost / HOURS_IN_MONTH : undefined;
                 const byolInstancePrice =
                     byolHourlyPrice && existingInstanceHourlyPriceWithoutLicense
@@ -839,43 +892,11 @@ async function getSqlInstanceLicenseRecommendations(
                     baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
                     instanceType: nodeInstanceTypes.join(', '),
                     finding: computeFinding,
-                    machineDetails: nodeInstances.map(
-                        ({ ec2InstanceType: instanceType, ec2UsageOperation: usageOperation }) => {
-                            const computeHourlyPrice =
-                                existingInstanceTypesPricingDetails.get(instanceType)?.pricingDetails.NA?.pricePerUnit;
-                            const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(computeHourlyPrice); // compute price is exclusive of license price
-
-                            const nodeInstanceByolPrice =
-                                byolHourlyPricePerHost && computeHourlyPrice
-                                    ? computeHourlyPrice + byolHourlyPricePerHost
-                                    : undefined;
-
-                            const instanceHourlyPrice =
-                                nodeInstanceByolPrice ||
-                                existingInstanceTypesPricingDetails.get(instanceType)?.pricingDetails[
-                                    existingLicenseType
-                                ]?.pricePerUnit; // instance price is inclusive of license price (priority to BYOL price if available)
-                            const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(instanceHourlyPrice);
-
-                            const licenseMonthlyPrice = WIN_SQL_EC2_USAGE_OPERATION.includes(usageOperation)
-                                ? computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
-                                    ? instanceMonthlyPrice - computeMonthlyPrice
-                                    : undefined
-                                : monthlySqlByolCost || 0;
-
-                            return {
-                                instanceType,
-                                price: instanceHourlyPrice,
-                                basePrice: computeHourlyPrice,
-                                computeMonthlyPrice,
-                                instanceMonthlyPrice,
-                                licenseMonthlyPrice,
-                                hoursInMonth: HOURS_IN_MONTH,
-                                licenseIncluded: monthlySqlByolCost
-                                    ? false
-                                    : WIN_SQL_EC2_USAGE_OPERATION.includes(usageOperation)
-                            };
-                        }
+                    machineDetails: getMachineDetails(
+                        nodeInstances,
+                        existingInstanceTypesPricingDetails,
+                        existingLicenseType,
+                        monthlySqlByolCostPerHost
                     )
                 };
 
@@ -941,10 +962,13 @@ async function getSqlInstanceLicenseRecommendations(
                           sqlServerDeploymentType,
                           recommendedSqlLicenseType,
                           ec2InstanceType,
+                          existingLicenseType,
+                          existingInstanceTypesPricingDetails,
                           nodeInstanceTypes.length,
                           recommendedInstanceHourlyPrice, // license type is already identified, so use the price for the recommended license type which is essentially existingInstanceTypePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit || byolHourlyPrice
                           recommendedInstanceHourlyPriceWithoutLicense,
                           awsLicenseIncluded,
+                          ec2UsageOperation,
                           monthlySqlByolCostPerHost
                       )
                     : {
@@ -952,15 +976,22 @@ async function getSqlInstanceLicenseRecommendations(
                           recommendedCompute: getExistingAsRecommended(
                               nodeInstanceTypes.length,
                               ec2InstanceType,
-                              existingInstanceHourlyPrice,
-                              existingInstanceHourlyPriceWithoutLicense,
+                              ec2UsageOperation,
+                              recommendedSqlLicenseType,
+                              existingInstanceTypesPricingDetails,
+                              recommendedInstanceHourlyPrice,
+                              recommendedInstanceHourlyPriceWithoutLicense,
+                              monthlySqlByolCostPerHost,
                               'No Instance change recommended'
                           )
                       });
                 existingCompute.finding = computeFinding;
-                recommendedInstanceHourlyPrice = recommendedCompute.price;
-                recommendedInstanceHourlyPriceWithoutLicense = recommendedCompute.baseInstancePrice;
 
+                // applicable only in case of EBS storage savings calculations
+                if (!isFsxwCalcs) {
+                    recommendedInstanceHourlyPrice = recommendedCompute.price;
+                    recommendedInstanceHourlyPriceWithoutLicense = recommendedCompute.baseInstancePrice;
+                }
                 // sql license recommendation logic; applicable only if the current instance is enterprise edition(sqlServerEngineEdition === 3)
                 // it either returns SQL Ent or SQL Std
 
@@ -1016,6 +1047,8 @@ async function getSqlInstanceLicenseRecommendations(
                           sqlServerDeploymentType,
                           'NA',
                           ec2InstanceType,
+                          'NA',
+                          existingInstanceTypesPricingDetails,
                           nodeInstanceTypes.length,
                           existingInstanceHourlyPriceWithoutLicense,
                           existingInstanceHourlyPriceWithoutLicense
@@ -1025,8 +1058,12 @@ async function getSqlInstanceLicenseRecommendations(
                           recommendedCompute: getExistingAsRecommended(
                               nodeInstanceTypes.length,
                               ec2InstanceType,
+                              ec2UsageOperation,
+                              'NA',
+                              existingInstanceTypesPricingDetails,
                               existingInstanceHourlyPriceWithoutLicense,
                               existingInstanceHourlyPriceWithoutLicense,
+                              monthlySqlByolCostPerHost,
                               'No Instance change recommended'
                           )
                       });

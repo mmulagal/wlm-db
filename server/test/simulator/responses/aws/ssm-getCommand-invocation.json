@@ -462,7 +462,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"MSSQLSERVER\": {\"volumeDBMap\":[{\"ontapVolumeuuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"driveVolumeName\":\"SQL-Data\",\"databaseName\":\"master\",\"driveVolumeId\":\"Volume{54500894-6228-4770-8901-8dcbf98c9d83}\",\"ontapVolumeName\":\"wlmdb_sqldata_1718157389159\"}],\"volumes\":{\"records\":[{\"uuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"name\":\"wlmdb_sqldata_1718157389159\",\"_links\":{\"self\":{\"href\":\"/api/storage/volumes/2f004bac-2865-11ef-b359-1b0fb5fca86e\"}}}],\"num_records\":1,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes?name=/vol/wlmdb_sqldata_1718157389159/sqldata\"}}}}}",
+        "StandardOutputContent": "{\"MSSQLSERVER\": {\"volumeDBMap\":[{\"ontapVolumeuuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"driveVolumeName\":\"SQL-Data\",\"databaseName\":\"master\",\"driveVolumeId\":\"Volume{54500894-6228-4770-8901-8dcbf98c9d83}\",\"ontapVolumeName\":\"wlmdb_sqldata_1718157389159\"}],\"volumes\":{\"records\":[{\"uuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"name\":\"wlmdb_sqldata_1718157389159\",\"snapshot_count\": 1,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes/2f004bac-2865-11ef-b359-1b0fb5fca86e\"}}}],\"num_records\":1,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes?name=/vol/wlmdb_sqldata_1718157389159/sqldata\"}}}}}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

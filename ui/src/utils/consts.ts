@@ -128,7 +128,9 @@ export const API_NAME = {
 
 export const FSX_DEPLOYMENT_MODE = {
     SINGLE_AZ_1: 'SINGLE_AZ_1',
-    MULTI_AZ_1: 'MULTI_AZ_1'
+    MULTI_AZ_1: 'MULTI_AZ_1',
+    SINGLE_AZ_2: 'SINGLE_AZ_2',
+    MULTI_AZ_2: 'MULTI_AZ_2'
 };
 
 export const SQL_DEPLOYMENT_MODE = {
@@ -178,7 +180,7 @@ export const FSXN_STORAGE_PROTOCOLS = {
 
 export const MAX_SAVED_CONFIG = 100;
 
-export const WLF_TO_FORM_NAVIGATE = '../add-working-environment/database-services/mssql/create';
+export const WLF_TO_FORM_NAVIGATE = '../mssql-deploy-wizard';
 
 export const FORM_TO_WLF_NAVIGATE = '../databases';
 export const FORM_TO_WLF_NAVIGATE_BLUEXP = '../fsxdb';
@@ -195,13 +197,26 @@ export const CURL_REQ_TEMPLATE = (
     credentialId: string,
     region: string,
     token: string,
-    payload: any
-) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
---header 'Authorization: Bearer ${token}' \\
---header 'Content-Type: application/json' \\
---data-raw '${payload}'
-`;
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
 
 export const CRED_PLACEHOLDERS = {
     ACCOUNT_ID: '<AccountId>',
@@ -280,7 +295,9 @@ export const UI_IDS = {
     WIZARD_CODEBOX_AWS_CLI: 'wizard-codebox-aws-cli',
     DBP_CODEBOX_AWS_CLI: 'dbp-codebox-aws-cli',
     WIZARD_CODEBOX_CF: 'wizard-codebox-cf',
-    DBP_CODEBOX_CF: 'dbp-codebox-cf'
+    DBP_CODEBOX_CF: 'dbp-codebox-cf',
+    WIZARD_CODEBOX_TF: 'wizard-codebox-tf',
+    DBP_CODEBOX_TF: 'dbp-codebox-tf'
 };
 
 export const WLF_TABS = {
@@ -316,27 +333,52 @@ export const CREATE_DB_CURL_REQ_TEMPLATE = (
     region: string,
     databaseHostId: any,
     token: string,
-    payload: any
-) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
---header 'Authorization: Bearer ${token}' \\
---header 'Content-Type: application/json' \\
---data-raw '${payload}'
-`;
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
 
 export const CREATE_SANDBOX_CURL_REQ_TEMPLATE = (
     baseUrl: string,
     credentialId: string,
     region: string,
     token: string,
-    payload: any
-) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandboxes' \\
---header 'Authorization: Bearer ${token}' \\
---header 'Content-Type: application/json' \\
---data-raw '${payload}'
-`;
-
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandboxes' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandboxes' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
 export const UPDATE_SANDBOX_CURL_REQ_TEMPLATE = (
     baseUrl: string,
     credentialId: string,
@@ -582,4 +624,10 @@ export const BXP_MESSAGES = {
     SERVICE_CONNECTOR_CHANGE: 'SERVICE:CONNECTOR-CHANGE',
     SERVICE_LOCATION_CHANGE: 'SERVICE:LOCATION-CHANGE',
     SERVICE_ON_READY: 'SERVICE:ON-READY'
+};
+
+export const EBS_PROTECTED_OPTIONS = {
+    PROTECTED: 'Protected',
+    UNPROTECTED: 'Unprotected',
+    UNKNOWN: 'Unknown'
 };

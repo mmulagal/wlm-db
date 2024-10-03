@@ -18,7 +18,7 @@ const DatabaseHomePage = () => {
 
     const hostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const hostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
-    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const databaseHostsLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
     const fullHostDataLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
     const [loading, setLoading] = useState(false);

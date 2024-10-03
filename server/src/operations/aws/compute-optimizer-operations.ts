@@ -18,7 +18,7 @@ import { getCredentialsDetails } from '../cloud-manager/credentials-operations';
 import { getInstanceTypesFromInstanceRequirements } from './ec2-operations';
 import { getSqlInstancePricingDetails } from './pricing-operations';
 import { FINDING, TCO_FEATURE } from '../../utils/consts';
-import { createTrackedEc2Records, updateTrackedEc2Record } from '../../lib/database/db';
+import { createTrackedEc2Records, listTrackedEc2, updateTrackedEc2Record } from '../../lib/database/db';
 import { NodeDetails } from '../../utils/common-types';
 
 const logger = getLogger();
@@ -168,15 +168,23 @@ async function addEc2InstancesToTrackedList(
     awsAccountId: string,
     instanceIds: string[]
 ) {
-    const records = instanceIds.map(instanceId => ({
-        account_id: accountId,
-        region,
-        credentials_id: credentialsId,
-        instance_id: instanceId,
-        feature: TCO_FEATURE,
-        cloud_provider_account_id: awsAccountId
-    }));
-    await createTrackedEc2Records(records);
+    const trackedEc2Instances = await listTrackedEc2(TCO_FEATURE, accountId, region, credentialsId);
+    const records = instanceIds
+        .map(instanceId => ({
+            account_id: accountId,
+            region,
+            credentials_id: credentialsId,
+            instance_id: instanceId,
+            feature: TCO_FEATURE,
+            cloud_provider_account_id: awsAccountId
+        }))
+        .filter(
+            record => !trackedEc2Instances?.some(trackedInstance => trackedInstance.instance_id === record.instance_id)
+        ); // filter out instances that are already tracked
+
+    if (records && records.length > 0) {
+        await createTrackedEc2Records(records);
+    }
 }
 
 function getFindingMapping(finding: string) {

@@ -1,4 +1,4 @@
-import { Button, Header, useDialog, Popover } from '@netapp/design-system';
+import { Button, Header, useDialog, Popover, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
@@ -103,7 +103,14 @@ const MSSqlHeader = () => {
                         } else if (databaseHostEntryPoint === 'database') {
                             navigate('/databases');
                         } else {
-                            navigateToCanvas('/');
+                            if (isWorkloadFactory) {
+                                navigateToCanvas('/');
+                            } else {
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: '../../../../../fsxhome', replace: true }
+                                });
+                            }
                         }
                     }
                 }}
@@ -119,7 +126,14 @@ const MSSqlHeader = () => {
         } else if (databaseHostEntryPoint === 'database') {
             navigate('/databases');
         } else {
-            navigateToCanvas('/');
+            if (isWorkloadFactory) {
+                navigateToCanvas('/');
+            } else {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../../../../fsxhome', replace: true }
+                });
+            }
         }
     };
 

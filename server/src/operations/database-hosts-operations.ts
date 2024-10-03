@@ -1,7 +1,13 @@
 import { STORAGE_TYPE } from '@prisma/client';
 import randomize from 'randomatic';
 import numeral from 'numeral';
-import { DescribeInstancesCommandOutput, DescribeVolumesResult, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
+import {
+    DescribeInstancesCommandOutput,
+    DescribeVolumesResult,
+    DescribeVpcsCommandInput,
+    DeviceType,
+    Volume
+} from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listDatabaseInstances, listResources } from '../lib/database/db';
@@ -49,7 +55,8 @@ import {
     SQL_SERVICE_STATE,
     UNKNOWN,
     WIN_SQL_EC2_USAGE_OPERATION,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    EBS_ROOT_VOLUME
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -77,7 +84,7 @@ import {
     ResourceDetails,
     databaseInstanceMetadata
 } from '../utils/common-types';
-import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
+import { getBillByResourceIds, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
@@ -120,7 +127,7 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
 };
 
 interface MappedOnTapVolumeResponse {
-    volumeUuids: string[];
+    volumeRecords: Record<string, string | number>[];
     volumeDBMap: any;
     lunNames: string[];
 }
@@ -143,6 +150,7 @@ interface MappedOnTapVolumeResponse {
 type EstimationEc2Type = {
     resourceType: string;
     sqlSoftwareType: string;
+    [key: string]: string | number;
 };
 
 type EstimationFSxType = {
@@ -158,8 +166,8 @@ type EstimationFSxType = {
 type EstimationEbsType = {
     id: string;
     size: number;
-    throughput: number;
-    iops: number;
+    throughput?: number;
+    iops?: number;
     volumeType: string;
 }[];
 
@@ -636,13 +644,15 @@ async function getBilling(resourceDetail: ResourceDetails) {
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         // Need to validate before proceeding for billing
         await validationForCostExplorer(resourceDetail);
-        const billingResponse: UsageCostResponseType = await calculateBilling(
-            credentialsId,
-            region!,
-            fileSystemId!,
+        const resourceGroupsById = new Map<string, string[]>();
+        resourceGroupsById.set(resourceDetail.resource_id, [
             node1InstanceId,
-            node2InstanceId
-        );
+            ...(node2InstanceId ? [node2InstanceId] : []),
+            ...(fileSystemId ? (Array.isArray(fileSystemId) ? fileSystemId : [fileSystemId]) : [])
+        ]);
+
+        const billsByResourceIds = await getBillByResourceIds(credentialsId, region!, resourceGroupsById);
+        const billingResponse: UsageCostResponseType = billsByResourceIds.get(resourceDetail.resource_id);
 
         return {
             compute: billingResponse?.compute,
@@ -661,7 +671,8 @@ async function validationForCostExplorer(resourceDetail: ResourceDetails) {
     logger.info('Validating prerequiste for Cost explorer for billing of resources');
 
     // 1.  We need to check if wlmdb-cost-resource cost allocation tag is activated at account level or not
-    const tagsResponse = await getCostAllocationTags(resourceDetail);
+    const { credentials_id: credentialsId, region } = resourceDetail;
+    const tagsResponse = await getCostAllocationTags(credentialsId, region!);
     if (!tagsResponse?.Tags?.includes(WLMDB_COST_ALLOCATION_TAG)) {
         throw new Error(
             `Calcaulation of  Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not activated at account level`
@@ -721,8 +732,18 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
 
         const ec2ResourceInfo = ec2Info as EstimationEc2Type;
         const fsxnResourceInfo = fsxnInfo as EstimationFSxType;
-        const ebsResourceInfo = ebsInfo as EstimationEbsType;
+        let ebsResourceInfo = ebsInfo as EstimationEbsType;
         const fsxwResourceInfo = fsxwInfo as EstimationFSxType;
+
+        if (ec2ResourceInfo.rootVolumeId) {
+            const rootVolume = {
+                id: ec2ResourceInfo.rootVolumeId as string,
+                size: ec2ResourceInfo.size as number,
+                volumeType: ec2ResourceInfo.volumeType as string
+            };
+
+            ebsResourceInfo = isEmpty(ebsResourceInfo) ? [rootVolume] : [...ebsResourceInfo, rootVolume];
+        }
 
         const pricingRequest: PricingServiceRequestType = {
             compute: {
@@ -761,13 +782,18 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             pricingRequest.ebsStorage,
             pricingRequest.fsxwStorage
         );
+
+        const ebsBreakdownByVolumeType = pricingResponse.ebsStorage?.ebsBreakdownByVolumeType.filter(
+            e => !e.id?.includes(EBS_ROOT_VOLUME)
+        );
+
         return {
             compute: pricingResponse?.compute || 0,
             storage: {
                 fsxn: pricingResponse?.fsxnStorage?.fsxStorageCost,
                 fsxw: pricingResponse?.fsxwStorage?.fsxwStorageCost,
                 ebs: pricingResponse.ebsStorage?.ebsStorageCost,
-                ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
+                ebsBreakdownByVolumeType: isEmpty(ebsBreakdownByVolumeType) ? undefined : ebsBreakdownByVolumeType,
                 fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById.map(id => ({
                     ...id,
                     size: id.size!.total
@@ -795,12 +821,23 @@ async function getEc2ResourceInfo(
         InstanceIds: [activeNodeInstanceId]
     });
     logger.info('Estimation info for EC2:', ec2Info);
-    const {
-        Reservations: [
-            { Instances: [{ InstanceType: resourceType = undefined, ImageId: imageId = undefined } = {}] = [] } = {}
-        ] = []
-    } = ec2Info;
-    const amiInfo = await getAmis(credentialsId, region, { ImageIds: [imageId!] });
+    const { Reservations: [{ Instances: [instance] = [] } = {}] = [] } = ec2Info;
+    let getRootVolumePromise = Promise.resolve({});
+    if (instance.RootDeviceType === DeviceType.ebs) {
+        const rootEbsVolume = instance.BlockDeviceMappings?.find(
+            ({ DeviceName }) => DeviceName === instance.RootDeviceName
+        );
+        if (rootEbsVolume) {
+            const rootVolumeId = rootEbsVolume.Ebs?.VolumeId;
+            if (rootVolumeId) {
+                getRootVolumePromise = describeVolumes(credentialsId, region, { VolumeIds: [rootVolumeId] });
+            }
+        }
+    }
+    const [amiInfo, volumes] = await Promise.all([
+        getAmis(credentialsId, region, { ImageIds: [instance.ImageId!] }),
+        getRootVolumePromise
+    ]);
     logger.debug('Estimation info for AMI:', amiInfo);
 
     const { Images: [{ PlatformDetails: sqlPlatform = '' } = {}] = [] } = amiInfo;
@@ -821,9 +858,15 @@ async function getEc2ResourceInfo(
             sqlSoftwareType = CUSTOM;
     }
 
+    const [rootVolume] = (volumes as { Volumes: Volume[] }).Volumes || [];
     return {
-        resourceType: resourceType!,
-        sqlSoftwareType
+        resourceType: instance.InstanceType!,
+        sqlSoftwareType,
+        ...(rootVolume && {
+            rootVolumeId: `${EBS_ROOT_VOLUME}1`,
+            size: rootVolume.Size!,
+            volumeType: rootVolume.VolumeType!
+        })
     };
 }
 
@@ -843,7 +886,9 @@ async function getFsxResourceInfo(
             const storageCapacity = StorageCapacity || 0;
             const throughput = OntapConfiguration?.ThroughputCapacity || WindowsConfiguration?.ThroughputCapacity;
             const iops =
-                OntapConfiguration?.DiskIopsConfiguration?.Iops || WindowsConfiguration?.DiskIopsConfiguration?.Iops;
+                OntapConfiguration?.DiskIopsConfiguration?.Iops ||
+                WindowsConfiguration?.DiskIopsConfiguration?.Iops ||
+                0;
             const deploymentOption = OntapConfiguration?.DeploymentType || WindowsConfiguration?.DeploymentType;
 
             return {
@@ -1455,7 +1500,7 @@ async function getDatabaseInstanceTopology(
         accountId,
         credentialsId,
         activeNodeInstanceId,
-        databaseInstances.instance_name
+        databaseInstances.database_instance_name
     );
 
     const {
@@ -1489,6 +1534,7 @@ async function getDatabaseInstanceTopology(
         let subnetIds;
         let availabilityZones: Array<string> | undefined;
         let fileSystemTags;
+        let fileSystemStorageType;
         try {
             if (fileSystemId || fsxwId) {
                 const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId || fsxwId] });
@@ -1502,7 +1548,8 @@ async function getDatabaseInstanceTopology(
                     } = {},
                     Lifecycle: fileSystemStatus,
                     StorageCapacity: fileSystemStorageCapacity,
-                    SubnetIds: subnetIds
+                    SubnetIds: subnetIds,
+                    StorageType: fileSystemStorageType
                 } = fileSystem);
 
                 fileSystemName = fileSystemTags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
@@ -1527,7 +1574,8 @@ async function getDatabaseInstanceTopology(
             ...(fileSystemStatus && { fileSystemStatus }),
             ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
-            ...(availabilityZones && { availabilityZones })
+            ...(availabilityZones && { availabilityZone: availabilityZones }),
+            ...(fileSystemStorageType && { fileSystemStorageType })
         };
     }
     return topologyData;
@@ -1802,7 +1850,11 @@ async function getDatabaseHostSummaryV2(
                             instanceType: 'm5.xlarge'
                         }));
                         nodeTopology.ec2Details = modifiedEc2Details;
-                    } else if (resourceDetail?.resource_name === 'app-server-14' && instanceResults?.length) {
+                    } else if (
+                        (resourceDetail?.resource_name === 'app-server-14' ||
+                            resourceDetail?.resource_name === 'app-server-19') &&
+                        instanceResults?.length
+                    ) {
                         instanceResults = instanceResults.map((item: any) => ({
                             ...item,
                             databaseServer: {
@@ -1956,27 +2008,21 @@ async function getProtectionDetails(
         activeNodeInstanceId,
         instanceNames,
         isSqlAuthEnabled
-    )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {} }];
+    )) as MappedOnTapVolumeResponse[]) || [{ volumeRecords: [], volumeDBMap: {} }];
 
-    const volumeUuids =
+    const volumeRecords =
         Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeUuids)
+            ?.map(i => i?.volumeRecords)
             .flat() || [];
     const volumeDBMap =
         Object.values(instanceVolumeMapping)
             ?.map(i => i?.volumeDBMap)
             .flat() || {};
+    const volumeUuids = volumeRecords.map(volume => volume.uuid as string);
 
     const [awsBackup = {}, ontapBackup = {}] = await Promise.all([
         isFsxnAwsBackupEnabled(credentialsId, region, fileSystemId, volumeUuids, volumeDBMap, activeNodeInstanceId),
-        getOntapVolumesSnapshotCount(
-            credentialsId,
-            region,
-            fileSystemId,
-            volumeUuids,
-            volumeDBMap,
-            activeNodeInstanceId
-        )
+        getOntapVolumesSnapshotCount(credentialsId, region, fileSystemId, volumeRecords, volumeDBMap)
     ]);
 
     return { awsBackup, ontapBackup };

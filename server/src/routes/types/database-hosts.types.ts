@@ -523,7 +523,8 @@ const DatabaseInstanceTopology = Type.Object({
     ),
     fileSystemStorageCapacity: Type.Optional(Type.Number()),
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
-    availabilityZones: Type.Optional(Type.Array(Type.String()))
+    availabilityZones: Type.Optional(Type.Array(Type.String())),
+    fileSystemStorageType: Type.Optional(Type.String({ enum: ['SSD', 'HDD'] }))
 });
 
 type DatabaseInstanceTopologyType = Static<typeof DatabaseInstanceTopology>;

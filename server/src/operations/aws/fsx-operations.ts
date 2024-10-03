@@ -30,7 +30,7 @@ import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getFsxArn } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
-import { getMappedOntapVolumesScript, restGetUtilForOntap } from '../workloads/mssql/ssm-script-utils';
+import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
 
 const logger = getLogger();
 
@@ -360,72 +360,47 @@ async function getOntapVolumesSnapshotCount(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    volumeUuids: string[],
-    volumeDBMap: any,
-    activeNodeInstanceId?: string
+    volumeRecords: Record<string, string | number>[],
+    volumeDBMap: any
 ) {
     logger.info('Fetching ontap snapshots count ', {
         credentialsId,
         region,
         fileSystemId,
         volumeDBMap,
-        volumeUuids
+        volumeRecords
     });
 
     try {
-        if (!isEmpty(volumeUuids)) {
-            const apiEndpoint = '/storage/volumes';
-            let apiFilter = `uuid=${volumeUuids?.join()}`;
-            const apiQuery = 'fields=snapshot_count';
-            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-                fileSystemId = 'test-fsx2345';
-                region = 'test-region';
-                apiFilter = 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44';
-            }
+        if (!isEmpty(volumeRecords)) {
+            // Update the volumeDBMap to mark the volumes that have local snapshots protected.
+            // Iterate through the volumeDBMap and check if the corresponding volume in the volumesMap has a snapshot count greater than 0.
+            // If so, set the localSnapshotsProtected property of the volumeDetail to true.
+            const volumesMap = volumeRecords?.reduce((map: Record<string, number>, volume) => {
+                map[volume.uuid] = (volume?.snapshot_count as number) || 0;
+                return map;
+            }, {});
 
-            const command = restGetUtilForOntap(fileSystemId, region, apiEndpoint, apiFilter, apiQuery);
+            const volumeDBMapWithProtectionFlag = volumeDBMap?.reduce(
+                (
+                    acc: any,
+                    volumeDetail: {
+                        ontapVolumeuuid: string;
+                        localSnapshotsProtected: boolean;
+                        databaseName: string;
+                    }
+                ) => {
+                    if (volumesMap[volumeDetail.ontapVolumeuuid] > 0) {
+                        acc[volumeDetail.databaseName] = true;
+                    } else {
+                        acc[volumeDetail.databaseName] = false;
+                    }
+                    return acc;
+                },
+                {}
+            );
 
-            const response = await callSsmExecution(credentialsId, region, [command], activeNodeInstanceId!);
-
-            const cleanResponse = response?.replaceAll('\r\n', '');
-            let parsedResponse = attempt(JSON.parse, cleanResponse);
-
-            logger.debug({ parsedResponse });
-            parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
-
-            if (parsedResponse && !isEmpty(parsedResponse.records)) {
-                // Update the volumeDBMap to mark the volumes that have local snapshots protected.
-                // Iterate through the volumeDBMap and check if the corresponding volume in the volumesMap has a snapshot count greater than 0.
-                // If so, set the localSnapshotsProtected property of the volumeDetail to true.
-                const volumesMap = parsedResponse.records?.reduce(
-                    (map: Record<string, number>, volume: { uuid: string; snapshot_count: number }) => {
-                        map[volume.uuid] = volume.snapshot_count;
-                        return map;
-                    },
-                    {}
-                );
-
-                const volumeDBMapWithProtectionFlag = volumeDBMap?.reduce(
-                    (
-                        acc: any,
-                        volumeDetail: {
-                            ontapVolumeuuid: string;
-                            localSnapshotsProtected: boolean;
-                            databaseName: string;
-                        }
-                    ) => {
-                        if (volumesMap[volumeDetail.ontapVolumeuuid] > 0) {
-                            acc[volumeDetail.databaseName] = true;
-                        } else {
-                            acc[volumeDetail.databaseName] = false;
-                        }
-                        return acc;
-                    },
-                    {}
-                );
-
-                return volumeDBMapWithProtectionFlag;
-            }
+            return volumeDBMapWithProtectionFlag;
         }
     } catch (err) {
         logger.error('Failed executing SSM script to get ontap snapshots', { err });
@@ -482,10 +457,13 @@ async function getMappedOntapVolumes(
             ) {
                 const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
                 if (volumes && !isEmpty(volumes?.records)) {
-                    const volumeUuids = volumes.records.map(({ uuid }: { uuid: string }) => uuid);
-                    instancesResponse[iName] = { volumeUuids, volumeDBMap, lunNames };
+                    const volumeRecords = volumes.records.map((record: Record<string, string | number>) => ({
+                        uuid: record.uuid,
+                        snapshot_count: record.snapshot_count
+                    }));
+                    instancesResponse[iName] = { volumeRecords, volumeDBMap, lunNames };
                 } else {
-                    instancesResponse[iName] = { volumeUuids: [], volumeDBMap: {}, lunNames: [] };
+                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: {}, lunNames: [] };
                 }
             } else {
                 logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);

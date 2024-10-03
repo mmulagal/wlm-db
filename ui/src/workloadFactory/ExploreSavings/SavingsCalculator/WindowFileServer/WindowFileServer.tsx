@@ -14,7 +14,18 @@ const WindowFileServer = () => {
     const [tableData, setTableData] = useState<any>([]);
 
     useEffect(() => {
-        const deploymentType = selectedHostDetails?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
+        let deploymentType = '';
+        for (let instance of selectedHostDetails?.sqlServerInstances || []) {
+            for (let deployment of instance?.deploymentTypes || []) {
+                if (deployment?.type) {
+                    deploymentType = deployment?.type;
+                    break;
+                }
+            }
+            if (deploymentType) {
+                break;
+            }
+        }
         const deploymentTypeText = getAzType(deploymentType) || GENERAL.NOT_AVAILABLE;
         const dataValue = [
             {
@@ -28,15 +39,16 @@ const WindowFileServer = () => {
             },
             {
                 label: 'Total provisioned IOPS',
-                value:
-                    viewCalculationsResponse?.fsxwCalculation?.sumOfDefaultAndAdditionalProvisionedIops ||
-                    GENERAL.NOT_AVAILABLE,
+                value: viewCalculationsResponse?.fsxwCalculation?.sumOfDefaultAndAdditionalProvisionedIops
+                    ? viewCalculationsResponse?.fsxwCalculation?.sumOfDefaultAndAdditionalProvisionedIops + ' IOPS'
+                    : GENERAL.NOT_AVAILABLE,
                 loading: viewCalculationsLoading
             },
             {
-                label: 'Total throughput MB/s',
-                value:
-                    viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity || GENERAL.NOT_AVAILABLE,
+                label: 'Total throughput',
+                value: viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity
+                    ? viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity + ' MB/s'
+                    : GENERAL.NOT_AVAILABLE,
                 loading: viewCalculationsLoading
             }
         ];

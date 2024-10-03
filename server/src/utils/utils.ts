@@ -97,7 +97,8 @@ function generateDeploymentParams(
     if (fsxIOPS !== 3 && fsxVolThroughput !== FSX_VOL_THROUGHPUT && !isExistingFSx) {
         // accepted iops values
         const acceptedIOPS = fsxStorageCapacity * 3;
-        if (fsxIOPS < acceptedIOPS) {
+        // Adding a buffer of 100 bytes to handle rounding off mismatch
+        if (fsxIOPS < acceptedIOPS - 100) {
             throw createError(412, `Provisioned SSD IOPS should be at least ${acceptedIOPS}`);
         }
         if (fsxIOPS < 3072 || fsxIOPS > 80000) {
@@ -633,6 +634,22 @@ async function decompressSSMResponse(response: string) {
     }
 }
 
+const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 'Retry failed') => {
+    try {
+        const resp = await fn();
+        return resp;
+    } catch (err) {
+        logger.error('Retry failed with error', err);
+        if (retries <= 0) {
+            return Promise.reject(finalErr);
+        }
+
+        await sleep(interval);
+
+        return retryWithDelay(fn, retries - 1, interval, finalErr);
+    }
+};
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -671,5 +688,6 @@ export {
     getDatabaseInstanceName,
     isDemo,
     getOriginalDatabaseInstanceName,
-    decompressSSMResponse
+    decompressSSMResponse,
+    retryWithDelay
 };

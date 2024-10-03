@@ -1,6 +1,7 @@
-import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
+import { Button, DsFlashingDotsLoader, DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
 import store from '../../store/store';
-import { setFsxCredentialStatus } from '../../store/workloadFactory/inventoryV2Slice';
+import { setFsxCredentialStatus, setSelectedHeaderTab, setUnManagedPerfInstanceIdsList } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
@@ -9,7 +10,8 @@ import {
     INVENTORY_STATUS,
     PARTNER_NODE,
     PROTECTION_TEXT_STATUS,
-    SQL_DEPLOYMENT_MODE
+    SQL_DEPLOYMENT_MODE,
+    WLF_TABS
 } from '../../utils/consts';
 import {
     DatabaseInstanceDetailsInterface,
@@ -33,6 +35,11 @@ import {
     formatSizeTwoPrecision,
     getAzType
 } from '../../utils/utilityFunctions';
+import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
+import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
+//@ts-ignore
+import CopyToClipboard from 'react-copy-to-clipboard';
+import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
 
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
@@ -237,18 +244,35 @@ export const getTotalCost = (estimatedUsageCost: EstimatedUsageCostInterface) =>
 };
 
 export const getAllocatedCapacity = (row: ManagedHostsRowInterface | undefined) => {
-    let allocatedCapacity = 0;
-    if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
-        row?.databaseInstancesSummary?.map(perRow => {
-            allocatedCapacity +=
-                (perRow?.storage?.fsxn?.size || 0) +
-                (perRow?.storage?.fsxw?.size || 0) +
-                (perRow?.storage?.ebs?.size || 0);
-        });
-        return allocatedCapacity;
-    } else {
-        return 0;
-    }
+    let fsxnCapacity = 0;
+    let fsxwCapacity = 0;
+    let ebsCapacity = 0;
+    let uniqueFsxnId: Array<String> = [];
+    let uniqueFsxwId: Array<String> = [];
+    let uniqueVolId: Array<String> = [];
+    row?.fsxnResourceInfo?.map((perFsx: any) => {
+        if (!uniqueFsxnId.includes(perFsx?.id)) {
+            fsxnCapacity += perFsx?.size || 0;
+            uniqueFsxnId.push(perFsx?.id);
+        }
+    });
+
+    row?.fsxwResourceInfo?.map((perFsxw: any) => {
+        if (!uniqueFsxwId.includes(perFsxw?.id)) {
+            fsxwCapacity += perFsxw?.size || 0;
+            uniqueFsxwId.push(perFsxw?.id);
+        }
+    });
+
+    row?.ebsResourceInfo?.map((perVol: any) => {
+        if (perVol?.id && !perVol?.id?.toLowerCase().includes('root_volume') && !uniqueVolId.includes(perVol?.id)) {
+            ebsCapacity += perVol?.size || 0;
+            uniqueVolId.push(perVol?.id);
+        }
+    });
+
+    let allocatedCapacity = fsxnCapacity + fsxwCapacity + ebsCapacity;
+    return allocatedCapacity;
 };
 
 export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) => {
@@ -1237,7 +1261,7 @@ export const getMergedAllocatedCapacity = (nodeList: Array<ManagedHostsRowInterf
 
     nodeList?.map(node => {
         node?.ebsResourceInfo?.map((perVol: any) => {
-            if (!uniqueVolId.includes(perVol?.id)) {
+            if (perVol?.id && !perVol?.id?.toLowerCase().includes('root_volume') && !uniqueVolId.includes(perVol?.id)) {
                 ebsCapacity += perVol?.size;
                 uniqueVolId.push(perVol?.id);
             }
@@ -1489,6 +1513,7 @@ export const getPerfUnmanagedData = (instanceId: string, instRow: any, partnerId
 };
 
 export const getExploreSavingsRows = (inventoryTableData: { [key: string]: InventoryTableData }) => {
+    // If ES row is disabled than it should come in inventory but not in explore savings table
     let nonFsxnStorageList: Array<InventoryTableData> = [];
     const state = store.getState();
     const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
@@ -1498,7 +1523,15 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
             return;
         }
         if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && item?.isDetected) {
-            nonFsxnStorageList.push(item);
+            if (!checkForMixedStorageType(item)) {
+                if (item?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+                    if (checkForAnySSD(item) && !checkForAnyAOAG(item)) {
+                        nonFsxnStorageList.push(item);
+                    }
+                } else {
+                    nonFsxnStorageList.push(item);
+                }
+            }
         }
     });
     return nonFsxnStorageList;
@@ -1861,11 +1894,258 @@ export const getPartnerNodeEc2InstanceId = (error: string) => {
     return null;
 };
 
-export const checkForAllAOAG = (rowData: any) => {
-    // If all instance have AOAG than ES is disabled for it
-    return rowData?.sqlServerInstances?.every((item: any) => {
-        return (
-            !item?.sqlServerDeploymentType || item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
+    // First check if this is already opened or closed. If this data is already available or not.
+    const state = store.getState();
+    const unManagedPerfInstanceIdsList = state.inventoryV2.unManagedPerfInstanceIdsList;
+    if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
+        // If this has unmanaged rows or not ?
+        let unmanagedRows = rowData?.sqlServerInstances?.filter(
+            (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
         );
+        if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
+            let instanceList = [];
+            instanceList.push(rowData?.ec2InstanceId);
+            const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
+            if (partnerData && partnerData?.length > 0) {
+                instanceList.push(partnerData?.[0]?.id);
+            }
+            dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
+        }
+        // This has to be called even if any row is becoming unmanaged row or managed row
+    }
+};
+
+export const checkForAnyAOAG = (rowData: any) => {
+    // If any instance have AOAG than ES is disabled for it
+    return rowData?.sqlServerInstances?.some((item: any) => {
+        return item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG;
     });
+};
+
+export const checkForAnySSD = (rowData: any) => {
+    for (const item of rowData?.sqlServerInstances || []) {
+        for (const perStorage of item?.storage || []) {
+            if (perStorage?.type === DETECT_HOST_VAR.FSXW && perStorage?.fileSystemStorageType === 'SSD') {
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
+export const checkForMixedStorageType = (rowData: any) => {
+    let storageType: Array<String> = [];
+    for (const item of rowData?.sqlServerInstances || []) {
+        if (item?.fileSystemType && !storageType.includes(item?.fileSystemType)) {
+            storageType.push(item?.fileSystemType);
+        }
+    }
+    if (storageType.length > 1) {
+        return true;
+    }
+    return false;
+};
+
+export const renderVpcText = (cellData: any, rowData: any, styles: any) => {
+    return (
+        <>
+            <div className={styles.ec2Container}>
+                <div className={styles.ssmOffline}>
+                    <Popover
+                        popoverClass={''}
+                        children={
+                            <>
+                                {rowData?.vpcIdAndNameText && (
+                                    <div className={styles.tooltipContainer}>
+                                        <DsTypography variant="Regular_14">{rowData?.vpcIdAndNameText}</DsTypography>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={'Copied'}
+                                            container={
+                                                <CopyToClipboard text={rowData?.vpcIdAndNameText}>
+                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                </CopyToClipboard>
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </>
+                        }
+                        trigger="hover"
+                        delayHide={200}
+                        interactive={true}
+                        isAppendedToBody={false}
+                        container={<TooltipIcon />}
+                    />
+                </div>
+                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                    {cellData || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            </div>
+        </>
+    );
+};
+
+export const renderInstanceListText = (cellData: any, rowData: any, styles: any) => {
+    let instanceList: any = cellData ? cellData.split(',') : null;
+    return (
+        <>
+            <div className={styles.ec2Container}>
+                <div className={styles.ssmOffline}>
+                    <Popover
+                        popoverClass={''}
+                        children={
+                            <>
+                                {instanceList && instanceList[0] && (
+                                    <div className={styles.tooltipContainer}>
+                                        <DsTypography variant="Regular_14">{instanceList[0]}</DsTypography>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={'Copied'}
+                                            container={
+                                                <CopyToClipboard text={instanceList[0]}>
+                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                </CopyToClipboard>
+                                            }
+                                        />
+                                    </div>
+                                )}
+                                {instanceList && instanceList[1] && (
+                                    <>
+                                        <div className={styles.ec2Separator} />
+                                        <div className={styles.tooltipContainer}>
+                                            <DsTypography variant="Regular_14">{instanceList[1]}</DsTypography>
+                                            <Popover
+                                                popoverClass={styles['copy-popover']}
+                                                children={'Copied'}
+                                                container={
+                                                    <CopyToClipboard text={instanceList[1]}>
+                                                        <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                    </CopyToClipboard>
+                                                }
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        }
+                        trigger="hover"
+                        delayHide={200}
+                        interactive={true}
+                        isAppendedToBody={false}
+                        container={<TooltipIcon />}
+                    />
+                </div>
+                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                    {rowData?.instanceNameListText || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            </div>
+
+            {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
+            {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const installModuleNotification = (styles: any, hostname: string, dispatch: any, initialMsg: any) => {
+    const prepareHostMsg = (
+        <div className={styles.notification}>
+            {initialMsg[0]}
+            <span className={styles.bold}>{hostname}</span>
+            {initialMsg[1]}
+            {
+                <>
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {initialMsg[2]}
+                    </Button>
+                </>
+            }
+            {initialMsg[3]}
+        </div>
+    );
+    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: prepareHostMsg }));
+};
+
+export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) => {
+    let azList = '';
+    let deploymentType = '';
+
+    for (let instance of rowData?.sqlServerInstances || []) {
+        for (let deployment of instance?.deploymentTypes || []) {
+            if (deployment?.zones) {
+                azList = deployment.zones.join(',');
+            }
+            if (deployment?.type) {
+                deploymentType = deployment.type;
+            }
+            if (azList || deploymentType) {
+                break;
+            }
+        }
+        if (azList || deploymentType) {
+            break;
+        }
+    }
+
+    return (
+        <>
+            {deploymentType && (
+                <div className={styles.azColText}>
+                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
+                    <DsTypography variant="Regular_14">{getAzType(deploymentType)}</DsTypography>
+                </div>
+            )}
+            {!deploymentType && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const renderCellData = (cellData: any, rowData: any, styles: any) => {
+    return (
+        <>
+            {cellData && (
+                <DsTypography variant="Regular_13" className={styles.colText}>
+                    {cellData}
+                </DsTypography>
+            )}
+            {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+            {!cellData && cellData !== 0 && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) => {
+    const costData = rowData?.estimatedUsageCost;
+    const totalCost = +rowData?.totalCost;
+    return (
+        <>
+            {costData && !rowData?.loading && (
+                <div className={styles.cost}>
+                    <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
+                        {EstimatedCostPopover({ ...costData, totalCost: totalCost })}
+                    </TooltipInfo>
+                    <DsTypography variant="Regular_14">{`$${formatFractionalNumber(totalCost, 2)}`}</DsTypography>
+                </div>
+            )}
+            {rowData?.loading && <DsFlashingDotsLoader />}
+            {!costData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const renderAllocatedCapacity = (cellData: any, rowData: any) => {
+    return (
+        <>
+            {!rowData?.loading && (cellData || cellData === 0 ? cellData : GENERAL.NOT_AVAILABLE)}
+            {rowData?.loading && <DsFlashingDotsLoader />}
+        </>
+    );
 };

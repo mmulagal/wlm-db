@@ -4,7 +4,8 @@ import {
     deployCloudFormationTemplate,
     getCloudformationTemplate,
     deployStackOrCreateTemplateURL,
-    getCollationDetailsForDeployment
+    getCollationDetailsForDeployment,
+    getTerraformSetup
 } from '../../src/operations/deployment-operations';
 import '../simulator/scopes/aws/s3-scope';
 import '../simulator/scopes/aws/ec2-scope';
@@ -97,5 +98,18 @@ describe('Cloud formation operations', () => {
     it('Get Collation details for mssql deployment', async () => {
         const resp = await getCollationDetailsForDeployment(ACCOUNT_ID, 2017);
         expect(resp).toBeDefined();
+    });
+    it('Get terraform setup', async () => {
+        const resp = await getTerraformSetup(
+            NETWORKING_CONFIGURATION,
+            EC2_CONFIGURATION,
+            AD_CONFIGURATION,
+            FSX_CONFIGURATION,
+            SQL_CONFIGURATION,
+            '',
+            false,
+            'chatbot'
+        );
+        expect(resp.url).toBeDefined();
     });
 });

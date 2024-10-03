@@ -10,6 +10,7 @@ const SSM_QUERY_CONCURRENCY_LIMIT = 10;
 const INVOKE_VIRTUAL_MOUNT = 'C:\\SSM\\Invoke-virtualmount.ps1';
 const CREATE_SANDBOX = 'C:\\SSM\\Create-Sandbox.ps1';
 const SCRIPT_VERSON_FILE = 'C:\\SSM\\Script-Version.txt';
+const GOOGLE_DNS = '8.8.8.8'; // Using a public DNS server to check internet connectivity
 
 export {
     DB_ROWS_COUNT,
@@ -23,5 +24,6 @@ export {
     CLEANUPSCRIPT,
     INVOKE_VIRTUAL_MOUNT,
     CREATE_SANDBOX,
-    SCRIPT_VERSON_FILE
+    SCRIPT_VERSON_FILE,
+    GOOGLE_DNS
 };

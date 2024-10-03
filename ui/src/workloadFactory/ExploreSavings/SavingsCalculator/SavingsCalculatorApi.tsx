@@ -9,11 +9,14 @@ import {
 } from '../../../utils/apiService';
 import {
     addManualInstanceTypeList,
+    setDisableState,
     setGetPartnerHostDetailsLoading,
     setSavingsCalculatorRefresh,
     setSelectedHostDetails,
     setSelectedPartnerHostDetails,
     setSelectedPartnerInstanceId,
+    setSelectedSnapshotFrequency,
+    setSnapshotLoading,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
     setViewCalculationsApiResponse,
@@ -21,11 +24,17 @@ import {
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../../store/store';
-import { setMssqlInstancesData as setMssqlInstancesDataV1 } from '../../../store/workloadFactory/inventorySlice';
 import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { formatStorageSavingsRecommendedData, formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
 import { GENERAL } from '../../../utils/appConstants';
-import { INSTANCE_API_FIELDS, SAVINGS_CALC_MODE } from '../../../utils/consts';
+import {
+    EBS_PROTECTED_OPTIONS,
+    INSTANCE_API_FIELDS,
+    SAVINGS_CALC_MODE,
+    SNAPSHOT_FREQUENCY
+} from '../../../utils/consts';
+import { addInstanceIdToGetPerf } from '../../InventoryV2/InventoryUtilsV2';
+import { checkIfEbsProtected } from './savingsUtil';
 
 const SavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
@@ -39,7 +48,8 @@ const SavingsCalculatorApi = () => {
         selectedDeploymentModel,
         selectedPartnerInstanceId,
         monthlyBYOLCost,
-        savingsCalculatorFrom
+        savingsCalculatorFrom,
+        selectedHostDetails
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
@@ -177,7 +187,45 @@ const SavingsCalculatorApi = () => {
     };
 
     useEffect(() => {
-        triggerRefreshApi();
+        // If the selected instance is EBS protected, set the snapshot frequency to daily. It is only for EBS Automatic mode.
+        if (
+            selectedHostDetails &&
+            Object.keys(selectedHostDetails).length !== 0 &&
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+        ) {
+            const isProtectionData: any = checkIfEbsProtected();
+            if (isProtectionData === EBS_PROTECTED_OPTIONS.PROTECTED) {
+                dispatch(setSnapshotLoading(false));
+                dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[2]));
+            } else if (isProtectionData === EBS_PROTECTED_OPTIONS.UNPROTECTED) {
+                dispatch(setSnapshotLoading(false));
+                dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[0]));
+            } else if (isProtectionData === EBS_PROTECTED_OPTIONS.UNKNOWN) {
+                dispatch(setSnapshotLoading(false));
+                dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
+            }
+        }
+    }, [selectedHostDetails]);
+
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+            // If selected snapshot frequency has some value than trigger TCO APIs else call instance api ti get protection.
+            if (selectedHostDetails && Object.keys(selectedHostDetails).length !== 0) {
+                const isProtectionData = checkIfEbsProtected();
+                if (isProtectionData !== '' || selectedSnapshotFrequency) {
+                    dispatch(setDisableState(false));
+                    triggerRefreshApi();
+                } else {
+                    dispatch(setSnapshotLoading(true));
+                    // This is similar to expand row in inventory. It will call instance API to get protection data.
+                    addInstanceIdToGetPerf(selectedHostDetails, dispatch);
+                }
+            }
+        } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+            dispatch(setSnapshotLoading(false));
+            dispatch(setDisableState(false));
+            triggerRefreshApi();
+        }
     }, [
         selectedSnapshotFrequency,
         numberOfClonedCopies,
@@ -204,7 +252,6 @@ const SavingsCalculatorApi = () => {
     // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance.
     const getMssqlData = async () => {
         const state = store.getState();
-        const mssqlInstancesDataV1 = state.inventory.mssqlInstancesData;
         const mssqlInstancesDataV2 = state.inventoryV2.mssqlInstancesData;
         let mssqlInstancesDataLoad: any = {};
         mssqlInstancesDataLoad[selectedInstanceId] = {
@@ -212,11 +259,7 @@ const SavingsCalculatorApi = () => {
             data: null,
             error: null
         };
-        if (isInventoryV2) {
-            dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataLoad }));
-        } else {
-            dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataLoad }));
-        }
+        dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataLoad }));
 
         try {
             let result: any;
@@ -240,31 +283,16 @@ const SavingsCalculatorApi = () => {
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    if (isInventoryV2) {
-                        if (mssqlInstancesDataV2[host?.id]) {
-                            mssqlInstancesDataRes[host?.id] = {
-                                loading: false,
-                                data: host,
-                                error: host?.errors,
-                                isManagedHost: false
-                            };
-                        }
-                    } else {
-                        if (mssqlInstancesDataV1[host?.id]) {
-                            mssqlInstancesDataRes[host?.id] = {
-                                loading: false,
-                                data: host,
-                                error: host?.errors,
-                                isManagedHost: false
-                            };
-                        }
+                    if (mssqlInstancesDataV2[host?.id]) {
+                        mssqlInstancesDataRes[host?.id] = {
+                            loading: false,
+                            data: host,
+                            error: host?.errors,
+                            isManagedHost: false
+                        };
                     }
                 });
-                if (isInventoryV2) {
-                    dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataRes }));
-                } else {
-                    dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataRes }));
-                }
+                dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataRes }));
             } else {
                 let mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[selectedInstanceId] = {
@@ -273,11 +301,7 @@ const SavingsCalculatorApi = () => {
                     error: result?.error?.data?.message,
                     isManagedHost: false
                 };
-                if (isInventoryV2) {
-                    dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
-                } else {
-                    dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataErr }));
-                }
+                dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
             }
         } catch (error) {
             let mssqlInstancesDataErr: any = {};
@@ -287,11 +311,7 @@ const SavingsCalculatorApi = () => {
                 error: error,
                 isManagedHost: false
             };
-            if (isInventoryV2) {
-                dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
-            } else {
-                dispatch(setMssqlInstancesDataV1({ ...mssqlInstancesDataV1, ...mssqlInstancesDataErr }));
-            }
+            dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
         }
     };
 

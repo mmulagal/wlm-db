@@ -18,7 +18,8 @@ import {
     FSXConfigurationType,
     SQLConfigurationType,
     CloudFormationDeploymentResponseType,
-    CloudFormationStaticTemplateResponseType
+    CloudFormationStaticTemplateResponseType,
+    TerraformSetupResponseType
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
@@ -101,7 +102,7 @@ import {
     getWindowsServerBaseAmi,
     enableVpcDnsAttributes
 } from './aws/ec2-operations';
-import uploadTemplates from './template-operations';
+import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
@@ -113,6 +114,12 @@ import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
 import { describeSubnets, getAmis } from '../lib/aws/ec2';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
+import {
+    createAndUploadTheTerraformZipFile,
+    uploadTerraformModules,
+    createTFVarsFile,
+    createRootModuleFile
+} from './terraform-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -521,6 +528,105 @@ async function getCloudformationTemplate(
     };
 }
 
+async function getTerraformSetup(
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    adConfiguration: ADConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    triggeredFrom: string,
+    tags?: Array<{ key: string; value: string }>,
+    credentialsId?: string,
+    region?: string
+): Promise<TerraformSetupResponseType> {
+    logger.info('Get terraform setup', {
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        adConfiguration,
+        fsxConfiguration,
+        sqlConfiguration,
+        triggeredFrom,
+        tags,
+        enableCloudWatch,
+        topicArn
+    });
+
+    const { workloadInstanceType } = ec2Configuration;
+    const { sqlServerName, sqlAmiName } = sqlConfiguration;
+    const { databaseSize } = fsxConfiguration;
+    const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
+    // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
+    const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+
+    try {
+        const { stackName: deploymentName, templateParameters } = await formatTemplateParameters(
+            networkConfiguration,
+            ec2Configuration,
+            adConfiguration,
+            fsxConfiguration,
+            sqlConfiguration,
+            topicArn,
+            enableCloudWatch,
+            metrics,
+            credentialsId,
+            region,
+            true
+        );
+
+        logger.debug(`Deployment ${deploymentName} parameters ${JSON.stringify(templateParameters)}.`);
+
+        region = !isEmpty(region) ? region : TEMPLATE_BUCKET_REGION;
+
+        const customTerraformModulesPath: string = `${WLMDB}/${deploymentName}/terraform`;
+
+        const initializationScriptURLs = await uploadTerraformModules(
+            region as string,
+            DatabaseTypes.MS_SQL_SERVER,
+            deploymentName,
+            tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+            customTerraformModulesPath
+        );
+        logger.debug('Terraform modules uploaded successfully', initializationScriptURLs);
+
+        const { terraformVariables } = await createTFVarsFile(
+            region as string,
+            DatabaseTypes.MS_SQL_SERVER,
+            deploymentName,
+            customTerraformModulesPath,
+            templateParameters,
+            initializationScriptURLs,
+            metrics
+        );
+
+        const contents = await createRootModuleFile(
+            region as string,
+            DatabaseTypes.MS_SQL_SERVER,
+            deploymentName,
+            terraformVariables
+        );
+        const terraformZipS3SignedURL = await createAndUploadTheTerraformZipFile(
+            region as string,
+            DatabaseTypes.MS_SQL_SERVER,
+            deploymentName,
+            customTerraformModulesPath
+        );
+
+        logger.debug('Terraform zip file signed url', terraformZipS3SignedURL);
+
+        return {
+            url: terraformZipS3SignedURL,
+            template: contents || ''
+        };
+    } catch (err: any) {
+        logger.error('Error while getting terraform setup', err);
+        throw createError(500, 'Error while getting terraform setup');
+    }
+}
+
 async function deployStackOrCreateTemplateURL(
     credentialsId: string,
     region: string,
@@ -545,7 +651,7 @@ async function deployStackOrCreateTemplateURL(
         tags,
         triggeredFrom
     });
-
+    updateLongRunningAuditGroup(undefined, undefined, sqlConfiguration?.sqlServerName);
     const { workloadInstanceType } = ec2Configuration;
     const { sqlServerName, sqlAmiName, sqlCollation } = sqlConfiguration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
@@ -1207,5 +1313,6 @@ export {
     getCloudformationTemplate,
     deployStackOrCreateTemplateURL,
     getFSXAvailableRegionsForThrougput,
-    getCollationDetailsForDeployment
+    getCollationDetailsForDeployment,
+    getTerraformSetup
 };

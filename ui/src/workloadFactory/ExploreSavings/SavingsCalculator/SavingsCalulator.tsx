@@ -1,9 +1,8 @@
 import { useDispatch } from 'react-redux';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './SavingsCalculator.module.scss';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
-import { DsTypography } from '@netapp/design-system';
+import { BlueXPListeners, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
 import SavingsHeader from './SavingsHeader/SavingsHeader';
@@ -36,8 +35,9 @@ import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../Expl
 import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
 import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
 import WindowFileServer from './WindowFileServer/WindowFileServer';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
-const SavingsCalculator = () => {
+const SavingsCalculator = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
     // const [disableState, setDisableState] = useState(false);
@@ -56,13 +56,19 @@ const SavingsCalculator = () => {
         disableState
     } = useAppSelector(state => state.exploreSavings);
 
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
+
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
-        dispatch(
-            setViewCalculationsResponse(
-                formatViewCalcData(viewCalculationsApiResponse || {}, selectedDeploymentModel, monthlyChangeRate)
-            )
-        );
+        if (viewCalculationsApiResponse) {
+            dispatch(
+                setViewCalculationsResponse(
+                    formatViewCalcData(viewCalculationsApiResponse, selectedDeploymentModel, monthlyChangeRate)
+                )
+            );
+        } else {
+            dispatch(setViewCalculationsResponse(null));
+        }
     }, [recommendedTargetInstance]);
 
     useEffect(() => {
@@ -105,26 +111,41 @@ const SavingsCalculator = () => {
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
                 <div className={styles.savingsCalculator} id="export-pdf">
-                    <div className={styles.breadCrumb}>
-                        <BreadCrumbs
-                            items={[
-                                {
-                                    title: GENERAL.ES_SAVINGS,
-                                    onClick: () => {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
-                                        dispatch(addExploreSavingsInitialData(null));
+                    {statusCheck ? (
+                        <div className={styles.breadCrumb}>
+                            <BreadCrumbs
+                                items={[
+                                    {
+                                        title: GENERAL.ES_SAVINGS,
+                                        onClick: () => {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                            dispatch(addExploreSavingsInitialData(null));
+                                            postBlueXPMessage({
+                                                type: BlueXPListeners.navigate,
+                                                payload: {
+                                                    pathname: `${
+                                                        isWorkloadFactory
+                                                            ? './explore-savings'
+                                                            : '../../fsxdb/explore-savings'
+                                                    }`,
+                                                    replace: true
+                                                }
+                                            });
+                                        }
+                                    },
+                                    {
+                                        title:
+                                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+                                                ? setManualBreadcrumbTitle()
+                                                : selectedServerName
                                     }
-                                },
-                                {
-                                    title:
-                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                            ? setManualBreadcrumbTitle()
-                                            : selectedServerName
-                                }
-                            ]}
-                        />
-                    </div>
+                                ]}
+                            />
+                        </div>
+                    ) : (
+                        <div style={{ marginBottom: '40px' }}></div>
+                    )}
 
                     <div className={styles.savingsHeading}>
                         <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>
