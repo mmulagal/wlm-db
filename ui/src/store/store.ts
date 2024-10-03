@@ -10,7 +10,6 @@ import {
     jobMonitoringApi,
     policiesApi,
     resourceApi,
-    workloadFactoryResourceApi,
     inventoryApi,
     sandboxApi,
     exploreSavingsApi,
@@ -51,7 +50,6 @@ const rootReducer = combineReducers({
     [databaseHomeSlice.name]: databaseHomeSlice.reducer,
     [chatbotSlice.name]: chatbotSlice.reducer,
     [workloadFactoryResourceSlice.name]: workloadFactoryResourceSlice.reducer,
-    [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer,
     [workloadFactoryResourceApiV2.reducerPath]: workloadFactoryResourceApiV2.reducer,
     [jobMonitoringApi.reducerPath]: jobMonitoringApi.reducer,
     [jobMonitoringSlice.name]: jobMonitoringSlice.reducer,
@@ -127,7 +125,6 @@ const store = configureStore({
             .concat(configApi.middleware)
             .concat(databaseHomeApi.middleware)
             .concat(chatbotApi.middleware)
-            .concat(workloadFactoryResourceApi.middleware)
             .concat(workloadFactoryResourceApiV2.middleware)
             .concat(jobMonitoringApi.middleware)
             .concat(headersApi.middleware)

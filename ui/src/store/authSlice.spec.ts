@@ -10,7 +10,6 @@ describe('authSlice reducers', () => {
         pathname: string;
         features: {};
         isWorkloadFactory: boolean;
-        isInventoryV2: boolean;
         refreshBlocked: boolean;
     };
 
@@ -24,7 +23,6 @@ describe('authSlice reducers', () => {
             pathname: '',
             features: {},
             isWorkloadFactory: false,
-            isInventoryV2: false,
             refreshBlocked: false
         };
     });

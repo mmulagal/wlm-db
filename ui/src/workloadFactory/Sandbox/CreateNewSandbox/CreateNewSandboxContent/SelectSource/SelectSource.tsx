@@ -38,7 +38,7 @@ const SelectSource = () => {
         aggregatedDbHostList
     } = useAppSelector(state => state.createSandbox);
     const { source } = useAppSelector(state => state.createSandbox);
-    const { isDemoMode, isInventoryV2 } = useAppSelector(state => state?.auth);
+    const { isDemoMode } = useAppSelector(state => state?.auth);
     const { selectedDatabaseHost, selectedDatabaseInstance, selectedDatabase } = source;
     const { databaseListData, databaseListLoading } = getDatabaseList;
     const { databaseHostsLoading } = getDatabaseHosts;
@@ -66,9 +66,7 @@ const SelectSource = () => {
     const generateHostName = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         aggregatedDbHostList?.map((obj: any, idx: number) => {
-            const isHostUp = isInventoryV2
-                ? obj?.databaseHostStatus?.toLowerCase() === STATUS_CONST.ONLINE.toLowerCase()
-                : obj.status === STATUS_CONST.UP;
+            const isHostUp = obj?.databaseHostStatus?.toLowerCase() === STATUS_CONST.ONLINE.toLowerCase();
             if (isHostUp) {
                 const protocolDisable = isSmbProtocol(obj?.storage?.fsxn?.protocol);
                 const option = generateOptionType(
@@ -89,27 +87,23 @@ const SelectSource = () => {
 
     const generateSourceInstance = useMemo<optionType[]>((): optionType[] => {
         let instanceList = [];
-        if (isInventoryV2) {
-            const selectedHostData: any = aggregatedDbHostList.find(
-                (hostItem: any) => hostItem?.id === selectedDatabaseHost?.value
-            );
-            instanceList = selectedHostData?.databaseInstancesSummary
-                ? selectedHostData.databaseInstancesSummary.map((instanceItem: any) => {
-                      return {
-                          value: instanceItem?.databaseInstanceId,
-                          label: instanceItem?.databaseInstanceName,
-                          status: instanceItem?.status,
-                          fileSystemId: instanceItem?.databaseInstanceTopology?.fileSystemId
-                      };
-                  })
-                : [];
-        } else {
-            instanceList = [{ label: 'MSSQLSERVER', value: 'MSSQLSERVER' }];
-        }
+        const selectedHostData: any = aggregatedDbHostList.find(
+            (hostItem: any) => hostItem?.id === selectedDatabaseHost?.value
+        );
+        instanceList = selectedHostData?.databaseInstancesSummary
+            ? selectedHostData.databaseInstancesSummary.map((instanceItem: any) => {
+                  return {
+                      value: instanceItem?.databaseInstanceId,
+                      label: instanceItem?.databaseInstanceName,
+                      status: instanceItem?.status,
+                      fileSystemId: instanceItem?.databaseInstanceTopology?.fileSystemId
+                  };
+              })
+            : [];
         const options: optionType[] = [];
         instanceList?.map((obj: any, idx: number) => {
             const option = generateOptionType(obj?.value, obj?.label, '', false, '', obj);
-            if (!isInventoryV2 || obj?.status?.toLowerCase() === STATUS_CONST.UP.toLowerCase()) {
+            if (obj?.status?.toLowerCase() === STATUS_CONST.UP.toLowerCase()) {
                 options.push(option);
             }
         });
@@ -221,7 +215,6 @@ const SelectSource = () => {
                                     isSearchable={true}
                                     options={generateSourceInstance}
                                     className={styles.selectField}
-                                    isDisabled={!isInventoryV2}
                                 />
 
                                 {windowSize.width <= 1500 && (
