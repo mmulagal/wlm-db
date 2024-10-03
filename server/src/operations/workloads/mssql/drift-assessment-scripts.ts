@@ -118,7 +118,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
     $ApiQueryFields = "fields=autosize,space,snapshot_policy,tiering,guarantee"
     
-    ${ontapRestRequest(true)}
+    ${ontapRestRequest}
     
     # Volume details
     $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields

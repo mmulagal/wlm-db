@@ -29,10 +29,11 @@ async function assessStorageDrift(credentialsId: string, region: string, instanc
         false
     )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [] }];
 
-    instanceRecord.mappedVolumesUuids =
+    const volumeRecords =
         Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeUuids)
+            ?.map(i => i?.volumeRecords)
             .flat() || [];
+    instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
 
     instanceRecord.mappedLunNames =
         Object.values(instanceVolumeMapping)
