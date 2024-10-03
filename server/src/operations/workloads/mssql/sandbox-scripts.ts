@@ -301,6 +301,7 @@ const getDbMappedOntapVolumes = (
                                 $_.Add('parentVolume', $volrecord.clone.parent_volume.name)
                                 $_.Add('parentVolumeUuid', $volrecord.clone.parent_volume.uuid)
                                 $_.Add('parentSnapshot', $volrecord.clone.parent_snapshot.name)
+                                $_.Add('splitEstimate', $volrecord.clone.split_estimate)
                             }
                         }
                     }

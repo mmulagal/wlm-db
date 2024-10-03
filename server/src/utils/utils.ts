@@ -97,7 +97,8 @@ function generateDeploymentParams(
     if (fsxIOPS !== 3 && fsxVolThroughput !== FSX_VOL_THROUGHPUT && !isExistingFSx) {
         // accepted iops values
         const acceptedIOPS = fsxStorageCapacity * 3;
-        if (fsxIOPS < acceptedIOPS) {
+        // Adding a buffer of 100 bytes to handle rounding off mismatch
+        if (fsxIOPS < acceptedIOPS - 100) {
             throw createError(412, `Provisioned SSD IOPS should be at least ${acceptedIOPS}`);
         }
         if (fsxIOPS < 3072 || fsxIOPS > 80000) {

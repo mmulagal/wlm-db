@@ -18,8 +18,7 @@ const style = {
     'code[class*="language-"]': {
         color: 'var(--text-primary)',
         background: 'none',
-        fontFamily:
-            "-apple-system, 'system-ui', 'Segoe UI', 'Helvetica', 'Arial', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji'",
+        fontFamily: 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace',
         fontSize: '14px',
         textAlign: 'left',
         whiteSpace: 'pre',

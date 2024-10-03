@@ -2,7 +2,7 @@ import { useDispatch } from 'react-redux';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './SavingsCalculator.module.scss';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
-import { DsTypography } from '@netapp/design-system';
+import { BlueXPListeners, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
 import SavingsHeader from './SavingsHeader/SavingsHeader';
@@ -55,6 +55,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         viewCalculationsResponse,
         disableState
     } = useAppSelector(state => state.exploreSavings);
+
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
@@ -118,6 +120,17 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                         onClick: () => {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
                                             dispatch(addExploreSavingsInitialData(null));
+                                            postBlueXPMessage({
+                                                type: BlueXPListeners.navigate,
+                                                payload: {
+                                                    pathname: `${
+                                                        isWorkloadFactory
+                                                            ? './explore-savings'
+                                                            : '../../fsxdb/explore-savings'
+                                                    }`,
+                                                    replace: true
+                                                }
+                                            });
                                         }
                                     },
                                     {

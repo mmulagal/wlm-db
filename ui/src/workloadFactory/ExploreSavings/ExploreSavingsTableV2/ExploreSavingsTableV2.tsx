@@ -18,6 +18,7 @@ const ExploreSavingsTableV2 = () => {
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const [tableData, setTableData] = useState<any>([]);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
     const getInitialFilter = () => {
         if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
@@ -83,7 +84,7 @@ const ExploreSavingsTableV2 = () => {
                     <div
                         className={styles.detectManage}
                         onClick={() => {
-                            onClickESHost(dispatch, rowData);
+                            onClickESHost(dispatch, rowData, isWorkloadFactory);
                         }}
                         id="explore-savings-table-button"
                     >

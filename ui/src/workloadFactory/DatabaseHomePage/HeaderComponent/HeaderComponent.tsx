@@ -19,6 +19,7 @@ import {
     checkValueSavedForRegion,
     generateOptionType,
     getCurrentDateTime,
+    handleURL,
     regionsSort,
     resetDBHomePageState
 } from '../../../utils/utilityFunctions';
@@ -137,9 +138,31 @@ const HeaderComponent = ({ tab }: Tab) => {
         } else if (statusData && !statusData?.isActive) {
             if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
                 if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: `${
+                                isWorkloadFactory
+                                    ? './storage-saving-calculator?type=ebs&mode=manual'
+                                    : '../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
+                            }`,
+                            replace: true
+                        }
+                    });
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                 } else {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: `${
+                                isWorkloadFactory
+                                    ? './storage-saving-calculator?type=fsxw&mode=manual'
+                                    : '../fsxdb/storage-saving-calculator?type=fsxw&mode=manual'
+                            }`,
+                            replace: true
+                        }
+                    });
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                 }
@@ -229,6 +252,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
+        handleURL(value, isWorkloadFactory);
     };
 
     useEffect(() => {

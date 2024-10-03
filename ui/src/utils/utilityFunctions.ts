@@ -36,6 +36,7 @@ import { DatabaseHostItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
+import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -1519,14 +1520,19 @@ export const setTabInfoFOrBXP = (tab: string) => {
         case '/fsxdb/inventory':
             return WLF_TABS.INVENTORY;
         case '/fsxdb/sandbox':
+        case '/fsxdb/sandboxes':
             return WLF_TABS.SANDBOXES;
         case '/fsxdb/exploreSaving':
+        case '/fsxdb/explore-savings':
             return WLF_TABS.EXPLORE_SAVINGS;
-        case '/fsxdb/exploreSavingsEBS':
+        case '/fsxdb/explore-savings-ebs':
             return WLF_TABS.EXPLORE_SAVINGS_EBS;
-        case '/fsxdb/exploreSavingsFsxW':
+        case '/fsxdb/explore-savings-fsxw':
             return WLF_TABS.EXPLORE_SAVINGS_FsxW;
+        case '/fsxdb/storage-saving-calculator':
+            return WLF_TABS.SAVINGS_CALCULATOR;
         case '/fsxdb/jobMonitoring':
+        case '/fsxdb/job-monitoring':
             return WLF_TABS.JOB_MONITORING;
         default:
             return WLF_TABS.DASHBOARD;
@@ -1552,6 +1558,54 @@ export const apiDOCURL = () => {
             return 'https://console.workloads.netapp.com/api-doc';
         }
     }
+};
+
+export const handleURL = (value: string, isWorkloadFactory: boolean) => {
+    let path = '';
+    if (isWorkloadFactory) {
+        switch (value) {
+            case 'Inventory':
+                path = './inventory';
+                break;
+            case 'Dashboard':
+                path = './dashboard';
+                break;
+            case 'Sandboxes':
+                path = './sandboxes';
+                break;
+            case 'Explore savings':
+                path = './explore-savings';
+                break;
+            case 'Job monitoring':
+                path = './job-monitoring';
+                break;
+        }
+    } else {
+        switch (value) {
+            case 'Inventory':
+                path = '../../fsxdb/inventory';
+                break;
+            case 'Dashboard':
+                path = '../../fsxdb/dashboard';
+                break;
+            case 'Sandboxes':
+                path = '../../fsxdb/sandboxes';
+                break;
+            case 'Explore savings':
+                path = '../../fsxdb/explore-savings';
+                break;
+            case 'Job monitoring':
+                path = '../../fsxdb/job-monitoring';
+                break;
+        }
+    }
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${path}`,
+            replace: true
+        }
+    });
 };
 
 export const updateSizeInGib = (data: any): any => {

@@ -9,7 +9,8 @@ import {
     BXP_SVC_TOKEN_TYPE,
     REQUEST_IN_PROGRESS_TYPE,
     AWS_PRICING_TYPE,
-    AWS_FSX_TYPE
+    AWS_FSX_TYPE,
+    AWS_CE_TYPE
 } from './consts.js';
 import getLogger from './logger.js';
 
@@ -58,6 +59,11 @@ const AWS_FSX_CACHE = new LRUCache({
     ttl: ms('1d')
 });
 
+const AWS_CE_CACHE = new LRUCache({
+    max: 1000,
+    ttl: ms('1d')
+});
+
 function getCacheByType(type: string) {
     logger.debug('Getting cache by type:', type);
 
@@ -80,6 +86,8 @@ function getCacheByType(type: string) {
             return AWS_PRICING_CACHE;
         case AWS_FSX_TYPE:
             return AWS_FSX_CACHE;
+        case AWS_CE_TYPE:
+            return AWS_CE_CACHE;
         default:
             logger.error('Could not found compatible cache');
     }

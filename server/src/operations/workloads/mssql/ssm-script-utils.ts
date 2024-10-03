@@ -444,7 +444,7 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
         $FSxRegion = '${fsxregion}'
 
         ${ontapRestRequest}
-        Invoke-ONTAPRequest -ApiEndPoint '/cluster?fields=version'
+        $ontapresult = Invoke-ONTAPRequest -ApiEndPoint '/cluster?fields=version'
 
         $responseObject.add('ontapconnectivity', $True)
     } catch {

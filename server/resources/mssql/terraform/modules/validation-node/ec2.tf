@@ -17,7 +17,7 @@ locals {
 }
 
 resource "aws_iam_instance_profile" "validation_instance_profile" {
-  name = "validation_instance_profile"
+  name = "${var.deployment_name}_validation_instance_profile"
   role = var.ec2_role_name
 }
 
@@ -26,7 +26,7 @@ data "aws_vpc" "selected" {
 }
 
 resource "aws_security_group" "domain_member_sg" {
-  name        = "domain_member_sg"
+  name        = "${var.deployment_name}_domain_member_sg"
   description = "Domain Members"
   vpc_id      = var.vpc_id
 
@@ -85,43 +85,29 @@ resource "aws_instance" "validation_node" {
   }
 }
 
-#Wait for user data to complete execution on the instance
-resource "null_resource" "wait_for_tag" {
+
+#Wait for user data to complete execution on the instance for mac and linux hosts
+resource "null_resource" "wait_for_tag_mac_or_linux" {
+  count = var.operating_system == "Linux" ? 1 : 0
+
   triggers = {
     instance_id = aws_instance.validation_node.id
   }
 
   provisioner "local-exec" {
-    command = <<EOF
-   if [ "$(uname)" == "Darwin" ] || [ "$(uname)" == "Linux" ]; then
-      while true; do
-        tag=$(sh '${path.module}/check_tag.sh' '${aws_instance.validation_node.id}' '${var.aws_location}')
-        if [ "$tag" = 'completed' ]; then
-          break
-        elif [ "$tag" = 'failed' ]; then
-          echo 'Validation Node failed to deploy'
-          exit 1
-        else
-          echo 'Waiting for validation node tag...'
-          sleep 10
-        fi
-      done
-    else
-      powershell.exe -Command "
-        do {
-          \$tag = & '${path.module}/check_tag.ps1' '${aws_instance.validation_node.id}' '${var.aws_location}'
-          if (\$tag -eq 'completed') {
-            break
-          } elseif (\$tag -eq 'failed') {
-            Write-Output 'Validation Node failed to deploy'
-            exit 1
-          } else {
-            Write-Output 'Waiting for validation node tag...'
-            Start-Sleep -Seconds 10
-          }
-        } while (\$true)
-      "
-    fi
-  EOF
+    command = "sh '${path.module}/wait_for_tag.sh' '${path.module}' '${aws_instance.validation_node.id}' '${var.aws_location}'"
+  }
+}
+
+#Wait for user data to complete execution on the instance for windows host
+resource "null_resource" "wait_for_tag_windows" {
+  count = var.operating_system == "Windows" ? 1 : 0
+
+  triggers = {
+    instance_id = aws_instance.validation_node.id
+  }
+
+  provisioner "local-exec" {
+    command = "powershell.exe -File ${path.module}/wait_for_tag.ps1 ${path.module} ${aws_instance.validation_node.id} ${var.aws_location}"
   }
 }

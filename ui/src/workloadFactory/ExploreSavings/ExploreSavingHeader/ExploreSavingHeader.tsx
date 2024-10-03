@@ -11,11 +11,13 @@ import { handleManualTCOEBS, handleManualTCOFSXW } from '../ExploreSavingsUtils'
 import { useDispatch } from 'react-redux';
 import useResize from '../../../common/hooks/useResize';
 import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const ExploreSavingHeader = () => {
     const dispatch = useDispatch();
     const windowSize = useResize();
     const navigate = useNavigate();
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
     return (
         <>
@@ -50,7 +52,7 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch, navigate)}
+                                        onClick={() => handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)}
                                         style={{ marginTop: '12px' }}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
@@ -58,7 +60,7 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-fsxW"
-                                        onClick={() => handleManualTCOFSXW(dispatch, navigate)}
+                                        onClick={() => handleManualTCOFSXW(dispatch, navigate, isWorkloadFactory)}
                                         style={{ marginTop: '4px' }}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
@@ -101,7 +103,7 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch, navigate)}
+                                        onClick={() => handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
@@ -109,7 +111,7 @@ const ExploreSavingHeader = () => {
                                         className={styles.link}
                                         id="explore-savings-manually-fsxW"
                                         style={{ whiteSpace: 'unset' }}
-                                        onClick={() => handleManualTCOFSXW(dispatch, navigate)}
+                                        onClick={() => handleManualTCOFSXW(dispatch, navigate, isWorkloadFactory)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>
@@ -151,14 +153,14 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch, navigate)}
+                                        onClick={() => handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
                                     </span>
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-fsxW"
-                                        onClick={() => handleManualTCOFSXW(dispatch, navigate)}
+                                        onClick={() => handleManualTCOFSXW(dispatch, navigate, isWorkloadFactory)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
                                     </span>

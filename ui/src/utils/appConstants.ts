@@ -483,7 +483,7 @@ export const GENERAL = {
     NUMBER_OF_EXECUTION: 'Number of Execution',
     TERRAFORM: 'Terraform',
     TERRAFORM_CODEBOX_TOOLTIP:
-        'The code represents only variables module. For the rest of the modules it should be downloaded.',
+        'The code represents only root module. For the rest of the modules it should be downloaded.',
     READ: 'Read',
     WRITE: 'Write',
     STORAGE_PERFORMANCE: 'Storage performance',
@@ -1155,6 +1155,7 @@ export const CODE_VIEWER = {
     AWS_CLI: 'AWS CLI',
     VIEW_IN_AWS_CLOUD_FORMATION: 'View in AWS CloudFormation',
     DOWNLOAD_YAML: 'Download YAML file ',
+    DOWNLOAD_ZIP: 'Download ZIP file',
     RECOMMENDED_DEV: 'Dev/Test',
     RECOMMENDED_PROD: 'Production',
     NO_DATA_MSG: 'No data',

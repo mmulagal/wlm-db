@@ -24,17 +24,8 @@ locals {
   })
 }
 
-# resource "aws_launch_template" "disable_imdsv1" {
-#   name_prefix = "disable_imdsv1"
-
-#   metadata_options {
-#     http_endpoint = "enabled"
-#     http_tokens   = "required"
-#   }
-# }
-
 resource "aws_iam_instance_profile" "launch_wizard_sql_fsx_profile" {
-  name = "launch_wizard_sql_fsx_profile"
+  name = "${var.deployment_name}_launch_wizard_sql_fsx_profile"
   role = var.ec2_role_name
 }
 
@@ -76,43 +67,29 @@ resource "aws_instance" "sql_node" {
   }
 }
 
-#Wait for user data to complete execution on the instance
-resource "null_resource" "wait_for_tag" {
+
+#Wait for user data to complete execution on the instance for mac and linux hosts
+resource "null_resource" "wait_for_tag_mac_or_linux" {
+  count = var.operating_system == "Linux" ? 1 : 0
+
   triggers = {
     instance_id = aws_instance.sql_node.id
   }
 
   provisioner "local-exec" {
-    command = <<EOF
-    if [ "$(uname)" == "Darwin" ] || [ "$(uname)" == "Linux" ]; then
-      while true; do
-        tag=$(sh '${path.module}/check_tag.sh' '${aws_instance.sql_node.id}' '${var.sql_node_aws_location}')
-        if [ "$tag" = 'completed' ]; then
-          break
-        elif [ "$tag" = 'failed' ]; then
-          echo 'Sql Node failed to deploy'
-          exit 1
-        else
-          echo 'Waiting for Sql node tag...'
-          sleep 10
-        fi
-      done
-    else
-      powershell.exe -Command "
-        do {
-          \$tag = & '${path.module}/check_tag.ps1' '${aws_instance.sql_node.id}' '${var.sql_node_aws_location}'
-          if (\$tag -eq 'completed') {
-            break
-          } elseif (\$tag -eq 'failed') {
-            Write-Output 'Sql Node failed to deploy'
-            exit 1
-          } else {
-            Write-Output 'Waiting for Sql node tag...'
-            Start-Sleep -Seconds 10
-          }
-        } while (\$true)
-      "
-    fi
-  EOF
+    command = "sh '${path.module}/wait_for_tag.sh' '${path.module}' '${aws_instance.sql_node.id}' '${var.sql_node_aws_location}'"
+  }
+}
+
+#Wait for user data to complete execution on the instance for windows host
+resource "null_resource" "wait_for_tag_windows" {
+  count = var.operating_system == "Windows" ? 1 : 0
+
+  triggers = {
+    instance_id = aws_instance.sql_node.id
+  }
+
+  provisioner "local-exec" {
+    command = "powershell.exe -File ${path.module}/wait_for_tag.ps1 ${path.module} ${aws_instance.sql_node.id} ${var.sql_node_aws_location}"
   }
 }

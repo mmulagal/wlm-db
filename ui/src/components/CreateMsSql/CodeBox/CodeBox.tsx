@@ -78,6 +78,7 @@ const CodeBox = () => {
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     useEffect(() => {
         if (isLoadConfig) {
@@ -109,17 +110,6 @@ const CodeBox = () => {
             document.removeEventListener('click', handleClick);
         };
     });
-
-    // const terraformUI = () => {
-    //     return (
-    //         <div className={styles.terraformContainer}>
-    //             <div>{GENERAL.TERRAFORM}</div>
-    //             <div>
-    //                 <ComingSoon />
-    //             </div>
-    //         </div>
-    //     );
-    // };
 
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
         const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, CODE_VIEWER.TERRAFORM];
@@ -353,7 +343,8 @@ const CodeBox = () => {
                     credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                     credDetails.region || CRED_PLACEHOLDERS.REGION,
                     CRED_PLACEHOLDERS.TOKEN,
-                    res
+                    res,
+                    isWorkloadFactory
                 )}
             />
         );
@@ -386,7 +377,8 @@ const CodeBox = () => {
                     credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                     credDetails.region || CRED_PLACEHOLDERS.REGION,
                     CRED_PLACEHOLDERS.TOKEN,
-                    res
+                    res,
+                    isWorkloadFactory
                 )}
             />
         );
@@ -443,6 +435,8 @@ const CodeBox = () => {
             return UI_IDS.WIZARD_CODEBOX_AWS_CLI;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
             return UI_IDS.WIZARD_CODEBOX_REST_API;
+        } else if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+            return UI_IDS.WIZARD_CODEBOX_TF;
         }
     };
 

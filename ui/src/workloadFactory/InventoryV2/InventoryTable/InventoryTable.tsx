@@ -70,6 +70,7 @@ const InventoryTable = () => {
     const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const { isDemoMode } = useAppSelector(state => state.auth);
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
     const [loading, setLoading] = useState(false);
 
@@ -477,7 +478,7 @@ const InventoryTable = () => {
                     }
                     onClick={() => {
                         if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-                            onClickESHost(dispatch, rowData);
+                            onClickESHost(dispatch, rowData, isWorkloadFactory);
                         } else {
                             handleDialog(rowData);
                         }
