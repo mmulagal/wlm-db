@@ -706,6 +706,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                 dispatch(setDatabaseHostEntryPoint('database'));
                                                 // navigate(WLF_TO_FORM_NAVIGATE);
                                                 if (isWorkloadFactory) {
+                                                    navigate(WLF_TO_FORM_NAVIGATE);
                                                     postBlueXPMessage({
                                                         type: BlueXPListeners.navigate,
                                                         payload: {
