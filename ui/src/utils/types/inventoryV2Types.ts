@@ -1,4 +1,6 @@
 export interface InventorySliceData {
+    defaultFilterOptions: {} | any;
+    optimizeFilterTags: [] | any;
     inventoryTableData: { [key: string]: InventoryTableData } | null;
     inventoryChartData: InventoryChartData | null;
     isManagedHostListLoading: boolean;

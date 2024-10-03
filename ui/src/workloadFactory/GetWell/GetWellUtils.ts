@@ -386,3 +386,50 @@ export const recommendendationTextData = {
             'Place TempDB on a dedicated volume to optimize performance for I/O intensive operations. \nData protection is less critical as TempDB is recreated upon SQL Server restart'
     }
 };
+
+export const getUniqueEntries = (arrays: any) => {
+    const combinedArray = [].concat(...arrays);
+    const seen = new Set();
+    return combinedArray.filter(item => {
+        const serializedItem = JSON.stringify(item);
+        if (seen.has(serializedItem)) {
+            return false;
+        } else {
+            seen.add(serializedItem);
+            return true;
+        }
+    });
+};
+
+export const groupByType = (array: any) => {
+    return array.reduce((acc: any, item: any) => {
+        const { type, id } = item;
+        if (!acc[type]) {
+            acc[type] = [];
+        }
+        if (!acc[type].includes(id)) {
+            acc[type].push(id);
+        }
+        return acc;
+    }, {});
+};
+
+export const removeEntry = (input: any, obj: any) => {
+    const { id, type } = obj;
+
+    // Create a new object to avoid mutating the original input object
+    const updatedInput = { ...input };
+
+    // Check if the type exists in the input object and filter out the id
+    if (updatedInput[type]) {
+        updatedInput[type] = updatedInput[type].filter((item: any) => item !== id);
+    }
+
+    return updatedInput;
+};
+
+export const removeObjectFromArray = (array: any, obj: any) => {
+    return array.filter((item: any) => {
+        return !(item.id === obj.id && item.label === obj.label && item.value === obj.value && item.type === obj.type);
+    });
+};

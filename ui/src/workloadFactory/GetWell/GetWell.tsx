@@ -8,20 +8,61 @@ import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as Light } from '../../assets/Light.svg';
 import { ReactComponent as Union } from '../../assets/Union.svg';
+import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { useDispatch } from 'react-redux';
 
 import { WLF_TABS } from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
-import { cardData, ontapConfigTableData, operatingSystemTableData, recommendendationTextData } from './GetWellUtils';
-import { setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
+import {
+    cardData,
+    getUniqueEntries,
+    groupByType,
+    ontapConfigTableData,
+    operatingSystemTableData,
+    recommendendationTextData,
+    removeEntry,
+    removeObjectFromArray
+} from './GetWellUtils';
+import {
+    setDefaultFilterOptions,
+    setOptimizeFilterTags,
+    setSelectedHeaderTab
+} from '../../store/workloadFactory/inventoryV2Slice';
+import { useAppSelector } from '../../store/storeHooks';
 
 const GetWell = () => {
     const dispatch = useDispatch();
+    const { optimizeFilterTags, defaultFilterOptions } = useAppSelector(state => state.inventoryV2);
 
-    const handleSelect = (option: any) => {
-        console.log(option);
+    const handleSelect = (filters: any, filterLabel: any) => {
+        let updatedFilters = [...optimizeFilterTags];
+        filters.forEach((filter: any) => {
+            const isSelected = optimizeFilterTags.some((selectedFilter: any) => selectedFilter.label === filter.label);
+
+            if (isSelected) {
+                // Remove the filter if it is already selected
+                updatedFilters = updatedFilters.filter(selectedFilter => selectedFilter.label !== filter.label);
+            } else {
+                // Add the filter if it is not selected
+                updatedFilters.push({ ...filter, type: filterLabel });
+            }
+        });
+
+        const uniqueArray = getUniqueEntries([optimizeFilterTags, updatedFilters]);
+
+        const reArrange = groupByType(uniqueArray);
+
+        dispatch(setOptimizeFilterTags(uniqueArray));
+        dispatch(setDefaultFilterOptions(reArrange));
+    };
+
+    const handleCancelFilter = (option: any) => {
+        const defaultFilterRemove = removeEntry(defaultFilterOptions, option);
+        const updatedOptimizeFilter = removeObjectFromArray(optimizeFilterTags, option);
+        dispatch(setOptimizeFilterTags(updatedOptimizeFilter));
+        dispatch(setDefaultFilterOptions(defaultFilterRemove));
     };
 
     return (
@@ -71,161 +112,201 @@ const GetWell = () => {
                             </div>
                         }
                         children={
-                            <div className={styles.dropdownList}>
-                                <div className={styles.dropDown}>
-                                    <DsSelect
-                                        title=""
-                                        placeholder="Placeholder text"
-                                        options={[
-                                            {
-                                                id: 0,
-                                                label: 'Storage ',
-                                                value: 'Storage'
-                                            },
-                                            {
-                                                id: 1,
-                                                label: 'Compute',
-                                                value: 'Compute'
-                                            },
-                                            {
-                                                id: 2,
-                                                label: 'Application',
-                                                value: 'Application'
-                                            },
-                                            {
-                                                id: 3,
-                                                label: 'Resiliency',
-                                                value: 'Resiliency'
-                                            },
-                                            {
-                                                id: 4,
-                                                label: 'Cloning',
-                                                value: 'Cloning'
+                            <div className={styles.mainSection}>
+                                <div className={styles.dropdownList}>
+                                    <div className={styles.dropDown}>
+                                        <DsSelect
+                                            title=""
+                                            selectedOptionIds={
+                                                defaultFilterOptions['all-catagories']
+                                                    ? defaultFilterOptions['all-catagories']
+                                                    : []
                                             }
-                                        ]}
-                                        selectionType="multi"
-                                        isWithActions={true}
-                                        onSelect={(option: any) => handleSelect(option)}
-                                        variant="underline"
-                                    />
+                                            placeholder="Placeholder text"
+                                            options={[
+                                                {
+                                                    id: 0,
+                                                    label: 'Storage ',
+                                                    value: 'Storage'
+                                                },
+                                                {
+                                                    id: 1,
+                                                    label: 'Compute',
+                                                    value: 'Compute'
+                                                },
+                                                {
+                                                    id: 2,
+                                                    label: 'Application',
+                                                    value: 'Application'
+                                                },
+                                                {
+                                                    id: 3,
+                                                    label: 'Resiliency',
+                                                    value: 'Resiliency'
+                                                },
+                                                {
+                                                    id: 4,
+                                                    label: 'Cloning',
+                                                    value: 'Cloning'
+                                                }
+                                            ]}
+                                            selectionType="multi"
+                                            isWithActions={true}
+                                            onSelect={(option: any) => handleSelect(option, 'all-catagories')}
+                                            variant="underline"
+                                        />
+                                    </div>
+                                    <div className={styles.dropDown}>
+                                        <DsSelect
+                                            title=""
+                                            selectedOptionIds={
+                                                defaultFilterOptions['sub-catagories']
+                                                    ? defaultFilterOptions['sub-catagories']
+                                                    : []
+                                            }
+                                            placeholder="Placeholder text"
+                                            options={[
+                                                {
+                                                    id: 0,
+                                                    label: 'Storage sizing',
+                                                    value: 'Storage sizing'
+                                                },
+                                                {
+                                                    id: 1,
+                                                    label: 'Storage layout',
+                                                    value: 'Storage layout'
+                                                },
+                                                {
+                                                    id: 2,
+                                                    label: 'ONTAP configuration',
+                                                    value: 'ONTAP configuration'
+                                                },
+                                                {
+                                                    id: 3,
+                                                    label: 'Storage performance',
+                                                    value: 'Storage performance'
+                                                },
+                                                {
+                                                    id: 4,
+                                                    label: 'Compute sub 1',
+                                                    value: 'Compute sub 1'
+                                                }
+                                            ]}
+                                            selectionType="multi"
+                                            isWithActions={true}
+                                            onSelect={(option: any) => handleSelect(option, 'sub-catagories')}
+                                            variant="underline"
+                                        />
+                                    </div>
+                                    <div className={styles.dropDown}>
+                                        <DsSelect
+                                            title=""
+                                            selectedOptionIds={
+                                                defaultFilterOptions['status'] ? defaultFilterOptions['status'] : []
+                                            }
+                                            placeholder="Placeholder text"
+                                            options={[
+                                                {
+                                                    id: 0,
+                                                    label: 'Optimized',
+                                                    value: 'Optimized'
+                                                },
+                                                {
+                                                    id: 1,
+                                                    label: 'Not-optimized',
+                                                    value: 'Not-optimized'
+                                                }
+                                            ]}
+                                            selectionType="multi"
+                                            isWithActions={true}
+                                            onSelect={(option: any) => handleSelect(option, 'status')}
+                                            variant="underline"
+                                        />
+                                    </div>
+                                    <div className={styles.dropDown}>
+                                        <DsSelect
+                                            title=""
+                                            selectedOptionIds={
+                                                defaultFilterOptions['severity'] ? defaultFilterOptions['severity'] : []
+                                            }
+                                            placeholder="Placeholder text"
+                                            options={[
+                                                {
+                                                    id: 0,
+                                                    label: 'Critical',
+                                                    value: 'Critical'
+                                                },
+                                                {
+                                                    id: 1,
+                                                    label: 'Warning',
+                                                    value: 'Warning'
+                                                }
+                                            ]}
+                                            selectionType="multi"
+                                            isWithActions={true}
+                                            onSelect={(option: any) => handleSelect(option, 'severity')}
+                                            variant="underline"
+                                        />
+                                    </div>
+                                    <div className={styles.dropDown}>
+                                        <DsSelect
+                                            title=""
+                                            selectedOptionIds={
+                                                defaultFilterOptions['tags'] ? defaultFilterOptions['tags'] : []
+                                            }
+                                            placeholder="Placeholder text"
+                                            options={[
+                                                {
+                                                    id: 0,
+                                                    label: 'Cost optimization',
+                                                    value: 'Cost optimization'
+                                                },
+                                                {
+                                                    id: 1,
+                                                    label: 'Performance efficiency',
+                                                    value: 'Performance efficiency'
+                                                },
+                                                {
+                                                    id: 2,
+                                                    label: 'Operational excellence',
+                                                    value: 'Operational excellence'
+                                                },
+                                                {
+                                                    id: 3,
+                                                    label: 'Reliability',
+                                                    value: 'Reliability'
+                                                },
+                                                {
+                                                    id: 4,
+                                                    label: 'Security',
+                                                    value: 'Security'
+                                                }
+                                            ]}
+                                            selectionType="multi"
+                                            isWithActions={true}
+                                            onSelect={(option: any) => handleSelect(option, 'tags')}
+                                            variant="underline"
+                                        />
+                                    </div>
                                 </div>
-                                <div className={styles.dropDown}>
-                                    <DsSelect
-                                        title=""
-                                        placeholder="Placeholder text"
-                                        options={[
-                                            {
-                                                id: 0,
-                                                label: 'Storage sizing',
-                                                value: 'Storage sizing'
-                                            },
-                                            {
-                                                id: 1,
-                                                label: 'Storage layout',
-                                                value: 'Storage layout'
-                                            },
-                                            {
-                                                id: 2,
-                                                label: 'ONTAP configuration',
-                                                value: 'ONTAP configuration'
-                                            },
-                                            {
-                                                id: 3,
-                                                label: 'Storage performance',
-                                                value: 'Storage performance'
-                                            },
-                                            {
-                                                id: 4,
-                                                label: 'Compute sub 1',
-                                                value: 'Compute sub 1'
-                                            }
-                                        ]}
-                                        selectionType="multi"
-                                        isWithActions={true}
-                                        onSelect={(option: any) => handleSelect(option)}
-                                        variant="underline"
-                                    />
-                                </div>
-                                <div className={styles.dropDown}>
-                                    <DsSelect
-                                        title=""
-                                        placeholder="Placeholder text"
-                                        options={[
-                                            {
-                                                id: 0,
-                                                label: 'Optimized',
-                                                value: 'Optimized'
-                                            },
-                                            {
-                                                id: 1,
-                                                label: 'Not-optimized',
-                                                value: 'Not-optimized'
-                                            }
-                                        ]}
-                                        selectionType="multi"
-                                        isWithActions={true}
-                                        onSelect={(option: any) => handleSelect(option)}
-                                        variant="underline"
-                                    />
-                                </div>
-                                <div className={styles.dropDown}>
-                                    <DsSelect
-                                        title=""
-                                        placeholder="Placeholder text"
-                                        options={[
-                                            {
-                                                id: 0,
-                                                label: 'Critical',
-                                                value: 'Critical'
-                                            },
-                                            {
-                                                id: 1,
-                                                label: 'Warning',
-                                                value: 'Warning'
-                                            }
-                                        ]}
-                                        selectionType="multi"
-                                        isWithActions={true}
-                                        onSelect={(option: any) => handleSelect(option)}
-                                        variant="underline"
-                                    />
-                                </div>
-                                <div className={styles.dropDown}>
-                                    <DsSelect
-                                        title=""
-                                        placeholder="Placeholder text"
-                                        options={[
-                                            {
-                                                id: 0,
-                                                label: 'Cost optimization',
-                                                value: 'Cost optimization'
-                                            },
-                                            {
-                                                id: 1,
-                                                label: 'Performance efficiency',
-                                                value: 'Performance efficiency'
-                                            },
-                                            {
-                                                id: 2,
-                                                label: 'Operational excellence',
-                                                value: 'Operational excellence'
-                                            },
-                                            {
-                                                id: 3,
-                                                label: 'Reliability',
-                                                value: 'Reliability'
-                                            },
-                                            {
-                                                id: 4,
-                                                label: 'Security',
-                                                value: 'Security'
-                                            }
-                                        ]}
-                                        selectionType="multi"
-                                        isWithActions={true}
-                                        onSelect={(option: any) => handleSelect(option)}
-                                        variant="underline"
-                                    />
+
+                                <div className={styles.filtersOption}>
+                                    {optimizeFilterTags.map((item: any) => (
+                                        <div className={styles.filterTag}>
+                                            <DsTypography
+                                                style={{ color: ' var(--text-button-primary-hover)' }}
+                                                variant="Semibold_13"
+                                            >
+                                                {item.label}
+                                            </DsTypography>
+                                            <div
+                                                onClick={() => handleCancelFilter(item)}
+                                                className={styles.closeButton}
+                                            >
+                                                <Close />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         }
