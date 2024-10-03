@@ -708,7 +708,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                 if (isWorkloadFactory) {
                                                     postBlueXPMessage({
                                                         type: BlueXPListeners.navigate,
-                                                        payload: { pathname: '../mssql-deploy-wizard', replace: true }
+                                                        payload: {
+                                                            pathname: '../databases/mssql-deploy-wizard',
+                                                            replace: true
+                                                        }
                                                     });
                                                 } else {
                                                     postBlueXPMessage({
