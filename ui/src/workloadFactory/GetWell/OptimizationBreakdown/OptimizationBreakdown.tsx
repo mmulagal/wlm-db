@@ -2,6 +2,7 @@ import { DsTypography } from '@netapp/design-system';
 import { ReactComponent as Storage } from '../../../assets/Storage.svg';
 import { ReactComponent as Applications } from '../../../assets/Application.svg';
 import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
+import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import styles from './OptimizationBreakdown.module.scss';
 import OptimizeComponent from '../OptimizeComponent/OptimizeComponent';
 
@@ -16,14 +17,34 @@ const OptimizationBreakdown = () => {
 
             <div className={styles.mainSection}>
                 <div className={styles.leftSide}>
-                    <OptimizeComponent value={'50%'} text={'Storage'} image={<Storage />} />
-                    <OptimizeComponent value={'50%'} text={'Compute'} image={<Storage />} />
-                    <OptimizeComponent value={'75%'} text={'Applications'} image={<Applications />} />
+                    <OptimizeComponent value={'50%'} text={'Storage'} image={<Storage />} isComingSoon={false} />
+                    <OptimizeComponent
+                        value={<ComingSoon />}
+                        text={'Compute'}
+                        image={<Storage />}
+                        isComingSoon={true}
+                    />
+                    <OptimizeComponent
+                        value={<ComingSoon />}
+                        text={'Applications'}
+                        image={<Applications />}
+                        isComingSoon={true}
+                    />
                 </div>
 
                 <div className={styles.rightSide}>
-                    <OptimizeComponent value={'100%'} text={'Resiliency'} image={<Resiliency />} />
-                    <OptimizeComponent value={'50%'} text={'Cloning'} image={<Storage />} />
+                    <OptimizeComponent
+                        value={<ComingSoon />}
+                        text={'Resiliency'}
+                        image={<Resiliency />}
+                        isComingSoon={true}
+                    />
+                    <OptimizeComponent
+                        value={<ComingSoon />}
+                        text={'Cloning'}
+                        image={<Storage />}
+                        isComingSoon={true}
+                    />
                 </div>
             </div>
         </div>
