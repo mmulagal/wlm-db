@@ -5,11 +5,12 @@ import GetWellBar from './GetWellBar/GetWellBar';
 
 type OptimizeComponentType = {
     text: string;
-    value: string;
+    value: string | any;
     image: any;
+    isComingSoon: boolean;
 };
 
-const OptimizeComponent = ({ text, value, image }: OptimizeComponentType) => {
+const OptimizeComponent = ({ text, value, image, isComingSoon }: OptimizeComponentType) => {
     return (
         <div className={styles.optimizeComponent}>
             <div className={styles.svgContainer}>{image}</div>
@@ -26,7 +27,7 @@ const OptimizeComponent = ({ text, value, image }: OptimizeComponentType) => {
                 </div>
 
                 <div className={styles.bottomSection}>
-                    <GetWellBar />
+                    <GetWellBar barValue={value} isComingSoon={isComingSoon} />
                 </div>
 
                 <div className={styles.bottomTextSection}>
