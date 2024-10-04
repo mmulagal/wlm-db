@@ -7,7 +7,6 @@ import {
     useGetViewCalculationsMutation
 } from '../../../utils/apiService';
 import {
-    addManualInstanceTypeList,
     setDisableState,
     setGetPartnerHostDetailsLoading,
     setSavingsCalculatorRefresh,

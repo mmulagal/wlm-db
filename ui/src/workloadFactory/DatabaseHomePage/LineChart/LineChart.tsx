@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
-import { Typography } from '@netapp/design-system';
 import { ReactComponent as NoData } from '../../../assets/empty table message.svg';
 import styles from './LineChart.module.scss';
 import { getShiftedHoursList, last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';

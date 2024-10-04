@@ -24,7 +24,6 @@ import {
     setSnapshotPolicyToggle,
     setSNSARN,
     setSNSState,
-    setSqlServerCollation,
     setTags
 } from '../../../../store/mssql/mssqlFormSlice';
 import { useEffect } from 'react';

@@ -2,7 +2,7 @@ import { Table, TableTopBar, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import TablesSummary from './TablesSummary/TablesSummary';
 import StatusComponent from '../../../common/StatusComponent/StatusComponent';
-import { formatDate, isNotNumberOrNA, formatSizeOrString, formatSizeSplit } from '../../../utils/utilityFunctions';
+import { isNotNumberOrNA, formatSizeOrString, formatSizeSplit } from '../../../utils/utilityFunctions';
 import styles from './Tables.module.scss';
 import { useOutletContext } from 'react-router-dom';
 import { useMemo } from 'react';

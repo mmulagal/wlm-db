@@ -2,7 +2,7 @@ import { DsTypography, Popover } from '@netapp/design-system';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import { useEffect, useMemo, useState } from 'react';
-import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import { optionType } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../utils/utilityFunctions';
 import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import styles from './CreateNewUserCodeBox.module.scss';

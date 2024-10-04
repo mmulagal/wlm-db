@@ -1,7 +1,7 @@
 import { DsTypography, Popover } from '@netapp/design-system';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import CodeBoxHeading from '../../../../common/CodeBoxHeading/CodeBoxHeading';
 import { ReactComponent as Copy } from '../../../../assets/copyBlackBackground.svg';
 import styles from './CreateNewSandboxCodebox.module.scss';
