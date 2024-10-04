@@ -1,4 +1,4 @@
-import { DsTooltipInfo, DsTypography, Popover, Typography } from '@netapp/design-system';
+import { DsTooltipInfo, DsTypography, Typography } from '@netapp/design-system';
 import styles from './ChatbotHeader.module.scss';
 import { CHATBOT } from '../../../../utils/appConstants';
 import { ReactComponent as AddIcon } from '../../../../assets/ic_add.svg';

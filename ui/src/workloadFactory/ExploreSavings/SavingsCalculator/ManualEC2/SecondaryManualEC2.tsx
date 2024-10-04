@@ -1,6 +1,5 @@
 import { TextField } from '@netapp/design-system';
 import styles from './ManualEC2.module.scss';
-import { GENERAL } from '../../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import {
     setSecondarySelectedMachineDescription,
