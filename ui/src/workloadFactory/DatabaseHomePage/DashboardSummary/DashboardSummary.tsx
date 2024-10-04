@@ -22,7 +22,7 @@ const DashboardSummary = () => {
     const windowSize = useResize();
     return (
         <div className={styles.dashboardSummary}>
-            {windowSize.width > 1818 && (
+            {windowSize.width >= 1818 && (
                 <div className={styles.mainContainer}>
                     {/* section 1 Hosts */}
                     <div className={styles.valueContainer}>
