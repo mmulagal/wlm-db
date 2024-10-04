@@ -334,7 +334,7 @@ const FSxNSystem = () => {
                                 error={
                                     !isFsxNotFilled && !selectedFsxnPassword
                                         ? GENERAL.ACTION_REQUIRED
-                                        : '' || fsxPassVal(password)
+                                        : fsxPassVal(password)
                                 }
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={

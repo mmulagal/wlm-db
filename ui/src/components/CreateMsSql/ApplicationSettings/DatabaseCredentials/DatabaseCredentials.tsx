@@ -127,7 +127,7 @@ const DatabaseCredentials = () => {
                                 error={
                                     !isDBPasswordFilled
                                         ? GENERAL.ACTION_REQUIRED
-                                        : '' || dbPassVal(password)
+                                        : dbPassVal(password)
                                 }
                                 info={tooltipText()}
                                 //@ts-ignore
