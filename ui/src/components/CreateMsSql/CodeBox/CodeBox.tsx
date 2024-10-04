@@ -14,7 +14,6 @@ import {
     handleDownloadTerraform,
     handleDownloadYAML
 } from '../../../utils/utilityFunctions';
-import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 

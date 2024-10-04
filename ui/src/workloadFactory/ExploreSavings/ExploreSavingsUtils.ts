@@ -17,7 +17,6 @@ import {
     ViewCalculationsInterface
 } from '../../utils/types/exploreSavingsType';
 import {
-    formatFractionalNumber,
     formatFractionalNumberForCost,
     formatNumberWithCustomComma
 } from '../../utils/utilityFunctions';
