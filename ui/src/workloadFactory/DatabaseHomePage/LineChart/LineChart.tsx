@@ -173,7 +173,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                         callbacks: {
                             label: function (context) {
                                 let label =
-                                    context.dataset.label === 'Success' ? 'Completed jobs' : 'Failed jobs' || '';
+                                    context.dataset.label === 'Success' ? 'Completed jobs' : 'Failed jobs';
 
                                 if (context.parsed.y !== null) {
                                     label = `${context.label} | ${context.parsed.y} ${label}`;
