@@ -37,7 +37,7 @@ const ResourceDistribution = ({mssqlCpu, mssqlMemory, mssqlDisk}: ResourceDistri
         const cpuUsedFormat = (mssqlCpu?.percentUsed && !cpuMsgCheck && mssqlCpu?.percentUsed !== 'N/A') ? '%' : '';
         const cpuUsedTooltip = (mssqlCpu?.percentUsed && `${mssqlCpu.percentUsed}% ${GENERAL.MS_SQL_CPU_USED}`) || 'N/A';
         const cpuRemTooltip = (mssqlCpu?.percentUsed && !cpuMsgCheck) ? 
-            `${(100 - parseInt(mssqlCpu?.percentUsed) ?? 0)}%  ${GENERAL.CPU_REM}` : 'N/A';
+            `${(100 - parseInt(mssqlCpu?.percentUsed))}%  ${GENERAL.CPU_REM}` : 'N/A';
         const memoryUsedValue = (!memoryMsgCheck && mssqlMemory?.percentUsed !== 'N/A' && mssqlMemory?.percentUsed) || 0;
         const memoryUsedTooltip = (mssqlMemory?.used && !memoryMsgCheck) ? 
             displayFormattedValue(parseInt(mssqlMemory?.used), GENERAL.MS_SQL_MEMORY_USED) : 'N/A';
