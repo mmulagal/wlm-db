@@ -334,8 +334,7 @@ const FSxNSystem = () => {
                                 error={
                                     !isFsxNotFilled && !selectedFsxnPassword
                                         ? GENERAL.ACTION_REQUIRED
-                                        : // eslint-disable-next-line react-hooks/rules-of-hooks
-                                          '' || fsxPassVal(password)
+                                        : '' || fsxPassVal(password)
                                 }
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
