@@ -467,9 +467,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     <>
                                         <BlueXPDatabase />
                                         <Typography
-                                            variant="Regular_24"
+                                            variant="Regular_20"
                                             className={styles.heading}
-                                            style={{ color: 'var(--text-button-primary)' }}
+                                            style={{
+                                                color: 'var(--text-button-primary)',
+                                                position: 'relative',
+                                                top: '5px'
+                                            }}
                                         >
                                             {GENERAL.DATABASES}
                                         </Typography>
@@ -492,7 +496,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                       isWorkloadFactory
                                                           ? styles.headerPart1
                                                           : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
-                                                  } ${styles.active}`
+                                                  } ${
+                                                      isWorkloadFactory
+                                                          ? styles.active
+                                                          : `${styles.active} ${styles.activeBlueXPActive}`
+                                                  }`
                                                 : `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart1
@@ -515,7 +523,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                       isWorkloadFactory
                                                           ? styles.headerPart2
                                                           : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
-                                                  } ${styles.active}`
+                                                  } ${
+                                                      isWorkloadFactory
+                                                          ? styles.active
+                                                          : `${styles.active} ${styles.activeBlueXPActive}`
+                                                  }`
                                                 : `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart2
@@ -538,7 +550,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                       isWorkloadFactory
                                                           ? styles.headerPart4
                                                           : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
-                                                  } ${styles.active}`
+                                                  } ${
+                                                      isWorkloadFactory
+                                                          ? styles.active
+                                                          : `${styles.active} ${styles.activeBlueXPActive}`
+                                                  }`
                                                 : `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart4
@@ -565,7 +581,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                       isWorkloadFactory
                                                           ? styles.headerPart5
                                                           : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
-                                                  } ${styles.active}`
+                                                  } ${
+                                                      isWorkloadFactory
+                                                          ? styles.active
+                                                          : `${styles.active} ${styles.activeBlueXPActive}`
+                                                  }`
                                                 : `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart5
@@ -588,7 +608,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                       isWorkloadFactory
                                                           ? styles.headerPart3
                                                           : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
-                                                  } ${styles.active}`
+                                                  } ${
+                                                      isWorkloadFactory
+                                                          ? styles.active
+                                                          : `${styles.active} ${styles.activeBlueXPActive}`
+                                                  }`
                                                 : `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart3
