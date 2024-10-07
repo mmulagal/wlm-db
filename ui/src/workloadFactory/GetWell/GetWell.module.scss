@@ -51,6 +51,24 @@
         margin-top: 24px;
         max-width: 1608px;
 
+        .downloadSectionHeader {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            .downloadSection {
+                display: flex;
+                justify-content: space-between;
+                cursor: pointer;
+
+                .buttonStyle {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                }
+            }
+        }
+
         .filterComponent {
             margin-bottom: 40px;
 

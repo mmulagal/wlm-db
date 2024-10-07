@@ -1,4 +1,4 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { ReactComponent as Storage } from '../../../assets/Storage.svg';
 import { ReactComponent as Applications } from '../../../assets/Application.svg';
 import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
@@ -7,12 +7,14 @@ import styles from './OptimizationBreakdown.module.scss';
 import OptimizeComponent from '../OptimizeComponent/OptimizeComponent';
 
 const OptimizationBreakdown = () => {
+    const loading = false;
     return (
         <div className={styles.optimizationBreakdown}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     Optimization Breakdown by category
                 </DsTypography>
+                {loading && <DsFlashingDotsLoader />}
             </div>
 
             <div className={styles.mainSection}>
