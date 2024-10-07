@@ -128,7 +128,7 @@ const RecommendationTable = ({ tableData, isLoading }: any) => {
                                 <DsButton
                                     variant="secondary"
                                     onClick={() => {}}
-                                    isDisabled={rowData?.status === 'Not optimized' ? true : false}
+                                    isDisabled={rowData?.status === 'Not optimized' ? false : true}
                                 >
                                     Optimize
                                 </DsButton>
