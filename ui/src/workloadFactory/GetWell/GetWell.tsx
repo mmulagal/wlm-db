@@ -1,4 +1,4 @@
-import { Button, DsAccordion, DsSelect, DsTypography } from '@netapp/design-system';
+import { DsAccordion, DsSelect, DsTypography } from '@netapp/design-system';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
@@ -33,7 +33,6 @@ import {
     setSelectedHeaderTab
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../store/storeHooks';
-import { render } from '@testing-library/react';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -350,7 +349,11 @@ const GetWell = () => {
                                             style={{ color: loading ? 'var(--text-disabled)' : 'var(--text-primary)' }}
                                             variant="Semibold_14"
                                         >
-                                            All (5)
+                                            All (
+                                            {defaultFilterOptions['all-catagories'].length > 0
+                                                ? defaultFilterOptions['all-catagories'].length
+                                                : 5}
+                                            )
                                         </DsTypography>
                                     </div>
 
@@ -365,7 +368,11 @@ const GetWell = () => {
                                             style={{ color: loading ? 'var(--text-disabled)' : 'var(--text-primary)' }}
                                             variant="Semibold_14"
                                         >
-                                            All (12)
+                                            All (
+                                            {defaultFilterOptions['sub-catagories'].length > 0
+                                                ? defaultFilterOptions['sub-catagories'].length
+                                                : 12}
+                                            )
                                         </DsTypography>
                                     </div>
 
@@ -380,7 +387,11 @@ const GetWell = () => {
                                             style={{ color: loading ? 'var(--text-disabled)' : 'var(--text-primary)' }}
                                             variant="Semibold_14"
                                         >
-                                            All (4)
+                                            All (
+                                            {defaultFilterOptions['status'].length > 0
+                                                ? defaultFilterOptions['status'].length
+                                                : 2}
+                                            )
                                         </DsTypography>
                                     </div>
 
@@ -395,7 +406,11 @@ const GetWell = () => {
                                             style={{ color: loading ? 'var(--text-disabled)' : 'var(--text-primary)' }}
                                             variant="Semibold_14"
                                         >
-                                            All (2)
+                                            All (
+                                            {defaultFilterOptions['severity'].length > 0
+                                                ? defaultFilterOptions['severity'].length
+                                                : 2}
+                                            )
                                         </DsTypography>
                                     </div>
 
@@ -410,7 +425,11 @@ const GetWell = () => {
                                             style={{ color: loading ? 'var(--text-disabled)' : 'var(--text-primary)' }}
                                             variant="Semibold_14"
                                         >
-                                            All (5)
+                                            All (
+                                            {defaultFilterOptions['tags'].length > 0
+                                                ? defaultFilterOptions['tags'].length
+                                                : 5}
+                                            )
                                         </DsTypography>
                                     </div>
                                 </div>
