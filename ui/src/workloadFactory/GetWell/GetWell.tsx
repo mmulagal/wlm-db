@@ -350,8 +350,8 @@ const GetWell = () => {
                                             variant="Semibold_14"
                                         >
                                             All (
-                                            {defaultFilterOptions['all-catagories'].length > 0
-                                                ? defaultFilterOptions['all-catagories'].length
+                                            {defaultFilterOptions['all-catagories']?.length > 0
+                                                ? defaultFilterOptions['all-catagories']?.length
                                                 : 5}
                                             )
                                         </DsTypography>
@@ -369,8 +369,8 @@ const GetWell = () => {
                                             variant="Semibold_14"
                                         >
                                             All (
-                                            {defaultFilterOptions['sub-catagories'].length > 0
-                                                ? defaultFilterOptions['sub-catagories'].length
+                                            {defaultFilterOptions['sub-catagories']?.length > 0
+                                                ? defaultFilterOptions['sub-catagories']?.length
                                                 : 12}
                                             )
                                         </DsTypography>
@@ -388,8 +388,8 @@ const GetWell = () => {
                                             variant="Semibold_14"
                                         >
                                             All (
-                                            {defaultFilterOptions['status'].length > 0
-                                                ? defaultFilterOptions['status'].length
+                                            {defaultFilterOptions['status']?.length > 0
+                                                ? defaultFilterOptions['status']?.length
                                                 : 2}
                                             )
                                         </DsTypography>
@@ -407,8 +407,8 @@ const GetWell = () => {
                                             variant="Semibold_14"
                                         >
                                             All (
-                                            {defaultFilterOptions['severity'].length > 0
-                                                ? defaultFilterOptions['severity'].length
+                                            {defaultFilterOptions['severity']?.length > 0
+                                                ? defaultFilterOptions['severity']?.length
                                                 : 2}
                                             )
                                         </DsTypography>
@@ -426,8 +426,8 @@ const GetWell = () => {
                                             variant="Semibold_14"
                                         >
                                             All (
-                                            {defaultFilterOptions['tags'].length > 0
-                                                ? defaultFilterOptions['tags'].length
+                                            {defaultFilterOptions['tags']?.length > 0
+                                                ? defaultFilterOptions['tags']?.length
                                                 : 5}
                                             )
                                         </DsTypography>

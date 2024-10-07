@@ -5,29 +5,29 @@ export const cardData = {
             value: 'Storage tier'
         },
         block_two: {
-            type: 'status',
+            type: 'Status',
             value: 'Optimized'
         },
         block_three: {
             type: 'Performance tier',
-            value: '0%'
+            value: '25%'
         },
         block_four: {
             type: 'Severity',
-            value: 'None'
+            value: 'Critical'
         }
     },
     FileSystemHeadroom: {
         block_one: {
             value: 'File system headroom',
-            type: 'Storage tier'
+            type: 'Storage sizing'
         },
         block_two: {
-            type: 'status',
+            type: 'Status',
             value: 'Under-provisioned'
         },
         block_three: {
-            type: 'File system headroom value',
+            type: 'File system headroom',
             value: '35%'
         },
         block_four: {
@@ -37,15 +37,15 @@ export const cardData = {
     },
     TransactionLogDriveSize: {
         block_one: {
-            value: 'Transaction log drive size',
+            value: 'Log drive size',
             type: 'Storage sizing'
         },
         block_two: {
-            type: 'status',
+            type: 'Status',
             value: 'Over-provisioned'
         },
         block_three: {
-            type: 'Transaction log drive size value',
+            type: 'Percentage of data drive size',
             value: '100%'
         },
         block_four: {
@@ -55,15 +55,15 @@ export const cardData = {
     },
     TempDBDriveSize: {
         block_one: {
-            value: 'Temp DB drive size',
+            value: 'TempDB drive size',
             type: 'Storage sizing'
         },
         block_two: {
-            type: 'status',
+            type: 'Status',
             value: 'Optimized'
         },
         block_three: {
-            type: 'TempDB drive size value',
+            type: 'Percentage of data drive size',
             value: '50%'
         },
         block_four: {
@@ -77,7 +77,7 @@ export const cardData = {
             type: 'Storage layout'
         },
         block_two: {
-            type: 'status',
+            type: 'Status',
             value: 'Optimized'
         },
         block_three: {
@@ -96,11 +96,11 @@ export const cardData = {
             type: 'Storage layout'
         },
         block_two: {
-            type: 'status',
+            type: 'Status',
             value: 'Optimized'
         },
         block_three: {
-            type: 'Transaction log files (.Ldf)',
+            type: 'Transaction log files (.ldf)',
             value: 'Separate drive',
             smallFont: true
         },
@@ -115,7 +115,7 @@ export const cardData = {
             type: 'Storage layout'
         },
         block_two: {
-            type: 'status',
+            type: 'Status',
             value: 'Optimized'
         },
         block_three: {
@@ -125,20 +125,20 @@ export const cardData = {
         },
         block_four: {
             type: 'Severity',
-            value: 'None'
+            value: 'Critical'
         }
     },
     ONTAPConfiguartion: {
         block_one: {
             value: 'ONTAP configuration',
-            type: 'ONTAP configuration'
+            type: 'Configuration'
         },
         block_two: {
             type: 'Status',
             value: 'Not optimized'
         },
         block_three: {
-            type: 'Not optimized values',
+            type: 'Not optimized configurations',
             value: '20%'
         },
         block_four: {
@@ -153,15 +153,15 @@ export const cardData = {
         },
         block_two: {
             type: 'Status',
-            value: 'optimized'
+            value: 'Optimized'
         },
         block_three: {
-            type: 'Not optimized values',
+            type: 'Not optimized configurations',
             value: '0%'
         },
         block_four: {
             type: 'Severity',
-            value: 'None'
+            value: 'Critical'
         }
     },
     Latency: {
@@ -222,7 +222,7 @@ export const cardData = {
 
 export const operatingSystemTableData = [
     {
-        configuration: 'Multipath I/O (MPIO) Status',
+        configuration: 'Multipath I/O Status',
         value: 'Enabled',
         status: 'Optimized',
         severity: 'Critical',
@@ -230,7 +230,7 @@ export const operatingSystemTableData = [
         recommendation: 'Recommendation text'
     },
     {
-        configuration: 'Multipath I/O (MPIO) Policy',
+        configuration: 'Multipath I/O Policy',
         value: 'Round robin',
         status: 'Not optimized',
         severity: 'Critical',
@@ -238,7 +238,7 @@ export const operatingSystemTableData = [
         recommendation: 'Recommendation text'
     },
     {
-        configuration: 'Multipath I/O (MPIO) Sessions',
+        configuration: 'Multipath I/O Sessions',
         value: '5',
         status: 'Not optimized',
         severity: 'Critical',
@@ -350,40 +350,40 @@ export const recommendendationTextData = {
     StorageTier: {
         title: 'Storage tier recommendation',
         description:
-            'For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. \nUsing the capacity tier may result in slower performance and high latency'
+            'For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier.\nUsing the capacity tier may result in slower performance and higher latency.'
     },
     FileSystemHeadroom: {
         title: 'File system headroom recommendation',
         description:
-            'For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.',
-        values: ['Under-provisioned: 0%-35%', 'Optimized: 35%-100%', 'Over-provisioned: >100%']
+            'For optimize storage performance, provision file system capacity as 1.35 times the size of total database usage.',
+        values: ['Under-provisioned: 0-35%', 'Optimized: 36-100%', 'Over-provisioned: >100%']
     },
     TransactionLogDriveSize: {
-        title: 'Transaction log drive size recommendation',
+        title: 'Log drive size recommendation',
         description:
             'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
-        values: ['Under-provisioned: 0%-20%', 'Optimized: 20%-30%', 'Over-provisioned: <30%']
+        values: ['Under-provisioned: 0-20%', 'Optimized: 21-30%', 'Over-provisioned: >31%']
     },
     TransactionDBDriveSize: {
         title: 'TempDB drive size recommendation',
         description:
-            'Place tempdb on a dedicated volume to optimize performance for I/O intensive operations. \nData protection is less critical as tempdb is recreated upon SQL Server restart',
-        values: ['Under-provisioned: 0%-20%', 'Optimized: 20%-30%', 'Over-provisioned: <30%']
+            'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+        values: ['Under-provisioned: 0-20%', 'Optimized: 21-30%', 'Over-provisioned: >31%']
     },
     UserDataFileMdf: {
-        title: 'User data files (.mdf) recommendation',
+        title: 'User data files (.mdf) placement recommendation',
         description:
-            'Separating data and log files onto different drives  improves performance by allowing simultaneous I/O activity \nit also allows independent backup schedules and leverage fast and granular restore functionality'
+            'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
     },
     TransactionLogFiles: {
-        title: 'Transaction log files recommendation',
+        title: 'Transaction Log files (.ldf) placement recommendation',
         description:
-            'Separating data and log files onto different drives  improves performance by allowing simultaneous I/O activity it \nalso allows independent backup schedules and leverage fast and granular restore functionality'
+            'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
     },
     TempDBPlacement: {
         title: 'TempDB placement recommendation',
         description:
-            'Place TempDB on a dedicated volume to optimize performance for I/O intensive operations. \nData protection is less critical as TempDB is recreated upon SQL Server restart'
+            'Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention.\nThis optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks,\nslower query performance, and potential system instability.'
     }
 };
 
