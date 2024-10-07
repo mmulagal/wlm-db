@@ -2,7 +2,7 @@ import { Chart } from 'chart.js';
 import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import styles from './OptimizationChart.module.scss';
-import { Typography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
 import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
 
@@ -14,6 +14,7 @@ type MultiRingDoughnutPropType = {
 };
 
 const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropType) => {
+    const loading = false;
     const unProtectedColor = '#E0E0E0';
 
     const ref = useRef<HTMLCanvasElement>(null);
@@ -61,6 +62,7 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
                     65%
                 </Typography>
                 <Typography variant="Regular_14">Optimization score</Typography>
+                {loading && <DsFlashingDotsLoader />}
             </div>
 
             {(hostData?.protectedPercent !== 0 || hostData?.unprotectedPercent !== 0) && (

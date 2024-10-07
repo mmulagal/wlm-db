@@ -1,4 +1,4 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { ReactComponent as DevCircle } from '../../../assets/DevCircle.svg';
 import styles from './OptimizeComponent.module.scss';
 import GetWellBar from './GetWellBar/GetWellBar';
@@ -11,13 +11,18 @@ type OptimizeComponentType = {
 };
 
 const OptimizeComponent = ({ text, value, image, isComingSoon }: OptimizeComponentType) => {
+    const loading = false;
     return (
         <div className={styles.optimizeComponent}>
             <div className={styles.svgContainer}>{image}</div>
 
             <div className={styles.rightSection}>
                 <div className={styles.topSection}>
-                    <DsTypography variant="Semibold_14">{text}</DsTypography>
+                    <div className={styles.textWithLoading}>
+                        <DsTypography variant="Semibold_14">{text}</DsTypography>
+                        {loading && !isComingSoon && <DsFlashingDotsLoader />}
+                    </div>
+
                     <div className={styles.optimizeText}>
                         <DsTypography variant="Regular_20" style={{ lineHeight: 'unset' }}>
                             {value}
@@ -30,10 +35,14 @@ const OptimizeComponent = ({ text, value, image, isComingSoon }: OptimizeCompone
                     <GetWellBar barValue={value} isComingSoon={isComingSoon} />
                 </div>
 
-                <div className={styles.bottomTextSection}>
-                    <DsTypography variant="Regular_14">Optimized configuration:</DsTypography>
-                    <DsTypography variant="Semibold_14">6 out of 11</DsTypography>
-                </div>
+                {!isComingSoon && (
+                    <div className={styles.bottomTextSection}>
+                        <DsTypography variant="Regular_14">Optimized configuration:</DsTypography>
+                        {!loading && <DsTypography variant="Semibold_14">6 out of 11</DsTypography>}
+                        {loading && <DsTypography variant="Semibold_14">0 out of X</DsTypography>}
+                    </div>
+                )}
+                {isComingSoon && <div style={{ height: '24px' }} />}
             </div>
         </div>
     );

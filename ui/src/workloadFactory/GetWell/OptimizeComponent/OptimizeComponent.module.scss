@@ -13,6 +13,12 @@
             justify-content: space-between;
             height: 32px;
 
+            .textWithLoading {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+
             .optimizeText {
                 display: flex;
                 gap: 6px;

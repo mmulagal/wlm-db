@@ -9,7 +9,7 @@ export const cardData = {
             value: 'Optimized'
         },
         block_three: {
-            type: 'Capacity tier',
+            type: 'Performance tier',
             value: '0%'
         },
         block_four: {
@@ -138,7 +138,7 @@ export const cardData = {
             value: 'Not optimized'
         },
         block_three: {
-            type: 'Not-optimized values',
+            type: 'Not optimized values',
             value: '20%'
         },
         block_four: {
@@ -156,7 +156,7 @@ export const cardData = {
             value: 'optimized'
         },
         block_three: {
-            type: 'Not-optimized values',
+            type: 'Not optimized values',
             value: '0%'
         },
         block_four: {
