@@ -376,7 +376,7 @@ export const recommendendationTextData = {
             'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
     },
     TransactionLogFiles: {
-        title: 'Transaction Log files (.ldf) placement recommendation',
+        title: 'Transaction log files (.ldf) placement recommendation',
         description:
             'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
     },
