@@ -576,17 +576,17 @@ async function getTerraformSetup(
             region,
             true
         );
-
-        logger.debug(`Deployment ${deploymentName} parameters ${JSON.stringify(templateParameters)}.`);
+        const tfDeploymentName = `TF-${deploymentName.replace('Stack', '')}`;
+        logger.debug(`Deployment ${tfDeploymentName} parameters ${JSON.stringify(templateParameters)}.`);
 
         region = !isEmpty(region) ? region : TEMPLATE_BUCKET_REGION;
 
-        const customTerraformModulesPath: string = `${WLMDB}/${deploymentName}/terraform`;
+        const customTerraformModulesPath: string = `${WLMDB}/${tfDeploymentName}/terraform`;
 
         const initializationScriptURLs = await uploadTerraformModules(
             region as string,
             DatabaseTypes.MS_SQL_SERVER,
-            deploymentName,
+            tfDeploymentName,
             tags?.map(({ key, value }) => ({ Key: key, Value: value })),
             customTerraformModulesPath
         );
@@ -595,7 +595,7 @@ async function getTerraformSetup(
         const { terraformVariables } = await createTFVarsFile(
             region as string,
             DatabaseTypes.MS_SQL_SERVER,
-            deploymentName,
+            tfDeploymentName,
             customTerraformModulesPath,
             templateParameters,
             initializationScriptURLs,
@@ -605,13 +605,13 @@ async function getTerraformSetup(
         const contents = await createRootModuleFile(
             region as string,
             DatabaseTypes.MS_SQL_SERVER,
-            deploymentName,
+            tfDeploymentName,
             terraformVariables
         );
         const terraformZipS3SignedURL = await createAndUploadTheTerraformZipFile(
             region as string,
             DatabaseTypes.MS_SQL_SERVER,
-            deploymentName,
+            tfDeploymentName,
             customTerraformModulesPath
         );
 

@@ -285,9 +285,9 @@ async function createAndUploadTheTerraformZipFile(
 
     try {
         if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
-            const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform/terraform.zip`;
+            const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform/${deploymentName}.zip`;
             if (!isDemoFlow) {
-                const archiveFolder = `./resources/mssql/${deploymentName}/terraform.zip`;
+                const archiveFolder = `./resources/mssql/${deploymentName}/${deploymentName}.zip`;
                 const folderToBeZipped = `./resources/mssql/${deploymentName}/terraform`;
                 await createArchive(archiveFolder, folderToBeZipped);
                 await putObjectBucket(
