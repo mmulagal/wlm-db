@@ -330,10 +330,6 @@ function getQueueUrl(accountId: string, queueName: string) {
 }
 
 function derivePropertiesFromARN(awsResourceArn: string) {
-    if (process.env.AWS_ACCOUNT_ID) {
-        return { awsAccountId: process.env.AWS_ACCOUNT_ID };
-    }
-
     const ARN_FORMAT = /arn:aws:(?<awsServiceName>.+):(?<region>.*):(?<awsAccountId>.+):(?<resourceName>.+)/;
     if (ARN_FORMAT.test(awsResourceArn)) {
         const matchResult = awsResourceArn.match(ARN_FORMAT);

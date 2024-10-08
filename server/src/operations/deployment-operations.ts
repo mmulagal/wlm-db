@@ -1522,7 +1522,7 @@ async function deployCfTemplateForPgSql(
         templateParamsInCfFormat
     );
 
-    logger.info('template params', templateParams);
+    logger.debug('template params', templateParams);
 
     const deployStackResponse = await createStack(
         credentialsId,

@@ -55,8 +55,8 @@ const DeploymentSummaryListSchema = {
 const DeployTemplateSchema = {
     ...baseRequest,
     headers: CloudFormationTemplateHeader,
-    summary: 'Deploy CloudFormation template for pgsql',
-    description: 'Deploy CloudFormation template to provision PGSQL',
+    summary: 'Deploy CloudFormation template for ms sql',
+    description: 'Deploy CloudFormation template to provision MS SQL',
     body: CloudFormationTemplateRequestBody,
     response: {
         202: CloudFormationDeploymentResponse
