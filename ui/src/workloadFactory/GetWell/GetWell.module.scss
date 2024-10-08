@@ -95,6 +95,7 @@
                 .dropdownList {
                     display: flex;
                     gap: 52px;
+                    flex-wrap: wrap;
                     .dropDown {
                         width: 264px;
 
