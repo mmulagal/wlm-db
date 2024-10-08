@@ -50,9 +50,10 @@ try {
     Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
 }
 catch {
-    Write-Output "Error connecting to Iscsi targets"
+    $FailureReason = "Error connecting to Iscsi targets"
+    Write-Output $FailureReason
     if ($IsTerraform) {
-        throw "Error connecting to Iscsi targets"
+        throw $FailureReason
     }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
