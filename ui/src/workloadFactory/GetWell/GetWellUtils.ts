@@ -350,12 +350,12 @@ export const recommendendationTextData = {
     StorageTier: {
         title: 'Storage tier recommendation',
         description:
-            'For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier.\nUsing the capacity tier may result in slower performance and higher latency.'
+            'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.\nUsing the capacity tier may result in slower performance and higher latency.'
     },
     FileSystemHeadroom: {
         title: 'File system headroom recommendation',
         description:
-            'For optimize storage performance, provision file system capacity as 1.35 times the size of total database usage.',
+            'To optimize storage performance, provision file system capacity as 1.35 times the size of total database usage.',
         values: ['Under-provisioned: 0-35%', 'Optimized: 36-100%', 'Over-provisioned: >100%']
     },
     TransactionLogDriveSize: {
