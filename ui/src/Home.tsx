@@ -96,6 +96,14 @@ const Home = () => {
                                 element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />}
                             />
                             <Route
+                                path={'databases/explore-savings'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
+                            />
+                            <Route
+                                path={'databases/job-monitoring'}
+                                element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
+                            />
+                            <Route
                                 path={'databases/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
@@ -136,6 +144,14 @@ const Home = () => {
                             />
                             <Route path={'fsxdb/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                             <Route path={'fsxdb/sandboxes'} element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />} />
+                            <Route
+                                path={'fsxdb/explore-savings'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
+                            />
+                            <Route
+                                path={'fsxdb/job-monitoring'}
+                                element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
+                            />
                             <Route
                                 path={'databases/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
