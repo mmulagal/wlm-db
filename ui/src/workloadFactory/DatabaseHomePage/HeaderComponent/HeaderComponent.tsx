@@ -114,7 +114,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     SandboxApis();
 
     useEffect(() => {
-        let tabValue = setTabValue(tab);
+        let tabValue = setTabValue(tab, selectedHeaderTab);
 
         setTabInfo(tabValue);
         dispatch(setSelectedHeaderTab(tabValue));

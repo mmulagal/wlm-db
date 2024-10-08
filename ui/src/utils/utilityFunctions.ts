@@ -1632,7 +1632,7 @@ export const updateSizeInGib = (data: any): any => {
     return data;
 };
 
-export const setTabValue = (tab: string) => {
+export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
     switch (tab) {
         case WLF_TABS.INVENTORY:
             return WLF_TABS.INVENTORY;
@@ -1643,6 +1643,6 @@ export const setTabValue = (tab: string) => {
         case WLF_TABS.SANDBOXES:
             return WLF_TABS.SANDBOXES;
         default:
-            return WLF_TABS.DASHBOARD;
+            return selectedHeaderTab;
     }
 };
