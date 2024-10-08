@@ -254,14 +254,14 @@ try {
     Write-Output "Unzipped the files successfully"
 
     Invoke-Command "C:\\cfn\\scripts\\validation\\Update-DNSServers.ps1 -DNSIpAddresses '${DnsIpAddresses}'"
-    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-VPCConnectivity.ps1 -subnet '${SubnetId}' -region '$Region' -Stackname '$DeploymentName' -ResourceID ValidationNode1 -WaitHandler '${ValidationNode1WaitHandler}'"
-    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-Credentials.ps1 -DomainName '${DomainDnsName}' -UserName '${DomainAdminUser}' -isSecretManagerSupported 0 -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID ValidationNode1 -WaitHandler '${ValidationNode1WaitHandler}'"
+    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-VPCConnectivity.ps1 -subnet '${SubnetId}' -region '$Region' -Stackname '$DeploymentName' -ResourceID ValidationNode1 -WaitHandler '${ValidationNode1WaitHandler} -IsTerraform 1'"
+    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-Credentials.ps1 -DomainName '${DomainDnsName}' -UserName '${DomainAdminUser}' -isSecretManagerSupported 0 -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID ValidationNode1 -WaitHandler '${ValidationNode1WaitHandler} -IsTerraform 1'"
     # run this validate-fsxconnecitivity.ps1 script only for existing fsx file system
     if (![string]::IsNullOrEmpty($FsxFileSystemId)) {
-        Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-FsxConnectivity.ps1 -PerformFSxCheck '${PerformFsxCheck}' -FSxFileSystemId '$FsxFileSystemId' -FSxRegion '$Region' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID ValidationNode1"
+        Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-FsxConnectivity.ps1 -PerformFSxCheck '${PerformFsxCheck}' -FSxFileSystemId '$FsxFileSystemId' -FSxRegion '$Region' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID ValidationNode1 -IsTerraform 1"
     }
     # this runs for the custom ami verifications
-    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-Ami.ps1 -IsCustomAmi '${IsCustomAmi}' -Region '$Region' -SQLDeploymentMode '$SqlDeploymentMode' -DomainDNSName '${DomainDnsName}' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID ValidationNode1 -WaitHandler '${ValidationNode1WaitHandler}'"
+    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-Ami.ps1 -IsCustomAmi '${IsCustomAmi}' -Region '$Region' -SQLDeploymentMode '$SqlDeploymentMode' -DomainDNSName '${DomainDnsName}' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID ValidationNode1 -WaitHandler '${ValidationNode1WaitHandler} -IsTerraform 1'"
     
     New-EC2Tag -Region "$Region" -ResourceId "$InstanceId" -Tag @{ Key = "user_data"; Value = "completed" }
 

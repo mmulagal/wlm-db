@@ -10,7 +10,10 @@ param(
     [string]$ResourceID,   
 
     [Parameter(Mandatory = $true)]
-    [string]$Stackname    
+    [string]$Stackname,
+    
+    [Parameter(Mandatory=$false)]
+    [boolean]$IsTerraform    
 )
 Start-Transcript -Path C:\cfn\log\connectontapinstance.ps1.txt -Append
 
@@ -48,6 +51,9 @@ try {
 }
 catch {
     Write-Output "Error connecting to Iscsi targets"
+    if ($IsTerraform) {
+        throw "Error connecting to Iscsi targets"
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }
