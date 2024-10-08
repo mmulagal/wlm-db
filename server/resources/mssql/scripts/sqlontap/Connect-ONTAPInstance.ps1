@@ -10,7 +10,10 @@ param(
     [string]$ResourceID,   
 
     [Parameter(Mandatory = $true)]
-    [string]$Stackname    
+    [string]$Stackname,
+    
+    [Parameter(Mandatory=$false)]
+    [boolean]$IsTerraform    
 )
 Start-Transcript -Path C:\cfn\log\connectontapinstance.ps1.txt -Append
 
@@ -47,7 +50,11 @@ try {
     Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
 }
 catch {
-    Write-Output "Error connecting to Iscsi targets"
+    $FailureReason = "Error connecting to Iscsi targets"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }

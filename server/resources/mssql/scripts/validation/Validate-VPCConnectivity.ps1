@@ -16,7 +16,10 @@ param(
     [string]$ResourceID,
 
     [Parameter(Mandatory=$true)]
-    [string]$WaitHandler 
+    [string]$WaitHandler,
+
+    [Parameter(Mandatory=$false)]
+    [boolean]$IsTerraform
 )
 
 #get Instance ID
@@ -69,6 +72,9 @@ foreach ($service in $serviceURLHashTable.keys) {
 if ($failed -eq $true) {
     $FailureReason = "Failed to connect to AWS Cloud Formation endpoint. Check if the security group allows HTTPS(443) tcp port and subnet is associated with the endpoint."
     Write-Output @{status= "Failed"; reason= $FailureReason} | ConvertTo-Json -Compress
+    if($IsTerraform) {
+        throw $FailureReason
+    }
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
 
