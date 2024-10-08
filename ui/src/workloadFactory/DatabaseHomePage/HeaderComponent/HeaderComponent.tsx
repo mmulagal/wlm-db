@@ -21,7 +21,8 @@ import {
     getCurrentDateTime,
     handleURL,
     regionsSort,
-    resetDBHomePageState
+    resetDBHomePageState,
+    setTabValue
 } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
@@ -113,16 +114,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     SandboxApis();
 
     useEffect(() => {
-        let tabValue = '';
-        if (tab === WLF_TABS.INVENTORY) {
-            tabValue = WLF_TABS.INVENTORY;
-        } else if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
-            tabValue = WLF_TABS.EXPLORE_SAVINGS_EBS;
-        } else if (tab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-            tabValue = WLF_TABS.EXPLORE_SAVINGS_FsxW;
-        } else {
-            tabValue = selectedHeaderTab;
-        }
+        let tabValue = setTabValue(tab);
+
         setTabInfo(tabValue);
         dispatch(setSelectedHeaderTab(tabValue));
     }, [tab]);
