@@ -326,8 +326,7 @@ function getEc2Arn(awsAccountId: string, region: string, instanceId: string) {
 
 function getQueueUrl(accountId: string, queueName: string) {
     logger.debug({ accountId, queueName });
-    // return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
-    return 'https://sqs.us-east-1.amazonaws.com/464262061435/wlmdb';
+    return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
 }
 
 function derivePropertiesFromARN(awsResourceArn: string) {
@@ -667,7 +666,7 @@ function generatePgDeploymentParams(
         FSxTempDbVolumeName: `${prefix}_pgsqltemp_${suffix}`,
         FSxTempDbVolumeSize, // 10% of FSxDataVolumeSize
         FSxSvmName: `${prefix}_svm_${suffix}`,
-        PGSQLSvmName: `${prefix}_pgsqlsvm_${suffix}`,
+        SQLSvmName: `${prefix}_pgsqlsvm_${suffix}`,
         FSxStorageCapacity: fsxStorageCapacity,
         FSxDataLunSize: FSxDataLunSizeInMib
     };

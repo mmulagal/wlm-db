@@ -299,7 +299,8 @@ enum AWSQueryFields {
 
 enum RESOURCESTYPE {
     MSSQL = 'MSSQL',
-    FSX = 'FSX'
+    FSX = 'FSX',
+    PGSQL = 'PGSQL'
 }
 
 const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
@@ -1255,7 +1256,7 @@ const PERMISSION_DENIAL_POSSIBLE_REASONS = {
 
 const NO_SANDBOX_CREATED = 'No sandboxes created for the instance';
 
-const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI' };
+const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI', NFS: 'NFS' };
 
 const AMI_OWNERS = { AMAZON: 'amazon' };
 
@@ -1326,6 +1327,7 @@ const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
 
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
+    sqlServerName: 'SqlServerName',
 
     workloadInstanceType: 'WorkloadInstanceType',
     keyPairName: 'KeyPairName',
@@ -1338,7 +1340,7 @@ const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
 const PGSQL_TEMPLATES_DISTRIBUTION = [
     {
         name: TEMPLATE_TYPES.VALIDATION,
-        location: './resources/pgsql/templates/vpc-ad-validation.yaml'
+        location: './resources/pgsql/templates/vpc-validation.yaml'
     },
     // {
     //     name: TEMPLATE_TYPES.SQLSTACK,
@@ -1381,7 +1383,7 @@ const PGSQL_TEMPLATES_ASSETS = [
     },
     {
         name: 'ValidationTemplate',
-        url: 'templates/vpc-ad-validation.yaml'
+        url: 'templates/vpc-validation.yaml'
     },
     {
         name: 'SQLStandaloneTemplate',

@@ -31,7 +31,7 @@ Parameters:
   RouteTableId:
     Description: Comma separated list of all route table IDs for SQL Server subnets.
     Type: String
-  PGSQLSvmName:
+  SQLSvmName:
     Description: Name of the storage virtual machine (SVM) that will host the SQL Server workload.
     Type: String
   FSxDataVolumeName:
@@ -120,7 +120,7 @@ Resources:
             fsxusername=${FSXUsername}
             fsxpassword=${FSXPassword}
             fsxsvmid=${FSxSVMId}
-            fsxsvmname=${PGSQLSvmName}
+            fsxsvmname=${SQLSvmName}
             fsxaggrname=${FSxAggrName}
             fsxdatamountpoint=/${FSxDataVolumeName}
             fsxlogmountpoint=/${FSxLogVolumeName}

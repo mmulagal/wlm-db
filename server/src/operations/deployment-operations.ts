@@ -1336,6 +1336,7 @@ async function deployPgSql(
 
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
+    const { sqlServerName } = sqlConfiguration;
 
     if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
         // FSX 4gbps throughput capacity supported regions
@@ -1353,7 +1354,7 @@ async function deployPgSql(
         }
     }
 
-    let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:16,${DATABASE_SIZE}:${databaseSize}`;
+    let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:16,${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);

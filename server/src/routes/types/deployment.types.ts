@@ -49,7 +49,12 @@ const SQLConfiguration = Type.Object({
     isCustomAmi: Type.Optional(Type.Boolean({ default: false }))
 });
 
-const PgSqlConfiguration = Type.Pick(SQLConfiguration, ['sqlAmiId', 'sqlAmiName', 'sqlDeploymentMode']);
+const PgSqlConfiguration = Type.Pick(SQLConfiguration, [
+    'sqlAmiId',
+    'sqlAmiName',
+    'sqlDeploymentMode',
+    'sqlServerName'
+]);
 
 const PgSqlCloudFormationTemplateRequestBody = Type.Object({
     networkConfiguration: CFNetworkConfiguration,

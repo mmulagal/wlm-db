@@ -574,7 +574,7 @@ async function getSqlServerDetails(
     };
 }
 
-function getMsSqlResourceId(node1InstanceId: string, node2InstanceId?: string) {
+function getResourceId(node1InstanceId: string, node2InstanceId?: string) {
     logger.info('Get MS SQL resource ID:', { node1InstanceId, node2InstanceId });
     return node2InstanceId ? generateHash(node1InstanceId + node2InstanceId) : generateHash(node1InstanceId);
 }
@@ -599,7 +599,7 @@ async function discoverMsSqlServer(
         fsxId
     });
 
-    const resourceId = getMsSqlResourceId(activeNodeInstanceId, standbyNodeInstanceId);
+    const resourceId = getResourceId(activeNodeInstanceId, standbyNodeInstanceId);
     const { resourceName } = await getSqlServerDetails(
         credentialsId,
         region,
@@ -1340,7 +1340,7 @@ export {
     getTablesSummary,
     discoverMsSqlServer,
     getTablesCount,
-    getMsSqlResourceId,
+    getResourceId,
     deleteResourceById,
     getServerIOLatency,
     getServerState,
