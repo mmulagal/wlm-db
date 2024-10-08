@@ -2,6 +2,8 @@ import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { ReactComponent as Storage } from '../../../assets/Storage.svg';
 import { ReactComponent as Applications } from '../../../assets/Application.svg';
 import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
+import { ReactComponent as Cloning } from '../../../assets/Cloning.svg';
+import { ReactComponent as Compute } from '../../../assets/Compute.svg';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import styles from './OptimizationBreakdown.module.scss';
 import OptimizeComponent from '../OptimizeComponent/OptimizeComponent';
@@ -23,7 +25,7 @@ const OptimizationBreakdown = () => {
                     <OptimizeComponent
                         value={<ComingSoon />}
                         text={'Compute'}
-                        image={<Storage />}
+                        image={<Compute />}
                         isComingSoon={true}
                     />
                     <OptimizeComponent
@@ -44,7 +46,7 @@ const OptimizationBreakdown = () => {
                     <OptimizeComponent
                         value={<ComingSoon />}
                         text={'Cloning'}
-                        image={<Storage />}
+                        image={<Cloning />}
                         isComingSoon={true}
                     />
                 </div>

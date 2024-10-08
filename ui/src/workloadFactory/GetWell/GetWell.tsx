@@ -41,24 +41,44 @@ const GetWell = () => {
 
     const handleSelect = (filters: any, filterLabel: any) => {
         let updatedFilters = [...optimizeFilterTags];
-        filters.forEach((filter: any) => {
-            const isSelected = optimizeFilterTags.some((selectedFilter: any) => selectedFilter.label === filter.label);
 
-            if (isSelected) {
-                // Remove the filter if it is already selected
-                updatedFilters = updatedFilters.filter(selectedFilter => selectedFilter.label !== filter.label);
-            } else {
-                // Add the filter if it is not selected
-                updatedFilters.push({ ...filter, type: filterLabel });
-            }
-        });
+        if (defaultFilterOptions[filterLabel] && defaultFilterOptions[filterLabel]?.length > filters?.length) {
+            const idArray = filters.map((item: any) => item.id);
 
-        const uniqueArray = getUniqueEntries([optimizeFilterTags, updatedFilters]);
+            const findRemovedElement = defaultFilterOptions[filterLabel].filter((item: any) => !idArray.includes(item));
 
-        const reArrange = groupByType(uniqueArray);
+            const typeToRemove = filterLabel;
+            const idsToRemove = findRemovedElement;
 
-        dispatch(setOptimizeFilterTags(uniqueArray));
-        dispatch(setDefaultFilterOptions(reArrange));
+            const filteredArray = updatedFilters.filter(
+                (item: any) => !(idsToRemove.includes(item.id) && item.type === typeToRemove)
+            );
+
+            const reArrange = groupByType(filteredArray);
+            dispatch(setOptimizeFilterTags(filteredArray));
+            dispatch(setDefaultFilterOptions(reArrange));
+        } else {
+            filters.forEach((filter: any) => {
+                const isSelected = optimizeFilterTags.some(
+                    (selectedFilter: any) => selectedFilter.label === filter.label
+                );
+
+                if (isSelected) {
+                    // Remove the filter if it is already selected
+                    updatedFilters = updatedFilters.filter(selectedFilter => selectedFilter.label !== filter.label);
+                } else {
+                    // Add the filter if it is not selected
+                    updatedFilters.push({ ...filter, type: filterLabel });
+                }
+            });
+
+            const uniqueArray = getUniqueEntries([optimizeFilterTags, updatedFilters]);
+
+            const reArrange = groupByType(uniqueArray);
+
+            dispatch(setOptimizeFilterTags(uniqueArray));
+            dispatch(setDefaultFilterOptions(reArrange));
+        }
     };
 
     const handleCancelFilter = (option: any) => {
