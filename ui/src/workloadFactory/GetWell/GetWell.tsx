@@ -33,11 +33,13 @@ import {
     setSelectedHeaderTab
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../store/storeHooks';
+import { useState } from 'react';
 
 const GetWell = () => {
     const dispatch = useDispatch();
     const { optimizeFilterTags, defaultFilterOptions } = useAppSelector(state => state.inventoryV2);
     const loading = false;
+    const [isAccordionOpen, setsAccordionOpen] = useState(false);
 
     const handleSelect = (filters: any, filterLabel: any) => {
         let updatedFilters = [...optimizeFilterTags];
@@ -142,6 +144,7 @@ const GetWell = () => {
                             id="2"
                             variant="Default"
                             isDisabled={loading}
+                            onExpandChange={setsAccordionOpen}
                             title={
                                 <div className={styles.filterHeaderStyle}>
                                     <div>
@@ -165,6 +168,15 @@ const GetWell = () => {
                                                     defaultFilterOptions['all-catagories']
                                                         ? defaultFilterOptions['all-catagories']
                                                         : []
+                                                }
+                                                isExpanded={isAccordionOpen === true ? false : false}
+                                                isCleanable={false}
+                                                formatLabel={() =>
+                                                    `Categories: (${
+                                                        defaultFilterOptions['all-catagories']?.length > 0
+                                                            ? defaultFilterOptions['all-catagories']?.length
+                                                            : 5
+                                                    })`
                                                 }
                                                 placeholder="Placeholder text"
                                                 options={[
@@ -208,7 +220,15 @@ const GetWell = () => {
                                                         ? defaultFilterOptions['sub-catagories']
                                                         : []
                                                 }
+                                                formatLabel={() =>
+                                                    `Sub categories: (${
+                                                        defaultFilterOptions['sub-catagories']?.length > 0
+                                                            ? defaultFilterOptions['sub-catagories']?.length
+                                                            : 12
+                                                    })`
+                                                }
                                                 placeholder="Placeholder text"
+                                                isCleanable={false}
                                                 options={[
                                                     {
                                                         id: 0,
@@ -248,6 +268,14 @@ const GetWell = () => {
                                                 selectedOptionIds={
                                                     defaultFilterOptions['status'] ? defaultFilterOptions['status'] : []
                                                 }
+                                                isCleanable={false}
+                                                formatLabel={() =>
+                                                    `Status: (${
+                                                        defaultFilterOptions['status']?.length > 0
+                                                            ? defaultFilterOptions['status']?.length
+                                                            : 5
+                                                    })`
+                                                }
                                                 placeholder="Placeholder text"
                                                 options={[
                                                     {
@@ -275,6 +303,14 @@ const GetWell = () => {
                                                         ? defaultFilterOptions['severity']
                                                         : []
                                                 }
+                                                isCleanable={false}
+                                                formatLabel={() =>
+                                                    `Severity: (${
+                                                        defaultFilterOptions['severity']?.length > 0
+                                                            ? defaultFilterOptions['severity']?.length
+                                                            : 5
+                                                    })`
+                                                }
                                                 placeholder="Placeholder text"
                                                 options={[
                                                     {
@@ -299,6 +335,14 @@ const GetWell = () => {
                                                 title=""
                                                 selectedOptionIds={
                                                     defaultFilterOptions['tags'] ? defaultFilterOptions['tags'] : []
+                                                }
+                                                isCleanable={false}
+                                                formatLabel={() =>
+                                                    `Tags: (${
+                                                        defaultFilterOptions['tags']?.length > 0
+                                                            ? defaultFilterOptions['tags']?.length
+                                                            : 5
+                                                    })`
                                                 }
                                                 placeholder="Placeholder text"
                                                 options={[
