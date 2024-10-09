@@ -256,6 +256,13 @@ export const awsApi = createApi({
                     body: payload
                 })
             }),
+            deployPgsqlTemplate: builder.mutation({
+                query: ({ credentialId, region, payload }) => ({
+                    url: `v1/credentials/${credentialId}/regions/${region}/cloudformation/pgsql/deploy`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             getEstimationCost: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/pricing`,
@@ -858,6 +865,7 @@ export const {
     useGetFsxnListQuery,
     useCreateSqlTemplateMutation,
     useDeploySqlTemplateMutation,
+    useDeployPgsqlTemplateMutation,
     useGetEstimationCostMutation,
     useGetSqlServerCollationListQuery
 } = awsApi;

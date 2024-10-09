@@ -254,3 +254,43 @@ export interface MssqlRequestBody {
     enableCloudWatch?: boolean;
     tags?: Array<TagObj>;
 }
+
+export interface PgsqlRequestBody {
+    [x: string]: any;
+    networkConfiguration: {
+        vpcId: string;
+        vpcCidr: string;
+        availabilityZone1: string;
+        privateSubnet1Id: string;
+        routeTable1Id: string;
+        availabilityZone2: string;
+        privateSubnet2Id: string;
+        routeTable2Id: string;
+    };
+    ec2Configuration: {
+        workloadInstanceType: string;
+        keyPairName: string;
+    };
+    fsxConfiguration: {
+        fsxDeploymentMode: string;
+        fsxFileSystemId: string;
+        fsxUsername: string;
+        fsxPassword: string;
+        databaseSize: string;
+        ontapSgGroupId: Array<string>;
+        fsxVolThroughput: string;
+        fsxIOPS: string;
+        encryptionKey: string;
+        snapshotPolicy: string;
+    };
+    sqlConfiguration: {
+        sqlDeploymentMode: string;
+        isCustomAmi: boolean;
+        sqlAmiId: string;
+        sqlAmiName: string;
+        sqlServerName: string;
+    };
+    topicArn?: string;
+    enableCloudWatch?: boolean;
+    tags?: Array<TagObj>;
+}

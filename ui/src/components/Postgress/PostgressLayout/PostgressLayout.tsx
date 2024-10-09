@@ -20,8 +20,25 @@ import Tags from '../../CreateMsSql/InfrastructureSettings/Tags/Tags';
 import SimpleNotificationService from '../../CreateMsSql/InfrastructureSettings/SimpleNotificationService/SimpleNotificationService';
 import CloudWatch from '../../CreateMsSql/InfrastructureSettings/CloudWatch/CloudWatch';
 import ResourceRollBack from '../../CreateMsSql/InfrastructureSettings/ResourceRollBack/ResourceRollBack';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { setSelectedDBDeploymentModel } from '../../../store/mssql/mssqlFormSlice';
+import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
+import SecurityGroup from '../../CreateMsSql/AwsSettings/SecurityGroup/SecurityGroup';
+import StorageCapacity from '../../CreateMsSql/InfrastructureSettings/StorageCapacity/StorageCapacity';
 
 function PostgressLayout() {
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        dispatch(
+            setSelectedDBDeploymentModel({
+                label: GENERAL.SINGLE_INSTANCE,
+                value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            })
+        );
+    }, []);
+
     return (
         <div className={`${styles['aws-settings']} ${CommonStyles['accordion-group']} ${styles.protectLayout}`}>
             <AccordionController isGrouped>
@@ -39,8 +56,9 @@ function PostgressLayout() {
                 <AwsAccount />
                 <RegionVpc />
                 <AvailabilityZone />
+                <SecurityGroup />
 
-                <Typography
+                {/* <Typography
                     style={{
                         padding: '0 0 8px'
                     }}
@@ -51,7 +69,21 @@ function PostgressLayout() {
                 </Typography>
                 <>
                     <DatabaseCredentials />
-                </>
+                </> */}
+
+                <Typography
+                    style={{
+                        padding: '0 0 8px'
+                    }}
+                    variant="Semibold_16"
+                    className={styles.adjustMargin}
+                >
+                    {GENERAL.APPLICATION_SETTINGS}
+                </Typography>
+
+                {/* Application settings accordions */}
+                <License />
+                <DatabaseName />
 
                 <div className={styles['header-buttons']}>
                     <Typography
@@ -80,6 +112,7 @@ function PostgressLayout() {
                     <InstanceType />
                     <FSxNSystem />
                     <SnapshotPolicy />
+                    <StorageCapacity />
                     <ProvisionedIOPS />
                     <ThroughputCapacity />
                     <Encryption />
