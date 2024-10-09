@@ -18,12 +18,6 @@ async function readSecretFromSecretManager(name: string) {
                 VersionStage: 'AWSCURRENT' // VersionStage defaults to AWSCURRENT if unspecified
             })
         );
-
-        logger.info('Fetched secret values from secret manager', {
-            response,
-            json: JSON.parse(response?.SecretString || '{}')
-        }); // TODO : Delete me, added to check demo config
-
         const secrets = JSON.parse(response.SecretString || '{}');
         return secrets[name];
     } catch (error) {
