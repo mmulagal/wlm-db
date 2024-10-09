@@ -164,4 +164,8 @@
         max-height: 2500px !important;
         overflow: hidden;
     }
+
+    [class*='accordionHeader'] {
+        height: 56px !important;
+    }
 }

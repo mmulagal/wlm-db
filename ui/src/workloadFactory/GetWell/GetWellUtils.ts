@@ -73,7 +73,7 @@ export const cardData = {
     },
     UserDataFiles: {
         block_one: {
-            value: 'User data files (.mdf)',
+            value: 'User data files (.mdf) placement',
             type: 'Storage layout'
         },
         block_two: {
@@ -92,7 +92,7 @@ export const cardData = {
     },
     TransactionLogFiles: {
         block_one: {
-            value: 'Transaction log files (.ldf)',
+            value: 'Log files (.ldf) placement',
             type: 'Storage layout'
         },
         block_two: {
@@ -100,7 +100,7 @@ export const cardData = {
             value: 'Optimized'
         },
         block_three: {
-            type: 'Transaction log files (.ldf)',
+            type: 'Log files',
             value: 'Separate drive',
             smallFont: true
         },
@@ -376,14 +376,14 @@ export const recommendendationTextData = {
             'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
     },
     TransactionLogFiles: {
-        title: 'Transaction log files (.ldf) placement recommendation',
+        title: 'Log files (.ldf) placement recommendation',
         description:
             'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
     },
     TempDBPlacement: {
         title: 'TempDB placement recommendation',
         description:
-            'Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention.\nThis optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks,\nslower query performance, and potential system instability.'
+            'Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention.\nThis optimization improves overall SQL Server performance and stability.\nFailure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.'
     }
 };
 
