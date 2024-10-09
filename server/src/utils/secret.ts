@@ -19,7 +19,10 @@ async function readSecretFromSecretManager(name: string) {
             })
         );
 
-        logger.debug('Fetched secret values from secret manager');
+        logger.info('Fetched secret values from secret manager', {
+            response,
+            json: JSON.parse(response?.SecretString || '{}')
+        }); // TODO : Delete me, added to check demo config
 
         const secrets = JSON.parse(response.SecretString || '{}');
         return secrets[name];

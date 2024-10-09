@@ -20,7 +20,6 @@ async function initiateSimulator() {
     await import('./scopes/aws/fsx-scope');
     await import('./scopes/aws/cloud-formation-scope');
     await import('./scopes/aws/service-quota-scope');
-    await import('./scopes/aws/secrets-manager-scope');
     await import('./scopes/aws/s3-scope');
     await import('./scopes/aws/iam-scope');
     await import('./scopes/aws/ssm-scope');
@@ -32,6 +31,8 @@ async function initiateSimulator() {
     await import('./scopes/cloud-manager/wlmdb-scope');
     if (process.env.NODE_ENV === 'simulator') {
         // local development and testing environment
+
+        await import('./scopes/aws/secrets-manager-scope');
         await import('./scopes/cloud-manager/marketing-scope');
         await import('./scopes/cloud-manager/cloud-manager-audit-scope');
         await import('./scopes/cloud-manager/workload-factory-auth-scope');
