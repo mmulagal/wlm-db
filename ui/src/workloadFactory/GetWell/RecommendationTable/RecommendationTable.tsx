@@ -13,14 +13,7 @@ const RecommendationTable = ({ tableData, isLoading }: any) => {
             id: '1',
             Header: 'Configuration',
             accessor: 'configuration',
-            width: '16%',
-            isSortable: true
-        },
-        {
-            id: '2',
-            Header: 'Value',
-            accessor: 'value',
-            width: '14%',
+            width: '18%',
             isSortable: true
         },
         {
@@ -95,7 +88,7 @@ const RecommendationTable = ({ tableData, isLoading }: any) => {
             id: '6',
             Header: '',
             accessor: 'recommendation',
-            width: '28%',
+            width: '40%',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>

@@ -42,7 +42,7 @@ const StorageCardComponent = ({ cardData }: any) => {
     return (
         <div className={styles.storageCardComponent}>
             {/* Section one */}
-            <div className={styles.commonSection}>
+            <div className={`${styles.commonSection} ${styles.firstSection}`}>
                 <DsTypography variant="Semibold_14">{cardData?.block_one?.value}</DsTypography>
                 <DsTypography variant="Regular_14">{cardData?.block_one?.type}</DsTypography>
             </div>
