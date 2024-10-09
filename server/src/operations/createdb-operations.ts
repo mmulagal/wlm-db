@@ -171,7 +171,7 @@ async function getDriveInfoFromNodes(
                         isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
                         ...(sqlDeploymentType === 'FCI' &&
                             !isDemoFlow && {
-                                isClusteredWithSelectedInstance: item.Owner === `SQL Server (${instanceName})` ?? false
+                                isClusteredWithSelectedInstance: item.Owner === `SQL Server (${instanceName})`
                             }),
                         ...(sqlDeploymentType === 'FCI' &&
                             isDemoFlow && {
