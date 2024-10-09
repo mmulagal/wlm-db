@@ -7,12 +7,12 @@ async function initiateSimulator() {
             host.includes('0.0.0.0') ||
             host.includes('bedrock-runtime') ||
             host.includes('sts.') ||
-            host.includes('pricing.')
+            host.includes('pricing.') ||
+            host.includes('bluexp.')
     );
 
     await import('./scopes/jwt-scope');
     await import('./scopes/cloud-manager/cloud-manager-tenancy-scope');
-    await import('./scopes/cloud-manager/cloud-manager-audit-scope');
     await import('./scopes/aws/ec2-scope');
     await import('./scopes/aws/directory-service-scope');
     await import('./scopes/aws/kms-scope');
@@ -30,10 +30,11 @@ async function initiateSimulator() {
     await import('./scopes/cloud-manager/cloud-manager-notification-scope');
     await import('./scopes/cloud-manager/workload-factory-credentials-scope');
     await import('./scopes/cloud-manager/wlmdb-scope');
-    await import('./scopes/cloud-manager/workload-factory-auth-scope');
     if (process.env.NODE_ENV === 'simulator') {
         // local development and testing environment
         await import('./scopes/cloud-manager/marketing-scope');
+        await import('./scopes/cloud-manager/cloud-manager-audit-scope');
+        await import('./scopes/cloud-manager/workload-factory-auth-scope');
     }
     await import('./scopes/aws/cost-explorer-scope');
     await import('./scopes/aws/tags-scope');

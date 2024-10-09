@@ -220,7 +220,7 @@ async function updateLongRunningAuditGroup(
     const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
 
     if (auditGroup) {
-        logger.info('Updating long running audit group:', auditGroup);
+        logger.info('Updating existing long running audit group:', auditGroup);
         auditGroup.status = status || auditGroup.status;
         auditGroup.resourceId = resourceId || auditGroup.resourceId;
         auditGroup.responseData = responseData ? JSON.stringify(responseData) : auditGroup.responseData;
