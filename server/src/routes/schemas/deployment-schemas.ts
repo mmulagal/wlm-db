@@ -54,7 +54,7 @@ const DeployTemplateSchema = {
     ...baseRequest,
     headers: CloudFormationTemplateHeader,
     summary: 'Deploy CloudFormation template',
-    description: 'Deploy CloudFormation template to provision SQL FCI',
+    description: 'Deploy CloudFormation template to provision SQL',
     body: CloudFormationTemplateRequestBody,
     response: {
         202: CloudFormationDeploymentResponse
