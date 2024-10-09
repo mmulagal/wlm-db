@@ -1,11 +1,16 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { SECRETS_MANAGER_KEYS, SECRETS } from './consts';
 import getLogger from './logger';
+import { isDemo } from './utils';
 
 const logger = getLogger();
 
 async function readSecretFromSecretManager(name: string) {
     logger.info('Getting secret from secret manager for: ', { name });
+
+    if (isDemo()) {
+        logger.info('READING SECRETS secrets:', { region: process.env.REGION, secretId: process.env.SECRET_NAME });
+    }
 
     const client = new SecretsManagerClient({
         region: process.env.REGION
@@ -40,4 +45,8 @@ export default async function initiateSecrets() {
             }
         })
     );
+
+    if (isDemo()) {
+        logger.info('DEMO secrets:', SECRETS);
+    }
 }
