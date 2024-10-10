@@ -24,8 +24,9 @@ import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 import { SSMParamterObject } from '../../utils/common-types';
 import { describeRegions } from '../../lib/aws/ec2';
-import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from '../workloads/mssql/const';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
+import { SSM_RUN_SHELL_SCRIPT_DOC } from '../workloads/pgsql/const';
 
 const logger = getLogger();
 
@@ -164,6 +165,65 @@ async function callSsmExecution(
     }
 }
 
+async function executeBashSsmCommand(
+    credentialsId: string,
+    region: string,
+    commands: Array<string>,
+    activeNodeInstanceId: string,
+    accountId?: string,
+    cacheData: boolean = true,
+    executionTimeout?: string
+) {
+    logger.info('Calling SSM bash command execution', credentialsId, region, commands, activeNodeInstanceId);
+    const cacheHashKey = generateHash(activeNodeInstanceId + commands);
+
+    if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+        logger.info('Reading from cache', activeNodeInstanceId, cacheHashKey);
+        return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
+    }
+
+    const defaultParams = {
+        DocumentName: SSM_RUN_SHELL_SCRIPT_DOC,
+        Documentversion: SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION,
+        Parameters: {
+            // DBS-1449 - Adding execution timeout in sec
+            executionTimeout: [executionTimeout || config.get<string>('ssm.execution-timeout')],
+            commands
+        }
+    };
+    const params = {
+        ...defaultParams,
+        InstanceIds: [activeNodeInstanceId]
+    };
+    try {
+        logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
+        const response = await executeSSMDocument(credentialsId, region, params, accountId);
+        if (response?.StandardErrorContent) {
+            const errorMessage = `SSM command ${response.CommandId}  execution  failed on node ${activeNodeInstanceId}  Error: ${response?.StandardErrorContent}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+        if (
+            response.Status === CommandInvocationStatus.TIMED_OUT ||
+            response.Status === CommandInvocationStatus.CANCELLED
+        ) {
+            const errorMessage = `SSM command ${response.CommandId} execution  timed out on node ${activeNodeInstanceId}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+
+        logger.info('SSM RESP>>', response, typeof response);
+        const output = response?.StandardOutputContent;
+        if (cacheData) {
+            logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
+            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
+        }
+        return output;
+    } catch (error: any) {
+        throw createError(error);
+    }
+}
+
 async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableRegionType[] }> {
     logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP');
 
@@ -287,5 +347,6 @@ export {
     ssmPutParameters,
     pollCommandStatus,
     callSsmExecution,
-    getEc2SqlParameters
+    getEc2SqlParameters,
+    executeBashSsmCommand
 };

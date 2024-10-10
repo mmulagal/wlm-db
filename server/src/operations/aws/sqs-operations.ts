@@ -46,7 +46,7 @@ import {
     upsertDatabaseInstance
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
-import { getAllInstanceDetails, getResourceId, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
+import { getAllInstanceDetails, getMsSqlResourceId, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
 // import { handleNotification } from '../cloud-manager/notification-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
 import { getDeployments } from '../database/database-operations';
@@ -56,6 +56,7 @@ import { decryptString } from './kms-operations';
 import { registerFsxOntapCredentials } from '../../lib/cloud-manager/fsx-core';
 import { createJobs, listJobs } from '../../lib/database/job';
 import { getJobDetails, updateJobDetails } from '../database/job-operations';
+import { getPgSqlInstanceId } from '../workloads/pgsql/pgsql-operations';
 
 const logger = getLogger();
 
@@ -556,7 +557,10 @@ async function processCloudFormationMessages() {
                                                         );
                                                     }
 
-                                                    const resourceId = getResourceId(node1InstanceId, node2InstanceId);
+                                                    const resourceId = getMsSqlResourceId(
+                                                        node1InstanceId,
+                                                        node2InstanceId
+                                                    );
 
                                                     const resourceType =
                                                         trackSqlDeploymentType === 'Microsoft SQL Server'
@@ -668,6 +672,16 @@ async function processCloudFormationMessages() {
                                                                     instanceDetails.databaseInstanceName =
                                                                         modifiedInstanceName;
                                                                     instanceDetails.isDefault = isDefaultInstance;
+                                                                } else if (resourceType === RESOURCESTYPE.PGSQL) {
+                                                                    instanceDetails.databaseInstanceId =
+                                                                        await getPgSqlInstanceId(
+                                                                            accountId,
+                                                                            credentialsId,
+                                                                            region,
+                                                                            instanceName,
+                                                                            nodeIds
+                                                                        );
+                                                                    instanceDetails.databaseInstanceName = instanceName;
                                                                 }
 
                                                                 await upsertDatabaseInstance(

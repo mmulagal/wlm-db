@@ -249,111 +249,8 @@ async function updateTemplateUrls(
             url: signedUrl,
             location: customTemplatePath
         });
-    }
-}
-
-async function updatePgTemplateUrls(
-    region: string,
-    templateFilepath: string,
-    signedUrls: Map<string, TemplateDetails>,
-    templateType: string,
-    stackName: string,
-    tags?: Array<{ Key: string; Value: string }>,
-    templatePath?: string,
-    templateParameters?: object
-) {
-    logger.info('Updating pgsql templates and uploading to bucket', region, templateFilepath, templateType);
-    const source = readFileSync(templateFilepath).toString();
-    const template = Handlebars.compile(source);
-    if (templateType === TEMPLATE_TYPES.MASTER) {
-        tags = tags ? tags.concat(DEFAULT_TAGS) : DEFAULT_TAGS;
-
-        const yamlStr = yaml.stringify(
-            {
-                Tags: tags
-            },
-            {
-                indent: SQL_TEMPLATE_TAGS_INDENTATION // !IMP: This is a workaround until we find a better solution, it should be changed if the indentation changes in master yaml file
-            }
-        );
-        const contents = template({
-            ValidationTemplate: decodeURI(signedUrls.get('ValidationTemplate')?.url || ''),
-            FSXNewTemplate: decodeURI(signedUrls.get('FSXNewTemplate')?.url || ''),
-            FSXExistingTemplate: decodeURI(signedUrls.get('FSXExistingTemplate')?.url || ''),
-            SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || ''),
-            Tags: tags?.length ? yamlStr : '',
-            SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || ''),
-            VpcEndpointTemplate: decodeURI(signedUrls.get('VpcEndpointTemplate')?.url || ''),
-            ...templateParameters
-        });
-        await putObjectBucket(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, templatePath!, contents);
-    } else if (templateType === TEMPLATE_TYPES.VALIDATION) {
-        const contents = template({
-            ScriptValidation: decodeURI(signedUrls.get('ScriptValidation')?.url || '')
-        });
-
-        const ValidationTemplate = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'ValidationTemplate');
-        const customValidationTemplatePath: string = `${WLMDB}/${stackName}/${ValidationTemplate!.url}`;
-        await putObjectBucket(
-            TEMPLATE_BUCKET_REGION,
-            SIGNED_TEMPLATES_BUCKET_NAME,
-            customValidationTemplatePath,
-            contents
-        );
-        const valSignedUrl = await getPreSignedUrl(
-            TEMPLATE_BUCKET_REGION,
-            SIGNED_TEMPLATES_BUCKET_NAME,
-            customValidationTemplatePath
-        );
-        signedUrls.set(ValidationTemplate!.name, {
-            name: ValidationTemplate!.name,
-            url: valSignedUrl,
-            location: customValidationTemplatePath
-        });
-    } else if (
-        templateType === TEMPLATE_TYPES.ENDPOINT ||
-        templateType === TEMPLATE_TYPES.NEWFSX ||
-        templateType === TEMPLATE_TYPES.EXISTINGFSX
-    ) {
-        let staticTemplatePath;
-        if (templateType === TEMPLATE_TYPES.NEWFSX) {
-            staticTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXNewTemplate');
-        } else if (templateType === TEMPLATE_TYPES.EXISTINGFSX) {
-            staticTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXExistingTemplate');
-        }
-        const customTemplatePath: string = `${WLMDB}/${stackName}/${staticTemplatePath!.url}`;
-        await putObjectBucket(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, customTemplatePath, source);
-        const signedUrl = await getPreSignedUrl(
-            TEMPLATE_BUCKET_REGION,
-            SIGNED_TEMPLATES_BUCKET_NAME,
-            customTemplatePath
-        );
-        signedUrls.set(staticTemplatePath!.name, {
-            name: staticTemplatePath!.name,
-            url: signedUrl,
-            location: customTemplatePath
-        });
-    } else if (templateType === TEMPLATE_TYPES.SQLSTANDALONE) {
+    } else if (templateType === TEMPLATE_TYPES.PGSQLSTANDALONE) {
         const contents = template({});
-        // const contents = template({
-        //     DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
-        //     PowerShell: decodeURI(signedUrls.get('PowerShell')?.url || ''),
-
-        //     Sqlspcu: decodeURI(signedUrls.get('Sqlspcu')?.url || ''),
-        //     AmazonLaunchWizardForCFN: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
-        //     AmazonLaunchWizardForSSM: decodeURI(signedUrls.get('AmazonLaunchWizardForSSM')?.url || ''),
-
-        //     ScriptVerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
-        //     ScriptUnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
-        //     ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
-
-        //     ScriptSQLFCI: decodeURI(signedUrls.get('ScriptSQLFCI')?.url || ''),
-        //     ScriptSQLONTAP: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
-        //     ScriptDBCREATE: decodeURI(signedUrls.get('ScriptDBCREATE')?.url || ''),
-        //     DependentPackages: decodeURI(signedUrls.get('DependentPackages')?.url || ''),
-        //     ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
-        //     OpenSSL: decodeURI(signedUrls.get('OpenSSL')?.url || '')
-        // });
         const standAloneTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
         const customStandAloneTemplatePath: string = `${WLMDB}/${stackName}/${standAloneTemplatePath!.url}`;
         await putObjectBucket(
@@ -385,43 +282,28 @@ async function uploadTemplates(
 ) {
     logger.info('Uploading templates ', region, resourceType);
 
-    if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
-        const signedUrls = await generateSignedUrls(region, resourceType);
-        const promises = SQL_TEMPLATES_DISTRIBUTION.map(async template =>
-            updateTemplateUrls(region, template.location, signedUrls, template.name, stackName)
-        );
-        await Promise.all(promises).then(() =>
-            updateTemplateUrls(
-                region,
-                MASTER_TEMPLATE_DISTRIBUTION.location,
-                signedUrls,
-                MASTER_TEMPLATE_DISTRIBUTION.name,
-                stackName,
-                tags,
-                templatePath,
-                templateParameters
-            )
-        );
-    }
-
-    if (resourceType === DatabaseTypes.PG_SQL) {
-        const signedUrls = await generateSignedUrls(region, resourceType);
-        const promises = PGSQL_TEMPLATES_DISTRIBUTION.map(async template =>
-            updatePgTemplateUrls(region, template.location, signedUrls, template.name, stackName)
-        );
-        await Promise.all(promises).then(() =>
-            updatePgTemplateUrls(
-                region,
-                PGSQL_MASTER_TEMPLATE_DISTRIBUTION.location,
-                signedUrls,
-                PGSQL_MASTER_TEMPLATE_DISTRIBUTION.name,
-                stackName,
-                tags,
-                templatePath,
-                templateParameters
-            )
-        );
-    }
+    const signedUrls = await generateSignedUrls(region, resourceType);
+    const templateDistribution =
+        resourceType === DatabaseTypes.MS_SQL_SERVER ? SQL_TEMPLATES_DISTRIBUTION : PGSQL_TEMPLATES_DISTRIBUTION;
+    const promises = templateDistribution.map(async template =>
+        updateTemplateUrls(region, template.location, signedUrls, template.name, stackName)
+    );
+    const masterTempate =
+        resourceType === DatabaseTypes.MS_SQL_SERVER
+            ? MASTER_TEMPLATE_DISTRIBUTION
+            : PGSQL_MASTER_TEMPLATE_DISTRIBUTION;
+    await Promise.all(promises).then(() =>
+        updateTemplateUrls(
+            region,
+            masterTempate.location,
+            signedUrls,
+            masterTempate.name,
+            stackName,
+            tags,
+            templatePath,
+            templateParameters
+        )
+    );
 }
 
 export { uploadTemplates, generateSignedUrls };

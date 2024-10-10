@@ -92,7 +92,7 @@ import {
     validateSQLInstanceConnectivity
 } from './workloads/mssql/ssm-script-utils';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { getResourceId } from './workloads/mssql/mssql-operations';
+import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
@@ -1204,8 +1204,8 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
        of the instance IDs,  we check need to verify the hash for both
        combinations.
     */
-    const resourceId = getResourceId(node1InstanceId, node2InstanceId);
-    const resourceId2 = getResourceId(node2InstanceId || '', node1InstanceId);
+    const resourceId = getMsSqlResourceId(node1InstanceId, node2InstanceId);
+    const resourceId2 = getMsSqlResourceId(node2InstanceId || '', node1InstanceId);
     const [
         {
             items: [resourceDetails1]
@@ -1960,8 +1960,8 @@ async function manageSqlServerV2(
         } else {
             // A resource ID is a hash generated using available EC2 instance IDs.
             const [resourceId1, resourceId2] = [
-                getResourceId(node1InstanceId, node2InstanceId),
-                getResourceId(node2InstanceId || '', node1InstanceId)
+                getMsSqlResourceId(node1InstanceId, node2InstanceId),
+                getMsSqlResourceId(node2InstanceId || '', node1InstanceId)
             ];
 
             const [

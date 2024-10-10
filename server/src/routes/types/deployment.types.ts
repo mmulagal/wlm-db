@@ -61,6 +61,8 @@ const PgSqlCloudFormationTemplateRequestBody = Type.Object({
     ec2Configuration: EC2Configuration,
     fsxConfiguration: FSXConfiguration,
     sqlConfiguration: PgSqlConfiguration,
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
     tags: Type.Optional(
         Type.Array(
             Type.Object({
@@ -69,7 +71,8 @@ const PgSqlCloudFormationTemplateRequestBody = Type.Object({
             })
         )
     ),
-    topicArn: Type.Optional(Type.String())
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String())
 });
 
 const CloudFormationTemplateHeader = Type.Object({

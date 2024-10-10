@@ -97,8 +97,7 @@ import {
     isNetworkConfigurationViolated,
     sleep,
     splitDomainUsername,
-    getCollationForMSSQLVersion,
-    generatePgDeploymentParams
+    getCollationForMSSQLVersion
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
@@ -174,21 +173,14 @@ async function formatTemplateParameters(
     region?: string,
     skipPasswords?: boolean
 ) {
-    const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              true,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          )
-        : generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              false,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          );
+    const derivedParams = generateDeploymentParams(
+        DatabaseTypes.MS_SQL_SERVER,
+        fsxConfiguration.databaseSize,
+        Boolean(fsxConfiguration.fsxFileSystemId),
+        sqlConfiguration.sqlDeploymentMode,
+        fsxConfiguration.fsxVolThroughput,
+        fsxConfiguration.fsxIOPS
+    );
 
     const { roleName = '', providerAccountId = '' } = credentialsId
         ? await getRoleDetails(credentialsId)
@@ -846,21 +838,14 @@ async function createCloudFormationTemplateForUserDeployment(
         }
     }
 
-    const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              true,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          )
-        : generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              false,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          );
+    const derivedParams = generateDeploymentParams(
+        DatabaseTypes.MS_SQL_SERVER,
+        fsxConfiguration.databaseSize,
+        Boolean(fsxConfiguration.fsxFileSystemId),
+        sqlConfiguration.sqlDeploymentMode,
+        fsxConfiguration.fsxVolThroughput,
+        fsxConfiguration.fsxIOPS
+    );
 
     const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
 
@@ -1321,8 +1306,10 @@ async function deployPgSql(
     ec2Configuration: EC2ConfigurationType,
     fsxConfiguration: FSXConfigurationType,
     sqlConfiguration: PgSqlConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
     triggeredFrom: string,
-    topicArn: string = ''
+    tags?: Array<{ key: string; value: string }>
 ) {
     logger.info('Deploy Postgres SQL', {
         credentialsId,
@@ -1330,8 +1317,11 @@ async function deployPgSql(
         networkConfiguration,
         ec2Configuration,
         fsxConfiguration,
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch,
         triggeredFrom,
-        sqlConfiguration
+        tags
     });
 
     const { workloadInstanceType } = ec2Configuration;
@@ -1354,7 +1344,7 @@ async function deployPgSql(
         }
     }
 
-    let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:16,${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+    let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:15,${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
@@ -1372,7 +1362,7 @@ async function deployPgSql(
                 topicArn,
                 false,
                 metrics,
-                []
+                tags
             );
             const errMsg = MISSING_PERMISSIONS(permissions.implicitlyDenied, permissions.explicitlyDenied);
 
@@ -1413,7 +1403,7 @@ async function deployPgSql(
                 topicArn,
                 false,
                 metrics,
-                []
+                tags
             );
 
             let blockedBySCP = false;
@@ -1565,21 +1555,14 @@ async function formatPgSqlTemplateParameters(
         region,
         skipPasswords
     });
-    const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generatePgDeploymentParams(
-              fsxConfiguration.databaseSize,
-              true,
-              STANDALONE,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          )
-        : generatePgDeploymentParams(
-              fsxConfiguration.databaseSize,
-              false,
-              STANDALONE,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          );
+    const derivedParams = generateDeploymentParams(
+        DatabaseTypes.PG_SQL,
+        fsxConfiguration.databaseSize,
+        Boolean(fsxConfiguration.fsxFileSystemId),
+        sqlConfiguration.sqlDeploymentMode,
+        fsxConfiguration.fsxVolThroughput,
+        fsxConfiguration.fsxIOPS
+    );
 
     logger.info('Derived parameters for Postgres deployment', derivedParams);
 
@@ -1765,21 +1748,14 @@ async function createCfTemplateForPgsqlDeployment(
         }
     }
 
-    const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generatePgDeploymentParams(
-              fsxConfiguration.databaseSize,
-              true,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          )
-        : generatePgDeploymentParams(
-              fsxConfiguration.databaseSize,
-              false,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          );
+    const derivedParams = generateDeploymentParams(
+        DatabaseTypes.PG_SQL,
+        fsxConfiguration.databaseSize,
+        Boolean(fsxConfiguration.fsxFileSystemId),
+        sqlConfiguration.sqlDeploymentMode,
+        fsxConfiguration.fsxVolThroughput,
+        fsxConfiguration.fsxIOPS
+    );
 
     const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
 

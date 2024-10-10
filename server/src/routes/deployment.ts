@@ -152,7 +152,15 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 const {
                     params: { credentialsId, region },
                     headers: { 'triggered-from': triggeredFrom },
-                    body: { networkConfiguration, ec2Configuration, fsxConfiguration, sqlConfiguration, topicArn }
+                    body: {
+                        networkConfiguration,
+                        ec2Configuration,
+                        fsxConfiguration,
+                        sqlConfiguration,
+                        topicArn,
+                        enableCloudWatch,
+                        tags
+                    }
                 } = request;
                 const response = await deployPgSql(
                     credentialsId,
@@ -161,8 +169,10 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     ec2Configuration,
                     fsxConfiguration,
                     sqlConfiguration,
+                    topicArn,
+                    enableCloudWatch,
                     triggeredFrom,
-                    topicArn
+                    tags
                 );
                 return reply.code(202).send(response);
             }

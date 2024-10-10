@@ -840,7 +840,9 @@ enum TEMPLATE_TYPES {
     SQLSTANDALONE = 'sqlstandalone',
     ENDPOINT = 'endpoint',
     NEWFSX = 'newfsx',
-    EXISTINGFSX = 'existingfsx'
+    EXISTINGFSX = 'existingfsx',
+    PGSQLSTACK = 'pgsqlstack',
+    PGSQLSTANDALONE = 'pgsqlstandalone'
 }
 
 const SQL_TEMPLATES_DISTRIBUTION = [
@@ -1347,7 +1349,7 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
     //     location: './resources/pgsql/templates/sql-windows-fci-config_nosignal.yaml'
     // },
     {
-        name: TEMPLATE_TYPES.SQLSTANDALONE,
+        name: TEMPLATE_TYPES.PGSQLSTANDALONE,
         location: './resources/pgsql/templates/standalone-deployment.yaml'
     },
     // {
