@@ -4,8 +4,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import {
     setSecondaryVolumeFilledStatus,
-    setSelectedVolumeTabForSecondary,
-    setSelectedVolumeType
+    setSelectedVolumeTabForSecondary
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import ManualTCOInputComponent from './ManualTCOInputComponent';
 import { allPropertiesHaveValues, calculateTotalVolumes } from '../savingsUtil';

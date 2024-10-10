@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { InventorySliceData } from '../../utils/types/inventoryV2Types';
-import { DETECT_HOST_VAR } from '../../utils/consts';
+import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
+import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
 
 const initialInventoryV2State: InventorySliceData = {
     inventoryTableData: null,
@@ -32,13 +33,24 @@ const initialInventoryV2State: InventorySliceData = {
     resetManagedData: false,
     removeSecNodeDiscoveredList: [],
     unManagedPerfInstanceIdsList: [],
-    managedHostInstanceLoading: false
+    managedHostInstanceLoading: false,
+    selectedHeaderTab: WLF_TABS.DASHBOARD,
+    managedHostInitialColumns: initialColStateManagedHosts,
+    isRefreshed: false,
+    optimizeFilterTags: [],
+    defaultFilterOptions: {}
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setDefaultFilterOptions: (state, action: PayloadAction<any>) => {
+            state.defaultFilterOptions = action.payload;
+        },
+        setOptimizeFilterTags: (state, action: PayloadAction<any>) => {
+            state.optimizeFilterTags = action.payload;
+        },
         setInventoryExpandedRowHostData: (state, action: PayloadAction<any>) => {
             state.inventoryExpandedRowHostData = action.payload;
         },
@@ -116,11 +128,22 @@ const inventoryV2Slice = createSlice({
         },
         setManagedHostInstanceLoading: (state, action: PayloadAction<any>) => {
             state.managedHostInstanceLoading = action.payload;
+        },
+        setManagedHostColState: (state, action: PayloadAction<any>) => {
+            state.managedHostInitialColumns = action.payload;
+        },
+        setSelectedHeaderTab: (state, action: PayloadAction<any>) => {
+            state.selectedHeaderTab = action.payload;
+        },
+        setIsRefreshed: (state, action: PayloadAction<any>) => {
+            state.isRefreshed = action.payload;
         }
     }
 });
 
 export const {
+    setDefaultFilterOptions,
+    setOptimizeFilterTags,
     setValuesForForm,
     setInventoryExpandedRowHostData,
     setInventoryTableData,
@@ -146,7 +169,10 @@ export const {
     setResetManagedData,
     setRemoveSecNodeDiscoveredList,
     setUnManagedPerfInstanceIdsList,
-    setManagedHostInstanceLoading
+    setManagedHostInstanceLoading,
+    setSelectedHeaderTab,
+    setManagedHostColState,
+    setIsRefreshed
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

@@ -84,7 +84,7 @@ import {
     ResourceDetails,
     databaseInstanceMetadata
 } from '../utils/common-types';
-import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
+import { getBillByResourceIds, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
@@ -643,13 +643,15 @@ async function getBilling(resourceDetail: ResourceDetails) {
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         // Need to validate before proceeding for billing
         await validationForCostExplorer(resourceDetail);
-        const billingResponse: UsageCostResponseType = await calculateBilling(
-            credentialsId,
-            region!,
-            fileSystemId!,
+        const resourceGroupsById = new Map<string, string[]>();
+        resourceGroupsById.set(resourceDetail.resource_id, [
             node1InstanceId,
-            node2InstanceId
-        );
+            ...(node2InstanceId ? [node2InstanceId] : []),
+            ...(fileSystemId ? (Array.isArray(fileSystemId) ? fileSystemId : [fileSystemId]) : [])
+        ]);
+
+        const billsByResourceIds = await getBillByResourceIds(credentialsId, region!, resourceGroupsById);
+        const billingResponse: UsageCostResponseType = billsByResourceIds.get(resourceDetail.resource_id);
 
         return {
             compute: billingResponse?.compute,
@@ -668,7 +670,8 @@ async function validationForCostExplorer(resourceDetail: ResourceDetails) {
     logger.info('Validating prerequiste for Cost explorer for billing of resources');
 
     // 1.  We need to check if wlmdb-cost-resource cost allocation tag is activated at account level or not
-    const tagsResponse = await getCostAllocationTags(resourceDetail);
+    const { credentials_id: credentialsId, region } = resourceDetail;
+    const tagsResponse = await getCostAllocationTags(credentialsId, region!);
     if (!tagsResponse?.Tags?.includes(WLMDB_COST_ALLOCATION_TAG)) {
         throw new Error(
             `Calcaulation of  Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not activated at account level`

@@ -4,7 +4,7 @@ import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 
 import styles from './Collation.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { generateOptionType } from '../../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../../store/storeHooks';

@@ -153,9 +153,18 @@
                     font-weight: 600 !important;
                 }
 
+                .activeBlueXPActive {
+                    border-bottom: 4px solid var(--text-button-primary);
+                }
+
+                .activeBleXP {
+                    border-bottom: 4px solid var(--text-button-primary);
+                }
+
                 .blueXPHeaderClass {
                     color: var(--text-button-primary);
                     font-weight: 400;
+                    font-size: 16px;
                 }
             }
         }

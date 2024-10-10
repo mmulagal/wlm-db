@@ -23,7 +23,8 @@ import {
     CF_STACK_RESOURCE_TYPE,
     RESOURCE_SOURCE,
     STORAGE_PROTOCOLS,
-    DatabaseTypes
+    DatabaseTypes,
+    AuditStatus
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -57,6 +58,7 @@ import { registerFsxOntapCredentials } from '../../lib/cloud-manager/fsx-core';
 import { createJobs, listJobs } from '../../lib/database/job';
 import { getJobDetails, updateJobDetails } from '../database/job-operations';
 import { getPgSqlInstanceId } from '../workloads/pgsql/pgsql-operations';
+import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
 const logger = getLogger();
 
@@ -240,6 +242,13 @@ async function modifyMasterJobStatus(
         endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined,
         error: jobStatus === JOBSTATUS.FAILED ? [...new Set(combinedErrors)].join(',') : undefined
     });
+
+    if (jobStatus === JOBSTATUS.FAILED) {
+        updateLongRunningAuditGroup(AuditStatus.FAILED, [...new Set(combinedErrors)].join(','));
+    } else if (jobStatus === JOBSTATUS.COMPLETED) {
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+    }
+
     logger.debug('Update job response:', response);
 }
 

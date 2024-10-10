@@ -17,6 +17,8 @@ locals {
   is_standalone                 = var.sql_deployment_mode == "standalone" ? true : false
   is_failover_cluster           = local.is_standalone ? false : true
   fsx_is_single_zone_deployment = var.deployment_mode == "SINGLE_AZ_1" ? true : false
+  is_windows                    = length(regexall("^[a-z]:", lower(abspath(path.root)))) > 0
+  operating_system              = local.is_windows ? "Windows" : "Linux"
 }
 
 provider "aws" {
@@ -36,6 +38,7 @@ module "vpc-endpoints" {
   endpoints_aws_location     = var.aws_location
   preferred_subnet1_id       = var.private_subnet1_id
   preferred_subnet_cidrblock = var.private_subnet1_cidrblock
+  deployment_name            = var.deployment_name
 
   standby_subnet1_id       = local.is_failover_cluster ? var.private_subnet2_id : ""
   standby_subnet_cidrblock = local.is_failover_cluster ? var.private_subnet2_cidrblock : ""
@@ -75,6 +78,7 @@ module "validation-node" {
   validation_node_initialization_s3_url = var.validation_node_initialization_s3_url
   validation_node1_wait_handler         = "wait"
   sql_deployment_mode                   = var.sql_deployment_mode
+  operating_system                      = local.operating_system
 }
 
 module "fsxn" {
@@ -147,4 +151,5 @@ module "ec2" {
   mssql_media_bucket_name        = var.mssql_media_bucket_name
   sql_fsx_server_net_bios_name   = element(split(",", var.node_net_bios_names), 0)
   workload_instance_type         = var.workload_instance_type
+  operating_system               = local.operating_system
 }

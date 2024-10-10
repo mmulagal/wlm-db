@@ -24,7 +24,7 @@ locals {
 
 resource "aws_security_group" "https_security_group" {
   count       = local.create_sg ? 1 : 0
-  name        = "https_security_group"
+  name        = "${var.deployment_name}_https_security_group"
   description = "Allow HTTPS traffic from the VPC"
   vpc_id      = var.vpc_id
 

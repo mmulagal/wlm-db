@@ -5,10 +5,10 @@ import styles from './ExploreSavingsTableV2.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
-import { renderAllocatedCapacity, renderInstanceListText, renderUnmanagedAZ } from '../../Inventory/InventoryUtils';
 import { onClickESHost } from '../ExploreSavingsUtils';
 import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
+import { renderAllocatedCapacity, renderInstanceListText, renderUnmanagedAZ } from '../../InventoryV2/InventoryUtilsV2';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -17,7 +17,8 @@ const ExploreSavingsTableV2 = () => {
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const [tableData, setTableData] = useState<any>([]);
-    const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
+    const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
     const getInitialFilter = () => {
         if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
@@ -83,7 +84,7 @@ const ExploreSavingsTableV2 = () => {
                     <div
                         className={styles.detectManage}
                         onClick={() => {
-                            onClickESHost(dispatch, rowData);
+                            onClickESHost(dispatch, rowData, isWorkloadFactory);
                         }}
                         id="explore-savings-table-button"
                     >

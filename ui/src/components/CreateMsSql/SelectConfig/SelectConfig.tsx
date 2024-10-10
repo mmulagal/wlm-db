@@ -9,10 +9,9 @@ import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
-import { Typography } from '@netapp/design-system';
 import { setIsWizardTouched } from '../../../store/chatbot/chatbotSlice';
-import CardComponent from '../Chatbot/Message/CardComponent/CardComponent';
 import CardComponentConfig from '../../../common/CardComponent/CardComponentConfig';
+
 const SelectConfig = () => {
     const dispatch = useDispatch();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);

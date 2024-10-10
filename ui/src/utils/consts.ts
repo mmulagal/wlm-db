@@ -180,7 +180,7 @@ export const FSXN_STORAGE_PROTOCOLS = {
 
 export const MAX_SAVED_CONFIG = 100;
 
-export const WLF_TO_FORM_NAVIGATE = '../add-working-environment/database-services/mssql/create';
+export const WLF_TO_FORM_NAVIGATE = '../mssql-deploy-wizard';
 
 export const FORM_TO_WLF_NAVIGATE = '../databases';
 export const FORM_TO_WLF_NAVIGATE_BLUEXP = '../fsxdb';
@@ -295,7 +295,9 @@ export const UI_IDS = {
     WIZARD_CODEBOX_AWS_CLI: 'wizard-codebox-aws-cli',
     DBP_CODEBOX_AWS_CLI: 'dbp-codebox-aws-cli',
     WIZARD_CODEBOX_CF: 'wizard-codebox-cf',
-    DBP_CODEBOX_CF: 'dbp-codebox-cf'
+    DBP_CODEBOX_CF: 'dbp-codebox-cf',
+    WIZARD_CODEBOX_TF: 'wizard-codebox-tf',
+    DBP_CODEBOX_TF: 'dbp-codebox-tf'
 };
 
 export const WLF_TABS = {
@@ -313,7 +315,8 @@ export const WLF_TABS = {
     MANAGED_HOSTS: 'Managed hosts',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     UNDETECTED_HOSTS: 'Undetected hosts',
-    REDIRECT_COMPONENT: 'Redirect Component'
+    REDIRECT_COMPONENT: 'Redirect Component',
+    OPTIMIZE: 'Optimize'
 };
 
 export const DRIVE_LETTER_TYPE = {

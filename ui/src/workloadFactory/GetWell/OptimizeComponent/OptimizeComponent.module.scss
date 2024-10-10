@@ -1,0 +1,33 @@
+.optimizeComponent {
+    display: flex;
+    gap: 16px;
+
+    .rightSection {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 400px;
+
+        .topSection {
+            display: flex;
+            justify-content: space-between;
+            height: 32px;
+
+            .textWithLoading {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .optimizeText {
+                display: flex;
+                gap: 6px;
+            }
+        }
+
+        .bottomTextSection {
+            display: flex;
+            gap: 8px;
+        }
+    }
+}
