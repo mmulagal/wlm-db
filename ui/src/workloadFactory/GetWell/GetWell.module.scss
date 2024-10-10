@@ -46,31 +46,43 @@
         gap: 24px;
     }
 
+    .sectionDownload {
+        width: 87.3%;
+        margin-top: 26px;
+        .downloadSection {
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+
+            .buttonStyle {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+        }
+    }
+
     .sectionTwo {
         width: 87.3%;
-        margin-top: 24px;
+        margin-top: 16px;
         max-width: 1608px;
+
+        [class*='accordionHeader'] {
+            height: 56px !important;
+        }
 
         .downloadSectionHeader {
             display: flex;
             flex-direction: column;
             gap: 16px;
-
-            .downloadSection {
-                display: flex;
-                justify-content: space-between;
-                cursor: pointer;
-
-                .buttonStyle {
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                }
-            }
         }
 
         .filterComponent {
             margin-bottom: 40px;
+
+            [class*='accordionHeader'] {
+                height: 72px !important;
+            }
 
             .filterHeaderStyle {
                 display: flex;
@@ -163,9 +175,5 @@
     [class*='isExpanded'] {
         max-height: 2500px !important;
         overflow: hidden;
-    }
-
-    [class*='accordionHeader'] {
-        height: 56px !important;
     }
 }

@@ -123,22 +123,25 @@ const GetWell = () => {
                 <OptimizationBreakdown />
             </div>
 
+            <div className={styles.sectionDownload}>
+                <div className={styles.downloadSection}>
+                    <div />
+                    <div className={styles.buttonStyle}>
+                        <div>
+                            <Download />
+                        </div>
+                        <DsTypography
+                            style={{ color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)' }}
+                            variant="Semibold_14"
+                        >
+                            Export PDF
+                        </DsTypography>
+                    </div>
+                </div>
+            </div>
+
             <div className={styles.sectionTwo}>
                 <div className={styles.downloadSectionHeader}>
-                    <div className={styles.downloadSection}>
-                        <div />
-                        <div className={styles.buttonStyle}>
-                            <div>
-                                <Download />
-                            </div>
-                            <DsTypography
-                                style={{ color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)' }}
-                                variant="Semibold_14"
-                            >
-                                Download Report
-                            </DsTypography>
-                        </div>
-                    </div>
                     <div className={styles.filterComponent}>
                         <DsAccordion
                             id="2"
@@ -169,7 +172,7 @@ const GetWell = () => {
                                                         ? defaultFilterOptions['all-catagories']
                                                         : []
                                                 }
-                                                isExpanded={isAccordionOpen === true ? false : false}
+                                                isExpanded={isAccordionOpen ? undefined : false}
                                                 isCleanable={false}
                                                 formatLabel={() =>
                                                     `Categories: (${
