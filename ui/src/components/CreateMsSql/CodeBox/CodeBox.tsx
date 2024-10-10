@@ -514,28 +514,34 @@ const CodeBox = () => {
                                         <Download />
                                     </div>
                                 ) : (
-                                    <Download
-                                        onClick={() => {
-                                            if (isDemoMode) {
-                                                downloadTerraformZip();
-                                            } else {
-                                                handleDownloadTerraform(terraformSetupResponse?.url);
-                                            }
-                                            dispatch(clearNotifications());
-                                            const ele = (
-                                                <div>
-                                                    <div style={{ fontWeight: 400 }}>{GENERAL.TERRAFORM_DOWNLOAD}</div>
-                                                    <div style={{ fontWeight: 400 }}>{GENERAL.TERRAFORM_NOTICE}</div>
-                                                </div>
-                                            );
-                                            dispatch(
-                                                addNotification({
-                                                    notificationType: NOTIFICATION_TYPES.INFO,
-                                                    message: ele
-                                                })
-                                            );
-                                        }}
-                                    />
+                                    <div id="codebox-terraform-download">
+                                        <Download
+                                            onClick={() => {
+                                                if (isDemoMode) {
+                                                    downloadTerraformZip();
+                                                } else {
+                                                    handleDownloadTerraform(terraformSetupResponse?.url);
+                                                }
+                                                dispatch(clearNotifications());
+                                                const ele = (
+                                                    <div>
+                                                        <div style={{ fontWeight: 400 }}>
+                                                            {GENERAL.TERRAFORM_DOWNLOAD}
+                                                        </div>
+                                                        <div style={{ fontWeight: 400 }}>
+                                                            {GENERAL.TERRAFORM_NOTICE}
+                                                        </div>
+                                                    </div>
+                                                );
+                                                dispatch(
+                                                    addNotification({
+                                                        notificationType: NOTIFICATION_TYPES.INFO,
+                                                        message: ele
+                                                    })
+                                                );
+                                            }}
+                                        />
+                                    </div>
                                 ))}
                             {dropDownValue !== CODE_VIEWER.TERRAFORM &&
                                 (dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (
