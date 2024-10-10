@@ -617,64 +617,6 @@ function isDemo() {
     return process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
 }
 
-function generatePgDeploymentParams(
-    FSxDataLunSize: number,
-    isExistingFSx: boolean,
-    sqlDeploymentType: string = 'fci',
-    fsxVolThroughput: number,
-    fsxIOPS: number
-) {
-    logger.info('Generate pg deployment params', {
-        FSxDataLunSize,
-        isExistingFSx,
-        sqlDeploymentType,
-        fsxVolThroughput,
-        fsxIOPS
-    });
-
-    const prefix = WLMDB;
-    const suffix = Date.now();
-
-    const { FSxDataLunSizeInMib, FSxDataVolumeSize, FSxLogVolumeSize, FSxTempDbVolumeSize, FSxStorageCapacity } =
-        calculateFsxnStorageCapacity(FSxDataLunSize, sqlDeploymentType);
-
-    const fsxStorageCapacity = Math.min(FSxStorageCapacity, MAX_FSX_STORAGE_IN_GIB);
-
-    if (fsxVolThroughput === FSX_VOL_THROUGHPUT && fsxStorageCapacity <= FSX_STORAGE_MIN_CAPACITY_IN_GIB) {
-        throw createError(412, 'Supported FSx for ONTAP Storage Capactiy should be minumum of 5,120 GiB');
-    }
-
-    if (fsxIOPS !== 3 && fsxVolThroughput !== FSX_VOL_THROUGHPUT && !isExistingFSx) {
-        // accepted iops values
-        const acceptedIOPS = fsxStorageCapacity * 3;
-        if (fsxIOPS < acceptedIOPS) {
-            throw createError(412, `Provisioned SSD IOPS should be at least ${acceptedIOPS}`);
-        }
-        if (fsxIOPS < 3072 || fsxIOPS > 80000) {
-            throw createError(412, 'Provisioned SSD IOPS should be between 3072 and 80000');
-        }
-    }
-
-    const stacknameSubstring = `Pg${`${sqlDeploymentType}` === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME}`;
-
-    return {
-        UniqueID: suffix,
-        StackName: `${prefix.toUpperCase()}-${stacknameSubstring}-${suffix}`,
-        // VpcName: `${prefix}-vpc-${suffix}`,
-        FSxFileSystemName: isExistingFSx ? '' : `${prefix}-fsx-${suffix}`,
-        FSxDataVolumeName: `${prefix}_pgsqldata_${suffix}`,
-        FSxDataVolumeSize,
-        FSxLogVolumeName: `${prefix}_pgsqllog_${suffix}`,
-        FSxLogVolumeSize, // 25% of FSxDataVolumeSize
-        FSxTempDbVolumeName: `${prefix}_pgsqltemp_${suffix}`,
-        FSxTempDbVolumeSize, // 10% of FSxDataVolumeSize
-        FSxSvmName: `${prefix}_svm_${suffix}`,
-        SQLSvmName: `${prefix}_pgsqlsvm_${suffix}`,
-        FSxStorageCapacity: fsxStorageCapacity,
-        FSxDataLunSize: FSxDataLunSizeInMib
-    };
-}
-
 function getOriginalDatabaseInstanceName(instanceName: string | undefined): string {
     return instanceName?.split('\\')?.[1] || DEFAULT_INSTANCE_NAME;
 }
@@ -752,7 +694,6 @@ export {
     getMonthlyPriceFromHourlyPrice,
     getDatabaseInstanceName,
     isDemo,
-    generatePgDeploymentParams,
     getOriginalDatabaseInstanceName,
     decompressSSMResponse,
     retryWithDelay
