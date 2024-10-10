@@ -299,11 +299,6 @@ variable "unique_id" {
 variable "fsx_file_system_name" {
   description = "The name of the FSx file system"
   type        = string
-
-  validation {
-    condition     = length(var.fsx_file_system_name) > 0
-    error_message = "The fsx_file_system_name value must not be empty."
-  }
 }
 
 variable "fsx_data_volume_name" {
@@ -671,4 +666,15 @@ variable "sql_node_initialization_s3_url" {
     condition     = length(var.sql_node_initialization_s3_url) > 0
     error_message = "The sql_node_initialization_s3_url value must not be empty."
   }
+}
+variable "sql_fsx_ws_fc_name" {
+  description = "The name of the volume for the WSFC."
+  type        = string
+  default     = ""
+}
+
+variable "sql_fsx_fci_name" {
+  description = "The name of the volume for the FCI."
+  type        = string
+  default     = ""
 }

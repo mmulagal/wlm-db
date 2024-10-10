@@ -1,10 +1,10 @@
 param(
-    [string]$instance_id,
-    [string]$region
+    [string]$InstanceId,
+    [string]$Region
 )
 
 while ($true) {
-    $tag_value = aws ec2 describe-tags --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=user_data" --region $region --output text --query 'Tags[].Value'
+    $tag_value = aws ec2 describe-tags --filters "Name=resource-id,Values=$InstanceId" "Name=key,Values=user_data" --region $Region --output text --query 'Tags[].Value'
 
     if ($tag_value -eq "completed") {
         Write-Output "completed"

@@ -35,7 +35,7 @@ variable "key_pair_name" {
 
 variable "perform_ad_check" {
   description = "Flag to indicate whether to perform AD check"
-  type        = bool
+  type        = string
 }
 variable "domain_dns_name" {
   description = "The domain DNS name"
@@ -103,5 +103,10 @@ variable "sql_deployment_mode" {
 
 variable "operating_system" {
   description = "Terraform host operating system"
+  type        = string
+}
+
+variable "validation_node_name" {
+  description = "The name of the validation node"
   type        = string
 }

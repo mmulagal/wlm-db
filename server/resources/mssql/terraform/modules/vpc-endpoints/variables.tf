@@ -20,7 +20,7 @@ variable "preferred_subnet1_id" {
   type        = string
 }
 
-variable "preferred_subnet_cidrblock" { # check
+variable "preferred_subnet_cidrblock" {
   description = "Cidrblock for preferred subnet."
   type        = string
 }
@@ -80,4 +80,9 @@ variable "ssm_messages_endpoint_exists" {
   description = "Boolean to convey if SSM messages endpoint exists in the vpc."
   type        = bool
   default     = false
+}
+
+variable "deployment_name" {
+  description = "The name of the parent deployment"
+  type        = string
 }

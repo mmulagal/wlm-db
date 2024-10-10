@@ -14,8 +14,10 @@ $ValidationNode1WaitHandler = "${validation_node1_wait_handler}"
 $IsCustomAmi = "${is_custom_ami}"
 $PerformFsxCheck = "${perform_fsx_check}"
 $FsxFileSystemId = "${fsx_file_system_id}"
-$LogGroup = "${log_group}_validation_node"
+$ValidationNodeName = "${validation_node_name}"
+$LogGroup = "${log_group}_$ValidationNodeName"
 $SqlDeploymentMode = "${sql_deployment_mode}"
+
 
 Write-Output "Deployment Name: $DeploymentName"
 

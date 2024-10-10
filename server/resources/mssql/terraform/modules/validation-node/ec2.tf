@@ -13,6 +13,7 @@ locals {
     fsx_file_system_id                    = var.fsx_file_system_id
     log_group                             = var.deployment_name
     sql_deployment_mode                   = var.sql_deployment_mode
+    validation_node_name                  = var.validation_node_name
   })
 }
 
@@ -74,14 +75,14 @@ resource "aws_instance" "validation_node" {
 
   user_data = local.user_data
 
-  instance_initiated_shutdown_behavior = "terminate" // enable this once we add sudo shutdown -h now in user data so this will get terminated
+  instance_initiated_shutdown_behavior = "stop" // enable this once we add sudo shutdown -h now in user data so this will get terminated
 
   timeouts {
     create = "30m"
   }
 
   tags = {
-    Name = "${var.deployment_name}-ValidationNode1"
+    Name = "${var.deployment_name}-${var.validation_node_name}"
   }
 }
 
@@ -95,7 +96,7 @@ resource "null_resource" "wait_for_tag_mac_or_linux" {
   }
 
   provisioner "local-exec" {
-    command = "sh '${path.module}/wait_for_tag.sh' '${path.module}' '${aws_instance.validation_node.id}' '${var.aws_location}'"
+    command = "sh '${path.root}/scripts/wait_for_tag.sh' '${path.root}' '${aws_instance.validation_node.id}' '${var.aws_location}' '${var.validation_node_name}'"
   }
 }
 
@@ -108,6 +109,6 @@ resource "null_resource" "wait_for_tag_windows" {
   }
 
   provisioner "local-exec" {
-    command = "powershell.exe -File ${path.module}/wait_for_tag.ps1 ${path.module} ${aws_instance.validation_node.id} ${var.aws_location}"
+    command = "powershell.exe -ExecutionPolicy Bypass -File ${path.root}/scripts/wait_for_tag.ps1 ${path.root} ${aws_instance.validation_node.id} ${var.aws_location} ${var.validation_node_name}"
   }
 }

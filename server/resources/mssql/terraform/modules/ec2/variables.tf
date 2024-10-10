@@ -59,7 +59,6 @@ variable "sql_fsx_server_net_bios_name" {
     error_message = "The NetBIOS name must contain only alphanumeric characters and hyphens."
   }
 }
-
 variable "domain_admin_user" {
   description = "User name for the account that will be used as Domain Administrator. This is separate from the default 'Administrator' account."
   type        = string
@@ -104,7 +103,7 @@ variable "sql_admin_accounts" {
 }
 
 variable "route_table_id" {
-  description = "Comma separated list of all route table IDs for SQL Server subnets."
+  description = "Route table id."
   type        = string
 }
 
@@ -196,4 +195,87 @@ variable "deployment_name" {
 variable "operating_system" {
   description = "Terraform host operating system"
   type        = string
+}
+
+variable "sql_node_name" {
+  description = "The name of the SQL node"
+  type        = string
+}
+
+# fci related variables
+
+variable "fsx_quorum_volume_name" {
+  description = "The name of the volume for the quorum."
+  type        = string
+  default     = ""
+}
+
+variable "sql_fsx_ws_fc_name" {
+  description = "Windows Server failover cluster name."
+  type        = string
+  default     = ""
+}
+
+variable "sql_fsx_fci_name" {
+  description = "Name for the SQL Server failover cluster instance."
+  type        = string
+  default     = ""
+}
+
+variable "is_standalone" {
+  description = "Whether the SQL Server is standalone or part of a failover cluster instance."
+  type        = bool
+}
+
+variable "mssql_media_path_key" {
+  description = "mssql media path key"
+  type        = string
+  default     = ""
+}
+
+variable "sql_fsx_server_net_bios_name_2" {
+  description = "NetBIOS name 2 of the SQL Server (up to 15 characters)."
+  type        = string
+  default     = ""
+}
+
+variable "workload_security_group_id" {
+  description = "ID of the security group for the workload."
+  type        = string
+}
+
+variable "iam_instance_profile" {
+  description = "IAM instance profile"
+  type        = string
+  default     = ""
+}
+
+variable "network_interface_id" {
+  description = "Network interface  id"
+  type        = string
+  default     = ""
+}
+
+variable "network_interface_1_first_private_ip" {
+  description = "Network interface 1 first private ip"
+  type        = string
+  default     = ""
+}
+
+variable "network_interface_1_second_private_ip" {
+  description = "Network interface 1 second private ip"
+  type        = string
+  default     = ""
+}
+
+variable "network_interface_2_first_private_ip" {
+  description = "Network interface 2 first private ip"
+  type        = string
+  default     = ""
+}
+
+variable "network_interface_2_second_private_ip" {
+  description = "Network interface 2 second private ip"
+  type        = string
+  default     = ""
 }

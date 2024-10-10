@@ -20,11 +20,12 @@ locals {
     local.create_ec2_messages_endpoint,
     local.create_ssm_messages_endpoint
   ])
+  create_multi_zone_sg = !local.single_zone && local.create_sg
 }
 
 resource "aws_security_group" "https_security_group" {
   count       = local.create_sg ? 1 : 0
-  name        = "https_security_group"
+  name        = "${var.deployment_name}_https_security_group"
   description = "Allow HTTPS traffic from the VPC"
   vpc_id      = var.vpc_id
 
@@ -33,6 +34,23 @@ resource "aws_security_group" "https_security_group" {
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.preferred_subnet_cidrblock]
+  }
+
+  dynamic "ingress" {
+    for_each = local.create_multi_zone_sg ? [1] : []
+    content {
+      from_port   = 443
+      to_port     = 443
+      protocol    = "tcp"
+      cidr_blocks = [var.standby_subnet_cidrblock]
+    }
   }
 }
 
