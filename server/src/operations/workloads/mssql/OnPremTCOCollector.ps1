@@ -34,7 +34,6 @@ $belongsToCluster = $false
 try{
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue
     if ($clusterNodes){
-    $clusterNodes
         $nodeNames = $clusterNodes | Select-Object -ExpandProperty Name
         $belongsToCluster = $true
     }
