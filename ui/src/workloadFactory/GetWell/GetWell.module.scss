@@ -1,8 +1,6 @@
 .getWell {
     width: 100%;
-    height: 100%;
-    background-color: var(--main-background);
-    overflow-y: auto;
+
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -35,6 +33,17 @@
                 }
             }
         }
+
+        .reportSubHeading {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+
+            .separator {
+                border-right: 1px solid var(--text-disabled);
+                height: 24px;
+            }
+        }
     }
 
     .getWellSecondLevel {
@@ -49,22 +58,11 @@
     .sectionDownload {
         width: 87.3%;
         margin-top: 26px;
-        .downloadSection {
-            display: flex;
-            justify-content: space-between;
-            cursor: pointer;
-
-            .buttonStyle {
-                display: flex;
-                gap: 8px;
-                align-items: center;
-            }
-        }
     }
 
     .sectionTwo {
-        width: 87.3%;
-        margin-top: 16px;
+        width: 100vw;
+        margin-top: 26px;
         max-width: 1608px;
 
         [class*='accordionHeader'] {
@@ -75,6 +73,18 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
+
+            .downloadSection {
+                display: flex;
+                justify-content: space-between;
+                cursor: pointer;
+
+                .buttonStyle {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                }
+            }
         }
 
         .filterComponent {
