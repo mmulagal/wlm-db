@@ -10,14 +10,14 @@ import FullStoryComp from './common/FullStoryComp';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
-    <>
+    <React.StrictMode>
         <ReduxContextProvider store={store}>
-            <BrowserRouter>
-                <DialogContextProvider>
+            <DialogContextProvider>
+                <BrowserRouter>
                     <FullStoryComp />
                     <App />
-                </DialogContextProvider>
-            </BrowserRouter>
+                </BrowserRouter>
+            </DialogContextProvider>
         </ReduxContextProvider>
-    </>
+    </React.StrictMode>
 );
