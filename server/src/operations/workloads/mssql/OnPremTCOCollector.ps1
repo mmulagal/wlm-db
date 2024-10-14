@@ -27,7 +27,7 @@ function Invoke-SQLQuery {
 }
 
 $osEdition = (Get-WmiObject -Class Win32_OperatingSystem).Caption
-$cpuCount = (Get-WmiObject -Class Win32_Processor).Count
+$cpuCount = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
 $ramSize = (Get-WmiObject -Class Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1GB
 $nodeNames = @()
 $belongsToCluster = $false
@@ -44,7 +44,7 @@ try{
  
 $windowsConfig = @{
     "OS Edition" = $osEdition
-    "Number of CPUs" = $cpuCount
+    "Number of virtual CPUs" = $cpuCount
     "RAM Size (GB)" = $ramSize
     "Belongs to Cluster" = $belongsToCluster 
     "Node Names" = $nodeNames
@@ -102,7 +102,7 @@ SET NOCOUNT ON; SET QUOTED_IDENTIFIER ON; WITH CPUUsage AS (
     SELECT
         DATEADD(ms, -1 * (rb.timestamp - si.ms_ticks), GETDATE()) AS EventTime,
         CAST(x.record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]', 'int') AS INT) AS SystemIdle,
-        CAST(x.record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SQLProcessUtilization)[1]', 'int') AS INT) AS SQLProcessUtilization
+        CAST(x.record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]', 'int') AS INT) AS SQLProcessUtilization
     FROM
         sys.dm_os_ring_buffers AS rb
     CROSS JOIN
