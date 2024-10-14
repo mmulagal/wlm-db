@@ -1,6 +1,4 @@
-import { DsAccordion, DsSelect, DsTypography } from '@netapp/design-system';
-import styles from './GetWell.module.scss';
-import commonStyles from '../../utils/CommonStyles.module.scss';
+import { DsAccordion, DsSelect, DsTypography, Spinner } from '@netapp/design-system';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
 import TotalOptimizationScore from './TotalOptimizationScore/TotalOptimizationScore';
 import OptimizationBreakdown from './OptimizationBreakdown/OptimizationBreakdown';
@@ -39,6 +37,8 @@ import { useState } from 'react';
 import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import { GENERAL } from '../../utils/appConstants';
+import styles from './GetWell.module.scss';
+import commonStyles from '../../utils/CommonStyles.module.scss';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -109,7 +109,7 @@ const GetWell = () => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: GENERAL.PDF_DOWNLOAD_SUCCESS
+                        message: GENERAL.REPORT_DOWNLOAD_SUCCESS
                     })
                 );
             });
@@ -118,6 +118,14 @@ const GetWell = () => {
 
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
+            {optimizePrintState && (
+                <>
+                    <div className={commonStyles.loaderOverlay}></div>
+                    <div className={commonStyles.spinnerPlacement}>
+                        <Spinner isLarge />
+                    </div>
+                </>
+            )}
             <div className={styles.getWell} id="export-optimize-pdf">
                 {!optimizePrintState && (
                     <div className={commonStyles.commonBreadCrumb}>
@@ -569,320 +577,348 @@ const GetWell = () => {
                     </div>
 
                     {/* Section one */}
-                    <div className={styles['header-buttons']}>
-                        <DsTypography
-                            style={{
-                                padding: '0 0 8px'
-                            }}
-                            variant="Semibold_16"
-                        >
-                            Storage sizing
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.accordionGroups}>
-                        <div className={styles.combineComponent}>
-                            <StorageCardComponent
-                                cardData={cardData.StorageTier}
-                                optimizePrintState={optimizePrintState}
-                            />
-                            <DsAccordion
-                                id="1"
-                                variant="Default"
-                                isDisabled={loading}
-                                isExpanded={optimizePrintState}
-                                title={<Tag text={'Performance efficiency'} />}
-                                headerActions={[
-                                    <div className={styles.headerAction}>
-                                        <div>{loading ? <LightDisabled /> : <Light />}</div>
-                                        <div
-                                            style={{
-                                                color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                            }}
-                                        >
-                                            View recommendation
-                                        </div>
-                                    </div>
-                                ]}
-                                children={<RecommendationText data={recommendendationTextData.StorageTier} />}
-                            />
+                    <div className={styles.sectionClass}>
+                        <div className={styles['header-buttons']}>
+                            <DsTypography
+                                style={{
+                                    padding: '0 0 8px'
+                                }}
+                                variant="Semibold_16"
+                            >
+                                Storage sizing
+                            </DsTypography>
                         </div>
 
-                        <div className={styles.combineComponent}>
-                            <StorageCardComponent
-                                cardData={cardData.FileSystemHeadroom}
-                                optimizePrintState={optimizePrintState}
-                            />
-                            <DsAccordion
-                                id="2"
-                                variant="Default"
-                                isDisabled={loading}
-                                isExpanded={optimizePrintState}
-                                title={<Tag text={'Performance efficiency'} />}
-                                headerActions={[
-                                    <div className={styles.headerAction}>
-                                        <div>{loading ? <LightDisabled /> : <Light />}</div>
-                                        <div
-                                            style={{
-                                                color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                            }}
-                                        >
-                                            View recommendation
+                        <div className={styles.accordionGroups}>
+                            <div className={styles.combineComponent}>
+                                <StorageCardComponent
+                                    cardData={cardData.StorageTier}
+                                    optimizePrintState={optimizePrintState}
+                                />
+                                <DsAccordion
+                                    id="1"
+                                    variant="Default"
+                                    isDisabled={loading}
+                                    isExpanded={optimizePrintState}
+                                    title={<Tag text={'Performance efficiency'} />}
+                                    headerActions={[
+                                        <div className={styles.headerAction}>
+                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div
+                                                style={{
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
+                                                }}
+                                            >
+                                                View recommendation
+                                            </div>
                                         </div>
-                                    </div>
-                                ]}
-                                children={<RecommendationText data={recommendendationTextData.FileSystemHeadroom} />}
-                            />
-                        </div>
+                                    ]}
+                                    children={<RecommendationText data={recommendendationTextData.StorageTier} />}
+                                />
+                            </div>
 
-                        <div className={styles.combineComponent}>
-                            <StorageCardComponent
-                                cardData={cardData.TransactionLogDriveSize}
-                                optimizePrintState={optimizePrintState}
-                            />
-                            <DsAccordion
-                                id="3"
-                                variant="Default"
-                                isDisabled={loading}
-                                isExpanded={optimizePrintState}
-                                title={<Tag text={'Performance efficiency'} />}
-                                headerActions={[
-                                    <div className={styles.headerAction}>
-                                        <div>{loading ? <LightDisabled /> : <Light />}</div>
-                                        <div
-                                            style={{
-                                                color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                            }}
-                                        >
-                                            View recommendation
+                            <div className={styles.combineComponent}>
+                                <StorageCardComponent
+                                    cardData={cardData.FileSystemHeadroom}
+                                    optimizePrintState={optimizePrintState}
+                                />
+                                <DsAccordion
+                                    id="2"
+                                    variant="Default"
+                                    isDisabled={loading}
+                                    isExpanded={optimizePrintState}
+                                    title={<Tag text={'Performance efficiency'} />}
+                                    headerActions={[
+                                        <div className={styles.headerAction}>
+                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div
+                                                style={{
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
+                                                }}
+                                            >
+                                                View recommendation
+                                            </div>
                                         </div>
-                                    </div>
-                                ]}
-                                children={
-                                    <RecommendationText data={recommendendationTextData.TransactionLogDriveSize} />
-                                }
-                            />
-                        </div>
+                                    ]}
+                                    children={
+                                        <RecommendationText data={recommendendationTextData.FileSystemHeadroom} />
+                                    }
+                                />
+                            </div>
 
-                        <div className={styles.combineComponent}>
-                            <StorageCardComponent
-                                cardData={cardData.TempDBDriveSize}
-                                optimizePrintState={optimizePrintState}
-                            />
-                            <DsAccordion
-                                id="4"
-                                variant="Default"
-                                isDisabled={loading}
-                                isExpanded={optimizePrintState}
-                                title={<Tag text={'Performance efficiency'} />}
-                                headerActions={[
-                                    <div className={styles.headerAction}>
-                                        <div>{loading ? <LightDisabled /> : <Light />}</div>
-                                        <div
-                                            style={{
-                                                color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                            }}
-                                        >
-                                            View recommendation
+                            <div className={styles.combineComponent}>
+                                <StorageCardComponent
+                                    cardData={cardData.TransactionLogDriveSize}
+                                    optimizePrintState={optimizePrintState}
+                                />
+                                <DsAccordion
+                                    id="3"
+                                    variant="Default"
+                                    isDisabled={loading}
+                                    isExpanded={optimizePrintState}
+                                    title={<Tag text={'Performance efficiency'} />}
+                                    headerActions={[
+                                        <div className={styles.headerAction}>
+                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div
+                                                style={{
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
+                                                }}
+                                            >
+                                                View recommendation
+                                            </div>
                                         </div>
-                                    </div>
-                                ]}
-                                children={
-                                    <RecommendationText data={recommendendationTextData.TransactionDBDriveSize} />
-                                }
-                            />
+                                    ]}
+                                    children={
+                                        <RecommendationText data={recommendendationTextData.TransactionLogDriveSize} />
+                                    }
+                                />
+                            </div>
+
+                            <div className={styles.combineComponent}>
+                                <StorageCardComponent
+                                    cardData={cardData.TempDBDriveSize}
+                                    optimizePrintState={optimizePrintState}
+                                />
+                                <DsAccordion
+                                    id="4"
+                                    variant="Default"
+                                    isDisabled={loading}
+                                    isExpanded={optimizePrintState}
+                                    title={<Tag text={'Performance efficiency'} />}
+                                    headerActions={[
+                                        <div className={styles.headerAction}>
+                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div
+                                                style={{
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
+                                                }}
+                                            >
+                                                View recommendation
+                                            </div>
+                                        </div>
+                                    ]}
+                                    children={
+                                        <RecommendationText data={recommendendationTextData.TransactionDBDriveSize} />
+                                    }
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Section two */}
-                    <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
-                        <DsTypography
-                            style={{
-                                padding: '0 0 8px'
-                            }}
-                            variant="Semibold_16"
-                        >
-                            Storage layout
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.accordionGroups}>
-                        <div className={styles.combineComponent}>
-                            <StorageCardComponent
-                                cardData={cardData.UserDataFiles}
-                                optimizePrintState={optimizePrintState}
-                            />
-                            <DsAccordion
-                                id="5"
-                                variant="Default"
-                                isDisabled={loading}
-                                isExpanded={optimizePrintState}
-                                title={<Tag text={'Performance efficiency'} />}
-                                headerActions={[
-                                    <div className={styles.headerAction}>
-                                        <div>{loading ? <LightDisabled /> : <Light />}</div>
-                                        <div
-                                            style={{
-                                                color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                            }}
-                                        >
-                                            View recommendation
-                                        </div>
-                                    </div>
-                                ]}
-                                children={<RecommendationText data={recommendendationTextData.UserDataFileMdf} />}
-                            />
+                    <div className={styles.sectionClass}>
+                        <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                            <DsTypography
+                                style={{
+                                    padding: '0 0 8px'
+                                }}
+                                variant="Semibold_16"
+                            >
+                                Storage layout
+                            </DsTypography>
                         </div>
 
-                        <div className={styles.combineComponent}>
-                            <StorageCardComponent
-                                cardData={cardData.TransactionLogFiles}
-                                optimizePrintState={optimizePrintState}
-                            />
-                            <DsAccordion
-                                id="6"
-                                variant="Default"
-                                title={<Tag text={'Performance efficiency'} />}
-                                isDisabled={loading}
-                                isExpanded={optimizePrintState}
-                                headerActions={[
-                                    <div className={styles.headerAction}>
-                                        <div>{loading ? <LightDisabled /> : <Light />}</div>
-                                        <div
-                                            style={{
-                                                color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                            }}
-                                        >
-                                            View recommendation
+                        <div className={styles.accordionGroups}>
+                            <div className={styles.combineComponent}>
+                                <StorageCardComponent
+                                    cardData={cardData.UserDataFiles}
+                                    optimizePrintState={optimizePrintState}
+                                />
+                                <DsAccordion
+                                    id="5"
+                                    variant="Default"
+                                    isDisabled={loading}
+                                    isExpanded={optimizePrintState}
+                                    title={<Tag text={'Performance efficiency'} />}
+                                    headerActions={[
+                                        <div className={styles.headerAction}>
+                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div
+                                                style={{
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
+                                                }}
+                                            >
+                                                View recommendation
+                                            </div>
                                         </div>
-                                    </div>
-                                ]}
-                                children={<RecommendationText data={recommendendationTextData.TransactionLogFiles} />}
-                            />
-                        </div>
+                                    ]}
+                                    children={<RecommendationText data={recommendendationTextData.UserDataFileMdf} />}
+                                />
+                            </div>
 
-                        <div className={styles.combineComponent}>
-                            <StorageCardComponent
-                                cardData={cardData.TempDBPlacement}
-                                optimizePrintState={optimizePrintState}
-                            />
-                            <DsAccordion
-                                id="7"
-                                variant="Default"
-                                isDisabled={loading}
-                                isExpanded={optimizePrintState}
-                                title={<Tag text={'Performance efficiency'} />}
-                                headerActions={[
-                                    <div className={styles.headerAction}>
-                                        <div>{loading ? <LightDisabled /> : <Light />}</div>
-                                        <div
-                                            style={{
-                                                color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                            }}
-                                        >
-                                            View recommendation
+                            <div className={styles.combineComponent}>
+                                <StorageCardComponent
+                                    cardData={cardData.TransactionLogFiles}
+                                    optimizePrintState={optimizePrintState}
+                                />
+                                <DsAccordion
+                                    id="6"
+                                    variant="Default"
+                                    title={<Tag text={'Performance efficiency'} />}
+                                    isDisabled={loading}
+                                    isExpanded={optimizePrintState}
+                                    headerActions={[
+                                        <div className={styles.headerAction}>
+                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div
+                                                style={{
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
+                                                }}
+                                            >
+                                                View recommendation
+                                            </div>
                                         </div>
-                                    </div>
-                                ]}
-                                children={<RecommendationText data={recommendendationTextData.TempDBPlacement} />}
-                            />
+                                    ]}
+                                    children={
+                                        <RecommendationText data={recommendendationTextData.TransactionLogFiles} />
+                                    }
+                                />
+                            </div>
+
+                            <div className={styles.combineComponent}>
+                                <StorageCardComponent
+                                    cardData={cardData.TempDBPlacement}
+                                    optimizePrintState={optimizePrintState}
+                                />
+                                <DsAccordion
+                                    id="7"
+                                    variant="Default"
+                                    isDisabled={loading}
+                                    isExpanded={optimizePrintState}
+                                    title={<Tag text={'Performance efficiency'} />}
+                                    headerActions={[
+                                        <div className={styles.headerAction}>
+                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div
+                                                style={{
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
+                                                }}
+                                            >
+                                                View recommendation
+                                            </div>
+                                        </div>
+                                    ]}
+                                    children={<RecommendationText data={recommendendationTextData.TempDBPlacement} />}
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Section three */}
-                    <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
-                        <DsTypography
-                            style={{
-                                padding: '0 0 8px'
-                            }}
-                            variant="Semibold_16"
-                        >
-                            Storage configuration
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.accordionGroups}>
-                        <div className={styles.combineComponent}>
-                            <StorageCardComponent
-                                cardData={cardData.ONTAPConfiguartion}
-                                optimizePrintState={optimizePrintState}
-                            />
-                            <DsAccordion
-                                id="9"
-                                variant="Default"
-                                isDisabled={loading}
-                                isExpanded={optimizePrintState}
-                                title={
-                                    <div className={styles.tagPlacement}>
-                                        <Tag text={'Performance efficiency'} />
-                                        <Tag text={'Operational excellence'} />
-                                        <Tag text={'Cost optimization'} />
-                                        <Tag text={'Reliability'} />
-                                        <Tag text={'Security'} />
-                                    </div>
-                                }
-                                headerActions={[
-                                    <div className={styles.headerAction}>
-                                        <div>{loading ? <LightDisabled /> : <Light />}</div>
-                                        <div
-                                            style={{
-                                                color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                            }}
-                                        >
-                                            View recommendation & optimization
-                                        </div>
-                                    </div>
-                                ]}
-                                children={
-                                    <RecommendationTable
-                                        tableData={ontapConfigTableData}
-                                        isLoading={false}
-                                        optimizePrintState={optimizePrintState}
-                                    />
-                                }
-                            />
+                    <div className={styles.sectionClass}>
+                        <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                            <DsTypography
+                                style={{
+                                    padding: '0 0 8px'
+                                }}
+                                variant="Semibold_16"
+                            >
+                                Storage configuration
+                            </DsTypography>
                         </div>
 
-                        <div className={styles.combineComponent} style={{ marginBottom: '80px' }}>
-                            <StorageCardComponent
-                                cardData={cardData.Configuartion}
-                                optimizePrintState={optimizePrintState}
-                            />
-                            <DsAccordion
-                                id="10"
-                                isDisabled={loading}
-                                variant="Default"
-                                isExpanded={optimizePrintState}
-                                title={
-                                    <div className={styles.tagPlacement}>
-                                        <Tag text={'Performance efficiency'} />
-                                        <Tag text={'Operational excellence'} />
-                                        <Tag text={'Cost optimization'} />
-                                        <Tag text={'Reliability'} />
-                                        <Tag text={'Security'} />
-                                    </div>
-                                }
-                                headerActions={[
-                                    <div className={styles.headerAction}>
-                                        <div>{loading ? <LightDisabled /> : <Light />}</div>
-                                        <div
-                                            style={{
-                                                color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                            }}
-                                        >
-                                            View recommendation & optimization
+                        <div className={styles.accordionGroups}>
+                            <div className={styles.combineComponent}>
+                                <StorageCardComponent
+                                    cardData={cardData.ONTAPConfiguartion}
+                                    optimizePrintState={optimizePrintState}
+                                />
+                                <DsAccordion
+                                    id="9"
+                                    variant="Default"
+                                    isDisabled={loading}
+                                    isExpanded={optimizePrintState}
+                                    title={
+                                        <div className={styles.tagPlacement}>
+                                            <Tag text={'Performance efficiency'} />
+                                            <Tag text={'Operational excellence'} />
+                                            <Tag text={'Cost optimization'} />
+                                            <Tag text={'Reliability'} />
+                                            <Tag text={'Security'} />
                                         </div>
-                                    </div>
-                                ]}
-                                children={
-                                    <RecommendationTable
-                                        tableData={operatingSystemTableData}
-                                        isLoading={false}
-                                        optimizePrintState={optimizePrintState}
-                                    />
-                                }
-                                style={{ marginBottom: '40px' }}
-                            />
+                                    }
+                                    headerActions={[
+                                        <div className={styles.headerAction}>
+                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div
+                                                style={{
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
+                                                }}
+                                            >
+                                                View recommendation & optimization
+                                            </div>
+                                        </div>
+                                    ]}
+                                    children={
+                                        <RecommendationTable
+                                            tableData={ontapConfigTableData}
+                                            isLoading={false}
+                                            optimizePrintState={optimizePrintState}
+                                        />
+                                    }
+                                />
+                            </div>
+
+                            <div className={styles.combineComponent} style={{ marginBottom: '80px' }}>
+                                <StorageCardComponent
+                                    cardData={cardData.Configuartion}
+                                    optimizePrintState={optimizePrintState}
+                                />
+                                <DsAccordion
+                                    id="10"
+                                    isDisabled={loading}
+                                    variant="Default"
+                                    isExpanded={optimizePrintState}
+                                    title={
+                                        <div className={styles.tagPlacement}>
+                                            <Tag text={'Performance efficiency'} />
+                                            <Tag text={'Operational excellence'} />
+                                            <Tag text={'Cost optimization'} />
+                                            <Tag text={'Reliability'} />
+                                            <Tag text={'Security'} />
+                                        </div>
+                                    }
+                                    headerActions={[
+                                        <div className={styles.headerAction}>
+                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div
+                                                style={{
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
+                                                }}
+                                            >
+                                                View recommendation & optimization
+                                            </div>
+                                        </div>
+                                    ]}
+                                    children={
+                                        <RecommendationTable
+                                            tableData={operatingSystemTableData}
+                                            isLoading={false}
+                                            optimizePrintState={optimizePrintState}
+                                        />
+                                    }
+                                    style={{ marginBottom: '40px' }}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
