@@ -29,7 +29,7 @@ function App() {
     return (
         <>
             <ThemeProvider isIframe={true} theme={isDarkTheme ? 'dark' : 'light'}>
-                {/* <FullStoryComp /> */}
+                <FullStoryComp />
                 {loading && (
                     <div className="App">
                         <ComponentLoader style={{ margin: '0 auto' }} />
