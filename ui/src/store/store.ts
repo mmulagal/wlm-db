@@ -10,7 +10,6 @@ import {
     jobMonitoringApi,
     policiesApi,
     resourceApi,
-    workloadFactoryResourceApi,
     inventoryApi,
     sandboxApi,
     exploreSavingsApi,
@@ -28,7 +27,6 @@ import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
 import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
-import inventorySlice from './workloadFactory/inventorySlice';
 import inventoryV2Slice from './workloadFactory/inventoryV2Slice';
 import headersSlice from './workloadFactory/headersSlice';
 import createNewUserSlice from './workloadFactory/createNewDBSlice';
@@ -52,12 +50,10 @@ const rootReducer = combineReducers({
     [databaseHomeSlice.name]: databaseHomeSlice.reducer,
     [chatbotSlice.name]: chatbotSlice.reducer,
     [workloadFactoryResourceSlice.name]: workloadFactoryResourceSlice.reducer,
-    [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer,
     [workloadFactoryResourceApiV2.reducerPath]: workloadFactoryResourceApiV2.reducer,
     [jobMonitoringApi.reducerPath]: jobMonitoringApi.reducer,
     [jobMonitoringSlice.name]: jobMonitoringSlice.reducer,
     [inventoryV2Slice.name]: inventoryV2Slice.reducer,
-    [inventorySlice.name]: inventorySlice.reducer,
     [headersApi.reducerPath]: headersApi.reducer,
     [headersSlice.name]: headersSlice.reducer,
     [createNewUserSlice.name]: createNewUserSlice.reducer,
@@ -129,7 +125,6 @@ const store = configureStore({
             .concat(configApi.middleware)
             .concat(databaseHomeApi.middleware)
             .concat(chatbotApi.middleware)
-            .concat(workloadFactoryResourceApi.middleware)
             .concat(workloadFactoryResourceApiV2.middleware)
             .concat(jobMonitoringApi.middleware)
             .concat(headersApi.middleware)

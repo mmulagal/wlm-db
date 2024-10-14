@@ -482,8 +482,7 @@ export const GENERAL = {
     PROTECTION: 'protection',
     NUMBER_OF_EXECUTION: 'Number of Execution',
     TERRAFORM: 'Terraform',
-    TERRAFORM_CODEBOX_TOOLTIP:
-        'The code represents only variables module. For the rest of the modules it should be downloaded.',
+    TERRAFORM_CODEBOX_TOOLTIP: 'The code includes only the root module. Download to access all modules.',
     READ: 'Read',
     WRITE: 'Write',
     STORAGE_PERFORMANCE: 'Storage performance',
@@ -1032,6 +1031,7 @@ export const GENERAL = {
     NOTICE_MESSAGE_COST_SAVINGS:
         'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
     PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.',
+    REPORT_DOWNLOAD_SUCCESS: 'Report downloaded successfully',
     MANAGE_HOST_DISABLED: 'Supported only for the FSx for ONTAP storage type',
     EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type',
     SMB_PROTOCOL_DISABLED: 'Action not supported on SQL server using SMB protocol',

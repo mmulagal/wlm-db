@@ -385,27 +385,6 @@ export const databaseHomeApi = createApi({
     }
 });
 
-export const workloadFactoryResourceApi = createApi({
-    reducerPath: 'workloadFactoryResourceApi',
-    baseQuery: dynamicBaseQuery,
-    endpoints: builder => {
-        return {
-            getResourceDetails: builder.query({
-                query: ({ credentialId, region, id }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=serverDetails,topology,storage,performance,usageEstimation,resourceUtilization`
-                })
-            }),
-            getDatabaseList: builder.query({
-                query: ({ credentialId, region, id, fields = false }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/databases${
-                        fields ? '?fields=protection' : ''
-                    }`
-                })
-            })
-        };
-    }
-});
-
 export const workloadFactoryResourceApiV2 = createApi({
     reducerPath: 'workloadFactoryResourceApiV2',
     baseQuery: dynamicBaseQuery,
@@ -542,13 +521,6 @@ export const createUserDbApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getDriveInfo: builder.query({
-                query: ({ credentialId, region, id, forSandbox }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/drive-information${
-                        forSandbox ? '?forSandbox=true' : ''
-                    }`
-                })
-            }),
             getDriveInfoV2: builder.query({
                 query: ({ credentialId, region, id, instanceId, forSandbox }) => ({
                     url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/drive-information${
@@ -561,11 +533,6 @@ export const createUserDbApi = createApi({
                     url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database`,
                     method: 'POST',
                     body: payload
-                })
-            }),
-            getCollationList: builder.query({
-                query: ({ credentialId, region, id }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/collation`
                 })
             }),
             getCollationListV2: builder.query({
@@ -583,63 +550,6 @@ export const inventoryApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getDatabaseHosts: builder.query({
-                query: ({ credentialId, region, nextToken = null }) => {
-                    if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
-                    } else {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation`;
-                    }
-                },
-                transformResponse: (response: any, meta, args) => {
-                    if (response) {
-                        response = {
-                            ...response,
-                            credentialId: args?.credentialId,
-                            regionId: args?.region
-                        };
-                    }
-                    return response;
-                }
-            }),
-            getDatabaseHostsFullData: builder.query({
-                query: ({ credentialId, regionId, nextToken = null }) => {
-                    if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
-                    } else {
-                        return `v1/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation`;
-                    }
-                },
-                transformResponse: (response: any, meta, args) => {
-                    if (response) {
-                        response = {
-                            ...response,
-                            credentialId: args?.credentialId,
-                            regionId: args?.regionId
-                        };
-                    }
-                    return response;
-                }
-            }),
-            getDatabaseHostsList: builder.query({
-                query: ({ credentialId, regionId, nextToken = null }) => {
-                    if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${regionId}/database-hosts?nextToken=${nextToken}`;
-                    } else {
-                        return `v1/credentials/${credentialId}/regions/${regionId}/database-hosts`;
-                    }
-                },
-                transformResponse: (response: any, meta, args) => {
-                    if (response) {
-                        response = {
-                            ...response,
-                            credentialId: args?.credentialId,
-                            regionId: args?.regionId
-                        };
-                    }
-                    return response;
-                }
-            }),
             getManagedHostData: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
@@ -684,17 +594,6 @@ export const inventoryApi = createApi({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/resources/file-systems/credentials-status?fsxids=${fsxIds}`
                 })
             }),
-            getHostsDetails: builder.query({
-                query: ({ regionId, credentialsId }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/discover/summary`
-                })
-            }),
-            manageHost: builder.mutation({
-                query: ({ credentialId, regionId, instanceId }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/manage`,
-                    method: 'POST'
-                })
-            }),
             registerResourceCredentials: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload }) => ({
                     url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/discover/resource-credentials`,
@@ -707,12 +606,6 @@ export const inventoryApi = createApi({
                     url: nextToken
                         ? `v1/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&nextToken=${nextToken}`
                         : `v1/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}`,
-                    method: 'GET'
-                })
-            }),
-            getMssqlResourceData: builder.mutation({
-                query: ({ credentialId, regionId, id }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/database-hosts/${id}?fields=topology,serverDetails,storage,performance,protection,usageEstimation`,
                     method: 'GET'
                 })
             }),
@@ -786,12 +679,6 @@ export const inventoryApiV2 = createApi({
                     method: 'GET'
                 })
             }),
-            getMssqlResourceDataV2: builder.mutation({
-                query: ({ credentialId, regionId, id }) => ({
-                    url: `v2/credentials/${credentialId}/regions/${regionId}/database-hosts/${id}?fields=topology,serverDetails,storage,performance,protection,usageEstimation`,
-                    method: 'GET'
-                })
-            }),
             unmanageMssqlInstance: builder.mutation({
                 query: ({ credentialsId, resourceId, dbInstanceId }) => ({
                     url: `v1/credentials/${credentialsId}/resources/${resourceId}/mssql/instances?databaseInstanceIds=${dbInstanceId}`,
@@ -815,25 +702,6 @@ export const sandboxApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getDatabaseHostsForSandbox: builder.query({
-                query: ({ credentialId, region, nextToken = null }) => {
-                    if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,storage&nextToken=${nextToken}`;
-                    } else {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,storage`;
-                    }
-                },
-                transformResponse: (response: any, meta, args) => {
-                    if (response) {
-                        response = {
-                            ...response,
-                            credentialId: args?.credentialId,
-                            regionId: args?.region
-                        };
-                    }
-                    return response;
-                }
-            }),
             getDatabaseHostsForSandboxV2: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
@@ -1019,8 +887,6 @@ export const {
     useGetTerraformSetupMutation
 } = databaseHomeApi;
 
-export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
-
 export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
     workloadFactoryResourceApiV2;
 
@@ -1038,28 +904,14 @@ export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetS
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
-export const {
-    useGetDriveInfoQuery,
-    useCreateUserDBMutation,
-    useGetCollationListQuery,
-    useGetDriveInfoV2Query,
-    useGetCollationListV2Query
-} = createUserDbApi;
+export const { useCreateUserDBMutation, useGetDriveInfoV2Query, useGetCollationListV2Query } = createUserDbApi;
 
 export const {
-    useLazyGetDatabaseHostsFullDataQuery,
-    useLazyGetDatabaseHostsListQuery,
     useLazyGetManagedHostDataQuery,
-    useDiscoverHostsQuery,
     useLazyDiscoverHostsQuery,
-    useGetFsxCredentialStatusQuery,
     useLazyGetFsxCredentialStatusQuery,
-    useGetHostsDetailsQuery,
-    useManageHostMutation,
     useRegisterResourceCredentialsMutation,
     useGetMssqlInstanceDataMutation,
-    useGetMssqlResourceDataMutation,
-    useGetDatabaseHostsQuery,
     usePrepareHostMutation
 } = inventoryApi;
 
@@ -1067,7 +919,6 @@ export const {
     useLazyGetDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
     useGetMssqlInstanceDataV2Mutation,
-    useGetMssqlResourceDataV2Mutation,
     useUnmanageMssqlInstanceMutation,
     useManageMssqlInstanceMutation
 } = inventoryApiV2;
@@ -1084,7 +935,6 @@ export const {
     useUpdateSandboxMutation,
     useSplitSandboxMutation,
     useCheckIntegrityMutation,
-    useGetDatabaseHostsForSandboxQuery,
     useGetDatabaseHostsForSandboxV2Query,
     useLazyGetRollbackSnapshotsQuery
 } = sandboxApi;

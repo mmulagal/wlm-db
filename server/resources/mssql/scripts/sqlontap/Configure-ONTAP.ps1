@@ -36,7 +36,10 @@ param(
     [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Parentstackname 
+    [string]$Parentstackname,
+    
+    [Parameter(Mandatory=$false)]
+    [boolean]$IsTerraform
 
 )
 Start-Transcript -Path C:\cfn\log\configureontap.ps1.txt -Append
@@ -101,6 +104,9 @@ function callGetOrDeleteApi{
             Invoke-RestMethod @Params -SkipCertificateCheck
         }
     }catch{
+        if ($IsTerraform) {
+            throw $_.Exception.Message
+        }
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
     }
@@ -141,6 +147,9 @@ function callrestapi{
             Invoke-RestMethod @Params -SkipCertificateCheck
         }
     }catch{
+        if ($IsTerraform) {
+            throw $_.Exception.Message
+        }
         Send-CFNResourceSignal -StackName $stack -Status FAILURE -LogicalResourceId $resource -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
     }

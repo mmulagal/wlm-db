@@ -12,8 +12,7 @@ import '../simulator/scopes/aws/service-quota-scope';
 import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/jwt-scope';
 import '../simulator/scopes/cloud-manager/wlmdb-scope';
-import { DEFAULT_AWS_REGION } from '../../src/utils/consts';
-import { DatabaseTypes } from '../../src/utils/consts';
+import { DEFAULT_AWS_REGION, DatabaseTypes } from '../../src/utils/consts';
 
 describe('template operations', () => {
     it('get signed urls', async () => {

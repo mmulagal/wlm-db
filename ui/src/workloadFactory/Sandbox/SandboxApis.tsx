@@ -13,7 +13,7 @@ const SandboxApis = () => {
 
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const { getSandboxList, aggregatedSandboxList, allSandboxList } = useAppSelector(state => state.sandbox);
-    const { isRefreshed } = useAppSelector(state => state.inventory);
+    const { isRefreshed } = useAppSelector(state => state.inventoryV2);
     const { refreshBlocked } = useAppSelector(state => state?.auth);
 
     const [credId, setCredId] = useState(null);

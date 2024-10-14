@@ -1,7 +1,6 @@
 import {
     AccordionCard,
     AccordionCardContent,
-    DsFlashingDotsLoader,
     Popover,
     RadioButton,
     TextField,

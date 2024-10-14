@@ -2,11 +2,17 @@ import {
     CostExplorerClient,
     GetCostAndUsageCommand,
     GetCostAndUsageCommandInput,
+    GetCostAndUsageCommandOutput,
     GetTagsCommand,
-    GetTagsCommandInput
+    GetTagsCommandInput,
+    GetTagsCommandOutput
 } from '@aws-sdk/client-cost-explorer';
+import { isEmpty } from 'lodash-es';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
+import { generateHash } from '../../utils/utils';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
+import { AWS_CE_TYPE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -24,12 +30,28 @@ async function getCostExplorerClient(region: string, credentialsId?: string) {
     }
 }
 
-async function getCostAndUsage(region: string, input: GetCostAndUsageCommandInput, credentialsId?: string) {
+async function getCostAndUsage(
+    region: string,
+    input: GetCostAndUsageCommandInput,
+    credentialsId?: string,
+    readFromCache = true
+) {
     logger.info('Get cost and usage :', region, credentialsId, input);
     try {
+        const costAndUsageHash = generateHash(JSON.stringify(input));
+        if (readFromCache && hasCache(AWS_CE_TYPE, costAndUsageHash)) {
+            logger.debug('Found pricing information in cache');
+
+            return readFromCacheByKey(AWS_CE_TYPE, costAndUsageHash) as GetCostAndUsageCommandOutput;
+        }
         const client = await getCostExplorerClient(region, credentialsId);
         const command = new GetCostAndUsageCommand(input);
         const response = await client.send(command);
+        if (!isEmpty(response)) {
+            logger.debug('Writing pricing information to cache');
+
+            writeToCache(AWS_CE_TYPE, costAndUsageHash, response);
+        }
         return response;
     } catch (error) {
         logger.error('Error retrieving billng cost and usage:', error);
@@ -37,12 +59,28 @@ async function getCostAndUsage(region: string, input: GetCostAndUsageCommandInpu
     }
 }
 
-async function getTagsfromCostExplorer(region: string, input: GetTagsCommandInput, credentialsId?: string) {
+async function getTagsfromCostExplorer(
+    region: string,
+    input: GetTagsCommandInput,
+    credentialsId?: string,
+    readFromCache = true
+) {
     logger.info('Get cost allocation tag at account level :', region, credentialsId, input);
     try {
+        const ceTagsHash = generateHash(JSON.stringify(input));
+        if (readFromCache && hasCache(AWS_CE_TYPE, ceTagsHash)) {
+            logger.debug('Found pricing information in cache');
+
+            return readFromCacheByKey(AWS_CE_TYPE, ceTagsHash) as GetTagsCommandOutput;
+        }
         const client = await getCostExplorerClient(region, credentialsId);
         const command = new GetTagsCommand(input);
         const response = await client.send(command);
+        if (!isEmpty(response)) {
+            logger.debug('Writing pricing information to cache');
+
+            writeToCache(AWS_CE_TYPE, ceTagsHash, response);
+        }
         return response;
     } catch (error) {
         logger.error('Error retrieving cost allocation tag', error);

@@ -43,10 +43,10 @@ import {
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import store from '../../../store/store';
 import RefreshContent from './RefreshContent/RefreshContent';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
 import { formatDateWithTime } from '../../../utils/utilityFunctions';
 import { SandboxActions } from '../../../utils/types/sandBoxTypes';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
 const SandboxTable = () => {
     const navigate = useNavigate();

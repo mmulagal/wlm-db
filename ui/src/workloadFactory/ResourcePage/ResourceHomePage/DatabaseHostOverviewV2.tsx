@@ -8,7 +8,6 @@ import OverviewTabs from '../OverviewTabs/OverviewTabs';
 import styles from './DatabaseHostOverview.module.scss';
 import { useDispatch } from 'react-redux';
 import { isSmbProtocol } from '../../../utils/utilityFunctions';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostTile from '../DatabaseOverviewLayout/DatabaseHostTile/DatabaseHostTile';
 import { WLF_TABS } from '../../../utils/consts';
 import {
@@ -23,6 +22,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import CustomContentInfo from '../../../common/CustomContentInfo/CustomContentInfo';
 import DatabaseHostOverviewApiV2 from './DatabaseHostOverviewApiV2';
 import { updateResourceId } from '../../../store/authSlice';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
 const DatabaseHostOverviewV2 = ({ refreshTime, refreshPage }: any) => {
     const navigate = useNavigate();

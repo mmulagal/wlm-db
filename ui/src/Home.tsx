@@ -1,6 +1,6 @@
-import React, { Suspense, useEffect, useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
@@ -19,10 +19,10 @@ import CreateNewSandbox from './workloadFactory/Sandbox/CreateNewSandbox/CreateN
 import { BXP_MESSAGES, WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 import { useAppSelector } from './store/storeHooks';
-import { setSelectedHeaderTab } from './store/workloadFactory/inventorySlice';
 import { useRunOnce } from './common/hooks/useRunOnce';
 import { setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
+import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -47,11 +47,8 @@ const Home = () => {
                             payload: { pathname: './fsxdb/marketing', replace: true }
                         });
                     } else {
-                        if (
-                            msg?.data?.payload?.pathname ===
-                            '/fsxdb/add-working-environment/database-services/mssql/create'
-                        ) {
-                            navigate('../fsxdb/add-working-environment/database-services/mssql/create');
+                        if (msg?.data?.payload?.pathname === '/fsxdb/mssql-deploy-wizard') {
+                            navigate('../fsxdb/mssql-deploy-wizard');
                         } else {
                             const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
                             navigate('../fsxdb');
@@ -74,10 +71,7 @@ const Home = () => {
                 {isWorkloadFactory && (
                     <Suspense fallback={<MainComponent />}>
                         <Routes>
-                            <Route
-                                path={`add-working-environment/database-services/:storage/create`}
-                                element={<MainComponent />}
-                            />
+                            <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
                             <Route
                                 path={`add-working-environment/database-services/:storage/postgress`}
                                 element={<PostgressMainComponent />}
@@ -98,6 +92,18 @@ const Home = () => {
                                 element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
                             />
                             <Route
+                                path={'databases/sandboxes'}
+                                element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />}
+                            />
+                            <Route
+                                path={'databases/explore-savings'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
+                            />
+                            <Route
+                                path={'databases/job-monitoring'}
+                                element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
+                            />
+                            <Route
                                 path={'databases/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
@@ -115,14 +121,8 @@ const Home = () => {
                 {!isWorkloadFactory && (
                     <Suspense fallback={<MainComponent />}>
                         <Routes>
-                            <Route
-                                path={`add-working-environment/database-services/:storage/create`}
-                                element={<MainComponent />}
-                            />
-                            <Route
-                                path={`fsxdb/add-working-environment/database-services/:storage/create`}
-                                element={<MainComponent />}
-                            />
+                            <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
+                            <Route path={`fsxdb/mssql-deploy-wizard`} element={<MainComponent />} />
                             <Route
                                 path={`add-working-environment/database-services/:storage/postgress`}
                                 element={<PostgressMainComponent />}
@@ -143,6 +143,15 @@ const Home = () => {
                                 element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
                             />
                             <Route path={'fsxdb/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
+                            <Route path={'fsxdb/sandboxes'} element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />} />
+                            <Route
+                                path={'fsxdb/explore-savings'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
+                            />
+                            <Route
+                                path={'fsxdb/job-monitoring'}
+                                element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
+                            />
                             <Route
                                 path={'databases/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}

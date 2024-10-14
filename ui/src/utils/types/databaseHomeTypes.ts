@@ -157,7 +157,6 @@ export interface DatabaseHostsEntities {
         jobsSummaryLoading: false;
         jobsSummaryError: null;
     };
-    databaseHostsList: null;
     aggregatedHostsCount: AggregatedHostsCountRes | null;
     aggregatedProtectionDbCount: AggregatedProtectionDbCountRes | null;
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;

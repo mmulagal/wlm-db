@@ -216,11 +216,12 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
         const { Regions: enabledRegionsInAccount } = ec2RegionResponse;
         fsxRegionResponse.forEach(({ Value: regionCode }) => {
             if (regionCode && !restrictedRegions.includes(regionCode)) {
-                enabledRegionsInAccount?.some(enabledRegion => enabledRegion?.RegionName === regionCode);
-                fsxRegionsList.push({
-                    regionCode,
-                    regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
-                });
+                if (enabledRegionsInAccount?.some(enabledRegion => enabledRegion?.RegionName === regionCode)) {
+                    fsxRegionsList.push({
+                        regionCode,
+                        regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
+                    });
+                }
             }
         });
 
