@@ -6,18 +6,16 @@ import { BrowserRouter } from 'react-router-dom';
 import store from './store/store';
 import './index.css';
 import App from './App';
-import FullStoryComp from './common/FullStoryComp';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
-    <React.StrictMode>
+    <>
         <ReduxContextProvider store={store}>
-            <DialogContextProvider>
-                <BrowserRouter>
-                    <FullStoryComp />
+            <BrowserRouter>
+                <DialogContextProvider>
                     <App />
-                </BrowserRouter>
-            </DialogContextProvider>
+                </DialogContextProvider>
+            </BrowserRouter>
         </ReduxContextProvider>
-    </React.StrictMode>
+    </>
 );
