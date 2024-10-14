@@ -12,7 +12,10 @@ param(
         [string]$ResourceID,   
 
         [Parameter(Mandatory=$true)]
-        [string]$Stackname
+        [string]$Stackname,
+
+        [Parameter(Mandatory=$false)]
+        [string]$IsTerraform
     )
 
 $ErrorActionPreference = "Stop"
@@ -34,12 +37,20 @@ try {
         Write-Host "Signature verification for $FilePath passed."
     }
     else {
-        Write-Output "Signature verification failed "+$FilePath
+        $FailureReason = "Signature verification failed " + $FilePath
+        Write-Output $FailureReason
+        if ($IsTerraform) {
+            throw $FailureReason
+        }
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         exit(1)
     }
 }catch { 
-    Write-host "Error while verifying signature for $FilePath : $_."
+    $FailureReason = "Error while verifying signature for $FilePath : $_."
+    Write-host $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     exit(1)
      } 

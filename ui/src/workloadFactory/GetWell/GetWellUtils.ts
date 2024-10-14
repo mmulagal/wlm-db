@@ -73,7 +73,7 @@ export const cardData = {
     },
     UserDataFiles: {
         block_one: {
-            value: 'User data files (.mdf)',
+            value: 'User data files (.mdf) placement',
             type: 'Storage layout'
         },
         block_two: {
@@ -92,7 +92,7 @@ export const cardData = {
     },
     TransactionLogFiles: {
         block_one: {
-            value: 'Transaction log files (.ldf)',
+            value: 'Log files (.ldf) placement',
             type: 'Storage layout'
         },
         block_two: {
@@ -100,7 +100,7 @@ export const cardData = {
             value: 'Optimized'
         },
         block_three: {
-            type: 'Transaction log files (.ldf)',
+            type: 'Log files',
             value: 'Separate drive',
             smallFont: true
         },
@@ -350,12 +350,12 @@ export const recommendendationTextData = {
     StorageTier: {
         title: 'Storage tier recommendation',
         description:
-            'For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier.\nUsing the capacity tier may result in slower performance and higher latency.'
+            'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.\nUsing the capacity tier may result in slower performance and higher latency.'
     },
     FileSystemHeadroom: {
         title: 'File system headroom recommendation',
         description:
-            'For optimize storage performance, provision file system capacity as 1.35 times the size of total database usage.',
+            'To optimize storage performance, provision file system capacity as 1.35 times the size of total database usage.',
         values: ['Under-provisioned: 0-35%', 'Optimized: 36-100%', 'Over-provisioned: >100%']
     },
     TransactionLogDriveSize: {
@@ -376,14 +376,14 @@ export const recommendendationTextData = {
             'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
     },
     TransactionLogFiles: {
-        title: 'Transaction Log files (.ldf) placement recommendation',
+        title: 'Log files (.ldf) placement recommendation',
         description:
             'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
     },
     TempDBPlacement: {
         title: 'TempDB placement recommendation',
         description:
-            'Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention.\nThis optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks,\nslower query performance, and potential system instability.'
+            'Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention.\nThis optimization improves overall SQL Server performance and stability.\nFailure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.'
     }
 };
 
@@ -432,4 +432,16 @@ export const removeObjectFromArray = (array: any, obj: any) => {
     return array.filter((item: any) => {
         return !(item.id === obj.id && item.label === obj.label && item.value === obj.value && item.type === obj.type);
     });
+};
+
+export const generateDate = () => {
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+
+    return `${year}${month}${day}_${hours}${minutes}`;
 };

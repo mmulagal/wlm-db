@@ -81,3 +81,8 @@ variable "ssm_messages_endpoint_exists" {
   type        = bool
   default     = false
 }
+
+variable "deployment_name" {
+  description = "The name of the parent deployment"
+  type        = string
+}

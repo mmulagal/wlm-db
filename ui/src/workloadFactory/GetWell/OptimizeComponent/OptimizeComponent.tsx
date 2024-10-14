@@ -37,7 +37,7 @@ const OptimizeComponent = ({ text, value, image, isComingSoon }: OptimizeCompone
 
                 {!isComingSoon && (
                     <div className={styles.bottomTextSection}>
-                        <DsTypography variant="Regular_14">Optimized configuration:</DsTypography>
+                        <DsTypography variant="Regular_14">Optimized configurations:</DsTypography>
                         {!loading && <DsTypography variant="Semibold_14">6 out of 11</DsTypography>}
                         {loading && <DsTypography variant="Semibold_14">0 out of X</DsTypography>}
                     </div>

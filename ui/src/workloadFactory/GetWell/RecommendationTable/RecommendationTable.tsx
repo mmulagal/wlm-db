@@ -7,20 +7,13 @@ import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 import Tag from '../../../common/Tag/Tag';
 
-const RecommendationTable = ({ tableData, isLoading }: any) => {
+const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) => {
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
             Header: 'Configuration',
             accessor: 'configuration',
-            width: '16%',
-            isSortable: true
-        },
-        {
-            id: '2',
-            Header: 'Value',
-            accessor: 'value',
-            width: '14%',
+            width: '18%',
             isSortable: true
         },
         {
@@ -95,7 +88,7 @@ const RecommendationTable = ({ tableData, isLoading }: any) => {
             id: '6',
             Header: '',
             accessor: 'recommendation',
-            width: '28%',
+            width: '40%',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
@@ -124,15 +117,17 @@ const RecommendationTable = ({ tableData, isLoading }: any) => {
                                     {'View recommendations'}
                                 </DsTypography>
                             </div>
-                            <div>
-                                <DsButton
-                                    variant="secondary"
-                                    onClick={() => {}}
-                                    isDisabled={rowData?.status === 'Not optimized' ? false : true}
-                                >
-                                    Optimize
-                                </DsButton>
-                            </div>
+                            {!optimizePrintState && (
+                                <div>
+                                    <DsButton
+                                        variant="secondary"
+                                        onClick={() => {}}
+                                        isDisabled={rowData?.status === 'Not optimized' ? false : true}
+                                    >
+                                        Optimize
+                                    </DsButton>
+                                </div>
+                            )}
                         </div>
                     </>
                 );

@@ -1,5 +1,5 @@
 .storageCardComponent {
-    height: 125px;
+    height: 88px;
     box-shadow: 2px 2px 6px var(--grey-15);
     background-color: var(--content-background);
     padding: 16px 40px;
@@ -24,6 +24,10 @@
                 left: -4px;
             }
         }
+    }
+
+    .firstSection {
+        width: 248px;
     }
 
     .thirdSection {

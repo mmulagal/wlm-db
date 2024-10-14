@@ -4,6 +4,7 @@ import DatabaseHomePage from '../DatabaseHomePage';
 import {
     BlueXPListeners,
     Button,
+    DsBlueXpMenu,
     DsTypography,
     Popover,
     SelectField,
@@ -21,17 +22,13 @@ import {
     getCurrentDateTime,
     handleURL,
     regionsSort,
-    resetDBHomePageState
+    resetDBHomePageState,
+    setTabValue
 } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as BlueXPDatabase } from '../../../assets/blueXPDatabase.svg';
-import { ReactComponent as ExternalLink } from '../../../assets/ic_external_link.svg';
-import { ReactComponent as ExternalLinkWhite } from '../../../assets/ic_external_link_white.svg';
 import { ReactComponent as Close } from '../../../assets/ic_close.svg';
-import { ReactComponent as RSS } from '../../../assets/ic_rss.svg';
-import { ReactComponent as RSS_White } from '../../../assets/ic_rss_white.svg';
-import { ReactComponent as Menu } from '../../../assets/ic_menu.svg';
 import { useDispatch } from 'react-redux';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
@@ -72,7 +69,6 @@ import { updateRefreshBlocked } from '../../../store/authSlice';
 import SavingsCalculatorManualApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorManualAPI';
 import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice';
 import { useNavigate } from 'react-router-dom';
-import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -85,7 +81,6 @@ const HeaderComponent = ({ tab }: Tab) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
-    const [menuOpenedRow, setOpenedRow] = useState<null | boolean>(null);
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
@@ -101,7 +96,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
-    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+
     const toShowPostgress = localStorage.getItem('postgress');
 
     HeaderComponentApi();
@@ -113,16 +108,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     SandboxApis();
 
     useEffect(() => {
-        let tabValue = '';
-        if (tab === WLF_TABS.INVENTORY) {
-            tabValue = WLF_TABS.INVENTORY;
-        } else if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
-            tabValue = WLF_TABS.EXPLORE_SAVINGS_EBS;
-        } else if (tab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-            tabValue = WLF_TABS.EXPLORE_SAVINGS_FsxW;
-        } else {
-            tabValue = selectedHeaderTab;
-        }
+        let tabValue = setTabValue(tab, selectedHeaderTab);
+
         setTabInfo(tabValue);
         dispatch(setSelectedHeaderTab(tabValue));
     }, [tab]);
@@ -367,37 +354,6 @@ const HeaderComponent = ({ tab }: Tab) => {
         }
     };
 
-    const menuItems = () => {
-        return [
-            {
-                id: 'links',
-                displayName: 'Links'
-            },
-            {
-                id: 'workLoadFactoryCredentials',
-                displayName: 'Workload Factory credentials'
-            },
-            {
-                id: 'apiHub',
-                displayName: 'API Hub',
-                tagAdded: true,
-                tag: isDarkTheme ? <ExternalLinkWhite /> : <ExternalLink />
-            },
-            {
-                id: 'monitoringGitHubRepository',
-                displayName: 'Monitoring GitHub repository',
-                tagAdded: true,
-                tag: isDarkTheme ? <ExternalLinkWhite /> : <ExternalLink />
-            },
-            {
-                id: 'subscribeToRss',
-                displayName: 'Subscribe to RSS',
-                tagAdded: true,
-                tag: isDarkTheme ? <RSS_White /> : <RSS />
-            }
-        ];
-    };
-
     //Job monitoring select drop down
     //Function to generate the options for Select Field for License
     const generateSelectFieldOptions = useMemo<optionType[]>((): optionType[] => {
@@ -631,77 +587,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         </div>
 
                         {!isWorkloadFactory && (
-                            <div
-                                className={
-                                    isDarkTheme ? `${styles.thirdRow} ${styles.darkThemeThirdRow}` : styles.thirdRow
-                                }
-                            >
-                                <Menu />
-                                <div className={styles.menuPopOverHide}>
-                                    <MenuPopover
-                                        isMenuOpen={menuOpenedRow === true}
-                                        menuItems={menuItems()}
-                                        toggleMenu={(toggleType: string, menuId: string) => {
-                                            if (toggleType === 'close') {
-                                                setOpenedRow(null);
-                                            } else if (toggleType === 'open') {
-                                                setOpenedRow(true);
-                                            } else if (toggleType === 'selectedOption') {
-                                                setOpenedRow(null);
-
-                                                switch (menuId) {
-                                                    case 'links':
-                                                        postBlueXPMessage({
-                                                            type: BlueXPListeners.navigate,
-                                                            payload: { pathname: '../fsxhome/links', replace: true }
-                                                        });
-
-                                                        break;
-                                                    case 'workLoadFactoryCredentials':
-                                                        postBlueXPMessage({
-                                                            type: BlueXPListeners.navigate,
-                                                            payload: {
-                                                                pathname: '../fsxhome/credentials',
-                                                                replace: true
-                                                            }
-                                                        });
-
-                                                        break;
-                                                    case 'apiHub':
-                                                        let url = apiDOCURL();
-                                                        //@ts-ignore
-                                                        window.open(url, '_blank', 'noopener').focus();
-                                                        break;
-
-                                                        break;
-                                                    case 'monitoringGitHubRepository':
-                                                        //@ts-ignore
-                                                        window
-                                                            .open(
-                                                                'https://github.com/NetApp/FSx-ONTAP-samples-scripts/tree/main/Monitoring',
-                                                                '_blank',
-                                                                'noopener'
-                                                            )
-                                                            .focus();
-                                                        break;
-                                                    case 'subscribeToRss':
-                                                        //@ts-ignore
-                                                        window
-                                                            .open(
-                                                                'https://docs.netapp.com/us-en/workload-relnotes/feed.xml',
-                                                                '_blank',
-                                                                'noopener'
-                                                            )
-                                                            .focus();
-
-                                                        break;
-                                                }
-                                            }
-                                        }}
-                                        CustomMenu={undefined}
-                                        disabledText={undefined}
-                                    />
-                                </div>
+                            <div className={styles.thirdRow}>
+                                <DsBlueXpMenu className="hamburgerMenu" />
                             </div>
                         )}
                     </div>
