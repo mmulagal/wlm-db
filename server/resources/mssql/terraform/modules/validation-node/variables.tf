@@ -26,6 +26,7 @@ variable "ec2_role_name" { # deployment_name
 variable "is_custom_ami" {
   description = "Flag to indicate whether a custom AMI is used"
   type        = string
+  default     = "false"
 }
 
 variable "key_pair_name" {

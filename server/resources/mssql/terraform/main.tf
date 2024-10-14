@@ -98,7 +98,6 @@ module "validation-node2" {
   subnet_id                             = var.private_subnet2_id
   dns_ip_addresses                      = var.dns_ip_addresses
   ec2_role_name                         = var.deployment_name
-  is_custom_ami                         = var.is_custom_ami
   key_pair_name                         = var.key_pair_name
   perform_ad_check                      = "false"
   domain_dns_name                       = var.domain_dns_name
@@ -273,8 +272,8 @@ module "fci_sql-node1" {
   ontap_security_group_id        = local.new_ontap_fsx ? module.fsxn_fci[0].fsxn_security_group_id : var.ontap_security_group_id
   mssql_media_bucket_name        = var.mssql_media_bucket_name
   mssql_media_path_key           = var.mssql_media_path_key
-  sql_fsx_server_net_bios_name   = element(split(",", var.node_net_bios_names), 0)
-  sql_fsx_server_net_bios_name_2 = element(split(",", var.node_net_bios_names), 1)
+  sql_fsx_server_net_bios_name   = local.sql_fsx_server_net_bios_name
+  sql_fsx_server_net_bios_name_2 = local.sql_fsx_server_net_bios_name_2
   workload_instance_type         = var.workload_instance_type
   sql_node_name                  = "SQL-Node-1"
   operating_system               = local.operating_system
@@ -311,7 +310,7 @@ module "fci_sql-node2" {
   sql_svm_name               = var.sql_svm_name
   fsx_data_volume_name       = var.fsx_data_volume_name
   fsx_log_volume_name        = var.fsx_log_volume_name
-  fsx_file_system_id         = local.existing_ontap_fsx ? var.fsx_file_system_id : module.fsxn_fci.fsx_fs_logical_id // may be the output of the fsx if its new
+  fsx_file_system_id         = local.existing_ontap_fsx ? var.fsx_file_system_id : module.fsxn_fci[0].fsx_fs_logical_id // may be the output of the fsx if its new
   fsx_temp_db_volume_name    = var.fsx_temp_db_volume_name
   fsx_data_lun_size          = tostring(var.fsx_data_lun_size)
   sql_igroup_name            = var.sql_igroup_name
@@ -326,16 +325,18 @@ module "fci_sql-node2" {
   sql_node_aws_location          = var.aws_location
   ebs_volume_size                = var.ebs_volume_size
   domain_member_sg_id            = var.domain_member_sg_id
-  ontap_security_group_id        = local.new_ontap_fsx ? module.fsxn_fci.fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id        = local.new_ontap_fsx ? module.fsxn_fci[0].fsxn_security_group_id : var.ontap_security_group_id
   mssql_media_bucket_name        = var.mssql_media_bucket_name
   mssql_media_path_key           = var.mssql_media_path_key
   workload_instance_type         = var.workload_instance_type
   sql_node_name                  = "SQL-Node-2"
   operating_system               = local.operating_system
 
-  private_subnet_id                     = var.private_subnet2_id
-  route_table_id                        = var.route_table2_id
-  sql_fsx_server_net_bios_name          = element(split(",", var.node_net_bios_names), 1)
+  private_subnet_id              = var.private_subnet2_id
+  route_table_id                 = var.route_table2_id
+  sql_fsx_server_net_bios_name   = local.sql_fsx_server_net_bios_name
+  sql_fsx_server_net_bios_name_2 = local.sql_fsx_server_net_bios_name_2
+
   fsx_quorum_volume_name                = var.fsx_quorum_volume_name
   sql_fsx_ws_fc_name                    = var.sql_fsx_ws_fc_name
   sql_fsx_fci_name                      = var.sql_fsx_fci_name

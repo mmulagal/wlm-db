@@ -34,67 +34,273 @@ output "policy_id" {
 
 
 # output of sql node
-# output "sql_node_instance_id" {
-#   description = "The ID of the SQL node instance"
-#   value       = module.ec2.sql_node_instance_id
-# }
+output "standalone_sql_node_instance_id" {
+  description = "The ID of the standalone SQL Node instance"
+  value       = length(module.standalone-sql-node) > 0 ? module.standalone-sql-node[0].sql_node_instance_id : null
+}
 
-# output "sql_node_instance_name" {
-#   description = "The name of the SQL node instance"
-#   value       = module.ec2.sql_node_instance_name
-# }
+output "standalone_sql_node_private_ip" {
+  description = "The private IP of the standalone SQL Node instance"
+  value       = length(module.standalone-sql-node) > 0 ? module.standalone-sql-node[0].sql_node_private_ip : null
+}
 
-# output "sql_node_private_ip" {
-#   description = "The private IP address of the SQL node instance"
-#   value       = module.ec2.sql_node_private_ip
-# }
+output "standalone_sql_node_instance_name" {
+  description = "The name of the standalone SQL Node instance"
+  value       = length(module.standalone-sql-node) > 0 ? module.standalone-sql-node[0].sql_node_instance_name : null
+}
 
-# output "sql_workload_security_group_id" {
-#   description = "The ID of the workload security group"
-#   value       = module.ec2.sql_workload_security_group_id
-# }
+output "sql_node1_instance_id" {
+  description = "The ID of the SQL Node 1 instance"
+  value       = length(module.fci_sql-node1) > 0 ? module.fci_sql-node1[0].sql_node_instance_id : null
+}
 
-# output "sql_workload_security_group_arn" {
-#   description = "The ARN of the workload security group"
-#   value       = module.ec2.sql_workload_security_group_arn
-# }
+output "sql_node1_private_ip" {
+  description = "The private IP of the SQL Node 1 instance"
+  value       = length(module.fci_sql-node1) > 0 ? module.fci_sql-node1[0].sql_node_private_ip : null
+}
+
+output "sql_node1_instance_name" {
+  description = "The name of the SQL Node 1 instance"
+  value       = length(module.fci_sql-node1) > 0 ? module.fci_sql-node1[0].sql_node_instance_name : null
+}
+
+output "sql_node2_instance_id" {
+  description = "The ID of the SQL Node 2 instance"
+  value       = length(module.fci_sql-node2) > 0 ? module.fci_sql-node2[0].sql_node_instance_id : null
+}
+
+output "sql_node2_private_ip" {
+  description = "The private IP of the SQL Node 2 instance"
+  value       = length(module.fci_sql-node2) > 0 ? module.fci_sql-node2[0].sql_node_private_ip : null
+}
+
+output "sql_node2_instance_name" {
+  description = "The name of the SQL Node 2 instance"
+  value       = length(module.fci_sql-node2) > 0 ? module.fci_sql-node2[0].sql_node_instance_name : null
+}
 
 # output of fsx node
-# output "fsx_fs_logical_id" {
-#   description = "Logical ID of the FSx for ONTAP file system"
-#   value       = module.fsxn.fsx_fs_logical_id
-# }
+# For standalone
+output "fsx_fs_standalone_logical_id" {
+  description = "Logical ID of the FSx for ONTAP file system"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_fs_logical_id : null
+}
 
-# output "fsx_svm_logical_id" {
-#   description = "Logical ID of the storage virtual machine"
-#   value       = module.fsxn.fsx_svm_logical_id
-# }
+output "fsx_svm_standalone_logical_id" {
+  description = "Logical ID of the storage virtual machine"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_svm_logical_id : null
+}
 
-# output of validation node
-# output "validation_instance_id" {
-#   description = "The ID of the validation node instance"
-#   value       = module.validation-node.instance_id
-# }
+output "fsx_svm_standalone_arn" {
+  description = "ARN of the storage virtual machine"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_svm_arn : null
+}
 
-# output "validation_instance_public_ip" {
-#   description = "The public IP of the validation node instance"
-#   value       = module.validation-node.instance_public_ip
-# }
+output "fsx_svm_standalone_id" {
+  description = "System generated ID of the storage virtual machine"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_svm_id : null
+}
 
-# output "validation_instance_private_ip" {
-#   description = "The private IP of the validation node instance"
-#   value       = module.validation-node.instance_private_ip
-# }
+output "fsx_svm_standalone_uuid" {
+  description = "System generated UUID of the storage virtual machine"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_svm_uuid : null
+}
 
-# output "validation_instance_state" {
-#   description = "The state of the validation node instance"
-#   value       = module.validation-node.instance_state
-# }
+output "fsx_fs_standalone_resource_arn" {
+  description = "ARN of the FSx for ONTAP file system"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_fs_resource_arn : null
+}
 
-# output "validation_instance_name" {
-#   description = "The name of the validation instance"
-#   value       = module.validation-node.instance_name
-# }
+output "fsx_data_volume_standalone_logical_id" {
+  description = "Logical ID of the FSx for ONTAP data volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_data_volume_logical_id : null
+}
+
+output "fsx_data_volume_standalone_arn" {
+  description = "ARN of the FSx for ONTAP data volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_data_volume_arn : null
+}
+
+output "fsx_data_volume_standalone_id" {
+  description = "System generated ID of volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_data_volume_id : null
+}
+
+output "fsx_data_volume_standalone_uuid" {
+  description = "System generated UUID of volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_data_volume_uuid : null
+}
+
+output "fsx_log_volume_standalone_logical_id" {
+  description = "Logical ID of the FSx for ONTAP log volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_log_volume_logical_id : null
+}
+
+output "fsx_log_volume_standalone_arn" {
+  description = "ARN of the FSx for ONTAP log volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_log_volume_arn : null
+}
+
+output "fsx_log_volume_standalone_id" {
+  description = "System generated ID of log volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_log_volume_id : null
+}
+
+output "fsx_log_volume_standalone_uuid" {
+  description = "System generated UUID of log volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_log_volume_uuid : null
+}
+
+output "fsx_cluster_volume_standalone_logical_id" {
+  description = "Logical ID of the FSx for ONTAP cluster volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_cluster_volume_logical_id : "Not Created"
+}
+
+output "fsx_cluster_volume_standalone_arn" {
+  description = "ARN of the FSx for ONTAP cluster volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_cluster_volume_arn : "Not Created"
+}
+
+output "fsx_cluster_volume_standalone_id" {
+  description = "System generated ID of cluster volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_cluster_volume_id : "Not Created"
+}
+
+output "fsx_cluster_volume_standalone_uuid" {
+  description = "System generated UUID of cluster volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_cluster_volume_uuid : "Not Created"
+}
+
+output "fsx_temp_dp_volume_standalone_logical_id" {
+  description = "Logical ID of the FSx for ONTAP temp db volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_temp_dp_volume_logical_id : null
+}
+
+output "fsx_temp_dp_volume_standalone_arn" {
+  description = "ARN of the FSx for ONTAP temp db volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_temp_dp_volume_arn : null
+}
+
+output "fsx_temp_dp_volume_standalone_id" {
+  description = "System generated ID of temp db volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_temp_dp_volume_id : null
+}
+
+output "fsx_temp_dp_volume_standalone_uuid" {
+  description = "System generated UUID of temp dp volume"
+  value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_temp_dp_volume_uuid : null
+}
+
+# For FCI
+output "fsx_fs_fci_logical_id" {
+  description = "Logical ID of the FSx for ONTAP file system"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_fs_logical_id : null
+}
+
+output "fsx_svm_fci_logical_id" {
+  description = "Logical ID of the storage virtual machine"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_svm_logical_id : null
+}
+
+output "fsx_svm_fci_arn" {
+  description = "ARN of the storage virtual machine"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_svm_arn : null
+}
+
+output "fsx_svm_fci_id" {
+  description = "System generated ID of the storage virtual machine"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_svm_id : null
+}
+
+output "fsx_svm_fci_uuid" {
+  description = "System generated UUID of the storage virtual machine"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_svm_uuid : null
+}
+
+output "fsx_fs_fci_resource_arn" {
+  description = "ARN of the FSx for ONTAP file system"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_fs_resource_arn : null
+}
+
+output "fsx_data_volume_fci_logical_id" {
+  description = "Logical ID of the FSx for ONTAP data volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_data_volume_logical_id : null
+}
+
+output "fsx_data_volume_fci_arn" {
+  description = "ARN of the FSx for ONTAP data volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_data_volume_arn : null
+}
+
+output "fsx_data_volume_fci_id" {
+  description = "System generated ID of volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_data_volume_id : null
+}
+
+output "fsx_data_volume_fci_uuid" {
+  description = "System generated UUID of volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_data_volume_uuid : null
+}
+
+output "fsx_log_volume_fci_logical_id" {
+  description = "Logical ID of the FSx for ONTAP log volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_log_volume_logical_id : null
+}
+
+output "fsx_log_volume_fci_arn" {
+  description = "ARN of the FSx for ONTAP log volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_log_volume_arn : null
+}
+
+output "fsx_log_volume_fci_id" {
+  description = "System generated ID of log volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_log_volume_id : null
+}
+
+output "fsx_log_volume_fci_uuid" {
+  description = "System generated UUID of log volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_log_volume_uuid : null
+}
+
+output "fsx_cluster_volume_fci_logical_id" {
+  description = "Logical ID of the FSx for ONTAP cluster volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_cluster_volume_logical_id : "Not Created"
+}
+
+output "fsx_cluster_volume_fci_arn" {
+  description = "ARN of the FSx for ONTAP cluster volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_cluster_volume_arn : "Not Created"
+}
+
+output "fsx_cluster_volume_fci_id" {
+  description = "System generated ID of cluster volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_cluster_volume_id : "Not Created"
+}
+
+output "fsx_cluster_volume_fci_uuid" {
+  description = "System generated UUID of cluster volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_cluster_volume_uuid : "Not Created"
+}
+
+output "fsx_temp_dp_volume_fci_logical_id" {
+  description = "Logical ID of the FSx for ONTAP temp db volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_temp_dp_volume_logical_id : null
+}
+
+output "fsx_temp_dp_volume_fci_arn" {
+  description = "ARN of the FSx for ONTAP temp db volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_temp_dp_volume_arn : null
+}
+
+output "fsx_temp_dp_volume_fci_id" {
+  description = "System generated ID of temp db volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_temp_dp_volume_id : null
+}
+
+output "fsx_temp_dp_volume_fci_uuid" {
+  description = "System generated UUID of temp dp volume"
+  value       = length(module.fsxn_fci) > 0 ? module.fsxn_fci[0].fsx_temp_dp_volume_uuid : null
+}
 
 output "absolute_path" {
   value = abspath(path.root)

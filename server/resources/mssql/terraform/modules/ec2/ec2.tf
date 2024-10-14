@@ -3,6 +3,7 @@ locals {
   log_feature_enabled = var.enable_cloudwatch_log_feature == true ? "true" : "false"
   group_set           = local.adsg_not_selected ? [var.workload_security_group_id, var.ontap_security_group_id] : [var.workload_security_group_id, var.ontap_security_group_id, var.domain_member_sg_id]
   node_type           = var.sql_node_name == "SQL-Node-1" ? "Primary" : "Secondary"
+  tagName             = (var.sql_node_name == "SQL-Node" || var.sql_node_name == "SQL-Node-1") ? var.sql_fsx_server_net_bios_name : var.sql_fsx_server_net_bios_name_2
 
   is_workload_security_group_id_empty            = var.is_standalone == false && var.workload_security_group_id == "" ? "workload_security_group_id is empty. " : ""
   is_mssql_media_bucket_name_empty               = var.is_standalone == false && var.mssql_media_bucket_name == "" ? "mssql_media_bucket_name is empty. " : ""
@@ -69,7 +70,7 @@ resource "aws_network_interface" "sql_node_ni" {
   security_groups   = local.group_set
 
   tags = {
-    Name          = var.sql_fsx_server_net_bios_name
+    Name          = local.tagName
     SQLServerName = var.sql_server_name
   }
 }
@@ -101,7 +102,7 @@ resource "aws_instance" "sql_node" {
 
   tags = merge(
     {
-      Name = var.sql_fsx_server_net_bios_name
+      Name = local.tagName
     },
     var.is_standalone ? {} : { FCIName = var.sql_fsx_fci_name, FCIRole = local.node_type }
   )

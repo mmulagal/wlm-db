@@ -18,7 +18,7 @@ locals {
 }
 
 resource "aws_iam_instance_profile" "validation_instance_profile" {
-  name = "${var.deployment_name}_validation_instance_profile"
+  name = "${var.deployment_name}_${var.validation_node_name}_validation_instance_profile"
   role = var.ec2_role_name
 }
 
@@ -27,7 +27,7 @@ data "aws_vpc" "selected" {
 }
 
 resource "aws_security_group" "domain_member_sg" {
-  name        = "${var.deployment_name}_domain_member_sg"
+  name        = "${var.deployment_name}_${var.validation_node_name}_domain_member_sg"
   description = "Domain Members"
   vpc_id      = var.vpc_id
 

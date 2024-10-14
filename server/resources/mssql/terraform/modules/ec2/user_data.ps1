@@ -77,7 +77,7 @@ try {
   
   Invoke-WebRequest -Uri $SqlNodeInitializationS3Url -OutFile "$ScriptDir\Sql-Instance-Initializer.ps1"  -ErrorAction Stop
 
-  $IsStandaloneString = if ($IsStandalone) { "1" } else { "0" }
+  $IsStandaloneString = if ($IsStandalone -eq "true") { "1" } else { "0" }
 
   if ($IsStandalone -eq $true) {
     $Command = "$ScriptDir\Sql-Instance-Initializer.ps1 -Region '$Region' -LogFeatureEnabled '$LogFeatureEnabled' -DeploymentName '$DeploymentName' -SqlServerName '$SqlServerName' -SqlSvmName '$SqlSvmName' -FsxDataVolumeName '$FsxDataVolumeName' -FsxLogVolumeName '$FsxLogVolumeName' -FsxFileSystemId '$FsxFileSystemId' -FsxTempDbVolumeName '$FsxTempDbVolumeName' -FsxDataLunSize '$FsxDataLunSize' -SqlIgroupName '$SqlIgroupName' -FsxVolumeSnapshotPolicy '$FsxVolumeSnapshotPolicy' -AdDnsIpAddresses '$AdDnsIpAddresses' -DomainDnsName '$DomainDnsName' -DomainAdminUser '$DomainAdminUser' -SqlAdminAccounts '$SqlAdminAccounts' -SqlCollation '$SqlCollation' -SqlNodeName '$SqlNodeName' -IsStandalone $IsStandaloneString -WorkloadSecurityGroupId '$WorkloadSecurityGroupId' -MssqlMediaBucketName '$MssqlMediaBucketName' -AmiId '$AmiId'"

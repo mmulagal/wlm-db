@@ -131,11 +131,6 @@ variable "domain_member_sg_id" {
   description = "The ID of the domain member security group"
   type        = string
   default     = ""
-
-  validation {
-    condition     = length(var.domain_member_sg_id) > 0
-    error_message = "The domain_member_sg_id value must not be empty."
-  }
 }
 
 variable "tf_deploy_role_name" {
@@ -509,10 +504,6 @@ variable "fsx_disk_iops" {
   }
 }
 
-variable "file_system_encryption_key_id" {
-  description = "The ID of the file system encryption key"
-  type        = string
-}
 
 variable "ontap_security_group_id" {
   description = "The ID of the ONTAP security group"
