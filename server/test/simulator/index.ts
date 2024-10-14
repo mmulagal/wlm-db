@@ -1,4 +1,5 @@
 import nock from 'nock';
+import { CLOUD_MANAGER_ENDPOINT } from '../../src/utils/consts';
 
 async function initiateSimulator() {
     nock.disableNetConnect();
@@ -8,10 +9,9 @@ async function initiateSimulator() {
             host.includes('bedrock-runtime') ||
             host.includes('sts.') ||
             host.includes('pricing.') ||
-            host.includes('bluexp.') ||
-            host.includes('secretsmanager.')
-    );
-
+            host.includes('secretsmanager.') || 
+            host === CLOUD_MANAGER_ENDPOINT
+    )
     await import('./scopes/jwt-scope');
     await import('./scopes/cloud-manager/cloud-manager-tenancy-scope');
     await import('./scopes/aws/ec2-scope');

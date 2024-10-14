@@ -12,7 +12,7 @@ const serviceTokenResponse = {
     token_type: 'Bearer'
 };
 
-nock(`${CLOUD_MANAGER_ENDPOINT}`)
+nock(`${CLOUD_MANAGER_ENDPOINT}`, { allowUnmocked: process.env.NODE_ENV === 'demo' })
     .persist(true)
     .post(/^\/tenancy\/service-resource$/)
     .reply(() => [200, registerServiceResponse])
