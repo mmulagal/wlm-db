@@ -30,10 +30,11 @@ async function initiateSimulator() {
     await import('./scopes/cloud-manager/cloud-manager-notification-scope');
     await import('./scopes/cloud-manager/workload-factory-credentials-scope');
     await import('./scopes/cloud-manager/wlmdb-scope');
-    await import('./scopes/cloud-manager/workload-factory-auth-scope');
+  
 
     if (process.env.NODE_ENV === 'simulator') {
         // local development and testing environment
+        await import('./scopes/cloud-manager/workload-factory-auth-scope');
         await import('./scopes/aws/secrets-manager-scope');
         await import('./scopes/cloud-manager/marketing-scope');
         await import('./scopes/cloud-manager/cloud-manager-audit-scope');
