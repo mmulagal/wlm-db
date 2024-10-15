@@ -28,7 +28,7 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
 
                     <div className={styles.optimizeText}>
                         <DsTypography variant="Regular_20" style={{ lineHeight: 'unset' }}>
-                            {value}
+                            {!isComingSoon ? value + '%' : value}
                         </DsTypography>
                         {/* <DsTypography variant="Regular_14">Optimized</DsTypography> */}
                     </div>

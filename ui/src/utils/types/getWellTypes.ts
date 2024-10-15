@@ -1,13 +1,13 @@
 export interface GetWellSliceInterface {
     optimizePageLoading: boolean;
-    driftAssessmentData: any;
+    driftAssessmentData: AssessmentResponseInterface | null;
     selectedHostname: string;
     selectedResourceId: string;
     selectedDatabaseInstance: string;
     selectedDatabaseInstanceName: string;
     cardData: any;
-    osConfigTableData: any;
-    ontapConfigTableData: any;
+    osConfigTableData: PerConfigInterface[] | null;
+    ontapConfigTableData: PerConfigInterface[] | null;
     optimizationBreakDown: {
         storage?: CountBreakDown;
         total?: CountBreakDown;
@@ -76,7 +76,7 @@ export interface GwPerConfigCardInterface {
     recommendation?: {
         title: string;
         description: string;
-        values?: string[];
+        values?: string[] | undefined;
     };
     tags: string[];
 }

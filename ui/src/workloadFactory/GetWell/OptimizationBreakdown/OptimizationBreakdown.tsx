@@ -25,7 +25,7 @@ const OptimizationBreakdown = () => {
             <div className={styles.mainSection}>
                 <div className={styles.leftSide}>
                     <OptimizeComponent
-                        value={(optimizationBreakDown?.storage?.percent || 0) + '%'}
+                        value={optimizationBreakDown?.storage?.percent || 0}
                         data={optimizationBreakDown?.storage}
                         text={'Storage'}
                         image={<Storage />}
