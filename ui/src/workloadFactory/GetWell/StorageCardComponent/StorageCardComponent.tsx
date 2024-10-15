@@ -2,7 +2,6 @@ import { DsButton, DsFlashingDotsLoader, DsTypography } from '@netapp/design-sys
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
-import { ReactComponent as OverProvisioned } from '../../../assets/over-provisioned.svg';
 import styles from './StorageCardComponent.module.scss';
 import GetWellChart from './GetWellChart/GetWellChart';
 import useResize from '../../../common/hooks/useResize';
@@ -15,7 +14,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState }: any) => {
         } else if (value === 'Under-provisioned') {
             return <UnderProvisioned />;
         } else if (value === 'Over-provisioned') {
-            return <OverProvisioned />;
+            return (
+                <div style={{ transform: 'rotate(180deg)' }}>
+                    <UnderProvisioned />
+                </div>
+            );
         } else {
             return <NotActive />;
         }
