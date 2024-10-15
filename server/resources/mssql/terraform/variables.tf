@@ -522,11 +522,6 @@ variable "file_system_encryption_key_id" {
 variable "ontap_security_group_id" {
   description = "The ID of the ONTAP security group"
   type        = string
-
-  validation {
-    condition     = length(var.ontap_security_group_id) > 0
-    error_message = "The ontap_security_group_id value must not be empty."
-  }
 }
 
 variable "fsx_volume_snapshot_policy" {
