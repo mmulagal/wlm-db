@@ -30,7 +30,17 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.post(API_PATH_STORAGE_SAVINGS, { schema: getStorageSavingsSchema }, async (request, reply) => {
+    server.post(`${API_PATH_STORAGE_SAVINGS}/ebs`, { schema: getStorageSavingsSchema }, async (request, reply) => {
+        const {
+            params: { accountId, credentialsId, region, instanceId },
+            body
+        } = request;
+
+        const response = await performStorageSavingsCalculations(accountId, credentialsId, region, instanceId, body);
+        return reply.send(response);
+    });
+
+    server.post(`${API_PATH_STORAGE_SAVINGS}/fsxw`, { schema: getStorageSavingsSchema }, async (request, reply) => {
         const {
             params: { accountId, credentialsId, region, instanceId },
             body
@@ -41,7 +51,7 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
     });
 
     server.post(
-        `${API_PATH_STORAGE_SAVINGS}/calculations`,
+        `${API_PATH_STORAGE_SAVINGS}/ebs/calculations`,
         { schema: getStorageSavingsCalculationMetricsSchema },
         async (request, reply) => {
             const {
@@ -61,7 +71,27 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
     );
 
     server.post(
-        '/v1/regions/:region/manual-storage-savings',
+        `${API_PATH_STORAGE_SAVINGS}/fsxw/calculations`,
+        { schema: getStorageSavingsCalculationMetricsSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region, instanceId },
+                body
+            } = request;
+
+            const response = await getStorageSavingsCalculationMetrics(
+                accountId,
+                credentialsId,
+                region,
+                instanceId,
+                body
+            );
+            return reply.send(response);
+        }
+    );
+
+    server.post(
+        '/v1/regions/:region/manual-storage-savings/ebs',
         { schema: getManualStorageSavingsSchema },
         async (request, reply) => {
             const {
@@ -75,7 +105,35 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
     );
 
     server.post(
-        '/v1/regions/:region/manual-storage-savings/calculations',
+        '/v1/regions/:region/manual-storage-savings/fsxw',
+        { schema: getManualStorageSavingsSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, region },
+                body
+            } = request;
+
+            const response = await performManualModeStorageSavingsCalculations(accountId, region, body);
+            return reply.send(response);
+        }
+    );
+
+    server.post(
+        '/v1/regions/:region/manual-storage-savings/ebs/calculations',
+        { schema: getManualStorageSavingsCalculationMetricsSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, region },
+                body
+            } = request;
+
+            const response = await getManualModeStorageSavingsCalculationMetrics(accountId, region, body);
+            return reply.send(response);
+        }
+    );
+
+    server.post(
+        '/v1/regions/:region/manual-storage-savings/fsxw/calculations',
         { schema: getManualStorageSavingsCalculationMetricsSchema },
         async (request, reply) => {
             const {
