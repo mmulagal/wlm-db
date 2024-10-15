@@ -57,6 +57,12 @@ import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/
 import UndetectedHostDialogContentV2 from '../UndetectedHostDialogContent/UndetectedHostDialogContentV2';
 import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecondDialogV2';
 import useResize from '../../../../common/hooks/useResize';
+import {
+    setGwDatabaseInstance,
+    setGwDatabaseInstanceName,
+    setGwHostname,
+    setGwResourceId
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 
 const ManagedHostSubTable = ({
     handleManageInstances
@@ -191,6 +197,19 @@ const ManagedHostSubTable = ({
         dispatch(setSelectedResourceId(targettedHost?.resourceId));
         dispatch(setSelectedDatabaseInstance(targettedDbInstance?.databaseInstanceId));
         dispatch(setSelectedDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
+    };
+
+    const optimizeAction = (rowData: any) => {
+        const updatedState = store.getState();
+        const { inventoryTableData }: any = updatedState.inventoryV2;
+        const targettedHost = inventoryTableData[hostData.resourceId] || inventoryTableData[hostData.ec2InstanceId];
+        const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
+            (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
+        );
+        dispatch(setGwHostname(hostname));
+        dispatch(setGwResourceId(targettedHost?.resourceId));
+        dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
+        dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
     };
 
     const resetDialogValues = () => {
@@ -348,6 +367,10 @@ const ManagedHostSubTable = ({
                     disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                     disableOption = true;
                 }
+                menu.push({
+                    id: 'optimize',
+                    displayName: 'Optimize'
+                });
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
@@ -481,6 +504,12 @@ const ManagedHostSubTable = ({
                                     } else if (toggleType === 'selectedOption') {
                                         menuOpenedRowDetail.current = null;
                                         setOpenedRow(null);
+
+                                        if (menuId === 'optimize') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            optimizeAction(rowData);
+                                        }
 
                                         if (menuId === 'manage') {
                                             handleManageInstances(hostData, [rowData?.databaseInstanceName], false);

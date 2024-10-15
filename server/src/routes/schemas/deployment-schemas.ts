@@ -14,6 +14,8 @@ import {
     FsxAvailableRegionsForThroughputListResponse,
     CollationListResponse,
     CollationListQueryString,
+    PgSqlCloudFormationTemplateRequestBody,
+    PgSqlCloudFormationDeploymentResponse,
     TerraformSetupRequestBody,
     TerraformSetupResponse
 } from '../types/deployment.types';
@@ -53,11 +55,22 @@ const DeploymentSummaryListSchema = {
 const DeployTemplateSchema = {
     ...baseRequest,
     headers: CloudFormationTemplateHeader,
-    summary: 'Deploy CloudFormation template',
-    description: 'Deploy CloudFormation template to provision SQL FCI',
+    summary: 'Deploy CloudFormation template for ms sql',
+    description: 'Deploy CloudFormation template to provision MS SQL',
     body: CloudFormationTemplateRequestBody,
     response: {
         202: CloudFormationDeploymentResponse
+    }
+};
+
+const PgSqlDeployTemplateSchema = {
+    ...baseRequest,
+    headers: CloudFormationTemplateHeader,
+    summary: 'Deploy CloudFormation template for pgsql',
+    description: 'Deploy CloudFormation template to provision PGSQL',
+    body: PgSqlCloudFormationTemplateRequestBody,
+    response: {
+        200: PgSqlCloudFormationDeploymentResponse
     }
 };
 
@@ -123,5 +136,6 @@ export {
     DeploymentSummaryListSchema,
     FsxAvailableRegionsForThroughputSchema,
     CollationListSchema,
+    PgSqlDeployTemplateSchema,
     TerraformSetupSchema
 };

@@ -101,7 +101,9 @@ interface Headers {
 }
 
 await initiateSecrets();
+logger.info('Secrets initiated');
 
+logger.info('Initializing app');
 const app = fastify({
     trustProxy: true,
     genReqId: () => `WLM-DB-${randomize('Aa0', 8)}`,
@@ -325,7 +327,7 @@ const app = fastify({
         }
         return payload;
     });
-
+logger.info('App initiated');
 // Blocking for simulator
 if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && isActiveInstance()) {
     try {
@@ -336,6 +338,7 @@ if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && i
     }
 }
 
+logger.info('Initializing database');
 try {
     initializeDatabase();
     if (isActiveInstance()) {
@@ -344,8 +347,10 @@ try {
 } catch (error) {
     logger.error('Failed to initialize database', error);
 }
-
+logger.info('Database initialized');
 // Initialize cron jobs
+
+logger.info('Initializing cron jobs');
 try {
     if (isActiveInstance()) {
         purgeOlderJobs();
@@ -357,6 +362,7 @@ try {
 } catch (error) {
     logger.error('Failed to initialize cron jobs', error);
 }
+logger.info('Cron jobs initialized');
 
 app.listen({ port, host }, err => {
     if (err) {

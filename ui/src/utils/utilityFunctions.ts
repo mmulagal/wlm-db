@@ -1631,3 +1631,22 @@ export const updateSizeInGib = (data: any): any => {
     }
     return data;
 };
+
+export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
+    switch (tab) {
+        case WLF_TABS.INVENTORY:
+            return WLF_TABS.INVENTORY;
+        case WLF_TABS.EXPLORE_SAVINGS_EBS:
+            return WLF_TABS.EXPLORE_SAVINGS_EBS;
+        case WLF_TABS.EXPLORE_SAVINGS_FsxW:
+            return WLF_TABS.EXPLORE_SAVINGS_FsxW;
+        case WLF_TABS.SANDBOXES:
+            return WLF_TABS.SANDBOXES;
+        case WLF_TABS.EXPLORE_SAVINGS:
+            return WLF_TABS.EXPLORE_SAVINGS;
+        case WLF_TABS.JOB_MONITORING:
+            return WLF_TABS.JOB_MONITORING;
+        default:
+            return selectedHeaderTab;
+    }
+};

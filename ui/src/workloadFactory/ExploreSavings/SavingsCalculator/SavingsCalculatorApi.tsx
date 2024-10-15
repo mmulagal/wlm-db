@@ -4,11 +4,9 @@ import {
     useGetMssqlInstanceDataMutation,
     useGetMssqlInstanceDataV2Mutation,
     useGetStorageSavingsMutation,
-    useGetViewCalculationsMutation,
-    useGetInstanceTypesQuery
+    useGetViewCalculationsMutation
 } from '../../../utils/apiService';
 import {
-    addManualInstanceTypeList,
     setDisableState,
     setGetPartnerHostDetailsLoading,
     setSavingsCalculatorRefresh,
@@ -54,7 +52,6 @@ const SavingsCalculatorApi = () => {
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
-    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
     const [getViewCalculationsApi] = useGetViewCalculationsMutation();
@@ -77,9 +74,6 @@ const SavingsCalculatorApi = () => {
                     partnerInstanceRow[0].ec2InstanceId !== selectedPartnerInstanceId
                 ) {
                     dispatch(setSelectedPartnerInstanceId(partnerInstanceRow[0].ec2InstanceId));
-                    if (!isDemoMode && !isInventoryV2) {
-                        dispatch(setGetPartnerHostDetailsLoading(true));
-                    }
                 }
             }
             setESInstanceData(selectedRow[0], dispatch);
@@ -263,22 +257,13 @@ const SavingsCalculatorApi = () => {
 
         try {
             let result: any;
-            if (isInventoryV2) {
-                result = await getMssqlInstanceDataApiV2({
-                    credentialId: headerSelectedCred?.data?.credentialsId,
-                    regionId: headerSelectedRegion?.label2,
-                    instances: selectedInstanceId,
-                    fields: INSTANCE_API_FIELDS.UNMANAGED_DEFAULT.join(','),
-                    nextToken: ''
-                });
-            } else {
-                result = await getMssqlInstanceDataApi({
-                    credentialId: headerSelectedCred?.data?.credentialsId,
-                    regionId: headerSelectedRegion?.label2,
-                    instances: selectedInstanceId,
-                    nextToken: ''
-                });
-            }
+            result = await getMssqlInstanceDataApiV2({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                instances: selectedInstanceId,
+                fields: INSTANCE_API_FIELDS.UNMANAGED_DEFAULT.join(','),
+                nextToken: ''
+            });
 
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
@@ -320,22 +305,13 @@ const SavingsCalculatorApi = () => {
         dispatch(setGetPartnerHostDetailsLoading(true));
         try {
             let result: any;
-            if (isInventoryV2) {
-                result = await getMssqlInstanceDataApiV2({
-                    credentialId: headerSelectedCred?.data?.credentialsId,
-                    regionId: headerSelectedRegion?.label2,
-                    instances: selectedPartnerInstanceId,
-                    fields: INSTANCE_API_FIELDS.UNMANAGED_DEFAULT.join(','),
-                    nextToken: ''
-                });
-            } else {
-                result = await getMssqlInstanceDataApi({
-                    credentialId: headerSelectedCred?.data?.credentialsId,
-                    regionId: headerSelectedRegion?.label2,
-                    instances: selectedPartnerInstanceId,
-                    nextToken: ''
-                });
-            }
+            result = await getMssqlInstanceDataApiV2({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                instances: selectedPartnerInstanceId,
+                fields: INSTANCE_API_FIELDS.UNMANAGED_DEFAULT.join(','),
+                nextToken: ''
+            });
 
             if (result && !result?.error) {
                 dispatch(setSelectedPartnerHostDetails(result?.data?.items?.[0]));
@@ -349,19 +325,6 @@ const SavingsCalculatorApi = () => {
             dispatch(setGetPartnerHostDetailsLoading(false));
         }
     };
-
-    useEffect(() => {
-        if (!isDemoMode) {
-            if (
-                selectedPartnerInstanceId &&
-                !isInventoryV2 &&
-                headerSelectedCred?.data?.credentialsId &&
-                headerSelectedRegion?.label2
-            ) {
-                getMssqlDataForPartnerNode();
-            }
-        }
-    }, [selectedPartnerInstanceId]);
 
     useEffect(() => {
         dispatch(setStorageSavingsResponse({}));

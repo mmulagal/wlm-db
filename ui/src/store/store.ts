@@ -10,12 +10,12 @@ import {
     jobMonitoringApi,
     policiesApi,
     resourceApi,
-    workloadFactoryResourceApi,
     inventoryApi,
     sandboxApi,
     exploreSavingsApi,
     inventoryApiV2,
-    workloadFactoryResourceApiV2
+    workloadFactoryResourceApiV2,
+    getWellApi
 } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
@@ -34,6 +34,7 @@ import createNewUserSlice from './workloadFactory/createNewDBSlice';
 import sandboxSlice from './workloadFactory/sandboxSlice';
 import exploreSavingsSlice from './workloadFactory/exploreSavingsSlice';
 import createSandboxSlice from './workloadFactory/createSandboxSlice';
+import getWellOptimizeSlice from './workloadFactory/getWellOptimizeSlice';
 // import postgressSlice from './mssql/postgressSlice';
 
 const rootReducer = combineReducers({
@@ -51,7 +52,6 @@ const rootReducer = combineReducers({
     [databaseHomeSlice.name]: databaseHomeSlice.reducer,
     [chatbotSlice.name]: chatbotSlice.reducer,
     [workloadFactoryResourceSlice.name]: workloadFactoryResourceSlice.reducer,
-    [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer,
     [workloadFactoryResourceApiV2.reducerPath]: workloadFactoryResourceApiV2.reducer,
     [jobMonitoringApi.reducerPath]: jobMonitoringApi.reducer,
     [jobMonitoringSlice.name]: jobMonitoringSlice.reducer,
@@ -67,7 +67,9 @@ const rootReducer = combineReducers({
     [sandboxApi.reducerPath]: sandboxApi.reducer,
     [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,
     [createSandboxSlice.reducerPath]: createSandboxSlice.reducer,
-    [exploreSavingsApi.reducerPath]: exploreSavingsApi.reducer
+    [exploreSavingsApi.reducerPath]: exploreSavingsApi.reducer,
+    [getWellApi.reducerPath]: getWellApi.reducer,
+    [getWellOptimizeSlice.name]: getWellOptimizeSlice.reducer
     // [postgressSlice.name]: postgressSlice.reducer
 });
 
@@ -127,7 +129,6 @@ const store = configureStore({
             .concat(configApi.middleware)
             .concat(databaseHomeApi.middleware)
             .concat(chatbotApi.middleware)
-            .concat(workloadFactoryResourceApi.middleware)
             .concat(workloadFactoryResourceApiV2.middleware)
             .concat(jobMonitoringApi.middleware)
             .concat(headersApi.middleware)
@@ -137,6 +138,7 @@ const store = configureStore({
             .concat(inventoryApiV2.middleware)
             .concat(sandboxApi.middleware)
             .concat(exploreSavingsApi.middleware)
+            .concat(getWellApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 

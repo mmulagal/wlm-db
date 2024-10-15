@@ -9,10 +9,7 @@ import {
     addJobsSummaryLoading
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { useLazyGetJobsSummaryQuery } from '../../utils/apiService';
-import {
-    jobStatusPercent,
-    resetDBHomePageState
-} from '../../utils/utilityFunctions';
+import { jobStatusPercent, resetDBHomePageState } from '../../utils/utilityFunctions';
 import {
     getManageAggrCost,
     getManagedAggrProtection,
@@ -23,7 +20,6 @@ import {
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
     const databaseHostsDataV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsData);
-    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const { sandboxSavings } = useAppSelector(state => state.sandbox.getSandboxSavings);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
@@ -80,7 +76,7 @@ const DatabaseHomeApis = () => {
 
     // To have database hosts data in dashboard - V2
     useEffect(() => {
-        if (!isInventoryV2 || !databaseHostsDataV2) {
+        if (!databaseHostsDataV2) {
             return;
         }
 
@@ -98,7 +94,7 @@ const DatabaseHomeApis = () => {
 
     // To have database hosts count data in dashboard - V2
     useEffect(() => {
-        if (!isInventoryV2 || !databaseHostsDataV2) {
+        if (!databaseHostsDataV2) {
             return;
         }
         const hostStatusCount = getManagedHostCount(databaseHostsDataV2, dispatch);

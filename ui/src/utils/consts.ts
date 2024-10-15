@@ -315,7 +315,8 @@ export const WLF_TABS = {
     MANAGED_HOSTS: 'Managed hosts',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     UNDETECTED_HOSTS: 'Undetected hosts',
-    REDIRECT_COMPONENT: 'Redirect Component'
+    REDIRECT_COMPONENT: 'Redirect Component',
+    OPTIMIZE: 'Optimize'
 };
 
 export const DRIVE_LETTER_TYPE = {
@@ -630,4 +631,35 @@ export const EBS_PROTECTED_OPTIONS = {
     PROTECTED: 'Protected',
     UNPROTECTED: 'Unprotected',
     UNKNOWN: 'Unknown'
+};
+
+export const GETWELL_VALUES: any = {
+    optimised: 'Optimized',
+    'not-optimised': 'Not optimized',
+    'under-provisioned': 'Under-provisioned',
+    'over-provisioned': 'Over-provisioned',
+    separate_drive: 'Separate Drive',
+    same_drive: 'Same Drive',
+    critical: 'Critical',
+    warning: 'Warning',
+    none: 'None'
+};
+
+export const GETWELL_CONFIG: any = {
+    'thin-provision': 'Thin provisioning',
+    autosize: 'Autosize',
+    'autosize-mode': 'Autosize-mode',
+    'fractional-reserve': 'Fractional reserve',
+    'snapshot-copy-reserve': 'Snapshot copy reserve',
+    'snapshot-autodelete': 'Snapshot autodelete',
+    'space-mgmt-try-first': 'Space management',
+    'tiering-policy': 'Tiering policy',
+    'tiering-min-cooling-days': 'Tiering min cooling days',
+    'os-type': 'OS type',
+    'space-reservation-enabled': 'Space reservation',
+    'space-allocation-allocated': 'Space allocation',
+    'mpio-iscsi-count': 'Multipath I/O Sessions',
+    'mpio-enabled': 'Multipath I/O Status',
+    'mpio-load-balance-policy': 'Multipath I/O Policy',
+    'ntfs-allocation-size': 'NTFS allocation unit size'
 };

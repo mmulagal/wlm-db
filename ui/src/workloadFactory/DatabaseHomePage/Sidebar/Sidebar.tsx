@@ -1,11 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Typography, SearchInput, Popover, FlashingDotsLoader, Button, useDialog } from '@netapp/design-system';
+import {
+    Typography,
+    SearchInput,
+    Popover,
+    FlashingDotsLoader,
+    Button,
+    useDialog,
+    DsTooltipInfo
+} from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg';
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
-import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import HighlighterWord from '../Highlighter/Highlighter';
@@ -144,7 +151,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     displayName: CODE_VIEWER.SIDEBAR_LOAD_WIZARD
                 },
                 {
-                    id: 'downloadZip',
+                    id: 'downloadTerraFormZip',
                     displayName: CODE_VIEWER.DOWNLOAD_ZIP,
                     disabled: !getTerraformSetupResponseById(openKey) || isTerraformDataLoading ? true : false
                 }
@@ -335,7 +342,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     // To get terraform response
     const getTerraformSetupResponseById = (id: string | undefined) => {
         if (id) {
-            const result = terraformSetupResponse[id];
+            const result = terraformSetupResponse?.[id];
             return result;
         }
     };
@@ -956,6 +963,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                     <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
                                         {dropDownValue}
                                     </Typography>
+                                    {dropDownValue === CODE_VIEWER.TERRAFORM && (
+                                        <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                            {GENERAL.TERRAFORM_CODEBOX_TOOLTIP}
+                                        </DsTooltipInfo>
+                                    )}
                                 </div>
 
                                 {/* <SearchInput onChange={e => setSearchInput(e)} /> */}

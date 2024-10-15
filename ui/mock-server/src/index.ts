@@ -18,6 +18,7 @@ app.use('', routers.chatbot);
 app.use('', routers.createUserDb);
 app.use('', routers.exploreSavings);
 app.use('', routers.inventory);
+app.use('', routers.getwell);
 
 const server = app.listen(process.env.PORT || 8061, () => {
     const { port } = server.address() as AddressInfo;

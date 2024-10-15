@@ -1232,7 +1232,8 @@ async function createCloneDb(
         parentJobId,
         destDetails,
         mountPaths,
-        collation
+        collation,
+        fileSuffix
     );
 
     let status: string = JOBSTATUS.IN_PROGRESS;

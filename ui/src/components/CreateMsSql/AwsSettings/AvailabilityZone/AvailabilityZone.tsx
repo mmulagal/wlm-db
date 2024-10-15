@@ -16,7 +16,6 @@ import {
     setSelectedSubnetNode2
 } from '../../../../store/mssql/mssqlFormSlice';
 import { Subnets } from '../../../../utils/types/mssqlTypes';
-import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const AvailabilityZone = () => {

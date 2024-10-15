@@ -3,7 +3,7 @@ import { ReactComponent as Download } from '@netapp/icons/ic_download.svg';
 import { ReactComponent as Calculate } from '../../../../assets/ic_calculate.svg';
 import { WLF_TABS } from '../../../../utils/consts';
 import styles from './ExportPDF.module.scss';
-import { DsTypography, Popover } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
 
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';

@@ -5,7 +5,6 @@ import { setFsxCredentialStatus, setSelectedHeaderTab, setUnManagedPerfInstanceI
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
-    FSX_DEPLOYMENT_MODE,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
     PARTNER_NODE,

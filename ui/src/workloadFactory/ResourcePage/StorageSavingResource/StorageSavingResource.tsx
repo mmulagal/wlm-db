@@ -1,7 +1,6 @@
 import React from 'react';
 import styles from './StorageSavingResource.module.scss';
 import { DsTypography, FlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
-import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber, formatSize } from '../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';

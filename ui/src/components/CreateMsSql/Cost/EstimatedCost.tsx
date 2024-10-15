@@ -111,7 +111,7 @@ const EstimatedCost = () => {
         return {
             regionCode: updatedStr || '',
             instanceType: instanceTypeName || '',
-            sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent' || '',
+            sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent',
             sqlDeploymentMode: deploymentModel?.value
         };
     };

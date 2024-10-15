@@ -14,6 +14,7 @@ import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
 import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
 import { SELECT_CONFIG } from './appConstants';
+import GetWellMock from '../workloadFactory/GetWell/GetWellMock.json';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -385,27 +386,6 @@ export const databaseHomeApi = createApi({
     }
 });
 
-export const workloadFactoryResourceApi = createApi({
-    reducerPath: 'workloadFactoryResourceApi',
-    baseQuery: dynamicBaseQuery,
-    endpoints: builder => {
-        return {
-            getResourceDetails: builder.query({
-                query: ({ credentialId, region, id }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=serverDetails,topology,storage,performance,usageEstimation,resourceUtilization`
-                })
-            }),
-            getDatabaseList: builder.query({
-                query: ({ credentialId, region, id, fields = false }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/databases${
-                        fields ? '?fields=protection' : ''
-                    }`
-                })
-            })
-        };
-    }
-});
-
 export const workloadFactoryResourceApiV2 = createApi({
     reducerPath: 'workloadFactoryResourceApiV2',
     baseQuery: dynamicBaseQuery,
@@ -542,13 +522,6 @@ export const createUserDbApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getDriveInfo: builder.query({
-                query: ({ credentialId, region, id, forSandbox }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/drive-information${
-                        forSandbox ? '?forSandbox=true' : ''
-                    }`
-                })
-            }),
             getDriveInfoV2: builder.query({
                 query: ({ credentialId, region, id, instanceId, forSandbox }) => ({
                     url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/drive-information${
@@ -561,11 +534,6 @@ export const createUserDbApi = createApi({
                     url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database`,
                     method: 'POST',
                     body: payload
-                })
-            }),
-            getCollationList: builder.query({
-                query: ({ credentialId, region, id }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/collation`
                 })
             }),
             getCollationListV2: builder.query({
@@ -735,25 +703,6 @@ export const sandboxApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getDatabaseHostsForSandbox: builder.query({
-                query: ({ credentialId, region, nextToken = null }) => {
-                    if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,storage&nextToken=${nextToken}`;
-                    } else {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,storage`;
-                    }
-                },
-                transformResponse: (response: any, meta, args) => {
-                    if (response) {
-                        response = {
-                            ...response,
-                            credentialId: args?.credentialId,
-                            regionId: args?.region
-                        };
-                    }
-                    return response;
-                }
-            }),
             getDatabaseHostsForSandboxV2: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
@@ -891,6 +840,25 @@ export const exploreSavingsApi = createApi({
     }
 });
 
+export const getWellApi = createApi({
+    reducerPath: 'getWellApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => {
+        return {
+            getMssqlAssessmentData: builder.mutation({
+                // ToDO : Untill APIs are ready using mock data
+                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
+                    return { data: GetWellMock };
+                }
+                // query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                //     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment`
+                // })
+            })
+        };
+    }
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -939,8 +907,6 @@ export const {
     useGetTerraformSetupMutation
 } = databaseHomeApi;
 
-export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
-
 export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
     workloadFactoryResourceApiV2;
 
@@ -958,13 +924,7 @@ export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetS
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
-export const {
-    useGetDriveInfoQuery,
-    useCreateUserDBMutation,
-    useGetCollationListQuery,
-    useGetDriveInfoV2Query,
-    useGetCollationListV2Query
-} = createUserDbApi;
+export const { useCreateUserDBMutation, useGetDriveInfoV2Query, useGetCollationListV2Query } = createUserDbApi;
 
 export const {
     useLazyGetManagedHostDataQuery,
@@ -995,7 +955,6 @@ export const {
     useUpdateSandboxMutation,
     useSplitSandboxMutation,
     useCheckIntegrityMutation,
-    useGetDatabaseHostsForSandboxQuery,
     useGetDatabaseHostsForSandboxV2Query,
     useLazyGetRollbackSnapshotsQuery
 } = sandboxApi;
@@ -1006,3 +965,5 @@ export const {
     useGetManualStorageSavingsMutation,
     useGetManualViewCalculationsMutation
 } = exploreSavingsApi;
+
+export const { useGetMssqlAssessmentDataMutation } = getWellApi;

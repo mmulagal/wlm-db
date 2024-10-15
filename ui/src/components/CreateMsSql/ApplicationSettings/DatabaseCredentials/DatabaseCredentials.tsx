@@ -127,8 +127,7 @@ const DatabaseCredentials = () => {
                                 error={
                                     !isDBPasswordFilled
                                         ? GENERAL.ACTION_REQUIRED
-                                        : // eslint-disable-next-line react-hooks/rules-of-hooks
-                                          '' || dbPassVal(password)
+                                        : dbPassVal(password)
                                 }
                                 info={tooltipText()}
                                 //@ts-ignore

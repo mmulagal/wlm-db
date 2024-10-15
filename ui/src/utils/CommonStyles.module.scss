@@ -160,3 +160,33 @@
         left: 15%;
     }
 }
+
+.loaderOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 70%;
+    background-color: var(--text-primary);
+    z-index: 3;
+}
+
+.spinnerPlacement {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 4;
+}
+
+.commonBreadCrumb {
+    margin-top: 24px;
+    width: 100%;
+    position: relative;
+    left: 5%;
+
+    [class*='BreadCrumbs_bread-crumbs'] {
+        position: relative;
+        top: -3px;
+    }
+}

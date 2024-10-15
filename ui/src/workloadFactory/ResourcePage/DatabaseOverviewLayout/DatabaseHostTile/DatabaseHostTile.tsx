@@ -10,7 +10,6 @@ const DatabaseHostTile = () => {
     const { resourceLoading, resourceDetails, selectedHostname, selectedDatabaseInstanceName } = useAppSelector(
         state => state.workloadFactoryResource
     );
-    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     return (
         <div className={styles.dbHostTile}>
@@ -23,21 +22,13 @@ const DatabaseHostTile = () => {
                         <Typography
                             variant="Semibold_14"
                             className={styles.textManage}
-                            title={
-                                isInventoryV2
-                                    ? selectedHostname + ' \\ ' + selectedDatabaseInstanceName
-                                    : resourceDetails?.name
-                            }
+                            title={selectedHostname + ' \\ ' + selectedDatabaseInstanceName}
                         >
-                            {isInventoryV2
-                                ? selectedHostname + ' \\ ' + selectedDatabaseInstanceName
-                                : resourceDetails?.name}
+                            {selectedHostname + ' \\ ' + selectedDatabaseInstanceName}
                         </Typography>
                     )}
 
-                    <Typography variant="Regular_14">
-                        {isInventoryV2 ? GENERAL.INSTANCE_NAME : GENERAL.HOST_NAME}
-                    </Typography>
+                    <Typography variant="Regular_14">{GENERAL.INSTANCE_NAME}</Typography>
                 </div>
             </div>
 

@@ -38,6 +38,7 @@ module "vpc-endpoints" {
   endpoints_aws_location     = var.aws_location
   preferred_subnet1_id       = var.private_subnet1_id
   preferred_subnet_cidrblock = var.private_subnet1_cidrblock
+  deployment_name            = var.deployment_name
 
   standby_subnet1_id       = local.is_failover_cluster ? var.private_subnet2_id : ""
   standby_subnet_cidrblock = local.is_failover_cluster ? var.private_subnet2_cidrblock : ""

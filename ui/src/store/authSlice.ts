@@ -11,21 +11,12 @@ interface AuthState {
     isDemoMode?: boolean;
     features: any;
     isWorkloadFactory: boolean;
-    isInventoryV2: boolean;
     refreshBlocked: boolean;
 }
 
 interface PayloadAuthSuccess {
     accessToken: string;
 }
-
-const checkLocalStorageValue = () => {
-    const value = localStorage.getItem('inventoryV1');
-    if (value === 'true') {
-        return false;
-    }
-    return true;
-};
 
 const initialState: AuthState = {
     accountId: '',
@@ -42,8 +33,7 @@ const initialState: AuthState = {
         }
     },
     isWorkloadFactory: false,
-    refreshBlocked: false,
-    isInventoryV2: checkLocalStorageValue() // This flag is added to check if new inventory has to run or old.
+    refreshBlocked: false
 };
 
 const authSlice = createSlice({
