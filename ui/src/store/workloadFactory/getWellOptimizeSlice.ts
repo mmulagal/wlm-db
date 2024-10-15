@@ -1,7 +1,8 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { cardDataDefault } from '../../workloadFactory/GetWell/GetWellUtils';
+import { GetWellSliceInterface } from '../../utils/types/getWellTypes';
 
-const initialState: any = {
+const initialState: GetWellSliceInterface = {
     optimizePageLoading: false,
     driftAssessmentData: null,
     selectedHostname: '',

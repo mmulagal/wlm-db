@@ -7,7 +7,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 type OptimizeComponentType = {
     text: string;
     value: string | any;
-    data?: { optimized: number; total: number };
+    data?: { optimized?: number; total?: number };
     image: any;
     isComingSoon: boolean;
 };

@@ -5,9 +5,11 @@ import {
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { GETWELL_CONFIG, GETWELL_VALUES } from '../../utils/consts';
+import { AssessmentResponseInterface, GwCardDataInterface, PerConfigInterface } from '../../utils/types/getWellTypes';
 import { formatNumberWithCustomComma } from '../../utils/utilityFunctions';
 
-export const cardDataDefault: any = {
+// This is strutcure of cardDataDefault. It is used to set the default values for the card data.
+export const cardDataDefault: GwCardDataInterface = {
     storage_tier: {
         block_one: {
             type: 'Storage sizing',
@@ -279,54 +281,58 @@ export const cardDataDefault: any = {
     }
 };
 
-export const formatGetWellData = (data: any, dispatch: any) => {
+export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface) => {
     let cardsData = {};
     let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
-    cardMainConfig?.map((category: any) => {
-        category?.map((item: any) => {
+    cardMainConfig?.map((category) => {
+        category?.map((item: PerConfigInterface) => {
+            const itemName = item?.name || '';
             cardsData = {
                 ...cardsData,
-                [item?.name]: {
-                    ...cardDataDefault?.[item?.name],
+                [itemName]: {
+                    ...(cardDataDefault?.[itemName] || {}),
                     block_two: {
-                        ...cardDataDefault?.[item?.name]?.block_two,
-                        value: GETWELL_VALUES?.[item?.status] || item?.status
+                        ...(cardDataDefault?.[itemName]?.block_two || {}),
+                        value: GETWELL_VALUES[item?.status || ''] || item?.status
                     },
                     block_three: {
-                        ...cardDataDefault?.[item?.name]?.block_three,
-                        value: GETWELL_VALUES?.[item?.recommended] || item?.recommended
+                        ...(cardDataDefault?.[itemName]?.block_three || {}),
+                        value: GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended
                     },
                     block_four: {
-                        ...cardDataDefault?.[item?.name]?.block_four,
-                        value: GETWELL_VALUES?.[item?.severity] || item?.severity
+                        ...(cardDataDefault?.[itemName]?.block_four || {}),
+                        value: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
                     },
                     tags: item?.tags
                 }
             };
         });
     });
+    return cardsData;
+};
 
-    let ontapTagsList: any = [];
+export const formatOntapConfig = (data: AssessmentResponseInterface) => {
+    let ontapTagsList: Array<string> = [];
     const ontapConfigList = [
         ...(data?.storage?.configuration?.volumes || []),
         ...(data?.storage?.configuration?.luns || [])
     ];
-    let formatOntapConfigList: any = [];
-    ontapConfigList?.map((item: any) => {
+    let formatOntapConfigList: PerConfigInterface[] = [];
+    ontapConfigList?.map((item: PerConfigInterface) => {
         formatOntapConfigList.push({
             ...item,
-            name: GETWELL_CONFIG?.[item?.name] || item?.name,
-            status: GETWELL_VALUES?.[item?.status] || item?.status,
-            severity: GETWELL_VALUES?.[item?.severity] || item?.severity
+            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+            status: GETWELL_VALUES?.[item?.status || ''] || item?.status,
+            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
         });
-        ontapTagsList = [...ontapTagsList, ...item?.tags];
+        ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
     });
 
     let ontapOptimizedConfig = 0;
     let ontapNotOptimizedConfig = 0;
     let ontapVolAndLunList = [data?.storage?.configuration?.volumes, data?.storage?.configuration?.luns];
-    ontapVolAndLunList?.map((type: any) => {
-        type?.map((item: any) => {
+    ontapVolAndLunList?.map(type => {
+        type?.map((item: PerConfigInterface) => {
             if (item?.status === 'optimized') {
                 ontapOptimizedConfig++;
             } else {
@@ -334,6 +340,67 @@ export const formatGetWellData = (data: any, dispatch: any) => {
             }
         });
     });
+    return { formatOntapConfigList, ontapTagsList, ontapOptimizedConfig, ontapNotOptimizedConfig };
+};
+
+
+export const formatOsConfig = (data: AssessmentResponseInterface) => {
+    let osTagsList: Array<string> = [];
+    let formatOsConfigList: PerConfigInterface[] = [];
+    data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
+        formatOsConfigList.push({
+            ...item,
+            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+            status: GETWELL_VALUES?.[item?.status || ''] || item?.status,
+            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+        });
+        osTagsList = [...osTagsList, ...(item?.tags || [])];
+    });
+
+    let osOptimizedConfig = 0;
+    let osNotOptimizedConfig = 0;
+    data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
+        if (item?.status === 'optimized') {
+            osOptimizedConfig++;
+        } else {
+            osNotOptimizedConfig++;
+        }
+    });
+    return { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig };
+};
+
+export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) => {
+    let optBreakDown = {
+        storage: {
+            total: data?.storage?.optimisedCount?.total ?? 0,
+            optimized: data?.storage?.optimisedCount?.optimised ?? 0,
+            percent: data?.storage?.optimisedCount
+                ? formatNumberWithCustomComma(
+                      (data?.storage?.optimisedCount?.optimised ?? 0) / (data?.storage?.optimisedCount?.total ?? 1) * 100
+                  )
+                : 0
+        },
+        total: {
+            // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
+            // Currently only storage is supported to directly adding that to the total
+            total: data?.storage?.optimisedCount?.total || 0,
+            optimized: data?.storage?.optimisedCount?.optimised || 0,
+            notOptimized: (data?.storage?.optimisedCount?.total || 0) - (data?.storage?.optimisedCount?.optimised || 0),
+            percent: data?.storage?.optimisedCount
+                ? formatNumberWithCustomComma(
+                      ((data?.storage?.optimisedCount?.optimised || 0) / (data?.storage?.optimisedCount?.total || 1)) * 100
+                  )
+                : 0
+        }
+    };
+    return optBreakDown;
+};
+
+export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: any) => {
+    let cardsData = formatIndividualCardMainConfig(data);
+
+    const { formatOntapConfigList, ontapTagsList, ontapOptimizedConfig, ontapNotOptimizedConfig } = formatOntapConfig(data);
+
     cardsData = {
         ...cardsData,
         ['ontap_configuration']: {
@@ -354,27 +421,7 @@ export const formatGetWellData = (data: any, dispatch: any) => {
         }
     };
 
-    let osTagsList: any = [];
-    let formatOsConfigList: any = [];
-    data?.storage?.configuration?.os?.map((item: any) => {
-        formatOsConfigList.push({
-            ...item,
-            name: GETWELL_CONFIG?.[item?.name] || item?.name,
-            status: GETWELL_VALUES?.[item?.status] || item?.status,
-            severity: GETWELL_VALUES?.[item?.severity] || item?.severity
-        });
-        osTagsList = [...osTagsList, ...item?.tags];
-    });
-
-    let osOptimizedConfig = 0;
-    let osNotOptimizedConfig = 0;
-    data?.storage?.configuration?.os?.map((item: any) => {
-        if (item?.status === 'optimized') {
-            osOptimizedConfig++;
-        } else {
-            osNotOptimizedConfig++;
-        }
-    });
+    const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig } = formatOsConfig(data);
 
     cardsData = {
         ...cardsData,
@@ -396,30 +443,8 @@ export const formatGetWellData = (data: any, dispatch: any) => {
         }
     };
 
-    let optBreakDown = {
-        storage: {
-            total: data?.storage?.optimisedCount?.total || 0,
-            optimized: data?.storage?.optimisedCount?.optimised || 0,
-            percent: data?.storage?.optimisedCount
-                ? formatNumberWithCustomComma(
-                      (data?.storage?.optimisedCount?.optimised / data?.storage?.optimisedCount?.total) * 100
-                  )
-                : 0
-        },
-        total: {
-            // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
-            // Currently only storage is supported to directly adding that to the total
-            total: data?.storage?.optimisedCount?.total || 0,
-            optimized: data?.storage?.optimisedCount?.optimised || 0,
-            notOptimized: (data?.storage?.optimisedCount?.total || 0) - (data?.storage?.optimisedCount?.optimised || 0),
-            percent: data?.storage?.optimisedCount
-                ? formatNumberWithCustomComma(
-                      (data?.storage?.optimisedCount?.optimised / data?.storage?.optimisedCount?.total) * 100
-                  )
-                : 0
-        }
-    };
-
+    let optBreakDown = formatOptimizationBreakDown(data);
+    
     dispatch(setCardData(cardsData));
     dispatch(setOntapConfigTableData(formatOntapConfigList));
     dispatch(setOsConfigTableData(formatOsConfigList));

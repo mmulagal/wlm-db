@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { setDriftAssessmentData, setOptimizePageLoading } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation } from '../../utils/apiService';
 import { formatGetWellData } from './GetWellUtils';
+import { AssessmentResponseInterface } from '../../utils/types/getWellTypes';
 
 const GetWellApi = () => {
     const dispatch = useDispatch();
@@ -20,15 +21,15 @@ const GetWellApi = () => {
     const runAssessmentDetailsApi = async () => {
         try {
             dispatch(setOptimizePageLoading(true));
-            const result: any = await assessmentDetailsApi({
+            const result: { data?: AssessmentResponseInterface, error?: any} = await assessmentDetailsApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
                 databaseHostId: selectedResourceId,
                 instanceId: selectedDatabaseInstance
             });
-            if (result && !result?.error) {
-                dispatch(setDriftAssessmentData(result?.data));
-                formatGetWellData(result?.data, dispatch);
+            if (result && !result?.error && result?.data) {
+                dispatch(setDriftAssessmentData(result.data));
+                formatGetWellData(result.data, dispatch);
                 dispatch(setOptimizePageLoading(false));
             } else {
                 dispatch(setOptimizePageLoading(false));
