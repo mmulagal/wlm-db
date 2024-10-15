@@ -47,8 +47,7 @@ const GetWell = () => {
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     //@ts-ignore
-    // const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-    const isDarkTheme = true;
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const handleSelect = (filters: any, filterLabel: any) => {
         let updatedFilters = [...optimizeFilterTags];
