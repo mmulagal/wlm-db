@@ -7,7 +7,7 @@ import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 import Tag from '../../../common/Tag/Tag';
 
-const RecommendationTable = ({ tableData, isLoading }: any) => {
+const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) => {
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
@@ -117,15 +117,17 @@ const RecommendationTable = ({ tableData, isLoading }: any) => {
                                     {'View recommendations'}
                                 </DsTypography>
                             </div>
-                            <div>
-                                <DsButton
-                                    variant="secondary"
-                                    onClick={() => {}}
-                                    isDisabled={rowData?.status === 'Not optimized' ? false : true}
-                                >
-                                    Optimize
-                                </DsButton>
-                            </div>
+                            {!optimizePrintState && (
+                                <div>
+                                    <DsButton
+                                        variant="secondary"
+                                        onClick={() => {}}
+                                        isDisabled={rowData?.status === 'Not optimized' ? false : true}
+                                    >
+                                        Optimize
+                                    </DsButton>
+                                </div>
+                            )}
                         </div>
                     </>
                 );
