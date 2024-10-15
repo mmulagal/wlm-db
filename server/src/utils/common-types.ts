@@ -214,8 +214,8 @@ interface StorageAssessment {
     volumes: Array<{ Key?: string; Value?: string }>;
     luns: Array<{ Key?: string; Value?: string }>;
     os: Array<{ Key?: string; Value?: string }>;
-    layout: Array<{ Key?: string; Value?: string }>;
-    sizing: Array<{ Key?: string; Value?: JSON }>;
+    layout: JSON;
+    sizing: JSON;
 }
 
 export {

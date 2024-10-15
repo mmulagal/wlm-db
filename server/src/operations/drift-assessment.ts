@@ -24,6 +24,7 @@ const volumeConfigData = storageGoldenConfigData.configuration.volume;
 const lunConfigData = storageGoldenConfigData.configuration.lun;
 const osConfigData = storageGoldenConfigData.configuration.os;
 const layoutConfigData = storageGoldenConfigData.layout;
+const sizingConfigData = storageGoldenConfigData.sizing;
 
 async function calculateStorageDrift(
     accountId: string,
@@ -57,7 +58,7 @@ async function calculateStorageDrift(
     };
 
     const { config_data: configData } = persistedConfigurationData;
-    const { volumes, luns, os, layout } = configData as unknown as StorageAssessment;
+    const { volumes, luns, os, layout, sizing } = configData as unknown as StorageAssessment;
     let configCount = 0;
     let optimizedCount = 0;
 
@@ -134,13 +135,14 @@ async function calculateStorageDrift(
         }
     });
 
-    driftAssessmentData.optimisedCount.total = configCount;
-    driftAssessmentData.optimisedCount.optimised = optimizedCount;
-
     Object.entries(layout).forEach(([key, value]) => {
         const goldenData = layoutConfigData.find(data => data.parameter === key);
         if (!isEmpty(goldenData)) {
+            configCount += 1;
             const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            if (status === AssessmentStatus.OPTIMIZED) {
+                optimizedCount += 1;
+            }
             driftAssessmentData.layout.push({
                 name: key,
                 recommended: goldenData.value.toString(),
@@ -151,6 +153,49 @@ async function calculateStorageDrift(
             });
         }
     });
+
+    Object.entries(sizing).forEach(([key, value]) => {
+        const goldenData = sizingConfigData.find(data => data.parameter === key);
+        if (!isEmpty(goldenData)) {
+            configCount += 1;
+            let status = AssessmentStatus.NOT_OPTIMIZED;
+            if (key === 'performance-tier') {
+                status = value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            }
+            if (key === 'log-drive-size') {
+                const sizePercent = Number(value);
+                status =
+                    sizePercent <= 30 || sizePercent >= 30
+                        ? AssessmentStatus.OPTIMIZED
+                        : sizePercent > 30
+                        ? AssessmentStatus.OVER_PROVISIONED
+                        : AssessmentStatus.UNDER_PROVISIONED;
+            }
+            if (key === 'tempdb-drive-size') {
+                const sizePercent = Number(value);
+                status =
+                    sizePercent <= 10 || sizePercent >= 20
+                        ? AssessmentStatus.OPTIMIZED
+                        : sizePercent > 20
+                        ? AssessmentStatus.OVER_PROVISIONED
+                        : AssessmentStatus.UNDER_PROVISIONED;
+            }
+            if (status === AssessmentStatus.OPTIMIZED) {
+                optimizedCount += 1;
+            }
+            driftAssessmentData.sizing.push({
+                name: key,
+                recommended: goldenData.value.toString(),
+                status,
+                severity: goldenData.severity,
+                recommendation: goldenData.recommendation,
+                tags: goldenData.tags
+            });
+        }
+    });
+
+    driftAssessmentData.optimisedCount.total = configCount;
+    driftAssessmentData.optimisedCount.optimised = optimizedCount;
 
     return driftAssessmentData;
 }

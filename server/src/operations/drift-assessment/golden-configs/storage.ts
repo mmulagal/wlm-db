@@ -173,7 +173,7 @@ const GOLDEN_CONFIG = {
             },
             {
                 parameter: 'mpio-iscsi-count',
-                value: 5,
+                value: '5',
                 severity: 'critical',
                 recommendation:
                     'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
@@ -226,8 +226,16 @@ const GOLDEN_CONFIG = {
     ],
     sizing: [
         {
+            parameter: 'performance-tier',
+            value: '100%',
+            severity: 'critical',
+            recommendation:
+                'For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity tier may result in slower performance and high latency',
+            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        },
+        {
             parameter: 'log-drive-size',
-            value: '25',
+            value: '20%-30%',
             severity: 'warning',
             recommendation:
                 'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.',
@@ -235,7 +243,7 @@ const GOLDEN_CONFIG = {
         },
         {
             parameter: 'tempdb-drive-size',
-            value: '10',
+            value: '10%-20%',
             severity: 'warning',
             recommendation:
                 'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',

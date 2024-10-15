@@ -176,7 +176,25 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $VolumeList += $($perVolRow)
     }
     $DriftAssessmentData['volumes'] = @($($VolumeList))
+
+    # Volume footprint details
+    $APIEndpoint = '/private/cli/volume/show-footprint'
+    $APIQueryFilter = "volume=${instanceRecord.mappedVolumeNames?.join('|')}"
+    $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
     
+    $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
+    $Volumes = $Response.records
+
+    $isPerformanceTier100Percent = $true
+    # loop through each volume and get data
+    foreach ($perVolumeData in $Volumes) {
+       if($perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
+            $isPerformanceTier100Percent = $false
+            break
+       }
+    }
+    $DriftAssessmentData['volumes'] = @($($VolumeList))
+
     # Lun details
     $APIEndpoint = '/storage/luns'
     $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
@@ -202,9 +220,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     
     # gather OS configuration data 
     $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 | Select ProductId,VendorId 
-    $MpioStatus = $False
+    $MpioStatus = $false
     if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
-        $MpioStatus = $True
+        $MpioStatus = $true
     }
     $LoadBalancingPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
 
@@ -212,7 +230,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $SessionCount = Test-IscsiSessions
     $ntfsAllocationUnit = Get-Volume | Where { $_.DriveLetter -in @('S','L','T') }  | select-Object DriveLetter, AllocationUnitSize  
     $DriftAssessmentData['os'] = @{
-                                    'mpio-enabled' = "$MpioStatus";
+                                    'mpio-enabled' = $MpioStatus;
                                     'mpio-load-balance-policy' = "$LoadBalancingPolicy";
                                     'mpio-iscsi-count' = "$SessionCount";
                                     'ntfs-allocation-unit' = $($ntfsAllocationUnit)
@@ -228,8 +246,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     }
     
     $DriftAssessmentData['sizing'] = @{
-                                        'log-drive-size' = $defaultLogDriveSizeDetails;
-                                        'tempdb-drive-size' = $tempDBDriveSizeDetails;
+                                        'performance-tier' = $isPerformanceTier100Percent
+                                        'log-drive-size' = $defaultLogDriveSizePercent;
+                                        'tempdb-drive-size' = $tempDBDriveSizePercent;
     }
    
    
