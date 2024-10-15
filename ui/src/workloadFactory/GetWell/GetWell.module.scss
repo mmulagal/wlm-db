@@ -197,7 +197,7 @@
             .dark-theme-light {
                 svg {
                     path {
-                        fill: #fff;
+                        fill: var(--cyan-60);
                     }
                 }
             }
