@@ -404,9 +404,9 @@ try {
             @{Command = "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\sqlfci\LCM-Config.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\common\Unjoin-Domain.ps1 -Parentstackname '$DeploymentName'"; UseExecutionPolicy = $false },
-            @{Command = "C:\cfn\scripts\common\Restart-Computer.ps1 -Test 'First'"; UseExecutionPolicy = $false },
+            @{Command = "C:\cfn\scripts\common\Restart-Computer.ps1 -Count 'First'"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\common\Rename-Computer.ps1 -NewName '$SqlServerName'"; UseExecutionPolicy = $false },
-            @{Command = "C:\cfn\scripts\common\Restart-Computer.ps1 -Test 'Second'"; UseExecutionPolicy = $false }
+            @{Command = "C:\cfn\scripts\common\Restart-Computer.ps1 -Count 'Second'"; UseExecutionPolicy = $false }
         )
     }
     else {
@@ -588,12 +588,12 @@ try {
 
         $FCIConfigure = @(
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Uninstall-SQL.ps1 -AMIID `"$AmiId`""; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Test 'First'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'First'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\prepare-fci.ps1 -MSSQLMediaBucket `"$MssqlMediaBucketName`" -MSSQLMediaKey `"$MssqlMediaPathKey`" -AMIID `"$AmiId`" -SqlUser `"$SqlAdminAccounts`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID SqlFSxInstanceMAD1 -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Test 'Second'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'Second'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\DSC\\PostConfigDSC.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Install-sqlcu.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Test 'Third'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'Third'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlontap\\completeONTAP-fci.ps1 -Node1FciIp `"$NetworkInterface1SecondPrivateIp`" -Node1SubnetId `"$PrivateSubnet1ID`" -Node2FciIp `"$NetworkInterface2SecondPrivateIp`" -Node2SubnetId `"$PrivateSubnet2ID`" -FCIName `"$SqlFsxFciName`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID SqlFSxInstanceMAD1 -Stackname `"$DeploymentName`" -SqlCollation `"$SqlCollation`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Validate-FCICluster.ps1 -DomainAdminUser `"$DomainAdminUser`" -WFCName `"$SqlFsxWsFcName`" -Node1 `"$SqlFsxServerNetBiosName`" -Node2 `"$SqlFsxServerNetBiosName2`" -ResourceID SqlFSxInstanceMAD1 -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Validate-SQLLogin.ps1 -SqlServer `"$SqlFsxFciName`""; UseExecutionPolicy = $false },
@@ -611,9 +611,9 @@ try {
         Write-Output "Starting ConfigureInstance for FCI Secondary Node"
         $ConfigureInstance = @(
             @{Command = "C:\\cfn\\scripts\\sqlfci\\AdditionalNodeAddCluster.ps1 -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Test 'First'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'First'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\AdditionalNodeClusterConfig.ps1 -WSFCNode2PrivateIP2 `"$NetworkInterface2FirstPrivateIp`" -ClusterName `"$SqlFsxWsFcName`" -Parentstackname `"$DeploymentName`" -DomainAdminUser `"$DomainAdminUser`""; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Test 'Second'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'Second'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Add-SecondaryNode.ps1 -WSFCNode2PrivateIP2 `"$NetworkInterface2FirstPrivateIp`" -ClusterName `"$SqlFsxWsFcName`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false }
         )
         Invoke-RemoteCommands -commands $ConfigureInstance -logFile "C:\\cfn\\tflogs\\ConfigureInstance.log" -Credential $LoginCredential
@@ -622,12 +622,12 @@ try {
         Write-Output "Starting ConfigureFCI for FCI Secondary Node"
         $ConfigureFCI = @(
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Uninstall-SQL.ps1 -AMIID `"$AmiId`""; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Test 'First'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'First'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\prepare-fci.ps1 -MSSQLMediaBucket `"$MssqlMediaBucketName`" -MSSQLMediaKey `"$MssqlMediaPathKey`" -AMIID `"$AmiId`" -SqlUser `"$SqlAdminAccounts`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Test 'Second'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'Second'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\DSC\\PostConfigDSC.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Install-sqlcu.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Test 'Third'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'Third'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Update-SQLNodeTag.ps1 -StackName `"$DeploymentName`""; UseExecutionPolicy = $false }
         )
         Invoke-RemoteCommands -commands $ConfigureFCI -logFile "C:\\cfn\\tflogs\\ConfigureFCI.log" -Credential $LoginCredential
