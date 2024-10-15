@@ -2,10 +2,13 @@ import config from 'config';
 import Promise from 'bluebird';
 import ms from 'ms';
 import { STORAGE_TYPE } from '@prisma/client';
-import { compact } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
+import { Queue, Worker } from 'bullmq';
+import Redis from 'ioredis';
 import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
+    AssessmentTriggeredBy,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     TCO_FEATURE
@@ -13,15 +16,24 @@ import {
 import getLogger from '../utils/logger';
 import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './database/job-operations';
 
-import { listTrackedEc2, removeTrackedEc2Record, updateTrackedEc2Record } from '../lib/database/db';
+import {
+    listAllManagedInstances,
+    listTrackedEc2,
+    removeTrackedEc2Record,
+    updateTrackedEc2Record
+} from '../lib/database/db';
 import { getHostAndSqlServerInfo } from './discover-operations';
 import { manageInstanceRecommendationPreReqs } from './aws/compute-optimizer-operations';
-import { getEc2Arn } from '../utils/utils';
+import { getEc2Arn, getRedisDetails } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
 import { fetchSqlServerInstanceConfiguration } from './recommendation-operations';
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { triggerDriftAssessment } from './drift-assessment';
 
 const logger = getLogger();
+
+const redisDetails = getRedisDetails();
+const driftAssessmentQueue = new Queue('driftAssessmentQueue', { connection: new Redis(redisDetails.connection) });
 
 async function failLongRunningDeploymentJobs() {
     logger.info('Marking long running (> 4 hours) deployment jobs as failed');
@@ -141,10 +153,71 @@ async function updatePreferences() {
     });
 }
 
+async function scheduledAssessment() {
+    const managedInstances = await listAllManagedInstances();
+    if (isEmpty(managedInstances)) {
+        logger.error('No successfully managed database instances found.');
+        return;
+    }
+
+    try {
+        await Promise.all(
+            managedInstances.map(async managedInstance => {
+                const {
+                    account_id: accountId,
+                    credentials_id: credentialsId,
+                    region,
+                    resource_id: resourceId
+                } = managedInstance;
+
+                const managedInstanceIds = managedInstances.map(instance => instance.database_instance_id);
+
+                driftAssessmentQueue.add(
+                    'driftAssessment',
+                    triggerDriftAssessment(
+                        accountId,
+                        credentialsId,
+                        region!,
+                        resourceId,
+                        managedInstanceIds,
+                        AssessmentTriggeredBy.SYSTEM
+                    ),
+                    {
+                        repeat: { every: 24 * 3600 * 1000 }, // 24 hours in milliseconds
+                        removeOnComplete: true,
+                        removeOnFail: true
+                    }
+                );
+
+                const driftAssessmentWorker = new Worker(
+                    'driftAssessmentQueue',
+                    async (job: { data: any }) => {
+                        try {
+                            logger.debug(job.data.jobData);
+                        } catch (error) {
+                            logger.error('Error processing job:', job, error);
+                        }
+                    },
+                    {
+                        connection: redisDetails.connection
+                    }
+                );
+
+                driftAssessmentWorker.on('completed', job => {
+                    logger.debug(job.id, 'is completed.');
+                });
+            })
+        );
+    } catch (error) {
+        logger.error(`Error while triggering scheduled assessment: ${error}.`);
+    }
+}
+
 export {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
     updateInstanceRecommendationPreferences,
-    updatePreferences
+    updatePreferences,
+    scheduledAssessment
 };

@@ -1,9 +1,16 @@
 import { WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
-import { PERFORMANCE_METRICS_WITH_LATENCY } from './queries';
+import {
+    DEFAULT_DATA_DRIVE_SIZE,
+    DEFAULT_LOG_DRIVE_SIZE,
+    INSTANCE_DATA_DRIVES_QUERY,
+    INSTANCE_LOG_DRIVES_QUERY,
+    INSTANCE_TEMPDB_DRIVES_QUERY,
+    TEMPDB_DRIVE_SIZE
+} from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
-const PERFORMANCE_ASSESSMENT = (instance: string, sqlAuthEnabled: boolean) =>
+const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boolean) =>
     `
     $sqlInstance = "${instance}"
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
@@ -21,10 +28,31 @@ const PERFORMANCE_ASSESSMENT = (instance: string, sqlAuthEnabled: boolean) =>
         ${readSsmParameter(instance)}
     }
     
-    $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${PERFORMANCE_METRICS_WITH_LATENCY}" -InstanceName "$instanceServiceName"
+    $instanceDataDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
+    $defaultDataDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${DEFAULT_DATA_DRIVE_SIZE}" -InstanceName "$instanceServiceName"
+   
+    $instanceLogDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
+    $defaultLogDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${DEFAULT_LOG_DRIVE_SIZE}" -InstanceName "$instanceServiceName"
+    $defaultLogDriveSizePercent = ($defaultLogDriveSize/$defaultDataDriveSize) * 100
+    $defaultLogDriveSizeDetails = @{'size' = "$defaultLogDriveSize"; 'percent' = "$defaultLogDriveSizePercent"}
 
-    ${compressResponse}
-    return (Deflate-String $queryResponse)
+    $instanceTempdbDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_TEMPDB_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
+    $tempDBDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${TEMPDB_DRIVE_SIZE}" -InstanceName "$instanceServiceName"
+    $tempDBDriveSizePercent = ($tempDBDriveSize/$defaultDataDriveSize) * 100
+    $tempDBDriveSizeDetails = @{'size' = "$tempDBDriveSize"; 'percent' = "$tempDBDriveSizePercent"}
+
+    if(($instanceDataDrivedetails -ne $instanceLogDrivedetails) -and ($instanceDataDrivedetails -ne $instanceTempdbDrivedetails)) {
+    $defaultDataDrive = 'separate-drive'
+    }
+
+    if(($instanceDataDrivedetails -ne $instanceLogDrivedetails) -and ($instanceLogDrivedetails -ne $instanceTempdbDrivedetails)) {
+    $defaultLogDrive = 'separate-drive'
+    }
+
+    if(($instanceDataDrivedetails -ne $instanceTempdbDrivedetails) -and ($instanceLogDrivedetails -ne $instanceTempdbDrivedetails)) {
+    $tempdbDrive = 'separate-drive'
+    }
+
 `;
 
 const TEST_ISCSI_SESSIONS = `
@@ -116,7 +144,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
     $APIEndpoint = '/storage/volumes'
     $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
-    $ApiQueryFields = "fields=autosize,space,snapshot_policy,tiering,guarantee"
+    $ApiQueryFields = "fields=autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
     
     ${ontapRestRequest}
     
@@ -134,7 +162,6 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             'space-guarantee' = $perVolumeData.guarantee.type
             'autosize-mode' = $perVolumeData.autosize.mode
             'fractional-reserve' = $perVolumeData.space.fractional_reserve
-            'snapshot-policy' = $perVolumeData.snapshot_policy.name
             'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
             'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
             'tiering-policy' = $perVolumeData.tiering.policy
@@ -148,11 +175,12 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         }
         $VolumeList += $($perVolRow)
     }
+    $DriftAssessmentData['volumes'] = @($($VolumeList))
     
     # Lun details
     $APIEndpoint = '/storage/luns'
     $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
-    $ApiQueryFields = "fields=space,os_type"
+    $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
     
     $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
     $Luns = $Response.records
@@ -170,7 +198,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         }
         $LunsList += $($perLunRow)
     }
-
+    $DriftAssessmentData['luns'] = @($($LunsList))
+    
+    # gather OS configuration data 
     $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 | Select ProductId,VendorId 
     $MpioStatus = $False
     if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
@@ -180,15 +210,29 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
     ${TEST_ISCSI_SESSIONS}
     $SessionCount = Test-IscsiSessions
-
-    $DriftAssessmentData['volumes'] = $($VolumeList)
-    $DriftAssessmentData['luns'] = $($LunsList)
+    $ntfsAllocationUnit = Get-Volume | Where { $_.DriveLetter -in @('S','L','T') }  | select-Object DriveLetter, AllocationUnitSize  
     $DriftAssessmentData['os'] = @{
                                     'mpio-enabled' = "$MpioStatus";
                                     'mpio-load-balance-policy' = "$LoadBalancingPolicy";
                                     'mpio-iscsi-count' = "$SessionCount";
-}
+                                    'ntfs-allocation-unit' = $($ntfsAllocationUnit)
+    }
 
+    # gather storage layout data
+    ${INSTANCE_DRIVE_DETAILS_TEMPLATE(instanceRecord.name, instanceRecord.sqlAuthEnabled)}
+    
+    $DriftAssessmentData['layout'] = @{
+                                        'default-data-files-location' = $defaultDataDrive;
+                                        'default-log-files-location' = $defaultLogDrive;
+                                        'tempdb-files-location' = $tempdbDrive
+    }
+    
+    $DriftAssessmentData['sizing'] = @{
+                                        'log-drive-size' = $defaultLogDriveSizeDetails;
+                                        'tempdb-drive-size' = $tempDBDriveSizeDetails;
+    }
+   
+   
     $response = $DriftAssessmentData | ConvertTo-Json -Depth 5
 
     if([string]::IsNullOrEmpty($response)) {
@@ -199,4 +243,4 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     return (Deflate-String $response)
 `;
 
-export { STORAGE_CONFIGURATION_ASSESSMENT, PERFORMANCE_ASSESSMENT };
+export { STORAGE_CONFIGURATION_ASSESSMENT };

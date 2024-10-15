@@ -33,7 +33,9 @@ import {
     FSX_STORAGE_MIN_CAPACITY_IN_GIB,
     HOURS_IN_MONTH,
     DEFAULT_MSSQL_INSTANCE_NAME,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    REDIS_URL,
+    SECRETS
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -650,6 +652,16 @@ const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 
     }
 };
 
+function getRedisDetails() {
+    logger.info('in getRedisDetails');
+    return {
+        connection: {
+            url: REDIS_URL,
+            password: SECRETS.REDIS_PASSWORD
+        }
+    };
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -689,5 +701,6 @@ export {
     isDemo,
     getOriginalDatabaseInstanceName,
     decompressSSMResponse,
-    retryWithDelay
+    retryWithDelay,
+    getRedisDetails
 };

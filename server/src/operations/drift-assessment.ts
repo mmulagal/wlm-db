@@ -1,5 +1,7 @@
 import { isEmpty } from 'lodash-es';
-import { DriftAssessmentResponseType, ParameterDriftResponseType } from '../routes/types/database-hosts.types';
+import createError from 'http-errors';
+import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import { DriftAssessmentResponseType, StorageParameterDriftResponseType } from '../routes/types/database-hosts.types';
 import getLogger from '../utils/logger';
 import { sqlResponseParsing } from '../utils/utils';
 import { getMappedOntapVolumes } from './aws/fsx-operations';
@@ -7,17 +9,168 @@ import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/drift-assessment-scripts';
 import storageGoldenConfigData from './drift-assessment/golden-configs/storage';
-import { RESOURCESTYPE } from '../utils/consts';
-import { WorkloadInstance } from '../utils/common-types';
+import { AssessmentCategories, AssessmentStatus, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import { StorageAssessment, WorkloadInstance } from '../utils/common-types';
+import { registerJob, updateJobDetails } from './database/job-operations';
+import {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData
+} from '../lib/database/database-instance-config';
+import { listResources } from '../lib/database/db';
 
 const logger = getLogger();
 
 const volumeConfigData = storageGoldenConfigData.configuration.volume;
 const lunConfigData = storageGoldenConfigData.configuration.lun;
 const osConfigData = storageGoldenConfigData.configuration.os;
+const layoutConfigData = storageGoldenConfigData.layout;
 
-async function assessStorageDrift(credentialsId: string, region: string, instanceRecord: WorkloadInstance) {
-    logger.info('assessStorageDrift', credentialsId, region, instanceRecord);
+async function calculateStorageDrift(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('calculateStorageDrift', accountId, credentialsId, region, databaseHostId);
+    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId,
+        AssessmentCategories.STORAGE
+    );
+
+    if (isEmpty(persistedConfigurationData)) {
+        const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found for ${databaseHostId}, ${databaseInstanceId}.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
+    const driftAssessmentData: StorageParameterDriftResponseType = {
+        timestamp: persistedConfigurationData.creation_time.toDateString(),
+        optimisedCount: { total: 0, optimised: 0 },
+        configuration: { volumes: [], luns: [], os: [] },
+        sizing: [],
+        layout: []
+    };
+
+    const { config_data: configData } = persistedConfigurationData;
+    const { volumes, luns, os, layout } = configData as unknown as StorageAssessment;
+    let configCount = 0;
+    let optimizedCount = 0;
+
+    volumeConfigData.forEach(config => {
+        configCount += 1;
+        let status = AssessmentStatus.OPTIMIZED;
+        const objectsInViolation: string[] = [];
+        volumes.forEach(volume => {
+            const objectName = volume.Key === 'name' ? volume.Value : '';
+            if (volume.Key === config.parameter) {
+                status = config.value === volume.Value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            }
+            if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                objectsInViolation.push(objectName!);
+            }
+        });
+        if (status === AssessmentStatus.OPTIMIZED) {
+            optimizedCount += 1;
+        }
+        driftAssessmentData.configuration.volumes.push({
+            name: config.parameter,
+            recommended: config.value.toString(),
+            status,
+            objectsInViolation,
+            severity: config.severity,
+            recommendation: config.recommendation,
+            tags: config.tags
+        });
+    });
+
+    lunConfigData.forEach(config => {
+        configCount += 1;
+        let status = AssessmentStatus.OPTIMIZED;
+        const objectsInViolation: string[] = [];
+        luns.forEach(lun => {
+            const objectName = lun.Key === 'name' ? lun.Value : '';
+            if (lun.Key === config.parameter) {
+                status = config.value === lun.Value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            }
+            if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                objectsInViolation.push(objectName!);
+            }
+        });
+        if (status === AssessmentStatus.OPTIMIZED) {
+            optimizedCount += 1;
+        }
+        driftAssessmentData.configuration.luns.push({
+            name: config.parameter,
+            recommended: config.value.toString(),
+            status,
+            objectsInViolation,
+            severity: config.severity,
+            recommendation: config.recommendation,
+            tags: config.tags
+        });
+    });
+
+    Object.entries(os).forEach(([key, value]) => {
+        const goldenData = osConfigData.find(data => data.parameter === key);
+        if (!isEmpty(goldenData)) {
+            configCount += 1;
+            const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            if (status === AssessmentStatus.OPTIMIZED) {
+                optimizedCount += 1;
+            }
+            driftAssessmentData.configuration.os.push({
+                name: key,
+                recommended: goldenData.value.toString(),
+                status,
+                severity: goldenData.severity,
+                recommendation: goldenData.recommendation,
+                tags: goldenData.tags
+            });
+        }
+    });
+
+    driftAssessmentData.optimisedCount.total = configCount;
+    driftAssessmentData.optimisedCount.optimised = optimizedCount;
+
+    Object.entries(layout).forEach(([key, value]) => {
+        const goldenData = layoutConfigData.find(data => data.parameter === key);
+        if (!isEmpty(goldenData)) {
+            const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            driftAssessmentData.layout.push({
+                name: key,
+                recommended: goldenData.value.toString(),
+                status,
+                severity: goldenData.severity,
+                recommendation: goldenData.recommendation,
+                tags: goldenData.tags
+            });
+        }
+    });
+
+    return driftAssessmentData;
+}
+async function initiateStorageAssessmentCollection(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    jobId: string,
+    instanceRecord: WorkloadInstance
+) {
+    logger.info(
+        'initiateStorageAssessmentCollection',
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        jobId,
+        instanceRecord
+    );
 
     const instanceVolumeMapping = ((await getMappedOntapVolumes(
         credentialsId,
@@ -46,96 +199,189 @@ async function assessStorageDrift(credentialsId: string, region: string, instanc
 
     const parsedResponse = response ? sqlResponseParsing(response) : {};
 
-    const driftAssessmentData: DriftAssessmentResponseType = { storage: { configuration: [] } };
-    parsedResponse.volumes.forEach((volume: { [key: string]: string }) => {
-        const volumeDriftData: ParameterDriftResponseType = { name: volume.name, type: 'volume', parameters: [] };
-        Object.entries(volume).forEach(([key, value]) => {
-            const goldenData = volumeConfigData.find(data => data.parameter === key);
-            if (goldenData && !isEmpty(goldenData)) {
-                const isOptimised = goldenData?.value === value;
-                volumeDriftData.parameters.push({
-                    name: key,
-                    current: value?.toString() || '',
-                    recommended: goldenData.value.toString(),
-                    isOptimised,
-                    severity: goldenData.severity,
-                    recommendation: goldenData.recommendation
-                });
-            }
-        });
-        driftAssessmentData.storage.configuration.push(volumeDriftData);
-    });
-
-    parsedResponse.luns.forEach((lun: { [key: string]: string }) => {
-        const lunDriftData: ParameterDriftResponseType = { name: lun.name, type: 'lun', parameters: [] };
-        Object.entries(lun).forEach(([key, value]) => {
-            const goldenData = lunConfigData.find(data => data.parameter === key);
-            if (!isEmpty(goldenData)) {
-                const isOptimised = goldenData.value === value;
-                lunDriftData.parameters.push({
-                    name: key,
-                    current: value?.toString() || '',
-                    recommended: goldenData.value.toString(),
-                    isOptimised,
-                    severity: goldenData.severity,
-                    recommendation: goldenData.recommendation
-                });
-            }
-        });
-        driftAssessmentData.storage.configuration.push(lunDriftData);
-    });
-
-    const osData = parsedResponse.os;
-    const osDriftData: ParameterDriftResponseType = { name: 'os', type: 'os', parameters: [] };
-    Object.entries(osData).forEach(([key, value]) => {
-        const goldenData = osConfigData.find(data => data.parameter === key);
-        if (!isEmpty(goldenData)) {
-            const isOptimised = goldenData.value === value;
-            osDriftData.parameters.push({
-                name: key,
-                current: value?.toString() || '',
-                recommended: goldenData.value.toString(),
-                isOptimised,
-                severity: goldenData.severity,
-                recommendation: goldenData.recommendation
-            });
+    await createDatabaseInstanceConfigData([
+        {
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            resource_id: databaseHostId,
+            database_instance_id: instanceRecord.id,
+            creation_time: new Date(Date.now()),
+            config_data_type: AssessmentCategories.STORAGE,
+            config_data: parsedResponse
         }
-    });
-    driftAssessmentData.storage.configuration.push(osDriftData);
-
-    return driftAssessmentData;
+    ]);
 }
 
-async function driftAssessment(
+async function driftAssesment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    jobId: string,
+    databaseHostId: string,
+    databaseInstanceIds: string[],
+    fields?: string
+) {
+    logger.info(
+        'Trigger drift assessment',
+        accountId,
+        credentialsId,
+        region,
+        jobId,
+        databaseHostId,
+        databaseInstanceIds,
+        fields
+    );
+
+    let errorMessage;
+    let jobStatus: string = JOBSTATUS.COMPLETED;
+
+    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE];
+
+    if (fields) {
+        // remove the empty spaces in the string & split the fields by comma separated array values
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    }
+
+    const shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
+
+    try {
+        await Promise.all(
+            databaseInstanceIds.map(async databaseInstanceId => {
+                const { activeNodeInstanceId, newDatabaseInstanceDetails } = await getInstanceDetails(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId
+                );
+                const {
+                    database_instance_name: savedInstanceName,
+                    fsxn_ids: fileSystemId,
+                    sqlAuthEnabled
+                } = newDatabaseInstanceDetails;
+
+                if (shouldRunStorageAssessment) {
+                    await initiateStorageAssessmentCollection(accountId, credentialsId, region, databaseHostId, jobId, {
+                        id: databaseInstanceId,
+                        name: savedInstanceName,
+                        type: RESOURCESTYPE.MSSQL,
+                        region,
+                        sqlAuthEnabled: sqlAuthEnabled || false,
+                        activeNodeInstanceid: activeNodeInstanceId,
+                        fsxFileSystem: fileSystemId
+                    });
+                }
+            })
+        );
+    } catch (e: any) {
+        logger.error(e);
+        errorMessage = e.message || 'Internal Server Error';
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, jobId, {
+            error: errorMessage,
+            description:
+                'The selected SQL Server instance has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.',
+            status: jobStatus!,
+            endTime: Date.now()
+        });
+    }
+}
+async function triggerDriftAssessment(
     accountId: string,
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceIds: string[],
+    initiatedBy: string,
+    fields?: string
 ) {
-    logger.info('Get drift assessment', accountId, credentialsId, region, databaseHostId, databaseInstanceId);
-
-    const { activeNodeInstanceId, newDatabaseInstanceDetails } = await getInstanceDetails(
+    logger.info(
+        'Trigger drift assessment',
         accountId,
         credentialsId,
         region,
         databaseHostId,
-        databaseInstanceId
+        databaseInstanceIds,
+        initiatedBy,
+        fields
     );
-    const {
-        database_instance_name: savedInstanceName,
-        fsxn_ids: fileSystemId,
-        sqlAuthEnabled
-    } = newDatabaseInstanceDetails;
 
-    return assessStorageDrift(credentialsId, region, {
-        name: savedInstanceName,
-        type: RESOURCESTYPE.MSSQL,
-        region,
-        sqlAuthEnabled: sqlAuthEnabled || false,
-        activeNodeInstanceid: activeNodeInstanceId,
-        fsxFileSystem: fileSystemId
-    });
+    let resourceName: string;
+    const runningInstances: string[] = [];
+
+    try {
+        await Promise.all(
+            databaseInstanceIds.map(async databaseInstanceId => {
+                const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+                if (isEmpty(resourceDetail)) {
+                    const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+                    logger.error(errorMessage);
+                    throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+                }
+
+                resourceName = resourceDetail.resource_name!;
+
+                await getInstanceDetails(accountId, credentialsId, region, databaseHostId, databaseInstanceId);
+
+                runningInstances.push(databaseInstanceId);
+            })
+        );
+    } catch (error) {
+        logger.error(`Error while fetching database instance details ${accountId}, ${databaseHostId}, ${error}`);
+    }
+
+    if (!isEmpty(runningInstances)) {
+        const job = await registerJob(accountId, credentialsId, region, {
+            name: 'The selected SQL Server instance is being scanned for best practice misalignments.',
+            description: 'The selected SQL Server instance is being scanned for best practice misalignments.',
+            resourceName: resourceName!,
+            initiator: initiatedBy.toLocaleUpperCase(),
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.ASSESSMENT
+        });
+
+        driftAssesment(accountId, credentialsId, region, job.id, databaseHostId, runningInstances, fields);
+
+        return { jobId: job.id };
+    }
+    throw createError(
+        HttpErrorCodes.NOT_FOUND,
+        `Aborting assessment as no instances found running for ${accountId}, ${databaseHostId}.`
+    );
 }
 
-export { driftAssessment };
+async function fetchDriftAssessment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    fields?: string
+) {
+    logger.info('Fetch drift assessment', accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields);
+
+    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE];
+
+    if (fields) {
+        // remove the empty spaces in the string & split the fields by comma separated array values
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    }
+    const driftAssesmentData: DriftAssessmentResponseType = {};
+    const shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
+    if (shouldCalculateStorageAssessment) {
+        driftAssesmentData.storage = await calculateStorageDrift(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+    }
+    return driftAssesmentData;
+}
+
+export { triggerDriftAssessment, fetchDriftAssessment };

@@ -10,7 +10,9 @@ import {
     ServerState,
     UNKNOWN,
     SANDBOX_LIFECYCLE_REFRESH,
-    SANDBOX_LIFECYCLE_REBASELINE
+    SANDBOX_LIFECYCLE_REBASELINE,
+    AssessmentStatus,
+    AwsWellArchitecturedPillars
 } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
 
@@ -604,26 +606,33 @@ const DatabaseQueryString = Type.Object({
 
 const ParameterDriftResponse = Type.Object({
     name: Type.String(),
-    type: Type.String(),
-    parameters: Type.Array(
-        Type.Optional(
-            Type.Object({
-                name: Type.String(),
-                current: Type.String(),
-                recommended: Type.String(),
-                isOptimised: Type.Boolean(),
-                severity: Type.String(),
-                recommendation: Type.String()
-            })
-        )
-    )
+    status: Type.Enum(AssessmentStatus),
+    recommended: Type.String(),
+    severity: Type.String(),
+    recommendation: Type.String(),
+    objectsInViolation: Type.Optional(Type.Array(Type.String())),
+    tags: Type.Array(Type.Enum(AwsWellArchitecturedPillars))
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
 
+const StorageParameterDriftResponse = Type.Object({
+    timestamp: Type.String(),
+    optimisedCount: Type.Object({
+        total: Type.Number(),
+        optimised: Type.Number()
+    }),
+    configuration: Type.Object({
+        volumes: Type.Array(ParameterDriftResponse),
+        luns: Type.Array(ParameterDriftResponse),
+        os: Type.Array(ParameterDriftResponse)
+    }),
+    sizing: Type.Array(ParameterDriftResponse),
+    layout: Type.Array(ParameterDriftResponse)
+});
+type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
+
 const DriftAssessmentResponse = Type.Object({
-    storage: Type.Object({
-        configuration: Type.Array(Type.Optional(ParameterDriftResponse))
-    })
+    storage: Type.Optional(StorageParameterDriftResponse)
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
@@ -710,5 +719,6 @@ export {
     DatabaseQueryString,
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
-    ParameterDriftResponseType
+    ParameterDriftResponseType,
+    StorageParameterDriftResponseType
 };

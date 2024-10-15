@@ -53,10 +53,12 @@ import {
     checkDatabaseIntegrity,
     getSandboxSnapshots
 } from '../operations/sandbox-operations';
-import { driftAssessment } from '../operations/drift-assessment';
+import { fetchDriftAssessment } from '../operations/drift-assessment';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_PREFIX_PATH_V2 = '/v2/credentials/:credentialsId/regions/:region';
+
+const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -475,18 +477,20 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment`,
             { schema: DriftAssessment },
             async (request, reply) => {
                 const {
-                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    query: { fields }
                 } = request;
-                const response = await driftAssessment(
+                const response = await fetchDriftAssessment(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
-                    databaseInstanceId
+                    databaseInstanceId,
+                    fields
                 );
                 return reply.send(response);
             }

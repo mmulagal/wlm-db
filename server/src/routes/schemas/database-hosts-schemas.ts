@@ -332,8 +332,24 @@ const DriftAssessment = {
     summary: 'Get database instance parameters drift from recommended settings',
     description: 'Get database instance parameters drift from recommended settings',
     params: DatabaseHostOptionalInstanceSummaryParams,
+    tags: [RouteTags.ASSESSMENT],
+    querystring: DatabaseQueryString,
     response: {
         200: DriftAssessmentResponse
+    }
+};
+
+const TriggerDriftAssessmentSchema = {
+    ...resourceRequest,
+    summary: 'Trigger assessment',
+    description: 'Trigger assessment for best practice misalignments on a managed database instance',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    tags: [RouteTags.ASSESSMENT],
+    querystring: DatabaseQueryString,
+    response: {
+        202: {
+            jobId: Type.String()
+        }
     }
 };
 
@@ -363,5 +379,6 @@ export {
     GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,
-    DriftAssessment
+    DriftAssessment,
+    TriggerDriftAssessmentSchema
 };

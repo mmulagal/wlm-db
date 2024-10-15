@@ -197,6 +197,7 @@ interface InstanceDetails {
 }
 
 interface WorkloadInstance {
+    id: string;
     name: string;
     type: string;
     region: string;
@@ -207,6 +208,14 @@ interface WorkloadInstance {
     mappedVolumesUuids?: string[];
     mappedLunNames?: string[];
     mappedLunUuids?: string[];
+}
+
+interface StorageAssessment {
+    volumes: Array<{ Key?: string; Value?: string }>;
+    luns: Array<{ Key?: string; Value?: string }>;
+    os: Array<{ Key?: string; Value?: string }>;
+    layout: Array<{ Key?: string; Value?: string }>;
+    sizing: Array<{ Key?: string; Value?: JSON }>;
 }
 
 export {
@@ -227,5 +236,6 @@ export {
     Sandbox,
     DatabaseInstance,
     InstanceDetails,
-    WorkloadInstance
+    WorkloadInstance,
+    StorageAssessment
 };
