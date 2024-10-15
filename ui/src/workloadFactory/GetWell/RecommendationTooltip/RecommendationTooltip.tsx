@@ -21,7 +21,7 @@ const RecommendationTooltip = ({ data }: { data: string }) => {
             </div>
             {points?.map(perPoint => {
                 return (
-                    <div className={`${styles.points}`}>
+                    <div className={styles.points}>
                         <div>
                             <Bullet />
                         </div>
