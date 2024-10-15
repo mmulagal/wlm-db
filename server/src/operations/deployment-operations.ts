@@ -19,6 +19,7 @@ import {
     SQLConfigurationType,
     CloudFormationDeploymentResponseType,
     CloudFormationStaticTemplateResponseType,
+    PgSqlConfigurationType,
     TerraformSetupResponseType
 } from '../routes/types/deployment.types';
 import {
@@ -81,6 +82,10 @@ import {
     EBS_DEFAULT_VOLUME_SIZE,
     TEMPLATE_PRIVATESUBNET1_CIDRBLOCK,
     TEMPLATE_PRIVATESUBNET2_CIDRBLOCK,
+    PG_TEMPLATE_CONFIG_MAPPING,
+    PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
+    PG_TEMPLATE_OPTIONAL_PARAMETERS,
+    PGSQL_VERSION,
     AuditStatus,
     FCI
 } from '../utils/consts';
@@ -128,19 +133,19 @@ async function getSubnetsCidr(
     credentialsId: string,
     region: string,
     networkConfiguration: CFNetworkConfigurationType,
-    sqlConfiguration: SQLConfigurationType
+    sqlDeploymentMode: string
 ) {
     logger.info('Fetch cidr block for subnets', credentialsId, region);
 
     if (
         isEmpty(networkConfiguration.privateSubnet1Id) ||
-        (sqlConfiguration.sqlDeploymentMode === FCI && isEmpty(networkConfiguration.privateSubnet2Id))
+        (sqlDeploymentMode === FCI && isEmpty(networkConfiguration.privateSubnet2Id))
     ) {
         return { privateSubnet1Cidr: '', privateSubnet2Cidr: '' };
     }
 
     const subnetIds =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
+        sqlDeploymentMode === STANDALONE
             ? [networkConfiguration.privateSubnet1Id!]
             : [networkConfiguration.privateSubnet1Id!, networkConfiguration.privateSubnet2Id!];
     const { Subnets } = await describeSubnets(credentialsId!, region!, { SubnetIds: subnetIds });
@@ -168,21 +173,14 @@ async function formatTemplateParameters(
     region?: string,
     skipPasswords?: boolean
 ) {
-    const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              true,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          )
-        : generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              false,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          );
+    const derivedParams = generateDeploymentParams(
+        DatabaseTypes.MS_SQL_SERVER,
+        fsxConfiguration.databaseSize,
+        Boolean(fsxConfiguration.fsxFileSystemId),
+        sqlConfiguration.sqlDeploymentMode,
+        fsxConfiguration.fsxVolThroughput,
+        fsxConfiguration.fsxIOPS
+    );
 
     const { roleName = '', providerAccountId = '' } = credentialsId
         ? await getRoleDetails(credentialsId)
@@ -221,7 +219,7 @@ async function formatTemplateParameters(
 
     const { privateSubnet1Cidr, privateSubnet2Cidr } =
         credentialsId && region
-            ? await getSubnetsCidr(credentialsId!, region!, networkConfiguration, sqlConfiguration)
+            ? await getSubnetsCidr(credentialsId!, region!, networkConfiguration, sqlConfiguration.sqlDeploymentMode)
             : { privateSubnet1Cidr: '', privateSubnet2Cidr: '' };
 
     const templateParams: Array<Parameter> = [
@@ -243,7 +241,10 @@ async function formatTemplateParameters(
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
             if (encryptedFsxPassword) {
-                templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+                templateParams.push({
+                    ParameterKey: TEMPLATE_FSX_PASSWORD,
+                    ParameterValue: fsxConfiguration.fsxPassword
+                });
             }
         } catch (error) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
@@ -837,21 +838,14 @@ async function createCloudFormationTemplateForUserDeployment(
         }
     }
 
-    const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              true,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          )
-        : generateDeploymentParams(
-              fsxConfiguration.databaseSize,
-              false,
-              sqlConfiguration.sqlDeploymentMode,
-              fsxConfiguration.fsxVolThroughput,
-              fsxConfiguration.fsxIOPS
-          );
+    const derivedParams = generateDeploymentParams(
+        DatabaseTypes.MS_SQL_SERVER,
+        fsxConfiguration.databaseSize,
+        Boolean(fsxConfiguration.fsxFileSystemId),
+        sqlConfiguration.sqlDeploymentMode,
+        fsxConfiguration.fsxVolThroughput,
+        fsxConfiguration.fsxIOPS
+    );
 
     const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
 
@@ -895,7 +889,7 @@ async function createCloudFormationTemplateForUserDeployment(
         credentialsId!,
         region!,
         networkConfiguration,
-        sqlConfiguration
+        sqlConfiguration.sqlDeploymentMode
     );
 
     const templateParamsAsList: Array<Parameter> = [
@@ -916,7 +910,7 @@ async function createCloudFormationTemplateForUserDeployment(
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
             if (encryptedFsxPassword) {
-                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
+                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(fsxConfiguration.fsxPassword)}`;
             }
         } catch (error) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
@@ -1305,6 +1299,621 @@ function getCollationDetailsForDeployment(accountId: string, mssqlVersion: numbe
     return getCollationForMSSQLVersion(String(mssqlVersion));
 }
 
+async function deployPgSql(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: PgSqlConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    triggeredFrom: string,
+    tags?: Array<{ key: string; value: string }>
+) {
+    logger.info('Deploy Postgres SQL', {
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        fsxConfiguration,
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch,
+        triggeredFrom,
+        tags
+    });
+
+    const { workloadInstanceType } = ec2Configuration;
+    const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
+    const { sqlServerName } = sqlConfiguration;
+
+    if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
+        // FSX 4gbps throughput capacity supported regions
+        const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
+        const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
+        if (!regionExists) {
+            throw createError(
+                412,
+                `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
+            );
+        }
+        // check ssd and iops size
+        if (fsxIOPS !== FSX_IOPS) {
+            throw createError(412, 'Supported Fsxn IOPs should be 160000');
+        }
+    }
+
+    let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:15,${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+
+    try {
+        const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
+
+        // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
+        if (permissions.implicitlyDenied.length || permissions.explicitlyDenied.length) {
+            metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
+            const response = await createCfTemplateForPgsqlDeployment(
+                credentialsId,
+                region,
+                networkConfiguration,
+                ec2Configuration,
+                fsxConfiguration,
+                sqlConfiguration,
+                topicArn,
+                false,
+                metrics,
+                tags
+            );
+            const errMsg = MISSING_PERMISSIONS(permissions.implicitlyDenied, permissions.explicitlyDenied);
+
+            const responseWithPermissions: CloudFormationDeploymentResponseType = {
+                ...response,
+                missingPermissions: {
+                    implicitlyDenied: permissions.implicitlyDenied || [],
+                    explicitlyDenied: permissions.explicitlyDenied
+                }
+            };
+
+            logger.error(errMsg);
+            return responseWithPermissions;
+        }
+        metrics += `,${DEPLOYED_FROM}:${WLMDB}`;
+        return deployCfTemplateForPgSql(
+            credentialsId,
+            region,
+            networkConfiguration,
+            ec2Configuration,
+            fsxConfiguration,
+            sqlConfiguration,
+            topicArn,
+            false,
+            metrics
+        );
+    } catch (err: any) {
+        // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
+        if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
+            metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
+            const response = await createCfTemplateForPgsqlDeployment(
+                credentialsId,
+                region,
+                networkConfiguration,
+                ec2Configuration,
+                fsxConfiguration,
+                sqlConfiguration,
+                topicArn,
+                false,
+                metrics,
+                tags
+            );
+
+            let blockedBySCP = false;
+            if (err?.message?.includes('deny in a service control policy')) {
+                blockedBySCP = true;
+            }
+
+            const errMsg = MISSING_PERMISSIONS(err?.message, []);
+            const responseWithPermissions: CloudFormationDeploymentResponseType = {
+                ...response,
+                missingPermissions: {
+                    implicitlyDenied: !blockedBySCP
+                        ? [
+                              {
+                                  service: IAM,
+                                  action: SIMULATE_IAM_POLICY,
+                                  reason: PERMISSION_DENIAL_POSSIBLE_REASONS.MISSING
+                              }
+                          ]
+                        : [],
+                    explicitlyDenied: blockedBySCP
+                        ? [
+                              {
+                                  service: IAM,
+                                  action: SIMULATE_IAM_POLICY,
+                                  reason: PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_SCP
+                              }
+                          ]
+                        : []
+                }
+            };
+            logger.error(errMsg);
+            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            return responseWithPermissions;
+        }
+        const errorMsg = `Error while deploying stack. ${err?.message}`;
+        logger.error(errorMsg, err);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
+
+        throw createError(
+            err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while deploying stack ${errorMsg}.`
+        );
+    }
+}
+
+async function deployCfTemplateForPgSql(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: PgSqlConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    metrics: string
+    // tags?: Array<{ key: string; value: string }>
+): Promise<{ cloudFormationStackId: string; cloudFormationUrl: string }> {
+    const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(networkConfiguration, STANDALONE);
+
+    if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
+        const errorMessage = vpcValidationCheck.violationMessage;
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+    }
+
+    const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
+    if (cfStackQuotaReached) {
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
+    }
+
+    const { stackName, templateParameters: templateParams } = await formatPgSqlTemplateParameters(
+        networkConfiguration,
+        ec2Configuration,
+        fsxConfiguration,
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch,
+        metrics,
+        credentialsId,
+        region
+    );
+
+    const customMasterTemplatePath = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
+
+    const signedMasterTemplateUrl = await getPreSignedUrl(
+        TEMPLATE_BUCKET_REGION,
+        SIGNED_TEMPLATES_BUCKET_NAME,
+        customMasterTemplatePath
+    );
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParams);
+
+    logger.info('Template parameters in CF format', templateParamsInCfFormat);
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        region,
+        DatabaseTypes.PG_SQL,
+        stackName,
+        // tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        [],
+        customMasterTemplatePath,
+        templateParamsInCfFormat
+    );
+
+    logger.debug('template params', templateParams);
+
+    const deployStackResponse = await createStack(
+        credentialsId,
+        region,
+        stackName,
+        signedMasterTemplateUrl,
+        templateParams,
+        DISABLE_ROLLBACK,
+        MASTER_STACK_TIMEOUT_MINUTES
+    );
+
+    // logger.info(`Stack ${stackName} response ${deployStackResponse}`);
+
+    const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
+
+    return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
+}
+
+async function formatPgSqlTemplateParameters(
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: PgSqlConfigurationType,
+    topicArn: string,
+    enableCloudWatch: boolean,
+    metrics: string,
+    credentialsId?: string,
+    region?: string,
+    skipPasswords?: boolean
+) {
+    logger.info('Format Postgres SQL template parameters', {
+        networkConfiguration,
+        ec2Configuration,
+        fsxConfiguration,
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch,
+        metrics,
+        credentialsId,
+        region,
+        skipPasswords
+    });
+    const derivedParams = generateDeploymentParams(
+        DatabaseTypes.PG_SQL,
+        fsxConfiguration.databaseSize,
+        Boolean(fsxConfiguration.fsxFileSystemId),
+        sqlConfiguration.sqlDeploymentMode,
+        fsxConfiguration.fsxVolThroughput,
+        fsxConfiguration.fsxIOPS
+    );
+
+    logger.info('Derived parameters for Postgres deployment', derivedParams);
+
+    const { roleName = '', providerAccountId = '' } = credentialsId
+        ? await getRoleDetails(credentialsId)
+        : { roleName: '', providerAccountId: '' };
+
+    const stackName = derivedParams.StackName;
+
+    const validationAmiImage = sqlConfiguration.sqlAmiId;
+
+    const availabilityZones =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.availabilityZone1!]
+            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
+
+    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
+
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
+
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+
+    logger.info('AWS Account ID', awsAccountId);
+
+    const routeTables =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.routeTable1Id!]
+            : [networkConfiguration.routeTable1Id!, networkConfiguration.routeTable2Id!];
+    const { servicesWithNoEndpoint, missingRoutesInS3 } =
+        credentialsId && region
+            ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
+            : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
+
+    const { privateSubnet1Cidr, privateSubnet2Cidr } =
+        credentialsId && region
+            ? await getSubnetsCidr(credentialsId!, region!, networkConfiguration, sqlConfiguration.sqlDeploymentMode)
+            : { privateSubnet1Cidr: '', privateSubnet2Cidr: '' };
+
+    const templateParams: Array<Parameter> = [
+        { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_METRICS, ParameterValue: '' },
+        { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
+        { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr?.toString() || '' },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
+    ];
+
+    if (fsxConfiguration.fsxPassword) {
+        try {
+            const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+            if (encryptedFsxPassword) {
+                templateParams.push({
+                    ParameterKey: TEMPLATE_FSX_PASSWORD,
+                    ParameterValue: fsxConfiguration.fsxPassword
+                });
+            }
+        } catch (error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
+        }
+    }
+
+    // Get the volume size of an ami.. Set to minimum value of 100 if its lesser than that
+    let amiSize = EBS_DEFAULT_VOLUME_SIZE; // to accomodate guest user when credentials or region could be empty
+    if (credentialsId && region && sqlConfiguration.sqlAmiId) {
+        const {
+            Images: [
+                {
+                    BlockDeviceMappings: [
+                        { Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} } = {}
+                    ] = []
+                } = {}
+            ] = []
+        } = (await getAmis(credentialsId as string, region as string, { ImageIds: [sqlConfiguration.sqlAmiId] })) || [];
+
+        amiSize = Math.max(amiVolumeSize, EBS_DEFAULT_VOLUME_SIZE);
+    }
+    templateParams.push({ ParameterKey: EBS_VOLUME_SIZE, ParameterValue: amiSize.toString() });
+
+    Object.entries(PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
+        if (!servicesWithNoEndpoint.includes(key)) {
+            templateParams.push({
+                ParameterKey: value,
+                ParameterValue: 'true'
+            });
+        }
+    });
+
+    Object.entries(derivedParams).forEach(([key, value]) => {
+        if (key !== 'StackName') {
+            templateParams.push({
+                ParameterKey: key,
+                ParameterValue: value.toString()
+            });
+        }
+    });
+
+    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername);
+    templateParams.push({
+        ParameterKey: TEMPLATE_USERNAME_MAPPING.FSxAdminUsername,
+        ParameterValue: fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+    });
+
+    const clubbedParamList = {
+        ...networkConfiguration,
+        ...fsxConfiguration,
+        ...sqlConfiguration,
+        ...ec2Configuration,
+        topicArn
+    };
+
+    const skipPassword = false;
+    Object.entries(clubbedParamList).forEach(([key, value]) => {
+        if (PG_TEMPLATE_CONFIG_MAPPING[key]) {
+            templateParams.push({
+                ParameterKey: PG_TEMPLATE_CONFIG_MAPPING[key],
+                ParameterValue:
+                    skipPassword && SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(PG_TEMPLATE_CONFIG_MAPPING[key])
+                        ? ''
+                        : value.toString()
+            });
+        }
+    });
+
+    Object.entries(PG_TEMPLATE_OPTIONAL_PARAMETERS).forEach(([key, value]) => {
+        if (!(key in clubbedParamList)) {
+            templateParams.push({
+                ParameterKey: value,
+                ParameterValue: ''
+            });
+        }
+    });
+
+    return { stackName, templateParameters: templateParams };
+}
+
+async function createCfTemplateForPgsqlDeployment(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: PgSqlConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    metrics: string,
+    tags?: Array<{ key: string; value: string }>
+) {
+    logger.info('Create cloud formation template for Postgres deployment', {
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        fsxConfiguration,
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch,
+        metrics,
+        tags
+    });
+
+    const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
+        networkConfiguration,
+        sqlConfiguration.sqlDeploymentMode
+    );
+
+    if (vpcValidationCheck.isViolated) {
+        let errorMessage = '';
+        if (vpcValidationCheck.violationMessage !== undefined) {
+            errorMessage = vpcValidationCheck.violationMessage;
+        } else if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
+            errorMessage = STANDALONE_NETWORK_VIOLATION_MESSAGE;
+        }
+        if (!isEmpty(errorMessage)) {
+            logger.error('VPC validation error:', errorMessage);
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage!);
+        }
+    }
+
+    const derivedParams = generateDeploymentParams(
+        DatabaseTypes.PG_SQL,
+        fsxConfiguration.databaseSize,
+        Boolean(fsxConfiguration.fsxFileSystemId),
+        sqlConfiguration.sqlDeploymentMode,
+        fsxConfiguration.fsxVolThroughput,
+        fsxConfiguration.fsxIOPS
+    );
+
+    const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
+
+    const customMasterTemplatePath: string = `${WLMDB}/${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
+
+    const signedMasterTemplateUrl = await getPreSignedUrl(
+        TEMPLATE_BUCKET_REGION,
+        SIGNED_TEMPLATES_BUCKET_NAME,
+        customMasterTemplatePath
+    );
+
+    const encodedSignedMasterTemplateURL = encodeURIComponent(signedMasterTemplateUrl);
+    logger.info('Signed master url ', encodedSignedMasterTemplateURL);
+
+    const validationAmiImage = sqlConfiguration.sqlAmiId;
+    const availabilityZones =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.availabilityZone1!]
+            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
+    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
+
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
+
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+
+    const routeTables =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.routeTable1Id!]
+            : [networkConfiguration.routeTable1Id!, networkConfiguration.routeTable2Id!];
+    const { servicesWithNoEndpoint, missingRoutesInS3 } =
+        credentialsId && region
+            ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
+            : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
+
+    const { privateSubnet1Cidr, privateSubnet2Cidr } = await getSubnetsCidr(
+        credentialsId!,
+        region!,
+        networkConfiguration,
+        sqlConfiguration.sqlDeploymentMode
+    );
+
+    const templateParamsAsList: Array<Parameter> = [
+        { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
+        { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr?.toString() || '' },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
+    ];
+
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${validationNodeInstanceType}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+
+    if (fsxConfiguration.fsxPassword) {
+        try {
+            const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+            if (encryptedFsxPassword) {
+                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(fsxConfiguration.fsxPassword)}`;
+            }
+        } catch (error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
+        }
+    }
+
+    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername);
+    // const sqlUsernameDetails = splitDomainUsername(sqlConfiguration.serviceAccountName);
+    templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.FSxAdminUsername}=${
+        fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+    }`;
+    // templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName}=${
+    //     sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName
+    // }`;
+
+    const {
+        Images: [
+            {
+                BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} } = {}] = []
+            } = {}
+        ] = []
+    } = await getAmis(credentialsId, region, { ImageIds: [sqlConfiguration.sqlAmiId] });
+
+    const amiSize = Math.max(amiVolumeSize, EBS_DEFAULT_VOLUME_SIZE);
+    templateParams += `&param_${EBS_VOLUME_SIZE}=${amiSize}`;
+
+    templateParamsAsList.push(
+        {
+            ParameterKey: TEMPLATE_USERNAME_MAPPING.FSxAdminUsername,
+            ParameterValue: fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+        }
+        // {
+        //     ParameterKey: TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName,
+        //     ParameterValue: sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName
+        // }
+    );
+
+    Object.entries(PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
+        if (!servicesWithNoEndpoint.includes(key)) {
+            templateParams += `&param_${value}='true'`;
+        }
+    });
+
+    Object.entries(derivedParams).forEach(([key, value]) => {
+        if (key !== 'StackName') {
+            templateParams += `&param_${key}=${value}`;
+            templateParamsAsList.push({
+                ParameterKey: key,
+                ParameterValue: value.toString()
+            });
+        }
+    });
+
+    const clubbedParamList = {
+        ...networkConfiguration,
+        ...networkConfiguration,
+        ...sqlConfiguration,
+        ...ec2Configuration,
+        ...fsxConfiguration,
+        topicArn,
+        enableCloudWatch,
+        metrics
+    };
+
+    Object.entries(clubbedParamList).forEach(([key, value]) => {
+        if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
+            value = SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(TEMPLATE_CONFIGURATION_MAPPING[key]) ? '' : value;
+            templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
+            templateParamsAsList.push({
+                ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
+                ParameterValue: value.toString()
+            });
+        }
+    });
+
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParamsAsList);
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        region!,
+        DatabaseTypes.PG_SQL,
+        derivedParams.StackName,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        customMasterTemplatePath,
+        templateParamsInCfFormat
+    );
+
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
+
+    logger.info('Cloud Formation template URL ', signedTemplateURL);
+
+    return { cloudFormationUrl: signedTemplateURL };
+}
+
 export {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
@@ -1314,5 +1923,6 @@ export {
     deployStackOrCreateTemplateURL,
     getFSXAvailableRegionsForThrougput,
     getCollationDetailsForDeployment,
+    deployPgSql,
     getTerraformSetup
 };

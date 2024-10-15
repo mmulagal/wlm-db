@@ -17,7 +17,17 @@ const RecommendationText = ({ data }: { data: { title: string; description: stri
                         {data?.values.map((value, index) => (
                             <>
                                 <div className={styles.seperator} />
-                                <DsTypography key={index} variant="Regular_14">
+
+                                <DsTypography
+                                    key={index}
+                                    variant="Regular_14"
+                                    style={{
+                                        width:
+                                            value.includes('Under-provisioned') || value.includes('Over-provisioned')
+                                                ? '180px'
+                                                : 'fit-content'
+                                    }}
+                                >
                                     {value}
                                 </DsTypography>
                             </>

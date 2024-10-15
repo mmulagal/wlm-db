@@ -33,7 +33,8 @@ import {
     FSX_STORAGE_MIN_CAPACITY_IN_GIB,
     HOURS_IN_MONTH,
     DEFAULT_MSSQL_INSTANCE_NAME,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    DatabaseTypes
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -55,14 +56,16 @@ function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: strin
 }
 
 function generateDeploymentParams(
-    FSxDataLunSize: number,
+    databaseType: string,
+    fsxDataLunSize: number,
     isExistingFSx: boolean,
     sqlDeploymentType: string = 'fci',
     fsxVolThroughput: number,
     fsxIOPS: number
 ) {
     logger.info('Generate deployment params', {
-        FSxDataLunSize,
+        databaseType,
+        fsxDataLunSize,
         isExistingFSx,
         sqlDeploymentType,
         fsxVolThroughput,
@@ -80,7 +83,7 @@ function generateDeploymentParams(
         FSxTempDbVolumeSize,
         FSxQuorumVolumeSize,
         FSxStorageCapacity
-    } = calculateFsxnStorageCapacity(FSxDataLunSize, sqlDeploymentType);
+    } = calculateFsxnStorageCapacity(fsxDataLunSize, sqlDeploymentType);
 
     // If the FSX total storage crosses 192Tib Means keeping it to 192TiB (196608GiB). This is because when the 130TiB is given as a data lun size, total storage capacity of is going beyond 196608 which is 197695.
     const fsxStorageCapacity = Math.min(FSxStorageCapacity, MAX_FSX_STORAGE_IN_GIB);
@@ -106,7 +109,9 @@ function generateDeploymentParams(
         }
     }
 
-    const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
+    const stacknameSubstring = `${databaseType === DatabaseTypes.MS_SQL_SERVER ? '' : 'Pg'}${
+        sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME
+    }`;
     const netbios =
         sqlDeploymentType === 'fci'
             ? [`sqlnode1-${randomDigits}`, `sqlnode2-${randomDigits}`]
@@ -124,12 +129,13 @@ function generateDeploymentParams(
         FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
         FSxTempDbVolumeSize, // 10% of FSxDataVolumeSize
         FSxSvmName: `${prefix}_svm_${suffix}`,
-        SQLigroupname: `${prefix}_sqligroup_${suffix}`,
+        ...(databaseType === DatabaseTypes.MS_SQL_SERVER && { SQLigroupname: `${prefix}_sqligroup_${suffix}` }),
         SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
-        NodeNetBIOSNames: netbios,
+        ...(databaseType === DatabaseTypes.MS_SQL_SERVER && { NodeNetBIOSNames: netbios }),
         FSxStorageCapacity: fsxStorageCapacity,
         FSxDataLunSize: FSxDataLunSizeInMib
     };
+
     if (sqlDeploymentType === 'fci') {
         params = {
             ...params,
@@ -326,6 +332,7 @@ function getEc2Arn(awsAccountId: string, region: string, instanceId: string) {
 }
 
 function getQueueUrl(accountId: string, queueName: string) {
+    logger.debug({ accountId, queueName });
     return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
 }
 

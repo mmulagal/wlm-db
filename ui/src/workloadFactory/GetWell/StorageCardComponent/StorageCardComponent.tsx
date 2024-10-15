@@ -2,12 +2,11 @@ import { DsButton, DsFlashingDotsLoader, DsTypography } from '@netapp/design-sys
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
-import { ReactComponent as OverProvisioned } from '../../../assets/over-provisioned.svg';
 import styles from './StorageCardComponent.module.scss';
 import GetWellChart from './GetWellChart/GetWellChart';
 import useResize from '../../../common/hooks/useResize';
 
-const StorageCardComponent = ({ cardData }: any) => {
+const StorageCardComponent = ({ cardData, optimizePrintState }: any) => {
     const loading = false;
     const setImage = (value: string) => {
         if (value.toLocaleLowerCase() === 'optimized') {
@@ -15,7 +14,11 @@ const StorageCardComponent = ({ cardData }: any) => {
         } else if (value === 'Under-provisioned') {
             return <UnderProvisioned />;
         } else if (value === 'Over-provisioned') {
-            return <OverProvisioned />;
+            return (
+                <div style={{ transform: 'rotate(180deg)' }}>
+                    <UnderProvisioned />
+                </div>
+            );
         } else {
             return <NotActive />;
         }
@@ -91,7 +94,8 @@ const StorageCardComponent = ({ cardData }: any) => {
             {/* <div className={styles.separator} /> */}
 
             {/* 6 section */}
-            {cardData?.block_one?.value !== 'ONTAP configuration' &&
+            {!optimizePrintState &&
+                cardData?.block_one?.value !== 'ONTAP configuration' &&
                 cardData?.block_one?.value !== 'Operating system' && (
                     <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
                         <DsButton variant="secondary" onClick={() => {}} isDisabled={loading}>
