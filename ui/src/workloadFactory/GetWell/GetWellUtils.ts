@@ -281,6 +281,7 @@ export const cardDataDefault: GwCardDataInterface = {
     }
 };
 
+// This function is used to format the data for the individual card main config.
 export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface) => {
     let cardsData = {};
     let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
@@ -311,6 +312,7 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
     return cardsData;
 };
 
+// This function is used to format the ONTAP configuration data.
 export const formatOntapConfig = (data: AssessmentResponseInterface) => {
     let ontapTagsList: Array<string> = [];
     const ontapConfigList = [
@@ -333,7 +335,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface) => {
     let ontapVolAndLunList = [data?.storage?.configuration?.volumes, data?.storage?.configuration?.luns];
     ontapVolAndLunList?.map(type => {
         type?.map((item: PerConfigInterface) => {
-            if (item?.status === 'optimized') {
+            if (item?.status === 'optimised') {
                 ontapOptimizedConfig++;
             } else {
                 ontapNotOptimizedConfig++;
@@ -343,6 +345,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface) => {
     return { formatOntapConfigList, ontapTagsList, ontapOptimizedConfig, ontapNotOptimizedConfig };
 };
 
+// This function is used to format the OS configuration data.
 export const formatOsConfig = (data: AssessmentResponseInterface) => {
     let osTagsList: Array<string> = [];
     let formatOsConfigList: PerConfigInterface[] = [];
@@ -359,7 +362,7 @@ export const formatOsConfig = (data: AssessmentResponseInterface) => {
     let osOptimizedConfig = 0;
     let osNotOptimizedConfig = 0;
     data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
-        if (item?.status === 'optimized') {
+        if (item?.status === 'optimised') {
             osOptimizedConfig++;
         } else {
             osNotOptimizedConfig++;
@@ -368,6 +371,7 @@ export const formatOsConfig = (data: AssessmentResponseInterface) => {
     return { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig };
 };
 
+// This function is used to format the optimization breakdown data.
 export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) => {
     let optBreakDown = {
         storage: {
@@ -397,6 +401,7 @@ export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) =
     return optBreakDown;
 };
 
+// This function is used to format the get well data.
 export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: any) => {
     let cardsData = formatIndividualCardMainConfig(data);
 
@@ -447,9 +452,16 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
 
     let optBreakDown = formatOptimizationBreakDown(data);
 
+    // Dispatch the formatted cards data to the store
     dispatch(setCardData(cardsData));
+
+    // Dispatch the formatted ONTAP configuration data to the store
     dispatch(setOntapConfigTableData(formatOntapConfigList));
+
+    // Dispatch the formatted OS configuration data to the store
     dispatch(setOsConfigTableData(formatOsConfigList));
+
+    // Dispatch the formatted optimization breakdown data to the store
     dispatch(setOptimizationBreakDown(optBreakDown));
 };
 

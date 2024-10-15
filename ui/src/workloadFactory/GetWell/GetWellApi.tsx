@@ -15,13 +15,15 @@ const GetWellApi = () => {
     const [assessmentDetailsApi] = useGetMssqlAssessmentDataMutation();
 
     useEffect(() => {
+        // On page load, call the API to get the assessment details
         viewOptimizeAction();
     }, []);
 
     const runAssessmentDetailsApi = async () => {
+        // Call the API to get the assessment details
         try {
             dispatch(setOptimizePageLoading(true));
-            const result: { data?: AssessmentResponseInterface; error?: any } = await assessmentDetailsApi({
+            const result: { data?: any; error?: any } = await assessmentDetailsApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
                 databaseHostId: selectedResourceId,
@@ -40,7 +42,9 @@ const GetWellApi = () => {
     };
 
     const viewOptimizeAction = () => {
+        // Set the loading state to true
         dispatch(setOptimizePageLoading(true));
+        // Call the API to get the assessment details
         runAssessmentDetailsApi();
     };
 
