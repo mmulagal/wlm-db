@@ -46,6 +46,8 @@ const GetWell = () => {
     const loading = false;
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
+    //@ts-ignore
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const handleSelect = (filters: any, filterLabel: any) => {
         let updatedFilters = [...optimizeFilterTags];
@@ -199,7 +201,7 @@ const GetWell = () => {
                                 onExpandChange={setsAccordionOpen}
                                 title={
                                     <div className={styles.filterHeaderStyle}>
-                                        <div>
+                                        <div className={isDarkTheme ? styles['dark-theme-union'] : ''}>
                                             <Union />
                                         </div>
                                         <DsTypography
@@ -603,7 +605,9 @@ const GetWell = () => {
                                     title={<Tag text={'Performance efficiency'} />}
                                     headerActions={[
                                         <div className={styles.headerAction}>
-                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                                {loading ? <LightDisabled /> : <Light />}
+                                            </div>
                                             <div
                                                 style={{
                                                     color: loading
@@ -632,7 +636,9 @@ const GetWell = () => {
                                     title={<Tag text={'Performance efficiency'} />}
                                     headerActions={[
                                         <div className={styles.headerAction}>
-                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                                {loading ? <LightDisabled /> : <Light />}
+                                            </div>
                                             <div
                                                 style={{
                                                     color: loading
@@ -663,7 +669,9 @@ const GetWell = () => {
                                     title={<Tag text={'Performance efficiency'} />}
                                     headerActions={[
                                         <div className={styles.headerAction}>
-                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                                {loading ? <LightDisabled /> : <Light />}
+                                            </div>
                                             <div
                                                 style={{
                                                     color: loading
@@ -694,7 +702,9 @@ const GetWell = () => {
                                     title={<Tag text={'Performance efficiency'} />}
                                     headerActions={[
                                         <div className={styles.headerAction}>
-                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                                {loading ? <LightDisabled /> : <Light />}
+                                            </div>
                                             <div
                                                 style={{
                                                     color: loading
@@ -741,7 +751,9 @@ const GetWell = () => {
                                     title={<Tag text={'Performance efficiency'} />}
                                     headerActions={[
                                         <div className={styles.headerAction}>
-                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                                {loading ? <LightDisabled /> : <Light />}
+                                            </div>
                                             <div
                                                 style={{
                                                     color: loading
@@ -770,7 +782,9 @@ const GetWell = () => {
                                     isExpanded={optimizePrintState}
                                     headerActions={[
                                         <div className={styles.headerAction}>
-                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                                {loading ? <LightDisabled /> : <Light />}
+                                            </div>
                                             <div
                                                 style={{
                                                     color: loading
@@ -801,7 +815,9 @@ const GetWell = () => {
                                     title={<Tag text={'Performance efficiency'} />}
                                     headerActions={[
                                         <div className={styles.headerAction}>
-                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                                {loading ? <LightDisabled /> : <Light />}
+                                            </div>
                                             <div
                                                 style={{
                                                     color: loading
@@ -854,7 +870,9 @@ const GetWell = () => {
                                     }
                                     headerActions={[
                                         <div className={styles.headerAction}>
-                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                                {loading ? <LightDisabled /> : <Light />}
+                                            </div>
                                             <div
                                                 style={{
                                                     color: loading
@@ -897,7 +915,9 @@ const GetWell = () => {
                                     }
                                     headerActions={[
                                         <div className={styles.headerAction}>
-                                            <div>{loading ? <LightDisabled /> : <Light />}</div>
+                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                                {loading ? <LightDisabled /> : <Light />}
+                                            </div>
                                             <div
                                                 style={{
                                                     color: loading
