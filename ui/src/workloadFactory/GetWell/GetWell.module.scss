@@ -133,6 +133,11 @@
                         [class*='dsTextFieldFrame'] {
                             max-width: 264px !important;
                         }
+
+                        .not-optimized-tooltip {
+                            display: flex;
+                            gap: 30px;
+                        }
                     }
                 }
 
@@ -208,4 +213,8 @@
         max-height: 2500px !important;
         overflow: hidden;
     }
+}
+
+[class*='Popover-module_base'] {
+    z-index: 999999;
 }
