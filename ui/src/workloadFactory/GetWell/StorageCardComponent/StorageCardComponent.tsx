@@ -6,11 +6,13 @@ import { ReactComponent as OverProvisioned } from '../../../assets/over-provisio
 import styles from './StorageCardComponent.module.scss';
 import GetWellChart from './GetWellChart/GetWellChart';
 import useResize from '../../../common/hooks/useResize';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const StorageCardComponent = ({ cardData }: any) => {
-    const loading = false;
+    const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
+
     const setImage = (value: string) => {
-        if (value.toLocaleLowerCase() === 'optimized') {
+        if (value?.toLocaleLowerCase() === 'optimized') {
             return <Optimized />;
         } else if (value === 'Under-provisioned') {
             return <UnderProvisioned />;

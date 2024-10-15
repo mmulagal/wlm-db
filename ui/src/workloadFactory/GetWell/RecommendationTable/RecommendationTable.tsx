@@ -12,7 +12,7 @@ const RecommendationTable = ({ tableData, isLoading }: any) => {
         {
             id: '1',
             Header: 'Configuration',
-            accessor: 'configuration',
+            accessor: 'name',
             width: '18%',
             isSortable: true
         },

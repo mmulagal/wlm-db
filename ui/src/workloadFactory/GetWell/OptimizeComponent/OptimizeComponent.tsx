@@ -2,16 +2,19 @@ import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { ReactComponent as DevCircle } from '../../../assets/DevCircle.svg';
 import styles from './OptimizeComponent.module.scss';
 import GetWellBar from './GetWellBar/GetWellBar';
+import { useAppSelector } from '../../../store/storeHooks';
 
 type OptimizeComponentType = {
     text: string;
     value: string | any;
+    data?: { optimized: number; total: number };
     image: any;
     isComingSoon: boolean;
 };
 
-const OptimizeComponent = ({ text, value, image, isComingSoon }: OptimizeComponentType) => {
-    const loading = false;
+const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeComponentType) => {
+    const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
+
     return (
         <div className={styles.optimizeComponent}>
             <div className={styles.svgContainer}>{image}</div>
@@ -38,7 +41,11 @@ const OptimizeComponent = ({ text, value, image, isComingSoon }: OptimizeCompone
                 {!isComingSoon && (
                     <div className={styles.bottomTextSection}>
                         <DsTypography variant="Regular_14">Optimized configurations:</DsTypography>
-                        {!loading && <DsTypography variant="Semibold_14">6 out of 11</DsTypography>}
+                        {!loading && (
+                            <DsTypography variant="Semibold_14">
+                                {data?.optimized} out of {data?.total}
+                            </DsTypography>
+                        )}
                         {loading && <DsTypography variant="Semibold_14">0 out of X</DsTypography>}
                     </div>
                 )}

@@ -839,6 +839,21 @@ export const exploreSavingsApi = createApi({
     }
 });
 
+export const getWellApi = createApi({
+    reducerPath: 'getWellApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => {
+        return {
+            getMssqlAssessmentData: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment`
+                })
+            })
+        };
+    }
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -945,3 +960,5 @@ export const {
     useGetManualStorageSavingsMutation,
     useGetManualViewCalculationsMutation
 } = exploreSavingsApi;
+
+export const { useGetMssqlAssessmentDataMutation } = getWellApi;

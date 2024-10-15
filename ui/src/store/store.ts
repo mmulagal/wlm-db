@@ -14,7 +14,8 @@ import {
     sandboxApi,
     exploreSavingsApi,
     inventoryApiV2,
-    workloadFactoryResourceApiV2
+    workloadFactoryResourceApiV2,
+    getWellApi
 } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
@@ -33,6 +34,7 @@ import createNewUserSlice from './workloadFactory/createNewDBSlice';
 import sandboxSlice from './workloadFactory/sandboxSlice';
 import exploreSavingsSlice from './workloadFactory/exploreSavingsSlice';
 import createSandboxSlice from './workloadFactory/createSandboxSlice';
+import getWellOptimizeSlice from './workloadFactory/getWellOptimizeSlice';
 // import postgressSlice from './mssql/postgressSlice';
 
 const rootReducer = combineReducers({
@@ -65,7 +67,9 @@ const rootReducer = combineReducers({
     [sandboxApi.reducerPath]: sandboxApi.reducer,
     [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,
     [createSandboxSlice.reducerPath]: createSandboxSlice.reducer,
-    [exploreSavingsApi.reducerPath]: exploreSavingsApi.reducer
+    [exploreSavingsApi.reducerPath]: exploreSavingsApi.reducer,
+    [getWellApi.reducerPath]: getWellApi.reducer,
+    [getWellOptimizeSlice.name]: getWellOptimizeSlice.reducer
     // [postgressSlice.name]: postgressSlice.reducer
 });
 
@@ -134,6 +138,7 @@ const store = configureStore({
             .concat(inventoryApiV2.middleware)
             .concat(sandboxApi.middleware)
             .concat(exploreSavingsApi.middleware)
+            .concat(getWellApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 

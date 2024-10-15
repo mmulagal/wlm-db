@@ -1,134 +1,188 @@
-export const cardData = {
-    StorageTier: {
+import {
+    setCardData,
+    setOntapConfigTableData,
+    setOptimizationBreakDown,
+    setOsConfigTableData
+} from '../../store/workloadFactory/getWellOptimizeSlice';
+import { GETWELL_CONFIG, GETWELL_VALUES } from '../../utils/consts';
+import { formatNumberWithCustomComma } from '../../utils/utilityFunctions';
+
+export const cardDataDefault: any = {
+    storage_tier: {
         block_one: {
             type: 'Storage sizing',
             value: 'Storage tier'
         },
         block_two: {
             type: 'Status',
-            value: 'Optimized'
+            value: ''
         },
         block_three: {
             type: 'Performance tier',
-            value: '25%'
+            value: ''
         },
         block_four: {
             type: 'Severity',
-            value: 'Critical'
-        }
+            value: ''
+        },
+        recommendation: {
+            title: 'Storage tier recommendation',
+            description:
+                'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.\nUsing the capacity tier may result in slower performance and higher latency.'
+        },
+        tags: []
     },
-    FileSystemHeadroom: {
+    file_system_headroom: {
         block_one: {
             value: 'File system headroom',
             type: 'Storage sizing'
         },
         block_two: {
             type: 'Status',
-            value: 'Under-provisioned'
+            value: ''
         },
         block_three: {
             type: 'File system headroom',
-            value: '35%'
+            value: ''
         },
         block_four: {
             type: 'Severity',
-            value: 'Critical'
-        }
+            value: ''
+        },
+        recommendation: {
+            title: 'File system headroom recommendation',
+            description:
+                'To optimize storage performance, provision file system capacity as 1.35 times the size of total database usage.',
+            values: ['Under-provisioned: 0-35%', 'Optimized: 36-100%', 'Over-provisioned: >100%']
+        },
+        tags: []
     },
-    TransactionLogDriveSize: {
+    transaction_log_drive_size: {
         block_one: {
             value: 'Log drive size',
             type: 'Storage sizing'
         },
         block_two: {
             type: 'Status',
-            value: 'Over-provisioned'
+            value: ''
         },
         block_three: {
             type: 'Percentage of data drive size',
-            value: '100%'
+            value: ''
         },
         block_four: {
             type: 'Severity',
-            value: 'Warning'
-        }
+            value: ''
+        },
+        recommendation: {
+            title: 'Log drive size recommendation',
+            description:
+                'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
+            values: ['Under-provisioned: 0-20%', 'Optimized: 21-30%', 'Over-provisioned: >31%']
+        },
+        tags: []
     },
-    TempDBDriveSize: {
+    tempdb_drive_size: {
         block_one: {
             value: 'TempDB drive size',
             type: 'Storage sizing'
         },
         block_two: {
             type: 'Status',
-            value: 'Optimized'
+            value: ''
         },
         block_three: {
             type: 'Percentage of data drive size',
-            value: '50%'
+            value: ''
         },
         block_four: {
             type: 'Severity',
-            value: 'None'
-        }
+            value: ''
+        },
+        recommendation: {
+            title: 'TempDB drive size recommendation',
+            description:
+                'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+            values: ['Under-provisioned: 0-20%', 'Optimized: 21-30%', 'Over-provisioned: >31%']
+        },
+        tags: []
     },
-    UserDataFiles: {
+    user_data_files: {
         block_one: {
             value: 'User data files (.mdf) placement',
             type: 'Storage layout'
         },
         block_two: {
             type: 'Status',
-            value: 'Optimized'
+            value: ''
         },
         block_three: {
             type: 'User data files',
-            value: 'Separate drive',
+            value: '',
             smallFont: true
         },
         block_four: {
             type: 'Severity',
-            value: 'None'
-        }
+            value: ''
+        },
+        recommendation: {
+            title: 'User data files (.mdf) placement recommendation',
+            description:
+                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
+        },
+        tags: []
     },
-    TransactionLogFiles: {
+    transaction_log_files: {
         block_one: {
             value: 'Log files (.ldf) placement',
             type: 'Storage layout'
         },
         block_two: {
             type: 'Status',
-            value: 'Optimized'
+            value: ''
         },
         block_three: {
             type: 'Log files',
-            value: 'Separate drive',
+            value: '',
             smallFont: true
         },
         block_four: {
             type: 'Severity',
-            value: 'None'
-        }
+            value: ''
+        },
+        recommendation: {
+            title: 'Log files (.ldf) placement recommendation',
+            description:
+                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
+        },
+        tags: []
     },
-    TempDBPlacement: {
+    tempdb_files: {
         block_one: {
             value: 'TempDB placement',
             type: 'Storage layout'
         },
         block_two: {
             type: 'Status',
-            value: 'Optimized'
+            value: ''
         },
         block_three: {
             type: 'TempDB placement',
-            value: 'Separate drive',
+            value: '',
             smallFont: true
         },
         block_four: {
             type: 'Severity',
-            value: 'Critical'
-        }
+            value: ''
+        },
+        recommendation: {
+            title: 'TempDB placement recommendation',
+            description:
+                'Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention.\nThis optimization improves overall SQL Server performance and stability.\nFailure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.'
+        },
+        tags: []
     },
-    ONTAPConfiguartion: {
+    ontap_configuration: {
         block_one: {
             value: 'ONTAP configuration',
             type: 'Configuration'
@@ -144,9 +198,10 @@ export const cardData = {
         block_four: {
             type: 'Severity',
             value: 'Critical'
-        }
+        },
+        tags: []
     },
-    Configuartion: {
+    os_configuration: {
         block_one: {
             value: 'Operating system',
             type: 'Configuration'
@@ -162,7 +217,8 @@ export const cardData = {
         block_four: {
             type: 'Severity',
             value: 'Critical'
-        }
+        },
+        tags: []
     },
     Latency: {
         block_one: {
@@ -180,7 +236,8 @@ export const cardData = {
         block_four: {
             type: 'Severity',
             value: 'Critical'
-        }
+        },
+        tags: []
     },
     Throughput: {
         block_one: {
@@ -198,7 +255,8 @@ export const cardData = {
         block_four: {
             type: 'Severity',
             value: 'Critical'
-        }
+        },
+        tags: []
     },
     IOPS: {
         block_one: {
@@ -216,175 +274,156 @@ export const cardData = {
         block_four: {
             type: 'Severity',
             value: 'Critical'
-        }
+        },
+        tags: []
     }
 };
 
-export const operatingSystemTableData = [
-    {
-        configuration: 'Multipath I/O Status',
-        value: 'Enabled',
-        status: 'Optimized',
-        severity: 'Critical',
-        tags: ['Operational excellence', 'Cost optimization'],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Multipath I/O Policy',
-        value: 'Round robin',
-        status: 'Not optimized',
-        severity: 'Critical',
-        tags: [],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Multipath I/O Sessions',
-        value: '5',
-        status: 'Not optimized',
-        severity: 'Critical',
-        tags: ['Operational excellence'],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'NTFS Allocation unit size',
-        value: '64K',
-        status: 'Not optimized',
-        severity: 'Critical',
-        tags: ['Cost optimization'],
-        recommendation: 'Recommendation text'
-    }
-];
+export const formatGetWellData = (data: any, dispatch: any) => {
+    let cardsData = {};
+    let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
+    cardMainConfig?.map((category: any) => {
+        category?.map((item: any) => {
+            cardsData = {
+                ...cardsData,
+                [item?.name]: {
+                    ...cardDataDefault?.[item?.name],
+                    block_two: {
+                        ...cardDataDefault?.[item?.name]?.block_two,
+                        value: GETWELL_VALUES?.[item?.status] || item?.status
+                    },
+                    block_three: {
+                        ...cardDataDefault?.[item?.name]?.block_three,
+                        value: GETWELL_VALUES?.[item?.recommended] || item?.recommended
+                    },
+                    block_four: {
+                        ...cardDataDefault?.[item?.name]?.block_four,
+                        value: GETWELL_VALUES?.[item?.severity] || item?.severity
+                    },
+                    tags: item?.tags
+                }
+            };
+        });
+    });
 
-export const ontapConfigTableData = [
-    {
-        configuration: 'Thin provisioning',
-        value: 'Thin provisioning',
-        status: 'Optimized',
-        severity: 'Critical',
-        tags: ['Operational excellence', 'Cost optimization'],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Autosize',
-        value: 'Autosize',
-        status: 'Not optimized',
-        severity: 'Critical',
-        tags: [],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Autosize-mode',
-        value: 'Autosize-mode',
-        status: 'Not optimized',
-        severity: 'Critical',
-        tags: ['Operational excellence'],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Fractional reserve',
-        value: 'Fractional reserve',
-        status: 'Not optimized',
-        severity: 'Critical',
-        tags: ['Cost optimization'],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Snapshot copy reserve',
-        value: 'Snapshot copy reserve',
-        status: 'Not optimized',
-        severity: 'Critical',
-        tags: ['Operational excellence', 'Cost optimization'],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Snapshot autodelete',
-        value: 'Snapshot autodelete',
-        status: 'Not optimized',
-        severity: 'Warning',
-        tags: ['Operational excellence', 'Cost optimization'],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Space management',
-        value: 'Space management',
-        status: 'Not optimized',
-        severity: 'Warning',
-        tags: [],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Tiering policy',
-        value: 'Tiering policy',
-        status: 'Not optimized',
-        severity: 'Critical',
-        tags: ['Operational excellence'],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Tiering minimum colling days',
-        value: 'Tiering minimum colling days',
-        status: 'Not optimized',
-        severity: 'Warning',
-        tags: ['Cost optimization'],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Space reservation',
-        value: 'Space reservation',
-        status: 'Not optimized',
-        severity: 'Critical',
-        tags: ['Operational excellence', 'Cost optimization'],
-        recommendation: 'Recommendation text'
-    },
-    {
-        configuration: 'Space allocation',
-        value: 'Space allocation',
-        status: 'Not optimized',
-        severity: 'Critical',
-        tags: ['Operational excellence', 'Cost optimization'],
-        recommendation: 'Recommendation text'
-    }
-];
+    let ontapTagsList: any = [];
+    const ontapConfigList = [
+        ...(data?.storage?.configuration?.volumes || []),
+        ...(data?.storage?.configuration?.luns || [])
+    ];
+    let formatOntapConfigList: any = [];
+    ontapConfigList?.map((item: any) => {
+        formatOntapConfigList.push({
+            ...item,
+            name: GETWELL_CONFIG?.[item?.name] || item?.name,
+            status: GETWELL_VALUES?.[item?.status] || item?.status,
+            severity: GETWELL_VALUES?.[item?.severity] || item?.severity
+        });
+        ontapTagsList = [...ontapTagsList, ...item?.tags];
+    });
 
-export const recommendendationTextData = {
-    StorageTier: {
-        title: 'Storage tier recommendation',
-        description:
-            'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.\nUsing the capacity tier may result in slower performance and higher latency.'
-    },
-    FileSystemHeadroom: {
-        title: 'File system headroom recommendation',
-        description:
-            'To optimize storage performance, provision file system capacity as 1.35 times the size of total database usage.',
-        values: ['Under-provisioned: 0-35%', 'Optimized: 36-100%', 'Over-provisioned: >100%']
-    },
-    TransactionLogDriveSize: {
-        title: 'Log drive size recommendation',
-        description:
-            'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
-        values: ['Under-provisioned: 0-20%', 'Optimized: 21-30%', 'Over-provisioned: >31%']
-    },
-    TransactionDBDriveSize: {
-        title: 'TempDB drive size recommendation',
-        description:
-            'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
-        values: ['Under-provisioned: 0-20%', 'Optimized: 21-30%', 'Over-provisioned: >31%']
-    },
-    UserDataFileMdf: {
-        title: 'User data files (.mdf) placement recommendation',
-        description:
-            'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
-    },
-    TransactionLogFiles: {
-        title: 'Log files (.ldf) placement recommendation',
-        description:
-            'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
-    },
-    TempDBPlacement: {
-        title: 'TempDB placement recommendation',
-        description:
-            'Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention.\nThis optimization improves overall SQL Server performance and stability.\nFailure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.'
-    }
+    let ontapOptimizedConfig = 0;
+    let ontapNotOptimizedConfig = 0;
+    let ontapVolAndLunList = [data?.storage?.configuration?.volumes, data?.storage?.configuration?.luns];
+    ontapVolAndLunList?.map((type: any) => {
+        type?.map((item: any) => {
+            if (item?.status === 'optimized') {
+                ontapOptimizedConfig++;
+            } else {
+                ontapNotOptimizedConfig++;
+            }
+        });
+    });
+    cardsData = {
+        ...cardsData,
+        ['ontap_configuration']: {
+            ...cardDataDefault?.ontap_configuration,
+            block_two: {
+                ...cardDataDefault?.ontap_configuration?.block_two,
+                value: ontapNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized'
+            },
+            block_three: {
+                ...cardDataDefault?.ontap_configuration?.block_three,
+                value: (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100 + '%'
+            },
+            block_four: {
+                ...cardDataDefault?.ontap_configuration?.block_four,
+                value: 'Critical'
+            },
+            tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index)
+        }
+    };
+
+    let osTagsList: any = [];
+    let formatOsConfigList: any = [];
+    data?.storage?.configuration?.os?.map((item: any) => {
+        formatOsConfigList.push({
+            ...item,
+            name: GETWELL_CONFIG?.[item?.name] || item?.name,
+            status: GETWELL_VALUES?.[item?.status] || item?.status,
+            severity: GETWELL_VALUES?.[item?.severity] || item?.severity
+        });
+        osTagsList = [...osTagsList, ...item?.tags];
+    });
+
+    let osOptimizedConfig = 0;
+    let osNotOptimizedConfig = 0;
+    data?.storage?.configuration?.os?.map((item: any) => {
+        if (item?.status === 'optimized') {
+            osOptimizedConfig++;
+        } else {
+            osNotOptimizedConfig++;
+        }
+    });
+
+    cardsData = {
+        ...cardsData,
+        ['os_configuration']: {
+            ...cardDataDefault?.os_configuration,
+            block_two: {
+                ...cardDataDefault?.os_configuration?.block_two,
+                value: osNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized'
+            },
+            block_three: {
+                ...cardDataDefault?.os_configuration?.block_three,
+                value: (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100 + '%'
+            },
+            block_four: {
+                ...cardDataDefault?.os_configuration?.block_four,
+                value: 'Warning'
+            },
+            tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index)
+        }
+    };
+
+    let optBreakDown = {
+        storage: {
+            total: data?.storage?.optimisedCount?.total || 0,
+            optimized: data?.storage?.optimisedCount?.optimised || 0,
+            percent: data?.storage?.optimisedCount
+                ? formatNumberWithCustomComma(
+                      (data?.storage?.optimisedCount?.optimised / data?.storage?.optimisedCount?.total) * 100
+                  )
+                : 0
+        },
+        total: {
+            // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
+            // Currently only storage is supported to directly adding that to the total
+            total: data?.storage?.optimisedCount?.total || 0,
+            optimized: data?.storage?.optimisedCount?.optimised || 0,
+            notOptimized: (data?.storage?.optimisedCount?.total || 0) - (data?.storage?.optimisedCount?.optimised || 0),
+            percent: data?.storage?.optimisedCount
+                ? formatNumberWithCustomComma(
+                      (data?.storage?.optimisedCount?.optimised / data?.storage?.optimisedCount?.total) * 100
+                  )
+                : 0
+        }
+    };
+
+    dispatch(setCardData(cardsData));
+    dispatch(setOntapConfigTableData(formatOntapConfigList));
+    dispatch(setOsConfigTableData(formatOsConfigList));
+    dispatch(setOptimizationBreakDown(optBreakDown));
 };
 
 export const getUniqueEntries = (arrays: any) => {
