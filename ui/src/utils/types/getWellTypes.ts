@@ -1,4 +1,3 @@
-
 export interface GetWellSliceInterface {
     optimizePageLoading: boolean;
     driftAssessmentData: any;
@@ -13,14 +12,14 @@ export interface GetWellSliceInterface {
         storage?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
-};
+}
 
 interface CountBreakDown {
     total?: number;
     optimized?: number;
     notOptimized?: number;
     percent?: number;
-};
+}
 
 export interface AssessmentResponseInterface {
     storage?: {
@@ -36,8 +35,8 @@ export interface AssessmentResponseInterface {
         };
         sizing?: PerConfigInterface[];
         layout?: PerConfigInterface[];
-    }
-};
+    };
+}
 
 export interface PerConfigInterface {
     name?: string;
@@ -47,11 +46,11 @@ export interface PerConfigInterface {
     severity?: string;
     recommendation?: string;
     tags?: string[];
-};
+}
 
 export interface GwCardDataInterface {
     [key: string]: GwPerConfigCardInterface;
-};
+}
 
 export interface GwPerConfigCardInterface {
     block_one: {
@@ -80,4 +79,4 @@ export interface GwPerConfigCardInterface {
         values?: string[];
     };
     tags: string[];
-};
+}

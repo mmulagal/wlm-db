@@ -21,7 +21,7 @@ const GetWellApi = () => {
     const runAssessmentDetailsApi = async () => {
         try {
             dispatch(setOptimizePageLoading(true));
-            const result: { data?: AssessmentResponseInterface, error?: any} = await assessmentDetailsApi({
+            const result: { data?: AssessmentResponseInterface; error?: any } = await assessmentDetailsApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
                 databaseHostId: selectedResourceId,

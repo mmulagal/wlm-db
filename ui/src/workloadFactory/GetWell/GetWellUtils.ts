@@ -284,7 +284,7 @@ export const cardDataDefault: GwCardDataInterface = {
 export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface) => {
     let cardsData = {};
     let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
-    cardMainConfig?.map((category) => {
+    cardMainConfig?.map(category => {
         category?.map((item: PerConfigInterface) => {
             const itemName = item?.name || '';
             cardsData = {
@@ -343,7 +343,6 @@ export const formatOntapConfig = (data: AssessmentResponseInterface) => {
     return { formatOntapConfigList, ontapTagsList, ontapOptimizedConfig, ontapNotOptimizedConfig };
 };
 
-
 export const formatOsConfig = (data: AssessmentResponseInterface) => {
     let osTagsList: Array<string> = [];
     let formatOsConfigList: PerConfigInterface[] = [];
@@ -376,7 +375,8 @@ export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) =
             optimized: data?.storage?.optimisedCount?.optimised ?? 0,
             percent: data?.storage?.optimisedCount
                 ? formatNumberWithCustomComma(
-                      (data?.storage?.optimisedCount?.optimised ?? 0) / (data?.storage?.optimisedCount?.total ?? 1) * 100
+                      ((data?.storage?.optimisedCount?.optimised ?? 0) / (data?.storage?.optimisedCount?.total ?? 1)) *
+                          100
                   )
                 : 0
         },
@@ -388,7 +388,8 @@ export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) =
             notOptimized: (data?.storage?.optimisedCount?.total || 0) - (data?.storage?.optimisedCount?.optimised || 0),
             percent: data?.storage?.optimisedCount
                 ? formatNumberWithCustomComma(
-                      ((data?.storage?.optimisedCount?.optimised || 0) / (data?.storage?.optimisedCount?.total || 1)) * 100
+                      ((data?.storage?.optimisedCount?.optimised || 0) / (data?.storage?.optimisedCount?.total || 1)) *
+                          100
                   )
                 : 0
         }
@@ -399,7 +400,8 @@ export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) =
 export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: any) => {
     let cardsData = formatIndividualCardMainConfig(data);
 
-    const { formatOntapConfigList, ontapTagsList, ontapOptimizedConfig, ontapNotOptimizedConfig } = formatOntapConfig(data);
+    const { formatOntapConfigList, ontapTagsList, ontapOptimizedConfig, ontapNotOptimizedConfig } =
+        formatOntapConfig(data);
 
     cardsData = {
         ...cardsData,
@@ -444,7 +446,7 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
     };
 
     let optBreakDown = formatOptimizationBreakDown(data);
-    
+
     dispatch(setCardData(cardsData));
     dispatch(setOntapConfigTableData(formatOntapConfigList));
     dispatch(setOsConfigTableData(formatOsConfigList));
