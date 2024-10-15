@@ -203,8 +203,8 @@ const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE
     : config.get<string>('jwt.audience.tenancy');
 
 const SECRETS: Record<string, string | undefined> = {
-    AUTH_CLIENT_ID: process.env.AUTH_CLIENT_ID || config.get('service-token.client_id'),
-    AUTH_CLIENT_SECRET: process.env.AUTH_CLIENT_SECRET || config.get('service-token.client_secret'),
+    AUTH_CLIENT_ID: process.env.AUTH_CLIENT_ID,
+    AUTH_CLIENT_SECRET: process.env.AUTH_CLIENT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY,
     SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY
