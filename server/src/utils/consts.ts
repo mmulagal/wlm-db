@@ -112,7 +112,8 @@ const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 const RESOURCE_CLASS = 'STORAGE_SERVICES';
 const WLMDB_RESOURCE_CLASS = 'WLMDB';
 enum DatabaseTypes {
-    MS_SQL_SERVER = 'MSSQL'
+    MS_SQL_SERVER = 'MSSQL',
+    PG_SQL = 'PGSQL'
 }
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
@@ -202,17 +203,11 @@ const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE
     : config.get<string>('jwt.audience.tenancy');
 
 const SECRETS: Record<string, string | undefined> = {
-    CLIENT_ID: process.env.CLIENT_ID
-        ? process.env.CLIENT_ID
-        : config.has('service-token.client_id')
-        ? config.get('service-token.client_id')
-        : undefined,
-    CLIENT_SECRET: process.env.CLIENT_SECRET
-        ? process.env.CLIENT_SECRET
-        : config.has('service-token.client_secret')
-        ? config.get('service-token.client_secret')
-        : undefined,
-    DATABASE_URL: process.env.DATABASE_URL
+    AUTH_CLIENT_ID: process.env.AUTH_CLIENT_ID || config.get('service-token.client_id'),
+    AUTH_CLIENT_SECRET: process.env.AUTH_CLIENT_SECRET || config.get('service-token.client_secret'),
+    DATABASE_URL: process.env.DATABASE_URL,
+    SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY,
+    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
@@ -304,7 +299,8 @@ enum AWSQueryFields {
 
 enum RESOURCESTYPE {
     MSSQL = 'MSSQL',
-    FSX = 'FSX'
+    FSX = 'FSX',
+    PGSQL = 'PGSQL'
 }
 
 const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
@@ -844,7 +840,9 @@ enum TEMPLATE_TYPES {
     SQLSTANDALONE = 'sqlstandalone',
     ENDPOINT = 'endpoint',
     NEWFSX = 'newfsx',
-    EXISTINGFSX = 'existingfsx'
+    EXISTINGFSX = 'existingfsx',
+    PGSQLSTACK = 'pgsqlstack',
+    PGSQLSTANDALONE = 'pgsqlstandalone'
 }
 
 const SQL_TEMPLATES_DISTRIBUTION = [
@@ -1261,7 +1259,7 @@ const PERMISSION_DENIAL_POSSIBLE_REASONS = {
 
 const NO_SANDBOX_CREATED = 'No sandboxes created for the instance';
 
-const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI' };
+const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI', NFS: 'NFS' };
 
 const AMI_OWNERS = { AMAZON: 'amazon' };
 
@@ -1310,6 +1308,114 @@ const DEMO_STANADLONE_INSTANCE_ID = 'i-c5x3z1a7s9d2f3g';
 const TCO_FEATURE = 'TCO';
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
+const PGSQL_VERSION = 'pgsql-version';
+
+const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
+    vpcId: 'VPCID',
+    vpcCidr: 'VPCCIDR',
+    vpcName: 'VPCName',
+    privateSubnet1Id: 'PrivateSubnet1ID',
+    routeTable1Id: 'RouteTable1Id',
+    privateSubnet2Id: 'PrivateSubnet2ID',
+    routeTable2Id: 'RouteTable2Id',
+
+    fsxDeploymentMode: 'DeploymentMode',
+    fsxFileSystemId: 'FSxFileSystemId',
+    fsxPassword: 'FSxAdminPassword',
+    fsxVolThroughput: 'FSxVolumeThroughputCapacity',
+    fsxIOPS: 'FSxDiskIops',
+    ontapSgGroupId: 'ONTAPSecurityGroupID',
+    encryptionKey: 'FileSystemEncryptionKeyId',
+    snapshotPolicy: 'FsxVolumeSnapshotPolicy',
+
+    sqlDeploymentMode: 'SQLDeploymentMode',
+    sqlAmiId: 'SQLAMIID',
+    sqlServerName: 'SqlServerName',
+
+    workloadInstanceType: 'WorkloadInstanceType',
+    keyPairName: 'KeyPairName',
+
+    topicArn: 'NotificationARN',
+    enableCloudWatch: 'EnableCloudWatchLogFeature',
+    metrics: 'Metrics'
+};
+
+const PGSQL_TEMPLATES_DISTRIBUTION = [
+    {
+        name: TEMPLATE_TYPES.VALIDATION,
+        location: './resources/pgsql/templates/vpc-validation.yaml'
+    },
+    // {
+    //     name: TEMPLATE_TYPES.SQLSTACK,
+    //     location: './resources/pgsql/templates/sql-windows-fci-config_nosignal.yaml'
+    // },
+    {
+        name: TEMPLATE_TYPES.PGSQLSTANDALONE,
+        location: './resources/pgsql/templates/standalone-deployment.yaml'
+    },
+    // {
+    //     name: TEMPLATE_TYPES.ENDPOINT,
+    //     location: './resources/pgsql/templates/vpc-endpoints.yaml'
+    // },
+    {
+        name: TEMPLATE_TYPES.NEWFSX,
+        location: './resources/pgsql/templates/fsx-new.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.EXISTINGFSX,
+        location: './resources/pgsql/templates/fsx-existing.yaml'
+    }
+];
+
+const PGSQL_RESOURCE_ASSETS = [
+    {
+        name: 'ScriptValidation',
+        url: `${WLMDB}/scripts/validate-vpc.bash`
+    }
+];
+
+const PGSQL_TEMPLATES_ASSETS = [
+    {
+        name: 'FSXNewTemplate',
+        url: 'templates/fsx-new.yaml'
+    },
+
+    {
+        name: 'FSXExistingTemplate',
+        url: 'templates/fsx-existing.yaml'
+    },
+    {
+        name: 'ValidationTemplate',
+        url: 'templates/vpc-validation.yaml'
+    },
+    {
+        name: 'SQLStandaloneTemplate',
+        url: 'templates/standalone-deployment.yaml'
+    }
+];
+
+const PGSQL_MASTER_TEMPLATE_DISTRIBUTION = {
+    name: TEMPLATE_TYPES.MASTER,
+    location: './resources/pgsql/templates/wlm-master.yaml'
+};
+
+const PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
+    s3: TEMPLATE_S3_ENDPOINT,
+    cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
+    sqs: TEMPLATE_SQS_ENDPOINT,
+    logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
+    fsx: TEMPLATE_FSX_ENDPOINT,
+    ec2: TEMPLATE_EC2_ENDPOINT,
+    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT
+};
+
+const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
+    encryptionKey: 'FileSystemEncryptionKeyId',
+    privateSubnet1Id: 'PrivateSubnet1ID',
+    routeTable1Id: 'RouteTable1Id',
+    privateSubnet2Id: 'PrivateSubnet2ID',
+    routeTable2Id: 'RouteTable2Id'
+};
 const TIMELINE_SERVICE_NAME = 'WF-Databases';
 
 const EBS_ROOT_VOLUME = 'ROOT_VOLUME';
@@ -1599,8 +1705,16 @@ export {
     WIN_SQL_EC2_USAGE_OPERATION,
     DEMO_STANADLONE_INSTANCE_ID,
     DEMO_STANADLONE_SQL_SERVER_ID,
-    TCO_FEATURE,
     CURRENT_SCRIPT_VERSION,
+    PGSQL_VERSION,
+    PG_TEMPLATE_CONFIG_MAPPING,
+    PGSQL_TEMPLATES_DISTRIBUTION,
+    PGSQL_RESOURCE_ASSETS,
+    PGSQL_TEMPLATES_ASSETS,
+    PGSQL_MASTER_TEMPLATE_DISTRIBUTION,
+    PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
+    PG_TEMPLATE_OPTIONAL_PARAMETERS,
+    TCO_FEATURE,
     AWS_SSM_PARAMETER,
     TIMELINE_SERVICE_NAME,
     AuditStatus,
