@@ -365,7 +365,7 @@ const GetWell = () => {
                                                                 <div className={styles['not-optimized-tooltip']}>
                                                                     <div>{option?.label}</div>
                                                                     <DsTooltipInfo
-                                                                        trigger="click"
+                                                                        trigger="hover"
                                                                         isRelativeToViewPort={false}
                                                                     >
                                                                         {' '}
