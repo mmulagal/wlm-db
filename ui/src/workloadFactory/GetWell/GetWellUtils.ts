@@ -479,14 +479,15 @@ export const getUniqueEntries = (arrays: any) => {
     });
 };
 
-export const groupByType = (array: any) => {
+export const groupByType = (array: any, returnType: string = 'id') => {
     return array.reduce((acc: any, item: any) => {
-        const { type, id } = item;
+        const { type, id, value } = item;
         if (!acc[type]) {
             acc[type] = [];
         }
-        if (!acc[type].includes(id)) {
-            acc[type].push(id);
+        const retValue = returnType === 'id' ? id : value;
+        if (!acc[type].includes(retValue)) {
+            acc[type].push(retValue);
         }
         return acc;
     }, {});
@@ -522,4 +523,40 @@ export const generateDate = () => {
     const minutes = String(now.getMinutes()).padStart(2, '0');
 
     return `${year}${month}${day}_${hours}${minutes}`;
+};
+
+// filters card data based on filter tags
+export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
+    let filteredCardData: any = {};
+    const filters = groupByType(optimizeFilterTags, 'value');
+    const subCategoryData: any = {
+        file_system_headroom: 'Storage sizing',
+        storage_tier: 'Storage sizing',
+        transaction_log_drive_size: 'Storage sizing',
+        tempdb_drive_size: 'Storage sizing',
+        user_data_files: 'Storage layout',
+        transaction_log_files: 'Storage layout',
+        tempdb_files: 'Storage layout',
+        ontap_configuration: 'Storage configuration',
+        os_configuration: 'Storage configuration'
+    };
+    Object.keys(cardData).map((key: any) => {
+        const checkSubCategory = !filters['sub-catagories'] || filters['sub-catagories'].includes(subCategoryData[key]);
+
+        const isOptmized = cardData[key]['block_two'].value === GETWELL_VALUES.optimised;
+        const checkStatus =
+            !filters.status ||
+            (filters.status.includes(GETWELL_VALUES.optimised) && isOptmized) ||
+            (filters.status.includes('Not optimized') && !isOptmized);
+
+        const checkSeverity = !filters.severity || filters.severity.includes(cardData[key]['block_four'].value);
+
+        const checkTags =
+            !filters.tags || filters.tags.filter((tag: string) => cardData[key].tags.includes(tag)).length > 0;
+
+        if (checkSubCategory && checkStatus && checkSeverity && checkTags) {
+            filteredCardData[key] = cardData[key];
+        }
+    });
+    return filteredCardData;
 };
