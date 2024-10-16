@@ -707,7 +707,7 @@ Resources:
                             command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
                             waitAfterCompletion: forever
                         c-set-dns:
-                           command: !Join
+                            command: !Join
                                 - ''
                                 - - 'powershell.exe -Command "C:\cfn\scripts\common\Update-DNSServers.ps1 -DNSIpAddresses '
                                   - '"'
