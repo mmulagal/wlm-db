@@ -57,7 +57,7 @@ try {
 
     Invoke-WebRequest -Uri $ValidationNodeInitializationS3Url -OutFile "$ScriptDir\Validation-Instance-Initializer.ps1"  -ErrorAction Stop
     
-    $Command = "$ScriptDir\Validation-Instance-Initializer.ps1 -Region '$Region' -DeploymentName '$DeploymentName' -DnsIpAddresses '$DnsIpAddresses' -DomainDnsName '$DomainDnsName' -SubnetId '$SubnetId' -DomainAdminUser '$DomainAdminUser' -ValidationNode1WaitHandler '$ValidationNode1WaitHandler' -IsCustomAmi '$IsCustomAmi' -PerformFsxCheck '$PerformFsxCheck' -LogGroup '$LogGroup' -SqlDeploymentMode '$SqlDeploymentMode'" 
+    $Command = "$ScriptDir\Validation-Instance-Initializer.ps1 -Region '$Region' -DeploymentName '$DeploymentName' -DnsIpAddresses '$DnsIpAddresses' -DomainDnsName '$DomainDnsName' -SubnetId '$SubnetId' -DomainAdminUser '$DomainAdminUser' -ValidationNode1WaitHandler '$ValidationNode1WaitHandler' -IsCustomAmi '$IsCustomAmi' -PerformFsxCheck '$PerformFsxCheck' -LogGroup '$LogGroup' -SqlDeploymentMode '$SqlDeploymentMode' -ValidationNodeName '$ValidationNodeName'" 
     if ($FsxFileSystemId -ne "") {
         $Command += " -FsxFileSystemId $FsxFileSystemId"
     }

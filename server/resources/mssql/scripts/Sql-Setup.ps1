@@ -257,7 +257,7 @@ else {
 
 
 
-function Invoke-Commands {
+function Invoke-CommandExecution {
     param(
         [Parameter(Mandatory = $true)]
         [PSCustomObject[]]$commands,
@@ -310,10 +310,10 @@ function Invoke-Commands {
 
             # Write a success marker to the log file
             Add-Content -Path $logFile -Value ("SUCCESS: " + $command.Command)
-            # If the command is to restart computer lets pause the script for 60 seconds
+            # If the command is to restart computer lets pause the script for 3 minutes
             if ($command.Command -like "*Restart-Computer.ps1*") {
-                Write-Output "Restart command executed, pausing script for 60 seconds..."
-                Start-Sleep -Seconds 60
+                Write-Output "Restart command executed, pausing script for 3 minutes..."
+                Start-Sleep -Seconds 180
             }
         }
         catch {
@@ -374,10 +374,10 @@ function Invoke-RemoteCommands {
 
             # Write a success marker to the log file
             Add-Content -Path $logFile -Value ("SUCCESS: " + $command.Command)
-            # If the command is to restart computer lets pause the script for 60 seconds
+            # If the command is to restart computer lets pause the script for 3 minutes
             if ($command.Command -like "*Restart-Computer.ps1*") {
-                Write-Output "Restart command executed, pausing script for 60 seconds..."
-                Start-Sleep -Seconds 60
+                Write-Output "Restart command executed, pausing script for 3 minutes..."
+                Start-Sleep -Seconds 180
             }
         } 
     }
@@ -427,7 +427,7 @@ try {
         )
     }
     # rename computer script does restart inside as well so we are not doing it here
-    Invoke-Commands -commands $SetupCommands -logFile "C:\cfn\tflogs\SetupCommands.log"
+    Invoke-CommandExecution -commands $SetupCommands -logFile "C:\cfn\tflogs\SetupCommands.log"
     Write-Output "Completed the initial setup"̣̣
 
     Write-Output "Starting ontap configuration"
@@ -435,7 +435,7 @@ try {
         @{Command = "C:\cfn\scripts\sqlontap\install-ONTAPprereqs.ps1"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\sqlontap\install-powershell7.ps1"; UseExecutionPolicy = $false }
     )
-    Invoke-Commands -commands $OntapPreReqCommands -logFile "C:\cfn\tflogs\OntapPreReqCommands.log"
+    Invoke-CommandExecution -commands $OntapPreReqCommands -logFile "C:\cfn\tflogs\OntapPreReqCommands.log"
     Write-Output "Completed the ontap and powershell 7 installation"
 
     Start-Sleep -Seconds 10
@@ -447,13 +447,13 @@ try {
             UseExecutionPolicy = $false
         }
     )
-    Invoke-Commands -commands $UpdateAwsToolsCommand -logFile "C:\cfn\tflogs\UpdateAwsToolsCommand.log" -usePwsh $true
+    Invoke-CommandExecution -commands $UpdateAwsToolsCommand -logFile "C:\cfn\tflogs\UpdateAwsToolsCommand.log" -usePwsh $true
     Write-Output "Completed Aws Tools Update"
 
     $ThirdRestartCommand = @(
         @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false }
     )
-    Invoke-Commands -commands $ThirdRestartCommand -logFile "C:\cfn\tflogs\ThirdRestartCommand.log"
+    Invoke-CommandExecution -commands $ThirdRestartCommand -logFile "C:\cfn\tflogs\ThirdRestartCommand.log"
     
     if ($IsPrimaryOrStandalone) {
         Write-Output "Configuring ontap"
@@ -463,7 +463,7 @@ try {
                 UseExecutionPolicy = $false
             }
         )
-        Invoke-Commands -commands $ConfigureOntapCommands -logFile "C:\cfn\tflogs\ConfigureOntapCommands.log" -usePwsh $true
+        Invoke-CommandExecution -commands $ConfigureOntapCommands -logFile "C:\cfn\tflogs\ConfigureOntapCommands.log" -usePwsh $true
         Write-Output "Completed ontap configuration"
 
         Write-Output "Initialize iscsi disks in ontap"
@@ -472,7 +472,7 @@ try {
             @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$FsxFileSystemId' -SQLVMName '$SqlSvmName' -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlontap\\Initialize-Iscsidisk.ps1 -IsFCI $IsFCI"; UseExecutionPolicy = $false }
         )
-        Invoke-Commands -commands $InitializeOntapCommands -logFile "C:\cfn\tflogs\InitializeOntapCommands.log"
+        Invoke-CommandExecution -commands $InitializeOntapCommands -logFile "C:\cfn\tflogs\InitializeOntapCommands.log"
         Write-Output "Completed initialize iscsi disks in ontap"
     }
     else {
@@ -482,14 +482,14 @@ try {
             Command            = "C:\\cfn\\scripts\\sqlontap\\Add-node2initiator.ps1 -SQLVMName '$SqlSvmName' -igroup '$SqlIgroupName' -FileSystemId '$FsxFileSystemId' -ResourceID '$NodeType' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName'"; 
             UseExecutionPolicy = $false 
         }
-        Invoke-Commands -commands $AddNode2InitiatorCommand -logFile "C:\cfn\tflogs\AddNode2InitiatorCommand.log"
+        Invoke-CommandExecution -commands $AddNode2InitiatorCommand -logFile "C:\cfn\tflogs\AddNode2InitiatorCommand.log"
         Write-Output "Completed the node2 initiator configuration"
 
         Write-Output "Connect Ontap instance for FCI Secondary Node"
         $InitializeOntapCommands = @(
             @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$FsxFileSystemId' -SQLVMName '$SqlSvmName' -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false }
         )
-        Invoke-Commands -commands $InitializeOntapCommands -logFile "C:\cfn\tflogs\InitializeOntapCommands.log"
+        Invoke-CommandExecution -commands $InitializeOntapCommands -logFile "C:\cfn\tflogs\InitializeOntapCommands.log"
         Write-Output "Completed connect ontap instance for FCI Secondary Node"
     }
 
@@ -499,7 +499,7 @@ try {
         $InstancePreparationCommands = @(
             @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Add-DNSEntry.ps1 -ADServerPrivateIP '$AdDnsIpAddresses' -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${AdDnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$SqlNodeName'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$DomainAdminUser' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
@@ -510,7 +510,7 @@ try {
         $InstancePreparationCommands = @(
             @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Add-DNSEntry.ps1 -ADServerPrivateIP '$AdDnsIpAddresses' -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${AdDnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$SqlNodeName'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\OpenWSFCPorts.ps1"; UseExecutionPolicy = $true },
             @{Command = "C:\\cfn\\scripts\\common\\Update-SecurityGroup.ps1 -SGID '$WorkloadSecurityGroupId'"; UseExecutionPolicy = $false },
@@ -523,7 +523,7 @@ try {
         $InstancePreparationCommands = @(
             @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Add-DNSEntry.ps1 -ADServerPrivateIP '$AdDnsIpAddresses' -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${AdDnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$SqlNodeName'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\OpenWSFCPorts.ps1"; UseExecutionPolicy = $true },
             @{Command = "C:\\cfn\\scripts\\common\\Update-SecurityGroup.ps1 -SGID '$WorkloadSecurityGroupId'"; UseExecutionPolicy = $false },
@@ -532,7 +532,7 @@ try {
             @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false }
         )
     }
-    Invoke-Commands -commands $InstancePreparationCommands -logFile "C:\cfn\tflogs\InstancePreparationCommands.log"
+    Invoke-CommandExecution -commands $InstancePreparationCommands -logFile "C:\cfn\tflogs\InstancePreparationCommands.log"
     Write-Output "Completed instance preparation"
 
     if ($IsPrimaryOrStandalone) {
@@ -568,7 +568,7 @@ try {
         $FifthRestartCommand = @(
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false }
         )
-        Invoke-Commands -commands $FifthRestartCommand -logFile "C:\cfn\tflogs\FifthRestartCommand.log"
+        Invoke-CommandExecution -commands $FifthRestartCommand -logFile "C:\cfn\tflogs\FifthRestartCommand.log"
     
     }
     elseif ($NodeType -eq 'primary') {
@@ -649,7 +649,7 @@ try {
         @{Command = "Remove-Item C:\\cfn\\DSC* -Force -Recurse"; UseExecutionPolicy = $false },
         @{Command = "Remove-Item C:\\cfn\\OpenSSL* -Force -Recurse"; UseExecutionPolicy = $false }
     )
-    Invoke-Commands -commands $Cleanup -logFile "C:\cfn\tflogs\Cleanup.log"
+    Invoke-CommandExecution -commands $Cleanup -logFile "C:\cfn\tflogs\Cleanup.log"
     Write-Output "Completed the Cleanup"
 
     Remove-ScheduledTask -taskName "wlmdbsqlsetup"
