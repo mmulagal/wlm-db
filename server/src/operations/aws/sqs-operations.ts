@@ -572,7 +572,7 @@ async function processCloudFormationMessages() {
                                                     );
 
                                                     const resourceType =
-                                                        trackSqlDeploymentType === 'Microsoft SQL Server'
+                                                        trackdatabaseType === 'Microsoft SQL server'
                                                             ? RESOURCESTYPE.MSSQL
                                                             : RESOURCESTYPE.PGSQL;
 
