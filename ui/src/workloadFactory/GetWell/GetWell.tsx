@@ -469,7 +469,7 @@ const GetWell = () => {
                                             {optimizeFilterTags.map((item: any) => (
                                                 <div className={styles.filterTag}>
                                                     <DsTypography
-                                                        style={{ color: ' var(--text-button-primary-hover)' }}
+                                                        style={{ color: 'var(--header-notification-text)' }}
                                                         variant="Semibold_13"
                                                     >
                                                         {item.label}
@@ -630,6 +630,7 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.storage_tier}
                                             optimizePrintState={optimizePrintState}
+                                            type="Storage tier"
                                         />
                                         <DsAccordion
                                             id="1"
@@ -677,6 +678,7 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.file_system_headroom}
                                             optimizePrintState={optimizePrintState}
+                                            type="File system headroom"
                                         />
                                         <DsAccordion
                                             id="2"
@@ -726,6 +728,7 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.transaction_log_drive_size}
                                             optimizePrintState={optimizePrintState}
+                                            type="Log drive size"
                                         />
                                         <DsAccordion
                                             id="3"
@@ -775,6 +778,7 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.tempdb_drive_size}
                                             optimizePrintState={optimizePrintState}
+                                            type="TempDB drive size"
                                         />
                                         <DsAccordion
                                             id="4"
@@ -844,6 +848,7 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.user_data_files}
                                             optimizePrintState={optimizePrintState}
+                                            type="User data files"
                                         />
                                         <DsAccordion
                                             id="5"
@@ -891,6 +896,7 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.transaction_log_files}
                                             optimizePrintState={optimizePrintState}
+                                            type="Log files"
                                         />
                                         <DsAccordion
                                             id="6"
@@ -940,6 +946,7 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.tempdb_files}
                                             optimizePrintState={optimizePrintState}
+                                            type="TempDB placement"
                                         />
                                         <DsAccordion
                                             id="7"

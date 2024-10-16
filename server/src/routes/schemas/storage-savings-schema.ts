@@ -18,10 +18,10 @@ const internalUpdateRecommendationPreferenceSchema = {
     }
 };
 
-const getStorageSavingsSchema = {
+const getEbsStorageSavingsSchema = {
     tags: [RouteTags.STORAGE_SAVINGS],
-    summary: 'Storage savings calculations for MSSQL server',
-    description: 'Calculates the storage savings for MSSQL server if FSxN is used instead of EBS or FSxW',
+    summary: 'EBS Storage savings calculations for MSSQL server',
+    description: 'Calculates the storage savings for MSSQL server if FSxN is used instead of EBS',
     params: StorageSavingsRequestParams,
     body: StorageSavingsRequestBody,
     response: {
@@ -29,11 +29,21 @@ const getStorageSavingsSchema = {
     }
 };
 
-const getStorageSavingsCalculationMetricsSchema = {
+const getFsxwStorageSavingsSchema = {
     tags: [RouteTags.STORAGE_SAVINGS],
-    summary: 'Storage savings calculation metrics for MSSQL server',
-    description:
-        'Retrieves the calculation metrics for storage savings in MSSQL server if FSxN is used instead of EBS or FSxW',
+    summary: 'FSxW Storage savings calculations for MSSQL server',
+    description: 'Calculates the storage savings for MSSQL server if FSxN is used instead of FSxW',
+    params: StorageSavingsRequestParams,
+    body: StorageSavingsRequestBody,
+    response: {
+        200: StorageSavingsResponse
+    }
+};
+
+const getEbsStorageSavingsCalculationMetricsSchema = {
+    tags: [RouteTags.STORAGE_SAVINGS],
+    summary: 'EBS Storage savings calculation metrics for MSSQL server',
+    description: 'Retrieves the calculation metrics for storage savings in MSSQL server if FSxN is used instead of EBS',
     params: StorageSavingsRequestParams,
     body: StorageSavingsRequestBody,
     response: {
@@ -41,11 +51,22 @@ const getStorageSavingsCalculationMetricsSchema = {
     }
 };
 
-const getManualStorageSavingsSchema = {
+const getFsxwStorageSavingsCalculationMetricsSchema = {
     tags: [RouteTags.STORAGE_SAVINGS],
-    summary: 'Manual mode storage savings calculations for MSSQL server',
+    summary: 'FSxW Storage savings calculation metrics for MSSQL server',
     description:
-        'Calculates the storage savings for MSSQL server if FSxN is used instead of EBS or FSxW in manual mode',
+        'Retrieves the calculation metrics for storage savings in MSSQL server if FSxN is used instead of FSxW',
+    params: StorageSavingsRequestParams,
+    body: StorageSavingsRequestBody,
+    response: {
+        200: StorageSavingsCalculationsMetricsResponse
+    }
+};
+
+const getEbsManualStorageSavingsSchema = {
+    tags: [RouteTags.STORAGE_SAVINGS],
+    summary: 'EBS Manual mode storage savings calculations for MSSQL server',
+    description: 'Calculates the storage savings for MSSQL server if FSxN is used instead of EBS in manual mode',
     params: ManualStorageSavingsRequestParams,
     body: ManualStorageSavingsRequestBody,
     response: {
@@ -53,11 +74,34 @@ const getManualStorageSavingsSchema = {
     }
 };
 
-const getManualStorageSavingsCalculationMetricsSchema = {
+const getFsxwManualStorageSavingsSchema = {
     tags: [RouteTags.STORAGE_SAVINGS],
-    summary: 'Manual mode storage savings calculation metrics for MSSQL server',
+    summary: 'FSxW Manual mode storage savings calculations for MSSQL server',
+    description: 'Calculates the storage savings for MSSQL server if FSxN is used instead of FSxW in manual mode',
+    params: ManualStorageSavingsRequestParams,
+    body: ManualStorageSavingsRequestBody,
+    response: {
+        200: StorageSavingsResponse
+    }
+};
+
+const getEbsManualStorageSavingsCalculationMetricsSchema = {
+    tags: [RouteTags.STORAGE_SAVINGS],
+    summary: 'EBS Manual mode storage savings calculation metrics for MSSQL server',
     description:
-        'Retrieves the calculation metrics for storage savings in MSSQL server if FSxN is used instead of EBS or FSxW in manual mode',
+        'Retrieves the calculation metrics for storage savings in MSSQL server if FSxN is used instead of EBS in manual mode',
+    params: ManualStorageSavingsRequestParams,
+    body: ManualStorageSavingsRequestBody,
+    response: {
+        200: StorageSavingsCalculationsMetricsResponse
+    }
+};
+
+const getFsxwManualStorageSavingsCalculationMetricsSchema = {
+    tags: [RouteTags.STORAGE_SAVINGS],
+    summary: 'FSxW Manual mode storage savings calculation metrics for MSSQL server',
+    description:
+        'Retrieves the calculation metrics for storage savings in MSSQL server if FSxN is used instead of FSxW in manual mode',
     params: ManualStorageSavingsRequestParams,
     body: ManualStorageSavingsRequestBody,
     response: {
@@ -67,8 +111,12 @@ const getManualStorageSavingsCalculationMetricsSchema = {
 
 export {
     internalUpdateRecommendationPreferenceSchema,
-    getStorageSavingsSchema,
-    getStorageSavingsCalculationMetricsSchema,
-    getManualStorageSavingsSchema,
-    getManualStorageSavingsCalculationMetricsSchema
+    getEbsStorageSavingsSchema,
+    getEbsStorageSavingsCalculationMetricsSchema,
+    getEbsManualStorageSavingsSchema,
+    getEbsManualStorageSavingsCalculationMetricsSchema,
+    getFsxwStorageSavingsSchema,
+    getFsxwStorageSavingsCalculationMetricsSchema,
+    getFsxwManualStorageSavingsSchema,
+    getFsxwManualStorageSavingsCalculationMetricsSchema
 };
