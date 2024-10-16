@@ -26,15 +26,16 @@ $NugetFileLoc = "C:\Program Files\PackageManagement\ProviderAssemblies\Microsoft
 
 #Check if private network
 $isprivatesubnet = $True
-try{
-    $connection =  Invoke-WebRequest www.powershellgallery.com -UseBasicParsing 
-    if($connection.StatusCode -ne "200") {
+try {
+    $connection = Invoke-WebRequest www.powershellgallery.com -UseBasicParsing 
+    if ($connection.StatusCode -ne "200") {
         $isprivatesubnet = $True
-        }
+    }
     else {
         $isprivatesubnet = $False
     }
-}catch{
+}
+catch {
     Write-Output "Private network determination: Error while invoking webrequest to www.powershellgallery.com. $_"
 }
 
@@ -87,7 +88,7 @@ while ($installPSModulesTries -le 2) {
             Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber
             Install-Module -Name AWS.Tools.SimpleSystemsManagement -Force -AllowClobber
             Install-Module -Name SqlServer -Force -AllowClobber
-            Install-Module -Name netapp.ontap -Force -AllowClobber
+            Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck # remove this skip publisher check once the module is signed
 
             $modulesInstalled = $True
             break
