@@ -619,6 +619,7 @@ const GetWell = () => {
                                 <StorageCardComponent
                                     cardData={cardData?.storage_tier}
                                     optimizePrintState={optimizePrintState}
+                                    type="Storage tier"
                                 />
                                 <DsAccordion
                                     id="1"
@@ -656,6 +657,7 @@ const GetWell = () => {
                                 <StorageCardComponent
                                     cardData={cardData?.file_system_headroom}
                                     optimizePrintState={optimizePrintState}
+                                    type="File system headroom"
                                 />
                                 <DsAccordion
                                     id="2"
