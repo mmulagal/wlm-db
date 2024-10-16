@@ -9,7 +9,7 @@ counter=0
 if [[ "$NodeName" == "Validation-Node-1" || "$NodeName" == "Validation-Node-2" ]]; then
     timeout=150 # 150 * 10 seconds = 25 minutes
 else
-    timeout=360 # 360 * 10 seconds = 1 hour
+    timeout=540 # 540 * 10 seconds = 1 hour 30 minutes
 fi
 
 while true; do

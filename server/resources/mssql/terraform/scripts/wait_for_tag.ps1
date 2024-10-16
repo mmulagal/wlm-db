@@ -6,7 +6,7 @@ param(
 )
 
 $counter = 0
-$timeout = if ($NodeName -in @('Validation-Node-1', 'Validation-Node-2')) { 150 } else { 360 } # 150 * 10 seconds = 25 minutes, 360 * 10 seconds = 1 hour
+$timeout = if ($NodeName -in @('Validation-Node-1', 'Validation-Node-2')) { 150 } else { 540 } # 150 * 10 seconds = 25 minutes, 540 * 10 seconds = 1 hour 30 minutes
 
 do {
     $tag = & "${Path}\scripts\check_tag.ps1" $InstanceId $Location
