@@ -1370,7 +1370,7 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
 const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptValidation',
-        url: `${WLMDB}/scripts/validate-vpc.bash`
+        url: `${WLMDB}/scripts/validate-vpc.sh`
     }
 ];
 
