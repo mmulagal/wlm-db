@@ -5,6 +5,9 @@ param(
     [string]$NodeName
 )
 
+$counter = 0
+$timeout = if ($NodeName -in @('Validation-Node-1', 'Validation-Node-2')) { 150 } else { 360 } # 150 * 10 seconds = 25 minutes, 360 * 10 seconds = 1 hour
+
 do {
     $tag = & "${Path}\scripts\check_tag.ps1" $InstanceId $Location
     if ($tag -eq 'completed') {
@@ -17,5 +20,10 @@ do {
     else {
         Write-Output "Waiting for $NodeName tag..."
         Start-Sleep -Seconds 10
+        $counter++
+        if ($counter -ge $timeout) {
+            Write-Output "$NodeName tag was not created within the timeout period. Stopping deployment."
+            exit 1
+        }
     }
 } while ($true)

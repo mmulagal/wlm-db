@@ -5,6 +5,13 @@ InstanceId=$2
 Location=$3
 NodeName=$4
 
+counter=0
+if [[ "$NodeName" == "Validation-Node-1" || "$NodeName" == "Validation-Node-2" ]]; then
+    timeout=150 # 150 * 10 seconds = 25 minutes
+else
+    timeout=360 # 360 * 10 seconds = 1 hour
+fi
+
 while true; do
   tag=$(sh "${Path}/scripts/check_tag.sh" "${InstanceId}" "${Location}")
   if [ "$tag" = 'completed' ]; then
@@ -15,5 +22,10 @@ while true; do
   else
     echo "Waiting for ${NodeName} tag..."
     sleep 10
+    ((counter++))
+    if [ $counter -ge $timeout ]; then
+        echo "${NodeName} tag was not created within the timeout period. Stopping deployment."
+        exit 1
+    fi
   fi
 done
