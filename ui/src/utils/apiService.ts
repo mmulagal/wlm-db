@@ -809,29 +809,29 @@ export const exploreSavingsApi = createApi({
     endpoints: builder => {
         return {
             getStorageSavings: builder.mutation({
-                query: ({ credentialId, regionId, instanceId, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings`,
+                query: ({ credentialId, regionId, instanceId, payload, type }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/${type}`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getManualStorageSavings: builder.mutation({
-                query: ({ regionId, payload }) => ({
-                    url: `v1/regions/${regionId}/manual-storage-savings`,
+                query: ({ regionId, payload, type }) => ({
+                    url: `v1/mssql/regions/${regionId}/manual-storage-savings/${type}`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getManualViewCalculations: builder.mutation({
-                query: ({ regionId, payload }) => ({
-                    url: `v1/regions/${regionId}/manual-storage-savings/calculations`,
+                query: ({ regionId, payload, type }) => ({
+                    url: `v1/mssql/regions/${regionId}/manual-storage-savings/${type}/calculations`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getViewCalculations: builder.mutation({
-                query: ({ credentialId, regionId, instanceId, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/calculations`,
+                query: ({ credentialId, regionId, instanceId, payload, type }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/${type}/calculations`,
                     method: 'POST',
                     body: payload
                 })

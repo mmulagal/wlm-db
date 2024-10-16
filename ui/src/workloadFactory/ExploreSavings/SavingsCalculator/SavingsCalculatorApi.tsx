@@ -106,7 +106,12 @@ const SavingsCalculatorApi = () => {
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
                 instanceId: selectedInstanceId,
-                payload: payload
+                payload: payload,
+                type:
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+                        ? 'ebs'
+                        : 'fsxw'
             });
             if (result && !result?.error) {
                 dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data)));
@@ -144,7 +149,12 @@ const SavingsCalculatorApi = () => {
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
                 instanceId: selectedInstanceId,
-                payload: payload
+                payload: payload,
+                type:
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+                        ? 'ebs'
+                        : 'fsxw'
             });
             if (result && !result?.error) {
                 dispatch(setViewCalculationsApiResponse(result?.data));
