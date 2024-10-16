@@ -1,0 +1,24 @@
+.dialogContent {
+    .storage-tier-block {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+
+        .first-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            .content {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+
+                .row {
+                    display: flex;
+                    gap: 16px;
+                }
+            }
+        }
+    }
+}

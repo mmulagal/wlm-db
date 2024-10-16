@@ -364,7 +364,7 @@ const GetWell = () => {
                                                             return (
                                                                 <div className={styles['not-optimized-tooltip']}>
                                                                     <div>{option?.label}</div>
-                                                                    <TooltipInfo trigger="click" isAppendedToBody>
+                                                                    <TooltipInfo trigger="hover" isAppendedToBody>
                                                                         {' '}
                                                                         Not optimized includes over-provisioned and
                                                                         under-provisioned instances.
