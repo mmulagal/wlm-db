@@ -1,4 +1,4 @@
-import { DsAccordion, DsSelect, DsTypography, Spinner, TooltipInfo } from '@netapp/design-system';
+import { DsAccordion, DsSelect, DsTypography, Spinner, DsTooltipInfo } from '@netapp/design-system';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
@@ -323,7 +323,7 @@ const GetWell = () => {
                                                     variant="underline"
                                                 />
                                             </div>
-                                            <div className={styles.dropDown}>
+                                            <div className={`${styles.dropDown} ${styles['optimized-drop-down']}`}>
                                                 <DsSelect
                                                     title=""
                                                     selectedOptionIds={
@@ -364,11 +364,14 @@ const GetWell = () => {
                                                             return (
                                                                 <div className={styles['not-optimized-tooltip']}>
                                                                     <div>{option?.label}</div>
-                                                                    <TooltipInfo trigger="hover" isAppendedToBody>
+                                                                    <DsTooltipInfo
+                                                                        trigger="hover"
+                                                                        isRelativeToViewPort={false}
+                                                                    >
                                                                         {' '}
                                                                         Not optimized includes over-provisioned and
                                                                         under-provisioned instances.
-                                                                    </TooltipInfo>
+                                                                    </DsTooltipInfo>
                                                                 </div>
                                                             );
                                                         }

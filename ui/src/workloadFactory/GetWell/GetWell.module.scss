@@ -139,6 +139,17 @@
                             gap: 24px;
                         }
                     }
+
+                    .optimized-drop-down {
+                        [class*='selectItem'] {
+                            padding: 12px 20px 12px 24px;
+                        }
+
+                        [class*='tooltipInfoBaloon'] {
+                            max-width: 500px;
+                            width: 500px;
+                        }
+                    }
                 }
 
                 .filtersOption {
@@ -213,8 +224,4 @@
         max-height: 2500px !important;
         overflow: hidden;
     }
-}
-
-[class*='Popover-module_base'] {
-    z-index: 9999999 !important;
 }
