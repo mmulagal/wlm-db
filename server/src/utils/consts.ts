@@ -896,6 +896,10 @@ const TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS = [
     {
         name: 'SQLStandaloneInitializerTemplate',
         url: 'terraform/standalone/Sql-Instance-initializer.ps1'
+    },
+    {
+        name: 'SQLFCIInitializerTemplate',
+        url: 'terraform/FCI/Sql-Instance-initializer.ps1'
     }
 ];
 
