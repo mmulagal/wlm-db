@@ -17,14 +17,21 @@ import { WLF_TABS } from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
-import { getUniqueEntries, groupByType, removeEntry, removeObjectFromArray, generateDate } from './GetWellUtils';
+import {
+    getUniqueEntries,
+    groupByType,
+    removeEntry,
+    removeObjectFromArray,
+    generateDate,
+    applyFilter
+} from './GetWellUtils';
 import {
     setDefaultFilterOptions,
     setOptimizeFilterTags,
     setSelectedHeaderTab
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../store/storeHooks';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import GetWellApi from './GetWellApi';
 import { resetGwData } from '../../store/workloadFactory/getWellOptimizeSlice';
 //@ts-ignore
@@ -40,6 +47,7 @@ const GetWell = () => {
         useAppSelector(state => state.getWellOptimize);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
+    const [filteredCardData, setFilteredCardData] = useState<any>({});
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
@@ -111,6 +119,11 @@ const GetWell = () => {
             });
         }, 10);
     };
+
+    // To apply filters on change of filters or card data
+    useEffect(() => {
+        setFilteredCardData(applyFilter(cardData, optimizeFilterTags));
+    }, [cardData, optimizeFilterTags]);
 
     GetWellApi();
 
@@ -282,7 +295,7 @@ const GetWell = () => {
                                                         `Sub categories: (${
                                                             defaultFilterOptions['sub-catagories']?.length > 0
                                                                 ? defaultFilterOptions['sub-catagories']?.length
-                                                                : 12
+                                                                : 3
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -300,18 +313,8 @@ const GetWell = () => {
                                                         },
                                                         {
                                                             id: 2,
-                                                            label: 'ONTAP configuration',
-                                                            value: 'ONTAP configuration'
-                                                        },
-                                                        {
-                                                            id: 3,
-                                                            label: 'Storage performance',
-                                                            value: 'Storage performance'
-                                                        },
-                                                        {
-                                                            id: 4,
-                                                            label: 'Compute sub 1',
-                                                            value: 'Compute sub 1'
+                                                            label: 'Storage configuration',
+                                                            value: 'Storage configuration'
                                                         }
                                                     ]}
                                                     selectionType="multi"
@@ -522,7 +525,7 @@ const GetWell = () => {
                                                 All (
                                                 {defaultFilterOptions['sub-catagories']?.length > 0
                                                     ? defaultFilterOptions['sub-catagories']?.length
-                                                    : 12}
+                                                    : 3}
                                                 )
                                             </DsTypography>
                                         </div>
@@ -602,408 +605,501 @@ const GetWell = () => {
                     </div>
 
                     {/* Section one */}
-                    <div className={styles.sectionClass}>
-                        <div className={styles['header-buttons']}>
-                            <DsTypography
-                                style={{
-                                    padding: '0 0 8px'
-                                }}
-                                variant="Semibold_16"
-                            >
-                                Storage sizing
-                            </DsTypography>
-                        </div>
-
-                        <div className={styles.accordionGroups}>
-                            <div className={styles.combineComponent}>
-                                <StorageCardComponent
-                                    cardData={cardData?.storage_tier}
-                                    optimizePrintState={optimizePrintState}
-                                    type="Storage tier"
-                                />
-                                <DsAccordion
-                                    id="1"
-                                    variant="Default"
-                                    isDisabled={loading}
-                                    isExpanded={optimizePrintState}
-                                    title={
-                                        <div className={styles.tagPlacement}>
-                                            {cardData?.storage_tier?.tags?.map((perTag: string) => {
-                                                return <Tag text={perTag} />;
-                                            })}
-                                        </div>
-                                    }
-                                    headerActions={[
-                                        <div className={styles.headerAction}>
-                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading ? <LightDisabled /> : <Light />}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    color: loading
-                                                        ? 'var(--text-disabled)'
-                                                        : 'var(--text-button-primary)'
-                                                }}
-                                            >
-                                                View recommendation
-                                            </div>
-                                        </div>
-                                    ]}
-                                    children={<RecommendationText data={cardData?.storage_tier?.recommendation} />}
-                                />
+                    {(filteredCardData?.storage_tier ||
+                        filteredCardData?.file_system_headroom ||
+                        filteredCardData?.transaction_log_drive_size ||
+                        filteredCardData?.tempdb_drive_size) && (
+                        <div className={styles.sectionClass}>
+                            <div className={styles['header-buttons']}>
+                                <DsTypography
+                                    style={{
+                                        padding: '0 0 8px'
+                                    }}
+                                    variant="Semibold_16"
+                                >
+                                    Storage sizing
+                                </DsTypography>
                             </div>
 
-                            <div className={styles.combineComponent}>
-                                <StorageCardComponent
-                                    cardData={cardData?.file_system_headroom}
-                                    optimizePrintState={optimizePrintState}
-                                    type="File system headroom"
-                                />
-                                <DsAccordion
-                                    id="2"
-                                    variant="Default"
-                                    isDisabled={loading}
-                                    isExpanded={optimizePrintState}
-                                    title={
-                                        <div className={styles.tagPlacement}>
-                                            {cardData?.file_system_headroom?.tags?.map((perTag: string) => {
-                                                return <Tag text={perTag} />;
-                                            })}
-                                        </div>
-                                    }
-                                    headerActions={[
-                                        <div className={styles.headerAction}>
-                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading ? <LightDisabled /> : <Light />}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    color: loading
-                                                        ? 'var(--text-disabled)'
-                                                        : 'var(--text-button-primary)'
-                                                }}
-                                            >
-                                                View recommendation
-                                            </div>
-                                        </div>
-                                    ]}
-                                    children={
-                                        <RecommendationText data={cardData?.file_system_headroom?.recommendation} />
-                                    }
-                                />
-                            </div>
-
-                            <div className={styles.combineComponent}>
-                                <StorageCardComponent
-                                    cardData={cardData?.transaction_log_drive_size}
-                                    optimizePrintState={optimizePrintState}
-                                />
-                                <DsAccordion
-                                    id="3"
-                                    variant="Default"
-                                    isDisabled={loading}
-                                    isExpanded={optimizePrintState}
-                                    title={
-                                        <div className={styles.tagPlacement}>
-                                            {cardData?.transaction_log_drive_size?.tags?.map((perTag: string) => {
-                                                return <Tag text={perTag} />;
-                                            })}
-                                        </div>
-                                    }
-                                    headerActions={[
-                                        <div className={styles.headerAction}>
-                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading ? <LightDisabled /> : <Light />}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    color: loading
-                                                        ? 'var(--text-disabled)'
-                                                        : 'var(--text-button-primary)'
-                                                }}
-                                            >
-                                                View recommendation
-                                            </div>
-                                        </div>
-                                    ]}
-                                    children={
-                                        <RecommendationText
-                                            data={cardData?.transaction_log_drive_size?.recommendation}
+                            <div className={styles.accordionGroups}>
+                                {filteredCardData?.storage_tier && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.storage_tier}
+                                            optimizePrintState={optimizePrintState}
                                         />
-                                    }
-                                />
-                            </div>
+                                        <DsAccordion
+                                            id="1"
+                                            variant="Default"
+                                            isDisabled={loading}
+                                            isExpanded={optimizePrintState}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.storage_tier?.tags?.map((perTag: string) => {
+                                                        return <Tag text={perTag} />;
+                                                    })}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ? <LightDisabled /> : <Light />}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color: loading
+                                                                ? 'var(--text-disabled)'
+                                                                : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.storage_tier?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
 
-                            <div className={styles.combineComponent}>
-                                <StorageCardComponent
-                                    cardData={cardData?.tempdb_drive_size}
-                                    optimizePrintState={optimizePrintState}
-                                />
-                                <DsAccordion
-                                    id="4"
-                                    variant="Default"
-                                    isDisabled={loading}
-                                    isExpanded={optimizePrintState}
-                                    title={
-                                        <div className={styles.tagPlacement}>
-                                            {cardData?.tempdb_drive_size?.tags?.map((perTag: string) => {
-                                                return <Tag text={perTag} />;
-                                            })}
-                                        </div>
-                                    }
-                                    headerActions={[
-                                        <div className={styles.headerAction}>
-                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading ? <LightDisabled /> : <Light />}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    color: loading
-                                                        ? 'var(--text-disabled)'
-                                                        : 'var(--text-button-primary)'
-                                                }}
-                                            >
-                                                View recommendation
-                                            </div>
-                                        </div>
-                                    ]}
-                                    children={<RecommendationText data={cardData?.tempdb_drive_size?.recommendation} />}
-                                />
+                                {filteredCardData?.file_system_headroom && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.file_system_headroom}
+                                            optimizePrintState={optimizePrintState}
+                                        />
+                                        <DsAccordion
+                                            id="2"
+                                            variant="Default"
+                                            isDisabled={loading}
+                                            isExpanded={optimizePrintState}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.file_system_headroom?.tags?.map(
+                                                        (perTag: string) => {
+                                                            return <Tag text={perTag} />;
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ? <LightDisabled /> : <Light />}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color: loading
+                                                                ? 'var(--text-disabled)'
+                                                                : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.file_system_headroom?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.transaction_log_drive_size && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.transaction_log_drive_size}
+                                            optimizePrintState={optimizePrintState}
+                                        />
+                                        <DsAccordion
+                                            id="3"
+                                            variant="Default"
+                                            isDisabled={loading}
+                                            isExpanded={optimizePrintState}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.transaction_log_drive_size?.tags?.map(
+                                                        (perTag: string) => {
+                                                            return <Tag text={perTag} />;
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ? <LightDisabled /> : <Light />}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color: loading
+                                                                ? 'var(--text-disabled)'
+                                                                : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.transaction_log_drive_size?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.tempdb_drive_size && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.tempdb_drive_size}
+                                            optimizePrintState={optimizePrintState}
+                                        />
+                                        <DsAccordion
+                                            id="4"
+                                            variant="Default"
+                                            isDisabled={loading}
+                                            isExpanded={optimizePrintState}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.tempdb_drive_size?.tags?.map(
+                                                        (perTag: string) => {
+                                                            return <Tag text={perTag} />;
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ? <LightDisabled /> : <Light />}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color: loading
+                                                                ? 'var(--text-disabled)'
+                                                                : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.tempdb_drive_size?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Section two */}
-                    <div className={styles.sectionClass}>
-                        <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
-                            <DsTypography
-                                style={{
-                                    padding: '0 0 8px'
-                                }}
-                                variant="Semibold_16"
-                            >
-                                Storage layout
-                            </DsTypography>
+                    {(filteredCardData?.user_data_files ||
+                        filteredCardData?.transaction_log_files ||
+                        filteredCardData?.tempdb_files) && (
+                        <div className={styles.sectionClass}>
+                            <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <DsTypography
+                                    style={{
+                                        padding: '0 0 8px'
+                                    }}
+                                    variant="Semibold_16"
+                                >
+                                    Storage layout
+                                </DsTypography>
+                            </div>
+
+                            <div className={styles.accordionGroups}>
+                                {filteredCardData?.user_data_files && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.user_data_files}
+                                            optimizePrintState={optimizePrintState}
+                                        />
+                                        <DsAccordion
+                                            id="5"
+                                            variant="Default"
+                                            isDisabled={loading}
+                                            isExpanded={optimizePrintState}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.user_data_files?.tags?.map((perTag: string) => {
+                                                        return <Tag text={perTag} />;
+                                                    })}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ? <LightDisabled /> : <Light />}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color: loading
+                                                                ? 'var(--text-disabled)'
+                                                                : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.user_data_files?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.transaction_log_files && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.transaction_log_files}
+                                            optimizePrintState={optimizePrintState}
+                                        />
+                                        <DsAccordion
+                                            id="6"
+                                            variant="Default"
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.transaction_log_files?.tags?.map(
+                                                        (perTag: string) => {
+                                                            return <Tag text={perTag} />;
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            isDisabled={loading}
+                                            isExpanded={optimizePrintState}
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ? <LightDisabled /> : <Light />}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color: loading
+                                                                ? 'var(--text-disabled)'
+                                                                : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.transaction_log_files?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.tempdb_files && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.tempdb_files}
+                                            optimizePrintState={optimizePrintState}
+                                        />
+                                        <DsAccordion
+                                            id="7"
+                                            variant="Default"
+                                            isDisabled={loading}
+                                            isExpanded={optimizePrintState}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.tempdb_files?.tags?.map((perTag: string) => {
+                                                        return <Tag text={perTag} />;
+                                                    })}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ? <LightDisabled /> : <Light />}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color: loading
+                                                                ? 'var(--text-disabled)'
+                                                                : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.tempdb_files?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </div>
-
-                        <div className={styles.accordionGroups}>
-                            <div className={styles.combineComponent}>
-                                <StorageCardComponent
-                                    cardData={cardData?.user_data_files}
-                                    optimizePrintState={optimizePrintState}
-                                />
-                                <DsAccordion
-                                    id="5"
-                                    variant="Default"
-                                    isDisabled={loading}
-                                    isExpanded={optimizePrintState}
-                                    title={
-                                        <div className={styles.tagPlacement}>
-                                            {cardData?.user_data_files?.tags?.map((perTag: string) => {
-                                                return <Tag text={perTag} />;
-                                            })}
-                                        </div>
-                                    }
-                                    headerActions={[
-                                        <div className={styles.headerAction}>
-                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading ? <LightDisabled /> : <Light />}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    color: loading
-                                                        ? 'var(--text-disabled)'
-                                                        : 'var(--text-button-primary)'
-                                                }}
-                                            >
-                                                View recommendation
-                                            </div>
-                                        </div>
-                                    ]}
-                                    children={<RecommendationText data={cardData?.user_data_files?.recommendation} />}
-                                />
-                            </div>
-
-                            <div className={styles.combineComponent}>
-                                <StorageCardComponent
-                                    cardData={cardData?.transaction_log_files}
-                                    optimizePrintState={optimizePrintState}
-                                />
-                                <DsAccordion
-                                    id="6"
-                                    variant="Default"
-                                    title={
-                                        <div className={styles.tagPlacement}>
-                                            {cardData?.transaction_log_files?.tags?.map((perTag: string) => {
-                                                return <Tag text={perTag} />;
-                                            })}
-                                        </div>
-                                    }
-                                    isDisabled={loading}
-                                    isExpanded={optimizePrintState}
-                                    headerActions={[
-                                        <div className={styles.headerAction}>
-                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading ? <LightDisabled /> : <Light />}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    color: loading
-                                                        ? 'var(--text-disabled)'
-                                                        : 'var(--text-button-primary)'
-                                                }}
-                                            >
-                                                View recommendation
-                                            </div>
-                                        </div>
-                                    ]}
-                                    children={
-                                        <RecommendationText data={cardData?.transaction_log_files?.recommendation} />
-                                    }
-                                />
-                            </div>
-
-                            <div className={styles.combineComponent}>
-                                <StorageCardComponent
-                                    cardData={cardData?.tempdb_files}
-                                    optimizePrintState={optimizePrintState}
-                                />
-                                <DsAccordion
-                                    id="7"
-                                    variant="Default"
-                                    isDisabled={loading}
-                                    isExpanded={optimizePrintState}
-                                    title={
-                                        <div className={styles.tagPlacement}>
-                                            {cardData?.tempdb_files?.tags?.map((perTag: string) => {
-                                                return <Tag text={perTag} />;
-                                            })}
-                                        </div>
-                                    }
-                                    headerActions={[
-                                        <div className={styles.headerAction}>
-                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading ? <LightDisabled /> : <Light />}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    color: loading
-                                                        ? 'var(--text-disabled)'
-                                                        : 'var(--text-button-primary)'
-                                                }}
-                                            >
-                                                View recommendation
-                                            </div>
-                                        </div>
-                                    ]}
-                                    children={<RecommendationText data={cardData?.tempdb_files?.recommendation} />}
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    )}
 
                     {/* Section three */}
-                    <div className={styles.sectionClass}>
-                        <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
-                            <DsTypography
-                                style={{
-                                    padding: '0 0 8px'
-                                }}
-                                variant="Semibold_16"
-                            >
-                                Storage configuration
-                            </DsTypography>
-                        </div>
-
-                        <div className={styles.accordionGroups}>
-                            <div className={styles.combineComponent}>
-                                <StorageCardComponent
-                                    cardData={cardData?.ontap_configuration}
-                                    optimizePrintState={optimizePrintState}
-                                />
-                                <DsAccordion
-                                    id="9"
-                                    variant="Default"
-                                    isDisabled={loading}
-                                    isExpanded={optimizePrintState}
-                                    title={
-                                        <div className={styles.tagPlacement}>
-                                            {cardData?.ontap_configuration?.tags?.map((perTag: string) => {
-                                                return <Tag text={perTag} />;
-                                            })}
-                                        </div>
-                                    }
-                                    headerActions={[
-                                        <div className={styles.headerAction}>
-                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading ? <LightDisabled /> : <Light />}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    color: loading
-                                                        ? 'var(--text-disabled)'
-                                                        : 'var(--text-button-primary)'
-                                                }}
-                                            >
-                                                View recommendation & optimization
-                                            </div>
-                                        </div>
-                                    ]}
-                                    children={
-                                        <RecommendationTable
-                                            tableData={ontapConfigTableData}
-                                            isLoading={loading}
-                                            optimizePrintState={optimizePrintState}
-                                        />
-                                    }
-                                />
+                    {(filteredCardData?.ontap_configuration || filteredCardData?.os_configuration) && (
+                        <div className={styles.sectionClass}>
+                            <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <DsTypography
+                                    style={{
+                                        padding: '0 0 8px'
+                                    }}
+                                    variant="Semibold_16"
+                                >
+                                    Storage configuration
+                                </DsTypography>
                             </div>
 
-                            <div className={styles.combineComponent} style={{ marginBottom: '80px' }}>
-                                <StorageCardComponent
-                                    cardData={cardData?.os_configuration}
-                                    optimizePrintState={optimizePrintState}
-                                />
-                                <DsAccordion
-                                    id="10"
-                                    isDisabled={loading}
-                                    isExpanded={optimizePrintState}
-                                    variant="Default"
-                                    title={
-                                        <div className={styles.tagPlacement}>
-                                            {cardData?.os_configuration?.tags?.map((perTag: string) => {
-                                                return <Tag text={perTag} />;
-                                            })}
-                                        </div>
-                                    }
-                                    headerActions={[
-                                        <div className={styles.headerAction}>
-                                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading ? <LightDisabled /> : <Light />}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    color: loading
-                                                        ? 'var(--text-disabled)'
-                                                        : 'var(--text-button-primary)'
-                                                }}
-                                            >
-                                                View recommendation & optimization
-                                            </div>
-                                        </div>
-                                    ]}
-                                    children={
-                                        <RecommendationTable
-                                            tableData={osConfigTableData}
-                                            isLoading={loading}
+                            <div className={styles.accordionGroups}>
+                                {filteredCardData?.ontap_configuration && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.ontap_configuration}
                                             optimizePrintState={optimizePrintState}
                                         />
-                                    }
-                                    style={{ marginBottom: '40px' }}
-                                />
+                                        <DsAccordion
+                                            id="9"
+                                            variant="Default"
+                                            isDisabled={loading}
+                                            isExpanded={optimizePrintState}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.ontap_configuration?.tags?.map(
+                                                        (perTag: string) => {
+                                                            return <Tag text={perTag} />;
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ? <LightDisabled /> : <Light />}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color: loading
+                                                                ? 'var(--text-disabled)'
+                                                                : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation & optimization
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationTable
+                                                    tableData={ontapConfigTableData}
+                                                    isLoading={loading}
+                                                    optimizePrintState={optimizePrintState}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.os_configuration && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.os_configuration}
+                                            optimizePrintState={optimizePrintState}
+                                        />
+                                        <DsAccordion
+                                            id="10"
+                                            isDisabled={loading}
+                                            isExpanded={optimizePrintState}
+                                            variant="Default"
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.os_configuration?.tags?.map((perTag: string) => {
+                                                        return <Tag text={perTag} />;
+                                                    })}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ? <LightDisabled /> : <Light />}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color: loading
+                                                                ? 'var(--text-disabled)'
+                                                                : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation & optimization
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationTable
+                                                    tableData={osConfigTableData}
+                                                    isLoading={loading}
+                                                    optimizePrintState={optimizePrintState}
+                                                />
+                                            }
+                                            style={{ marginBottom: '40px' }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
