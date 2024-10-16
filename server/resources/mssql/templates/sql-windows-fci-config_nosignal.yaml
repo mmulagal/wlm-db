@@ -710,9 +710,9 @@ Resources:
                             command: !Join
                                 - ''
                                 - - 'powershell.exe -Command "C:\cfn\scripts\common\Update-DNSServers.ps1 -DNSIpAddresses '
-                                  - '"'
+                                  - ''''
                                   - !Ref 'ADDnsIpAddresses'
-                                  - '"'
+                                  - ''''
                                   - ' -Stackname '
                                   - !Ref 'AWS::StackName'
                                   - ' -ResourceID SqlFSxInstanceMAD1'
