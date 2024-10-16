@@ -147,16 +147,16 @@ variable "fsx_file_system_id" {
 }
 
 variable "preferred_subnet_cidrblock" {
-  description = "Cidrblock for preferred subnet."
+  description = "CIDR block for preferred subnet."
   type        = string
 }
 
 variable "standby_subnet_cidrblock" {
-  description = "Cidrblock for standby subnet."
+  description = "CIDR block for standby subnet."
   type        = string
 }
 
 variable "deployment_name" {
-  description = "The name of the parent deployment"
+  description = "The name of the deployment"
   type        = string
 }

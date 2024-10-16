@@ -35,7 +35,7 @@ provider "aws" {
   }
 }
 
-module "vpc-endpoints" {
+module "vpc_endpoints" {
   source = "./modules/vpc-endpoints"
 
   vpc_id                     = var.vpc_id
@@ -47,7 +47,6 @@ module "vpc-endpoints" {
   standby_subnet1_id       = local.is_standalone ? "" : var.private_subnet2_id
   standby_subnet_cidrblock = local.is_standalone ? "" : var.private_subnet2_cidrblock
   s3_endpoint_route_tables = var.s3_endpoint_route_tables
-  deployment_name          = var.deployment_name
 
   s3_endpoint_exists              = var.s3_endpoint_exists
   ssm_endpoint_exists             = var.ssm_endpoint_exists
@@ -58,14 +57,14 @@ module "vpc-endpoints" {
   ssm_messages_endpoint_exists    = var.ssm_messages_endpoint_exists
 }
 
-module "validation-node1" {
+module "validation_node1" {
   source = "./modules/validation-node"
 
-  depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, aws_ssm_parameter.credentials_ssm_parameter, module.vpc-endpoints]
+  depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, aws_ssm_parameter.credentials_ssm_parameter, module.vpc_endpoints]
 
   vpc_id                                = var.vpc_id
   aws_location                          = var.aws_location
-  subnet_id                             = var.private_subnet1_id // PrivateSubnet2ID for fci
+  subnet_id                             = var.private_subnet1_id
   dns_ip_addresses                      = var.dns_ip_addresses
   ec2_role_name                         = var.deployment_name
   is_custom_ami                         = var.is_custom_ami
@@ -88,11 +87,11 @@ module "validation-node1" {
 }
 
 // This is only created for the FCI Deployment
-module "validation-node2" {
+module "validation_node2" {
   source = "./modules/validation-node"
   count  = local.is_standalone ? 0 : 1
 
-  depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, aws_ssm_parameter.credentials_ssm_parameter, module.vpc-endpoints]
+  depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, aws_ssm_parameter.credentials_ssm_parameter, module.vpc_endpoints]
 
   vpc_id                                = var.vpc_id
   aws_location                          = var.aws_location
@@ -121,7 +120,7 @@ module "fsxn_standalone" {
   source = "./modules/fsxn"
   count  = local.is_standalone ? 1 : 0
 
-  depends_on                     = [module.vpc-endpoints, module.validation-node1]
+  depends_on                     = [module.vpc_endpoints, module.validation_node1]
   fsx_file_system_id             = var.fsx_file_system_id
   deployment_mode                = var.deployment_mode
   deployment_name                = var.deployment_name
@@ -156,7 +155,7 @@ module "fsxn_fci" {
   source = "./modules/fsxn"
   count  = local.is_standalone ? 0 : 1
 
-  depends_on                     = [module.vpc-endpoints, module.validation-node1, module.validation-node2]
+  depends_on                     = [module.vpc_endpoints, module.validation_node1, module.validation_node2]
   fsx_file_system_id             = var.fsx_file_system_id
   deployment_mode                = var.deployment_mode
   deployment_name                = var.deployment_name
@@ -187,11 +186,11 @@ module "fsxn_fci" {
   fsx_weekly_maintenance_start_time = "1:05:00"
 }
 
-module "standalone-sql-node" {
+module "standalone_sql_node" {
   source = "./modules/ec2"
   count  = local.is_standalone ? 1 : 0
 
-  depends_on                    = [module.vpc-endpoints, module.validation-node1, module.fsxn_standalone]
+  depends_on                    = [module.vpc_endpoints, module.validation_node1, module.fsxn_standalone]
   ec2_role_name                 = var.deployment_name
   enable_cloudwatch_log_feature = var.enable_cloud_watch_log_feature
   unique_id                     = var.unique_id
@@ -234,11 +233,11 @@ module "standalone-sql-node" {
 }
 
 // This is only created for the FCI Deployment
-module "fci_sql-node1" {
+module "fci_sql_node1" {
   source = "./modules/ec2"
   count  = local.is_standalone ? 0 : 1
 
-  depends_on                    = [module.vpc-endpoints, module.validation-node1, module.validation-node2, module.fsxn_fci, aws_iam_instance_profile.fci_sql_fsx_profile, aws_network_interface.sql_node_ni_1, aws_network_interface.sql_node_ni_2]
+  depends_on                    = [module.vpc_endpoints, module.validation_node1, module.validation_node2, module.fsxn_fci, aws_iam_instance_profile.fci_sql_fsx_profile, aws_network_interface.sql_node_ni_1, aws_network_interface.sql_node_ni_2]
   ec2_role_name                 = var.deployment_name
   enable_cloudwatch_log_feature = var.enable_cloud_watch_log_feature
   unique_id                     = var.unique_id # check not used
@@ -292,11 +291,11 @@ module "fci_sql-node1" {
   network_interface_2_second_private_ip = tolist(aws_network_interface.sql_node_ni_2[0].private_ips)[1]
 }
 
-module "fci_sql-node2" {
+module "fci_sql_node2" {
   source = "./modules/ec2"
   count  = local.is_standalone ? 0 : 1
 
-  depends_on                    = [module.vpc-endpoints, module.validation-node1, module.validation-node2, module.fsxn_fci, aws_iam_instance_profile.fci_sql_fsx_profile, aws_network_interface.sql_node_ni_1, aws_network_interface.sql_node_ni_2]
+  depends_on                    = [module.vpc_endpoints, module.validation_node1, module.validation_node2, module.fsxn_fci, aws_iam_instance_profile.fci_sql_fsx_profile, aws_network_interface.sql_node_ni_1, aws_network_interface.sql_node_ni_2]
   ec2_role_name                 = var.deployment_name
   enable_cloudwatch_log_feature = var.enable_cloud_watch_log_feature
   unique_id                     = var.unique_id

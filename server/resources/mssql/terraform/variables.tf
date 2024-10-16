@@ -659,13 +659,13 @@ variable "sql_node_initialization_s3_url" {
   }
 }
 variable "sql_fsx_ws_fc_name" {
-  description = "The name of the volume for the WSFC."
+  description = "Windows Server failover cluster name"
   type        = string
   default     = ""
 }
 
 variable "sql_fsx_fci_name" {
-  description = "The name of the volume for the FCI."
+  description = "Name for the SQL Server failover cluster instance."
   type        = string
   default     = ""
 }

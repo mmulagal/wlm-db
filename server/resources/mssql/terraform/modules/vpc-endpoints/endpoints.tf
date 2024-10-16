@@ -33,24 +33,7 @@ resource "aws_security_group" "https_security_group" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [var.preferred_subnet_cidrblock]
-  }
-
-  dynamic "ingress" {
-    for_each = local.create_multi_zone_sg ? [1] : []
-    content {
-      from_port   = 443
-      to_port     = 443
-      protocol    = "tcp"
-      cidr_blocks = [var.standby_subnet_cidrblock]
-    }
+    cidr_blocks = local.create_multi_zone_sg ? [var.vpc_cidr, var.preferred_subnet_cidrblock, var.standby_subnet_cidrblock] : [var.vpc_cidr, var.preferred_subnet_cidrblock]
   }
 }
 

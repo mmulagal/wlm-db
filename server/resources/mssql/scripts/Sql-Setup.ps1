@@ -395,6 +395,8 @@ try {
 
     New-ScheduledTask -taskName "wlmdbsqlsetup" -argument "$WLMDBSqlSetupCommand" -userName "SYSTEM"
 
+    $IsPrimaryOrStandalone = $IsStandalone -eq $true -or $NodeType -eq 'primary'
+
     if ($IsStandalone -eq $true) {
         Write-Output "Starting setup for Standalone"
         $SetupCommands = @(
@@ -452,16 +454,25 @@ try {
     )
     Invoke-Commands -commands $ThirdRestartCommand -logFile "C:\cfn\tflogs\ThirdRestartCommand.log"
     
-    if ($IsStandalone -eq $true -or $NodeType -eq 'primary') {
+    if ($IsPrimaryOrStandalone) {
         Write-Output "Configuring ontap"
         $ConfigureOntapCommands = @(
             @{
-                Command            = "`"C:\\cfn\\scripts\\sqlontap\\Configure-ONTAP.ps1 -Parentstackname '$DeploymentName' -SQLVMName '$SqlSvmName' -FSxDataVolumeName '$FsxDataVolumeName' -FSxLogVolumeName '$FsxLogVolumeName' -FileSystemId '$FsxFileSystemId' -FSxTempDbVolumeName '$FsxTempDbVolumeName' -FSxQuorumVolumeName '$FsxQuorumVolumeName' -FSxDataLunSize '$FsxDataLunSize' -IGROUP '$SqlIgroupName' -SnapshotPolicy '$FsxVolumeSnapshotPolicy' -ResourceID '$NodeType' -Stackname '$DeploymentName'`""
+                Command            = "C:\\cfn\\scripts\\sqlontap\\Configure-ONTAP.ps1 -Parentstackname '$DeploymentName' -SQLVMName '$SqlSvmName' -FSxDataVolumeName '$FsxDataVolumeName' -FSxLogVolumeName '$FsxLogVolumeName' -FileSystemId '$FsxFileSystemId' -FSxTempDbVolumeName '$FsxTempDbVolumeName' -FSxQuorumVolumeName '$FsxQuorumVolumeName' -FSxDataLunSize '$FsxDataLunSize' -IGROUP '$SqlIgroupName' -SnapshotPolicy '$FsxVolumeSnapshotPolicy' -ResourceID '$NodeType' -Stackname '$DeploymentName'";
                 UseExecutionPolicy = $false
             }
         )
         Invoke-Commands -commands $ConfigureOntapCommands -logFile "C:\cfn\tflogs\ConfigureOntapCommands.log" -usePwsh $true
         Write-Output "Completed ontap configuration"
+
+        Write-Output "Initialize iscsi disks in ontap"
+        $IsFCI = if ($IsStandalone -eq $true) { "false" } else { "true" }
+        $InitializeOntapCommands = @(
+            @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$FsxFileSystemId' -SQLVMName '$SqlSvmName' -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlontap\\Initialize-Iscsidisk.ps1 -IsFCI $IsFCI"; UseExecutionPolicy = $false }
+        )
+        Invoke-Commands -commands $InitializeOntapCommands -logFile "C:\cfn\tflogs\InitializeOntapCommands.log"
+        Write-Output "Completed initialize iscsi disks in ontap"
     }
     else {
         # setup for FCI Secondary node
@@ -473,19 +484,6 @@ try {
         Invoke-Commands -commands $AddNode2InitiatorCommand -logFile "C:\cfn\tflogs\AddNode2InitiatorCommand.log"
         Write-Output "Completed the node2 initiator configuration"
 
-    }
-
-    if ($IsStandalone -eq $true -or $NodeType -eq 'primary') {
-        Write-Output "Initialize iscsi disks in ontap"
-        $IsFCI = if ($IsStandalone -eq $true) { "false" } else { "true" }
-        $InitializeOntapCommands = @(
-            @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$FsxFileSystemId' -SQLVMName '$SqlSvmName' -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlontap\\Initialize-Iscsidisk.ps1 -IsFCI $IsFCI"; UseExecutionPolicy = $false }
-        )
-        Invoke-Commands -commands $InitializeOntapCommands -logFile "C:\cfn\tflogs\InitializeOntapCommands.log"
-        Write-Output "Completed initialize iscsi disks in ontap"
-    }
-    else {
         Write-Output "Connect Ontap instance for FCI Secondary Node"
         $InitializeOntapCommands = @(
             @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$FsxFileSystemId' -SQLVMName '$SqlSvmName' -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false }
@@ -536,7 +534,7 @@ try {
     Invoke-Commands -commands $InstancePreparationCommands -logFile "C:\cfn\tflogs\InstancePreparationCommands.log"
     Write-Output "Completed instance preparation"
 
-    if ($IsStandalone -eq $true -or $NodeType -eq 'primary') {
+    if ($IsPrimaryOrStandalone) {
         Write-Output "Starting instance prep continuation"
         $UserName = if ($IsStandalone -eq $true) { "$DomainDnsName\\$SqlAdminAccounts" } else { "$SqlAdminAccounts" }
         $IntancePreparationContinueCommands = @(

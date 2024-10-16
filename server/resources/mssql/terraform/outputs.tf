@@ -36,47 +36,47 @@ output "policy_id" {
 # output of sql node
 output "standalone_sql_node_instance_id" {
   description = "The ID of the standalone SQL Node instance"
-  value       = length(module.standalone-sql-node) > 0 ? module.standalone-sql-node[0].sql_node_instance_id : null
+  value       = length(module.standalone_sql_node) > 0 ? module.standalone_sql_node[0].sql_node_instance_id : null
 }
 
 output "standalone_sql_node_private_ip" {
   description = "The private IP of the standalone SQL Node instance"
-  value       = length(module.standalone-sql-node) > 0 ? module.standalone-sql-node[0].sql_node_private_ip : null
+  value       = length(module.standalone_sql_node) > 0 ? module.standalone_sql_node[0].sql_node_private_ip : null
 }
 
 output "standalone_sql_node_instance_name" {
   description = "The name of the standalone SQL Node instance"
-  value       = length(module.standalone-sql-node) > 0 ? module.standalone-sql-node[0].sql_node_instance_name : null
+  value       = length(module.standalone_sql_node) > 0 ? module.standalone_sql_node[0].sql_node_instance_name : null
 }
 
 output "sql_node1_instance_id" {
   description = "The ID of the SQL Node 1 instance"
-  value       = length(module.fci_sql-node1) > 0 ? module.fci_sql-node1[0].sql_node_instance_id : null
+  value       = length(module.fci_sql_node1) > 0 ? module.fci_sql_node1[0].sql_node_instance_id : null
 }
 
 output "sql_node1_private_ip" {
   description = "The private IP of the SQL Node 1 instance"
-  value       = length(module.fci_sql-node1) > 0 ? module.fci_sql-node1[0].sql_node_private_ip : null
+  value       = length(module.fci_sql_node1) > 0 ? module.fci_sql_node1[0].sql_node_private_ip : null
 }
 
 output "sql_node1_instance_name" {
   description = "The name of the SQL Node 1 instance"
-  value       = length(module.fci_sql-node1) > 0 ? module.fci_sql-node1[0].sql_node_instance_name : null
+  value       = length(module.fci_sql_node1) > 0 ? module.fci_sql_node1[0].sql_node_instance_name : null
 }
 
 output "sql_node2_instance_id" {
   description = "The ID of the SQL Node 2 instance"
-  value       = length(module.fci_sql-node2) > 0 ? module.fci_sql-node2[0].sql_node_instance_id : null
+  value       = length(module.fci_sql_node2) > 0 ? module.fci_sql_node2[0].sql_node_instance_id : null
 }
 
 output "sql_node2_private_ip" {
   description = "The private IP of the SQL Node 2 instance"
-  value       = length(module.fci_sql-node2) > 0 ? module.fci_sql-node2[0].sql_node_private_ip : null
+  value       = length(module.fci_sql_node2) > 0 ? module.fci_sql_node2[0].sql_node_private_ip : null
 }
 
 output "sql_node2_instance_name" {
   description = "The name of the SQL Node 2 instance"
-  value       = length(module.fci_sql-node2) > 0 ? module.fci_sql-node2[0].sql_node_instance_name : null
+  value       = length(module.fci_sql_node2) > 0 ? module.fci_sql_node2[0].sql_node_instance_name : null
 }
 
 # output of fsx node
