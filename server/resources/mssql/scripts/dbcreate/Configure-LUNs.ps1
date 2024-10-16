@@ -26,6 +26,7 @@ param(
 $logtranscript = (New-Item -ItemType Directory -Path C:\cfn\log -Force)
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append)
 
+$ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12

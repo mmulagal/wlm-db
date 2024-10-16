@@ -31,6 +31,7 @@ $FSxUserName = $SsmParameter.fsx.username
 $FSxPassword = $SsmParameter.fsx.password
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${FSxUserName}:${FSxPassword}"))
 $FSxHostName = "management.${FSxID}.fsx.${FSxRegion}.amazonaws.com"
+$ProgressPreference = "SilentlyContinue"
 
 # Get region Certificateificate for FSx
 $isprivatesubnet = $False
