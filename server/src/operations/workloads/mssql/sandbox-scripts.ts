@@ -576,7 +576,7 @@ const createVolumeClone = (
                         if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
                             Write-Information "$logPrefix NetApp.ONTAP Module does not exist, installing it now"
 
-                            Install-Module -Name NetApp.ONTAP -Force -AllowClobber
+                            Install-Module -Name NetApp.ONTAP -Force -AllowClobber -SkipPublisherCheck
                         }
 
                         $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
