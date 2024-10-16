@@ -16,7 +16,11 @@ import {
     DEFAULT_TAGS,
     SIGNED_TEMPLATES_BUCKET_NAME,
     WLMDB,
-    TEMPLATE_BUCKET_REGION
+    TEMPLATE_BUCKET_REGION,
+    PGSQL_RESOURCE_ASSETS,
+    PGSQL_TEMPLATES_DISTRIBUTION,
+    PGSQL_TEMPLATES_ASSETS,
+    PGSQL_MASTER_TEMPLATE_DISTRIBUTION
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { getArtifactsRegionBucketName } from '../utils/utils';
@@ -39,23 +43,44 @@ async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
     let assets = [];
     if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         assets = SQL_RESOURCE_ASSETS;
+
+        const bucketname = getArtifactsRegionBucketName(region);
+        if (assets?.length) {
+            await Promise.all(
+                assets.map(async resource => {
+                    logger.info(`Creating signed url for ${resource.url} in region ${region}.`);
+                    try {
+                        signedUrl = await getPreSignedUrl(region, bucketname, resource.url);
+                        signedUrls.set(resource.name, { name: resource.name, url: signedUrl, location: resource.url });
+                    } catch (error) {
+                        const errorMessage = SIGNED_URL_ERROR_MESSAGE(resource.url, region, error as string);
+                        logger.error(errorMessage);
+                        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+                    }
+                })
+            );
+        }
     }
 
-    const bucketname = getArtifactsRegionBucketName(region);
-    if (assets?.length) {
-        await Promise.all(
-            SQL_RESOURCE_ASSETS.map(async resource => {
-                logger.info(`Creating signed url for ${resource.url} in region ${region}.`);
-                try {
-                    signedUrl = await getPreSignedUrl(region, bucketname, resource.url);
-                    signedUrls.set(resource.name, { name: resource.name, url: signedUrl, location: resource.url });
-                } catch (error) {
-                    const errorMessage = SIGNED_URL_ERROR_MESSAGE(resource.url, region, error as string);
-                    logger.error(errorMessage);
-                    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-                }
-            })
-        );
+    if (resourceType === DatabaseTypes.PG_SQL) {
+        assets = PGSQL_RESOURCE_ASSETS;
+
+        const bucketname = getArtifactsRegionBucketName(region);
+        if (assets?.length) {
+            await Promise.all(
+                assets.map(async resource => {
+                    logger.info(`Creating signed url for ${resource.url} in region ${region}.`);
+                    try {
+                        signedUrl = await getPreSignedUrl(region, bucketname, resource.url);
+                        signedUrls.set(resource.name, { name: resource.name, url: signedUrl, location: resource.url });
+                    } catch (error) {
+                        const errorMessage = SIGNED_URL_ERROR_MESSAGE(resource.url, region, error as string);
+                        logger.error(errorMessage);
+                        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+                    }
+                })
+            );
+        }
     }
 
     logger.debug('Signed urls', signedUrls);
@@ -139,7 +164,7 @@ async function updateTemplateUrls(
             AmazonLaunchWizardForCFN: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
             ScriptUnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
             ScriptVerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
-            ScriptValidation: decodeURI(signedUrls.get('ScriptValidation')?.url || ''),
+            ScriptValidation: `"${decodeURI(signedUrls.get('ScriptValidation')?.url || '')}"`,
             ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
             ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
             OpenSSL: decodeURI(signedUrls.get('OpenSSL')?.url || '')
@@ -224,6 +249,26 @@ async function updateTemplateUrls(
             url: signedUrl,
             location: customTemplatePath
         });
+    } else if (templateType === TEMPLATE_TYPES.PGSQLSTANDALONE) {
+        const contents = template({});
+        const standAloneTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
+        const customStandAloneTemplatePath: string = `${WLMDB}/${stackName}/${standAloneTemplatePath!.url}`;
+        await putObjectBucket(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customStandAloneTemplatePath,
+            contents
+        );
+        const standAloneSignedUrl = await getPreSignedUrl(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customStandAloneTemplatePath
+        );
+        signedUrls.set(standAloneTemplatePath!.name, {
+            name: standAloneTemplatePath!.name,
+            url: standAloneSignedUrl,
+            location: customStandAloneTemplatePath
+        });
     }
 }
 
@@ -237,24 +282,28 @@ async function uploadTemplates(
 ) {
     logger.info('Uploading templates ', region, resourceType);
 
-    if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
-        const signedUrls = await generateSignedUrls(region, resourceType);
-        const promises = SQL_TEMPLATES_DISTRIBUTION.map(async template =>
-            updateTemplateUrls(region, template.location, signedUrls, template.name, stackName)
-        );
-        await Promise.all(promises).then(() =>
-            updateTemplateUrls(
-                region,
-                MASTER_TEMPLATE_DISTRIBUTION.location,
-                signedUrls,
-                MASTER_TEMPLATE_DISTRIBUTION.name,
-                stackName,
-                tags,
-                templatePath,
-                templateParameters
-            )
-        );
-    }
+    const signedUrls = await generateSignedUrls(region, resourceType);
+    const templateDistribution =
+        resourceType === DatabaseTypes.MS_SQL_SERVER ? SQL_TEMPLATES_DISTRIBUTION : PGSQL_TEMPLATES_DISTRIBUTION;
+    const promises = templateDistribution.map(async template =>
+        updateTemplateUrls(region, template.location, signedUrls, template.name, stackName)
+    );
+    const masterTempate =
+        resourceType === DatabaseTypes.MS_SQL_SERVER
+            ? MASTER_TEMPLATE_DISTRIBUTION
+            : PGSQL_MASTER_TEMPLATE_DISTRIBUTION;
+    await Promise.all(promises).then(() =>
+        updateTemplateUrls(
+            region,
+            masterTempate.location,
+            signedUrls,
+            masterTempate.name,
+            stackName,
+            tags,
+            templatePath,
+            templateParameters
+        )
+    );
 }
 
 export { uploadTemplates, generateSignedUrls };

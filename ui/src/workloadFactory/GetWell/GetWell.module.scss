@@ -1,6 +1,6 @@
 .getWell {
     width: 100%;
-
+    padding-bottom: 80px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -99,6 +99,14 @@
                 display: flex;
                 gap: 16px;
                 align-items: center;
+
+                .dark-theme-union {
+                    svg {
+                        path {
+                            fill: #fff;
+                        }
+                    }
+                }
             }
 
             .filterHeader {
@@ -124,6 +132,22 @@
 
                         [class*='dsTextFieldFrame'] {
                             max-width: 264px !important;
+                        }
+
+                        .not-optimized-tooltip {
+                            display: flex;
+                            gap: 24px;
+                        }
+                    }
+
+                    .optimized-drop-down {
+                        [class*='selectItem'] {
+                            padding: 12px 20px 12px 24px;
+                        }
+
+                        [class*='tooltipInfoBaloon'] {
+                            max-width: 500px;
+                            width: 500px;
                         }
                     }
                 }
@@ -185,6 +209,14 @@
             display: flex;
             gap: 10px;
             align-items: center;
+
+            .dark-theme-light {
+                svg {
+                    path {
+                        fill: var(--cyan-60);
+                    }
+                }
+            }
         }
     }
 

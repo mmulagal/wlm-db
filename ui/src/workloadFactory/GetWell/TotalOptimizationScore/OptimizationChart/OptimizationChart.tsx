@@ -5,6 +5,7 @@ import styles from './OptimizationChart.module.scss';
 import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
 import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 Chart.register(...registerables);
 
@@ -14,7 +15,7 @@ type MultiRingDoughnutPropType = {
 };
 
 const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropType) => {
-    const loading = false;
+    const { optimizePageLoading } = useAppSelector(state => state.getWellOptimize);
     const unProtectedColor = '#E0E0E0';
 
     const ref = useRef<HTMLCanvasElement>(null);
@@ -59,15 +60,13 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
         <div className={styles.optimizationChart} id="chart-item">
             <div className={styles['center-text']}>
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                    65%
+                    {hostData?.percent || 0}%
                 </Typography>
                 <Typography variant="Regular_14">Optimization score</Typography>
-                {loading && <DsFlashingDotsLoader />}
+                {optimizePageLoading && <DsFlashingDotsLoader />}
             </div>
 
-            {(hostData?.protectedPercent !== 0 || hostData?.unprotectedPercent !== 0) && (
-                <canvas ref={ref} id="chart-area" width={200} height={200}></canvas>
-            )}
+            {hostData?.percent !== 0 && <canvas ref={ref} id="chart-area" width={200} height={200}></canvas>}
         </div>
     );
 };

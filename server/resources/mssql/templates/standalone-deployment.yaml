@@ -653,16 +653,14 @@ Resources:
                         c-set-dns:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Add-DNSEntry.ps1
-                                    -ADServerPrivateIP '
-                                  - !Select
-                                    - 0
-                                    - !Split
-                                      - ','
-                                      - !Ref 'ADDnsIpAddresses'
-                                  - "' -DomainDNSName '"
-                                  - !Ref 'DomainDNSName'
-                                  - '''"'
+                                - - 'powershell.exe -Command "C:\cfn\scripts\common\Update-DNSServers.ps1 -DNSIpAddresses '
+                                  - '"'
+                                  - !Ref 'ADDnsIpAddresses'
+                                  - '"'
+                                  - ' -Stackname '
+                                  - !Ref 'AWS::StackName'
+                                  - ' -ResourceID SqlNode'
+                                  - '"'
                             waitAfterCompletion: 0
                         d-update-dnssuffixlist:
                             command: !Join

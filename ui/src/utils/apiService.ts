@@ -14,6 +14,7 @@ import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
 import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
 import { SELECT_CONFIG } from './appConstants';
+import GetWellMock from '../workloadFactory/GetWell/GetWellMock.json';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -808,32 +809,51 @@ export const exploreSavingsApi = createApi({
     endpoints: builder => {
         return {
             getStorageSavings: builder.mutation({
-                query: ({ credentialId, regionId, instanceId, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings`,
+                query: ({ credentialId, regionId, instanceId, payload, type }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/${type}`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getManualStorageSavings: builder.mutation({
-                query: ({ regionId, payload }) => ({
-                    url: `v1/regions/${regionId}/manual-storage-savings`,
+                query: ({ regionId, payload, type }) => ({
+                    url: `v1/mssql/regions/${regionId}/manual-storage-savings/${type}`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getManualViewCalculations: builder.mutation({
-                query: ({ regionId, payload }) => ({
-                    url: `v1/regions/${regionId}/manual-storage-savings/calculations`,
+                query: ({ regionId, payload, type }) => ({
+                    url: `v1/mssql/regions/${regionId}/manual-storage-savings/${type}/calculations`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getViewCalculations: builder.mutation({
-                query: ({ credentialId, regionId, instanceId, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/calculations`,
+                query: ({ credentialId, regionId, instanceId, payload, type }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/${type}/calculations`,
                     method: 'POST',
                     body: payload
                 })
+            })
+        };
+    }
+});
+
+export const getWellApi = createApi({
+    reducerPath: 'getWellApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => {
+        return {
+            getMssqlAssessmentData: builder.mutation({
+                // ToDO : Untill APIs are ready using mock data
+                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
+                    return { data: GetWellMock };
+                }
+                // query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                //     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment`
+                // })
             })
         };
     }
@@ -945,3 +965,5 @@ export const {
     useGetManualStorageSavingsMutation,
     useGetManualViewCalculationsMutation
 } = exploreSavingsApi;
+
+export const { useGetMssqlAssessmentDataMutation } = getWellApi;

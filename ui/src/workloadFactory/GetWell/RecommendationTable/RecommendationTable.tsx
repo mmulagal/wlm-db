@@ -6,13 +6,14 @@ import { ReactComponent as Active } from '../../../assets/success.svg';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 import Tag from '../../../common/Tag/Tag';
+import RecommendationTooltip from '../RecommendationTooltip/RecommendationTooltip';
 
 const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) => {
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
             Header: 'Configuration',
-            accessor: 'configuration',
+            accessor: 'name',
             width: '18%',
             isSortable: true
         },
@@ -97,20 +98,13 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                 <div className={styles.tooltip}>
                                     <Popover
                                         popoverClass={''}
-                                        children={
-                                            <>
-                                                {cellData && (
-                                                    <div>
-                                                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                                                    </div>
-                                                )}
-                                            </>
-                                        }
+                                        children={cellData && <RecommendationTooltip data={cellData} />}
                                         trigger="hover"
                                         delayHide={200}
                                         interactive={true}
                                         isAppendedToBody={false}
                                         container={<TooltipIcon />}
+                                        placement="bottom"
                                     />
                                 </div>
                                 <DsTypography variant="Regular_13" className={`${styles.colText}`}>

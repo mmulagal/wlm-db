@@ -3,10 +3,13 @@ import styles from './TotalOptimizationScore.module.scss';
 import OptimizationChart from './OptimizationChart/OptimizationChart';
 import Square from '../../../common/Square/Square';
 import useResize from '../../../common/hooks/useResize';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const TotalOptimizationScore = () => {
     const windowSize = useResize();
-    const loading = false;
+    const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
+    const optimizationBreakDown = useAppSelector(state => state.getWellOptimize.optimizationBreakDown);
+
     return (
         <div className={styles.totalOptimizationScore}>
             <div className={styles.headSection}>
@@ -18,7 +21,7 @@ const TotalOptimizationScore = () => {
 
             <div className={styles.mainSection}>
                 <div className={styles.chartSection}>
-                    <OptimizationChart />
+                    <OptimizationChart hostData={optimizationBreakDown?.total} />
                 </div>
 
                 {windowSize.width >= 1770 && (
@@ -26,7 +29,7 @@ const TotalOptimizationScore = () => {
                         <div className={styles.tile} style={{ width: '131px' }}>
                             {!loading && (
                                 <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
-                                    26
+                                    {optimizationBreakDown?.total?.total}
                                 </DsTypography>
                             )}
                             {loading && (
@@ -43,7 +46,7 @@ const TotalOptimizationScore = () => {
                         <div className={styles.tile} style={{ width: '108px' }}>
                             {!loading && (
                                 <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
-                                    17
+                                    {optimizationBreakDown?.total?.optimized}
                                 </DsTypography>
                             )}
                             {loading && (
@@ -63,7 +66,7 @@ const TotalOptimizationScore = () => {
                         <div className={styles.tile} style={{ width: '112px' }}>
                             {!loading && (
                                 <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
-                                    9
+                                    {optimizationBreakDown?.total?.notOptimized}
                                 </DsTypography>
                             )}
                             {loading && (

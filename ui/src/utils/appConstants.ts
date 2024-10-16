@@ -1146,7 +1146,11 @@ export const GENERAL = {
         'The cost for compute of SQL over EBS is based on current instance type vs. cost of compute of SQL server over FSxN based on your selected instance type.',
     BYOL_TEXT: 'Monthly SQL BYOL costs($)',
     CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI: 'Source database is not hosted on a NetApp iSCSI drive',
-    COMING_SOON: 'Coming soon'
+    COMING_SOON: 'Coming soon',
+    NOTE_PONT_ONE: 'No disruption to your services is expected during this process.',
+    NOTE_PONT_TWO:
+        'By proceeding, you authorize Workload Factory to automatically perform these actions on your behalf.',
+    NOTE: 'Note'
 };
 
 export const CODE_VIEWER = {

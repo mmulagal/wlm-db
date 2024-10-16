@@ -1,21 +1,30 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { useDialog } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
-import { ReactComponent as OverProvisioned } from '../../../assets/over-provisioned.svg';
 import styles from './StorageCardComponent.module.scss';
 import GetWellChart from './GetWellChart/GetWellChart';
 import useResize from '../../../common/hooks/useResize';
+import { useAppSelector } from '../../../store/storeHooks';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import { GENERAL } from '../../../utils/appConstants';
+import DialogContent from './DialogContent/DialogContent';
 
-const StorageCardComponent = ({ cardData, optimizePrintState }: any) => {
-    const loading = false;
+const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
+    const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
+    const { setDialog, closeDialog } = useDialog();
     const setImage = (value: string) => {
-        if (value.toLocaleLowerCase() === 'optimized') {
+        if (value?.toLocaleLowerCase() === 'optimized') {
             return <Optimized />;
         } else if (value === 'Under-provisioned') {
             return <UnderProvisioned />;
         } else if (value === 'Over-provisioned') {
-            return <OverProvisioned />;
+            return (
+                <div style={{ transform: 'rotate(180deg)' }}>
+                    <UnderProvisioned />
+                </div>
+            );
         } else {
             return <NotActive />;
         }
@@ -39,6 +48,22 @@ const StorageCardComponent = ({ cardData, optimizePrintState }: any) => {
         }
     };
     const windowSize = useResize();
+
+    const handleDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={`${type} optimization`}
+                content={<DialogContent type={type} />}
+                primaryButton={GENERAL.CONTINUE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {}}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.colorSet}
+            />
+        );
+    };
     return (
         <div className={styles.storageCardComponent}>
             {/* Section one */}
@@ -95,7 +120,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState }: any) => {
                 cardData?.block_one?.value !== 'ONTAP configuration' &&
                 cardData?.block_one?.value !== 'Operating system' && (
                     <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
-                        <DsButton variant="secondary" onClick={() => {}} isDisabled={loading}>
+                        <DsButton variant="secondary" onClick={() => handleDialog()} isDisabled={loading}>
                             Optimize
                         </DsButton>
                     </div>

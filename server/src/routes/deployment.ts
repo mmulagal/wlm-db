@@ -1,6 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
+    deployPgSql,
     deployStackOrCreateTemplateURL,
     deploymentStatus,
     deploymentStatusByName,
@@ -17,6 +18,7 @@ import {
     DeploymentSummaryListSchema,
     FsxAvailableRegionsForThroughputSchema,
     CollationListSchema,
+    PgSqlDeployTemplateSchema,
     TerraformSetupSchema
 } from './schemas/deployment-schemas';
 import { getDeploymentJobsSummary } from '../operations/jobs-operations';
@@ -143,6 +145,38 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             const response = getCollationDetailsForDeployment(accountId, mssqlVersion);
             return reply.send(response);
         })
+        .post(
+            `${API_PREFIX_PATH}/cloudformation/pgsql/deploy`,
+            { schema: PgSqlDeployTemplateSchema },
+            async (request, reply) => {
+                const {
+                    params: { credentialsId, region },
+                    headers: { 'triggered-from': triggeredFrom },
+                    body: {
+                        networkConfiguration,
+                        ec2Configuration,
+                        fsxConfiguration,
+                        sqlConfiguration,
+                        topicArn,
+                        enableCloudWatch,
+                        tags
+                    }
+                } = request;
+                const response = await deployPgSql(
+                    credentialsId,
+                    region,
+                    networkConfiguration,
+                    ec2Configuration,
+                    fsxConfiguration,
+                    sqlConfiguration,
+                    topicArn,
+                    enableCloudWatch,
+                    triggeredFrom,
+                    tags
+                );
+                return reply.code(202).send(response);
+            }
+        )
         .post(`${API_TERRAFORM_PREFIX_PATH}`, { schema: TerraformSetupSchema }, async (request, reply) => {
             const {
                 headers: { 'triggered-from': triggeredFrom },

@@ -508,11 +508,6 @@ variable "fsx_disk_iops" {
 variable "ontap_security_group_id" {
   description = "The ID of the ONTAP security group"
   type        = string
-
-  validation {
-    condition     = length(var.ontap_security_group_id) > 0
-    error_message = "The ontap_security_group_id value must not be empty."
-  }
 }
 
 variable "fsx_volume_snapshot_policy" {
