@@ -278,18 +278,17 @@ try {
   
     Write-Output "Invoking the sql setup script"
     $IsStandaloneString = if ($IsStandalone -eq $true) { "1" } else { "0" }
-    if ($IsStandalone -eq $true) {
-        $SqlSetupCommand = @(
-            @{Command = "C:\cfn\scripts\Sql-Setup.ps1 -DeploymentName '$DeploymentName' -Region '$Region' -SqlServerName '$SqlServerName' -SqlSvmName '$SqlSvmName' -FsxDataVolumeName '$FsxDataVolumeName' -FsxLogVolumeName '$FsxLogVolumeName' -FsxFileSystemId '$FsxFileSystemId' -FsxTempDbVolumeName '$FsxTempDbVolumeName' -FsxDataLunSize '$FsxDataLunSize' -SqlIgroupName '$SqlIgroupName' -FsxVolumeSnapshotPolicy '$FsxVolumeSnapshotPolicy' -AdDnsIpAddresses '$AdDnsIpAddresses' -DomainDnsName '$DomainDnsName' -DomainAdminUser '$DomainAdminUser' -SqlAdminAccounts '$SqlAdminAccounts' -SqlCollation '$SqlCollation'  -InstanceId '$InstanceId' -LogFeatureEnabled '$LogFeatureEnabled' -SqlNodeName '$SqlNodeName' -IsStandalone $IsStandaloneString -NodeType '$NodeType' -WorkloadSecurityGroupId '$WorkloadSecurityGroupId' -MssqlMediaBucketName '$MssqlMediaBucketName' -AmiId '$AmiId'"; UseExecutionPolicy = $false }
-        )
+
+    $SqlSetupCommand = "C:\cfn\scripts\Sql-Setup.ps1 -DeploymentName '$DeploymentName' -Region '$Region' -SqlServerName '$SqlServerName' -SqlSvmName '$SqlSvmName' -FsxDataVolumeName '$FsxDataVolumeName' -FsxLogVolumeName '$FsxLogVolumeName' -FsxFileSystemId '$FsxFileSystemId' -FsxTempDbVolumeName '$FsxTempDbVolumeName' -FsxDataLunSize '$FsxDataLunSize' -SqlIgroupName '$SqlIgroupName' -FsxVolumeSnapshotPolicy '$FsxVolumeSnapshotPolicy' -AdDnsIpAddresses '$AdDnsIpAddresses' -DomainDnsName '$DomainDnsName' -DomainAdminUser '$DomainAdminUser' -SqlAdminAccounts '$SqlAdminAccounts' -SqlCollation '$SqlCollation'  -InstanceId '$InstanceId' -LogFeatureEnabled '$LogFeatureEnabled' -SqlNodeName '$SqlNodeName' -IsStandalone $IsStandaloneString -NodeType '$NodeType' -WorkloadSecurityGroupId '$WorkloadSecurityGroupId' -MssqlMediaBucketName '$MssqlMediaBucketName' -AmiId '$AmiId'"
+
+    if ($IsStandalone -eq $false) {
+        Write-Output "FCI Instance Command"
+        $SqlSetupCommand += " -FsxQuorumVolumeName '$FsxQuorumVolumeName' -MssqlMediaPathKey '$MssqlMediaPathKey' -SqlFsxWsFcName '$SqlFsxWsFcName' -SqlFsxFciName '$SqlFsxFciName' -SqlFsxServerNetBiosName '$SqlFsxServerNetBiosName' -SqlFsxServerNetBiosName2 '$SqlFsxServerNetBiosName2' -NetworkInterface1FirstPrivateIp '$NetworkInterface1FirstPrivateIp' -NetworkInterface1SecondPrivateIp '$NetworkInterface1SecondPrivateIp' -NetworkInterface2FirstPrivateIp '$NetworkInterface2FirstPrivateIp' -NetworkInterface2SecondPrivateIp '$NetworkInterface2SecondPrivateIp'"
     }
-    else {
-        $SqlSetupCommand = @(
-            @{Command = "C:\cfn\scripts\Sql-Setup.ps1 -DeploymentName '$DeploymentName' -Region '$Region' -SqlServerName '$SqlServerName' -SqlSvmName '$SqlSvmName' -FsxDataVolumeName '$FsxDataVolumeName' -FsxLogVolumeName '$FsxLogVolumeName' -FsxFileSystemId '$FsxFileSystemId' -FsxTempDbVolumeName '$FsxTempDbVolumeName' -FsxQuorumVolumeName '$FsxQuorumVolumeName' -FsxDataLunSize '$FsxDataLunSize' -SqlIgroupName '$SqlIgroupName' -FsxVolumeSnapshotPolicy '$FsxVolumeSnapshotPolicy' -AdDnsIpAddresses '$AdDnsIpAddresses' -DomainDnsName '$DomainDnsName' -DomainAdminUser '$DomainAdminUser' -SqlAdminAccounts '$SqlAdminAccounts' -SqlCollation '$SqlCollation'  -InstanceId '$InstanceId' -LogFeatureEnabled '$LogFeatureEnabled' -SqlNodeName '$SqlNodeName' -IsStandalone $IsStandaloneString -NodeType '$NodeType' -WorkloadSecurityGroupId '$WorkloadSecurityGroupId' -MssqlMediaBucketName '$MssqlMediaBucketName' -AmiId '$AmiId' -MssqlMediaPathKey '$MssqlMediaPathKey' -SqlFsxWsFcName '$SqlFsxWsFcName' -SqlFsxFciName '$SqlFsxFciName' -SqlFsxServerNetBiosName '$SqlFsxServerNetBiosName' -SqlFsxServerNetBiosName2 '$SqlFsxServerNetBiosName2' -NetworkInterface1FirstPrivateIp '$NetworkInterface1FirstPrivateIp' -NetworkInterface1SecondPrivateIp '$NetworkInterface1SecondPrivateIp' -NetworkInterface2FirstPrivateIp '$NetworkInterface2FirstPrivateIp' -NetworkInterface2SecondPrivateIp '$NetworkInterface2SecondPrivateIp'"; UseExecutionPolicy = $false }
-        )
-    }
-    $SqlSetupCommand | Format-List
-    Invoke-Commands -commands $SqlSetupCommand
+
+    $CommandToInvoke = @{Command = $SqlSetupCommand; UseExecutionPolicy = $false }
+    $CommandToInvoke | Format-List
+    Invoke-Commands -commands $CommandToInvoke
     Write-Output "Completed with instance initializer script"
 }
 catch {
