@@ -269,12 +269,10 @@ async function formatTemplateParameters(
     templateParams.push({ ParameterKey: EBS_VOLUME_SIZE, ParameterValue: amiSize.toString() });
 
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
-        if (!servicesWithNoEndpoint.includes(key)) {
-            templateParams.push({
-                ParameterKey: value,
-                ParameterValue: 'true'
-            });
-        }
+        templateParams.push({
+            ParameterKey: value,
+            ParameterValue: servicesWithNoEndpoint.includes(key) ? 'true' : 'false'
+        });
     });
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -588,6 +586,7 @@ async function getTerraformSetup(
             region as string,
             DatabaseTypes.MS_SQL_SERVER,
             tfDeploymentName,
+            sqlConfiguration.sqlDeploymentMode,
             tags?.map(({ key, value }) => ({ Key: key, Value: value })),
             customTerraformModulesPath
         );

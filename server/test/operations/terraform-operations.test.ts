@@ -21,7 +21,12 @@ import { DatabaseTypes } from '../../src/utils/consts';
 
 describe('terraform operations', () => {
     it('upload terraform modules', async () => {
-        const resp = await uploadTerraformModules(DEFAULT_AWS_REGION, DatabaseTypes.MS_SQL_SERVER, 'test-deployment');
+        const resp = await uploadTerraformModules(
+            DEFAULT_AWS_REGION,
+            DatabaseTypes.MS_SQL_SERVER,
+            'standalone',
+            'test-deployment'
+        );
         expect(resp).toBeDefined();
     });
 

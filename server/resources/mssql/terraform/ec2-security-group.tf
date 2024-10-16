@@ -91,7 +91,7 @@ resource "aws_security_group" "workload_security_group" {
       from_port   = ingress.value.from_port
       to_port     = ingress.value.to_port
       protocol    = ingress.value.protocol
-      cidr_blocks = [format("%s/32", var.ad_dns_ip_addresses)]
+      cidr_blocks = [format("%s/32", local.ad_dns_ip_addresses)]
     }
   }
 

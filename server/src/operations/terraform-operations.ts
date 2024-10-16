@@ -16,7 +16,9 @@ import {
     TEMPLATE_TYPES,
     CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING,
     TERRAFORM_FOLDER_PATH,
-    TERRAFORM_ROOT_MODULE_DISTRIBUTION
+    TERRAFORM_ROOT_MODULE_DISTRIBUTION,
+    FCI,
+    STANDALONE
 } from '../utils/consts';
 import { isDemo } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -37,10 +39,19 @@ async function uploadTerraformModules(
     region: string,
     resourceType: DatabaseTypes,
     deploymentName: string,
+    deploymentMode: string,
     tags?: Array<{ Key: string; Value: string }>,
     templatePath?: string
 ) {
-    logger.info('Uploading terraform module templates', region, resourceType, deploymentName, tags, templatePath);
+    logger.info(
+        'Uploading terraform module templates',
+        region,
+        resourceType,
+        deploymentName,
+        tags,
+        templatePath,
+        deploymentMode
+    );
 
     // here getting all the assets signed urls for the scripts and other resources
     // then upating the initializer scripts for validation and sql standalone node with the signed urls and uploading them to s3
@@ -54,7 +65,8 @@ async function uploadTerraformModules(
                     deploymentName,
                     signedUrls,
                     template.name,
-                    template.location
+                    template.location,
+                    deploymentMode
                 )
             );
 
@@ -77,7 +89,8 @@ async function uploadInitializerScripts(
     deploymentName: string,
     signedUrls: Map<string, TemplateDetails>,
     initializerName: string,
-    initializerPath: string
+    initializerPath: string,
+    deploymentMode: string
 ) {
     logger.info(
         'Uploading initializer scripts for terraform modules',
@@ -86,7 +99,8 @@ async function uploadInitializerScripts(
         deploymentName,
         signedUrls,
         initializerName,
-        initializerPath
+        initializerPath,
+        deploymentMode
     );
 
     let signedURLDetail = {};
@@ -119,6 +133,13 @@ async function uploadInitializerScripts(
                     SqlSpcu: decodeURIComponent(signedUrls.get('Sqlspcu')?.url || ''),
                     AmazonLaunchWizardForCfn: decodeURIComponent(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
                     AmazonLaunchWizardForSsm: decodeURIComponent(signedUrls.get('AmazonLaunchWizardForSSM')?.url || ''),
+                    ...(deploymentMode === FCI
+                        ? {
+                              AmazonFailoverCluster: decodeURIComponent(
+                                  signedUrls.get('AmazonFailoverCluster')?.url || ''
+                              )
+                          }
+                        : {}),
 
                     ScriptVerifySignature: decodeURIComponent(signedUrls.get('ScriptVerifySignature')?.url || ''),
                     ScriptUnzipArchive: decodeURIComponent(signedUrls.get('ScriptUnzipArchive')?.url || ''),
@@ -132,9 +153,11 @@ async function uploadInitializerScripts(
                     OpenSsl: decodeURIComponent(signedUrls.get('OpenSSL')?.url || ''),
                     SqlSetup: decodeURIComponent(signedUrls.get('ScriptSqlSetup')?.url || '')
                 });
+                const templateName =
+                    deploymentMode === STANDALONE ? 'SQLStandaloneInitializerTemplate' : 'SQLFCIInitializerTemplate';
                 signedURLDetail = await processTemplate(
                     deploymentName,
-                    'SQLStandaloneInitializerTemplate',
+                    templateName,
                     contents,
                     'sql_node_initialization_s3_url'
                 );

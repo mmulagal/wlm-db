@@ -1,10 +1,10 @@
 #!/bin/bash
 
-instance_id=$1
-region=$2
+InstanceId=$1
+Region=$2
 
 while true; do
-  tag_value=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=user_data" --region $region --output text --query 'Tags[].Value')
+  tag_value=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$InstanceId" "Name=key,Values=user_data" --region $Region --output text --query 'Tags[].Value')
 
   if [[ $tag_value == "completed" ]]; then
     echo "completed"

@@ -131,11 +131,6 @@ variable "domain_member_sg_id" {
   description = "The ID of the domain member security group"
   type        = string
   default     = ""
-
-  validation {
-    condition     = length(var.domain_member_sg_id) > 0
-    error_message = "The domain_member_sg_id value must not be empty."
-  }
 }
 
 variable "tf_deploy_role_name" {
@@ -299,11 +294,6 @@ variable "unique_id" {
 variable "fsx_file_system_name" {
   description = "The name of the FSx file system"
   type        = string
-
-  validation {
-    condition     = length(var.fsx_file_system_name) > 0
-    error_message = "The fsx_file_system_name value must not be empty."
-  }
 }
 
 variable "fsx_data_volume_name" {
@@ -514,10 +504,6 @@ variable "fsx_disk_iops" {
   }
 }
 
-variable "file_system_encryption_key_id" {
-  description = "The ID of the file system encryption key"
-  type        = string
-}
 
 variable "ontap_security_group_id" {
   description = "The ID of the ONTAP security group"
@@ -666,4 +652,15 @@ variable "sql_node_initialization_s3_url" {
     condition     = length(var.sql_node_initialization_s3_url) > 0
     error_message = "The sql_node_initialization_s3_url value must not be empty."
   }
+}
+variable "sql_fsx_ws_fc_name" {
+  description = "Windows Server failover cluster name"
+  type        = string
+  default     = ""
+}
+
+variable "sql_fsx_fci_name" {
+  description = "Name for the SQL Server failover cluster instance."
+  type        = string
+  default     = ""
 }

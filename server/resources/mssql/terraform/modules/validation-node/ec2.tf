@@ -13,11 +13,12 @@ locals {
     fsx_file_system_id                    = var.fsx_file_system_id
     log_group                             = var.deployment_name
     sql_deployment_mode                   = var.sql_deployment_mode
+    validation_node_name                  = var.validation_node_name
   })
 }
 
 resource "aws_iam_instance_profile" "validation_instance_profile" {
-  name = "${var.deployment_name}_validation_instance_profile"
+  name = "${var.deployment_name}_${var.validation_node_name}_validation_instance_profile"
   role = var.ec2_role_name
 }
 
@@ -26,7 +27,7 @@ data "aws_vpc" "selected" {
 }
 
 resource "aws_security_group" "domain_member_sg" {
-  name        = "${var.deployment_name}_domain_member_sg"
+  name        = "${var.deployment_name}_${var.validation_node_name}_domain_member_sg"
   description = "Domain Members"
   vpc_id      = var.vpc_id
 
@@ -81,7 +82,7 @@ resource "aws_instance" "validation_node" {
   }
 
   tags = {
-    Name = "${var.deployment_name}-ValidationNode1"
+    Name = "${var.deployment_name}-${var.validation_node_name}"
   }
 }
 
@@ -95,7 +96,7 @@ resource "null_resource" "wait_for_tag_mac_or_linux" {
   }
 
   provisioner "local-exec" {
-    command = "sh '${path.module}/wait_for_tag.sh' '${path.module}' '${aws_instance.validation_node.id}' '${var.aws_location}'"
+    command = "sh '${path.root}/scripts/wait_for_tag.sh' '${path.root}' '${aws_instance.validation_node.id}' '${var.aws_location}' '${var.validation_node_name}'"
   }
 }
 
@@ -108,6 +109,6 @@ resource "null_resource" "wait_for_tag_windows" {
   }
 
   provisioner "local-exec" {
-    command = "powershell.exe -File ${path.module}/wait_for_tag.ps1 ${path.module} ${aws_instance.validation_node.id} ${var.aws_location}"
+    command = "powershell.exe -ExecutionPolicy Bypass -File ${path.root}/scripts/wait_for_tag.ps1 ${path.root} ${aws_instance.validation_node.id} ${var.aws_location} ${var.validation_node_name}"
   }
 }

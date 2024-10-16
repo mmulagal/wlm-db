@@ -13,6 +13,7 @@ $FsxDataVolumeName = "${fsx_data_volume_name}"
 $FsxLogVolumeName = "${fsx_log_volume_name}"
 $FsxFileSystemId = "${fsx_file_system_id}"
 $FsxTempDbVolumeName = "${fsx_temp_db_volume_name}"
+$FsxQuorumVolumeName = "${fsx_quorum_volume_name}"
 $FsxDataLunSize = "${fsx_data_lun_size}"
 $SqlIgroupName = "${sql_igroup_name}"
 $FsxVolumeSnapshotPolicy = "${fsx_volume_snapshot_policy}"
@@ -21,6 +22,21 @@ $DomainDnsName = "${domain_dns_name}"
 $DomainAdminUser = "${domain_admin_user}"
 $SqlAdminAccounts = "${sql_admin_accounts}"
 $SqlCollation = "${sql_collation}"
+
+$SqlNodeName = "${sql_node_name}"
+$IsStandalone = "${is_standalone}"
+$WorkloadSecurityGroupId = "${workload_security_group_id}"
+$MssqlMediaBucketName = "${mssql_media_bucket_name}"
+$AmiId = "${ami_id}"
+$MssqlMediaPathKey = "${mssql_media_path_key}"
+$SqlFsxWsFcName = "${sql_fsx_ws_fc_name}"
+$SqlFsxFciName = "${sql_fsx_fci_name}"
+$SqlFsxServerNetBiosName = "${sql_fsx_server_net_bios_name}"
+$SqlFsxServerNetBiosName2 = "${sql_fsx_server_net_bios_name_2}"
+$NetworkInterface1FirstPrivateIp = "${network_interface_1_first_private_ip}"
+$NetworkInterface1SecondPrivateIp = "${network_interface_1_second_private_ip}"
+$NetworkInterface2FirstPrivateIp = "${network_interface_2_first_private_ip}"
+$NetworkInterface2SecondPrivateIp = "${network_interface_2_second_private_ip}"
 
 Write-Output "Deployment Name: $DeploymentName"
 
@@ -61,7 +77,15 @@ try {
   
   Invoke-WebRequest -Uri $SqlNodeInitializationS3Url -OutFile "$ScriptDir\Sql-Instance-Initializer.ps1"  -ErrorAction Stop
 
-  $Command = "$ScriptDir\Sql-Instance-Initializer.ps1 -Region '$Region' -LogFeatureEnabled '$LogFeatureEnabled' -DeploymentName '$DeploymentName' -SqlServerName '$SqlServerName' -SqlSvmName '$SqlSvmName' -FsxDataVolumeName '$FsxDataVolumeName' -FsxLogVolumeName '$FsxLogVolumeName' -FsxFileSystemId '$FsxFileSystemId' -FsxTempDbVolumeName '$FsxTempDbVolumeName' -FsxDataLunSize '$FsxDataLunSize' -SqlIgroupName '$SqlIgroupName' -FsxVolumeSnapshotPolicy '$FsxVolumeSnapshotPolicy' -AdDnsIpAddresses '$AdDnsIpAddresses' -DomainDnsName '$DomainDnsName' -DomainAdminUser '$DomainAdminUser' -SqlAdminAccounts '$SqlAdminAccounts' -SqlCollation '$SqlCollation'"
+  $IsStandaloneString = if ($IsStandalone -eq "true") { "1" } else { "0" }
+  
+  Write-Output "Base instance command"
+  $Command = "$ScriptDir\Sql-Instance-Initializer.ps1 -Region '$Region' -LogFeatureEnabled '$LogFeatureEnabled' -DeploymentName '$DeploymentName' -SqlServerName '$SqlServerName' -SqlSvmName '$SqlSvmName' -FsxDataVolumeName '$FsxDataVolumeName' -FsxLogVolumeName '$FsxLogVolumeName' -FsxFileSystemId '$FsxFileSystemId' -FsxTempDbVolumeName '$FsxTempDbVolumeName' -FsxDataLunSize '$FsxDataLunSize' -SqlIgroupName '$SqlIgroupName' -FsxVolumeSnapshotPolicy '$FsxVolumeSnapshotPolicy' -AdDnsIpAddresses '$AdDnsIpAddresses' -DomainDnsName '$DomainDnsName' -DomainAdminUser '$DomainAdminUser' -SqlAdminAccounts '$SqlAdminAccounts' -SqlCollation '$SqlCollation' -SqlNodeName '$SqlNodeName' -IsStandalone $IsStandaloneString -WorkloadSecurityGroupId '$WorkloadSecurityGroupId' -MssqlMediaBucketName '$MssqlMediaBucketName' -AmiId '$AmiId'"
+  if ($IsStandalone -eq "false") {
+    Write-Output "FCI Instance command"
+    $Command += " -FsxQuorumVolumeName '$FsxQuorumVolumeName' -MssqlMediaPathKey '$MssqlMediaPathKey' -SqlFsxWsFcName '$SqlFsxWsFcName' -SqlFsxFciName '$SqlFsxFciName' -SqlFsxServerNetBiosName '$SqlFsxServerNetBiosName' -SqlFsxServerNetBiosName2 '$SqlFsxServerNetBiosName2' -NetworkInterface1FirstPrivateIp '$NetworkInterface1FirstPrivateIp' -NetworkInterface1SecondPrivateIp '$NetworkInterface1SecondPrivateIp' -NetworkInterface2FirstPrivateIp '$NetworkInterface2FirstPrivateIp' -NetworkInterface2SecondPrivateIp '$NetworkInterface2SecondPrivateIp'"
+  }
+
   Write-Output "Executing command: $Command"
   Invoke-Expression -Command $Command
 }
