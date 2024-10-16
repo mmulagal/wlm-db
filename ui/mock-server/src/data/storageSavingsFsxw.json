@@ -68,8 +68,8 @@
             "message": "No license change recommended as you are already using a non-enterprise edition"
         }
     },
-    "ebs": {
-        "capacity": 2560,
+    "fsxw": {
+        "capacity": 2550,
         "iops": 4888,
         "throughput": 0,
         "snapshots": 3481.6,
