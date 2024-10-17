@@ -1,5 +1,6 @@
 import {
     setCardData,
+    setGwTimestamp,
     setOntapConfigTableData,
     setOptimizationBreakDown,
     setOsConfigTableData
@@ -463,6 +464,9 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
 
     // Dispatch the formatted optimization breakdown data to the store
     dispatch(setOptimizationBreakDown(optBreakDown));
+
+    // Dispatch the timestamp to the store
+    dispatch(setGwTimestamp(data?.storage?.timestamp));
 };
 
 export const getUniqueEntries = (arrays: any) => {

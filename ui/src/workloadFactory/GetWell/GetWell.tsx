@@ -1,4 +1,4 @@
-import { DsAccordion, DsSelect, DsTypography, Spinner, DsTooltipInfo } from '@netapp/design-system';
+import { DsAccordion, DsSelect, DsTypography, Spinner, DsTooltipInfo, Popover } from '@netapp/design-system';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
@@ -23,7 +23,8 @@ import {
     removeEntry,
     removeObjectFromArray,
     generateDate,
-    applyFilter
+    applyFilter,
+    cardDataDefault
 } from './GetWellUtils';
 import {
     setDefaultFilterOptions,
@@ -33,7 +34,15 @@ import {
 import { useAppSelector } from '../../store/storeHooks';
 import { useState, useEffect } from 'react';
 import GetWellApi from './GetWellApi';
-import { resetGwData } from '../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    resetGwData,
+    setCardData,
+    setDriftAssessmentData,
+    setGwRefreshPage,
+    setOntapConfigTableData,
+    setOptimizationBreakDown,
+    setOsConfigTableData
+} from '../../store/workloadFactory/getWellOptimizeSlice';
 //@ts-ignore
 import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
@@ -43,8 +52,14 @@ const GetWell = () => {
     const dispatch = useDispatch();
     const { optimizeFilterTags, defaultFilterOptions } = useAppSelector(state => state.inventoryV2);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
-    const { cardData, ontapConfigTableData, osConfigTableData, selectedHostname, selectedDatabaseInstanceName } =
-        useAppSelector(state => state.getWellOptimize);
+    const {
+        cardData,
+        ontapConfigTableData,
+        osConfigTableData,
+        selectedHostname,
+        selectedDatabaseInstanceName,
+        gwTimestamp
+    } = useAppSelector(state => state.getWellOptimize);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
@@ -125,6 +140,15 @@ const GetWell = () => {
         setFilteredCardData(applyFilter(cardData, optimizeFilterTags));
     }, [cardData, optimizeFilterTags]);
 
+    const refreshGetWellPage = () => {
+        dispatch(setDriftAssessmentData(null));
+        dispatch(setCardData(cardDataDefault));
+        dispatch(setOsConfigTableData(null));
+        dispatch(setOntapConfigTableData(null));
+        dispatch(setOptimizationBreakDown(null));
+        dispatch(setGwRefreshPage(true));
+    };
+
     GetWellApi();
 
     return (
@@ -161,11 +185,23 @@ const GetWell = () => {
                         <DsTypography className={styles.optimizeHeader} variant="Semibold_20">
                             Optimize instance
                         </DsTypography>
-                        {!optimizePrintState && (
-                            <div className={styles.refreshIcon}>
-                                <RefreshIcon />
-                            </div>
-                        )}
+                        {!optimizePrintState &&
+                            (loading ? (
+                                <div className={styles.refreshIconDisable}>
+                                    <Spinner isLarge />
+                                </div>
+                            ) : (
+                                <Popover
+                                    popoverClass={styles['copy-popover']}
+                                    children={`Last update: ${gwTimestamp}`}
+                                    trigger="hover"
+                                    container={
+                                        <div className={styles.refreshIcon} onClick={refreshGetWellPage}>
+                                            <RefreshIcon />
+                                        </div>
+                                    }
+                                />
+                            ))}
                     </div>
                     {!optimizePrintState && (
                         <DsTypography variant="Semibold_16">
@@ -1117,3 +1153,6 @@ const GetWell = () => {
 };
 
 export default GetWell;
+function driftAssessmentData(arg0: null): any {
+    throw new Error('Function not implemented.');
+}
