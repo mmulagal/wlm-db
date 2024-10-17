@@ -1153,6 +1153,3 @@ const GetWell = () => {
 };
 
 export default GetWell;
-function driftAssessmentData(arg0: null): any {
-    throw new Error('Function not implemented.');
-}
