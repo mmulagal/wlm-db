@@ -639,6 +639,8 @@ export const GETWELL_VALUES: any = {
     'under-provisioned': 'Under-provisioned',
     'over-provisioned': 'Over-provisioned',
     separate_drive: 'Separate Drive',
+    'separate-drive': 'Separate Drive',
+    'same-drive': 'Same Drive',
     same_drive: 'Same Drive',
     critical: 'Critical',
     warning: 'Warning',
@@ -661,5 +663,12 @@ export const GETWELL_CONFIG: any = {
     'mpio-iscsi-count': 'Multipath I/O Sessions',
     'mpio-enabled': 'Multipath I/O Status',
     'mpio-load-balance-policy': 'Multipath I/O Policy',
-    'ntfs-allocation-size': 'NTFS allocation unit size'
+    'ntfs-allocation-size': 'NTFS allocation unit size',
+    'log-drive-size': 'transaction_log_drive_size',
+    'performance-tier': 'storage_tier',
+    'tempdb-drive-size': 'tempdb_drive_size',
+    headroom: 'file_system_headroom',
+    'tempdb-files-location': 'tempdb_files',
+    'default-log-files-location': 'transaction_log_files',
+    'default-data-files-location': 'user_data_files'
 };

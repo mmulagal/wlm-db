@@ -288,7 +288,8 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
     let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
     cardMainConfig?.map(category => {
         category?.map((item: PerConfigInterface) => {
-            const itemName = item?.name || '';
+            let itemName = item?.name || '';
+            itemName = GETWELL_CONFIG?.[itemName] || itemName;
             cardsData = {
                 ...cardsData,
                 [itemName]: {
@@ -336,7 +337,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface) => {
     let ontapVolAndLunList = [data?.storage?.configuration?.volumes, data?.storage?.configuration?.luns];
     ontapVolAndLunList?.map(type => {
         type?.map((item: PerConfigInterface) => {
-            if (item?.status === 'optimised') {
+            if (item?.status === 'optimized') {
                 ontapOptimizedConfig++;
             } else {
                 ontapNotOptimizedConfig++;
@@ -363,7 +364,7 @@ export const formatOsConfig = (data: AssessmentResponseInterface) => {
     let osOptimizedConfig = 0;
     let osNotOptimizedConfig = 0;
     data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
-        if (item?.status === 'optimised') {
+        if (item?.status === 'optimized') {
             osOptimizedConfig++;
         } else {
             osNotOptimizedConfig++;
@@ -419,7 +420,10 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
             },
             block_three: {
                 ...cardDataDefault?.ontap_configuration?.block_three,
-                value: (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100 + '%'
+                value:
+                    formatNumberWithCustomComma(
+                        (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
+                    ) + '%'
             },
             block_four: {
                 ...cardDataDefault?.ontap_configuration?.block_four,
@@ -441,7 +445,10 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
             },
             block_three: {
                 ...cardDataDefault?.os_configuration?.block_three,
-                value: (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100 + '%'
+                value:
+                    formatNumberWithCustomComma(
+                        (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
+                    ) + '%'
             },
             block_four: {
                 ...cardDataDefault?.os_configuration?.block_four,
@@ -547,10 +554,10 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
     Object.keys(cardData).map((key: any) => {
         const checkSubCategory = !filters['sub-catagories'] || filters['sub-catagories'].includes(subCategoryData[key]);
 
-        const isOptmized = cardData[key]['block_two'].value === GETWELL_VALUES.optimised;
+        const isOptmized = cardData[key]['block_two'].value === GETWELL_VALUES.optimized;
         const checkStatus =
             !filters.status ||
-            (filters.status.includes(GETWELL_VALUES.optimised) && isOptmized) ||
+            (filters.status.includes(GETWELL_VALUES.optimized) && isOptmized) ||
             (filters.status.includes('Not optimized') && !isOptmized);
 
         const checkSeverity = !filters.severity || filters.severity.includes(cardData[key]['block_four'].value);
