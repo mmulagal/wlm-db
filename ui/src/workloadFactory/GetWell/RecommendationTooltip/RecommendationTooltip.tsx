@@ -8,8 +8,8 @@ const RecommendationTooltip = ({ data }: { data: string }) => {
     const [desc, setDesc] = useState('');
     const [points, setPoints] = useState<Array<string>>([]);
     useEffect(() => {
-        const desc = data.split(' - ')[0];
-        const points = data.split(' - ').slice(1);
+        let desc = data.split('- ')[0].trim();
+        const points = data.split('- ').slice(1);
         setDesc(desc);
         setPoints(points);
     }, []);
