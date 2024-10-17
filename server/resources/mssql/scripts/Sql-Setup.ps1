@@ -404,7 +404,7 @@ try {
             @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\modules\AWSLaunchWizardForCFN.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\modules\AWSLaunchWizardForSSM.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\common\InitializeDisks.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID '$NodeType' -Stackname '$DeploymentName' -IsTerraform 1"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\sqlfci\LCM-Config.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\common\Unjoin-Domain.ps1 -Parentstackname '$DeploymentName'"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\common\Restart-Computer.ps1 -Count 'First'"; UseExecutionPolicy = $false },
@@ -420,7 +420,7 @@ try {
             @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\modules\AWSLaunchWizardForSSM.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\modules\AmznFailoverCluster.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\common\InitializeDisks.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID '$NodeType' -Stackname '$DeploymentName' -IsTerraform 1"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\sqlfci\LCM-Config.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\common\Rename-Computer.ps1 -NewName '$NewName'"; UseExecutionPolicy = $false },
             @{Command = "C:\cfn\scripts\common\Restart-Computer.ps1"; UseExecutionPolicy = $false }
@@ -459,7 +459,7 @@ try {
         Write-Output "Configuring ontap"
         $ConfigureOntapCommands = @(
             @{
-                Command            = "C:\\cfn\\scripts\\sqlontap\\Configure-ONTAP.ps1 -Parentstackname '$DeploymentName' -SQLVMName '$SqlSvmName' -FSxDataVolumeName '$FsxDataVolumeName' -FSxLogVolumeName '$FsxLogVolumeName' -FileSystemId '$FsxFileSystemId' -FSxTempDbVolumeName '$FsxTempDbVolumeName' -FSxQuorumVolumeName '$FsxQuorumVolumeName' -FSxDataLunSize '$FsxDataLunSize' -IGROUP '$SqlIgroupName' -SnapshotPolicy '$FsxVolumeSnapshotPolicy' -ResourceID '$NodeType' -Stackname '$DeploymentName'";
+                Command            = "C:\\cfn\\scripts\\sqlontap\\Configure-ONTAP.ps1 -Parentstackname '$DeploymentName' -SQLVMName '$SqlSvmName' -FSxDataVolumeName '$FsxDataVolumeName' -FSxLogVolumeName '$FsxLogVolumeName' -FileSystemId '$FsxFileSystemId' -FSxTempDbVolumeName '$FsxTempDbVolumeName' -FSxQuorumVolumeName '$FsxQuorumVolumeName' -FSxDataLunSize '$FsxDataLunSize' -IGROUP '$SqlIgroupName' -SnapshotPolicy '$FsxVolumeSnapshotPolicy' -ResourceID '$NodeType' -Stackname '$DeploymentName' -IsTerraform 1";
                 UseExecutionPolicy = $false
             }
         )
@@ -469,7 +469,7 @@ try {
         Write-Output "Initialize iscsi disks in ontap"
         $IsFCI = if ($IsStandalone -eq $true) { "false" } else { "true" }
         $InitializeOntapCommands = @(
-            @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$FsxFileSystemId' -SQLVMName '$SqlSvmName' -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$FsxFileSystemId' -SQLVMName '$SqlSvmName' -ResourceID '$NodeType' -Stackname '$DeploymentName' -IsTerraform 1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlontap\\Initialize-Iscsidisk.ps1 -IsFCI $IsFCI"; UseExecutionPolicy = $false }
         )
         Invoke-CommandExecution -commands $InitializeOntapCommands -logFile "C:\cfn\tflogs\InitializeOntapCommands.log"
@@ -487,7 +487,7 @@ try {
 
         Write-Output "Connect Ontap instance for FCI Secondary Node"
         $InitializeOntapCommands = @(
-            @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$FsxFileSystemId' -SQLVMName '$SqlSvmName' -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false }
+            @{Command = "C:\\cfn\\scripts\\sqlontap\\Connect-ONTAPInstance.ps1 -FileSystemId '$FsxFileSystemId' -SQLVMName '$SqlSvmName' -ResourceID '$NodeType' -Stackname '$DeploymentName' -IsTerraform 1"; UseExecutionPolicy = $false }
         )
         Invoke-CommandExecution -commands $InitializeOntapCommands -logFile "C:\cfn\tflogs\InitializeOntapCommands.log"
         Write-Output "Completed connect ontap instance for FCI Secondary Node"
