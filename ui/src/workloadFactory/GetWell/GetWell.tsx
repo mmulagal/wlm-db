@@ -188,7 +188,7 @@ const GetWell = () => {
                         {!optimizePrintState &&
                             (loading ? (
                                 <div className={styles.refreshIconDisable}>
-                                    <Spinner isLarge />
+                                    <RefreshIcon />
                                 </div>
                             ) : (
                                 <Popover
