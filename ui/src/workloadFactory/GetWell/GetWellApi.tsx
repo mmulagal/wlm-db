@@ -1,7 +1,11 @@
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../store/storeHooks';
 import { useEffect } from 'react';
-import { setDriftAssessmentData, setOptimizePageLoading } from '../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setDriftAssessmentData,
+    setOptimizePageLoading,
+    setGwRefreshPage
+} from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation } from '../../utils/apiService';
 import { formatGetWellData } from './GetWellUtils';
 import { AssessmentResponseInterface } from '../../utils/types/getWellTypes';
@@ -10,7 +14,9 @@ const GetWellApi = () => {
     const dispatch = useDispatch();
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
-    const { selectedResourceId, selectedDatabaseInstance } = useAppSelector(state => state.getWellOptimize);
+    const { selectedResourceId, selectedDatabaseInstance, gwRefreshPage } = useAppSelector(
+        state => state.getWellOptimize
+    );
 
     const [assessmentDetailsApi] = useGetMssqlAssessmentDataMutation();
 
@@ -47,6 +53,14 @@ const GetWellApi = () => {
         // Call the API to get the assessment details
         runAssessmentDetailsApi();
     };
+
+    useEffect(() => {
+        // On page refresh, call the API to get the assessment details
+        if (gwRefreshPage) {
+            viewOptimizeAction();
+            dispatch(setGwRefreshPage(false));
+        }
+    }, [gwRefreshPage]);
 
     return;
 };
