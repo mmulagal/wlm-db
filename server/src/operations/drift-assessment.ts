@@ -303,7 +303,7 @@ async function driftAssesment(
     region: string,
     jobId: string,
     databaseHostId: string,
-    databaseInstanceIds: string[],
+    databaseInstanceRecords: WorkloadInstance[],
     fields?: string
 ) {
     logger.info(
@@ -313,7 +313,7 @@ async function driftAssesment(
         region,
         jobId,
         databaseHostId,
-        databaseInstanceIds,
+        databaseInstanceRecords,
         fields
     );
 
@@ -331,30 +331,16 @@ async function driftAssesment(
 
     try {
         await Promise.all(
-            databaseInstanceIds.map(async databaseInstanceId => {
-                const { activeNodeInstanceId, newDatabaseInstanceDetails } = await getInstanceDetails(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId
-                );
-                const {
-                    database_instance_name: savedInstanceName,
-                    fsxn_ids: fileSystemId,
-                    sqlAuthEnabled
-                } = newDatabaseInstanceDetails;
-
+            databaseInstanceRecords.map(async databaseInstanceRecord => {
                 if (shouldRunStorageAssessment) {
-                    await initiateStorageAssessmentCollection(accountId, credentialsId, region, databaseHostId, jobId, {
-                        id: databaseInstanceId,
-                        name: savedInstanceName,
-                        type: RESOURCESTYPE.MSSQL,
+                    await initiateStorageAssessmentCollection(
+                        accountId,
+                        credentialsId,
                         region,
-                        sqlAuthEnabled: sqlAuthEnabled || false,
-                        activeNodeInstanceid: activeNodeInstanceId,
-                        fsxFileSystem: fileSystemId
-                    });
+                        databaseHostId,
+                        jobId,
+                        databaseInstanceRecord
+                    );
                 }
             })
         );
@@ -392,25 +378,42 @@ async function triggerDriftAssessment(
         fields
     );
 
-    let resourceName: string;
-    const runningInstances: string[] = [];
+    const runningInstances: WorkloadInstance[] = [];
 
+    const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+
+    const resourceName = resourceDetail.resource_name!;
     try {
         await Promise.all(
             databaseInstanceIds.map(async databaseInstanceId => {
-                const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
+                const { activeNodeInstanceId, newDatabaseInstanceDetails } = await getInstanceDetails(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId
+                );
+                const {
+                    database_instance_name: savedInstanceName,
+                    fsxn_ids: fileSystemId,
+                    sqlAuthEnabled
+                } = newDatabaseInstanceDetails;
 
-                if (isEmpty(resourceDetail)) {
-                    const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-                    logger.error(errorMessage);
-                    throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
-                }
-
-                resourceName = resourceDetail.resource_name!;
-
-                await getInstanceDetails(accountId, credentialsId, region, databaseHostId, databaseInstanceId);
-
-                runningInstances.push(databaseInstanceId);
+                const instanceRecord: WorkloadInstance = {
+                    id: databaseInstanceId,
+                    name: savedInstanceName,
+                    type: RESOURCESTYPE.MSSQL,
+                    region,
+                    sqlAuthEnabled: sqlAuthEnabled || false,
+                    activeNodeInstanceid: activeNodeInstanceId,
+                    fsxFileSystem: fileSystemId
+                };
+                runningInstances.push(instanceRecord);
             })
         );
     } catch (error) {

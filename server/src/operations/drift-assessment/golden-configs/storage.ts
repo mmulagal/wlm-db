@@ -8,7 +8,7 @@ const GOLDEN_CONFIG = {
                 value: true,
                 severity: 'critical',
                 recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
@@ -19,7 +19,7 @@ const GOLDEN_CONFIG = {
                 value: 'on',
                 severity: 'critical',
                 recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
@@ -30,7 +30,7 @@ const GOLDEN_CONFIG = {
                 value: 'grow',
                 severity: 'critical',
                 recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
@@ -41,7 +41,7 @@ const GOLDEN_CONFIG = {
                 value: 0,
                 severity: 'critical',
                 recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
@@ -52,7 +52,7 @@ const GOLDEN_CONFIG = {
                 value: 0,
                 severity: 'critical',
                 recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
@@ -63,7 +63,7 @@ const GOLDEN_CONFIG = {
                 value: true,
                 severity: 'warning',
                 recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
@@ -74,7 +74,7 @@ const GOLDEN_CONFIG = {
                 value: 'volume_grow',
                 severity: 'warning',
                 recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
@@ -85,7 +85,7 @@ const GOLDEN_CONFIG = {
                 value: 'snapshot_only',
                 severity: 'critical',
                 recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
             },
             {
@@ -203,7 +203,7 @@ const GOLDEN_CONFIG = {
         },
         {
             parameter: 'headroom',
-            value: '35%-100%',
+            value: '36-100%',
             severity: 'critical',
             recommendation:
                 'For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.',
@@ -211,7 +211,7 @@ const GOLDEN_CONFIG = {
         },
         {
             parameter: 'log-drive-size',
-            value: '20%-30%',
+            value: '20-30%',
             severity: 'warning',
             recommendation:
                 'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.',
@@ -219,7 +219,7 @@ const GOLDEN_CONFIG = {
         },
         {
             parameter: 'tempdb-drive-size',
-            value: '10%-20%',
+            value: '10-20%',
             severity: 'warning',
             recommendation:
                 'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',

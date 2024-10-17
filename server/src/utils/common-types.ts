@@ -219,6 +219,14 @@ interface StorageAssessment {
     sizing: JSON;
 }
 
+interface DriftAssessmentJob {
+    accountId: string;
+    credentialsId: string;
+    region: string;
+    resourceId: string;
+    managedInstanceIds: string[];
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -238,5 +246,6 @@ export {
     DatabaseInstance,
     InstanceDetails,
     WorkloadInstance,
-    StorageAssessment
+    StorageAssessment,
+    DriftAssessmentJob
 };

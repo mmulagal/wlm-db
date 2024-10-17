@@ -29,6 +29,7 @@ import { getAoagPartnerNodesDetails } from './storage-savings-operations';
 import { fetchSqlServerInstanceConfiguration } from './recommendation-operations';
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { triggerDriftAssessment } from './drift-assessment';
+import { DriftAssessmentJob } from '../utils/common-types';
 
 const logger = getLogger();
 
@@ -174,14 +175,13 @@ async function scheduledAssessment() {
 
                 driftAssessmentQueue.add(
                     'driftAssessment',
-                    triggerDriftAssessment(
+                    {
                         accountId,
                         credentialsId,
-                        region!,
+                        region,
                         resourceId,
-                        managedInstanceIds,
-                        AssessmentTriggeredBy.SYSTEM
-                    ),
+                        managedInstanceIds
+                    },
                     {
                         repeat: { every: 24 * 3600 * 1000 }, // 24 hours in milliseconds
                         removeOnComplete: true,
@@ -189,11 +189,27 @@ async function scheduledAssessment() {
                     }
                 );
 
+                await triggerDriftAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    resourceId,
+                    managedInstanceIds,
+                    AssessmentTriggeredBy.SYSTEM
+                );
+
                 const driftAssessmentWorker = new Worker(
                     'driftAssessmentQueue',
-                    async (job: { data: any }) => {
+                    async (job: { data: DriftAssessmentJob }) => {
                         try {
-                            logger.debug(job.data.jobData);
+                            await triggerDriftAssessment(
+                                job.data.accountId,
+                                job.data.credentialsId,
+                                job.data.region,
+                                job.data.resourceId,
+                                job.data.managedInstanceIds,
+                                AssessmentTriggeredBy.SYSTEM
+                            );
                         } catch (error) {
                             logger.error('Error processing job:', job, error);
                         }
