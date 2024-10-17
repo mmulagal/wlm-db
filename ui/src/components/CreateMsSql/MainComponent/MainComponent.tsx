@@ -9,14 +9,24 @@ import { useAppSelector } from '../../../store/storeHooks';
 import CreateMsSqlLayout from '../CreateMsSqlLayout/CreateMsSqlLayout';
 import MSSqlServer from '../MSSqlServer/MSSqlServer';
 import CodeBox from '../CodeBox/CodeBox';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MssqlApis from '../MSSqlServer/MssqlApis';
+import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 
 const MainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
     const showChatbot = true;
     const [selectedTab, setSelectedTab] = useState<'wizard' | 'chatbot'>('wizard');
     const { statusData } = useAppSelector(state => state.headers.getStatus);
+    const [statusResponse, setStatusResponse] = useState<any>(null);
+
+    useEffect(() => {
+        if (statusData?.isActive || statusData?.isActive === false) {
+            setStatusResponse(true);
+        } else {
+            setStatusResponse(false);
+        }
+    }, [statusData]);
 
     MssqlApis();
 
@@ -28,15 +38,15 @@ const MainComponent = () => {
         </div>
     ) : (
         <div className={styles.mainContainer}>
-            {(loading || statusData === null) && (
+            {(loading || statusResponse === null || !statusResponse) && (
                 <>
                     <div className={styles.loaderOverlay}></div>
                     <div className={styles.spinnerPlacement}>
-                        <Spinner isLarge />
+                        <ComponentLoader style={{ margin: '0 auto' }} />
                     </div>
                 </>
             )}
-            {statusData !== null && (
+            {statusResponse && (
                 <>
                     <div className={`${styles.leftSide} ${!showChatbot ? styles.noChatBot : ''}`}>
                         <StepLayout className={styles.header}>
