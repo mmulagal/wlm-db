@@ -16,6 +16,7 @@ const MainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
     const showChatbot = true;
     const [selectedTab, setSelectedTab] = useState<'wizard' | 'chatbot'>('wizard');
+    const { statusLoading } = useAppSelector(state => state.headers.getStatus);
 
     MssqlApis();
 
@@ -27,7 +28,7 @@ const MainComponent = () => {
         </div>
     ) : (
         <div className={styles.mainContainer}>
-            {loading && (
+            {(loading || statusLoading) && (
                 <>
                     <div className={styles.loaderOverlay}></div>
                     <div className={styles.spinnerPlacement}>
