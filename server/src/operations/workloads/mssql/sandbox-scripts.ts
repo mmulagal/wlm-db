@@ -1536,6 +1536,7 @@ const getSnapshotsToClone = (
 
 const getConnectionInfo = (instanceName: string, sqlAuthEnabled: boolean) => `
 
+$ProgressPreference = "SilentlyContinue"
 $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 $sqlCredential = @{'useSqlAuth' = $False}
 

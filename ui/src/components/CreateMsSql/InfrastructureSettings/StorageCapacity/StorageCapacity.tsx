@@ -64,7 +64,7 @@ const StorageCapacity = () => {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const re = /^[0-9.\b]+$/;
+        const re = /^[0-9]*\.?[0-9]*$/;
 
         // if value is not blank, then test the regex
 

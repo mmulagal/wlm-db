@@ -19,13 +19,14 @@ import { GENERAL } from '../../utils/appConstants';
 type DialogProps = {
     header: string | any;
     content: ReactNode | string;
-    primaryButton: string;
+    primaryButton?: string;
     secondaryButton?: string;
     callback?: any;
     closeCallback?: any;
     dialogFrom?: string;
     customClass?: string;
     primaryButtonDisabled?: boolean;
+    hidePrimaryButton?: boolean;
 };
 
 const DialogComponent = ({
@@ -37,7 +38,8 @@ const DialogComponent = ({
     closeCallback,
     dialogFrom,
     customClass,
-    primaryButtonDisabled = false
+    primaryButtonDisabled = false,
+    hidePrimaryButton = false
 }: DialogProps) => {
     const { closeDialog } = useDialog();
 
@@ -120,16 +122,19 @@ const DialogComponent = ({
                     </div>
                 )}
 
-                <Button
-                    variant={'primary'}
-                    className={'continue-button'}
-                    isThin={true}
-                    isDisabled={disabledCheck() || refreshSandboxDisabled}
-                    isLoading={primaryButtonLoad}
-                    onClick={primaryButtonClick}
-                >
-                    {primaryButton}
-                </Button>
+                {!hidePrimaryButton && (
+                    <Button
+                        variant={'primary'}
+                        className={'continue-button'}
+                        isThin={true}
+                        isDisabled={disabledCheck() || refreshSandboxDisabled}
+                        isLoading={primaryButtonLoad}
+                        onClick={primaryButtonClick}
+                    >
+                        {primaryButton}
+                    </Button>
+                )}
+
                 {secondaryButton && (
                     <Button variant={'secondary'} isThin={true} onClick={secButtonClick}>
                         {secondaryButton}

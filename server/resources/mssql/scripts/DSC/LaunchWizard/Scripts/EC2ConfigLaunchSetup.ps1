@@ -1,6 +1,6 @@
 Configuration EC2ConfigLaunchSetup {
     param()
-
+    $ProgressPreference = "SilentlyContinue"
     $WindowsVersion = [System.Environment]::OSVersion.Version.Major
     $CutoffVersion = 10
 

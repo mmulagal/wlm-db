@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param()
 Start-Transcript -Path C:\cfn\log\installontapwindowsfeatures.ps1.txt -Append
+$ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
 
 try {

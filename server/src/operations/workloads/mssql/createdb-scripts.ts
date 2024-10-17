@@ -41,6 +41,7 @@ Add-Type @"
 
 #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 $WarningPreference = 'SilentlyContinue';
+$ProgressPreference = "SilentlyContinue";
 $silenttranscript = (Start-Transcript -Path C:\\cfn\\log\\cleanup_ontap.log.txt -Append)
 
 $ErrorActionPreference = "Stop"

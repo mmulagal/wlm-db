@@ -32,6 +32,7 @@ function Convert-SCSITargetIdToDeviceName {
 
 
 try{
+    $ProgressPreference = "SilentlyContinue"
     $ErrorActionPreference = "Stop"
     # List the Windows disks
     $InstanceId = Get-EC2InstanceMetadata "meta-data/instance-id"
