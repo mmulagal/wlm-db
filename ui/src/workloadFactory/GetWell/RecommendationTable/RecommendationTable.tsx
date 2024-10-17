@@ -1,4 +1,5 @@
 import { DsButton, DsTypography, Popover, Table, useTable } from '@netapp/design-system';
+import { useDialog } from '@netapp/design-system';
 import styles from './RecommendationTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
@@ -7,8 +8,32 @@ import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 import Tag from '../../../common/Tag/Tag';
 import RecommendationTooltip from '../RecommendationTooltip/RecommendationTooltip';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
+import { GENERAL } from '../../../utils/appConstants';
 
 const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) => {
+    const { setDialog, closeDialog } = useDialog();
+    const handleOntapDialog = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={`${rowData?.name} optimization`}
+                content={<DialogContent type={rowData?.name} />}
+                primaryButton={GENERAL.CONTINUE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {}}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.colorSet}
+                hidePrimaryButton={
+                    rowData?.name === 'Multipath I/O Status' ||
+                    rowData?.name === 'Multipath I/O Policy' ||
+                    rowData?.name === 'NTFS allocation unit size'
+                }
+            />
+        );
+    };
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
@@ -115,7 +140,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                 <div>
                                     <DsButton
                                         variant="secondary"
-                                        onClick={() => {}}
+                                        onClick={() => handleOntapDialog(rowData)}
                                         isDisabled={rowData?.status === 'Not optimized' ? false : true}
                                     >
                                         Optimize
