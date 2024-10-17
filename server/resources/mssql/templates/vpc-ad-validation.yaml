@@ -486,6 +486,8 @@ Resources:
                       - "\n"
                       - 'try {'
                       - "\n"
+                      - '$progressPreference = "silentlyContinue"'
+                      - "\n"
                       - "$Response = Invoke-WebRequest -Uri 'https://cloudformation."
                       - !Ref 'AWS::Region'
                       - ".amazonaws.com' -UseBasicParsing"
@@ -780,6 +782,8 @@ Resources:
                       - '$FailureReason = "CF endpoint is not reachable. Check your subnet outbound connectivity."'
                       - "\n"
                       - 'try {'
+                      - "\n"
+                      - '$progressPreference = "silentlyContinue"'
                       - "\n"
                       - "$Response = Invoke-WebRequest -Uri 'https://cloudformation."
                       - !Ref 'AWS::Region'

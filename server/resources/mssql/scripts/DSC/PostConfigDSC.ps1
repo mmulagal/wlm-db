@@ -4,7 +4,8 @@ param()
 try {
 
     Start-Transcript -Path C:\cfn\log\PostConfigDSC.ps1.txt -Append
-
+    
+    $ProgressPreference = "SilentlyContinue"
     $ErrorActionPreference = "SilentlyContinue"
     #Set Powershell connection encryption to TLS 1.2
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12

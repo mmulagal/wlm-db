@@ -38,6 +38,7 @@ function enableTLS12 {
     }
 }
 
+$ProgressPreference = "SilentlyContinue"
 $failed = $false
 $failedServices = @()
 enableTLS12

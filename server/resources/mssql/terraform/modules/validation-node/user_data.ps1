@@ -1,6 +1,7 @@
 <powershell>
 
 Write-Output "Starting user data script from terraform"
+$ProgressPreference = "SilentlyContinue";
 $WarningPreference = 'SilentlyContinue';
 
 $Region = "${region}"

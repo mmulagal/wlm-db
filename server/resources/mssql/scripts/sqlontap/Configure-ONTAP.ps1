@@ -44,6 +44,7 @@ param(
 )
 Start-Transcript -Path C:\cfn\log\configureontap.ps1.txt -Append
 
+$ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
 $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
 . "$ScriptsPath\common\InvokeRetryCommand.ps1" 

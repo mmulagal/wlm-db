@@ -10,6 +10,7 @@ param(
     $serviceURLMap
 )
 
+$ProgressPreference = "SilentlyContinue"
 # Tries to enable TLS12
 function enableTLS12 {
     try {
