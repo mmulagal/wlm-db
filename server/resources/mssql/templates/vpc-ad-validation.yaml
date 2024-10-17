@@ -366,7 +366,6 @@ Resources:
                                   - ''''
                                   - !Ref 'DNSIpAddresses'
                                   - ''''
-                                  - '"'
                                   - ' -Stackname '
                                   - !Ref 'AWS::StackName'
                                   - ' -ResourceID ValidationNode1'
