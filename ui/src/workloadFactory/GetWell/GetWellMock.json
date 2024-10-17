@@ -1,6 +1,6 @@
 {
     "storage": {
-        "timestamp": "",
+        "timestamp": "Tue Oct 15 2024",
         "optimisedCount": {
             "total": 11,
             "optimised": 6
@@ -9,17 +9,17 @@
             "volumes": [
                 {
                     "name": "thin-provision",
-                    "status": "not-optimised",
+                    "status": "not-optimized",
                     "severity": "critical",
                     "recommended": "none",
                     "tags":["Cost optimization", "Operational excellence"],
-                    "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n                     - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n                     - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n                     - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                    "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n                     If Not Configured Properly:\n                     - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n                     - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n                     - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n                     - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                     "objectsInViolation": ["wlmdb_sqldata_1725517192_clone_1725869019","wlmdb_sqldata_1725517192_clone_1725519874"]
 
                 },
                 {
                     "name": "autosize",
-                    "status": "optimised",
+                    "status": "optimized",
                     "severity": "critical",
                     "recommended": "on",
                     "tags":["Cost optimization", "Operational excellence"],
@@ -29,7 +29,7 @@
                 },
                 {
                     "name": "autosize-mode",
-                    "status": "optimised",
+                    "status": "optimized",
                     "severity": "critical",
                     "recommended": "grow",
                     "tags":["Cost optimization", "Operational excellence"],
@@ -39,7 +39,7 @@
                 },
                 {
                     "name": "fractional-reserve",
-                    "status": "not-optimised",
+                    "status": "not-optimized",
                     "severity": "critical",
                     "recommended": "0",
                     "tags":["Cost optimization", "Operational excellence"],
@@ -49,7 +49,7 @@
                 },
                 {
                     "name": "snapshot-copy-reserve",
-                    "status": "not-optimised",
+                    "status": "not-optimized",
                     "severity": "critical",
                     "recommended": "0",
                     "tags":["Cost optimization", "Operational excellence"],
@@ -59,7 +59,7 @@
                 },
                 {
                     "name": "snapshot-autodelete",
-                    "status": "not-optimised",
+                    "status": "not-optimized",
                     "severity": "warning",
                     "recommended": "true",
                     "tags":["Cost optimization", "Operational excellence"],
@@ -69,7 +69,7 @@
                 },
                 {
                     "name": "space-mgmt-try-first",
-                    "status": "optimised",
+                    "status": "optimized",
                     "severity": "warning",
                     "recommended": "volume_grow",
                     "tags":["Cost optimization", "Operational excellence"],
@@ -79,7 +79,7 @@
                 },
                 {
                     "name": "tiering-policy",
-                    "status": "not-optimised",
+                    "status": "not-optimized",
                     "severity": "critical",
                     "recommended": "snapshot_only",
                     "tags":["Performance efficiency"],
@@ -89,7 +89,7 @@
                 },
                 {
                     "name": "tiering-min-cooling-days",
-                    "status": "optimised",
+                    "status": "optimized",
                     "severity": "warning",
                     "recommended": "7",
                     "tags":["Cost optimization"],
@@ -101,7 +101,7 @@
             "luns": [
                 {
                     "name": "os-type",
-                    "status": "not-optimised",
+                    "status": "not-optimized",
                     "severity": "critical",
                     "recommended": "windows_2008",
                     "tags":["Performance efficiency"],
@@ -111,7 +111,7 @@
                 },
                 {
                     "name": "space-reservation-enabled",
-                    "status": "optimised",
+                    "status": "optimized",
                     "severity": "critical",
                     "recommended": "true",
                     "tags":["Reliability"],
@@ -121,7 +121,7 @@
                 },
                 {
                     "name": "space-allocation-allocated",
-                    "status": "optimised",
+                    "status": "optimized",
                     "severity": "critical",
                     "recommended": "true",
                     "tags":["Reliability"],
@@ -133,7 +133,7 @@
             "os": [
                 {
                     "name": "mpio-iscsi-count",
-                    "status": "optimised",
+                    "status": "optimized",
                     "severity": "critical",
                     "recommended": "5",
                     "tags":["Performance efficiency", "Reliability"],
@@ -142,7 +142,7 @@
                 },
                 {
                     "name": "mpio-enabled",
-                    "status": "optimised",
+                    "status": "optimized",
                     "severity": "critical",
                     "recommended": "true",
                     "tags":["Performance efficiency", "Reliability"],
@@ -151,7 +151,7 @@
                 },
                 {
                     "name": "mpio-load-balance-policy",
-                    "status": "optimised",
+                    "status": "optimized",
                     "severity": "critical",
                     "recommended": "RR",
                     "tags":["Performance efficiency", "Reliability"],
@@ -160,7 +160,7 @@
                 },
                 {
                     "name": "ntfs-allocation-size",
-                    "status": "optimised",
+                    "status": "optimized",
                     "severity": "critical",
                     "recommended": "RR",
                     "tags":["Performance efficiency", "Reliability"],
@@ -173,7 +173,7 @@
         "sizing": [
             {
                 "name": "storage_tier",
-                "status": "optimised",
+                "status": "optimized",
                 "severity": "critical",
                 "current": 100,
                 "recommended": 100,
@@ -200,7 +200,7 @@
             },
             {
                 "name": "tempdb_drive_size",
-                "status": "optimised",
+                "status": "optimized",
                 "severity": "warning",
                 "current":15,
                 "recommended": "10-20%",
@@ -212,7 +212,7 @@
         "layout": [
             {
                 "name": "user_data_files",
-                "status": "not-optimised",
+                "status": "not-optimized",
                 "current": "same_drive",
                 "recommended": "separate_drive",
                 "severity":"critical",
@@ -221,7 +221,7 @@
             },
             {
                 "name": "transaction_log_files",
-                "status": "not-optimised",
+                "status": "not-optimized",
                 "severity":"critical",
                 "recommended": "separate_drive",
                 "recommendation": "Separating data and log files onto different drives  improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
@@ -229,7 +229,7 @@
             },
             {
                 "name": "tempdb_files",
-                "status": "not-optimised",
+                "status": "not-optimized",
                 "severity":"critical",
                 "recommendation": "",
                 "recommended": "separate_drive",

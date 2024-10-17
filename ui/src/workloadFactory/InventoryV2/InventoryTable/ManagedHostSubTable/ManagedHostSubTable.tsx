@@ -367,10 +367,6 @@ const ManagedHostSubTable = ({
                     disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                     disableOption = true;
                 }
-                menu.push({
-                    id: 'optimize',
-                    displayName: 'Optimize'
-                });
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
@@ -387,6 +383,12 @@ const ManagedHostSubTable = ({
                     });
                 } else {
                     menu.push(
+                        {
+                            id: 'optimize',
+                            displayName: 'Optimize',
+                            disabled: disableOption,
+                            infoText: disableMessage
+                        },
                         {
                             id: 'viewInstance',
                             displayName: 'View instance',

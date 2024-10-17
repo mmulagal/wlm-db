@@ -12,6 +12,8 @@ export interface GetWellSliceInterface {
         storage?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
+    gwRefreshPage: boolean;
+    gwTimestamp: string;
 }
 
 interface CountBreakDown {
