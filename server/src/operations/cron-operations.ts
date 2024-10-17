@@ -189,15 +189,6 @@ async function scheduledAssessment() {
                     }
                 );
 
-                await triggerDriftAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    resourceId,
-                    managedInstanceIds,
-                    AssessmentTriggeredBy.SYSTEM
-                );
-
                 const driftAssessmentWorker = new Worker(
                     'driftAssessmentQueue',
                     async (job: { data: DriftAssessmentJob }) => {
