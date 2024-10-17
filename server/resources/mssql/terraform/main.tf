@@ -23,6 +23,18 @@ locals {
   sql_fsx_server_net_bios_name_2 = element(split(",", var.node_net_bios_names), 1)
   adsg_not_selected              = var.domain_member_sg_id == "" ? true : false
   group_set                      = local.adsg_not_selected ? [aws_security_group.workload_security_group.id, var.ontap_security_group_id] : [aws_security_group.workload_security_group.id, var.ontap_security_group_id, var.domain_member_sg_id]
+
+  # Terraform does not support doing validation of an variable based on another variable. So we have to do it like this.
+  fsx_file_system_name_required     = (local.new_ontap_fsx && var.fsx_file_system_name == "") ? tobool("Validation Error: The fsx_file_system_name variable must be set when new fsx is deployed.") : true
+  s3_endpoint_route_tables_required = (!var.s3_endpoint_exists && var.s3_endpoint_route_tables == "") ? tobool("Validation Error: The s3_endpoint_route_tables variable must be set when s3_endpoint_exists is false.") : true
+  # validations for the fci deployment
+  subnet2_cidrblock_required      = (!local.is_standalone && var.private_subnet2_cidrblock == "") ? tobool("Validation Error: The private_subnet2_cidrblock variable must be set for fci deployment.") : true
+  subnet2_id_required             = (!local.is_standalone && var.private_subnet2_id == "") ? tobool("Validation Error: The private_subnet2_id variable must be set for fci deployment.") : true
+  route_table2_id_required        = (!local.is_standalone && var.route_table2_id == "") ? tobool("Validation Error: The route_table2_id variable must be set for fci deployment.") : true
+  fsx_quorum_volume_name_required = (!local.is_standalone && var.fsx_quorum_volume_name == "") ? tobool("Validation Error: The fsx_quorum_volume_name variable must be set for fci deployment.") : true
+  fsx_quorum_volume_size_required = (!local.is_standalone && var.fsx_quorum_volume_size == "") ? tobool("Validation Error: The fsx_quorum_volume_size variable must be set for fci deployment.") : true
+  sql_fsx_ws_fc_name_required     = (!local.is_standalone && var.sql_fsx_ws_fc_name == "") ? tobool("Validation Error: The sql_fsx_ws_fc_name variable must be set for fci deployment.") : true
+  sql_fsx_fci_name_required       = (!local.is_standalone && var.sql_fsx_fci_name == "") ? tobool("Validation Error: The sql_fsx_fci_name variable must be set for fci deployment.") : true
 }
 
 provider "aws" {
