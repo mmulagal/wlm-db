@@ -10,23 +10,26 @@ import { useAppSelector } from '../../../store/storeHooks';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
+import { GETWELL_STATUS } from '../../../utils/consts';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const { setDialog, closeDialog } = useDialog();
     const setImage = (value: string) => {
-        if (value?.toLocaleLowerCase() === 'optimized') {
+        if (value === GETWELL_STATUS.OPTIMIZED) {
             return <Optimized />;
-        } else if (value === 'Under-provisioned') {
+        } else if (value === GETWELL_STATUS.UNDER_PROVISIONED) {
             return <UnderProvisioned />;
-        } else if (value === 'Over-provisioned') {
+        } else if (value === GETWELL_STATUS.OVER_PROVISIONED) {
             return (
                 <div style={{ transform: 'rotate(180deg)' }}>
                     <UnderProvisioned />
                 </div>
             );
-        } else {
+        } else if (value === GETWELL_STATUS.NOT_OPTIMIZED) {
             return <NotActive />;
+        } else {
+            return;
         }
     };
 
@@ -37,12 +40,16 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsFlashingDotsLoader />
                 </div>
             );
-        } else if (cardData?.block_three?.smallFont) {
-            return <DsTypography variant="Semibold_14">{cardData?.block_three?.value}</DsTypography>;
+        } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
+            return (
+                <DsTypography variant="Semibold_14">
+                    {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            );
         } else {
             return (
                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                    {cardData?.block_three?.value}
+                    {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
                 </DsTypography>
             );
         }
@@ -81,8 +88,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 )}
                 {!loading && (
                     <div className={styles.statusTopSection}>
-                        <div className={styles.svgSection}>{setImage(cardData?.block_two?.value)}</div>
-                        <DsTypography variant="Semibold_14">{cardData?.block_two?.value}</DsTypography>
+                        <div className={styles.svgSection}>
+                            {setImage(cardData?.block_two?.value || GENERAL.NOT_AVAILABLE)}
+                        </div>
+                        <DsTypography variant="Semibold_14">
+                            {cardData?.block_two?.value || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
                     </div>
                 )}
                 <DsTypography variant="Regular_14">{cardData?.block_two?.type}</DsTypography>
@@ -102,7 +113,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         <DsFlashingDotsLoader />
                     </div>
                 )}
-                {!loading && <DsTypography variant="Semibold_14">{cardData?.block_four?.value}</DsTypography>}
+                {!loading && (
+                    <DsTypography variant="Semibold_14">
+                        {cardData?.block_four?.value || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                )}
                 <DsTypography variant="Regular_14">{cardData?.block_four?.type}</DsTypography>
             </div>
 
@@ -120,7 +135,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 cardData?.block_one?.value !== 'ONTAP configuration' &&
                 cardData?.block_one?.value !== 'Operating system' && (
                     <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
-                        <DsButton variant="secondary" onClick={() => handleDialog()} isDisabled={loading}>
+                        <DsButton
+                            variant="secondary"
+                            onClick={() => handleDialog()}
+                            isDisabled={loading || cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED}
+                        >
                             Optimize
                         </DsButton>
                     </div>
