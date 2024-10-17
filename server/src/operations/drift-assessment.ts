@@ -4,7 +4,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { DriftAssessmentResponseType, StorageParameterDriftResponseType } from '../routes/types/database-hosts.types';
 import getLogger from '../utils/logger';
 import { sqlResponseParsing } from '../utils/utils';
-import { getMappedOntapVolumes } from './aws/fsx-operations';
+import { getFsxStorageCapacity, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/drift-assessment-scripts';
@@ -17,6 +17,7 @@ import {
     listDatabaseInstanceConfigData
 } from '../lib/database/database-instance-config';
 import { listResources } from '../lib/database/db';
+import { describeFSxVolumes } from '../lib/aws/fsx';
 
 const logger = getLogger();
 
@@ -58,7 +59,7 @@ async function calculateStorageDrift(
     };
 
     const { config_data: configData } = persistedConfigurationData;
-    const { volumes, luns, os, layout, sizing } = configData as unknown as StorageAssessment;
+    const { volumes, luns, os, layout, sizing, filesystemId } = configData as unknown as StorageAssessment;
     let configCount = 0;
     let optimizedCount = 0;
 
@@ -165,7 +166,7 @@ async function calculateStorageDrift(
             if (key === 'log-drive-size') {
                 const sizePercent = Number(value);
                 status =
-                    sizePercent <= 30 || sizePercent >= 30
+                    sizePercent <= 30 || sizePercent >= 20
                         ? AssessmentStatus.OPTIMIZED
                         : sizePercent > 30
                         ? AssessmentStatus.OVER_PROVISIONED
@@ -174,7 +175,7 @@ async function calculateStorageDrift(
             if (key === 'tempdb-drive-size') {
                 const sizePercent = Number(value);
                 status =
-                    sizePercent <= 10 || sizePercent >= 20
+                    sizePercent <= 20 || sizePercent >= 10
                         ? AssessmentStatus.OPTIMIZED
                         : sizePercent > 20
                         ? AssessmentStatus.OVER_PROVISIONED
@@ -193,6 +194,44 @@ async function calculateStorageDrift(
             });
         }
     });
+
+    const [fsxSSDCapacity, { Volumes }] = await Promise.all([
+        getFsxStorageCapacity(credentialsId, region, filesystemId),
+        describeFSxVolumes(credentialsId, region, filesystemId)
+    ]);
+
+    const { storage } = fsxSSDCapacity ?? {};
+    const ssdStorageCapacityInBytes = storage ? storage * 1024 * 1024 * 1024 : 0;
+
+    const totalVolumeSizeInBytes = Volumes?.reduce((total, curr) => {
+        const amount = curr.OntapConfiguration?.SizeInBytes || 0;
+        return total + amount;
+    }, 0);
+
+    try {
+        const headroomPercent =
+            ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100;
+        const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
+        const sizePercent = Number(headroomPercent);
+        const status =
+            sizePercent <= 100 || sizePercent >= 35
+                ? AssessmentStatus.OPTIMIZED
+                : sizePercent > 30
+                ? AssessmentStatus.OVER_PROVISIONED
+                : AssessmentStatus.UNDER_PROVISIONED;
+        driftAssessmentData.sizing.push({
+            name: 'headroom',
+            recommended: goldenData!.value.toString(),
+            status,
+            severity: goldenData!.severity,
+            recommendation: goldenData!.recommendation,
+            tags: goldenData!.tags
+        });
+    } catch (e: any) {
+        logger.error(
+            `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`
+        );
+    }
 
     driftAssessmentData.optimisedCount.total = configCount;
     driftAssessmentData.optimisedCount.optimised = optimizedCount;
@@ -386,7 +425,7 @@ async function triggerDriftAssessment(
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.ASSESSMENT
+            type: JOBTYPE.SANDBOX
         });
 
         driftAssesment(accountId, credentialsId, region, job.id, databaseHostId, runningInstances, fields);

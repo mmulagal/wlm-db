@@ -234,6 +234,14 @@ const GOLDEN_CONFIG = {
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
         },
         {
+            parameter: 'headroom',
+            value: '35%-100%',
+            severity: 'critical',
+            recommendation:
+                'For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.',
+            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        },
+        {
             parameter: 'log-drive-size',
             value: '20%-30%',
             severity: 'warning',

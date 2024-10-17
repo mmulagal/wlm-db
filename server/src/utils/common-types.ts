@@ -211,6 +211,7 @@ interface WorkloadInstance {
 }
 
 interface StorageAssessment {
+    filesystemId: string;
     volumes: Array<{ Key?: string; Value?: string }>;
     luns: Array<{ Key?: string; Value?: string }>;
     os: Array<{ Key?: string; Value?: string }>;
