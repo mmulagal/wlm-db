@@ -634,8 +634,8 @@ export const EBS_PROTECTED_OPTIONS = {
 };
 
 export const GETWELL_VALUES: any = {
-    optimised: 'Optimized',
-    'not-optimised': 'Not optimized',
+    optimized: 'Optimized',
+    'not-optimized': 'Not optimized',
     'under-provisioned': 'Under-provisioned',
     'over-provisioned': 'Over-provisioned',
     separate_drive: 'Separate Drive',
