@@ -243,7 +243,7 @@ async function formatTemplateParameters(
             if (encryptedFsxPassword) {
                 templateParams.push({
                     ParameterKey: TEMPLATE_FSX_PASSWORD,
-                    ParameterValue: fsxConfiguration.fsxPassword
+                    ParameterValue: encryptedFsxPassword
                 });
             }
         } catch (error) {
@@ -271,7 +271,7 @@ async function formatTemplateParameters(
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
         templateParams.push({
             ParameterKey: value,
-            ParameterValue: servicesWithNoEndpoint.includes(key) ? 'true' : 'false'
+            ParameterValue: servicesWithNoEndpoint.includes(key) ? 'false' : 'true'
         });
     });
 
@@ -909,7 +909,7 @@ async function createCloudFormationTemplateForUserDeployment(
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
             if (encryptedFsxPassword) {
-                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(fsxConfiguration.fsxPassword)}`;
+                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
             }
         } catch (error) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
@@ -1622,7 +1622,7 @@ async function formatPgSqlTemplateParameters(
             if (encryptedFsxPassword) {
                 templateParams.push({
                     ParameterKey: TEMPLATE_FSX_PASSWORD,
-                    ParameterValue: fsxConfiguration.fsxPassword
+                    ParameterValue: encryptedFsxPassword
                 });
             }
         } catch (error) {
@@ -1817,7 +1817,7 @@ async function createCfTemplateForPgsqlDeployment(
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
             if (encryptedFsxPassword) {
-                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(fsxConfiguration.fsxPassword)}`;
+                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
             }
         } catch (error) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
