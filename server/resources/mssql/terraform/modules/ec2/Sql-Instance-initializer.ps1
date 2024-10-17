@@ -62,7 +62,11 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$NetworkInterface2FirstPrivateIp,
     [Parameter(Mandatory = $false)]
-    [string]$NetworkInterface2SecondPrivateIp
+    [string]$NetworkInterface2SecondPrivateIp,
+    [Parameter(Mandatory = $false)]
+    [string]$PrivateSubnet1Id,
+    [Parameter(Mandatory = $false)]
+    [string]$PrivateSubnet2Id
 )
 
 Write-Output "Starting the initializer script from terraform"
@@ -283,7 +287,7 @@ try {
 
     if ($IsStandalone -eq $false) {
         Write-Output "FCI Instance Command"
-        $SqlSetupCommand += " -FsxQuorumVolumeName '$FsxQuorumVolumeName' -MssqlMediaPathKey '$MssqlMediaPathKey' -SqlFsxWsFcName '$SqlFsxWsFcName' -SqlFsxFciName '$SqlFsxFciName' -SqlFsxServerNetBiosName '$SqlFsxServerNetBiosName' -SqlFsxServerNetBiosName2 '$SqlFsxServerNetBiosName2' -NetworkInterface1FirstPrivateIp '$NetworkInterface1FirstPrivateIp' -NetworkInterface1SecondPrivateIp '$NetworkInterface1SecondPrivateIp' -NetworkInterface2FirstPrivateIp '$NetworkInterface2FirstPrivateIp' -NetworkInterface2SecondPrivateIp '$NetworkInterface2SecondPrivateIp'"
+        $SqlSetupCommand += " -FsxQuorumVolumeName '$FsxQuorumVolumeName' -MssqlMediaPathKey '$MssqlMediaPathKey' -SqlFsxWsFcName '$SqlFsxWsFcName' -SqlFsxFciName '$SqlFsxFciName' -SqlFsxServerNetBiosName '$SqlFsxServerNetBiosName' -SqlFsxServerNetBiosName2 '$SqlFsxServerNetBiosName2' -NetworkInterface1FirstPrivateIp '$NetworkInterface1FirstPrivateIp' -NetworkInterface1SecondPrivateIp '$NetworkInterface1SecondPrivateIp' -NetworkInterface2FirstPrivateIp '$NetworkInterface2FirstPrivateIp' -NetworkInterface2SecondPrivateIp '$NetworkInterface2SecondPrivateIp' -PrivateSubnet1Id '$PrivateSubnet1Id' -PrivateSubnet2Id '$PrivateSubnet2Id'"
     }
 
     $CommandToInvoke = @{Command = $SqlSetupCommand; UseExecutionPolicy = $false }

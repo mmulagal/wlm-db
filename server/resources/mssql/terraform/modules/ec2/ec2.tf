@@ -54,6 +54,8 @@ locals {
     network_interface_1_second_private_ip = var.network_interface_1_second_private_ip
     network_interface_2_first_private_ip  = var.network_interface_2_first_private_ip
     network_interface_2_second_private_ip = var.network_interface_2_second_private_ip
+    private_subnet1_id                    = var.private_subnet1_id
+    private_subnet2_id                    = var.private_subnet2_id
   })
 }
 
