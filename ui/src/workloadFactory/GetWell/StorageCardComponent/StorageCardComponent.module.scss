@@ -66,6 +66,11 @@
             height: 32px !important;
             min-width: 140px !important;
         }
+
+        .disabled {
+            background-color: var(--grey-15);
+            color: var(--text-primary);
+        }
     }
 }
 

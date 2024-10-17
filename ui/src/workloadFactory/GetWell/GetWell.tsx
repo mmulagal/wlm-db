@@ -671,7 +671,7 @@ const GetWell = () => {
                                         <DsAccordion
                                             id="1"
                                             variant="Default"
-                                            isDisabled={loading}
+                                            isDisabled={loading || !cardData?.storage_tier?.block_two?.value}
                                             isExpanded={optimizePrintState}
                                             title={
                                                 <div className={styles.tagPlacement}>
@@ -687,13 +687,18 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ? <LightDisabled /> : <Light />}
+                                                        {loading || !cardData?.storage_tier?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
                                                     </div>
                                                     <div
                                                         style={{
-                                                            color: loading
-                                                                ? 'var(--text-disabled)'
-                                                                : 'var(--text-button-primary)'
+                                                            color:
+                                                                loading || !cardData?.storage_tier?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
                                                         }}
                                                     >
                                                         View recommendation
@@ -719,7 +724,7 @@ const GetWell = () => {
                                         <DsAccordion
                                             id="2"
                                             variant="Default"
-                                            isDisabled={loading}
+                                            isDisabled={loading || !cardData?.file_system_headroom?.block_two?.value}
                                             isExpanded={optimizePrintState}
                                             title={
                                                 <div className={styles.tagPlacement}>
@@ -737,13 +742,20 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ? <LightDisabled /> : <Light />}
+                                                        {loading ||
+                                                        !cardData?.file_system_headroom?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
                                                     </div>
                                                     <div
                                                         style={{
-                                                            color: loading
-                                                                ? 'var(--text-disabled)'
-                                                                : 'var(--text-button-primary)'
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.file_system_headroom?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
                                                         }}
                                                     >
                                                         View recommendation
@@ -769,7 +781,9 @@ const GetWell = () => {
                                         <DsAccordion
                                             id="3"
                                             variant="Default"
-                                            isDisabled={loading}
+                                            isDisabled={
+                                                loading || !cardData?.transaction_log_drive_size?.block_two?.value
+                                            }
                                             isExpanded={optimizePrintState}
                                             title={
                                                 <div className={styles.tagPlacement}>
@@ -787,13 +801,20 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ? <LightDisabled /> : <Light />}
+                                                        {loading ||
+                                                        !cardData?.transaction_log_drive_size?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
                                                     </div>
                                                     <div
                                                         style={{
-                                                            color: loading
-                                                                ? 'var(--text-disabled)'
-                                                                : 'var(--text-button-primary)'
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.transaction_log_drive_size?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
                                                         }}
                                                     >
                                                         View recommendation
@@ -819,7 +840,7 @@ const GetWell = () => {
                                         <DsAccordion
                                             id="4"
                                             variant="Default"
-                                            isDisabled={loading}
+                                            isDisabled={loading || !cardData?.tempdb_drive_size?.block_two?.value}
                                             isExpanded={optimizePrintState}
                                             title={
                                                 <div className={styles.tagPlacement}>
@@ -837,13 +858,19 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ? <LightDisabled /> : <Light />}
+                                                        {loading || !cardData?.tempdb_drive_size?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
                                                     </div>
                                                     <div
                                                         style={{
-                                                            color: loading
-                                                                ? 'var(--text-disabled)'
-                                                                : 'var(--text-button-primary)'
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.tempdb_drive_size?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
                                                         }}
                                                     >
                                                         View recommendation
@@ -889,7 +916,7 @@ const GetWell = () => {
                                         <DsAccordion
                                             id="5"
                                             variant="Default"
-                                            isDisabled={loading}
+                                            isDisabled={loading || !cardData?.user_data_files?.block_two?.value}
                                             isExpanded={optimizePrintState}
                                             title={
                                                 <div className={styles.tagPlacement}>
@@ -905,13 +932,18 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ? <LightDisabled /> : <Light />}
+                                                        {loading || !cardData?.user_data_files?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
                                                     </div>
                                                     <div
                                                         style={{
-                                                            color: loading
-                                                                ? 'var(--text-disabled)'
-                                                                : 'var(--text-button-primary)'
+                                                            color:
+                                                                loading || !cardData?.user_data_files?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
                                                         }}
                                                     >
                                                         View recommendation
@@ -946,7 +978,7 @@ const GetWell = () => {
                                                     )}
                                                 </div>
                                             }
-                                            isDisabled={loading}
+                                            isDisabled={loading || !cardData?.transaction_log_files?.block_two?.value}
                                             isExpanded={optimizePrintState}
                                             headerActions={[
                                                 <div className={styles.headerAction}>
@@ -955,13 +987,20 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ? <LightDisabled /> : <Light />}
+                                                        {loading ||
+                                                        !cardData?.transaction_log_files?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
                                                     </div>
                                                     <div
                                                         style={{
-                                                            color: loading
-                                                                ? 'var(--text-disabled)'
-                                                                : 'var(--text-button-primary)'
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.transaction_log_files?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
                                                         }}
                                                     >
                                                         View recommendation
@@ -987,7 +1026,7 @@ const GetWell = () => {
                                         <DsAccordion
                                             id="7"
                                             variant="Default"
-                                            isDisabled={loading}
+                                            isDisabled={loading || !cardData?.tempdb_files?.block_two?.value}
                                             isExpanded={optimizePrintState}
                                             title={
                                                 <div className={styles.tagPlacement}>
@@ -1003,13 +1042,18 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ? <LightDisabled /> : <Light />}
+                                                        {loading || !cardData?.tempdb_files?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
                                                     </div>
                                                     <div
                                                         style={{
-                                                            color: loading
-                                                                ? 'var(--text-disabled)'
-                                                                : 'var(--text-button-primary)'
+                                                            color:
+                                                                loading || !cardData?.tempdb_files?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
                                                         }}
                                                     >
                                                         View recommendation
@@ -1052,7 +1096,7 @@ const GetWell = () => {
                                         <DsAccordion
                                             id="9"
                                             variant="Default"
-                                            isDisabled={loading}
+                                            isDisabled={loading || !cardData?.ontap_configuration?.block_two?.value}
                                             isExpanded={optimizePrintState}
                                             title={
                                                 <div className={styles.tagPlacement}>
@@ -1070,13 +1114,19 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ? <LightDisabled /> : <Light />}
+                                                        {loading || !cardData?.ontap_configuration?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
                                                     </div>
                                                     <div
                                                         style={{
-                                                            color: loading
-                                                                ? 'var(--text-disabled)'
-                                                                : 'var(--text-button-primary)'
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.ontap_configuration?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
                                                         }}
                                                     >
                                                         View recommendation & optimization
@@ -1102,7 +1152,7 @@ const GetWell = () => {
                                         />
                                         <DsAccordion
                                             id="10"
-                                            isDisabled={loading}
+                                            isDisabled={loading || !cardData?.os_configuration?.block_two?.value}
                                             isExpanded={optimizePrintState}
                                             variant="Default"
                                             title={
@@ -1119,13 +1169,18 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ? <LightDisabled /> : <Light />}
+                                                        {loading || !cardData?.os_configuration?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
                                                     </div>
                                                     <div
                                                         style={{
-                                                            color: loading
-                                                                ? 'var(--text-disabled)'
-                                                                : 'var(--text-button-primary)'
+                                                            color:
+                                                                loading || !cardData?.os_configuration?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
                                                         }}
                                                     >
                                                         View recommendation & optimization

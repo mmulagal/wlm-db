@@ -192,11 +192,11 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_two: {
             type: 'Status',
-            value: 'Not optimized'
+            value: ''
         },
         block_three: {
             type: 'Not optimized configurations',
-            value: '20%'
+            value: ''
         },
         block_four: {
             type: 'Severity',
@@ -211,11 +211,11 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_two: {
             type: 'Status',
-            value: 'Optimized'
+            value: ''
         },
         block_three: {
             type: 'Not optimized configurations',
-            value: '0%'
+            value: ''
         },
         block_four: {
             type: 'Severity',
