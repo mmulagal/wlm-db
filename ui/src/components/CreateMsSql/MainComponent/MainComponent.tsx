@@ -16,7 +16,6 @@ const MainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
     const showChatbot = true;
     const [selectedTab, setSelectedTab] = useState<'wizard' | 'chatbot'>('wizard');
-    const { statusData } = useAppSelector(state => state.headers.getStatus);
 
     MssqlApis();
 
@@ -28,7 +27,7 @@ const MainComponent = () => {
         </div>
     ) : (
         <div className={styles.mainContainer}>
-            {(loading || statusData === null) && (
+            {loading && (
                 <>
                     <div className={styles.loaderOverlay}></div>
                     <div className={styles.spinnerPlacement}>
@@ -36,31 +35,28 @@ const MainComponent = () => {
                     </div>
                 </>
             )}
-            {statusData !== null && (
-                <>
-                    <div className={`${styles.leftSide} ${!showChatbot ? styles.noChatBot : ''}`}>
-                        <StepLayout className={styles.header}>
-                            <MSSqlHeader />
-                            <WizardContent className={styles.content}>
-                                {showChatbot ? (
-                                    <CreateMsSqlLayout selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-                                ) : (
-                                    <MSSqlServer />
-                                )}
-                            </WizardContent>
-                            {selectedTab === 'wizard' && (
-                                <WizardFooter>
-                                    <MSSqlFooter />
-                                </WizardFooter>
-                            )}
-                        </StepLayout>
-                    </div>
-                    {showChatbot && (
-                        <div className={styles.rightSide}>
-                            <CodeBox />
-                        </div>
+
+            <div className={`${styles.leftSide} ${!showChatbot ? styles.noChatBot : ''}`}>
+                <StepLayout className={styles.header}>
+                    <MSSqlHeader />
+                    <WizardContent className={styles.content}>
+                        {showChatbot ? (
+                            <CreateMsSqlLayout selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+                        ) : (
+                            <MSSqlServer />
+                        )}
+                    </WizardContent>
+                    {selectedTab === 'wizard' && (
+                        <WizardFooter>
+                            <MSSqlFooter />
+                        </WizardFooter>
                     )}
-                </>
+                </StepLayout>
+            </div>
+            {showChatbot && (
+                <div className={styles.rightSide}>
+                    <CodeBox />
+                </div>
             )}
         </div>
     );
