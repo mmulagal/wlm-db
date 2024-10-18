@@ -1,7 +1,14 @@
 import randomize from 'randomatic';
 import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
-import { AWS_REGIONS, DatabaseTypes, RESOURCE_SOURCE, STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
+import {
+    AssessmentCategories,
+    AWS_REGIONS,
+    DatabaseTypes,
+    RESOURCE_SOURCE,
+    STORAGE_PROTOCOLS,
+    USER_TOKEN
+} from '../consts';
 import getLogger from '../logger';
 import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from '../../operations/demo-operations';
@@ -13,6 +20,7 @@ import { listJobs } from '../../lib/database/job';
 import { inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
 import { instanceDemoData } from './instancesResponse';
+import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 
 const logger = getLogger();
 
@@ -228,11 +236,12 @@ async function createDatabaseInstances(
     storageProtocol: string,
     databaseMetadata: any
 ) {
+    const databaseInstanceId = randomUUID();
     const instanceRecord = {
         resourceId,
         credentialsId,
         region,
-        databaseInstanceId: randomUUID(),
+        databaseInstanceId,
         databaseInstanceName,
         fsxnIds: fsxId,
         isDefault: false,
@@ -247,6 +256,98 @@ async function createDatabaseInstances(
     };
 
     await upsertDatabaseInstance(accountId, instanceRecord);
+
+    const instanceConfigDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: databaseInstanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.STORAGE,
+        config_data: {
+            os: {
+                'mpio-enabled': true,
+                'mpio-iscsi-count': '5',
+                'ntfs-allocation-unit': [
+                    { DriveLetter: 'S', AllocationUnitSize: 65536 },
+                    { DriveLetter: 'T', AllocationUnitSize: 65536 },
+                    { DriveLetter: 'L', AllocationUnitSize: 65536 }
+                ],
+                'mpio-load-balance-policy': 'LB'
+            },
+            luns: [
+                {
+                    name: '/vol/wlmdb_sqldata_1728552629461/sqldata',
+                    'os-type': 'windows_2008',
+                    'space-reservation-enabled': true,
+                    'space-allocation-allocated': true
+                },
+                {
+                    name: '/vol/wlmdb_sqltemp_1728552629461/tempdb',
+                    'os-type': 'windows_2008',
+                    'space-reservation-enabled': true,
+                    'space-allocation-allocated': true
+                },
+                {
+                    name: '/vol/wlmdb_sqldata_1728574994/sqldata',
+                    'os-type': 'windows_2008',
+                    'space-reservation-enabled': true,
+                    'space-allocation-allocated': true
+                }
+            ],
+            layout: {
+                'tempdb-files-location': 'separate-drive',
+                'default-log-files-location': 'separate-drive',
+                'default-data-files-location': 'separate-drive'
+            },
+            sizing: {
+                'log-drive-size': 24.95199566128725,
+                'performance-tier': true,
+                'tempdb-drive-size': 9.9423947935447
+            },
+            volumes: [
+                {
+                    name: 'wlmdb_sqldata_1728552629461',
+                    autosize: 'on',
+                    'autosize-mode': 'grow',
+                    'thin-provision': true,
+                    'tiering-policy': 'snapshot_only',
+                    'space-guarantee': 'none',
+                    'fractional-reserve': 0,
+                    'snapshot-autodelete': true,
+                    'snapshot-copy-reserve': 0,
+                    'tiering-min-cooling-days': 7
+                },
+                {
+                    name: 'wlmdb_sqltemp_1728552629461',
+                    autosize: 'on',
+                    'autosize-mode': 'grow',
+                    'thin-provision': true,
+                    'tiering-policy': 'snapshot_only',
+                    'space-guarantee': 'none',
+                    'fractional-reserve': 0,
+                    'snapshot-autodelete': true,
+                    'snapshot-copy-reserve': 0,
+                    'tiering-min-cooling-days': 7
+                },
+                {
+                    name: 'wlmdb_sqldata_1728574994',
+                    autosize: 'on',
+                    'autosize-mode': 'grow',
+                    'thin-provision': true,
+                    'tiering-policy': 'snapshot_only',
+                    'space-guarantee': 'none',
+                    'fractional-reserve': 0,
+                    'snapshot-autodelete': true,
+                    'snapshot-copy-reserve': 0,
+                    'tiering-min-cooling-days': 7
+                }
+            ]
+        }
+    };
+
+    await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
 }
 
 export { creadteDemoDBData, returnInventorydata, createConfigurations };

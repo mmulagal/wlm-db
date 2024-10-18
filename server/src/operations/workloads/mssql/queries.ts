@@ -323,6 +323,54 @@ const GET_SANDBOXES = `${SET_NOCOUNT}
     ${FOR_JSON_PATH}) as sandboxes
 `;
 
+const INSTANCE_DATA_DRIVES_QUERY = `${SET_NOCOUNT} 
+        SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS varchar(38)),1);`;
+
+const DEFAULT_DATA_DRIVE_SIZE = `${SET_NOCOUNT}
+        SELECT
+       total_bytes/1024/1024 --/1024
+        FROM sys.master_files mf 
+        CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id)
+        WHERE ((SELECT LEFT(volume_mount_point,1)) = (SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS varchar(38)),1)))
+        GROUP BY
+        volume_mount_point
+        ,total_bytes/1024/1024 --/1024
+        ,available_bytes/1024/1024 --/1024
+        ,CONVERT(INT,CONVERT(DECIMAL(15,2),available_bytes) / total_bytes * 100)
+`;
+
+const DEFAULT_LOG_DRIVE_SIZE = `${SET_NOCOUNT}
+        SELECT
+        total_bytes/1024/1024 --/1024
+        FROM sys.master_files mf 
+        CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id)
+        WHERE ((SELECT LEFT(volume_mount_point,1)) = (SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultLogPath') AS varchar(38)),1)))
+        GROUP BY
+        volume_mount_point
+        ,total_bytes/1024/1024 --/1024
+        ,available_bytes/1024/1024 --/1024
+        ,CONVERT(INT,CONVERT(DECIMAL(15,2),available_bytes) / total_bytes * 100)
+`;
+
+const TEMPDB_DRIVE_SIZE = `${SET_NOCOUNT}
+       SELECT
+        total_bytes/1024/1024 --/1024
+        FROM sys.master_files mf 
+        CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id)
+        WHERE ((SELECT LEFT(volume_mount_point,1)) = (SELECT DISTINCT(SELECT LEFT(physical_name, 1)) FROM tempdb.sys.database_files))
+        GROUP BY
+        volume_mount_point
+        ,total_bytes/1024/1024 --/1024
+        ,available_bytes/1024/1024 --/1024
+        ,CONVERT(INT,CONVERT(DECIMAL(15,2),available_bytes) / total_bytes * 100)
+`;
+
+const INSTANCE_LOG_DRIVES_QUERY = `${SET_NOCOUNT}
+        SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultLogPath') AS varchar(38)),1);`;
+
+const INSTANCE_TEMPDB_DRIVES_QUERY = `${SET_NOCOUNT}
+        SELECT DISTINCT(SELECT LEFT(physical_name, 1))FROM tempdb.sys.database_files;`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -352,5 +400,11 @@ export {
     ENTERPRISE_CHECK_QUERY,
     DATABASES_COUNT_V2,
     SERVER_VERSION,
-    GET_SANDBOXES
+    GET_SANDBOXES,
+    INSTANCE_TEMPDB_DRIVES_QUERY,
+    INSTANCE_DATA_DRIVES_QUERY,
+    INSTANCE_LOG_DRIVES_QUERY,
+    DEFAULT_DATA_DRIVE_SIZE,
+    DEFAULT_LOG_DRIVE_SIZE,
+    TEMPDB_DRIVE_SIZE
 };

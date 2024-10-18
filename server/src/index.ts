@@ -62,7 +62,8 @@ import {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
-    updateInstanceRecommendationPreferences
+    updateInstanceRecommendationPreferences,
+    scheduledAssessment
 } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
 import { resetCache } from './utils/cache';
@@ -356,6 +357,7 @@ try {
         failLongRunningDeploymentJobs();
         failLongRunningResourcePrepareJobs();
         updateInstanceRecommendationPreferences();
+        scheduledAssessment();
     }
 } catch (error) {
     logger.error('Failed to initialize cron jobs', error);

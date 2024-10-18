@@ -129,6 +129,7 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
 interface MappedOnTapVolumeResponse {
     volumeRecords: Record<string, string | number>[];
     volumeDBMap: any;
+    lunNames: string[];
 }
 
 // type VolumeSpaceRecord = {
@@ -2451,5 +2452,6 @@ export {
     getDatabaseHostSummaryV2,
     getDatabaseHostInstanceSummary,
     getDatabasesV2,
-    getInstanceDetails
+    getInstanceDetails,
+    MappedOnTapVolumeResponse
 };

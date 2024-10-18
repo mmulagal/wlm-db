@@ -313,6 +313,7 @@ async function listResources(
         pageSize,
         nextToken
     });
+
     accountId = checkAccount(accountId);
 
     return prisma.client.resource.findMany({
@@ -646,11 +647,17 @@ async function updateDatabaseInstanceMetadata(
     });
 }
 
+async function listAllManagedInstances() {
+    return prisma.client.database_instances.findMany({
+        orderBy: {
+            id: 'asc'
+        }
+    });
+}
 async function listDatabaseInstances(accountId: string, record: any) {
     logger.info('List database instances for given account/credentialsId', accountId);
 
     const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId } = record;
-
     accountId = checkAccount(accountId);
 
     return prisma.client.database_instances.findMany({
@@ -806,5 +813,6 @@ export {
     createTrackedEc2Records,
     listTrackedEc2,
     removeTrackedEc2Record,
-    updateTrackedEc2Record
+    updateTrackedEc2Record,
+    listAllManagedInstances
 };

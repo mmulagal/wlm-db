@@ -455,15 +455,15 @@ async function getMappedOntapVolumes(
                 parsedResponse?.[iName] &&
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
             ) {
-                const { volumeDBMap, volumes } = parsedResponse?.[iName] ?? {};
+                const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
                 if (volumes && !isEmpty(volumes?.records)) {
                     const volumeRecords = volumes.records.map((record: Record<string, string | number>) => ({
                         uuid: record.uuid,
                         snapshot_count: record.snapshot_count
                     }));
-                    instancesResponse[iName] = { volumeRecords, volumeDBMap };
+                    instancesResponse[iName] = { volumeRecords, volumeDBMap, lunNames };
                 } else {
-                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: {} };
+                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: {}, lunNames: [] };
                 }
             } else {
                 logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);
@@ -546,5 +546,6 @@ export {
     tagFsxResource,
     getCostAllocationTagFsxResource,
     getFsxStorageCapacity,
-    getFSXFileSystemListForDemo
+    getFSXFileSystemListForDemo,
+    getFSXDetails
 };
