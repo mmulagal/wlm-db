@@ -617,6 +617,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                         }
                                                     });
                                                 } else {
+                                                    navigate('../../fsxdb/mssql-deploy-wizard');
                                                     postBlueXPMessage({
                                                         type: BlueXPListeners.navigate,
                                                         payload: {
