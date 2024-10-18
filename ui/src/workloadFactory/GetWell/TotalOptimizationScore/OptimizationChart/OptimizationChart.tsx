@@ -34,7 +34,7 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
         data: {
             datasets: [
                 {
-                    data: [65, 35],
+                    data: [hostData?.percent || 0, 100 - (hostData?.percent || 0)],
                     backgroundColor: ['#68C6B3', unProtectedColor]
                 }
             ]

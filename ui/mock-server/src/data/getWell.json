@@ -3,7 +3,7 @@
         "timestamp": "Thu Oct 17 2024",
         "optimisedCount": {
             "total": 21,
-            "optimised": 20
+            "optimised": 19
         },
         "configuration": {
             "volumes": [
@@ -189,7 +189,7 @@
             {
                 "name": "log-drive-size",
                 "recommended": "20%-30%",
-                "status": "optimized",
+                "status": "not-optimized23",
                 "severity": "warning",
                 "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
                 "tags": [

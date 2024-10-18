@@ -192,11 +192,11 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_two: {
             type: 'Status',
-            value: 'Not optimized'
+            value: ''
         },
         block_three: {
             type: 'Not optimized configurations',
-            value: '20%'
+            value: ''
         },
         block_four: {
             type: 'Severity',
@@ -211,11 +211,11 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_two: {
             type: 'Status',
-            value: 'Optimized'
+            value: ''
         },
         block_three: {
             type: 'Not optimized configurations',
-            value: '0%'
+            value: ''
         },
         block_four: {
             type: 'Severity',
@@ -421,9 +421,11 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
             block_three: {
                 ...cardDataDefault?.ontap_configuration?.block_three,
                 value:
-                    formatNumberWithCustomComma(
-                        (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
-                    ) + '%'
+                    ontapNotOptimizedConfig !== 0
+                        ? formatNumberWithCustomComma(
+                              (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
+                          ) + '%'
+                        : '0%'
             },
             block_four: {
                 ...cardDataDefault?.ontap_configuration?.block_four,
@@ -446,9 +448,11 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
             block_three: {
                 ...cardDataDefault?.os_configuration?.block_three,
                 value:
-                    formatNumberWithCustomComma(
-                        (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
-                    ) + '%'
+                    osNotOptimizedConfig !== 0
+                        ? formatNumberWithCustomComma(
+                              (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
+                          ) + '%'
+                        : '0%'
             },
             block_four: {
                 ...cardDataDefault?.os_configuration?.block_four,
