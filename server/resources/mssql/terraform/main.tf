@@ -23,7 +23,7 @@ locals {
   sql_fsx_server_net_bios_name_2 = element(split(",", var.node_net_bios_names), 1)
   adsg_not_selected              = var.domain_member_sg_id == "" ? true : false
   group_set                      = local.adsg_not_selected ? [aws_security_group.workload_security_group.id, var.ontap_security_group_id] : [aws_security_group.workload_security_group.id, var.ontap_security_group_id, var.domain_member_sg_id]
-
+  sql_fsx_fci_name               = var.sql_server_name
   # Terraform does not support doing validation of an variable based on another variable. So we have to do it like this.
   fsx_file_system_name_required     = (local.new_ontap_fsx && var.fsx_file_system_name == "") ? tobool("Validation Error: The fsx_file_system_name variable must be set when new fsx is deployed.") : true
   s3_endpoint_route_tables_required = (!var.s3_endpoint_exists && var.s3_endpoint_route_tables == "") ? tobool("Validation Error: The s3_endpoint_route_tables variable must be set when s3_endpoint_exists is false.") : true
@@ -34,7 +34,6 @@ locals {
   fsx_quorum_volume_name_required = (!local.is_standalone && var.fsx_quorum_volume_name == "") ? tobool("Validation Error: The fsx_quorum_volume_name variable must be set for fci deployment.") : true
   fsx_quorum_volume_size_required = (!local.is_standalone && var.fsx_quorum_volume_size == "") ? tobool("Validation Error: The fsx_quorum_volume_size variable must be set for fci deployment.") : true
   sql_fsx_ws_fc_name_required     = (!local.is_standalone && var.sql_fsx_ws_fc_name == "") ? tobool("Validation Error: The sql_fsx_ws_fc_name variable must be set for fci deployment.") : true
-  sql_fsx_fci_name_required       = (!local.is_standalone && var.sql_fsx_fci_name == "") ? tobool("Validation Error: The sql_fsx_fci_name variable must be set for fci deployment.") : true
 }
 
 provider "aws" {
@@ -292,7 +291,7 @@ module "fci_sql_node1" {
 
   fsx_quorum_volume_name                = var.fsx_quorum_volume_name
   sql_fsx_ws_fc_name                    = var.sql_fsx_ws_fc_name
-  sql_fsx_fci_name                      = var.sql_fsx_fci_name
+  sql_fsx_fci_name                      = local.sql_fsx_fci_name
   is_standalone                         = local.is_standalone
   workload_security_group_id            = aws_security_group.workload_security_group.id
   iam_instance_profile                  = aws_iam_instance_profile.fci_sql_fsx_profile[0].name
@@ -353,7 +352,7 @@ module "fci_sql_node2" {
 
   fsx_quorum_volume_name                = var.fsx_quorum_volume_name
   sql_fsx_ws_fc_name                    = var.sql_fsx_ws_fc_name
-  sql_fsx_fci_name                      = var.sql_fsx_fci_name
+  sql_fsx_fci_name                      = local.sql_fsx_fci_name
   is_standalone                         = local.is_standalone
   workload_security_group_id            = aws_security_group.workload_security_group.id
   iam_instance_profile                  = aws_iam_instance_profile.fci_sql_fsx_profile[0].name

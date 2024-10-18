@@ -978,7 +978,8 @@ const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: { [key: string]: { name: str
     VPCID: { name: 'vpc_id', type: 'string' },
     WlmdbAwsAccountId: { name: 'wlmdb_aws_account_id', type: 'string' },
     WorkloadInstanceType: { name: 'workload_instance_type', type: 'string' },
-    EBSVolumeSize: { name: 'ebs_volume_size', type: 'number' }
+    EBSVolumeSize: { name: 'ebs_volume_size', type: 'number' },
+    SqlFSxWSFCName: { name: 'sql_fsx_ws_fc_name', type: 'string' }
 };
 
 enum DATABASE_METRIC_TYPE {
