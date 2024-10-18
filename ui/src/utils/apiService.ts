@@ -847,13 +847,9 @@ export const getWellApi = createApi({
     endpoints: builder => {
         return {
             getMssqlAssessmentData: builder.mutation({
-                // ToDO : Untill APIs are ready using mock data
-                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return { data: GetWellMock };
-                }
-                // query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                //     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment`
-                // })
+                query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment`
+                })
             })
         };
     }
