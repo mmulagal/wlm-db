@@ -71,6 +71,7 @@ const Home = () => {
                 {isWorkloadFactory && (
                     <Routes>
                         <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
+                        <Route path={`/databases/mssql-deploy-wizard`} element={<MainComponent />} />
                         <Route
                             path={`add-working-environment/database-services/:storage/postgress`}
                             element={<PostgressMainComponent />}
@@ -108,7 +109,7 @@ const Home = () => {
                         <Route path={'/create-new-user'} element={<WizardComponent />} />
                         <Route path={'/job-monitor'} element={<JobMonitoring />} />
                         <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
-                        <Route path="*" element={<MainComponent />} />
+                        {/* <Route path="*" element={<MainComponent />} /> */}
                     </Routes>
                 )}
                 {!isWorkloadFactory && (
