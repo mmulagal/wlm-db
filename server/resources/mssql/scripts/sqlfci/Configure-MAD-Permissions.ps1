@@ -14,7 +14,10 @@ param(
     [string]$Stackname,
 
 	[Parameter(Mandatory=$true)]
-    [string]$Parentstackname
+    [string]$Parentstackname,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform
 )
 
 #get Instance ID
@@ -53,7 +56,11 @@ Invoke-Command -scriptblock {
 	Set-acl -aclobject $acl "ad:$OU"
 } -Credential $Credentials -ComputerName $HostName -Authentication credssp
 } catch {
-	Write-Output "Error configuring permissions for WSFC in Active Directory"
+	$FailureReason = "Error configuring permissions for WSFC in Active Directory"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
 	Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
 	$_ | Write-AWSLaunchWizardException
 }
