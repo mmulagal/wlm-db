@@ -266,6 +266,9 @@ const CodeBox = () => {
         if (credDetails?.region) {
             resBody.region = credDetails?.region;
         }
+        if (changeObjectForm?.mssqlForm?.encryption?.selectedRow?.[0]?.arn) {
+            resBody.fsxConfiguration.encryptionKey = changeObjectForm.mssqlForm.encryption.selectedRow[0].arn;
+        }
         loadTerraformData({ payload: resBody }).then((data: any) => {
             if (data?.data) {
                 setTerraformSetupResponse(data?.data);
