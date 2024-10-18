@@ -101,7 +101,11 @@ const MSSqlHeader = () => {
                         if (databaseHostEntryPoint === 'inventory') {
                             navigate('databases/inventory');
                         } else if (databaseHostEntryPoint === 'database') {
-                            navigate('/databases');
+                            if (isWorkloadFactory) {
+                                navigate('/databases');
+                            } else {
+                                navigate('../../fsxdb');
+                            }
                         } else {
                             if (isWorkloadFactory) {
                                 navigateToCanvas('/');
@@ -124,7 +128,11 @@ const MSSqlHeader = () => {
         if (databaseHostEntryPoint === 'inventory') {
             navigate('databases/inventory');
         } else if (databaseHostEntryPoint === 'database') {
-            navigate('/databases');
+            if (isWorkloadFactory) {
+                navigate('/databases');
+            } else {
+                navigate('../../fsxdb');
+            }
         } else {
             if (isWorkloadFactory) {
                 navigateToCanvas('/');
