@@ -312,21 +312,31 @@ output "operating_system" {
 
 
 #output for fci resources
-output "sql_node_ni_1_first_private_ip" {
+output "sql_node_ni_1_primary_private_ip" {
   value = length(aws_network_interface.sql_node_ni_1) > 0 ? tolist(aws_network_interface.sql_node_ni_1[0].private_ips)[0] : null
 }
 
-output "sql_node_ni_1_second_private_ip" {
+output "sql_node_ni_1_secondary_private_ip_1" {
   value = length(aws_network_interface.sql_node_ni_1) > 0 ? tolist(aws_network_interface.sql_node_ni_1[0].private_ips)[1] : null
 }
 
-output "sql_node_ni_2_first_private_ip" {
+output "sql_node_ni_1_secondary_private_ip_2" {
+  value = length(aws_network_interface.sql_node_ni_1) > 0 ? tolist(aws_network_interface.sql_node_ni_1[0].private_ips)[2] : null
+}
+
+
+output "sql_node_ni_2_primary_private_ip" {
   value = length(aws_network_interface.sql_node_ni_2) > 0 ? tolist(aws_network_interface.sql_node_ni_2[0].private_ips)[0] : null
 }
 
-output "sql_node_ni_2_second_private_ip" {
+output "sql_node_ni_2_secondary_private_ip_1" {
   value = length(aws_network_interface.sql_node_ni_2) > 0 ? tolist(aws_network_interface.sql_node_ni_2[0].private_ips)[1] : null
 }
+
+output "sql_node_ni_2_secondary_private_ip_2" {
+  value = length(aws_network_interface.sql_node_ni_2) > 0 ? tolist(aws_network_interface.sql_node_ni_2[0].private_ips)[2] : null
+}
+
 
 output "sql_workload_security_group_id" {
   description = "The ID of the workload security group"
