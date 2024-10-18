@@ -14,7 +14,6 @@ import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
 import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
 import { SELECT_CONFIG } from './appConstants';
-import GetWellMock from '../workloadFactory/GetWell/GetWellMock.json';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
