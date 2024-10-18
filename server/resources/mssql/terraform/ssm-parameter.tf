@@ -1,4 +1,5 @@
 resource "aws_ssm_parameter" "credentials_ssm_parameter" {
+  depends_on  = [null_resource.validation]
   name        = "/netapp/wlmdb/${var.deployment_name}"
   description = "SSM Parameter for active directory, FSxN and SQL service account credentials"
   type        = "SecureString"

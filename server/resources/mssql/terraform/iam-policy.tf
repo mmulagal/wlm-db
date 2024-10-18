@@ -1,6 +1,7 @@
 resource "aws_iam_role_policy" "ec2_iam_role_policy" {
-  name = "${var.deployment_name}_WLMDB_Policy_1"
-  role = aws_iam_role.ec2_iam_role.id
+  depends_on = [null_resource.validation]
+  name       = "${var.deployment_name}_WLMDB_Policy_1"
+  role       = aws_iam_role.ec2_iam_role.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

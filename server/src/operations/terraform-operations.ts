@@ -215,8 +215,7 @@ async function createTFVarsFile(
                 creator_tag: deploymentName,
                 deployment_name: deploymentName,
                 role_credentials_id: '',
-                metrics,
-                fsx_encryption_key: ''
+                metrics
             };
             let terraformVariableString = '';
             const terraformVariables: any = {};

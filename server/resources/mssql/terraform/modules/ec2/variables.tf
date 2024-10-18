@@ -279,3 +279,15 @@ variable "network_interface_2_second_private_ip" {
   type        = string
   default     = ""
 }
+
+variable "private_subnet1_id" {
+  description = "ID of private subnet in an Availability Zone 1 for the workload (For example, subnet-a0246dcd)."
+  type        = string
+  default     = ""
+}
+
+variable "private_subnet2_id" {
+  description = "ID of private subnet in an Availability Zone 2 for the workload (For example, subnet-a0246dcd)."
+  type        = string
+  default     = ""
+}
