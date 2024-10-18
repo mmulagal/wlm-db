@@ -29,7 +29,10 @@ param(
     [string]$Parentstackname,
     
     [Parameter(Mandatory = $true)]
-    [string]$SqlCollation 
+    [string]$SqlCollation,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform
 )
 
 Start-Sleep -Seconds 600
@@ -177,7 +180,11 @@ try {
     }
 }
 catch {
-    Write-Output "Failed to run complete Failover cluster action for SQL installation"
+    $FailureReason = "Failed to run complete Failover cluster action for SQL installation"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }

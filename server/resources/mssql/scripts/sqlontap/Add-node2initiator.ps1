@@ -18,7 +18,10 @@ param(
     [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Parentstackname    
+    [string]$Parentstackname,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform    
 )
 Start-Transcript -Path C:\cfn\log\ontapconfig.ps1.txt -Append
 
@@ -45,7 +48,11 @@ do{
 }while($ig -eq $null)
 Add-NcIgroupInitiator -Name $igroup -Initiator $nodeiqn
 }catch{
-    Write-Output "Adding Initiator failed"
+    $FailureReason = "Adding Initiator failed"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId   
     $_ | Write-AWSLaunchWizardException 
 }

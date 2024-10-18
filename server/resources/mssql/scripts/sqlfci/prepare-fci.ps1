@@ -22,7 +22,10 @@ param(
     [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Parentstackname
+    [string]$Parentstackname,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform
 )
 
 #get Instance ID
@@ -156,7 +159,11 @@ try {
 $Service = Get-Service -Name 'MSSQLSERVER' 
 }
 catch {
-        Write-Output "Failed to create SQLServer(MSSQLSERVER) service"
+        $FailureReason = "Failed to create SQLServer(MSSQLSERVER) service"
+        Write-Output $FailureReason
+        if ($IsTerraform) {
+            throw $FailureReason
+        }
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException  
 }
@@ -166,7 +173,11 @@ else {
  }
 
 } catch {
-        Write-Output "Failed to run prepare Failover cluster action for SQL installation"
+        $FailureReason = "Failed to run prepare Failover cluster action for SQL installation"
+        Write-Output $FailureReason
+        if ($IsTerraform) {
+            throw $FailureReason
+        }
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
 }
