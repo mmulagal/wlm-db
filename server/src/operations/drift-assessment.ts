@@ -35,6 +35,11 @@ async function calculateStorageDrift(
     databaseInstanceId: string
 ) {
     logger.info('calculateStorageDrift', accountId, credentialsId, region, databaseHostId);
+
+    // to be removed
+    logger.info('debug demo');
+    const allConfigData = await listDatabaseInstanceConfigData();
+    logger.info(allConfigData);
     const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
         accountId,
         region,
