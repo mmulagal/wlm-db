@@ -36,7 +36,8 @@ import {
     GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,
-    DriftAssessment
+    DriftAssessment,
+    TriggerDriftAssessmentSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -53,7 +54,8 @@ import {
     checkDatabaseIntegrity,
     getSandboxSnapshots
 } from '../operations/sandbox-operations';
-import { fetchDriftAssessment } from '../operations/drift-assessment';
+import { fetchDriftAssessment, triggerDriftAssessment } from '../operations/drift-assessment';
+import { AssessmentTriggeredBy } from '../utils/consts';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_PREFIX_PATH_V2 = '/v2/credentials/:credentialsId/regions/:region';
@@ -490,6 +492,26 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     region,
                     databaseHostId,
                     databaseInstanceId,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment`,
+            { schema: TriggerDriftAssessmentSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    query: { fields }
+                } = request;
+                const response = await triggerDriftAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    [databaseInstanceId],
+                    AssessmentTriggeredBy.USER,
                     fields
                 );
                 return reply.send(response);
