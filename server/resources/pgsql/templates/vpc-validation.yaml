@@ -154,7 +154,7 @@ Resources:
                             command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
                 FetchResources:
                     files:
-                        /home/ec2-user/cfn/scripts/validate-vpc.bash:
+                        /home/ec2-user/cfn/scripts/validate-vpc.sh:
                             source: {{{ ScriptValidation }}}
                             mode: '000755'
                             owner: ec2-user
@@ -163,7 +163,7 @@ Resources:
                     commands:
                         a-validate-vpc:
                             command: !Sub 
-                                - '/home/ec2-user/cfn/scripts/validate-vpc.bash ${subnetId} ${AWS::Region} ${AWS::StackName} ValidationNode1'
+                                - '/home/ec2-user/cfn/scripts/validate-vpc.sh ${subnetId} ${AWS::Region} ${AWS::StackName} ValidationNode1'
                                 - subnetId: !Ref 'SubnetID'
                             waitAfterCompletion: '0'
                         e-signal-resource:

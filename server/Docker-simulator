@@ -7,6 +7,7 @@ ADD test ./test
 ADD config ./config
 ADD resources/mssql/templates ./resources/mssql/templates
 ADD resources/mssql/terraform ./resources/mssql/terraform
+ADD resources/pgsql/templates ./resources/pgsql/templates/
 COPY package.json ./
 COPY package-lock.json ./
 

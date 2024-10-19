@@ -25,7 +25,7 @@ enableTLS12
 # Example for serviceURLMap='{"S3": "s3.us-east-2.amazonaws.com"}'
 # Convert input string to associative array
 serviceURLMap='{"S3": "s3.'$region'.amazonaws.com"}'
-declare -A serviceURLHashTable
+declare -a serviceURLHashTable
 serviceURLHashTable=$(echo "$serviceURLMap" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"')
 
 for service in "${!serviceURLHashTable[@]}"; do
