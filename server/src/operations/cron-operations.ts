@@ -173,6 +173,8 @@ async function scheduledAssessment() {
 
                 const managedInstanceIds = managedInstances.map(instance => instance.database_instance_id);
 
+                logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+
                 driftAssessmentQueue.add(
                     'driftAssessment',
                     {
