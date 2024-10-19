@@ -36,6 +36,9 @@ const logger = getLogger();
 const redisDetails = getRedisDetails();
 const driftAssessmentQueue = new Queue('driftAssessmentQueue', { connection: new Redis(redisDetails.connection) });
 
+logger.info('Debug queue');
+logger.info(`Jobs count ${JSON.stringify(await driftAssessmentQueue.getJobCounts())}`);
+
 async function failLongRunningDeploymentJobs() {
     logger.info('Marking long running (> 4 hours) deployment jobs as failed');
 
@@ -176,7 +179,7 @@ async function scheduledAssessment() {
                 logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
 
                 driftAssessmentQueue.add(
-                    'driftAssessment',
+                    `driftAssessmentFor${resourceId}`,
                     {
                         accountId,
                         credentialsId,
