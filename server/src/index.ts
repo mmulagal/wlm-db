@@ -72,7 +72,7 @@ import { resetCache } from './utils/cache';
 const logger = getLogger();
 const accessLogger = getLogger('access');
 
-logger.info(`Env variable ${process.env.REDIS_ENDPOINT}.`);
+logger.info(`Env variable ${process.env}.`);
 logger.info(`Redis URL ${REDIS_URL}.`);
 
 const { verifyToken, authorizeJwt } = jwtOperation;
