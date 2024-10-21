@@ -158,7 +158,7 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
-    ASSESSMENT = 'ASSESSMENT'
+    ASSESSMENT = 'Assessment'
 }
 
 enum HttpErrorCodes {
