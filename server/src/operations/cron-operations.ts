@@ -35,13 +35,6 @@ import { DriftAssessmentJob } from '../utils/common-types';
 
 const logger = getLogger();
 
-const redisDetails = getRedisDetails();
-logger.info(`Redis details ${redisDetails.connection.url}`);
-const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, { connection: new Redis(redisDetails.connection) });
-
-// logger.info('Debug queue');
-// logger.info(`Jobs count ${JSON.stringify(await driftAssessmentQueue.getJobCounts())}`);
-
 async function failLongRunningDeploymentJobs() {
     logger.info('Marking long running (> 4 hours) deployment jobs as failed');
 
@@ -161,6 +154,12 @@ async function updatePreferences() {
 }
 
 async function scheduledAssessment() {
+    const redisDetails = getRedisDetails();
+
+    logger.info(`Redis details ${redisDetails.connection.url}`);
+
+    const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, { connection: new Redis(redisDetails.connection) });
+
     const managedResources = await listResources();
     if (isEmpty(managedResources)) {
         logger.error('No managed database resources found.');
