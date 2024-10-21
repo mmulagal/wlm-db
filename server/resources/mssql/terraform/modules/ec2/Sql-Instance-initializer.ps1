@@ -140,7 +140,7 @@ function Get-InstanceIdByName {
         return $InstanceId
     }
     catch {
-        Write-Output "An error occurred while getting the instance ID for $Name: $($_.Exception.Message)"
+        Write-Output "An error occurred while getting the instance ID for $Name : $($_.Exception.Message)"
         return $null
     }
 }
