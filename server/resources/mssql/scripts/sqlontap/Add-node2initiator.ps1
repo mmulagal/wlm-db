@@ -1,46 +1,57 @@
 #Requires -Module AWS.Tools.FSX,netapp.ontap
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$sqlvmname,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$igroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$FileSystemId,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$ResourceID,   
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Stackname,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Parentstackname,
 
     [Parameter(Mandatory = $false)]
-    [boolean]$IsTerraform    
+    [boolean]$IsTerraform,
+    
+    [Parameter(Mandatory = $false)]
+    [string]$PrimaryInstanceId
 )
 Start-Transcript -Path C:\cfn\log\ontapconfig.ps1.txt -Append
 
 # Get Instance ID
-$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
-$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+$region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing).Content
+
 
 $ErrorActionPreference = "Stop"
 
 $ScriptsPath = Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
-. "$ScriptsPath\common\InvokeRetryCommand.ps1" 
+. "$ScriptsPath\common\InvokeRetryCommand.ps1"
+. "$ScriptsPath\common\PollForTag.ps1" 
 $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
 $username = $SsmParameter.fsx.username
 $password = $SsmParameter.fsx.password
 $fsxadmincreds = (New-Object PSCredential($username, (ConvertTo-SecureString $password -AsPlainText -Force)))
 $fslist = Invoke-WithRetry -Command { Get-FSXFileSystem -FileSystemId $FileSystemId }
-$MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
-$nodeiqn = (Get-InitiatorPort).NodeAddress
 
 try {
+    # Check if polling is required
+    if ($IsTerraform) {
+        PollForTag -Region $region -InstanceId $PrimaryInstanceId -TagKey "primary_configure_ontap" -TagValue "completed"
+    }
+
+    $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
+    $nodeiqn = (Get-InitiatorPort).NodeAddress
     Connect-NcController -Name $MgmtDNS -Credential $fsxadmincreds -Vserver $sqlvmname
     Write-Output "Connected to NetApp controller at $MgmtDNS"
     
@@ -48,30 +59,32 @@ try {
     $maxRetries = 3
     $ig = $null
 
-    while ($retryCount -lt $maxRetries -and $ig -eq $null) {
+    while ($retryCount -lt $maxRetries -and $null -eq $ig) {
         try {
             $ig = Get-NcIgroup -Name $igroup
-            if ($ig -eq $null) {
+            if ($null -eq $ig) {
                 Write-Output "Igroup $igroup not found, retrying..."
                 Start-Sleep -Seconds 5
             }
-        } catch {
+        }
+        catch {
             Write-Output "Error retrieving igroup: $_"
             Start-Sleep -Seconds 5
         }
         $retryCount++
     }
 
-    if ($ig -eq $null) {
+    if ($null -eq $ig) {
         throw "Igroup $igroup not found after $maxRetries attempts"
     }
 
     Write-Output "Igroup $igroup found, adding initiator $nodeiqn"
     Add-NcIgroupInitiator -Name $igroup -Initiator $nodeiqn
-} catch {
+}
+catch {
     Write-Output $_
     Write-Error $_.Exception.Message
-    $FailureReason = "Adding Initiator failed"
+    $FailureReason = "Adding Initiator failed: " + $_.Exception.Message
     Write-Output $FailureReason
     if ($IsTerraform) {
         throw $FailureReason
