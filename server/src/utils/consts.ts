@@ -158,7 +158,7 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
-    ASSESSMENT = 'ASSESSMENT'
+    ASSESSMENT = 'Assessment'
 }
 
 enum HttpErrorCodes {
@@ -1455,6 +1455,8 @@ enum AwsWellArchitecturedPillars {
 // Redis
 const REDIS_URL = process.env.REDIS_ENDPOINT || config.get('redis.endpoint') || '127.0.0.1:6379';
 
+const DRIFT_ASSESSMENT_QUEUE = 'driftAssessmentQueue';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1765,5 +1767,6 @@ export {
     AssessmentTriggeredBy,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
-    REDIS_URL
+    REDIS_URL,
+    DRIFT_ASSESSMENT_QUEUE
 };
