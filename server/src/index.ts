@@ -24,7 +24,8 @@ import {
     JWKS_FULL_NAME,
     WLMDB,
     SSM_COMMAND_CACHE_TYPE,
-    BXP
+    BXP,
+    REDIS_URL
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import {
@@ -70,6 +71,8 @@ import { resetCache } from './utils/cache';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
+
+logger.info(`Redis URL ${REDIS_URL}.`);
 
 const { verifyToken, authorizeJwt } = jwtOperation;
 

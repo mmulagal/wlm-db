@@ -33,7 +33,7 @@ export const cardDataDefault: GwCardDataInterface = {
             description:
                 'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.\nUsing the capacity tier may result in slower performance and higher latency.'
         },
-        tags: []
+        tags: ['Performance efficiency']
     },
     file_system_headroom: {
         block_one: {
@@ -58,7 +58,7 @@ export const cardDataDefault: GwCardDataInterface = {
                 'To optimize storage performance, provision file system capacity as 1.35 times the size of total database usage.',
             values: ['Under-provisioned: 0-35%', 'Optimized: 36-100%', 'Over-provisioned: >100%']
         },
-        tags: []
+        tags: ['Performance efficiency']
     },
     transaction_log_drive_size: {
         block_one: {
@@ -83,7 +83,7 @@ export const cardDataDefault: GwCardDataInterface = {
                 'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
             values: ['Under-provisioned: 0-20%', 'Optimized: 21-30%', 'Over-provisioned: >31%']
         },
-        tags: []
+        tags: ['Operational excellence']
     },
     tempdb_drive_size: {
         block_one: {
@@ -108,7 +108,7 @@ export const cardDataDefault: GwCardDataInterface = {
                 'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
             values: ['Under-provisioned: 0-20%', 'Optimized: 21-30%', 'Over-provisioned: >31%']
         },
-        tags: []
+        tags: ['Operational excellence']
     },
     user_data_files: {
         block_one: {
@@ -133,7 +133,7 @@ export const cardDataDefault: GwCardDataInterface = {
             description:
                 'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
         },
-        tags: []
+        tags: ['Performance efficiency', 'Operational excellence']
     },
     transaction_log_files: {
         block_one: {
@@ -158,7 +158,7 @@ export const cardDataDefault: GwCardDataInterface = {
             description:
                 'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
         },
-        tags: []
+        tags: ['Performance efficiency', 'Operational excellence']
     },
     tempdb_files: {
         block_one: {
@@ -183,7 +183,7 @@ export const cardDataDefault: GwCardDataInterface = {
             description:
                 'Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention.\nThis optimization improves overall SQL Server performance and stability.\nFailure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.'
         },
-        tags: []
+        tags: ['Performance efficiency', 'Operational excellence']
     },
     ontap_configuration: {
         block_one: {
@@ -202,7 +202,7 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: 'Critical'
         },
-        tags: []
+        tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency', 'Reliability']
     },
     os_configuration: {
         block_one: {
@@ -221,7 +221,7 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: 'Critical'
         },
-        tags: []
+        tags: ['Performance efficiency', 'Reliability']
     },
     Latency: {
         block_one: {

@@ -256,7 +256,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     };
 
     // This will call terraform setup API to get Terraform response for current payload.
-    const getTerraformSetupResponse = (payload: any, credDetails: any, id: any) => {
+    const getTerraformSetupResponse = (payload: any, credDetails: any, id: any, changeObjectForm: any) => {
         const data = getTerraformSetupResponseById(id);
         if (data) {
             setIsTerraformDataLoading(false);
@@ -266,6 +266,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             }
             if (credDetails?.region) {
                 payload.region = credDetails?.region;
+            }
+            if (changeObjectForm?.mssqlForm?.encryption?.selectedRow?.[0]?.arn) {
+                payload.fsxConfiguration.encryptionKey = changeObjectForm.mssqlForm.encryption.selectedRow[0].arn;
             }
             loadTerraformData({ payload }).then((data: any) => {
                 if (data?.data) {
@@ -361,7 +364,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         if (id === openKey) {
             setIsRightPanelDataLoading(false);
             getTemplateResponse(resBody, credDetails, id);
-            getTerraformSetupResponse(resBody, credDetails, id);
+            getTerraformSetupResponse(resBody, credDetails, id, changeObjectForm);
         }
         if (save) {
             const res = JSON.stringify(resBody, null, 2);
@@ -450,7 +453,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             );
             setIsRightPanelDataLoading(false);
             getTemplateResponse(resBody, {}, id);
-            getTerraformSetupResponse(resBody, {}, id);
+            getTerraformSetupResponse(resBody, {}, id, changeObjectForm);
             setCredDetailsData({});
             storeRightPanelRestResponse(id, actualData[0].data, highlightedString, highlightedString, resBody);
         } else {
@@ -496,23 +499,25 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     }, [searchInput]);
 
     useEffect(() => {
-        if (openKey && (openKey === RECOMMENDED_TEMPLATES.DEV_ID || openKey === RECOMMENDED_TEMPLATES.PROD_ID)) {
-            const recList = recommendedData.filter((item: any) => item.id === openKey);
-            setOpenedItem(recList[0]);
-            getRestResponse(openKey);
-        } else if (openKey && configData && configData.length) {
-            const updatedConfigData = configData.filter((item: any) => item.id === openKey);
-            setOpenedItem(updatedConfigData[0]);
-            getRestResponse(updatedConfigData[0].id);
-        } else if (!openKey && recommendedData && recommendedData.length) {
-            setOpenedItem(recommendedData[0]);
-            getRestResponse(recommendedData[0].id || '');
-        } else if (!openKey && configData && configData.length) {
-            setOpenedItem(configData[0]);
-            getRestResponse(configData[0].id);
+        if (isOpen) {
+            if (openKey && (openKey === RECOMMENDED_TEMPLATES.DEV_ID || openKey === RECOMMENDED_TEMPLATES.PROD_ID)) {
+                const recList = recommendedData.filter((item: any) => item.id === openKey);
+                setOpenedItem(recList[0]);
+                getRestResponse(openKey);
+            } else if (openKey && configData && configData.length) {
+                const updatedConfigData = configData.filter((item: any) => item.id === openKey);
+                setOpenedItem(updatedConfigData[0]);
+                getRestResponse(updatedConfigData[0].id);
+            } else if (!openKey && recommendedData && recommendedData.length) {
+                setOpenedItem(recommendedData[0]);
+                getRestResponse(recommendedData[0].id || '');
+            } else if (!openKey && configData && configData.length) {
+                setOpenedItem(configData[0]);
+                getRestResponse(configData[0].id);
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [configData, openKey]);
+    }, [configData, openKey, isOpen]);
 
     const handleToggle = (key: any, id: any) => {
         if (openKey !== id) {

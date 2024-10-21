@@ -228,9 +228,9 @@ const GetWell = () => {
                 <div className={styles.sectionTwo}>
                     <div className={styles.downloadSectionHeader}>
                         {!optimizePrintState && (
-                            <div className={styles.downloadSection}>
+                            <div className={!loading ? styles.downloadSection : styles.downloadSectionDisable}>
                                 <div />
-                                <div className={styles.buttonStyle} onClick={printDocument}>
+                                <div className={styles.buttonStyle} onClick={!loading ? printDocument : () => {}}>
                                     <div>
                                         <Download />
                                     </div>

@@ -1,5 +1,4 @@
 resource "aws_security_group" "workload_security_group" {
-  depends_on  = [null_resource.validation]
   name        = "${var.deployment_name}_workload_security_group"
   description = "Allow access to the Workload instances"
   vpc_id      = var.vpc_id

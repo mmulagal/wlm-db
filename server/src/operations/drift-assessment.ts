@@ -35,6 +35,7 @@ async function calculateStorageDrift(
     databaseInstanceId: string
 ) {
     logger.info('calculateStorageDrift', accountId, credentialsId, region, databaseHostId);
+
     const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
         accountId,
         region,
@@ -263,7 +264,7 @@ async function initiateStorageAssessmentCollection(
         false,
         instanceRecord.activeNodeInstanceid,
         [instanceRecord.name],
-        false
+        instanceRecord.sqlAuthEnabled
     )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [] }];
 
     const volumeRecords =
@@ -428,7 +429,7 @@ async function triggerDriftAssessment(
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.SANDBOX
+            type: JOBTYPE.ASSESSMENT
         });
 
         driftAssesment(accountId, credentialsId, region, job.id, databaseHostId, runningInstances, fields);

@@ -73,7 +73,11 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$PrivateSubnet1Id,
     [Parameter(Mandatory = $false)]
-    [string]$PrivateSubnet2Id
+    [string]$PrivateSubnet2Id,
+    [Parameter(Mandatory = $false)]
+    [string]$PrimaryInstanceId,
+    [Parameter(Mandatory = $false)]
+    [string]$SecondaryInstanceId
 )
 
 Write-Output "Starting the sql setup script from terraform"
@@ -107,7 +111,7 @@ $IsStandaloneString = if ($IsStandalone) { "1" } else { "0" }
 $WLMDBSqlSetupCommand = "C:\cfn\scripts\Sql-Setup.ps1 -DeploymentName '$DeploymentName' -Region '$Region' -SqlServerName '$SqlServerName' -SqlSvmName '$SqlSvmName' -FsxDataVolumeName '$FsxDataVolumeName' -FsxLogVolumeName '$FsxLogVolumeName' -FsxFileSystemId '$FsxFileSystemId' -FsxTempDbVolumeName '$FsxTempDbVolumeName' -FsxDataLunSize '$FsxDataLunSize' -SqlIgroupName '$SqlIgroupName' -FsxVolumeSnapshotPolicy '$FsxVolumeSnapshotPolicy' -AdDnsIpAddresses '$AdDnsIpAddresses' -DomainDnsName '$DomainDnsName' -DomainAdminUser '$DomainAdminUser' -SqlAdminAccounts '$SqlAdminAccounts' -SqlCollation '$SqlCollation'  -InstanceId '$InstanceId' -LogFeatureEnabled '$LogFeatureEnabled' -SqlNodeName '$SqlNodeName' -IsStandalone $IsStandaloneString -NodeType '$NodeType' -WorkloadSecurityGroupId '$WorkloadSecurityGroupId' -MssqlMediaBucketName '$MssqlMediaBucketName' -AmiId '$AmiId'"
 
 if ($IsStandalone -eq $false) {
-    $WLMDBSqlSetupCommand += " -FsxQuorumVolumeName '$FsxQuorumVolumeName' -MssqlMediaPathKey '$MssqlMediaPathKey' -SqlFsxWsFcName '$SqlFsxWsFcName' -SqlFsxFciName '$SqlFsxFciName' -SqlFsxServerNetBiosName '$SqlFsxServerNetBiosName' -SqlFsxServerNetBiosName2 '$SqlFsxServerNetBiosName2' -NetworkInterface1FirstPrivateIp '$NetworkInterface1FirstPrivateIp' -NetworkInterface1SecondPrivateIp '$NetworkInterface1SecondPrivateIp' -NetworkInterface2FirstPrivateIp '$NetworkInterface2FirstPrivateIp' -NetworkInterface2SecondPrivateIp '$NetworkInterface2SecondPrivateIp' -PrivateSubnet1Id '$PrivateSubnet1Id' -PrivateSubnet2Id '$PrivateSubnet2Id'"
+    $WLMDBSqlSetupCommand += " -FsxQuorumVolumeName '$FsxQuorumVolumeName' -MssqlMediaPathKey '$MssqlMediaPathKey' -SqlFsxWsFcName '$SqlFsxWsFcName' -SqlFsxFciName '$SqlFsxFciName' -SqlFsxServerNetBiosName '$SqlFsxServerNetBiosName' -SqlFsxServerNetBiosName2 '$SqlFsxServerNetBiosName2' -NetworkInterface1FirstPrivateIp '$NetworkInterface1FirstPrivateIp' -NetworkInterface1SecondPrivateIp '$NetworkInterface1SecondPrivateIp' -NetworkInterface2FirstPrivateIp '$NetworkInterface2FirstPrivateIp' -NetworkInterface2SecondPrivateIp '$NetworkInterface2SecondPrivateIp' -PrivateSubnet1Id '$PrivateSubnet1Id' -PrivateSubnet2Id '$PrivateSubnet2Id' -PrimaryInstanceId '$PrimaryInstanceId' -SecondaryInstanceId '$SecondaryInstanceId'"
 }
 $WLMDBSqlSetupCommand += " | Out-File '$OutputFilePath'"
 
@@ -434,6 +438,60 @@ try {
     Invoke-CommandExecution -commands $SetupCommands -logFile "C:\cfn\tflogs\SetupCommands.log"
     Write-Output "Completed the initial setup"̣̣
 
+    # here join-domain has restart inside the script also
+    if ($IsStandalone -eq $true) {
+        Write-Output "Starting instance preparation for standalone"
+        $InstancePreparationCommands = @(
+            @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${AdDnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$NodeType'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$DomainAdminUser' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
+        )
+    }
+    elseif ($NodeType -eq 'primary') {
+        Write-Output "Starting instance preparation for FCI Primary Node"
+        $InstancePreparationCommands = @(
+            @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${AdDnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$NodeType'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\OpenWSFCPorts.ps1"; UseExecutionPolicy = $true },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-SecurityGroup.ps1 -SGID '$WorkloadSecurityGroupId'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$DomainAdminUser' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
+        )
+    }
+    else {
+        Write-Output "Starting instance preparation for FCI Secondary Node"
+        $InstancePreparationCommands = @(
+            @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
+            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${AdDnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$NodeType'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\OpenWSFCPorts.ps1"; UseExecutionPolicy = $true },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-SecurityGroup.ps1 -SGID '$WorkloadSecurityGroupId'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$DomainAdminUser' -GroupName 'Administrators'"; UseExecutionPolicy = $true },
+            @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$SqlAdminAccounts' -GroupName 'Administrators'"; UseExecutionPolicy = $true },
+            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false }
+        )
+    }
+    Invoke-CommandExecution -commands $InstancePreparationCommands -logFile "C:\cfn\tflogs\InstancePreparationCommands.log"
+    Write-Output "Completed instance preparation"
+    
+    if ($IsPrimaryOrStandalone) {
+        Write-Output "Starting instance prep continuation"
+        $UserName = if ($IsStandalone -eq $true) { "$DomainDnsName\\$SqlAdminAccounts" } else { "$SqlAdminAccounts" }
+        $IntancePreparationContinueCommands = @(
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\Create-ADServiceAccount.ps1 -DomainAdminUser '$DomainAdminUser' -DomainDNSName '$DomainDnsName' -ServiceAccountUser '$SqlAdminAccounts' -Parentstackname '$DeploymentName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Test-ADUser.ps1 -UserName '$SqlAdminAccounts' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"; UseExecutionPolicy = $true }, # this has timeout of 30 minutes and runs in interval of 1 minute
+            @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$UserName' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
+        )
+        Invoke-RemoteCommands -commands $IntancePreparationContinueCommands -logFile "C:\cfn\tflogs\IntancePreparationContinueCommands.log" -Credential $LoginCredential
+        Write-Output "Completed instance continuation"
+    }
+
     Write-Output "Starting ontap configuration"
     $OntapPreReqCommands = @(
         @{Command = "C:\cfn\scripts\sqlontap\install-ONTAPprereqs.ps1"; UseExecutionPolicy = $false },
@@ -483,7 +541,7 @@ try {
         # setup for FCI Secondary node
         Write-Output "Starting FCI Node2 initiator configuration"
         $AddNode2InitiatorCommand = @{
-            Command            = "C:\\cfn\\scripts\\sqlontap\\Add-node2initiator.ps1 -SQLVMName '$SqlSvmName' -igroup '$SqlIgroupName' -FileSystemId '$FsxFileSystemId' -ResourceID '$NodeType' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName'"; 
+            Command            = "C:\\cfn\\scripts\\sqlontap\\Add-node2initiator.ps1 -SQLVMName '$SqlSvmName' -igroup '$SqlIgroupName' -FileSystemId '$FsxFileSystemId' -ResourceID '$NodeType' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -IsTerraform 1 -PrimaryInstanceId '$PrimaryInstanceId'";
             UseExecutionPolicy = $false 
         }
         Invoke-CommandExecution -commands $AddNode2InitiatorCommand -logFile "C:\cfn\tflogs\AddNode2InitiatorCommand.log"
@@ -495,60 +553,6 @@ try {
         )
         Invoke-CommandExecution -commands $InitializeOntapCommands -logFile "C:\cfn\tflogs\InitializeOntapCommands.log"
         Write-Output "Completed connect ontap instance for FCI Secondary Node"
-    }
-
-    # here join-domain has restart inside the script also
-    if ($IsStandalone -eq $true) {
-        Write-Output "Starting instance preparation for standalone"
-        $InstancePreparationCommands = @(
-            @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${AdDnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$NodeType'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$DomainAdminUser' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
-        )
-    }
-    elseif ($NodeType -eq 'primary') {
-        Write-Output "Starting instance preparation for FCI Primary Node"
-        $InstancePreparationCommands = @(
-            @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${AdDnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$NodeType'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\OpenWSFCPorts.ps1"; UseExecutionPolicy = $true },
-            @{Command = "C:\\cfn\\scripts\\common\\Update-SecurityGroup.ps1 -SGID '$WorkloadSecurityGroupId'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$DomainAdminUser' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
-        )
-    }
-    else {
-        Write-Output "Starting instance preparation for FCI Secondary Node"
-        $InstancePreparationCommands = @(
-            @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
-            @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${AdDnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$NodeType'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\OpenWSFCPorts.ps1"; UseExecutionPolicy = $true },
-            @{Command = "C:\\cfn\\scripts\\common\\Update-SecurityGroup.ps1 -SGID '$WorkloadSecurityGroupId'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$DomainAdminUser' -GroupName 'Administrators'"; UseExecutionPolicy = $true },
-            @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$SqlAdminAccounts' -GroupName 'Administrators'"; UseExecutionPolicy = $true },
-            @{Command = "C:\\cfn\\scripts\\common\\Update-DNSSuffixSearchList.ps1 -DomainDNSName '$DomainDnsName'"; UseExecutionPolicy = $false }
-        )
-    }
-    Invoke-CommandExecution -commands $InstancePreparationCommands -logFile "C:\cfn\tflogs\InstancePreparationCommands.log"
-    Write-Output "Completed instance preparation"
-
-    if ($IsPrimaryOrStandalone) {
-        Write-Output "Starting instance prep continuation"
-        $UserName = if ($IsStandalone -eq $true) { "$DomainDnsName\\$SqlAdminAccounts" } else { "$SqlAdminAccounts" }
-        $IntancePreparationContinueCommands = @(
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Create-ADServiceAccount.ps1 -DomainAdminUser '$DomainAdminUser' -DomainDNSName '$DomainDnsName' -ServiceAccountUser '$SqlAdminAccounts' -Parentstackname '$DeploymentName'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Test-ADUser.ps1 -UserName '$SqlAdminAccounts' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"; UseExecutionPolicy = $true }, # this has timeout of 30 minutes and runs in interval of 1 minute
-            @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$UserName' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
-        )
-        Invoke-RemoteCommands -commands $IntancePreparationContinueCommands -logFile "C:\cfn\tflogs\IntancePreparationContinueCommands.log" -Credential $LoginCredential
-        Write-Output "Completed instance continuation"
     }
    
     if ($IsStandalone -eq $true) {
@@ -581,8 +585,8 @@ try {
         $ConfigureInstance = @(
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Node1AddCluster.ps1 -DomainDNSName `"$DomainDNSName`" -Parentstackname `"$DeploymentName`" -FileSystemId `"$FsxFileSystemId`" -DomainAdminUser `"$DomainAdminUser`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlontap\\Node1ONTAPClusterConfig.ps1 -DomainDNSName `"$DomainDNSName`" -WSFCNode1PrivateIP2 `"$NetworkInterface1FirstPrivateIp`" -ClusterName `"$SqlFsxWsFcName`" -Parentstackname `"$DeploymentName`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`""; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Configure-MAD-Permissions.ps1 -DomainAdminUser `"$DomainAdminUser`" -wsfcName `"$SqlFsxWsFcName`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false }
+            @{Command = "C:\\cfn\\scripts\\sqlontap\\Node1ONTAPClusterConfig.ps1 -DomainDNSName `"$DomainDNSName`" -WSFCNode1PrivateIP2 `"$NetworkInterface1FirstPrivateIp`" -ClusterName `"$SqlFsxWsFcName`" -Parentstackname `"$DeploymentName`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\Configure-MAD-Permissions.ps1 -DomainAdminUser `"$DomainAdminUser`" -wsfcName `"$SqlFsxWsFcName`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false }
         )
         Invoke-RemoteCommands -commands $ConfigureInstance -logFile "C:\\cfn\\tflogs\\ConfigureInstance.log" -Credential $LoginCredential
         Write-Output "Completed configure instance for FCI Primary Node"
@@ -592,13 +596,13 @@ try {
         $FCIConfigure = @(
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Uninstall-SQL.ps1 -AMIID `"$AmiId`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'First'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\prepare-fci.ps1 -MSSQLMediaBucket `"$MssqlMediaBucketName`" -MSSQLMediaKey `"$MssqlMediaPathKey`" -AMIID `"$AmiId`" -SqlUser `"$SqlAdminAccounts`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\prepare-fci.ps1 -MSSQLMediaBucket `"$MssqlMediaBucketName`" -MSSQLMediaKey `"$MssqlMediaPathKey`" -AMIID `"$AmiId`" -SqlUser `"$SqlAdminAccounts`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`" -IsTerraform 1 -SecondaryInstanceId `"$SecondaryInstanceId`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'Second'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\DSC\\PostConfigDSC.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Install-sqlcu.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'Third'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlontap\\completeONTAP-fci.ps1 -Node1FciIp `"$NetworkInterface1SecondPrivateIp`" -Node1SubnetId `"$PrivateSubnet1ID`" -Node2FciIp `"$NetworkInterface2SecondPrivateIp`" -Node2SubnetId `"$PrivateSubnet2ID`" -FCIName `"$SqlFsxFciName`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -SqlCollation `"$SqlCollation`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Validate-FCICluster.ps1 -DomainAdminUser `"$DomainAdminUser`" -WFCName `"$SqlFsxWsFcName`" -Node1 `"$SqlFsxServerNetBiosName`" -Node2 `"$SqlFsxServerNetBiosName2`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlontap\\completeONTAP-fci.ps1 -Node1FciIp `"$NetworkInterface1SecondPrivateIp`" -Node1SubnetId `"$PrivateSubnet1ID`" -Node2FciIp `"$NetworkInterface2SecondPrivateIp`" -Node2SubnetId `"$PrivateSubnet2ID`" -FCIName `"$SqlFsxFciName`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -SqlCollation `"$SqlCollation`" -Parentstackname `"$DeploymentName`" -IsTerraform 1 -SecondaryInstanceId `"$SecondaryInstanceId`""; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\Validate-FCICluster.ps1 -DomainAdminUser `"$DomainAdminUser`" -WFCName `"$SqlFsxWsFcName`" -Node1 `"$SqlFsxServerNetBiosName`" -Node2 `"$SqlFsxServerNetBiosName2`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Validate-SQLLogin.ps1 -SqlServer `"$SqlFsxFciName`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\SetMaxDOP.ps1 -DomainAdminUser `"$DomainAdminUser`" -Parentstackname `"$DeploymentName`" -NetBIOSName `"$SqlFsxServerNetBiosName`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Update-SQLNodeTag.ps1 -StackName `"$DeploymentName`""; UseExecutionPolicy = $false },
@@ -613,11 +617,11 @@ try {
         # FCI Node 2 configuration
         Write-Output "Starting ConfigureInstance for FCI Secondary Node"
         $ConfigureInstance = @(
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\AdditionalNodeAddCluster.ps1 -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\AdditionalNodeAddCluster.ps1 -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'First'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\AdditionalNodeClusterConfig.ps1 -WSFCNode2PrivateIP2 `"$NetworkInterface2FirstPrivateIp`" -ClusterName `"$SqlFsxWsFcName`" -Parentstackname `"$DeploymentName`" -DomainAdminUser `"$DomainAdminUser`""; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\AdditionalNodeClusterConfig.ps1 -WSFCNode2PrivateIP2 `"$NetworkInterface2FirstPrivateIp`" -ClusterName `"$SqlFsxWsFcName`" -Parentstackname `"$DeploymentName`" -DomainAdminUser `"$DomainAdminUser`" -IsTerraform 1 -PrimaryInstanceId `"$PrimaryInstanceId`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'Second'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Add-SecondaryNode.ps1 -WSFCNode2PrivateIP2 `"$NetworkInterface2FirstPrivateIp`" -ClusterName `"$SqlFsxWsFcName`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false }
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\Add-SecondaryNode.ps1 -WSFCNode2PrivateIP2 `"$NetworkInterface2FirstPrivateIp`" -ClusterName `"$SqlFsxWsFcName`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false }
         )
         Invoke-RemoteCommands -commands $ConfigureInstance -logFile "C:\\cfn\\tflogs\\ConfigureInstance.log" -Credential $LoginCredential
         Write-Output "Completed ConfigureInstance for FCI Secondary Node"
@@ -626,7 +630,7 @@ try {
         $ConfigureFCI = @(
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Uninstall-SQL.ps1 -AMIID `"$AmiId`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'First'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\prepare-fci.ps1 -MSSQLMediaBucket `"$MssqlMediaBucketName`" -MSSQLMediaKey `"$MssqlMediaPathKey`" -AMIID `"$AmiId`" -SqlUser `"$SqlAdminAccounts`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\prepare-fci.ps1 -MSSQLMediaBucket `"$MssqlMediaBucketName`" -MSSQLMediaKey `"$MssqlMediaPathKey`" -AMIID `"$AmiId`" -SqlUser `"$SqlAdminAccounts`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'Second'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\DSC\\PostConfigDSC.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Install-sqlcu.ps1"; UseExecutionPolicy = $false },

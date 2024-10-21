@@ -26,6 +26,7 @@ import { getDeploymentJobsSummary } from '../operations/jobs-operations';
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_STATIC_TEMPLATE_PREFIX_PATH = '/v1/cloudformation/template';
 const API_TERRAFORM_PREFIX_PATH = '/v1/terraform/setup';
+const API_PGSQL_PREFIX_PATH = '/v1/pgsql/credentials/:credentialsId/regions/:region';
 
 export default function deploymentRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -146,7 +147,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         })
         .post(
-            `${API_PREFIX_PATH}/cloudformation/pgsql/deploy`,
+            `${API_PGSQL_PREFIX_PATH}/cloudformation/deploy`,
             { schema: PgSqlDeployTemplateSchema },
             async (request, reply) => {
                 const {
