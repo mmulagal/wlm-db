@@ -6,7 +6,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { handleCreateNewSandbox } from './CreateNewSandboxPayload';
 import styles from './CreateNewSandboxFooter.module.scss';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../store/notificationSlice';
-import { WLF_TABS } from '../../../../utils/consts';
+import { FORM_TO_WLF_NAVIGATE_BLUEXP, WLF_TABS } from '../../../../utils/consts';
 import { useCreateSandboxMutation } from '../../../../utils/apiService';
 import { setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
 import { setShowError } from '../../../../store/workloadFactory/createSandboxSlice';
@@ -18,10 +18,15 @@ const CreateNewSandboxFooter = () => {
     const dispatch = useDispatch();
 
     const state = useAppSelector(state => state);
+    const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
 
     const closeHandler = () => {
         dispatch(updateRefreshBlocked(true));
-        navigate('../databases');
+        if (isWorkloadFactoryStatus) {
+            navigate('../databases');
+        } else {
+            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+        }
     };
 
     const [createNewSandbox] = useCreateSandboxMutation();
@@ -54,7 +59,11 @@ const CreateNewSandboxFooter = () => {
                                 onClick={() => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                     dispatch(updateRefreshBlocked(true));
-                                    navigate('../databases');
+                                    if (isWorkloadFactoryStatus) {
+                                        navigate('../databases');
+                                    } else {
+                                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                                    }
                                     dispatch(clearNotifications());
                                 }}
                             >
@@ -69,7 +78,11 @@ const CreateNewSandboxFooter = () => {
                         })
                     );
                     dispatch(updateRefreshBlocked(true));
-                    navigate('../databases');
+                    if (isWorkloadFactoryStatus) {
+                        navigate('../databases');
+                    } else {
+                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                    }
                 }
             } catch (error) {
                 dispatch(setIsLoading(false));
