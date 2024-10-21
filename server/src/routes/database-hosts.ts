@@ -36,7 +36,8 @@ import {
     GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,
-    DriftAssessment
+    DriftAssessment,
+    OptimizeStorageSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -54,6 +55,8 @@ import {
     getSandboxSnapshots
 } from '../operations/sandbox-operations';
 import { fetchDriftAssessment } from '../operations/drift-assessment';
+import { optimizeInstance } from '../operations/drift-assessment-optimize-opertaions';
+import { OptimizeInstanceParams } from '../utils/consts';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_PREFIX_PATH_V2 = '/v2/credentials/:credentialsId/regions/:region';
@@ -492,6 +495,26 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseInstanceId,
                     fields
                 );
+                return reply.send(response);
+            }
+        )
+        .patch(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize`,
+            { schema: OptimizeStorageSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
+                } = request;
+
+                const response = await optimizeInstance({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    volumeOptimizeData: request.body.volume,
+                    lunOptimizeData: request.body.lun
+                } as OptimizeInstanceParams);
                 return reply.send(response);
             }
         );

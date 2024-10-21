@@ -264,4 +264,30 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     return (Deflate-String $response)
 `;
 
-export { STORAGE_CONFIGURATION_ASSESSMENT };
+const OPTIMIZE_STOARGE_PARAMS_SCRIPT = (
+    fsxid: string,
+    fsxregion: string,
+    apiEndpoint: string,
+    apiQueryFilter: string,
+    apiBody: string
+) => `
+    $WarningPreference = 'SilentlyContinue';
+    $FSxID = '${fsxid}'
+    $FSxRegion = '${fsxregion}'
+    $apiEndpoint = '${apiEndpoint}'
+    $apiQueryFilter = '${apiQueryFilter}'
+    $apiBody = '${apiBody}'
+
+    ${ontapRestRequest}
+
+    $newBody = $apiBody | ConvertFrom-Json
+
+    $body =   $newBody | ConvertTo-Json
+
+    $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
+
+    $ontapResponse | ConvertTo-Json
+    
+`;
+
+export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STOARGE_PARAMS_SCRIPT };

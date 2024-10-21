@@ -471,4 +471,4 @@ async function fetchDriftAssessment(
     return driftAssesmentData;
 }
 
-export { triggerDriftAssessment, fetchDriftAssessment };
+export { triggerDriftAssessment, fetchDriftAssessment, driftAssesment };
