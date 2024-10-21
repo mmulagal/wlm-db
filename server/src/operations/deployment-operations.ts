@@ -87,7 +87,8 @@ import {
     PG_TEMPLATE_OPTIONAL_PARAMETERS,
     PGSQL_VERSION,
     AuditStatus,
-    FCI
+    FCI,
+    PGSQL_MASTER_TEMPLATE_PATH
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -1485,7 +1486,7 @@ async function deployCfTemplateForPgSql(
         region
     );
 
-    const customMasterTemplatePath = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath = `${WLMDB}/${stackName}/${PGSQL_MASTER_TEMPLATE_PATH}`;
 
     const signedMasterTemplateUrl = await getPreSignedUrl(
         TEMPLATE_BUCKET_REGION,
@@ -1758,7 +1759,7 @@ async function createCfTemplateForPgsqlDeployment(
 
     const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
 
-    const customMasterTemplatePath: string = `${WLMDB}/${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${WLMDB}/${derivedParams.StackName}/${PGSQL_MASTER_TEMPLATE_PATH}`;
 
     const signedMasterTemplateUrl = await getPreSignedUrl(
         TEMPLATE_BUCKET_REGION,

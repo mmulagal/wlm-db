@@ -553,6 +553,7 @@ const VALIDATION_INSTANCE_TYPE = 'ValidationNodeInstanceType';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
+const PGSQL_MASTER_TEMPLATE_PATH = 'pgsql/templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = `https://${DEFAULT_AWS_REGION}.console.aws.amazon.com/cloudformation/home`;
 const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
@@ -1377,27 +1378,27 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
 const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptValidation',
-        url: `${WLMDB}/scripts/validate-vpc.sh`
+        url: `${WLMDB}/pgsql/scripts/validate-vpc.sh`
     }
 ];
 
 const PGSQL_TEMPLATES_ASSETS = [
     {
         name: 'FSXNewTemplate',
-        url: 'templates/fsx-new.yaml'
+        url: 'pgsql/templates/fsx-new.yaml'
     },
 
     {
         name: 'FSXExistingTemplate',
-        url: 'templates/fsx-existing.yaml'
+        url: 'pgsql/templates/fsx-existing.yaml'
     },
     {
         name: 'ValidationTemplate',
-        url: 'templates/vpc-validation.yaml'
+        url: 'pgsql/templates/vpc-validation.yaml'
     },
     {
         name: 'SQLStandaloneTemplate',
-        url: 'templates/standalone-deployment.yaml'
+        url: 'pgsql/templates/standalone-deployment.yaml'
     }
 ];
 
@@ -1768,5 +1769,6 @@ export {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     REDIS_URL,
-    DRIFT_ASSESSMENT_QUEUE
+    DRIFT_ASSESSMENT_QUEUE,
+    PGSQL_MASTER_TEMPLATE_PATH
 };
