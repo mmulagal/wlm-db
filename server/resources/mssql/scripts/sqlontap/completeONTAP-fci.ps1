@@ -122,7 +122,7 @@ try {
         Write-Output "Base Windows ami: Attemting complete failover fci from available or s3 downloaded sql installer."
         $SQLMediaPath = 'C:\cfn\Installer\SQLServerSetup\setup.exe'
         If (Test-Path -path "C:\SQL*") {
-            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where { $_.name -eq "setup.exe" } ).fullname | Sort-Object -Property Length
+            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*\*" -Recurse | where { $_.name -eq "setup.exe" } ).fullname | Sort-Object -Property Length
             If ($SQLInstallerPaths -is 'string') {
                 $SQLMediaPath = $SQLInstallerPaths
             }
