@@ -15,7 +15,10 @@ import {
 import { derivePropertiesFromARN, getEc2Arn } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { getCredentialsDetails } from '../cloud-manager/credentials-operations';
-import { getInstanceTypesFromInstanceRequirements } from './ec2-operations';
+import {
+    getInstanceTypesFromInstanceRequirements,
+    getInstanceTypesFromInstanceRequirementsForManagedInstances
+} from './ec2-operations';
 import { getSqlInstancePricingDetails } from './pricing-operations';
 import { FINDING, TCO_FEATURE } from '../../utils/consts';
 import { createTrackedEc2Records, listTrackedEc2, updateTrackedEc2Record } from '../../lib/database/db';
@@ -103,7 +106,8 @@ async function manageInstanceRecommendationPreReqs(
     accountId: string,
     instanceIds: string[],
     ebsVolumeIds: string[],
-    sqlServerDeploymentType: string
+    sqlServerDeploymentType: string,
+    isManagedInstance: boolean = false
 ) {
     logger.info('Managing instance recommendation prerequisites', {
         awsAccountId,
@@ -115,14 +119,23 @@ async function manageInstanceRecommendationPreReqs(
         ebsVolumeIds,
         sqlServerDeploymentType
     });
-
-    const instanceTypes = await getInstanceTypesFromInstanceRequirements(
-        credentialsId,
-        region,
-        instanceIds,
-        ebsVolumeIds,
-        sqlServerDeploymentType
-    );
+    let instanceTypes: string[] | undefined = [];
+    if (isManagedInstance) {
+        logger.info('Instance is already managed, skipping recommendation preference creation');
+        instanceTypes = await getInstanceTypesFromInstanceRequirementsForManagedInstances(
+            credentialsId,
+            region,
+            instanceIds
+        );
+    } else {
+        instanceTypes = await getInstanceTypesFromInstanceRequirements(
+            credentialsId,
+            region,
+            instanceIds,
+            ebsVolumeIds,
+            sqlServerDeploymentType
+        );
+    }
 
     if (instanceTypes && instanceTypes.length <= 0) {
         throw new Error(

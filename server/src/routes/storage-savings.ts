@@ -17,7 +17,7 @@ import {
     getManualModeStorageSavingsCalculationMetrics,
     performManualModeStorageSavingsCalculations
 } from '../operations/storage-savings-operations';
-import { updatePreferences } from '../operations/cron-operations';
+import { updateTcoInstanceRecommendationPreferences } from '../operations/cron-operations';
 
 export default function storageSavingsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -31,7 +31,7 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
         '/v1/internal/recommendation-preferences',
         { schema: internalUpdateRecommendationPreferenceSchema },
         async (_, reply) => {
-            updatePreferences();
+            updateTcoInstanceRecommendationPreferences();
             return reply.code(202).send({});
         }
     );

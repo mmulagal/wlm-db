@@ -12,7 +12,8 @@ import {
     DescribeSnapshotsCommandInput,
     _InstanceType,
     ImageState,
-    PlatformValues
+    PlatformValues,
+    CpuManufacturer
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import {
@@ -685,6 +686,49 @@ async function determineBiggerInstance(region: string, instanceTypes: _InstanceT
     return biggerInstanceType;
 }
 
+async function getInstanceTypesFromInstanceRequirementsForManagedInstances(
+    credentialsId: string,
+    region: string,
+    instanceIds: string[]
+) {
+    logger.info(
+        'Getting instance types from instance requirements for managed instances',
+        credentialsId,
+        region,
+        instanceIds
+    );
+
+    const { Reservations = [] } = await describeInstance(credentialsId, region, {
+        InstanceIds: instanceIds
+    });
+
+    const instances = Reservations.map(reservation => reservation.Instances || []).flat();
+    const [{ Architecture, VirtualizationType }] = instances;
+    if (Architecture && VirtualizationType) {
+        const params = {
+            ArchitectureTypes: [Architecture],
+            VirtualizationTypes: [VirtualizationType],
+            InstanceRequirements: {
+                AllowedInstanceTypes: ['m*', 'c*', 'r*'], // limit to specific instance types: 'm*', 'c*', 'r*' families.
+                CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES], // Filtering AMD based instances
+                VCpuCount: { Min: 2 },
+                MemoryMiB: { Min: 1024 }
+            }
+        };
+
+        const { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
+            credentialsId,
+            region,
+            params
+        );
+
+        const requiredInstanceTypes = compact(
+            instanceTypes?.map(requiredInstanceType => requiredInstanceType.InstanceType)
+        );
+
+        return requiredInstanceTypes;
+    }
+}
 async function getInstanceTypesFromInstanceRequirements(
     credentialsId: string,
     region: string,
@@ -824,6 +868,7 @@ export {
     enableVpcDnsAttributes,
     getValidationNodeInstanceType,
     isEbsAwsBackupEnabled,
+    getInstanceTypesFromInstanceRequirementsForManagedInstances,
     getInstanceTypesFromInstanceRequirements,
     getInstanceDetailsByPrivateIp,
     determineBiggerInstance,

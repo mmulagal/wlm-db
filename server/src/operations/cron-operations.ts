@@ -1,7 +1,7 @@
 import config from 'config';
 import Promise from 'bluebird';
 import ms from 'ms';
-import { STORAGE_TYPE } from '@prisma/client';
+import { STORAGE_TYPE, database_instances as DatabaseInstances } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
 import { Queue, Worker } from 'bullmq';
 import Redis from 'ioredis';
@@ -9,6 +9,7 @@ import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
     AssessmentTriggeredBy,
+    CONTINUOUS_ASSESSMENT_FEATURE,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     TCO_FEATURE
@@ -17,6 +18,7 @@ import getLogger from '../utils/logger';
 import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './database/job-operations';
 
 import {
+    createTrackedEc2Records,
     listAllManagedInstances,
     listTrackedEc2,
     removeTrackedEc2Record,
@@ -29,7 +31,7 @@ import { getAoagPartnerNodesDetails } from './storage-savings-operations';
 import { fetchSqlServerInstanceConfiguration } from './recommendation-operations';
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { triggerDriftAssessment } from './drift-assessment';
-import { DriftAssessmentJob } from '../utils/common-types';
+import { DriftAssessmentJob, Metadata } from '../utils/common-types';
 
 const logger = getLogger();
 
@@ -62,13 +64,13 @@ function purgeOlderJobs() {
 // Scheduled task to update and manage EC2 instance recommendation preferences based on recent usage, and remove entries for instances no longer available in AWS."
 function updateInstanceRecommendationPreferences() {
     setInterval(async () => {
-        await updatePreferences();
+        await updateTcoInstanceRecommendationPreferences();
     }, Number(ms(config.get('db.tco.update-recommendation-preference'))));
 }
 
-async function updatePreferences() {
+async function updateTcoInstanceRecommendationPreferences() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
-        logger.info('Updating instance recommendation preferences');
+        logger.info('Updating instance recommendation preferences for TCO feature');
         const trackedEc2Instances = await listTrackedEc2(TCO_FEATURE);
         await Promise.map(
             trackedEc2Instances,
@@ -154,6 +156,113 @@ async function updatePreferences() {
     });
 }
 
+async function updateManagedInstanceRecommendationPreferencesInterval() {
+    setInterval(async () => {
+        await updateManagedInstanceRecommendationPreferences();
+    }, Number(ms('1d')));
+}
+
+async function updateManagedInstanceRecommendationPreferences() {
+    getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
+        logger.info('Updating instance recommendation preferences for Continuous assessment feature');
+
+        const managedInstances = await listAllManagedInstances();
+        if (isEmpty(managedInstances)) {
+            logger.error('No successfully managed database instances found.');
+            return;
+        }
+        const trackedEc2Instances = await listTrackedEc2(CONTINUOUS_ASSESSMENT_FEATURE);
+        const trackedEc2InstanceIds = trackedEc2Instances.map(instance => instance.instance_id);
+
+        // group managed instances by account_id, region, credentials_id, cloud_provider_account_id, and database_deployment_type so that we can manage a set of instances in bulk
+        const grouped: { [key: string]: DatabaseInstances[] } = managedInstances.reduce(
+            (acc: { [key: string]: DatabaseInstances[] }, managedInstance) => {
+                const key = `${managedInstance.account_id}|${managedInstance.region}|${managedInstance.credentials_id}|${managedInstance.resource.cloud_provider_account_id}|${managedInstance.database_deployment_type}`;
+                if (!acc[key]) {
+                    acc[key] = [];
+                }
+                acc[key].push(managedInstance);
+                return acc;
+            },
+            {} as { [key: string]: DatabaseInstances[] }
+        );
+
+        await Promise.all(
+            Object.entries(grouped).map(async ([key, instances]) => {
+                const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('|');
+                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                const managedInstanceToBeUpdated = instances.filter(
+                    instance => !trackedEc2InstanceIds.includes(instance.database_instance_id)
+                ); // update compute optimizer recommendation preferences only for managed instances that are not already being tracked, becuase the recommendation preference is static irrespsctive of the number of times it is updated
+                if (managedInstanceToBeUpdated.length === 0) {
+                    return;
+                }
+                const recordsToCreate: {
+                    account_id: string;
+                    region: string;
+                    credentials_id: string;
+                    instance_id: string;
+                    feature: string;
+                    cloud_provider_account_id: string;
+                }[] = [];
+                managedInstanceToBeUpdated.forEach(async instance => {
+                    const { node1InstanceId, node2InstanceId } = instance?.metadata as unknown as Metadata;
+
+                    const instanceId = node1InstanceId || instance.database_instance_id;
+
+                    const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
+                    await manageInstanceRecommendationPreReqs(
+                        awsAccountId,
+                        region,
+                        credentialsId,
+                        resourceArn,
+                        accountId,
+                        [node1InstanceId],
+                        [],
+                        deploymentType as string,
+                        true
+                    );
+                    recordsToCreate.push({
+                        account_id: accountId,
+                        region,
+                        credentials_id: credentialsId,
+                        instance_id: instanceId,
+                        feature: CONTINUOUS_ASSESSMENT_FEATURE,
+                        cloud_provider_account_id: awsAccountId
+                    });
+                    if (node2InstanceId) {
+                        const resourceArn2 = getEc2Arn(awsAccountId, region, node2InstanceId);
+                        await manageInstanceRecommendationPreReqs(
+                            awsAccountId,
+                            region,
+                            credentialsId,
+                            resourceArn2,
+                            accountId,
+                            [node2InstanceId],
+                            [],
+                            deploymentType as string,
+                            true
+                        );
+                        recordsToCreate.push({
+                            account_id: accountId,
+                            region,
+                            credentials_id: credentialsId,
+                            instance_id: node2InstanceId,
+                            feature: CONTINUOUS_ASSESSMENT_FEATURE,
+                            cloud_provider_account_id: awsAccountId
+                        });
+                    }
+
+                    if (recordsToCreate.length > 0) {
+                        await createTrackedEc2Records(recordsToCreate);
+                    }
+                });
+            })
+        );
+
+        logger.info('Updating instance recommendation preferences for managed instances completed');
+    });
+}
 async function scheduledAssessment() {
     const managedInstances = await listAllManagedInstances();
     if (isEmpty(managedInstances)) {
@@ -224,7 +333,8 @@ export {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
+    updateManagedInstanceRecommendationPreferencesInterval,
     updateInstanceRecommendationPreferences,
-    updatePreferences,
+    updateTcoInstanceRecommendationPreferences,
     scheduledAssessment
 };

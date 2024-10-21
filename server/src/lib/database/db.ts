@@ -651,6 +651,9 @@ async function listAllManagedInstances() {
     return prisma.client.database_instances.findMany({
         orderBy: {
             id: 'asc'
+        },
+        include: {
+            resource: true
         }
     });
 }
