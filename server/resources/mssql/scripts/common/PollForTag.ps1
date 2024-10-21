@@ -13,7 +13,7 @@ function PollForTag {
 
     while (-not $TagFound -and $RetryCount -lt $MaxRetries) {
         try {
-            $Tags = Get-EC2Tag -Region $Region -ResourceId $InstanceId
+            $Tags = Get-EC2Tag -Region $Region -Filter @{ Name = "resource-id"; Values = $InstanceId }
             $Tag = $Tags | Where-Object { $_.Key -eq $TagKey -and $_.Value -eq $TagValue }
             $FailureTag = $Tags | Where-Object { $_.Key -eq "user_data" -and $_.Value -eq "failed" }
 
