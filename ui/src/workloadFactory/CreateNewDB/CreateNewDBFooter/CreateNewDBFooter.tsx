@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import { useCreateUserDBMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { WLF_TABS } from '../../../utils/consts';
+import { FORM_TO_WLF_NAVIGATE_BLUEXP, WLF_TABS } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './CreateNewUserFooter.module.scss';
 import { updateRefreshBlocked } from '../../../store/authSlice';
@@ -20,10 +20,15 @@ const CreateNewUserFooter = () => {
     const resourceId = useAppSelector(state => state.auth.resourceId);
     const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
     const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
+    const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
 
     const closeHandler = () => {
         dispatch(updateRefreshBlocked(true));
-        navigate('../databases');
+        if (isWorkloadFactoryStatus) {
+            navigate('../databases');
+        } else {
+            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+        }
     };
 
     const [createNewUserDb] = useCreateUserDBMutation();
@@ -54,7 +59,12 @@ const CreateNewUserFooter = () => {
                                 onClick={() => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                     dispatch(updateRefreshBlocked(true));
-                                    navigate('../databases');
+                                    if (isWorkloadFactoryStatus) {
+                                        navigate('../databases');
+                                    } else {
+                                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                                    }
+
                                     dispatch(clearNotifications());
                                 }}
                             >
@@ -79,7 +89,11 @@ const CreateNewUserFooter = () => {
                         );
                     }
                     dispatch(updateRefreshBlocked(true));
-                    navigate('../databases');
+                    if (isWorkloadFactoryStatus) {
+                        navigate('../databases');
+                    } else {
+                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                    }
                 }
             } catch (error) {
                 dispatch(setIsLoading(false));
