@@ -135,7 +135,7 @@ function Get-InstanceIdByName {
         [string]$Region
     )
     try {
-        $Instance = Get-EC2Instance -Region $Region -Filter @{ Name = "tag:Name"; Values = $Name }
+        $Instance = Get-EC2Instance -Region $Region -Filter @{ Name = "tag:Name"; Values = $Name }, @{ Name = "instance-state-name"; Values = @("running", "initializing") }
         $InstanceId = $Instance.Instances.InstanceId
         return $InstanceId
     }
