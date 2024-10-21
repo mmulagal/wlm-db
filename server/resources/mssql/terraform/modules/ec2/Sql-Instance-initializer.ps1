@@ -129,6 +129,22 @@ function Get-InstanceId {
     }
 }
 
+function Get-InstanceIdByName {
+    param (
+        [string]$Name,
+        [string]$Region
+    )
+    try {
+        $Instance = Get-EC2Instance -Region $Region -Filter @{ Name = "tag:Name"; Values = $Name }
+        $InstanceId = $Instance.Instances.InstanceId
+        return $InstanceId
+    }
+    catch {
+        Write-Output "An error occurred while getting the instance ID for $Name: $($_.Exception.Message)"
+        return $null
+    }
+}
+
 function Install-SSMAgent {
     param(
         [string]$Region
@@ -221,6 +237,22 @@ function Invoke-CommandExecution {
 try {
     $InstanceId = Get-InstanceId
     Write-Output "Instance ID: $InstanceId"
+
+    if ($NodeType -eq 'primary') {
+        $PrimaryInstanceId = $InstanceId
+        $SecondaryInstanceId = Get-InstanceIdByName -Name $SqlFsxServerNetBiosName2 -Region $Region
+    }
+    elseif ($NodeType -eq 'secondary') {
+        $SecondaryInstanceId = $InstanceId
+        $PrimaryInstanceId = Get-InstanceIdByName -Name $SqlFsxServerNetBiosName -Region $Region
+    }
+    else {
+        Write-Output "Nothing to get the instance ID for"
+    }
+
+    Write-Output "Primary Instance ID: $PrimaryInstanceId"
+    Write-Output "Secondary Instance ID: $SecondaryInstanceId"
+
     Install-SSMAgent -Region "$Region"
 
     # FetchResources
@@ -287,7 +319,7 @@ try {
 
     if ($IsStandalone -eq $false) {
         Write-Output "FCI Instance Command"
-        $SqlSetupCommand += " -FsxQuorumVolumeName '$FsxQuorumVolumeName' -MssqlMediaPathKey '$MssqlMediaPathKey' -SqlFsxWsFcName '$SqlFsxWsFcName' -SqlFsxFciName '$SqlFsxFciName' -SqlFsxServerNetBiosName '$SqlFsxServerNetBiosName' -SqlFsxServerNetBiosName2 '$SqlFsxServerNetBiosName2' -NetworkInterface1FirstPrivateIp '$NetworkInterface1FirstPrivateIp' -NetworkInterface1SecondPrivateIp '$NetworkInterface1SecondPrivateIp' -NetworkInterface2FirstPrivateIp '$NetworkInterface2FirstPrivateIp' -NetworkInterface2SecondPrivateIp '$NetworkInterface2SecondPrivateIp' -PrivateSubnet1Id '$PrivateSubnet1Id' -PrivateSubnet2Id '$PrivateSubnet2Id'"
+        $SqlSetupCommand += " -FsxQuorumVolumeName '$FsxQuorumVolumeName' -MssqlMediaPathKey '$MssqlMediaPathKey' -SqlFsxWsFcName '$SqlFsxWsFcName' -SqlFsxFciName '$SqlFsxFciName' -SqlFsxServerNetBiosName '$SqlFsxServerNetBiosName' -SqlFsxServerNetBiosName2 '$SqlFsxServerNetBiosName2' -NetworkInterface1FirstPrivateIp '$NetworkInterface1FirstPrivateIp' -NetworkInterface1SecondPrivateIp '$NetworkInterface1SecondPrivateIp' -NetworkInterface2FirstPrivateIp '$NetworkInterface2FirstPrivateIp' -NetworkInterface2SecondPrivateIp '$NetworkInterface2SecondPrivateIp' -PrivateSubnet1Id '$PrivateSubnet1Id' -PrivateSubnet2Id '$PrivateSubnet2Id' -PrimaryInstanceId '$PrimaryInstanceId' -SecondaryInstanceId '$SecondaryInstanceId'"
     }
 
     $CommandToInvoke = @{Command = $SqlSetupCommand; UseExecutionPolicy = $false }
