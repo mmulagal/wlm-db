@@ -433,7 +433,7 @@ async function triggerDriftAssessment(
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.SANDBOX
+            type: JOBTYPE.ASSESSMENT
         });
 
         driftAssesment(accountId, credentialsId, region, job.id, databaseHostId, runningInstances, fields);
