@@ -160,7 +160,7 @@ async function scheduledAssessment() {
     logger.info(`Redis port: ${redisDetails.port}`);
 
     const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
-        connection: new Redis(redisDetails.port, redisDetails.host, { password: redisDetails.password })
+        connection: new Redis({ host: redisDetails.host, port: redisDetails.port, password: redisDetails.password })
     });
 
     logger.info('Debug queue');
@@ -194,22 +194,26 @@ async function scheduledAssessment() {
 
                 logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
 
-                driftAssessmentQueue.add(
-                    `driftAssessmentFor${resourceId}`,
-                    {
-                        accountId,
-                        credentialsId,
-                        region,
-                        resourceId,
-                        managedInstanceIds
-                    },
-                    {
-                        // 2hours to observe
-                        repeat: { every: 2 * 3600 * 1000 }, // 24 hours in milliseconds
-                        removeOnComplete: true,
-                        removeOnFail: true
-                    }
-                );
+                try {
+                    driftAssessmentQueue.add(
+                        `driftAssessmentFor${resourceId}`,
+                        {
+                            accountId,
+                            credentialsId,
+                            region,
+                            resourceId,
+                            managedInstanceIds
+                        },
+                        {
+                            // 2hours to observe
+                            repeat: { every: 2 * 3600 * 1000 }, // 24 hours in milliseconds
+                            removeOnComplete: true,
+                            removeOnFail: true
+                        }
+                    );
+                } catch (error: any) {
+                    logger.error(`Error while add job to the queue. Error: ${error}`);
+                }
 
                 logger.info(`Added assessment cron for ${resourceId}, ${managedInstanceIds}.`);
 
