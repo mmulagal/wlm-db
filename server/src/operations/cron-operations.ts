@@ -161,8 +161,8 @@ async function scheduledAssessment() {
     const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, { connection: new Redis(redisDetails.connection) });
 
     logger.info('Debug queue');
-    logger.info(JSON.stringify(driftAssessmentQueue.getJobCounts()));
-    logger.info(JSON.stringify(driftAssessmentQueue.getJobs()));
+    const allJobsCount = await driftAssessmentQueue.getJobCounts();
+    logger.info(allJobsCount);
 
     const managedResources = await listResources();
     if (isEmpty(managedResources)) {
