@@ -357,7 +357,7 @@ const TEMPDB_DRIVE_SIZE = `${SET_NOCOUNT}
         total_bytes/1024/1024 --/1024
         FROM sys.master_files mf 
         CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id)
-        WHERE ((SELECT LEFT(volume_mount_point,1)) = (SELECT DISTINCT(SELECT LEFT(physical_name, 1)) FROM tempdb.sys.database_files))
+        WHERE ((SELECT LEFT(volume_mount_point,1)) in (SELECT DISTINCT(SELECT LEFT(physical_name, 1)) FROM tempdb.sys.database_files))
         GROUP BY
         volume_mount_point
         ,total_bytes/1024/1024 --/1024
