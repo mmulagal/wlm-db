@@ -364,10 +364,12 @@ async function driftAssesment(
         errorMessage = e.message || 'Internal Server Error';
         jobStatus = JOBSTATUS.FAILED;
     } finally {
+        const instanceNames = databaseInstanceRecords.map(i => i.name);
         await updateJobDetails(accountId, credentialsId, region, jobId, {
             error: errorMessage,
-            description:
-                'The selected SQL Server instance has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.',
+            description: `The selected SQL Server instance(s) ${instanceNames.join(
+                ','
+            )} has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.`,
             status: jobStatus!,
             endTime: Date.now()
         });
@@ -435,10 +437,14 @@ async function triggerDriftAssessment(
         logger.error(`Error while fetching database instance details ${accountId}, ${databaseHostId}, ${error}`);
     }
 
+    const instanceNames = runningInstances.map(i => i.name);
     if (!isEmpty(runningInstances)) {
+        const jobString = `The selected SQL Server instance(s) ${instanceNames.join(
+            ','
+        )} is/are being scanned for best practice misalignments.`;
         const job = await registerJob(accountId, credentialsId, region, {
-            name: 'The selected SQL Server instance is being scanned for best practice misalignments.',
-            description: 'The selected SQL Server instance is being scanned for best practice misalignments.',
+            name: jobString,
+            description: jobString,
             resourceName: resourceName!,
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),

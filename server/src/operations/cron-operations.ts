@@ -160,6 +160,10 @@ async function scheduledAssessment() {
 
     const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, { connection: new Redis(redisDetails.connection) });
 
+    logger.info('Debug queue');
+    const allJobsCount = await driftAssessmentQueue.getJobCounts();
+    logger.info(allJobsCount);
+
     const managedResources = await listResources();
     if (isEmpty(managedResources)) {
         logger.error('No managed database resources found.');
@@ -197,7 +201,8 @@ async function scheduledAssessment() {
                         managedInstanceIds
                     },
                     {
-                        repeat: { every: 24 * 3600 * 1000 }, // 24 hours in milliseconds
+                        // 2hours to observe
+                        repeat: { every: 2 * 3600 * 1000 }, // 24 hours in milliseconds
                         removeOnComplete: true,
                         removeOnFail: true
                     }
