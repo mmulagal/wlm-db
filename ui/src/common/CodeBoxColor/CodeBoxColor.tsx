@@ -104,7 +104,7 @@ const CodeBoxColor = ({ credID, region, actualData, endpoint }: codeBoxTypes) =>
         actualData && (
             <div className={styles.codeBox}>
                 <div style={{ width: 'max-content' }}>
-                    {`curl --location --request POST ${baseUrl}/credentials/`}
+                    {`curl --location --request POST ${baseUrl}/mssql/credentials/`}
                     <span className={credID === '<CredentialId>' ? `${styles.highlightWord}` : ''}>{`${credID}`}</span>
                     <span>{`/regions/`}</span>
                     <span className={region === '<Region>' ? `${styles.highlightWord}` : ''}>{`${region}`}</span>

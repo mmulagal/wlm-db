@@ -52,13 +52,13 @@ router.get(
     }
 );
 
-router.post(`${BASE_URL}/v1/cloudformation/template`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/mssql/cloudformation/template`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, Templates);
     }, 3000);
 });
 
-router.post(`${BASE_URL}/v1/terraform/setup`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/mssql/terraform/setup`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, Templates);
     }, 3000);
@@ -80,7 +80,7 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/jobs/:jobI
     }, 3000);
 });
 
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/mssql/discover`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/mssql/discover`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, DiscoverEC2);
     }, 3000);
@@ -96,7 +96,7 @@ router.get(
 );
 
 router.post(
-    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/discover/resource-credentials`,
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/discover/resource-credentials`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, {
@@ -115,13 +115,13 @@ router.post(
         setTimeout(() => {
             generateResponse(res, 200, { resource: '1234' });
             // generateResponse(res, 424, {message: 'PowerShell 7 is required for managing the resource. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4 and retry the operation.'})
-            // generateResponse(res, 424, {message: 'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.'});
+            // generateResponse(res, 424, {message: 'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare", and retry the operation.'});
         }, 3000);
     }
 );
 
 router.post(
-    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/prepare`,
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/instances/:instanceId/prepare`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { message: '1234' });
@@ -129,12 +129,6 @@ router.post(
         }, 3000);
     }
 );
-
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/mssql/instances`, async (req: {}, res: any) => {
-    setTimeout(() => {
-        generateResponse(res, 200, MssqlInstances);
-    }, 7000);
-});
 
 router.get(
     `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/resources/managed-hosts`,
