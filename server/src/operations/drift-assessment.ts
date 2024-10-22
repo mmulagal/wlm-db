@@ -69,13 +69,16 @@ async function calculateStorageDrift(
         let status = AssessmentStatus.OPTIMIZED;
         const objectsInViolation: string[] = [];
         volumes.forEach(volume => {
-            const objectName = volume.Key === 'name' ? volume.Value : '';
-            if (volume.Key === config.parameter) {
-                status = config.value === volume.Value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            }
-            if (status === AssessmentStatus.NOT_OPTIMIZED) {
-                objectsInViolation.push(objectName!);
-            }
+            let objectName = '';
+            Object.entries(volume).forEach(([key, value]) => {
+                objectName = key === 'name' ? value : objectName;
+                if (key === config.parameter) {
+                    status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
+                    if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                        objectsInViolation.push(objectName!);
+                    }
+                }
+            });
         });
         if (status === AssessmentStatus.OPTIMIZED) {
             optimizedCount += 1;
@@ -96,13 +99,17 @@ async function calculateStorageDrift(
         let status = AssessmentStatus.OPTIMIZED;
         const objectsInViolation: string[] = [];
         luns.forEach(lun => {
-            const objectName = lun.Key === 'name' ? lun.Value : '';
-            if (lun.Key === config.parameter) {
-                status = config.value === lun.Value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            }
-            if (status === AssessmentStatus.NOT_OPTIMIZED) {
-                objectsInViolation.push(objectName!);
-            }
+            let objectName = '';
+            Object.entries(lun).forEach(([key, value]) => {
+                objectName = key === 'name' ? value : objectName;
+                if (key === config.parameter) {
+                    status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
+
+                    if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                        objectsInViolation.push(objectName!);
+                    }
+                }
+            });
         });
         if (status === AssessmentStatus.OPTIMIZED) {
             optimizedCount += 1;
