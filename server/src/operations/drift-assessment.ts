@@ -279,6 +279,7 @@ async function initiateStorageAssessmentCollection(
             ?.map(i => i?.volumeRecords)
             .flat() || [];
     instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
+    instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
 
     instanceRecord.mappedLunNames =
         Object.values(instanceVolumeMapping)
