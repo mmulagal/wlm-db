@@ -82,6 +82,7 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         lunoptimizationTargets,
         volumeoptimizationTargets
     } = params;
+    logger.info('Optimizing storage for', params);
     if (lunoptimizationTargets && lunoptimizationTargets.length > 0) {
         await optimizeStorage({
             accountId,
@@ -140,7 +141,8 @@ async function optimizeOperation(params: OptimizeOperationParams) {
 
     await updateJobDetails(accountId, credentialsId, region, parentJobId, {
         status: JOBSTATUS.COMPLETED,
-        endTime: Date.now()
+        endTime: Date.now(),
+        description: `Optimization completed for ${serverNameWithHostName}`
     });
     updateLongRunningAuditGroup(AuditStatus.SUCCESS);
 }
@@ -189,7 +191,6 @@ async function optimizeStorage(params: OptimizeStorageParams) {
             }
             const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
             const apiQueryFilter = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
-
             const apiEndpoint = apiData.api;
 
             const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
@@ -333,7 +334,6 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
-
         optimizeOperation({
             accountId,
             region,
