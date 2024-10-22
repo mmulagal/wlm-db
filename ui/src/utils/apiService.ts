@@ -523,7 +523,7 @@ export const createUserDbApi = createApi({
         return {
             getDriveInfoV2: builder.query({
                 query: ({ credentialId, region, id, instanceId, forSandbox }) => ({
-                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/drive-information${
+                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${instanceId}/drive-information${
                         forSandbox ? '?forSandbox=true' : ''
                     }`
                 })
