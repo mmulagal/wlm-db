@@ -2,6 +2,10 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import { CredentialsIdParams } from './generic.types';
 import { FINDING } from '../../utils/consts';
 
+const InternalUpdateInstRecQueryString = Type.Object({
+    fields: Type.Optional(Type.String())
+});
+
 const StorageSavingsRequestParams = Type.Composite([
     CredentialsIdParams,
     Type.Object({
@@ -498,6 +502,7 @@ type EBSCloneCostCalculationRespType = Static<typeof EBSCloneCostCalculationResp
 type EBSSnapshotCalculationRespType = Static<typeof EBSSnapshotCalculationResp>;
 
 export {
+    InternalUpdateInstRecQueryString,
     EbsCostCalculationType,
     EbsCloneCalculationType,
     EbsSnapshotCalculationType,

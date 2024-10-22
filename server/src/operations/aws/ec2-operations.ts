@@ -689,17 +689,16 @@ async function determineBiggerInstance(region: string, instanceTypes: _InstanceT
 async function getInstanceTypesFromInstanceRequirementsForManagedInstances(
     credentialsId: string,
     region: string,
-    instanceIds: string[]
+    instanceId: string
 ) {
-    logger.info(
-        'Getting instance types from instance requirements for managed instances',
+    logger.info('Getting instance types from instance requirements for managed instance', {
         credentialsId,
         region,
-        instanceIds
-    );
+        instanceId
+    });
 
     const { Reservations = [] } = await describeInstance(credentialsId, region, {
-        InstanceIds: instanceIds
+        InstanceIds: [instanceId]
     });
 
     const instances = Reservations.map(reservation => reservation.Instances || []).flat();
@@ -799,6 +798,7 @@ async function getInstanceTypesFromInstanceRequirements(
                 ArchitectureTypes: [Architecture],
                 VirtualizationTypes: [VirtualizationType],
                 InstanceRequirements: {
+                    CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES], // Filtering AMD based instances; That's a recommendation we've got from the Microsoft specialists in AWS. It is better that across the board we will filter it. Product Management thinks that in general OLTP workloads are associated with Intel processors because of hyper threading technology or something like that.
                     AllowedInstanceTypes: ['m*', 'c*', 'r*'],
                     VCpuCount: { Min: totalMinCpu, Max: totalMaxCpu }, // As per req, Reduced #vcpus - according to #vcpus in use.(for Standard- headroom=20%, for AOAG, headroom = 10%).
                     MemoryMiB: { Min: MemoryInfo?.SizeInMiB }, // As per req, Memory should be the same.

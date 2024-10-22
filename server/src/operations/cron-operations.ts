@@ -19,7 +19,6 @@ import getLogger from '../utils/logger';
 import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './database/job-operations';
 
 import {
-    createTrackedEc2Records,
     listAllManagedInstances,
     listResources,
     listTrackedEc2,
@@ -27,7 +26,10 @@ import {
     updateTrackedEc2Record
 } from '../lib/database/db';
 import { getHostAndSqlServerInfo } from './discover-operations';
-import { manageInstanceRecommendationPreReqs } from './aws/compute-optimizer-operations';
+import {
+    manageInstanceRecommendationPreReqs,
+    manageInstanceRecommendationPreReqsForManagedInstances
+} from './aws/compute-optimizer-operations';
 import { getEc2Arn, getRedisDetails } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
 import {
@@ -64,13 +66,13 @@ function purgeOlderJobs() {
 }
 
 // Scheduled task to update and manage EC2 instance recommendation preferences based on recent usage, and remove entries for instances no longer available in AWS."
-function updateInstanceRecommendationPreferences() {
+function updateTcoInstanceRecommendationPreferences() {
     setInterval(async () => {
-        await updateTcoInstanceRecommendationPreferences();
+        await updateTcoInstRecPrefs();
     }, Number(ms(config.get('db.tco.update-recommendation-preference'))));
 }
 
-async function updateTcoInstanceRecommendationPreferences() {
+async function updateTcoInstRecPrefs() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
         logger.info('Updating instance recommendation preferences for TCO feature');
         const trackedEc2Instances = await listTrackedEc2(TCO_FEATURE);
@@ -158,19 +160,21 @@ async function updateTcoInstanceRecommendationPreferences() {
     });
 }
 
-async function updateManagedInstanceRecommendationPreferencesInterval() {
+async function updateManagedInstanceRecommendationPreferences() {
     setInterval(async () => {
-        await updateManagedInstanceRecommendationPreferences();
-    }, Number(ms('1d')));
+        await updateManagedInstRecPrefs();
+    }, Number(ms(config.get('db.manged-instance.update-recommendation-preference'))));
 }
 
-async function updateManagedInstanceRecommendationPreferences() {
+async function updateManagedInstRecPrefs() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
         logger.info('Updating instance recommendation preferences for Continuous assessment feature');
 
         const managedInstances = await listAllManagedInstances();
         if (isEmpty(managedInstances)) {
-            logger.error('No successfully managed database instances found.');
+            logger.error(
+                'No successfully managed database instances found during instance recommendation preference update.'
+            );
             return;
         }
         const trackedEc2Instances = await listTrackedEc2(CONTINUOUS_ASSESSMENT_FEATURE);
@@ -192,80 +196,42 @@ async function updateManagedInstanceRecommendationPreferences() {
         await Promise.all(
             Object.entries(grouped).map(async ([key, instances]) => {
                 const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('|');
-                try {
-                    await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
-                } catch (error) {
-                    logger.info(
-                        `Failed fetching compute otimizer opt in status or Compute optimizer is not enabled for account ${awsAccountId} in region ${region}. Skipping updating instance recommendation preferences for managed instances.`
-                    );
-                    return;
-                }
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 const managedInstanceToBeUpdated = instances.filter(
                     instance => !trackedEc2InstanceIds.includes(instance.database_instance_id)
                 ); // update compute optimizer recommendation preferences only for managed instances that are not already being tracked, becuase the recommendation preference is static irrespsctive of the number of times it is updated
                 if (managedInstanceToBeUpdated.length === 0) {
+                    logger.info('No new managed instances found to update instance recommendation preferences.');
                     return;
                 }
-                const recordsToCreate: {
-                    account_id: string;
-                    region: string;
-                    credentials_id: string;
-                    instance_id: string;
-                    feature: string;
-                    cloud_provider_account_id: string;
-                }[] = [];
+
+                if (managedInstanceToBeUpdated.length > 0) {
+                    try {
+                        await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
+                    } catch (error) {
+                        logger.info(
+                            `Failed fetching compute otimizer opt in status or Compute optimizer is not enabled for account ${awsAccountId} in region ${region}. Skipping updating instance recommendation preferences for managed instances.`
+                        );
+                        return;
+                    }
+                }
                 managedInstanceToBeUpdated.forEach(async instance => {
                     const { node1InstanceId, node2InstanceId } = instance?.metadata as unknown as Metadata;
 
                     const instanceId = node1InstanceId || instance.database_instance_id;
 
-                    const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
-                    await manageInstanceRecommendationPreReqs(
+                    const instanceIds = [instanceId];
+                    if (node2InstanceId) {
+                        instanceIds.push(node2InstanceId);
+                    }
+                    await manageInstanceRecommendationPreReqsForManagedInstances(
                         awsAccountId,
                         region,
                         credentialsId,
-                        resourceArn,
+                        instanceIds,
                         accountId,
-                        [node1InstanceId],
-                        [],
-                        deploymentType as string,
-                        true
+                        deploymentType as string
                     );
-                    recordsToCreate.push({
-                        account_id: accountId,
-                        region,
-                        credentials_id: credentialsId,
-                        instance_id: instanceId,
-                        feature: CONTINUOUS_ASSESSMENT_FEATURE,
-                        cloud_provider_account_id: awsAccountId
-                    });
-                    if (node2InstanceId) {
-                        const resourceArn2 = getEc2Arn(awsAccountId, region, node2InstanceId);
-                        await manageInstanceRecommendationPreReqs(
-                            awsAccountId,
-                            region,
-                            credentialsId,
-                            resourceArn2,
-                            accountId,
-                            [node2InstanceId],
-                            [],
-                            deploymentType as string,
-                            true
-                        );
-                        recordsToCreate.push({
-                            account_id: accountId,
-                            region,
-                            credentials_id: credentialsId,
-                            instance_id: node2InstanceId,
-                            feature: CONTINUOUS_ASSESSMENT_FEATURE,
-                            cloud_provider_account_id: awsAccountId
-                        });
-                    }
-
-                    if (recordsToCreate.length > 0) {
-                        await createTrackedEc2Records(recordsToCreate);
-                    }
                 });
             })
         );
@@ -273,6 +239,7 @@ async function updateManagedInstanceRecommendationPreferences() {
         logger.info('Updating instance recommendation preferences for managed instances completed');
     });
 }
+
 async function scheduledAssessment() {
     const redisDetails = getRedisDetails();
 
@@ -360,8 +327,9 @@ export {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
-    updateManagedInstanceRecommendationPreferencesInterval,
-    updateInstanceRecommendationPreferences,
+    updateManagedInstanceRecommendationPreferences,
     updateTcoInstanceRecommendationPreferences,
+    updateTcoInstRecPrefs,
+    updateManagedInstRecPrefs,
     scheduledAssessment
 };

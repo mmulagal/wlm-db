@@ -20,7 +20,7 @@ import {
     getInstanceTypesFromInstanceRequirementsForManagedInstances
 } from './ec2-operations';
 import { getSqlInstancePricingDetails } from './pricing-operations';
-import { FINDING, TCO_FEATURE } from '../../utils/consts';
+import { CONTINUOUS_ASSESSMENT_FEATURE, FINDING, TCO_FEATURE } from '../../utils/consts';
 import { createTrackedEc2Records, listTrackedEc2, updateTrackedEc2Record } from '../../lib/database/db';
 import { NodeDetails } from '../../utils/common-types';
 
@@ -98,6 +98,76 @@ async function identifyComputeOptimizerRecommendationOptions(
     return recommendationOptionsWithPrices;
 }
 
+async function manageInstanceRecommendationPreReqsForManagedInstances(
+    awsAccountId: string,
+    region: string,
+    credentialsId: string,
+    instanceIds: string[],
+    accountId: string,
+    sqlServerDeploymentType: string
+) {
+    logger.info('Managing instance recommendation prerequisites for managed instances', {
+        awsAccountId,
+        region,
+        credentialsId,
+        instanceIds,
+        accountId,
+        sqlServerDeploymentType
+    });
+
+    let isRecommendationPreferenceExists = false;
+    await Promise.all(
+        instanceIds.map(async instanceId => {
+            const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
+            const instanceTypes =
+                (await getInstanceTypesFromInstanceRequirementsForManagedInstances(
+                    credentialsId,
+                    region,
+                    resourceArn
+                )) || [];
+
+            if (instanceTypes && instanceTypes.length <= 0) {
+                throw new Error(
+                    'Instance types not found for the instance requirements, unable to create recommendation preference'
+                );
+            }
+
+            const { preferredResources: [{ includeList = [] }] = [] } = await getEffectiveRecommendationPreferences(
+                region,
+                credentialsId,
+                accountId,
+                {
+                    resourceArn
+                }
+            );
+
+            isRecommendationPreferenceExists =
+                includeList &&
+                instanceTypes &&
+                includeList?.length > 1 &&
+                instanceTypes.every(item => includeList.includes(item));
+            if (!isRecommendationPreferenceExists) {
+                await createRecommendationForResource(
+                    region,
+                    credentialsId,
+                    accountId,
+                    instanceIds,
+                    instanceTypes,
+                    awsAccountId
+                );
+                await addEc2InstancesToTrackedList(
+                    accountId,
+                    region,
+                    credentialsId,
+                    awsAccountId,
+                    instanceIds,
+                    CONTINUOUS_ASSESSMENT_FEATURE
+                );
+            }
+        })
+    );
+}
+
 async function manageInstanceRecommendationPreReqs(
     awsAccountId: string,
     region: string,
@@ -106,8 +176,7 @@ async function manageInstanceRecommendationPreReqs(
     accountId: string,
     instanceIds: string[],
     ebsVolumeIds: string[],
-    sqlServerDeploymentType: string,
-    isManagedInstance: boolean = false
+    sqlServerDeploymentType: string
 ) {
     logger.info('Managing instance recommendation prerequisites', {
         awsAccountId,
@@ -119,23 +188,14 @@ async function manageInstanceRecommendationPreReqs(
         ebsVolumeIds,
         sqlServerDeploymentType
     });
-    let instanceTypes: string[] | undefined = [];
-    if (isManagedInstance) {
-        logger.info('Instance is already managed, skipping recommendation preference creation');
-        instanceTypes = await getInstanceTypesFromInstanceRequirementsForManagedInstances(
-            credentialsId,
-            region,
-            instanceIds
-        );
-    } else {
-        instanceTypes = await getInstanceTypesFromInstanceRequirements(
-            credentialsId,
-            region,
-            instanceIds,
-            ebsVolumeIds,
-            sqlServerDeploymentType
-        );
-    }
+
+    const instanceTypes = await getInstanceTypesFromInstanceRequirements(
+        credentialsId,
+        region,
+        instanceIds,
+        ebsVolumeIds,
+        sqlServerDeploymentType
+    );
 
     if (instanceTypes && instanceTypes.length <= 0) {
         throw new Error(
@@ -165,7 +225,7 @@ async function manageInstanceRecommendationPreReqs(
         );
     } else {
         logger.info('Recommendation preference created for the instance, adding the instance to the tracked list');
-        await addEc2InstancesToTrackedList(accountId, region, credentialsId, awsAccountId, instanceIds);
+        await addEc2InstancesToTrackedList(accountId, region, credentialsId, awsAccountId, instanceIds, TCO_FEATURE);
         throw new Error(
             'Recommendation preference created for the instance; it takes about 24hours for compute optimizer to recommend an instance; skipping recommendations'
         );
@@ -179,16 +239,25 @@ async function addEc2InstancesToTrackedList(
     region: string,
     credentialsId: string,
     awsAccountId: string,
-    instanceIds: string[]
+    instanceIds: string[],
+    feature: string
 ) {
-    const trackedEc2Instances = await listTrackedEc2(TCO_FEATURE, accountId, region, credentialsId);
+    logger.info('Adding instance to tracked list', {
+        accountId,
+        region,
+        credentialsId,
+        awsAccountId,
+        instanceIds,
+        feature
+    });
+    const trackedEc2Instances = await listTrackedEc2(feature, accountId, region, credentialsId);
     const records = instanceIds
         .map(instanceId => ({
             account_id: accountId,
             region,
             credentials_id: credentialsId,
             instance_id: instanceId,
-            feature: TCO_FEATURE,
+            feature,
             cloud_provider_account_id: awsAccountId
         }))
         .filter(
@@ -369,5 +438,6 @@ export {
     createRecommendationForResource,
     getInstanceRecommendations,
     manageInstanceRecommendationPreReqs,
+    manageInstanceRecommendationPreReqsForManagedInstances,
     translateFindingReasonCode
 };
