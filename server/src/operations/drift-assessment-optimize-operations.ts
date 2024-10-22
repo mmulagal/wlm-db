@@ -22,7 +22,10 @@ import {
     OptimizeStorageLunApiData,
     OptimizeStorageVolumeConfigs,
     OptimizeStorageVolumeApiData,
-    OptimizeInstanceParams
+    OptimizeInstanceParams,
+    LUN,
+    VOLUME,
+    QUERY_PARAMS
 } from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
@@ -37,7 +40,7 @@ interface OptimizeStorageParams {
     optimizationTargets: OptimizeStorageLunRequestParamsType[] | OptimizeStorageVolumeRequestParamsType[];
     optimizationConfigs: Record<string, any>;
     apiRequestData: Record<string, any>;
-    queryParamKey: string;
+    optimizeType: string;
     svmName: string;
     serverNameWithHostName: string;
 }
@@ -61,6 +64,7 @@ interface OptimizeOperationParams {
 }
 
 async function optimizeOperation(params: OptimizeOperationParams) {
+    logger.info('Optimizing storage for', params);
     const {
         accountId,
         region,
@@ -78,7 +82,6 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         lunoptimizationTargets,
         volumeoptimizationTargets
     } = params;
-    logger.info('Optimizing storage for', params);
     if (lunoptimizationTargets && lunoptimizationTargets.length > 0) {
         await optimizeStorage({
             accountId,
@@ -90,7 +93,7 @@ async function optimizeOperation(params: OptimizeOperationParams) {
             optimizationTargets: lunoptimizationTargets,
             optimizationConfigs: OptimizeStorageLunConfigs,
             apiRequestData: OptimizeStorageLunApiData,
-            queryParamKey: 'path',
+            optimizeType: LUN,
             svmName,
             serverNameWithHostName
         });
@@ -107,7 +110,7 @@ async function optimizeOperation(params: OptimizeOperationParams) {
             optimizationTargets: volumeoptimizationTargets,
             optimizationConfigs: OptimizeStorageVolumeConfigs,
             apiRequestData: OptimizeStorageVolumeApiData,
-            queryParamKey: 'volume',
+            optimizeType: VOLUME,
             svmName,
             serverNameWithHostName
         });
@@ -134,6 +137,12 @@ async function optimizeOperation(params: OptimizeOperationParams) {
     };
 
     await driftAssessment(accountId, credentialsId, region, jobId, databaseHostId, [instancetoAsses]);
+
+    await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        status: JOBSTATUS.COMPLETED,
+        endTime: Date.now()
+    });
+    updateLongRunningAuditGroup(AuditStatus.SUCCESS);
 }
 
 async function optimizeStorage(params: OptimizeStorageParams) {
@@ -147,15 +156,15 @@ async function optimizeStorage(params: OptimizeStorageParams) {
         optimizationTargets,
         optimizationConfigs,
         apiRequestData,
-        queryParamKey,
+        optimizeType,
         svmName,
         serverNameWithHostName
     } = params;
     logger.info(`Optimizing storage for ${accountId} in ${region} for configuration ${optimizationTargets}`);
     try {
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: `Optimize ${queryParamKey} for ${serverNameWithHostName}`,
-            description: `Optimize ${queryParamKey} for ${serverNameWithHostName}`,
+            name: `Optimize ${optimizeType} for ${serverNameWithHostName}`,
+            description: `Optimize ${optimizeType} for ${serverNameWithHostName}`,
             startTime: Date.now(),
             type: JOBTYPE.OPTIMIZE,
             status: JOBSTATUS.IN_PROGRESS,
@@ -170,12 +179,17 @@ async function optimizeStorage(params: OptimizeStorageParams) {
             );
 
             if (!configKey) {
-                throw new Error(`${queryParamKey} configuration not found`);
+                throw new Error(`${optimizeType} configuration not found`);
             }
 
             const apiData = apiRequestData[configKey as keyof typeof apiRequestData];
             const apiBody = JSON.stringify(apiData.body);
+            if (!Array.isArray(objectsToOptimize) || objectsToOptimize.some(obj => !obj)) {
+                throw new Error('objectsToOptimize must be an array with non-empty string elements.');
+            }
+            const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
             const apiQueryFilter = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
+
             const apiEndpoint = apiData.api;
 
             const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
@@ -286,7 +300,7 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
         if (timeDifferenceInMinutes <= 5) {
             throw createError(
                 412,
-                `Optimize is not available now on since another optimize is in progress with job ID ${job.id}`
+                `Optimization is not available now since another optimization is in progress with job ID ${job.id}.`
             );
         }
     }
@@ -304,22 +318,22 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
 
     const svmDetailsObject = svmDetails as Record<string, string>;
     const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
-
-    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
-        credentialsId,
-        region,
-        fsxId as string
-    );
-
-    const svmList = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId);
-    const svmName = svmList?.Name;
-
-    if (!svmName) {
-        const errorMessage = `No SVM with id ${svmId} found for ${fsxId} in ${region}`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-    }
     try {
+        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+            credentialsId,
+            region,
+            fsxId as string
+        );
+
+        const svmList = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId);
+        const svmName = svmList?.Name;
+
+        if (!svmName) {
+            const errorMessage = `No SVM with id ${svmId} found for ${fsxId} in ${region}`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+
         optimizeOperation({
             accountId,
             region,
@@ -337,11 +351,6 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
             lunoptimizationTargets,
             volumeoptimizationTargets
         } as OptimizeOperationParams);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
-            status: JOBSTATUS.COMPLETED,
-            endTime: Date.now()
-        });
-        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;
         logger.error(errorMessage);

@@ -108,6 +108,14 @@ interface OptimizeInstanceParams {
     lunoptimizationTargets?: OptimizeStorageRequestParams[];
 }
 
+const VOLUME = 'volume';
+const LUN = 'lun';
+
+const QUERY_PARAMS = {
+    volume: 'volume',
+    lun: 'path'
+};
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -119,5 +127,8 @@ export {
     OptimizeStorageVolumeApiData,
     OptimizeStorageLunApiData,
     OptimizeInstanceParams,
-    DRIFT_ASSESSMENT_QUEUE
+    DRIFT_ASSESSMENT_QUEUE,
+    VOLUME,
+    LUN,
+    QUERY_PARAMS
 };

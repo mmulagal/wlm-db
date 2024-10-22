@@ -519,7 +519,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .patch(
+        .post(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize`,
             { schema: OptimizeStorageSchema },
             async (request, reply) => {
