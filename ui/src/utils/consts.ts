@@ -202,14 +202,14 @@ export const CURL_REQ_TEMPLATE = (
 ) => {
     if (isWorkloadFactory) {
         return `
-        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --data-raw '${payload}'
         `;
     } else {
         return `
-        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --header 'x-netapp-referer: BlueXP' \\
@@ -588,7 +588,7 @@ export const PROTECTION_TEXT_STATUS = {
     NO: 'No'
 };
 
-export const PREPARE_API_ENDPOINT = '/mssql/prepare';
+export const PREPARE_API_ENDPOINT = '/prepare';
 
 export const FSX_AZ_TYPE = {
     SINGLE: 'single',
