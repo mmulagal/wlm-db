@@ -7,25 +7,23 @@ import {
     OptimizeStorageLunRequestParamsType
 } from '../routes/types/database-hosts.types';
 import { Metadata, DatabaseInstance, WorkloadInstance } from '../utils/common-types';
-import {
-    RESOURCESTYPE,
-    HttpErrorCodes,
-    OptimizeStorageVolumeConfigs,
-    OptimizeStorageVolumeApiData,
-    OptimizeStorageLunApiData,
-    OptimizeStorageLunConfigs,
-    OptimizeInstanceParams,
-    AuditStatus
-} from '../utils/consts';
+import { RESOURCESTYPE, HttpErrorCodes, AuditStatus } from '../utils/consts';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getResources, getInstanceInfo } from './database/database-operations';
 import { OPTIMIZE_STOARGE_PARAMS_SCRIPT } from './workloads/mssql/drift-assessment-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
-import { sqlResponseParsing } from '../utils/utils';
-import { driftAssesment } from './drift-assessment';
+import { getTimeDifferenceInMinutes, sqlResponseParsing } from '../utils/utils';
+import { driftAssessment } from './drift-assessment';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
+import {
+    OptimizeStorageLunConfigs,
+    OptimizeStorageLunApiData,
+    OptimizeStorageVolumeConfigs,
+    OptimizeStorageVolumeApiData,
+    OptimizeInstanceParams
+} from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -80,7 +78,7 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         lunOptimizeData,
         volumeOptimizeData
     } = params;
-    logger.info('Optimizing storage for', serverNameWithHostName, volumeOptimizeData, lunOptimizeData);
+    logger.info('Optimizing storage for', params);
     if (lunOptimizeData && lunOptimizeData.length > 0) {
         await optimizeStorage({
             accountId,
@@ -126,15 +124,15 @@ async function optimizeOperation(params: OptimizeOperationParams) {
     };
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Assesment for ${serverNameWithHostName} after optimization`,
-        description: `Assesment for ${serverNameWithHostName} after optimization`,
+        name: `Assessment for ${serverNameWithHostName} after optimization`,
+        description: `Assessment for ${serverNameWithHostName} after optimization`,
         startTime: Date.now(),
         type: JOBTYPE.OPTIMIZE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName,
         parentJobId
     });
-    await driftAssesment(accountId, credentialsId, region, jobId, databaseHostId, [instancetoAsses]);
+    await driftAssessment(accountId, credentialsId, region, jobId, databaseHostId, [instancetoAsses]);
 }
 
 async function optimizeStorage(params: OptimizeStorageParams) {
@@ -183,14 +181,13 @@ async function optimizeStorage(params: OptimizeStorageParams) {
         const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!);
         const parsedResp = sqlResponseParsing(resp);
         const objectsOptimized = parsedResp.num_records;
-        const optimizeMessage = `Optimized ${objectsOptimized}/${objectsToOptimize.length} ${queryParamKey} ${serverNameWithHostName}, parsedResp.cli_output`;
-        logger.debug(optimizeMessage);
+        const optimizeMessage = `Optimized ${objectsOptimized}/${objectsToOptimize.length} ${queryParamKey} ${serverNameWithHostName}, ${parsedResp.cli_output}`;
+        logger.info(optimizeMessage);
 
         await updateJobDetails(accountId, credentialsId, region, jobId, {
             status: JOBSTATUS.COMPLETED,
             endTime: Date.now(),
-            description: optimizeMessage,
-            error: undefined
+            description: optimizeMessage
         });
         logger.debug(resp);
     } catch (error) {
@@ -273,9 +270,7 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
     } = await getJobs(accountId, credentialsId, region, filterParams);
 
     if (job) {
-        // Calculate the time difference in minutes
-        const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
-        const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
+        const timeDifferenceInMinutes = getTimeDifferenceInMinutes(job.startTime);
         if (timeDifferenceInMinutes <= 5) {
             throw createError(
                 412,
@@ -304,8 +299,8 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
         fsxId as string
     );
 
-    const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === svmId) || [];
-    const svmName = svmList[0]?.Name;
+    const svmList = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId);
+    const svmName = svmList?.Name;
 
     if (!svmName) {
         const errorMessage = `No SVM with id ${svmId} found for ${fsxId} in ${region}`;
@@ -332,8 +327,7 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
         } as OptimizeOperationParams);
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status: JOBSTATUS.COMPLETED,
-            endTime: Date.now(),
-            error: undefined
+            endTime: Date.now()
         });
         updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (error) {

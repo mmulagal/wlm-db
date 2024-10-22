@@ -56,8 +56,8 @@ import {
     getSandboxSnapshots
 } from '../operations/sandbox-operations';
 import { fetchDriftAssessment, triggerDriftAssessment } from '../operations/drift-assessment';
-import { optimizeInstance } from '../operations/drift-assessment-optimize-opertaions';
-import { AssessmentTriggeredBy, OptimizeInstanceParams } from '../utils/consts';
+import { optimizeInstance } from '../operations/drift-assessment-optimize-operations';
+import { AssessmentTriggeredBy, OptimizeInstanceParams } from '../utils/continous-optimization-consts';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_PREFIX_PATH_V2 = '/v2/credentials/:credentialsId/regions/:region';
