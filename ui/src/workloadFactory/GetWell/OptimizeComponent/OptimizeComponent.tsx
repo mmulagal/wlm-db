@@ -3,6 +3,7 @@ import { ReactComponent as DevCircle } from '../../../assets/DevCircle.svg';
 import styles from './OptimizeComponent.module.scss';
 import GetWellBar from './GetWellBar/GetWellBar';
 import { useAppSelector } from '../../../store/storeHooks';
+import { GENERAL } from '../../../utils/appConstants';
 
 type OptimizeComponentType = {
     text: string;
@@ -14,6 +15,7 @@ type OptimizeComponentType = {
 
 const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeComponentType) => {
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
+    const isAssessmentAvailable = useAppSelector(state => state.getWellOptimize.isAssessmentAvailable);
 
     return (
         <div className={styles.optimizeComponent}>
@@ -22,14 +24,38 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
             <div className={styles.rightSection}>
                 <div className={styles.topSection}>
                     <div className={styles.textWithLoading}>
-                        <DsTypography variant="Semibold_14">{text}</DsTypography>
+                        {!isAssessmentAvailable && !loading ? (
+                            <DsTypography variant="Semibold_14" isDisabled={true}>
+                                {text}
+                            </DsTypography>
+                        ) : (
+                            <DsTypography variant="Semibold_14">{text}</DsTypography>
+                        )}
+
                         {loading && !isComingSoon && <DsFlashingDotsLoader />}
                     </div>
 
                     <div className={styles.optimizeText}>
-                        <DsTypography variant="Regular_20" style={{ lineHeight: 'unset' }}>
-                            {!isComingSoon ? value + '%' : value}
-                        </DsTypography>
+                        {!isComingSoon &&
+                            (!isAssessmentAvailable && !loading ? (
+                                <DsTypography
+                                    variant="Regular_14"
+                                    style={{ lineHeight: 'unset', marginTop: '5px' }}
+                                    isDisabled={true}
+                                >
+                                    {GENERAL.NOT_AVAILABLE}
+                                </DsTypography>
+                            ) : (
+                                <DsTypography variant="Regular_20" style={{ lineHeight: 'unset' }}>
+                                    {value + '%'}
+                                </DsTypography>
+                            ))}
+                        {isComingSoon && (
+                            <DsTypography variant="Regular_20" style={{ lineHeight: 'unset' }}>
+                                {value}
+                            </DsTypography>
+                        )}
+
                         {/* <DsTypography variant="Regular_14">Optimized</DsTypography> */}
                     </div>
                 </div>
@@ -40,12 +66,20 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
 
                 {!isComingSoon && (
                     <div className={styles.bottomTextSection}>
-                        <DsTypography variant="Regular_14">Optimized configurations:</DsTypography>
-                        {!loading && (
-                            <DsTypography variant="Semibold_14">
-                                {data?.optimized} out of {data?.total}
-                            </DsTypography>
+                        {!loading && !isAssessmentAvailable ? (
+                            <div style={{ height: '24px' }} />
+                        ) : (
+                            <DsTypography variant="Regular_14">Optimized configurations:</DsTypography>
                         )}
+
+                        {!loading &&
+                            (isAssessmentAvailable ? (
+                                <DsTypography variant="Semibold_14">
+                                    {data?.optimized} out of {data?.total}
+                                </DsTypography>
+                            ) : (
+                                <div style={{ height: '24px' }} />
+                            ))}
                         {loading && <DsTypography variant="Semibold_14">0 out of X</DsTypography>}
                     </div>
                 )}
