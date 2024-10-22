@@ -441,6 +441,7 @@ async function handleInstanceRecommendation(
             existingInstanceTypesPricingDetails,
             existingInstanceHourlyPrice,
             existingInstanceHourlyPriceWithoutLicense,
+            monthlySqlByolCostPerHost,
             error.message
         );
     }
