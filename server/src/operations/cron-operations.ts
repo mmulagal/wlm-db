@@ -163,6 +163,7 @@ async function scheduledAssessment() {
     const redisConnection = new IORedis(redisDetails.url, {
         maxRetriesPerRequest: null
     });
+
     const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
         connection: redisConnection
     });
