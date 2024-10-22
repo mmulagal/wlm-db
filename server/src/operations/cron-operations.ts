@@ -4,7 +4,6 @@ import ms from 'ms';
 import { STORAGE_TYPE } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
 import { Queue, Worker } from 'bullmq';
-import Redis from 'ioredis';
 import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
@@ -160,7 +159,7 @@ async function scheduledAssessment() {
     logger.info(`Redis port: ${redisDetails.port}`);
 
     const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
-        connection: new Redis({ host: redisDetails.host, port: redisDetails.port, password: redisDetails.password })
+        connection: redisDetails
     });
 
     logger.info('Debug queue');
