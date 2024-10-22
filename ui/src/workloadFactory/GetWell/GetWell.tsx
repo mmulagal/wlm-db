@@ -24,7 +24,8 @@ import {
     removeObjectFromArray,
     generateDate,
     applyFilter,
-    cardDataDefault
+    cardDataDefault,
+    resetGwValuesOnRefresh
 } from './GetWellUtils';
 import {
     setDefaultFilterOptions,
@@ -34,15 +35,7 @@ import {
 import { useAppSelector } from '../../store/storeHooks';
 import { useState, useEffect } from 'react';
 import GetWellApi from './GetWellApi';
-import {
-    resetGwData,
-    setCardData,
-    setDriftAssessmentData,
-    setGwRefreshPage,
-    setOntapConfigTableData,
-    setOptimizationBreakDown,
-    setOsConfigTableData
-} from '../../store/workloadFactory/getWellOptimizeSlice';
+import { resetGwData, setGwRefreshPage } from '../../store/workloadFactory/getWellOptimizeSlice';
 //@ts-ignore
 import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
@@ -58,7 +51,8 @@ const GetWell = () => {
         osConfigTableData,
         selectedHostname,
         selectedDatabaseInstanceName,
-        gwTimestamp
+        gwTimestamp,
+        isAssessmentAvailable
     } = useAppSelector(state => state.getWellOptimize);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -141,11 +135,7 @@ const GetWell = () => {
     }, [cardData, optimizeFilterTags]);
 
     const refreshGetWellPage = () => {
-        dispatch(setDriftAssessmentData(null));
-        dispatch(setCardData(cardDataDefault));
-        dispatch(setOsConfigTableData(null));
-        dispatch(setOntapConfigTableData(null));
-        dispatch(setOptimizationBreakDown(null));
+        resetGwValuesOnRefresh(dispatch);
         dispatch(setGwRefreshPage(true));
     };
 
@@ -228,15 +218,27 @@ const GetWell = () => {
                 <div className={styles.sectionTwo}>
                     <div className={styles.downloadSectionHeader}>
                         {!optimizePrintState && (
-                            <div className={!loading ? styles.downloadSection : styles.downloadSectionDisable}>
+                            <div
+                                className={
+                                    loading || !isAssessmentAvailable
+                                        ? styles.downloadSectionDisable
+                                        : styles.downloadSection
+                                }
+                            >
                                 <div />
-                                <div className={styles.buttonStyle} onClick={!loading ? printDocument : () => {}}>
+                                <div
+                                    className={styles.buttonStyle}
+                                    onClick={loading || !isAssessmentAvailable ? () => {} : printDocument}
+                                >
                                     <div>
                                         <Download />
                                     </div>
                                     <DsTypography
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading || !isAssessmentAvailable
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                         variant="Semibold_14"
                                     >
@@ -249,7 +251,7 @@ const GetWell = () => {
                             <DsAccordion
                                 id="2"
                                 variant="Default"
-                                isDisabled={loading}
+                                isDisabled={loading || !isAssessmentAvailable}
                                 onExpandChange={setsAccordionOpen}
                                 title={
                                     <div className={styles.filterHeaderStyle}>
@@ -257,7 +259,12 @@ const GetWell = () => {
                                             <Union />
                                         </div>
                                         <DsTypography
-                                            style={{ color: loading ? 'var(--text-disabled)' : 'var(--text-primary)' }}
+                                            style={{
+                                                color:
+                                                    loading || !isAssessmentAvailable
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-primary)'
+                                            }}
                                             variant="Semibold_14"
                                         >
                                             Configurations: All(26)
@@ -526,7 +533,10 @@ const GetWell = () => {
                                         <div className={styles.items}>
                                             <DsTypography
                                                 style={{
-                                                    color: loading ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
                                                 }}
                                                 variant="Regular_14"
                                             >
@@ -534,7 +544,10 @@ const GetWell = () => {
                                             </DsTypography>
                                             <DsTypography
                                                 style={{
-                                                    color: loading ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
                                                 }}
                                                 variant="Semibold_14"
                                             >
@@ -549,7 +562,10 @@ const GetWell = () => {
                                         <div className={styles.items}>
                                             <DsTypography
                                                 style={{
-                                                    color: loading ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
                                                 }}
                                                 variant="Regular_14"
                                             >
@@ -557,7 +573,10 @@ const GetWell = () => {
                                             </DsTypography>
                                             <DsTypography
                                                 style={{
-                                                    color: loading ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
                                                 }}
                                                 variant="Semibold_14"
                                             >
@@ -572,7 +591,10 @@ const GetWell = () => {
                                         <div className={styles.items}>
                                             <DsTypography
                                                 style={{
-                                                    color: loading ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
                                                 }}
                                                 variant="Regular_14"
                                             >
@@ -580,7 +602,10 @@ const GetWell = () => {
                                             </DsTypography>
                                             <DsTypography
                                                 style={{
-                                                    color: loading ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
                                                 }}
                                                 variant="Semibold_14"
                                             >
@@ -595,7 +620,10 @@ const GetWell = () => {
                                         <div className={styles.items}>
                                             <DsTypography
                                                 style={{
-                                                    color: loading ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
                                                 }}
                                                 variant="Regular_14"
                                             >
@@ -603,7 +631,10 @@ const GetWell = () => {
                                             </DsTypography>
                                             <DsTypography
                                                 style={{
-                                                    color: loading ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
                                                 }}
                                                 variant="Semibold_14"
                                             >
@@ -618,7 +649,10 @@ const GetWell = () => {
                                         <div className={styles.items}>
                                             <DsTypography
                                                 style={{
-                                                    color: loading ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
                                                 }}
                                                 variant="Regular_14"
                                             >
@@ -626,7 +660,10 @@ const GetWell = () => {
                                             </DsTypography>
                                             <DsTypography
                                                 style={{
-                                                    color: loading ? 'var(--text-disabled)' : 'var(--text-primary)'
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
                                                 }}
                                                 variant="Semibold_14"
                                             >

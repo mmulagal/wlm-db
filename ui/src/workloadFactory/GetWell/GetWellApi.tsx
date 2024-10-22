@@ -4,10 +4,12 @@ import { useEffect } from 'react';
 import {
     setDriftAssessmentData,
     setOptimizePageLoading,
-    setGwRefreshPage
+    setGwRefreshPage,
+    setIsAssessmentAvailable,
+    resetGwData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation } from '../../utils/apiService';
-import { formatGetWellData } from './GetWellUtils';
+import { formatGetWellData, resetGwValuesOnRefresh } from './GetWellUtils';
 import { AssessmentResponseInterface } from '../../utils/types/getWellTypes';
 
 const GetWellApi = () => {
@@ -39,19 +41,25 @@ const GetWellApi = () => {
                 dispatch(setDriftAssessmentData(result.data));
                 formatGetWellData(result.data, dispatch);
                 dispatch(setOptimizePageLoading(false));
+                dispatch(setIsAssessmentAvailable(true));
             } else {
+                dispatch(setIsAssessmentAvailable(false));
                 dispatch(setOptimizePageLoading(false));
             }
         } catch (error) {
+            dispatch(setIsAssessmentAvailable(false));
             dispatch(setOptimizePageLoading(false));
         }
     };
 
     const viewOptimizeAction = () => {
-        // Set the loading state to true
-        dispatch(setOptimizePageLoading(true));
-        // Call the API to get the assessment details
-        runAssessmentDetailsApi();
+        resetGwValuesOnRefresh(dispatch);
+        setTimeout(() => {
+            // Set the loading state to true
+            dispatch(setOptimizePageLoading(true));
+            // Call the API to get the assessment details
+            runAssessmentDetailsApi();
+        }, 10);
     };
 
     useEffect(() => {

@@ -11,9 +11,22 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
 import { GETWELL_STATUS } from '../../../utils/consts';
+import { useEffect, useState } from 'react';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
+    const isAssessmentAvailable = useAppSelector(state => state.getWellOptimize.isAssessmentAvailable);
+
+    const [disableText, setDisableText] = useState(false);
+
+    useEffect(() => {
+        if (!loading && !isAssessmentAvailable) {
+            setDisableText(true);
+        } else {
+            setDisableText(false);
+        }
+    }, [isAssessmentAvailable, loading]);
+
     const { setDialog, closeDialog } = useDialog();
     const setImage = (value: string) => {
         if (value === GETWELL_STATUS.OPTIMIZED) {
@@ -42,13 +55,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             );
         } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
             return (
-                <DsTypography variant="Semibold_14">
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
                     {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
                 </DsTypography>
             );
         } else {
             return (
-                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} isDisabled={disableText}>
                     {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
                 </DsTypography>
             );
@@ -91,19 +104,23 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         <div className={styles.svgSection}>
                             {setImage(cardData?.block_two?.value || GENERAL.NOT_AVAILABLE)}
                         </div>
-                        <DsTypography variant="Semibold_14">
+                        <DsTypography variant="Semibold_14" isDisabled={disableText}>
                             {cardData?.block_two?.value || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     </div>
                 )}
-                <DsTypography variant="Regular_14">{cardData?.block_two?.type}</DsTypography>
+                <DsTypography variant="Regular_14" isDisabled={disableText}>
+                    {cardData?.block_two?.type}
+                </DsTypography>
             </div>
 
             {/* Section three */}
             <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
                 {sectionThreeContent(cardData)}
 
-                <DsTypography variant="Regular_14">{cardData?.block_three?.type}</DsTypography>
+                <DsTypography variant="Regular_14" isDisabled={disableText}>
+                    {cardData?.block_three?.type}
+                </DsTypography>
             </div>
 
             {/* Section 4 */}
@@ -114,11 +131,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </div>
                 )}
                 {!loading && (
-                    <DsTypography variant="Semibold_14">
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
                         {cardData?.block_four?.value || GENERAL.NOT_AVAILABLE}
                     </DsTypography>
                 )}
-                <DsTypography variant="Regular_14">{cardData?.block_four?.type}</DsTypography>
+                <DsTypography variant="Regular_14" isDisabled={disableText}>
+                    {cardData?.block_four?.type}
+                </DsTypography>
             </div>
 
             {/* 5 Section */}

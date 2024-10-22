@@ -5,6 +5,7 @@ import { GetWellSliceInterface } from '../../utils/types/getWellTypes';
 const initialState: GetWellSliceInterface = {
     optimizePageLoading: false,
     driftAssessmentData: null,
+    isAssessmentAvailable: false,
     selectedHostname: '',
     selectedResourceId: '',
     selectedDatabaseInstance: '',
@@ -26,6 +27,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setDriftAssessmentData: (state, action: PayloadAction<any>) => {
             state.driftAssessmentData = action.payload;
+        },
+        setIsAssessmentAvailable: (state, action: PayloadAction<any>) => {
+            state.isAssessmentAvailable = action.payload;
         },
         setGwHostname: (state, action: PayloadAction<any>) => {
             state.selectedHostname = action.payload;
@@ -60,6 +64,7 @@ const getWellOptimizeSlice = createSlice({
         resetGwData: (state, action: PayloadAction<any>) => {
             state.optimizePageLoading = false;
             state.driftAssessmentData = null;
+            state.isAssessmentAvailable = false;
             state.selectedHostname = '';
             state.selectedResourceId = '';
             state.selectedDatabaseInstance = '';
@@ -75,6 +80,7 @@ const getWellOptimizeSlice = createSlice({
 export const {
     setOptimizePageLoading,
     setDriftAssessmentData,
+    setIsAssessmentAvailable,
     setGwHostname,
     setGwResourceId,
     setGwDatabaseInstance,
