@@ -278,22 +278,28 @@ const JobMonitoringTable = () => {
                 return (
                     <>
                         <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
-                        <div
-                            className={
-                                isIntegrityCheckJob ? `${styles.arrow} ${styles['arrow-disabled']}` : styles.arrow
-                            }
-                        >
-                            <ArrowIcon
-                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
-                                onClick={(e: any) => {
-                                    e.stopPropagation();
-                                    if (!isIntegrityCheckJob) {
-                                        getSubJobsData(rowData?.id); // calling sub jobs api on expand click
-                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
-                                    }
-                                }}
-                            />
-                        </div>
+                        {rowData?.type !== JOB_MONITORING_TYPE.ASSESSMENT ? (
+                            <div
+                                className={
+                                    isIntegrityCheckJob ? `${styles.arrow} ${styles['arrow-disabled']}` : styles.arrow
+                                }
+                            >
+                                <ArrowIcon
+                                    className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                    onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        if (!isIntegrityCheckJob) {
+                                            getSubJobsData(rowData?.id); // calling sub jobs api on expand click
+                                            expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                        }
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <div className={`${styles.arrow} ${styles['arrow-disabled']}`}>
+                                <ArrowIcon className={styles['arrow-disable']} />
+                            </div>
+                        )}
                     </>
                 );
             }

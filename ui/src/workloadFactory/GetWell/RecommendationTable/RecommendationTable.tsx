@@ -1,4 +1,4 @@
-import { DsButton, DsTypography, Popover, Table, useTable } from '@netapp/design-system';
+import { Button, DsButton, DsTypography, Popover, Table, useTable } from '@netapp/design-system';
 import { useDialog } from '@netapp/design-system';
 import styles from './RecommendationTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
@@ -11,9 +11,79 @@ import RecommendationTooltip from '../RecommendationTooltip/RecommendationToolti
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
 import { GENERAL } from '../../../utils/appConstants';
+import { useLazyGetSubTaskListQuery, useOptimizeStorageConfigMutation } from '../../../utils/apiService';
+import { useAppSelector } from '../../../store/storeHooks';
+import { useDispatch } from 'react-redux';
+import SmallLoader from '../../../common/SmallLoader/SmallLoader';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
+import { WLF_TABS } from '../../../utils/consts';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setOptimizingData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 
 const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) => {
+    const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
+
+    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
+    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const { selectedResourceId, selectedDatabaseInstance, optimizingData } = useAppSelector(
+        state => state.getWellOptimize
+    );
+
+    const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+
+    const callOptimizeApi = (rowData: any) => {
+        let payload = {
+            [rowData?.type]: [
+                {
+                    configurationName: rowData?.id,
+                    objectsToOptimize: rowData?.objectsInViolation
+                }
+            ]
+        };
+        // call optimize api
+        dispatch(
+            setOptimizingData({
+                ...optimizingData,
+                [rowData?.id]: 'optimizing'
+            })
+        );
+        formatGetWellData(dispatch);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: `Optimization process initiated for ${rowData?.name}. This process can take upto X minutes.`
+            })
+        );
+
+        optimizeStorageConfig({
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            regionId: headerSelectedRegion?.label2,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance,
+            payload: payload
+        }).then((res: any) => {
+            const failedMsgData = (
+                <div className={styles.notification}>
+                    {rowData?.name} failed to optimize.
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {GENERAL.VIEW_JOB_MONITORING}.
+                    </Button>
+                </div>
+            );
+            handleOptimizeStorageJob(res, rowData, failedMsgData, getJobDetailApi, dispatch);
+        });
+    };
+
     const handleOntapDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
@@ -21,7 +91,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                 content={<DialogContent type={rowData?.name} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => {}}
+                callback={() => {
+                    callOptimizeApi(rowData);
+                }}
                 closeCallback={() => {
                     closeDialog();
                 }}
@@ -29,7 +101,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                 hidePrimaryButton={
                     rowData?.name === 'Multipath I/O Status' ||
                     rowData?.name === 'Multipath I/O Policy' ||
-                    rowData?.name === 'NTFS allocation unit size'
+                    rowData?.name === 'Multipath I/O Sessions' ||
+                    rowData?.name === 'NTFS allocation unit size' ||
+                    rowData?.name === 'OS type'
                 }
             />
         );
@@ -54,6 +128,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                         <div>
                             {cellData === 'Optimized' && <Active className={styles.statusIcon} />}
                             {cellData === 'Not optimized' && <NotActive className={styles.statusIcon} />}
+                            {cellData === 'Optimizing' && <SmallLoader />}
                         </div>
                         <div>{cellData}</div>
                     </div>
