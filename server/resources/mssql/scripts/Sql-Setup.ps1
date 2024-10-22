@@ -350,12 +350,11 @@ function Invoke-RemoteCommands {
 
     # Get the completed commands from the log file
     $completedCommands = Get-Content $logFile | Where-Object { $_ -match "SUCCESS:" }
-    
     if ($null -eq $Credential) {
         Write-Output "No credentials provided, skipping command execution."
         return
     }
-
+    
     try {
         foreach ($command in $commands) {
             $commandValue = $command.Command | Out-String
@@ -366,28 +365,36 @@ function Invoke-RemoteCommands {
 
             # Write the command to the log file before executing it
             Add-Content -Path $logFile -Value $command.Command
-
-       
             Write-Output "Starting to execute command: $commandValue"
             $commandString = $command | ConvertTo-Json -Compress
-            Invoke-Command -ComputerName localhost -ScriptBlock { 
+
+            $result = Invoke-Command -ComputerName localhost -ScriptBlock {
                 param($commandString)
                 $command = ConvertFrom-Json $commandString
-                Write-Output "command here"
-                Write-Output $command.Command
-                Start-Process -FilePath "powershell.exe" -ArgumentList "-Command $($command.Command)" -NoNewWindow -Wait
+                try {
+                    Start-Process -FilePath "powershell.exe" -ArgumentList "-Command $($command.Command)" -NoNewWindow -Wait -PassThru
+                }
+                catch {
+                    Write-Output "Command execution failed: $($command.Command)"
+                    throw
+                }
             } -ArgumentList $commandString -Credential $Credential -Authentication Credssp
-           
-            Write-Output "Successfully executed command: $commandValue"
 
-            # Write a success marker to the log file
-            Add-Content -Path $logFile -Value ("SUCCESS: " + $command.Command)
-            # If the command is to restart computer lets pause the script for 3 minutes
+            if ($result.ExitCode -eq 0) {
+                Write-Output "Successfully executed command: $commandValue"
+                # Write a success marker to the log file
+                Add-Content -Path $logFile -Value ("SUCCESS: " + $command.Command)
+            }
+            else {
+                Write-Output "Command failed with exit code $($result.ExitCode): $commandValue"
+                throw "Command execution failed $commandValue"
+            }
+            # If the command is to restart computer, pause the script for 3 minutes
             if ($command.Command -like "*Restart-Computer.ps1*") {
                 Write-Output "Restart command executed, pausing script for 3 minutes..."
                 Start-Sleep -Seconds 180
             }
-        } 
+        }
     }
     catch {
         Write-Output "An error occurred while executing command"
