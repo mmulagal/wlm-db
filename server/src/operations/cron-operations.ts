@@ -160,7 +160,7 @@ async function scheduledAssessment() {
     logger.info(`Redis port: ${redisDetails.port}`);
 
     const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
-        connection: new Redis(redisDetails.port, redisDetails.host, { password: redisDetails.password })
+        connection: new Redis({ host: redisDetails.host, port: redisDetails.port, password: redisDetails.password })
     });
 
     logger.info('Debug queue');
