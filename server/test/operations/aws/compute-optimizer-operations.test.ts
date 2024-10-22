@@ -62,12 +62,30 @@ describe('Compute optimizer operations', () => {
     });
 
     it('Manage instance recommendation prerequisites', async () => {
-        const instanceTypes = await manageInstanceRecommendationPreReqs('464262061435', DEFAULT_AWS_REGION, DEFAULT_AWS_CREDENTIALS_ID, getEc2Arn('464262061435','ap-southeast-1','i-test'), ACCOUNT_ID, ['i-partner-1','i-test'],['vol-123456789'],'AOAG');
+        const instanceTypes = await manageInstanceRecommendationPreReqs(
+            '464262061435',
+            DEFAULT_AWS_REGION,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            getEc2Arn('464262061435', 'ap-southeast-1', 'i-test'),
+            ACCOUNT_ID,
+            ['i-partner-1', 'i-test'],
+            ['vol-123456789'],
+            'AOAG'
+        );
         expect(instanceTypes).toBeDefined();
     });
 
     it('Manage instance recommendation prerequisites - managed instances', async () => {
-        const instanceTypes = await manageInstanceRecommendationPreReqs('464262061435', DEFAULT_AWS_REGION, DEFAULT_AWS_CREDENTIALS_ID, getEc2Arn('464262061435','ap-southeast-1','i-test'), ACCOUNT_ID, ['i-test'],[],'Standalone');
+        const instanceTypes = await manageInstanceRecommendationPreReqs(
+            '464262061435',
+            DEFAULT_AWS_REGION,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            getEc2Arn('464262061435', 'ap-southeast-1', 'i-test'),
+            ACCOUNT_ID,
+            ['i-test'],
+            [],
+            'Standalone'
+        );
         expect(instanceTypes).toBeDefined();
     });
 

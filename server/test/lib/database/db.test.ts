@@ -166,7 +166,6 @@ describe('List deployments', () => {
 
 describe('Database instance operations', () => {
     it('Create/update/list/delete database instance record', async () => {
-
         const databaseResource = await createResource(ACCOUNT_ID, {
             resourceId: 'i-rwithDBInstance',
             resourceName: 'resourcewithDBInstance',
@@ -236,7 +235,6 @@ describe('Database instance operations', () => {
         ]);
         response = await listDatabaseInstances(ACCOUNT_ID, {});
         expect(response.length).toEqual(0);
-
     });
 });
 

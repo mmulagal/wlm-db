@@ -14,7 +14,6 @@ import {
     isEbsAwsBackupEnabled,
     getInstanceDetailsByPrivateIp,
     getInstanceTypesFromInstanceRequirementsForManagedInstances
-
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -125,7 +124,8 @@ describe('EC2 Operations', () => {
         const response = await getInstanceTypesFromInstanceRequirementsForManagedInstances(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
-            ['i-12345']);
+            ['i-12345']
+        );
         expect(response).toBeDefined();
     });
 });

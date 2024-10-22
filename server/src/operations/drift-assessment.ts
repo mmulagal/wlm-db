@@ -250,6 +250,68 @@ async function calculateStorageDrift(
 
     return driftAssessmentData;
 }
+
+async function calculateComputeDrift(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Calculating compute drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
+
+    const { activeNodeInstanceId, cloudProviderAccountId, resourceName } = await getInstanceDetails(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    );
+    if (activeNodeInstanceId && cloudProviderAccountId && resourceName) {
+        const { finding, findingReasonCodes, currentInstanceType } =
+            (await initiateCompueAssessment(
+                cloudProviderAccountId,
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                resourceName
+            )) || {};
+
+        if (finding) {
+            let recommendationMessage = '';
+            const findingValue = getMatchingAssessmentStatus(finding);
+            const underProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is under-provisioned. We recommend upgrading it to meet your workload demands. This will provide additional CPU, memory, and I/O capacity, ensuring better performance for your SQL Server DB.`;
+            const overProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses.`;
+
+            if (findingValue.includes('provisioned')) {
+                const genericRecommendationMessage =
+                    'Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.';
+                recommendationMessage =
+                    findingValue === AssessmentStatus.UNDER_PROVISIONED
+                        ? underProvisionedRecommendationMessage
+                        : overProvisionedRecommendationMessage;
+                recommendationMessage += ` ${genericRecommendationMessage}`;
+            }
+
+            return {
+                name: 'Compute',
+                status: findingValue,
+                recommended: AssessmentStatus.OPTIMIZED,
+                severity: 'Critical',
+                recommendation: recommendationMessage,
+                objectsInViolation: findingReasonCodes?.map(code => translateFindingReasonCode(code)) || [],
+                tags: [
+                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
+            };
+        }
+    }
+    throw createError(
+        'Failed to get compute optimizer recommendation options for the selected database host during Continuous Assessment.'
+    );
+}
 async function initiateStorageAssessmentCollection(
     accountId: string,
     credentialsId: string,
@@ -564,54 +626,13 @@ async function fetchDriftAssessment(
     }
 
     if (shouldCalculateComputeAssessment) {
-        const { activeNodeInstanceId, cloudProviderAccountId, resourceName } = await getInstanceDetails(
+        driftAssesmentData.compute = await calculateComputeDrift(
             accountId,
             credentialsId,
             region,
             databaseHostId,
             databaseInstanceId
         );
-        if (activeNodeInstanceId && cloudProviderAccountId && resourceName) {
-            const { finding, findingReasonCodes, currentInstanceType } =
-                (await initiateCompueAssessment(
-                    cloudProviderAccountId,
-                    accountId,
-                    credentialsId,
-                    region,
-                    activeNodeInstanceId,
-                    resourceName
-                )) || {};
-
-            if (finding) {
-                let recommendationMessage = '';
-                const findingValue = getMatchingAssessmentStatus(finding);
-                const underProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is under-provisioned. We recommend upgrading it to meet your workload demands. This will provide additional CPU, memory, and I/O capacity, ensuring better performance for your SQL Server DB.`;
-                const overProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses.`;
-
-                if (findingValue.includes('provisioned')) {
-                    const genericRecommendationMessage =
-                        'Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.';
-                    recommendationMessage =
-                        findingValue === AssessmentStatus.UNDER_PROVISIONED
-                            ? underProvisionedRecommendationMessage
-                            : overProvisionedRecommendationMessage;
-                    recommendationMessage += ` ${genericRecommendationMessage}`;
-                }
-
-                driftAssesmentData.compute = {
-                    name: 'Compute',
-                    status: findingValue,
-                    recommended: AssessmentStatus.OPTIMIZED,
-                    severity: 'Critical',
-                    recommendation: recommendationMessage,
-                    objectsInViolation: findingReasonCodes?.map(code => translateFindingReasonCode(code)) || [],
-                    tags: [
-                        AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                        AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                    ]
-                };
-            }
-        }
     }
     return driftAssesmentData;
 }
