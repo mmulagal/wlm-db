@@ -4,6 +4,7 @@ import ms from 'ms';
 import { STORAGE_TYPE } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
 import { Queue, Worker } from 'bullmq';
+import IORedis from 'ioredis';
 import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
@@ -158,8 +159,14 @@ async function scheduledAssessment() {
     logger.info(`Redis host: ${redisDetails.host}`);
     logger.info(`Redis port: ${redisDetails.port}`);
 
+    const redisConnection = new IORedis({
+        port: redisDetails.port,
+        host: redisDetails.host,
+        password: redisDetails.password,
+        maxRetriesPerRequest: null
+    });
     const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
-        connection: redisDetails
+        connection: redisConnection
     });
 
     logger.info('Debug queue');
@@ -219,32 +226,36 @@ async function scheduledAssessment() {
                 } else {
                     logger.info(`No managed instances found for ${resourceId}.`);
                 }
-                const driftAssessmentWorker = new Worker(
-                    DRIFT_ASSESSMENT_QUEUE,
-                    async (job: { data: DriftAssessmentJob }) => {
-                        try {
-                            await triggerDriftAssessment(
-                                job.data.accountId,
-                                job.data.credentialsId,
-                                job.data.region,
-                                job.data.resourceId,
-                                job.data.managedInstanceIds,
-                                AssessmentTriggeredBy.SYSTEM
-                            );
-                        } catch (error) {
-                            logger.error('Error processing job:', job, error);
-                        }
-                    },
-                    {
-                        connection: redisDetails
-                    }
-                );
-
-                driftAssessmentWorker.on('completed', job => {
-                    logger.debug(job.id, 'is completed.');
-                });
             })
         );
+    } catch (error) {
+        logger.error(`Error while adding cron assessment job ${error}`);
+    }
+    try {
+        const driftAssessmentWorker = new Worker(
+            DRIFT_ASSESSMENT_QUEUE,
+            async (job: { data: DriftAssessmentJob }) => {
+                try {
+                    await triggerDriftAssessment(
+                        job.data.accountId,
+                        job.data.credentialsId,
+                        job.data.region,
+                        job.data.resourceId,
+                        job.data.managedInstanceIds,
+                        AssessmentTriggeredBy.SYSTEM
+                    );
+                } catch (error) {
+                    logger.error('Error processing job:', job, error);
+                }
+            },
+            {
+                connection: redisConnection
+            }
+        );
+
+        driftAssessmentWorker.on('completed', job => {
+            logger.debug(job.id, 'is completed.');
+        });
     } catch (error) {
         logger.error(`Error while triggering scheduled assessment: ${error}.`);
     }
