@@ -632,7 +632,8 @@ const StorageParameterDriftResponse = Type.Object({
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 
 const DriftAssessmentResponse = Type.Object({
-    storage: Type.Optional(StorageParameterDriftResponse)
+    storage: Type.Optional(StorageParameterDriftResponse),
+    compute: Type.Optional(ParameterDriftResponse)
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 

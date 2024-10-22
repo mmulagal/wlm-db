@@ -225,7 +225,7 @@ async function getInstanceRecommendations(
     accountId: string,
     instanceId: string,
     nodeInstances: NodeDetails[],
-    ebsVolumeIds: string[],
+    ebsVolumeIds: string[] = [],
     sqlServerDeploymentType: string
 ) {
     logger.info('Getting instance recommendations', {
@@ -337,4 +337,37 @@ async function getInstanceRecommendations(
     throw new Error('AWS Account ID details associated with the Database host not found');
 }
 
-export { createRecommendationForResource, getInstanceRecommendations, manageInstanceRecommendationPreReqs };
+const translationMap: { [key: string]: string } = {
+    CPUOverprovisioned: 'CPU over-provisioned',
+    CPUUnderprovisioned: 'CPU under-provisioned',
+    DiskIOPSOverprovisioned: 'Disk IOPS over-provisioned',
+    DiskIOPSUnderprovisioned: 'Disk IOPS under-provisioned',
+    DiskThroughputOverprovisioned: 'Disk throughput over-provisioned',
+    DiskThroughputUnderprovisioned: 'Disk throughput under-provisioned',
+    EBSIOPSOverprovisioned: 'EBS IOPS over-provisioned',
+    EBSIOPSUnderprovisioned: 'EBS IOPS under-provisioned',
+    EBSThroughputOverprovisioned: 'EBS throughput over-provisioned',
+    EBSThroughputUnderprovisioned: 'EBS throughput under-provisioned',
+    GPUMemoryOverprovisioned: 'GPU memory over-provisioned',
+    GPUMemoryUnderprovisioned: 'GPU memory under-provisioned',
+    GPUOverprovisioned: 'GPU over-provisioned',
+    GPUUnderprovisioned: 'GPU under-provisioned',
+    MemoryOverprovisioned: 'Memory over-provisioned',
+    MemoryUnderprovisioned: 'Memory under-provisioned',
+    NetworkBandwidthOverprovisioned: 'Network bandwidth over-provisioned',
+    NetworkBandwidthUnderprovisioned: 'Network bandwidth under-provisioned',
+    NetworkPPSOverprovisioned: 'Network PPS over-provisioned',
+    NetworkPPSUnderprovisioned: 'Network PPS under-provisioned'
+};
+
+function translateFindingReasonCode(key: string): string {
+    logger.info('Translating finding reason code', { key });
+    return translationMap[key] || key; // Return the key itself if no translation is found
+}
+
+export {
+    createRecommendationForResource,
+    getInstanceRecommendations,
+    manageInstanceRecommendationPreReqs,
+    translateFindingReasonCode
+};

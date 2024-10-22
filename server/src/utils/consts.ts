@@ -64,13 +64,6 @@ enum HEADERS {
 
 const API_PATH_HEALTH: string = '/health';
 
-// TODO: These variables are not used anywhere. Remove them later.
-// const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
-//     ? `http://${process.env.CLOUD_MANAGER_ENDPOINT}`
-//     : !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
-//     ? config.get<string>('urls.local-connector')
-//     : config.get<string>('urls.cloud-manager');
-
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit

@@ -8,7 +8,6 @@ import {
     DATABASES,
     SERVER_NAME,
     SERVER_GUID,
-    SERVER_STATE,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
     SERVER_IO_LATENCY,
@@ -759,27 +758,6 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
     }
 }
 
-// TODO: remove if this is not being used
-
-async function getServerState(resourceId: string) {
-    logger.info('Fetch SQL server state for resource', resourceId);
-
-    const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
-
-    if (!credentialsId || !region || !node1InstanceId) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
-    }
-
-    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!);
-
-    const commands = [`${PSSCRIPT} -Query "${SERVER_STATE}"`];
-    const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId!);
-
-    logger.debug('SQL server state response', response);
-
-    return response!.replace(/[\r\n.]/g, '');
-}
-
 async function getNativeSQLProtection(
     credentialsId: string,
     region: string,
@@ -1343,7 +1321,6 @@ export {
     getMsSqlResourceId,
     deleteResourceById,
     getServerIOLatency,
-    getServerState,
     getNativeSQLProtection,
     getPerformanceMetrics,
     getNativeSQLBackedupDatabases,

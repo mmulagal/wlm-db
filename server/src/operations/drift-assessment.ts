@@ -1,15 +1,23 @@
 import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import { DriftAssessmentResponseType, StorageParameterDriftResponseType } from '../routes/types/database-hosts.types';
 import getLogger from '../utils/logger';
-import { sqlResponseParsing } from '../utils/utils';
+import { getEc2Arn, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageCapacity, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/drift-assessment-scripts';
 import storageGoldenConfigData from './drift-assessment/golden-configs/storage';
-import { AssessmentCategories, AssessmentStatus, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import {
+    AssessmentCategories,
+    AssessmentStatus,
+    AssessmentTriggeredBy,
+    AwsWellArchitecturedPillars,
+    HttpErrorCodes,
+    RESOURCESTYPE
+} from '../utils/consts';
 import { StorageAssessment, WorkloadInstance } from '../utils/common-types';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import {
@@ -18,6 +26,9 @@ import {
 } from '../lib/database/database-instance-config';
 import { listResources } from '../lib/database/db';
 import { describeFSxVolumes } from '../lib/aws/fsx';
+import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
+import { checkComputeOptimizerEnrollmentStatus } from './recommendation-operations';
+import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
 
 const logger = getLogger();
 
@@ -297,6 +308,90 @@ async function initiateStorageAssessmentCollection(
     ]);
 }
 
+async function initiateCompueAssessment(
+    awsAccountId: string,
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    resourceName: string
+) {
+    logger.info('Initiate compute assessment', {
+        awsAccountId,
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId
+    });
+    let errorMessage = '';
+    let jobStatus: string = JOBSTATUS.COMPLETED;
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: 'The selected database host is being scanned for compute best practice misalignments.',
+        description: 'The selected database host is being scanned for compute best practice misalignments.',
+        resourceName: resourceName!,
+        initiator: AssessmentTriggeredBy.USER,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.ASSESSMENT
+    }); // just creating the job and not returning the jobId as we are not using it anywhere; the compute assessment job will be a part of jobs dashboard
+
+    try {
+        await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
+
+        const resourceArn = getEc2Arn(awsAccountId, region, databaseHostId);
+        const computeOptimizerInstanceRecommendations = await getEC2InstanceRecommendations(
+            region,
+            credentialsId,
+            accountId,
+            {
+                instanceArns: [resourceArn],
+                recommendationPreferences: {
+                    cpuVendorArchitectures: [CpuVendorArchitecture.CURRENT] // CURRENT to view recommendations that are based on the same CPU vendor and architecture as the current instance.
+                },
+                filters: [
+                    {
+                        name: 'InferredWorkloadTypes',
+                        values: ['SQLServer']
+                    }
+                ]
+            }
+        );
+        const {
+            instanceRecommendations: [
+                { currentInstanceType, finding, findingReasonCodes, recommendationOptions: coRecOptions }
+            ] = []
+        } = computeOptimizerInstanceRecommendations || {};
+        if (currentInstanceType && finding) {
+            return {
+                currentInstanceType,
+                finding,
+                findingReasonCodes,
+                recommendationOptions: coRecOptions?.map(({ instanceType, rank, savingsOpportunity }) => ({
+                    instanceType,
+                    rank,
+                    savingsOpportunity
+                }))
+            };
+        }
+        throw new Error(
+            'Unable to find current instance type and compute optimizer findings for the selected database host.'
+        );
+    } catch (error: any) {
+        errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Assessment. ${error.message}`;
+        logger.error({ errorMessage, error });
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, jobId, {
+            error: errorMessage,
+            description:
+                'The selected daatabase host has been scanned for compute best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.',
+            status: jobStatus!,
+            endTime: Date.now()
+        });
+    }
+}
+
 async function driftAssesment(
     accountId: string,
     credentialsId: string,
@@ -320,7 +415,7 @@ async function driftAssesment(
     let errorMessage;
     let jobStatus: string = JOBSTATUS.COMPLETED;
 
-    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE];
+    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE, AssessmentCategories.COMPUTE];
 
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
@@ -391,13 +486,8 @@ async function triggerDriftAssessment(
     try {
         await Promise.all(
             databaseInstanceIds.map(async databaseInstanceId => {
-                const { activeNodeInstanceId, newDatabaseInstanceDetails } = await getInstanceDetails(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId
-                );
+                const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } =
+                    await getInstanceDetails(accountId, credentialsId, region, databaseHostId, databaseInstanceId);
                 const {
                     database_instance_name: savedInstanceName,
                     fsxn_ids: fileSystemId,
@@ -411,7 +501,9 @@ async function triggerDriftAssessment(
                     region,
                     sqlAuthEnabled: sqlAuthEnabled || false,
                     activeNodeInstanceid: activeNodeInstanceId,
-                    fsxFileSystem: fileSystemId
+                    fsxFileSystem: fileSystemId,
+                    cloudProviderAccountId: cloudProviderAccountId || '',
+                    resourceName: resourceName || ''
                 };
                 runningInstances.push(instanceRecord);
             })
@@ -428,7 +520,7 @@ async function triggerDriftAssessment(
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.SANDBOX
+            type: JOBTYPE.ASSESSMENT
         });
 
         driftAssesment(accountId, credentialsId, region, job.id, databaseHostId, runningInstances, fields);
@@ -459,6 +551,7 @@ async function fetchDriftAssessment(
     }
     const driftAssesmentData: DriftAssessmentResponseType = {};
     const shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
+    const shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
     if (shouldCalculateStorageAssessment) {
         driftAssesmentData.storage = await calculateStorageDrift(
             accountId,
@@ -468,7 +561,73 @@ async function fetchDriftAssessment(
             databaseInstanceId
         );
     }
+
+    if (shouldCalculateComputeAssessment) {
+        const { activeNodeInstanceId, cloudProviderAccountId, resourceName } = await getInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+        if (activeNodeInstanceId && cloudProviderAccountId && resourceName) {
+            const { finding, findingReasonCodes, currentInstanceType } =
+                (await initiateCompueAssessment(
+                    cloudProviderAccountId,
+                    accountId,
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId,
+                    resourceName
+                )) || {};
+
+            if (finding) {
+                let recommendationMessage = '';
+                const findingValue = getMatchingAssessmentStatus(finding);
+                const underProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is under-provisioned. We recommend upgrading it to meet your workload demands. This will provide additional CPU, memory, and I/O capacity, ensuring better performance for your SQL Server DB.`;
+                const overProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses.`;
+
+                if (findingValue.includes('provisioned')) {
+                    const genericRecommendationMessage =
+                        'Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.';
+                    recommendationMessage =
+                        findingValue === AssessmentStatus.UNDER_PROVISIONED
+                            ? underProvisionedRecommendationMessage
+                            : overProvisionedRecommendationMessage;
+                    recommendationMessage += ` ${genericRecommendationMessage}`;
+                }
+
+                driftAssesmentData.compute = {
+                    name: 'Compute',
+                    status: findingValue,
+                    recommended: AssessmentStatus.OPTIMIZED,
+                    severity: 'Critical',
+                    recommendation: recommendationMessage,
+                    objectsInViolation: findingReasonCodes?.map(code => translateFindingReasonCode(code)) || [],
+                    tags: [
+                        AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                        AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                    ]
+                };
+            }
+        }
+    }
     return driftAssesmentData;
+}
+
+function getMatchingAssessmentStatus(finding: string) {
+    logger.info('Getting matching assessment status for finding:', finding);
+    switch (finding) {
+        case 'NOT_OPTIMIZED':
+            return AssessmentStatus.NOT_OPTIMIZED;
+        case 'OVER_PROVISIONED':
+            return AssessmentStatus.OVER_PROVISIONED;
+        case 'UNDER_PROVISIONED':
+            return AssessmentStatus.UNDER_PROVISIONED;
+        case 'OPTIMIZED':
+        default:
+            return AssessmentStatus.OPTIMIZED;
+    }
 }
 
 export { triggerDriftAssessment, fetchDriftAssessment };

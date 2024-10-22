@@ -409,12 +409,6 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
     recommendedLicenseCalculation: LicenseCalculationObject,
     existingComputeCalculation: ComputeCalculationObject,
     existingLicenseCalculation: LicenseCalculationObject,
-    // TODO: Uncomment below 3 lines after fixing the issue with the Type.Mapped and remove the next 3 lines
-    // ebsCalculation: Type.Array(Type.Mapped(Type.Union([Type.Optional(Type.Literal('gp2')),Type.Literal('gp3'),Type.Optional(Type.Literal('io1')),Type.Optional(Type.Literal('io2'))]), () =>
-    //     ebsCostCalculation
-    // )),
-    // ebsCloneCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsCloneCalculation)),
-    // ebsSnapshotCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsSnapshotCalculation)),
     ebsCalculation: Type.Optional(EBSCostCalculationResp),
     ebsCloneCalculation: Type.Optional(EBSCloneCostCalculationResp),
     ebsSnapshotCalculation: Type.Optional(EBSSnapshotCalculationResp),

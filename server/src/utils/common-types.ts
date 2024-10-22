@@ -208,6 +208,8 @@ interface WorkloadInstance {
     mappedVolumesUuids?: string[];
     mappedLunNames?: string[];
     mappedLunUuids?: string[];
+    cloudProviderAccountId: string;
+    resourceName: string;
 }
 
 interface StorageAssessment {

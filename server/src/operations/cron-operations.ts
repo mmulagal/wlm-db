@@ -28,7 +28,10 @@ import { getHostAndSqlServerInfo } from './discover-operations';
 import { manageInstanceRecommendationPreReqs } from './aws/compute-optimizer-operations';
 import { getEc2Arn, getRedisDetails } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
-import { fetchSqlServerInstanceConfiguration } from './recommendation-operations';
+import {
+    checkComputeOptimizerEnrollmentStatus,
+    fetchSqlServerInstanceConfiguration
+} from './recommendation-operations';
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { triggerDriftAssessment } from './drift-assessment';
 import { DriftAssessmentJob, Metadata } from '../utils/common-types';
@@ -190,6 +193,14 @@ async function updateManagedInstanceRecommendationPreferences() {
         await Promise.all(
             Object.entries(grouped).map(async ([key, instances]) => {
                 const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('|');
+                try {
+                    await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
+                } catch (error) {
+                    logger.info(
+                        `Failed fetching compute otimizer opt in status or Compute optimizer is not enabled for account ${awsAccountId} in region ${region}. Skipping updating instance recommendation preferences for managed instances.`
+                    );
+                    return;
+                }
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 const managedInstanceToBeUpdated = instances.filter(
                     instance => !trackedEc2InstanceIds.includes(instance.database_instance_id)
