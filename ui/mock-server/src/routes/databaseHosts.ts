@@ -80,7 +80,7 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/jobs/:jobI
     }, 3000);
 });
 
-router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/mssql/discover`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/discover`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, DiscoverEC2);
     }, 3000);
@@ -96,7 +96,7 @@ router.get(
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/discover/resource-credentials`,
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/instances/:instanceId/discover/resource-credentials`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, {

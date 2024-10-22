@@ -572,9 +572,9 @@ export const inventoryApi = createApi({
             discoverHosts: builder.query({
                 query: ({ regionId, credentialsId, nextToken = null }) => {
                     if (nextToken) {
-                        return `v1/mssql/credentials/${credentialsId}/regions/${regionId}/mssql/discover?pageSize=10&nextToken=${nextToken}`;
+                        return `v1/mssql/credentials/${credentialsId}/regions/${regionId}/discover?pageSize=10&nextToken=${nextToken}`;
                     } else {
-                        return `v1/mssql/credentials/${credentialsId}/regions/${regionId}/mssql/discover?pageSize=10`;
+                        return `v1/mssql/credentials/${credentialsId}/regions/${regionId}/discover?pageSize=10`;
                     }
                 },
                 keepUnusedDataFor: 1,
@@ -596,7 +596,7 @@ export const inventoryApi = createApi({
             }),
             registerResourceCredentials: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/discover/resource-credentials`,
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/discover/resource-credentials`,
                     method: 'POST',
                     body: payload
                 })
