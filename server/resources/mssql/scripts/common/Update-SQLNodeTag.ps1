@@ -8,6 +8,8 @@ param(
     [boolean]$IsTerraform 
 )
 
+Start-Transcript -Path C:\cfn\log\updatesqlnodetag.ps1.txt -Append
+
 Import-Module -Name AWSPowerShell
 try {
     $ScriptsPath = Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 

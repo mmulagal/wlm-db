@@ -635,7 +635,7 @@ try {
             @{Command = "C:\\cfn\\DSC\\PostConfigDSC.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Install-sqlcu.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1 -Count 'Third'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Update-SQLNodeTag.ps1 -StackName `"$DeploymentName`""; UseExecutionPolicy = $false }
+            @{Command = "C:\\cfn\\scripts\\common\\Update-SQLNodeTag.ps1 -StackName `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false }
         )
         Invoke-RemoteCommands -commands $ConfigureFCI -logFile "C:\\cfn\\tflogs\\ConfigureFCI.log" -Credential $LoginCredential
         Write-Output "Completed ConfigureFCI for FCI Secondary Node"
