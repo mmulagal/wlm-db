@@ -14,7 +14,6 @@ import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
 import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
 import { SELECT_CONFIG } from './appConstants';
-import GetWellMock from '../workloadFactory/GetWell/GetWellMock.json';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -847,13 +846,9 @@ export const getWellApi = createApi({
     endpoints: builder => {
         return {
             getMssqlAssessmentData: builder.mutation({
-                // ToDO : Untill APIs are ready using mock data
-                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return { data: GetWellMock };
-                }
-                // query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                //     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment`
-                // })
+                query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment`
+                })
             })
         };
     }

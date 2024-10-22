@@ -29,21 +29,36 @@ param(
     [string]$Parentstackname,
     
     [Parameter(Mandatory = $true)]
-    [string]$SqlCollation 
+    [string]$SqlCollation,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform,
+
+    [Parameter(Mandatory = $false)]
+    [string]$SecondaryInstanceId
 )
 
 Start-Sleep -Seconds 600
 
+
+#wait until the secondary node done with update-sqlnodetag.ps1 to continue
 #get Instance ID
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
-
+$region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing).Content
 
 try {
     #Function to find Subnet mask
 
-    $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+    $ScriptsPath = Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
     . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
+    . "$ScriptsPath\common\PollForTag.ps1" 
+
+    # Check if polling is required
+    if ($IsTerraform -and $SecondaryInstanceId) {
+        PollForTag -Region $region -InstanceId $SecondaryInstanceId -TagKey "update_sql_node_tag" -TagValue "completed"
+    }
+    
     function Get-SubnetMask($subnetid) {
 
         $subnet = Invoke-WithRetry -Command { get-ec2subnet -SubnetId $subnetid }
@@ -177,7 +192,11 @@ try {
     }
 }
 catch {
-    Write-Output "Failed to run complete Failover cluster action for SQL installation"
+    $FailureReason = "Failed to run complete Failover cluster action for SQL installation: " + $_.Exception.Message
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }

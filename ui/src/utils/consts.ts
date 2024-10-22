@@ -633,6 +633,13 @@ export const EBS_PROTECTED_OPTIONS = {
     UNKNOWN: 'Unknown'
 };
 
+export const GETWELL_STATUS = {
+    OPTIMIZED: 'Optimized',
+    NOT_OPTIMIZED: 'Not optimized',
+    UNDER_PROVISIONED: 'Under-provisioned',
+    OVER_PROVISIONED: 'Over-provisioned'
+};
+
 export const GETWELL_VALUES: any = {
     optimized: 'Optimized',
     'not-optimized': 'Not optimized',

@@ -10,6 +10,7 @@ import {
     ACCOUNT_ID,
     AssessmentTriggeredBy,
     CONTINUOUS_ASSESSMENT_FEATURE,
+    DRIFT_ASSESSMENT_QUEUE,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     TCO_FEATURE
@@ -20,6 +21,7 @@ import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './d
 import {
     createTrackedEc2Records,
     listAllManagedInstances,
+    listResources,
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record
@@ -37,9 +39,6 @@ import { triggerDriftAssessment } from './drift-assessment';
 import { DriftAssessmentJob, Metadata } from '../utils/common-types';
 
 const logger = getLogger();
-
-const redisDetails = getRedisDetails();
-const driftAssessmentQueue = new Queue('driftAssessmentQueue', { connection: new Redis(redisDetails.connection) });
 
 async function failLongRunningDeploymentJobs() {
     logger.info('Marking long running (> 4 hours) deployment jobs as failed');
@@ -275,6 +274,17 @@ async function updateManagedInstanceRecommendationPreferences() {
     });
 }
 async function scheduledAssessment() {
+    const redisDetails = getRedisDetails();
+
+    logger.info(`Redis details ${redisDetails.connection.url}`);
+
+    const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, { connection: new Redis(redisDetails.connection) });
+
+    const managedResources = await listResources();
+    if (isEmpty(managedResources)) {
+        logger.error('No managed database resources found.');
+        return;
+    }
     const managedInstances = await listAllManagedInstances();
     if (isEmpty(managedInstances)) {
         logger.error('No successfully managed database instances found.');
@@ -283,18 +293,22 @@ async function scheduledAssessment() {
 
     try {
         await Promise.all(
-            managedInstances.map(async managedInstance => {
+            managedResources.map(async managedResource => {
                 const {
                     account_id: accountId,
                     credentials_id: credentialsId,
                     region,
                     resource_id: resourceId
-                } = managedInstance;
+                } = managedResource;
 
-                const managedInstanceIds = managedInstances.map(instance => instance.database_instance_id);
+                const managedInstanceIds = managedInstances
+                    .filter(instance => instance.resource_id === resourceId)
+                    .map(instance => instance.database_instance_id);
+
+                logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
 
                 driftAssessmentQueue.add(
-                    'driftAssessment',
+                    `driftAssessmentFor${resourceId}`,
                     {
                         accountId,
                         credentialsId,
@@ -309,8 +323,10 @@ async function scheduledAssessment() {
                     }
                 );
 
+                logger.info(`Added assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+
                 const driftAssessmentWorker = new Worker(
-                    'driftAssessmentQueue',
+                    DRIFT_ASSESSMENT_QUEUE,
                     async (job: { data: DriftAssessmentJob }) => {
                         try {
                             await triggerDriftAssessment(

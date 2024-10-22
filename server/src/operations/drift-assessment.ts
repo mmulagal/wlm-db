@@ -46,6 +46,7 @@ async function calculateStorageDrift(
     databaseInstanceId: string
 ) {
     logger.info('calculateStorageDrift', accountId, credentialsId, region, databaseHostId);
+
     const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
         accountId,
         region,
@@ -274,7 +275,7 @@ async function initiateStorageAssessmentCollection(
         false,
         instanceRecord.activeNodeInstanceid,
         [instanceRecord.name],
-        false
+        instanceRecord.sqlAuthEnabled
     )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [] }];
 
     const volumeRecords =

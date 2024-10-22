@@ -293,7 +293,7 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
 }
 
 async function listResources(
-    accountId: string,
+    accountId?: string,
     resourceId?: string,
     credentialsId?: string,
     region?: string,
@@ -314,11 +314,13 @@ async function listResources(
         nextToken
     });
 
-    accountId = checkAccount(accountId);
+    if (accountId) {
+        accountId = checkAccount(accountId);
+    }
 
     return prisma.client.resource.findMany({
         where: {
-            account_id: accountId,
+            ...(accountId && { account_id: accountId }),
             ...(resourceId && { resource_id: resourceId }),
             ...(resourceType && { resource_type: resourceType }),
             ...(region && { region }),

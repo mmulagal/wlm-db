@@ -69,115 +69,105 @@ const Home = () => {
         <div className={styles['app-layout']}>
             <div style={{ height: '100%' }}>
                 {isWorkloadFactory && (
-                    <Suspense fallback={<MainComponent />}>
-                        <Routes>
-                            <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
-                            <Route
-                                path={`add-working-environment/database-services/:storage/postgress`}
-                                element={<PostgressMainComponent />}
-                            />
-                            <Route
-                                path={`add-working-environment/database-services/:storage/discover`}
-                                element={<DiscoverPage />}
-                            />
+                    <Routes>
+                        <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
+                        <Route path={`/databases/mssql-deploy-wizard`} element={<MainComponent />} />
+                        <Route
+                            path={`add-working-environment/database-services/:storage/postgress`}
+                            element={<PostgressMainComponent />}
+                        />
+                        <Route
+                            path={`add-working-environment/database-services/:storage/discover`}
+                            element={<DiscoverPage />}
+                        />
 
-                            <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
-                                <Route path={'overview'} element={<MsSqlOverview />} />
-                                <Route path={'databases'} element={<Databases />} />
-                                <Route path={'tables'} element={<Tables />} />
-                            </Route>
-                            <Route path={'databases'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
-                            <Route
-                                path={'databases/dashboard'}
-                                element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />}
-                            />
-                            <Route
-                                path={'databases/inventory'}
-                                element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
-                            />
-                            <Route
-                                path={'databases/sandboxes'}
-                                element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />}
-                            />
-                            <Route
-                                path={'databases/explore-savings'}
-                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
-                            />
-                            <Route
-                                path={'databases/job-monitoring'}
-                                element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
-                            />
-                            <Route
-                                path={'databases/explore-savings-ebs'}
-                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
-                            />
-                            <Route
-                                path={'databases/explore-savings-fsxw'}
-                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
-                            />
-                            <Route path={'create-new-user'} element={<WizardComponent />} />
-                            <Route path={'job-monitor'} element={<JobMonitoring />} />
-                            <Route path={'create-new-sandbox'} element={<CreateNewSandbox />} />
-                            <Route path="*" element={<MainComponent />} />
-                        </Routes>
-                    </Suspense>
+                        <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
+                            <Route path={'overview'} element={<MsSqlOverview />} />
+                            <Route path={'databases'} element={<Databases />} />
+                            <Route path={'tables'} element={<Tables />} />
+                        </Route>
+                        <Route path={'/databases'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
+                        <Route path={'/databases/dashboard'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
+                        <Route path={'/databases/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
+                        <Route path={'/databases/sandboxes'} element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />} />
+                        <Route
+                            path={'/databases/explore-savings'}
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
+                        />
+                        <Route
+                            path={'/databases/job-monitoring'}
+                            element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
+                        />
+                        <Route
+                            path={'/databases/explore-savings-ebs'}
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                        />
+                        <Route
+                            path={'/databases/explore-savings-fsxw'}
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
+                        />
+                        <Route path={'/create-new-user'} element={<WizardComponent />} />
+                        <Route path={'/job-monitor'} element={<JobMonitoring />} />
+                        <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
+                        {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
+                    </Routes>
                 )}
                 {!isWorkloadFactory && (
                     <Suspense fallback={<MainComponent />}>
                         <Routes>
-                            <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
-                            <Route path={`fsxdb/mssql-deploy-wizard`} element={<MainComponent />} />
+                            <Route path={`/mssql-deploy-wizard`} element={<MainComponent />} />
+                            <Route path={`/fsxdb/mssql-deploy-wizard`} element={<MainComponent />} />
                             <Route
-                                path={`add-working-environment/database-services/:storage/postgress`}
+                                path={`/add-working-environment/database-services/:storage/postgress`}
                                 element={<PostgressMainComponent />}
                             />
                             <Route
-                                path={`add-working-environment/database-services/:storage/discover`}
+                                path={`/add-working-environment/database-services/:storage/discover`}
                                 element={<DiscoverPage />}
                             />
 
-                            <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
+                            <Route path={`/mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
                                 <Route path={'overview'} element={<MsSqlOverview />} />
                                 <Route path={'databases'} element={<Databases />} />
                                 <Route path={'tables'} element={<Tables />} />
                             </Route>
-                            <Route path={'fsxdb'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
-                            <Route path={'fsxdb/dashboard'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
+                            <Route path={'/fsxdb'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
+                            <Route path={'/fsxdb/dashboard'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
                             <Route
-                                path={'databases/inventory'}
+                                path={'/databases/inventory'}
                                 element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
                             />
-                            <Route path={'fsxdb/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
-                            <Route path={'fsxdb/sandboxes'} element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />} />
+                            <Route path={'/fsxdb/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
+                            <Route path={'/fsxdb/sandboxes'} element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />} />
                             <Route
-                                path={'fsxdb/explore-savings'}
+                                path={'/fsxdb/explore-savings'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
                             />
                             <Route
-                                path={'fsxdb/job-monitoring'}
+                                path={'/fsxdb/job-monitoring'}
                                 element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                             />
                             <Route
-                                path={'databases/explore-savings-ebs'}
+                                path={'/databases/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
                             <Route
-                                path={'fsxdb/explore-savings-ebs'}
+                                path={'/fsxdb/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
                             <Route
-                                path={'databases/explore-savings-fsxw'}
+                                path={'/databases/explore-savings-fsxw'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                             />
                             <Route
-                                path={'fsxdb/explore-savings-fsxw'}
+                                path={'/fsxdb/explore-savings-fsxw'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                             />
 
-                            <Route path={'create-new-user'} element={<WizardComponent />} />
-                            <Route path={'job-monitor'} element={<JobMonitoring />} />
-                            <Route path={'create-new-sandbox'} element={<CreateNewSandbox />} />
-                            <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
+                            <Route path={'/create-new-user'} element={<WizardComponent />} />
+                            <Route path={'/job-monitor'} element={<JobMonitoring />} />
+                            <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
+                            {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
                         </Routes>
                     </Suspense>
                 )}

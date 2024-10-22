@@ -151,7 +151,7 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
-    ASSESSMENT = 'ASSESSMENT'
+    ASSESSMENT = 'Assessment'
 }
 
 enum HttpErrorCodes {
@@ -546,6 +546,7 @@ const VALIDATION_INSTANCE_TYPE = 'ValidationNodeInstanceType';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
+const PGSQL_MASTER_TEMPLATE_PATH = 'pgsql/templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = `https://${DEFAULT_AWS_REGION}.console.aws.amazon.com/cloudformation/home`;
 const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
@@ -921,7 +922,7 @@ const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: { [key: string]: { name: str
     Ec2MessagesEndpointExists: { name: 'ec2_messages_endpoint_exists', type: 'boolean' },
     EnableCloudWatchLogFeature: { name: 'enable_cloud_watch_log_feature', type: 'boolean' },
     EncryptedFsxPassword: { name: 'encrypted_fsx_password', type: 'string' },
-    FileSystemEncryptionKeyId: { name: 'file_system_encryption_key_id', type: 'string' },
+    FileSystemEncryptionKeyId: { name: 'fsx_encryption_key', type: 'string' },
     FSxAdminPassword: { name: 'fsx_admin_password', type: 'string' },
     FSxAdminUsername: { name: 'fsx_admin_username', type: 'string' },
     FSxDataLunSize: { name: 'fsx_data_lun_size', type: 'number' },
@@ -973,7 +974,8 @@ const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: { [key: string]: { name: str
     VPCID: { name: 'vpc_id', type: 'string' },
     WlmdbAwsAccountId: { name: 'wlmdb_aws_account_id', type: 'string' },
     WorkloadInstanceType: { name: 'workload_instance_type', type: 'string' },
-    EBSVolumeSize: { name: 'ebs_volume_size', type: 'number' }
+    EBSVolumeSize: { name: 'ebs_volume_size', type: 'number' },
+    SqlFSxWSFCName: { name: 'sql_fsx_ws_fc_name', type: 'string' }
 };
 
 enum DATABASE_METRIC_TYPE {
@@ -1371,27 +1373,27 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
 const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptValidation',
-        url: `${WLMDB}/scripts/validate-vpc.bash`
+        url: `${WLMDB}/pgsql/scripts/validate-vpc.sh`
     }
 ];
 
 const PGSQL_TEMPLATES_ASSETS = [
     {
         name: 'FSXNewTemplate',
-        url: 'templates/fsx-new.yaml'
+        url: 'pgsql/templates/fsx-new.yaml'
     },
 
     {
         name: 'FSXExistingTemplate',
-        url: 'templates/fsx-existing.yaml'
+        url: 'pgsql/templates/fsx-existing.yaml'
     },
     {
         name: 'ValidationTemplate',
-        url: 'templates/vpc-validation.yaml'
+        url: 'pgsql/templates/vpc-validation.yaml'
     },
     {
         name: 'SQLStandaloneTemplate',
-        url: 'templates/standalone-deployment.yaml'
+        url: 'pgsql/templates/standalone-deployment.yaml'
     }
 ];
 
@@ -1448,6 +1450,8 @@ enum AwsWellArchitecturedPillars {
 
 // Redis
 const REDIS_URL = process.env.REDIS_ENDPOINT || config.get('redis.endpoint') || '127.0.0.1:6379';
+
+const DRIFT_ASSESSMENT_QUEUE = 'driftAssessmentQueue';
 
 export {
     WLMDB,
@@ -1760,5 +1764,7 @@ export {
     AssessmentTriggeredBy,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
-    REDIS_URL
+    REDIS_URL,
+    DRIFT_ASSESSMENT_QUEUE,
+    PGSQL_MASTER_TEMPLATE_PATH
 };

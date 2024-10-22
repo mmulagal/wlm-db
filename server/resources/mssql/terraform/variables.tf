@@ -294,6 +294,7 @@ variable "unique_id" {
 variable "fsx_file_system_name" {
   description = "The name of the FSx file system"
   type        = string
+  default     = ""
 }
 
 variable "fsx_data_volume_name" {

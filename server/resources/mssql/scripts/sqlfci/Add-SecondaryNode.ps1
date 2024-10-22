@@ -17,7 +17,10 @@ param(
     [string]$Stackname,
 
     [Parameter(Mandatory = $true)]
-    [string]$Parentstackname
+    [string]$Parentstackname,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform 
  
 )
 
@@ -26,7 +29,7 @@ Start-Sleep -Seconds 180
 #get Instance ID
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
-
+$region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing).Content
 
 try {
     Start-Transcript -Path C:\cfn\log\AddSecondaryNode.ps1.txt -Append
@@ -35,7 +38,7 @@ try {
     $DscCertThumbprint = (get-childitem -path cert:\LocalMachine\My | where { $_.subject -eq "CN=AWSLWDscEncryptCert" }).Thumbprint
     $DomainNetBIOSName = $env:USERDOMAIN
     # Getting Password from Secrets Manager for AD Admin User
-    $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
+    $ScriptsPath = Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
     . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
     $SsmParameter = Invoke-WithRetry -Command {
     (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
@@ -127,9 +130,18 @@ try {
         } -Credential $Credentials -ComputerName $HostName -Authentication credssp -ArgumentList $ClusterName, $HostName
     }
 
+    if ($IsTerraform) {
+        # once this completes add the tag to know when to proceed from primary instance
+        New-EC2Tag -Region "$region" -ResourceId "$instanceId" -Tag @{ Key = "add_secondary_node"; Value = "completed" }
+        Write-Output "Instance tagged successfully for the completion of add secondary node"
+    }
 }
 catch {
-    Write-Output "Adding secondary node for Windows cluster failed"
+    $FailureReason = "Adding secondary node for Windows cluster failed"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }
