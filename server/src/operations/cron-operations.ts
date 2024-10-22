@@ -192,31 +192,34 @@ async function scheduledAssessment() {
                     .filter(instance => instance.resource_id === resourceId)
                     .map(instance => instance.database_instance_id);
 
-                logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+                if (!isEmpty(managedInstanceIds)) {
+                    logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
 
-                try {
-                    driftAssessmentQueue.add(
-                        `driftAssessmentFor${resourceId}`,
-                        {
-                            accountId,
-                            credentialsId,
-                            region,
-                            resourceId,
-                            managedInstanceIds
-                        },
-                        {
-                            // 2hours to observe
-                            repeat: { every: 2 * 3600 * 1000 }, // 24 hours in milliseconds
-                            removeOnComplete: true,
-                            removeOnFail: true
-                        }
-                    );
-                } catch (error: any) {
-                    logger.error(`Error while add job to the queue. Error: ${error}`);
+                    try {
+                        driftAssessmentQueue.add(
+                            `driftAssessmentFor${resourceId}`,
+                            {
+                                accountId,
+                                credentialsId,
+                                region,
+                                resourceId,
+                                managedInstanceIds
+                            },
+                            {
+                                // 2hours to observe
+                                repeat: { every: 2 * 3600 * 1000 }, // 24 hours in milliseconds
+                                removeOnComplete: true,
+                                removeOnFail: true
+                            }
+                        );
+                    } catch (error: any) {
+                        logger.error(`Error while add job to the queue. Error: ${error}`);
+                    }
+
+                    logger.info(`Added assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+                } else {
+                    logger.info(`No managed instances found for ${resourceId}.`);
                 }
-
-                logger.info(`Added assessment cron for ${resourceId}, ${managedInstanceIds}.`);
-
                 const driftAssessmentWorker = new Worker(
                     DRIFT_ASSESSMENT_QUEUE,
                     async (job: { data: DriftAssessmentJob }) => {
