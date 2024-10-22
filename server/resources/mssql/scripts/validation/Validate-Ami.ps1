@@ -103,7 +103,7 @@ If( $SQLDeploymentMode -eq 'fci'){
     else {
         $SQLMediaPath = 'C:\cfn\Installer\SQLServerSetup\setup.exe'
         If (Test-Path -path "C:\SQL*") {
-            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname
+            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*\*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname
             If($SQLInstallerPaths -is 'string')
             {
                 $SQLMediaPathAvailable = $True
