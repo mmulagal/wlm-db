@@ -65,6 +65,10 @@
         max-width: 480px !important;
         padding: unset !important;
     }
+
+    [class*='Button-module_content'] {
+        max-width: 152px !important;
+    }
 }
 .colorSet {
     div {

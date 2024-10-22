@@ -1151,7 +1151,8 @@ export const GENERAL = {
     NOTE_PONT_ONE: 'No disruption to your services is expected during this process.',
     NOTE_PONT_TWO:
         'By proceeding, you authorize Workload Factory to automatically perform these actions on your behalf.',
-    NOTE: 'Note'
+    NOTE: 'Note',
+    OPTIMIZATION_NOT_SUPPORTED: 'Optimization not supported for this configuration.'
 };
 
 export const CODE_VIEWER = {

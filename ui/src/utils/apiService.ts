@@ -849,6 +849,13 @@ export const getWellApi = createApi({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment`
                 })
+            }),
+            optimizeStorageConfig: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment/optimize`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -961,4 +968,4 @@ export const {
     useGetManualViewCalculationsMutation
 } = exploreSavingsApi;
 
-export const { useGetMssqlAssessmentDataMutation } = getWellApi;
+export const { useGetMssqlAssessmentDataMutation, useOptimizeStorageConfigMutation } = getWellApi;

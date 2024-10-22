@@ -535,6 +535,8 @@ export const OS_VERSIONS_LIST = [
 
 export const SANDBOX_ACTIONS_POLLING_INTERVAL = 5000;
 
+export const OPTIMIZE_POLLING_INTERVAL = 5000;
+
 export const MAX_IOPS_VALUE = 160000;
 
 export const INVENTORY_STATUS = {
@@ -638,11 +640,13 @@ export const GETWELL_STATUS = {
     OPTIMIZED: 'Optimized',
     NOT_OPTIMIZED: 'Not optimized',
     UNDER_PROVISIONED: 'Under-provisioned',
-    OVER_PROVISIONED: 'Over-provisioned'
+    OVER_PROVISIONED: 'Over-provisioned',
+    OPTIMIZING: 'Optimizing'
 };
 
 export const GETWELL_VALUES: any = {
     optimized: 'Optimized',
+    optimizing: 'Optimizing',
     'not-optimized': 'Not optimized',
     'under-provisioned': 'Under-provisioned',
     'over-provisioned': 'Over-provisioned',

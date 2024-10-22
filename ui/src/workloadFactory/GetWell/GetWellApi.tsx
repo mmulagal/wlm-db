@@ -39,7 +39,7 @@ const GetWellApi = () => {
             });
             if (result && !result?.error && result?.data) {
                 dispatch(setDriftAssessmentData(result.data));
-                formatGetWellData(result.data, dispatch);
+                formatGetWellData(dispatch, result.data);
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
             } else {
