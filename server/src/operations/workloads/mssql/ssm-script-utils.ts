@@ -476,7 +476,8 @@ const getMappedOntapVolumesScript = (
     fsxregion: string,
     isSystemDatabase: string = '$false',
     instances: string[] = [],
-    sqlAuthEnabled: boolean = false
+    sqlAuthEnabled: boolean = false,
+    fields: string = ''
 ) => `
     $WarningPreference = 'SilentlyContinue';
     $ProgressPreference = 'SilentlyContinue'
@@ -490,6 +491,7 @@ const getMappedOntapVolumesScript = (
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
         $instances = '${JSON.stringify(instances)}' | ConvertFrom-Json
+        $additionalFields = '${fields}'
 
         ${getSqlCredentials(sqlAuthEnabled)}
         $sqlInstances = $instances | ForEach-Object {
@@ -710,7 +712,7 @@ const getMappedOntapVolumesScript = (
                     }
 
                     if ($QueryFilter -ne '') {
-                        $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=snapshot_count"}
+                        $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=snapshot_count,$additionalFields"}
                     
 
                         $Response = Invoke-ONTAPRequest @Params
@@ -895,7 +897,7 @@ const getMappedOntapVolumesScript = (
                 $instanceRespones[$serverInstanceName] = "error: $_"
             }
         }
-        $response = $instanceRespones | ConvertTo-Json -Depth 5
+        $response = $instanceRespones | ConvertTo-Json -Depth 10
 
         if([string]::IsNullOrEmpty($response)) {
             throw "Failed to compress the response because the response is either null or empty. $response"

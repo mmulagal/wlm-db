@@ -276,7 +276,7 @@ try {
     }
     # only for fci this will be added
     if (![string]::IsNullOrEmpty($AmazonFailoverCluster)) {
-        $Downloads["$AmazonFailoverCluster"] = "C:\\cfn\\modules\\AmazonFailoverCluster.zip"
+        $Downloads["$AmazonFailoverCluster"] = "C:\\cfn\\modules\\AmznFailoverCluster.zip"
     }
     $ProgressPreference = 'SilentlyContinue'
     foreach ($uri in $Downloads.Keys) {

@@ -559,6 +559,7 @@ export const GENERAL = {
     JM_TYPE_CREATE_RESOURCE: 'Create database',
     JM_TYPE_PREPARE_RESOURCE: 'Prepare resource',
     JM_TYPE_SANDBOX: 'Sandbox',
+    JM_TYPE_ASSESSMENT: 'Assessment',
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',

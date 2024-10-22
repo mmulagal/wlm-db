@@ -47,6 +47,8 @@ $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing).Content
 
+Start-Transcript -Path C:\cfn\log\completeONTAPfci.ps1.txt -Append
+
 try {
     #Function to find Subnet mask
 
@@ -90,7 +92,6 @@ try {
         $subnet_mask = "{0}.{1}.{2}.{3}" -f $A, $B, $C, $D
         return $subnet_mask
     }
-    Start-Transcript -Path C:\cfn\log\completeONTAPfci.ps1.txt -Append
     $ErrorActionPreference = "Stop"
     $DomainNetBIOSName = $env:USERDOMAIN
     $AdminGroup = 'BUILTIN\Administrators'
@@ -122,7 +123,7 @@ try {
         Write-Output "Base Windows ami: Attemting complete failover fci from available or s3 downloaded sql installer."
         $SQLMediaPath = 'C:\cfn\Installer\SQLServerSetup\setup.exe'
         If (Test-Path -path "C:\SQL*") {
-            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where { $_.name -eq "setup.exe" } ).fullname | Sort-Object -Property Length
+            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*\*" -Recurse | where { $_.name -eq "setup.exe" } ).fullname | Sort-Object -Property Length
             If ($SQLInstallerPaths -is 'string') {
                 $SQLMediaPath = $SQLInstallerPaths
             }

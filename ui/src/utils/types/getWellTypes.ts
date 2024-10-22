@@ -1,6 +1,7 @@
 export interface GetWellSliceInterface {
     optimizePageLoading: boolean;
     driftAssessmentData: AssessmentResponseInterface | null;
+    isAssessmentAvailable: boolean;
     selectedHostname: string;
     selectedResourceId: string;
     selectedDatabaseInstance: string;

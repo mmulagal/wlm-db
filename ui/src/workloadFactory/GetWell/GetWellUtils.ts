@@ -1,5 +1,6 @@
 import {
     setCardData,
+    setDriftAssessmentData,
     setGwTimestamp,
     setOntapConfigTableData,
     setOptimizationBreakDown,
@@ -257,7 +258,7 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
-            value: 'Critical'
+            value: ''
         },
         tags: []
     },
@@ -276,7 +277,7 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
-            value: 'Critical'
+            value: ''
         },
         tags: []
     }
@@ -317,11 +318,14 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
 // This function is used to format the ONTAP configuration data.
 export const formatOntapConfig = (data: AssessmentResponseInterface) => {
     let ontapTagsList: Array<string> = [];
+    let highestOntapSeverity = 'None';
     const ontapConfigList = [
         ...(data?.storage?.configuration?.volumes || []),
         ...(data?.storage?.configuration?.luns || [])
     ];
     let formatOntapConfigList: PerConfigInterface[] = [];
+    let ontapCritical = 0;
+    let ontapWarning = 0;
     ontapConfigList?.map((item: PerConfigInterface) => {
         formatOntapConfigList.push({
             ...item,
@@ -329,8 +333,19 @@ export const formatOntapConfig = (data: AssessmentResponseInterface) => {
             status: GETWELL_VALUES?.[item?.status || ''] || item?.status,
             severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
         });
+        if (item?.severity === 'critical') {
+            ontapCritical = 1;
+        } else if (item?.severity === 'warning') {
+            ontapWarning = 1;
+        }
         ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
     });
+
+    if (ontapCritical === 1) {
+        highestOntapSeverity = 'Critical';
+    } else if (ontapWarning === 1) {
+        highestOntapSeverity = 'Warning';
+    }
 
     let ontapOptimizedConfig = 0;
     let ontapNotOptimizedConfig = 0;
@@ -344,13 +359,22 @@ export const formatOntapConfig = (data: AssessmentResponseInterface) => {
             }
         });
     });
-    return { formatOntapConfigList, ontapTagsList, ontapOptimizedConfig, ontapNotOptimizedConfig };
+    return {
+        formatOntapConfigList,
+        ontapTagsList,
+        ontapOptimizedConfig,
+        ontapNotOptimizedConfig,
+        highestOntapSeverity
+    };
 };
 
 // This function is used to format the OS configuration data.
 export const formatOsConfig = (data: AssessmentResponseInterface) => {
     let osTagsList: Array<string> = [];
+    let highestOsSeverity = 'None';
     let formatOsConfigList: PerConfigInterface[] = [];
+    let osCritical = 0;
+    let osWarning = 0;
     data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
         formatOsConfigList.push({
             ...item,
@@ -358,8 +382,19 @@ export const formatOsConfig = (data: AssessmentResponseInterface) => {
             status: GETWELL_VALUES?.[item?.status || ''] || item?.status,
             severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
         });
+        if (item?.severity === 'critical') {
+            osCritical = 1;
+        } else if (item?.severity === 'warning') {
+            osWarning = 1;
+        }
         osTagsList = [...osTagsList, ...(item?.tags || [])];
     });
+
+    if (osCritical === 1) {
+        highestOsSeverity = 'Critical';
+    } else if (osWarning === 1) {
+        highestOsSeverity = 'Warning';
+    }
 
     let osOptimizedConfig = 0;
     let osNotOptimizedConfig = 0;
@@ -370,7 +405,7 @@ export const formatOsConfig = (data: AssessmentResponseInterface) => {
             osNotOptimizedConfig++;
         }
     });
-    return { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig };
+    return { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity };
 };
 
 // This function is used to format the optimization breakdown data.
@@ -379,12 +414,14 @@ export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) =
         storage: {
             total: data?.storage?.optimisedCount?.total ?? 0,
             optimized: data?.storage?.optimisedCount?.optimised ?? 0,
-            percent: data?.storage?.optimisedCount
-                ? formatNumberWithCustomComma(
-                      ((data?.storage?.optimisedCount?.optimised ?? 0) / (data?.storage?.optimisedCount?.total ?? 1)) *
-                          100
-                  )
-                : 0
+            percent:
+                data?.storage?.optimisedCount && data?.storage?.optimisedCount?.optimised !== 0
+                    ? formatNumberWithCustomComma(
+                          ((data?.storage?.optimisedCount?.optimised ?? 0) /
+                              (data?.storage?.optimisedCount?.total ?? 1)) *
+                              100
+                      )
+                    : 0
         },
         total: {
             // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
@@ -392,12 +429,14 @@ export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) =
             total: data?.storage?.optimisedCount?.total || 0,
             optimized: data?.storage?.optimisedCount?.optimised || 0,
             notOptimized: (data?.storage?.optimisedCount?.total || 0) - (data?.storage?.optimisedCount?.optimised || 0),
-            percent: data?.storage?.optimisedCount
-                ? formatNumberWithCustomComma(
-                      ((data?.storage?.optimisedCount?.optimised || 0) / (data?.storage?.optimisedCount?.total || 1)) *
-                          100
-                  )
-                : 0
+            percent:
+                data?.storage?.optimisedCount && data?.storage?.optimisedCount?.optimised !== 0
+                    ? formatNumberWithCustomComma(
+                          ((data?.storage?.optimisedCount?.optimised || 0) /
+                              (data?.storage?.optimisedCount?.total || 1)) *
+                              100
+                      )
+                    : 0
         }
     };
     return optBreakDown;
@@ -407,8 +446,13 @@ export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) =
 export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: any) => {
     let cardsData = formatIndividualCardMainConfig(data);
 
-    const { formatOntapConfigList, ontapTagsList, ontapOptimizedConfig, ontapNotOptimizedConfig } =
-        formatOntapConfig(data);
+    const {
+        formatOntapConfigList,
+        ontapTagsList,
+        ontapOptimizedConfig,
+        ontapNotOptimizedConfig,
+        highestOntapSeverity
+    } = formatOntapConfig(data);
 
     cardsData = {
         ...cardsData,
@@ -429,13 +473,14 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
             },
             block_four: {
                 ...cardDataDefault?.ontap_configuration?.block_four,
-                value: 'Critical'
+                value: highestOntapSeverity
             },
             tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index)
         }
     };
 
-    const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig } = formatOsConfig(data);
+    const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity } =
+        formatOsConfig(data);
 
     cardsData = {
         ...cardsData,
@@ -456,7 +501,7 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
             },
             block_four: {
                 ...cardDataDefault?.os_configuration?.block_four,
-                value: 'Warning'
+                value: highestOsSeverity
             },
             tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index)
         }
@@ -574,4 +619,12 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         }
     });
     return filteredCardData;
+};
+
+export const resetGwValuesOnRefresh = (dispatch: any) => {
+    dispatch(setDriftAssessmentData(null));
+    dispatch(setCardData(cardDataDefault));
+    dispatch(setOsConfigTableData(null));
+    dispatch(setOntapConfigTableData(null));
+    dispatch(setOptimizationBreakDown(null));
 };

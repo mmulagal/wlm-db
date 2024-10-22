@@ -187,6 +187,7 @@ interface DatabaseInstance {
     databaseType?: string;
     storage_type?: string;
     sqlAuthEnabled?: boolean;
+    isManaged?: boolean;
 }
 
 interface InstanceDetails {
@@ -235,6 +236,21 @@ interface OptimizeStorageParams {
     apiBody: string;
 }
 
+type VolumeSpaceRecord = {
+    uuid: string;
+    name: string;
+    efficiency: {
+        space_savings: {
+            total: number;
+            total_percent: number;
+        };
+    };
+    space: {
+        size: number;
+        used: number;
+    };
+};
+
 export {
     Metadata,
     NodeDetails,
@@ -256,5 +272,6 @@ export {
     WorkloadInstance,
     StorageAssessment,
     DriftAssessmentJob,
-    OptimizeStorageParams
+    OptimizeStorageParams,
+    VolumeSpaceRecord
 };

@@ -25,7 +25,7 @@ import {
     HttpErrorCodes
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
-import { ResourceDetails } from '../../utils/common-types';
+import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getFsxArn } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
@@ -536,6 +536,76 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
     }
 }
 
+async function getStorageDataFromOntap(
+    activeNodeInstanceId: string,
+    instanceDetails: DatabaseInstance[],
+    isSqlAuthEnabled: boolean
+) {
+    logger.info('Getting storage data from Ontap:', { activeNodeInstanceId, instanceDetails, isSqlAuthEnabled });
+
+    try {
+        const managedInstances = instanceDetails.filter(
+            ({ isManaged, fsxn_ids: fsxnIds }) => isManaged && fsxnIds?.length
+        );
+        const [{ credentials_id: credentialsId, region, fsxn_ids: fsxnId }] = managedInstances;
+
+        const instanceNames = managedInstances.map(({ database_instance_name: instanceName }) => instanceName);
+        const command = getMappedOntapVolumesScript(
+            fsxnId,
+            region,
+            '$false',
+            instanceNames,
+            isSqlAuthEnabled,
+            'efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'
+        );
+        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId);
+
+        const cleanResponse = response?.replaceAll('\r\n', '');
+        let parsedResponse = attempt(JSON.parse, cleanResponse);
+
+        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+        logger.debug({ parsedResponse });
+
+        const instancesResponse: { [key: string]: any } = {};
+        instanceNames?.forEach((iName: string) => {
+            if (
+                parsedResponse?.[iName] &&
+                !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
+            ) {
+                const { volumes } = parsedResponse?.[iName] ?? {};
+                if (volumes && !isEmpty(volumes?.records)) {
+                    const storageSavings = volumes.records.reduce(
+                        (savings: Record<string, number>, { space, efficiency }: VolumeSpaceRecord) => ({
+                            size: savings.size + space.size,
+                            used: savings.used + space.used,
+                            spaceSavings: savings.spaceSavings + efficiency.space_savings.total
+                        }),
+                        {
+                            size: 0,
+                            used: 0,
+                            spaceSavings: 0
+                        } as Record<string, number>
+                    );
+                    // storageSavings.spaceSavingsPercent = (storageSavings.spaceSavings / storageSavings.used) * 100;
+                    instancesResponse[iName] = { ...storageSavings };
+                } else {
+                    instancesResponse[iName] = { size: 0, used: 0, spaceSavings: 0 };
+                }
+            } else {
+                logger.error(
+                    'Failed to get storage savings from ONTAP for the instance:',
+                    iName,
+                    parsedResponse?.[iName]
+                );
+            }
+        });
+
+        return instancesResponse;
+    } catch (error) {
+        logger.error('Failed executing SSM script to get storage data from ONTAP', { error });
+    }
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -547,5 +617,6 @@ export {
     getCostAllocationTagFsxResource,
     getFsxStorageCapacity,
     getFSXFileSystemListForDemo,
-    getFSXDetails
+    getFSXDetails,
+    getStorageDataFromOntap
 };
