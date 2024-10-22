@@ -104,8 +104,8 @@ interface OptimizeInstanceParams {
     region: string;
     databaseHostId: string;
     databaseInstanceId: string;
-    volumeOptimizeData?: OptimizeStorageRequestParams[];
-    lunOptimizeData?: OptimizeStorageRequestParams[];
+    volumeoptimizationTargets?: OptimizeStorageRequestParams[];
+    lunoptimizationTargets?: OptimizeStorageRequestParams[];
 }
 
 export {
