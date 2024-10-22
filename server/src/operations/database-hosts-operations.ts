@@ -75,7 +75,8 @@ import {
     getOntapVolumesSnapshotCount,
     getCostAllocationTagFsxResource,
     isFsxwAwsBackupEnabled,
-    getMappedOntapVolumes
+    getMappedOntapVolumes,
+    getStorageDataFromOntap
 } from './aws/fsx-operations';
 import {
     DatabaseInstance,
@@ -123,7 +124,8 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     4: 'protection',
     5: 'resourceUtilization',
     6: 'databasesCount',
-    7: 'nodeTopology'
+    7: 'nodeTopology',
+    8: 'storageSavingsFromOntap'
 };
 
 interface MappedOnTapVolumeResponse {
@@ -131,21 +133,6 @@ interface MappedOnTapVolumeResponse {
     volumeDBMap: any;
     lunNames: string[];
 }
-
-// type VolumeSpaceRecord = {
-//     uuid: string;
-//     name: string;
-//     efficiency: {
-//         space_savings: {
-//             total: number;
-//             total_percent: number;
-//         };
-//     };
-//     space: {
-//         size: number;
-//         used: number;
-//     };
-// };
 
 type EstimationEc2Type = {
     resourceType: string;
@@ -430,7 +417,7 @@ async function getStorageData(
         ebsVolumeIds = ebsVolumeIds || [];
 
         const response = {} as StoragePerStorageTypeResponseType;
-        if (fsxnId && region && credentialsId) {
+        if (fsxnId && region && credentialsId && !databaseInstanceDetails?.isManaged) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
                 await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxnId));
             response.fsxn = {
@@ -1681,7 +1668,8 @@ async function getDatabaseHostSummaryV2(
     // Update the database instances detail to include storage type as FSXN
     instancesManaged = instancesManaged.map(instance => ({
         ...instance,
-        storage_type: STORAGE_TYPE.FSXN
+        storage_type: STORAGE_TYPE.FSXN,
+        isManaged: true
     }));
     const errormessages: { [index: string]: string } = {};
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
@@ -2047,7 +2035,8 @@ async function getInstanceDetails(
     // Update the database instance details to include storage type as FSXN
     const databaseInstanceDetails = {
         ...instanceDetails,
-        storage_type: STORAGE_TYPE.FSXN
+        storage_type: STORAGE_TYPE.FSXN,
+        isManaged: true
     };
 
     if (isEmpty(resourceDetails) || isEmpty(databaseInstanceDetails)) {
@@ -2261,6 +2250,7 @@ async function getDatabaseInstancesSummary(
     let protectionData: any;
     let databasesCount: any;
     let nodeTopologyData: any;
+    let ontapStorageSavings: any;
     const errormessages: { [index: string]: string } = {};
 
     const instanceNames = databaseInstances.map((instance: DatabaseInstance) => instance.database_instance_name);
@@ -2271,6 +2261,7 @@ async function getDatabaseInstancesSummary(
             ? isSqlAuthEnabled
             : databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
     }
+    const shouldGetStorageSavingsFromOntap = databaseInstances.some(i => i.isManaged);
 
     try {
         [
@@ -2281,7 +2272,8 @@ async function getDatabaseInstancesSummary(
             protectionData,
             resourceUtilizationData,
             databasesCount,
-            nodeTopologyData
+            nodeTopologyData,
+            ontapStorageSavings
         ] = await Promise.all(
             [
                 ...(shouldQueryServerDetails
@@ -2357,6 +2349,9 @@ async function getDatabaseInstancesSummary(
                               standbyNodeInstanceId
                           )
                       ]
+                    : [Promise.resolve()]),
+                ...(getStorageSavings && shouldGetStorageSavingsFromOntap
+                    ? [getStorageDataFromOntap(activeNodeInstanceId, databaseInstances, isSqlAuthEnabled)]
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
@@ -2439,6 +2434,13 @@ async function getDatabaseInstancesSummary(
         }
         if (!isEmpty(errormessages)) {
             databaseInstanceDetails.errors = errormessages;
+        }
+
+        if (databaseInstanceDetails.storage && ontapStorageSavings?.[instanceName]) {
+            databaseInstanceDetails.storage.fsxn = {
+                ...ontapStorageSavings[instanceName],
+                protocol: databaseInstance.storage_protocol ? databaseInstance.storage_protocol.split(',') : []
+            };
         }
         return databaseInstanceDetails;
     });
