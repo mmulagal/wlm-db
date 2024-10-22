@@ -35,13 +35,13 @@ import {
     DEFAULT_MSSQL_INSTANCE_NAME,
     DEFAULT_INSTANCE_NAME,
     SECRETS,
-    DatabaseTypes,
-    REDIS_URL
+    DatabaseTypes
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/mssql/createdb-collations';
+import { REDIS_URL } from './continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -675,6 +675,13 @@ function getRedisDetails() {
     };
 }
 
+function getTimeDifferenceInMinutes(startTime: number, endTime: number = Date.now()) {
+    // Calculate the time difference in minutes
+    logger.debug('Calculate time difference in minutes', { startTime, endTime });
+    const timeDifferenceInMilliseconds = Math.abs(endTime - startTime);
+    return Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -715,5 +722,6 @@ export {
     getOriginalDatabaseInstanceName,
     decompressSSMResponse,
     retryWithDelay,
-    getRedisDetails
+    getRedisDetails,
+    getTimeDifferenceInMinutes
 };

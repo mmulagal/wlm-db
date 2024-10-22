@@ -9,7 +9,7 @@ import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/drift-assessment-scripts';
 import storageGoldenConfigData from './drift-assessment/golden-configs/storage';
-import { AssessmentCategories, AssessmentStatus, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import { HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { StorageAssessment, WorkloadInstance } from '../utils/common-types';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import {
@@ -18,6 +18,7 @@ import {
 } from '../lib/database/database-instance-config';
 import { listResources } from '../lib/database/db';
 import { describeFSxVolumes } from '../lib/aws/fsx';
+import { AssessmentCategories, AssessmentStatus } from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -312,7 +313,7 @@ async function initiateStorageAssessmentCollection(
     ]);
 }
 
-async function driftAssesment(
+async function driftAssessment(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -452,7 +453,7 @@ async function triggerDriftAssessment(
             type: JOBTYPE.ASSESSMENT
         });
 
-        driftAssesment(accountId, credentialsId, region, job.id, databaseHostId, runningInstances, fields);
+        driftAssessment(accountId, credentialsId, region, job.id, databaseHostId, runningInstances, fields);
 
         return { jobId: job.id };
     }
@@ -478,10 +479,10 @@ async function fetchDriftAssessment(
         // remove the empty spaces in the string & split the fields by comma separated array values
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
-    const driftAssesmentData: DriftAssessmentResponseType = {};
+    const driftAssessmentData: DriftAssessmentResponseType = {};
     const shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
     if (shouldCalculateStorageAssessment) {
-        driftAssesmentData.storage = await calculateStorageDrift(
+        driftAssessmentData.storage = await calculateStorageDrift(
             accountId,
             credentialsId,
             region,
@@ -489,7 +490,7 @@ async function fetchDriftAssessment(
             databaseInstanceId
         );
     }
-    return driftAssesmentData;
+    return driftAssessmentData;
 }
 
-export { triggerDriftAssessment, fetchDriftAssessment };
+export { triggerDriftAssessment, fetchDriftAssessment, driftAssessment };

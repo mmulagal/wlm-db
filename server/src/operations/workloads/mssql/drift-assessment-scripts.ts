@@ -1,4 +1,4 @@
-import { WorkloadInstance } from '../../../utils/common-types';
+import { OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import { INSTANCE_DATA_DRIVES_QUERY, INSTANCE_LOG_DRIVES_QUERY, INSTANCE_TEMPDB_DRIVES_QUERY } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
@@ -260,4 +260,24 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     return (Deflate-String $response)
 `;
 
-export { STORAGE_CONFIGURATION_ASSESSMENT };
+const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
+    $WarningPreference = 'SilentlyContinue';
+    $FSxID = '${params.fsxId}'
+    $FSxRegion = '${params.region}'
+    $apiEndpoint = '${params.apiEndpoint}'
+    $apiQueryFilter = '${params.apiQueryFilter}'
+    $apiBody = '${params.apiBody}'
+
+    ${ontapRestRequest}
+
+    $newBody = $apiBody | ConvertFrom-Json
+
+    $body =   $newBody | ConvertTo-Json
+
+    $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
+
+    $ontapResponse | ConvertTo-Json
+    
+`;
+
+export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STORAGE_PARAMS_SCRIPT };

@@ -1,4 +1,4 @@
-import { AwsWellArchitecturedPillars } from '../../../utils/consts';
+import { AwsWellArchitecturedPillars } from '../../../utils/continous-optimization-consts';
 
 const GOLDEN_CONFIG = {
     configuration: {

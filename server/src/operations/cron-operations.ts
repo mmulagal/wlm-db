@@ -7,8 +7,6 @@ import { Queue, Worker } from 'bullmq';
 import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
-    AssessmentTriggeredBy,
-    DRIFT_ASSESSMENT_QUEUE,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     TCO_FEATURE
@@ -31,6 +29,7 @@ import { fetchSqlServerInstanceConfiguration } from './recommendation-operations
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { triggerDriftAssessment } from './drift-assessment';
 import { DriftAssessmentJob } from '../utils/common-types';
+import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
 

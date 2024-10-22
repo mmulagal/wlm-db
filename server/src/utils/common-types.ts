@@ -228,6 +228,14 @@ interface DriftAssessmentJob {
     managedInstanceIds: string[];
 }
 
+interface OptimizeStorageParams {
+    fsxId: string;
+    region: string;
+    apiEndpoint: string;
+    apiQueryFilter: string;
+    apiBody: string;
+}
+
 type VolumeSpaceRecord = {
     uuid: string;
     name: string;
@@ -264,5 +272,6 @@ export {
     WorkloadInstance,
     StorageAssessment,
     DriftAssessmentJob,
+    OptimizeStorageParams,
     VolumeSpaceRecord
 };

@@ -29,9 +29,11 @@ import {
     DatabaseHostInstanceSummaryResponse,
     DatabaseHostOptionalInstanceSummaryParams,
     DatabaseQueryString,
-    DriftAssessmentResponse
+    DriftAssessmentResponse,
+    OptimizeStorageRequestBody
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
+import { OptimizeStorageVolumeConfigs, OptimizeStorageLunConfigs } from '../../utils/continous-optimization-consts';
 
 // Base Request for resource with credential and region Routes
 const resourceRequest = {
@@ -352,6 +354,24 @@ const TriggerDriftAssessmentSchema = {
         }
     }
 };
+const OptimizeStorageSchemaDescription = `Optimize storage volume and lun for the given database instance. \n
+                  Acceptable values for volume: ${Object.values(OptimizeStorageVolumeConfigs).join(', ')}.
+                  Acceptable values for lun: ${Object.values(OptimizeStorageLunConfigs).join(', ')}.\n
+                 objectsToOptimize should be an array of volume names or lun paths`;
+
+const OptimizeStorageSchema = {
+    ...resourceRequest,
+    summary: 'Optimize storage',
+    description: OptimizeStorageSchemaDescription,
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: OptimizeStorageRequestBody,
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
 
 export {
     DatabaseHostsSummarySchema,
@@ -380,5 +400,6 @@ export {
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,
     DriftAssessment,
-    TriggerDriftAssessmentSchema
+    TriggerDriftAssessmentSchema,
+    OptimizeStorageSchema
 };

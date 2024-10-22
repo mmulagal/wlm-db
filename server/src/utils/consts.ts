@@ -1428,36 +1428,6 @@ const TIMELINE_SERVICE_NAME = 'WF-Databases';
 
 const EBS_ROOT_VOLUME = 'ROOT_VOLUME';
 
-enum AssessmentCategories {
-    STORAGE = 'storage',
-    COMPUTE = 'compute'
-}
-
-enum AssessmentTriggeredBy {
-    SYSTEM = 'system',
-    USER = 'user'
-}
-
-enum AssessmentStatus {
-    OPTIMIZED = 'optimized',
-    NOT_OPTIMIZED = 'not-optimized',
-    UNDER_PROVISIONED = 'under-provisioned',
-    OVER_PROVISIONED = 'over-provisioned'
-}
-
-enum AwsWellArchitecturedPillars {
-    PERFORMANCE_EFFICIENCY = 'Performance efficiency',
-    RELIABILITY = 'Reliability',
-    COST_OPTIMIZATION = 'Cost optimization',
-    OPERATIONAL_EXCELLENCE = 'Operational excellence',
-    SECURITY = 'Security'
-}
-
-// Redis
-const REDIS_URL = process.env.REDIS_ENDPOINT || config.get('redis.endpoint') || '127.0.0.1:6379';
-
-const DRIFT_ASSESSMENT_QUEUE = 'driftAssessmentQueue';
-
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1764,11 +1734,5 @@ export {
     TERRAFORM_FOLDER_PATH,
     TERRAFORM_ROOT_MODULE_DISTRIBUTION,
     AWS_CE_TYPE,
-    AssessmentCategories,
-    AssessmentTriggeredBy,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    REDIS_URL,
-    DRIFT_ASSESSMENT_QUEUE,
     PGSQL_MASTER_TEMPLATE_PATH
 };
