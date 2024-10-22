@@ -132,6 +132,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $sqlInstance = "${instanceRecord.name}"
     $FSxID = "${instanceRecord.fsxFileSystem}"
     $FSxRegion = "${instanceRecord.region}"
+    $MappedVolumeNames = '${JSON.stringify(instanceRecord.mappedVolumeNames)}' | ConvertFrom-Json
   
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
     $sqlCredential = @{'useSqlAuth' = $False}
@@ -146,7 +147,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
     $APIEndpoint = '/storage/volumes'
     $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
-    $ApiQueryFields = "fields=autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
+    $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
     
     ${ontapRestRequest}
     
@@ -156,6 +157,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
     $VolumeList = @()
     # loop through each volume and get data
+    $SvmNames = @()
     foreach ($perVolumeData in $Volumes) {
         # Using PSCustomObject
         $perVolRow = [PSCustomObject]@{
@@ -176,12 +178,14 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "off"
         }
         $VolumeList += $($perVolRow)
+        $SvmNames += $perVolumeData.svm.name
     }
     $DriftAssessmentData['volumes'] = @($($VolumeList))
 
     # Volume footprint details
+    $SvmNamesWithDelimiter = $SvmNames -join '|'
     $APIEndpoint = '/private/cli/volume/show-footprint'
-    $APIQueryFilter = "volume=${instanceRecord.mappedVolumeNames?.join('|')}"
+    $APIQueryFilter = "vserver=$SvmNamesWithDelimiter,volume=${instanceRecord.mappedVolumeNames?.join('|')}"
     $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
     
     $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
@@ -190,7 +194,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $isPerformanceTier100Percent = $true
     # loop through each volume and get data
     foreach ($perVolumeData in $Volumes) {
-       if($perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
+       if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
             $isPerformanceTier100Percent = $false
             break
        }
@@ -252,7 +256,6 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                                         'log-drive-size' = $defaultLogDriveSizePercent;
                                         'tempdb-drive-size' = $tempDBDriveSizePercent;
     }
-   
    
     $response = $DriftAssessmentData | ConvertTo-Json -Depth 5
 
