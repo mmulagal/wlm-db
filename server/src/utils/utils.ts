@@ -35,8 +35,7 @@ import {
     DEFAULT_MSSQL_INSTANCE_NAME,
     DEFAULT_INSTANCE_NAME,
     SECRETS,
-    DatabaseTypes,
-    REDIS_URL
+    DatabaseTypes
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
