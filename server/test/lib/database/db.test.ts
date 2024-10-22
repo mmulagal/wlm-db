@@ -20,7 +20,8 @@ import {
     createTrackedEc2Records,
     listTrackedEc2,
     removeTrackedEc2Record,
-    updateTrackedEc2Record
+    updateTrackedEc2Record,
+    listAllManagedInstances
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -165,10 +166,23 @@ describe('List deployments', () => {
 
 describe('Database instance operations', () => {
     it('Create/update/list/delete database instance record', async () => {
+
+        const databaseResource = await createResource(ACCOUNT_ID, {
+            resourceId: 'i-rwithDBInstance',
+            resourceName: 'resourcewithDBInstance',
+            resourceType: 'MSSQL',
+            cloudProviderAccountId: '464262061435',
+            cloudProviderName: 'AWS',
+            coRelationId: 'fsx-1234',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            storageType: STORAGE_TYPE.FSXN,
+            region: DEFAULT_AWS_REGION
+        });
+
         const DATABASE_INSTANCE_RECORD: DatabaseInstanceRecord = {
             credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
-            resourceId: '02bff58ecf20c32b5bbf86de997c4296ab9cd45e88d4ff3b3d0c918b7f96a5bx',
+            resourceId: databaseResource.id,
             databaseInstanceId: '11111111-2222-3333-4444-55555555555a',
             databaseInstanceName: 'MSSQLSERVER',
             isDefault: true,
@@ -212,12 +226,17 @@ describe('Database instance operations', () => {
         response = await listDatabaseInstances(ACCOUNT_ID, {});
         expect(response.length).toEqual(1);
 
+        const managedInstances = await listAllManagedInstances();
+        expect(managedInstances.length).toBeGreaterThan(0);
+        expect(managedInstances[0].resource.id).toBeDefined();
+
         // Delete an existing record
         await deleteDatabaseInstance(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DATABASE_INSTANCE_RECORD.resourceId, [
             DATABASE_INSTANCE_RECORD.databaseInstanceId
         ]);
         response = await listDatabaseInstances(ACCOUNT_ID, {});
         expect(response.length).toEqual(0);
+
     });
 });
 

@@ -225,7 +225,7 @@ async function getInstanceRecommendations(
     accountId: string,
     instanceId: string,
     nodeInstances: NodeDetails[],
-    ebsVolumeIds: string[] = [],
+    ebsVolumeIds: string[],
     sqlServerDeploymentType: string
 ) {
     logger.info('Getting instance recommendations', {
