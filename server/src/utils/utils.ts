@@ -35,7 +35,8 @@ import {
     DEFAULT_MSSQL_INSTANCE_NAME,
     DEFAULT_INSTANCE_NAME,
     SECRETS,
-    DatabaseTypes
+    DatabaseTypes,
+    REDIS_URL
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -661,11 +662,17 @@ const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 
 
 function getRedisDetails() {
     logger.info('in getRedisDetails');
+    let host = '127.0.0.1';
+    let port = '6379';
+    try {
+        [host, port] = REDIS_URL.split(':');
+    } catch (e: any) {
+        logger.error(`Unable to fetch redis host and port from ${REDIS_URL}. Error: ${e}.`);
+    }
     return {
-        connection: {
-            url: REDIS_URL,
-            password: SECRETS.REDIS_PASSWORD
-        }
+        host,
+        port: Number(port),
+        password: SECRETS.REDIS_PASSWORD
     };
 }
 

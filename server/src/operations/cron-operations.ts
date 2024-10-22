@@ -4,7 +4,6 @@ import ms from 'ms';
 import { STORAGE_TYPE } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
 import { Queue, Worker } from 'bullmq';
-import Redis from 'ioredis';
 import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
@@ -155,13 +154,16 @@ async function updatePreferences() {
 async function scheduledAssessment() {
     const redisDetails = getRedisDetails();
 
-    logger.info(`Redis details ${redisDetails.connection.url}`);
+    logger.info(`Redis host: ${redisDetails.host}`);
+    logger.info(`Redis port: ${redisDetails.port}`);
 
-    const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, { connection: new Redis(redisDetails.connection) });
+    const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
+        connection: redisDetails
+    });
 
     logger.info('Debug queue');
     const allJobsCount = await driftAssessmentQueue.getJobCounts();
-    logger.info(allJobsCount);
+    logger.info(JSON.stringify(allJobsCount));
 
     const managedResources = await listResources();
     if (isEmpty(managedResources)) {
@@ -188,27 +190,34 @@ async function scheduledAssessment() {
                     .filter(instance => instance.resource_id === resourceId)
                     .map(instance => instance.database_instance_id);
 
-                logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+                if (!isEmpty(managedInstanceIds)) {
+                    logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
 
-                driftAssessmentQueue.add(
-                    `driftAssessmentFor${resourceId}`,
-                    {
-                        accountId,
-                        credentialsId,
-                        region,
-                        resourceId,
-                        managedInstanceIds
-                    },
-                    {
-                        // 2hours to observe
-                        repeat: { every: 2 * 3600 * 1000 }, // 24 hours in milliseconds
-                        removeOnComplete: true,
-                        removeOnFail: true
+                    try {
+                        driftAssessmentQueue.add(
+                            `driftAssessmentFor${resourceId}`,
+                            {
+                                accountId,
+                                credentialsId,
+                                region,
+                                resourceId,
+                                managedInstanceIds
+                            },
+                            {
+                                // 2hours to observe
+                                repeat: { every: 2 * 3600 * 1000 }, // 24 hours in milliseconds
+                                removeOnComplete: true,
+                                removeOnFail: true
+                            }
+                        );
+                    } catch (error: any) {
+                        logger.error(`Error while add job to the queue. Error: ${error}`);
                     }
-                );
 
-                logger.info(`Added assessment cron for ${resourceId}, ${managedInstanceIds}.`);
-
+                    logger.info(`Added assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+                } else {
+                    logger.info(`No managed instances found for ${resourceId}.`);
+                }
                 const driftAssessmentWorker = new Worker(
                     DRIFT_ASSESSMENT_QUEUE,
                     async (job: { data: DriftAssessmentJob }) => {
@@ -226,7 +235,7 @@ async function scheduledAssessment() {
                         }
                     },
                     {
-                        connection: redisDetails.connection
+                        connection: redisDetails
                     }
                 );
 
