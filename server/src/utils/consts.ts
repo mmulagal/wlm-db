@@ -1455,6 +1455,7 @@ enum AwsWellArchitecturedPillars {
 
 // Redis
 const REDIS_URL = process.env.REDIS_ENDPOINT || config.get('redis.endpoint') || '127.0.0.1:6379';
+const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';
 
 const DRIFT_ASSESSMENT_QUEUE = 'driftAssessmentQueue';
 
@@ -1770,5 +1771,6 @@ export {
     AwsWellArchitecturedPillars,
     REDIS_URL,
     DRIFT_ASSESSMENT_QUEUE,
-    PGSQL_MASTER_TEMPLATE_PATH
+    PGSQL_MASTER_TEMPLATE_PATH,
+    REDIS_SCHEMA
 };

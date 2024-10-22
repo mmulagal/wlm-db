@@ -36,7 +36,8 @@ import {
     DEFAULT_INSTANCE_NAME,
     SECRETS,
     DatabaseTypes,
-    REDIS_URL
+    REDIS_URL,
+    REDIS_SCHEMA
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -668,7 +669,9 @@ function getRedisDetails() {
     } catch (e: any) {
         logger.error(`Unable to fetch redis host and port from ${REDIS_URL}. Error: ${e}.`);
     }
+    const url = `${REDIS_SCHEMA}://:${SECRETS.REDIS_PASSWORD}@${REDIS_URL}`;
     return {
+        url,
         host,
         port: Number(port),
         password: SECRETS.REDIS_PASSWORD

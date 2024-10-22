@@ -158,11 +158,9 @@ async function scheduledAssessment() {
 
     logger.info(`Redis host: ${redisDetails.host}`);
     logger.info(`Redis port: ${redisDetails.port}`);
+    logger.info(`Redis port: ${redisDetails.url}`);
 
-    const redisConnection = new IORedis({
-        port: redisDetails.port,
-        host: redisDetails.host,
-        password: redisDetails.password,
+    const redisConnection = new IORedis(redisDetails.url, {
         maxRetriesPerRequest: null
     });
     const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
