@@ -34,15 +34,18 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     $tempDBDriveSizePercent = ($tempDBDriveSize/$defaultDataDriveSize) * 100
     $tempDBDriveSizeDetails = @{'size' = "$tempDBDriveSize"; 'percent' = "$tempDBDriveSizePercent"}
 
-    if(($instanceDataDrivedetails -ne $instanceLogDrivedetails) -and ($instanceDataDrivedetails -ne $instanceTempdbDrivedetails)) {
+    $defaultDataDrive = 'shared-drive'
+    if(($instanceDataDrivedetails -notcontains $instanceLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDataDrivedetails )) {
     $defaultDataDrive = 'separate-drive'
     }
-
-    if(($instanceDataDrivedetails -ne $instanceLogDrivedetails) -and ($instanceLogDrivedetails -ne $instanceTempdbDrivedetails)) {
+    
+    $defaultLogDrive = 'shared-drive'
+    if(($instanceDataDrivedetails -notcontains $instanceLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceLogDrivedetails )) {
     $defaultLogDrive = 'separate-drive'
     }
-
-    if(($instanceDataDrivedetails -ne $instanceTempdbDrivedetails) -and ($instanceLogDrivedetails -ne $instanceTempdbDrivedetails)) {
+    
+    $tempdbDrive = 'shared-drive'
+    if(($instanceTempdbDrivedetails -notcontains $instanceDataDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceLogDrivedetails)) {
     $tempdbDrive = 'separate-drive'
     }
 
