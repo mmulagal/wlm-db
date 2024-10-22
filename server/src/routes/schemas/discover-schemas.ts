@@ -8,7 +8,6 @@ import {
     DiscoverMsSqlQuery,
     DiscoverInstanceParams,
     DiscoverCredentialsRequestBody,
-    ManageMsSqlResponseBody,
     DiscoverCredentialsResponse,
     MsSqlInstancesRequestQuery,
     PrepareResourceResponseBody,
@@ -56,23 +55,23 @@ const PrepareForManageSchema = {
         200: PrepareResourceResponseBody
     }
 };
-const ManageMsSqlSchema = {
-    ...DiscoveryBaseRequest,
-    params: DiscoverInstanceParams,
-    hide: process.env.NODE_ENV === 'production',
-    summary: 'Manage EC2 instances hosting Microsoft SQL Server. (deprecated)',
-    description: `Manage AWS EC2 instances hosting Microsoft SQL Server.
-    EC2 instances meeting the following constraints are managed:
-    <ul>
-        <li> Instance is in running state.
-        <li> Host operating system is Microsoft Windows.
-        <li> Architecture is x86_64.
-        <li> Underlying storage is FSx for NetApp.
-    </ul>`,
-    response: {
-        200: ManageMsSqlResponseBody
-    }
-};
+// const ManageMsSqlSchema = {
+//     ...DiscoveryBaseRequest,
+//     params: DiscoverInstanceParams,
+//     hide: process.env.NODE_ENV === 'production',
+//     summary: 'Manage EC2 instances hosting Microsoft SQL Server. (deprecated)',
+//     description: `Manage AWS EC2 instances hosting Microsoft SQL Server.
+//     EC2 instances meeting the following constraints are managed:
+//     <ul>
+//         <li> Instance is in running state.
+//         <li> Host operating system is Microsoft Windows.
+//         <li> Architecture is x86_64.
+//         <li> Underlying storage is FSx for NetApp.
+//     </ul>`,
+//     response: {
+//         200: ManageMsSqlResponseBody
+//     }
+// };
 
 const UnManageMsSqlSchema = {
     ...DiscoveryBaseRequest,
@@ -135,7 +134,6 @@ const MsSqlInstancesSchemaV2 = {
 export {
     DiscoverCredentialsSchema,
     DiscoverMsSqlSchema,
-    ManageMsSqlSchema,
     MsSqlInstancesSchema,
     PrepareForManageSchema,
     MsSqlInstancesSchemaV2,
