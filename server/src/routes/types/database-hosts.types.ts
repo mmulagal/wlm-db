@@ -10,13 +10,15 @@ import {
     ServerState,
     UNKNOWN,
     SANDBOX_LIFECYCLE_REFRESH,
-    SANDBOX_LIFECYCLE_REBASELINE,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    OptimizeStorageVolumeConfigs,
-    OptimizeStorageLunConfigs
+    SANDBOX_LIFECYCLE_REBASELINE
 } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
+import {
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    OptimizeStorageLunConfigs,
+    OptimizeStorageVolumeConfigs
+} from '../../utils/continous-optimization-consts';
 
 const DatabaseHostObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 })

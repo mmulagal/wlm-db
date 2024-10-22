@@ -1,4 +1,4 @@
-import { WorkloadInstance } from '../../../utils/common-types';
+import { OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {
     DEFAULT_DATA_DRIVE_SIZE,
@@ -264,19 +264,13 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     return (Deflate-String $response)
 `;
 
-const OPTIMIZE_STOARGE_PARAMS_SCRIPT = (
-    fsxid: string,
-    fsxregion: string,
-    apiEndpoint: string,
-    apiQueryFilter: string,
-    apiBody: string
-) => `
+const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     $WarningPreference = 'SilentlyContinue';
-    $FSxID = '${fsxid}'
-    $FSxRegion = '${fsxregion}'
-    $apiEndpoint = '${apiEndpoint}'
-    $apiQueryFilter = '${apiQueryFilter}'
-    $apiBody = '${apiBody}'
+    $FSxID = '${params.fsxId}'
+    $FSxRegion = '${params.region}'
+    $apiEndpoint = '${params.apiEndpoint}'
+    $apiQueryFilter = '${params.apiQueryFilter}'
+    $apiBody = '${params.apiBody}'
 
     ${ontapRestRequest}
 
@@ -290,4 +284,4 @@ const OPTIMIZE_STOARGE_PARAMS_SCRIPT = (
     
 `;
 
-export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STOARGE_PARAMS_SCRIPT };
+export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STORAGE_PARAMS_SCRIPT };

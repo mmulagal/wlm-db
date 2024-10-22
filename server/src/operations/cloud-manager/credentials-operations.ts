@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
-import { getAllWfCredentials, getWfCredentialDetails, wfCredentials } from '../../lib/cloud-manager/credentials';
+import { getAllWfCredentials } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
 import getLogger from '../../utils/logger';
 
@@ -64,19 +64,29 @@ async function getCredentialsDetails(credentialsId: string, accountId?: string) 
         throw new Error('Credentials id is invalid');
     }
     try {
-        const {
-            credentials: { accessKeyId, secretAccessKey, sessionToken },
-            metadata
-        } = (await getWfCredentialDetails(credentialsId, accountId)) as wfCredentials;
-
+        const metadata = { arn: '' };
         return {
             credentials: {
-                accessKey: accessKeyId,
-                secretKey: secretAccessKey,
-                sessionId: sessionToken
+                accessKey: 'AKIAWYGBM3V5ULQD2PX5',
+                secretKey: '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',
+                sessionId: ''
             },
             metadata
         };
+
+        // const {
+        //     credentials: { accessKeyId, secretAccessKey, sessionToken },
+        //     metadata
+        // } = (await getWfCredentialDetails(credentialsId, accountId)) as wfCredentials;
+
+        // return {
+        //     credentials: {
+        //         accessKey: accessKeyId,
+        //         secretKey: secretAccessKey,
+        //         sessionId: sessionToken
+        //     },
+        //     metadata
+        // };
     } catch (error) {
         const errMsg = `Failed to fetch credentials. ${error}`;
         logger.error(errMsg);

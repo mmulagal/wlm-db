@@ -10,7 +10,7 @@ import { Metadata, DatabaseInstance, WorkloadInstance } from '../utils/common-ty
 import { RESOURCESTYPE, HttpErrorCodes, AuditStatus } from '../utils/consts';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getResources, getInstanceInfo } from './database/database-operations';
-import { OPTIMIZE_STOARGE_PARAMS_SCRIPT } from './workloads/mssql/drift-assessment-scripts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/drift-assessment-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import { getTimeDifferenceInMinutes, sqlResponseParsing } from '../utils/utils';
@@ -34,9 +34,9 @@ interface OptimizeStorageParams {
     fsxId: string;
     activeNodeInstanceId: string;
     parentJobId: string;
-    optimizeData: OptimizeStorageLunRequestParamsType[] | OptimizeStorageVolumeRequestParamsType[];
-    configMap: Record<string, any>;
-    apiDataMap: Record<string, any>;
+    optimizationTargets: OptimizeStorageLunRequestParamsType[] | OptimizeStorageVolumeRequestParamsType[];
+    optimizationConfigs: Record<string, any>;
+    apiRequestData: Record<string, any>;
     queryParamKey: string;
     svmName: string;
     serverNameWithHostName: string;
@@ -56,8 +56,8 @@ interface OptimizeOperationParams {
     instanceName: string;
     sqlAuthEnabled: boolean;
     svmName: string;
-    lunOptimizeData: OptimizeStorageLunRequestParamsType[];
-    volumeOptimizeData: OptimizeStorageVolumeRequestParamsType[];
+    lunoptimizationTargets: OptimizeStorageLunRequestParamsType[];
+    volumeoptimizationTargets: OptimizeStorageVolumeRequestParamsType[];
 }
 
 async function optimizeOperation(params: OptimizeOperationParams) {
@@ -75,11 +75,11 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         instanceName,
         sqlAuthEnabled,
         svmName,
-        lunOptimizeData,
-        volumeOptimizeData
+        lunoptimizationTargets,
+        volumeoptimizationTargets
     } = params;
     logger.info('Optimizing storage for', params);
-    if (lunOptimizeData && lunOptimizeData.length > 0) {
+    if (lunoptimizationTargets && lunoptimizationTargets.length > 0) {
         await optimizeStorage({
             accountId,
             region,
@@ -87,16 +87,16 @@ async function optimizeOperation(params: OptimizeOperationParams) {
             fsxId,
             activeNodeInstanceId: activeNodeInstanceId!,
             parentJobId,
-            optimizeData: lunOptimizeData,
-            configMap: OptimizeStorageLunConfigs,
-            apiDataMap: OptimizeStorageLunApiData,
+            optimizationTargets: lunoptimizationTargets,
+            optimizationConfigs: OptimizeStorageLunConfigs,
+            apiRequestData: OptimizeStorageLunApiData,
             queryParamKey: 'path',
             svmName,
             serverNameWithHostName
         });
     }
 
-    if (volumeOptimizeData && volumeOptimizeData.length > 0) {
+    if (volumeoptimizationTargets && volumeoptimizationTargets.length > 0) {
         await optimizeStorage({
             accountId,
             region,
@@ -104,14 +104,24 @@ async function optimizeOperation(params: OptimizeOperationParams) {
             fsxId,
             activeNodeInstanceId: activeNodeInstanceId!,
             parentJobId,
-            optimizeData: volumeOptimizeData,
-            configMap: OptimizeStorageVolumeConfigs,
-            apiDataMap: OptimizeStorageVolumeApiData,
+            optimizationTargets: volumeoptimizationTargets,
+            optimizationConfigs: OptimizeStorageVolumeConfigs,
+            apiRequestData: OptimizeStorageVolumeApiData,
             queryParamKey: 'volume',
             svmName,
             serverNameWithHostName
         });
     }
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Assessment for ${serverNameWithHostName} after optimization`,
+        description: `Assessment for ${serverNameWithHostName} after optimization`,
+        startTime: Date.now(),
+        type: JOBTYPE.OPTIMIZE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: serverNameWithHostName,
+        parentJobId
+    });
 
     const instancetoAsses: WorkloadInstance = {
         id: instanceId,
@@ -123,20 +133,10 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         activeNodeInstanceid: activeNodeInstanceId!
     };
 
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Assessment for ${serverNameWithHostName} after optimization`,
-        description: `Assessment for ${serverNameWithHostName} after optimization`,
-        startTime: Date.now(),
-        type: JOBTYPE.OPTIMIZE,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName,
-        parentJobId
-    });
     await driftAssessment(accountId, credentialsId, region, jobId, databaseHostId, [instancetoAsses]);
 }
 
 async function optimizeStorage(params: OptimizeStorageParams) {
-    logger.info('Optimizing storage for', params.serverNameWithHostName, params.optimizeData);
     const {
         accountId,
         region,
@@ -144,14 +144,14 @@ async function optimizeStorage(params: OptimizeStorageParams) {
         fsxId,
         activeNodeInstanceId,
         parentJobId,
-        optimizeData,
-        configMap,
-        apiDataMap,
+        optimizationTargets,
+        optimizationConfigs,
+        apiRequestData,
         queryParamKey,
         svmName,
         serverNameWithHostName
     } = params;
-    logger.debug(`Optimizing storage for ${accountId} in ${region} for configuration ${optimizeData}`);
+    logger.info(`Optimizing storage for ${accountId} in ${region} for configuration ${optimizationTargets}`);
     try {
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: `Optimize ${queryParamKey} for ${serverNameWithHostName}`,
@@ -163,33 +163,40 @@ async function optimizeStorage(params: OptimizeStorageParams) {
             parentJobId
         });
         logger.debug(`Job created with id ${jobId}`);
-        const { configurationName, objectsToOptimize } = optimizeData[0];
-        const configKey = Object.keys(configMap).find(
-            key => configMap[key as keyof typeof configMap] === configurationName
-        );
+        for (const data of optimizationTargets) {
+            const { configurationName, objectsToOptimize } = data;
+            const configKey = Object.keys(optimizationConfigs).find(
+                key => optimizationConfigs[key as keyof typeof optimizationConfigs] === configurationName
+            );
 
-        if (!configKey) {
-            throw new Error(`${queryParamKey} configuration not found`);
+            if (!configKey) {
+                throw new Error(`${queryParamKey} configuration not found`);
+            }
+
+            const apiData = apiRequestData[configKey as keyof typeof apiRequestData];
+            const apiBody = JSON.stringify(apiData.body);
+            const apiQueryFilter = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
+            const apiEndpoint = apiData.api;
+
+            const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
+                fsxId,
+                region,
+                apiEndpoint,
+                apiQueryFilter,
+                apiBody
+            });
+            const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!);
+            const parsedResp = sqlResponseParsing(resp);
+            const objectsOptimized = parsedResp.num_records;
+            const optimizeMessage = `Optimized ${objectsOptimized}/${objectsToOptimize.length} ${queryParamKey} ${serverNameWithHostName}, ${parsedResp.cli_output}`;
+            logger.info(optimizeMessage);
+
+            await updateJobDetails(accountId, credentialsId, region, jobId, {
+                status: JOBSTATUS.COMPLETED,
+                endTime: Date.now(),
+                description: optimizeMessage
+            });
         }
-
-        const apiData = apiDataMap[configKey as keyof typeof apiDataMap];
-        const jsonApiBody = JSON.stringify(apiData.body);
-        const apiQueryParams = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
-        const apiEndpoint = apiData.api;
-
-        const ssmCommand = OPTIMIZE_STOARGE_PARAMS_SCRIPT(fsxId, region, apiEndpoint, apiQueryParams, jsonApiBody);
-        const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!);
-        const parsedResp = sqlResponseParsing(resp);
-        const objectsOptimized = parsedResp.num_records;
-        const optimizeMessage = `Optimized ${objectsOptimized}/${objectsToOptimize.length} ${queryParamKey} ${serverNameWithHostName}, ${parsedResp.cli_output}`;
-        logger.info(optimizeMessage);
-
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
-            status: JOBSTATUS.COMPLETED,
-            endTime: Date.now(),
-            description: optimizeMessage
-        });
-        logger.debug(resp);
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;
         logger.error(errorMessage);
@@ -209,14 +216,19 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
         region,
         databaseHostId,
         databaseInstanceId,
-        volumeOptimizeData,
-        lunOptimizeData
+        volumeoptimizationTargets,
+        lunoptimizationTargets
     } = params;
     logger.info(
-        `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${volumeOptimizeData} ${lunOptimizeData}`
+        `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${volumeoptimizationTargets} ${lunoptimizationTargets}`
     );
 
-    if (volumeOptimizeData && volumeOptimizeData.length > 0 && lunOptimizeData && lunOptimizeData.length > 0) {
+    if (
+        volumeoptimizationTargets &&
+        volumeoptimizationTargets.length > 0 &&
+        lunoptimizationTargets &&
+        lunoptimizationTargets.length > 0
+    ) {
         logger.info(`Optimization body is empty ${databaseInstanceId} in ${region}`);
         throw createError(HttpErrorCodes.BAD_REQUEST, 'Optimization body is empty');
     }
@@ -322,8 +334,8 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
             instanceName,
             sqlAuthEnabled: sqlAuthEnabled || false,
             svmName,
-            lunOptimizeData,
-            volumeOptimizeData
+            lunoptimizationTargets,
+            volumeoptimizationTargets
         } as OptimizeOperationParams);
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status: JOBSTATUS.COMPLETED,

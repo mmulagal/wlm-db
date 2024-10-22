@@ -1,5 +1,5 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { OptimizeStorageLunConfigs, OptimizeStorageVolumeConfigs, RouteTags } from '../../utils/consts';
+import { RouteTags } from '../../utils/consts';
 
 import {
     DatabaseHostQueryString,
@@ -33,6 +33,7 @@ import {
     OptimizeStorageRequestBody
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
+import { OptimizeStorageVolumeConfigs, OptimizeStorageLunConfigs } from '../../utils/continous-optimization-consts';
 
 // Base Request for resource with credential and region Routes
 const resourceRequest = {

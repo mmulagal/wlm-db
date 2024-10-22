@@ -227,6 +227,14 @@ interface DriftAssessmentJob {
     managedInstanceIds: string[];
 }
 
+interface OptimizeStorageParams {
+    fsxId: string;
+    region: string;
+    apiEndpoint: string;
+    apiQueryFilter: string;
+    apiBody: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -247,5 +255,6 @@ export {
     InstanceDetails,
     WorkloadInstance,
     StorageAssessment,
-    DriftAssessmentJob
+    DriftAssessmentJob,
+    OptimizeStorageParams
 };
