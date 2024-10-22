@@ -156,13 +156,16 @@ async function updatePreferences() {
 async function scheduledAssessment() {
     const redisDetails = getRedisDetails();
 
-    logger.info(`Redis details ${redisDetails.connection.url}`);
+    logger.info(`Redis host: ${redisDetails.host}`);
+    logger.info(`Redis port: ${redisDetails.port}`);
 
-    const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, { connection: new Redis(redisDetails.connection) });
+    const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
+        connection: new Redis(redisDetails.port, redisDetails.host, { password: redisDetails.password })
+    });
 
     logger.info('Debug queue');
     const allJobsCount = await driftAssessmentQueue.getJobCounts();
-    logger.info(allJobsCount);
+    logger.info(JSON.stringify(allJobsCount));
 
     const managedResources = await listResources();
     if (isEmpty(managedResources)) {
@@ -227,7 +230,7 @@ async function scheduledAssessment() {
                         }
                     },
                     {
-                        connection: redisDetails.connection
+                        connection: redisDetails
                     }
                 );
 

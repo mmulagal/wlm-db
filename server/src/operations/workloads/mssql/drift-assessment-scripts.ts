@@ -1,13 +1,6 @@
 import { WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
-import {
-    DEFAULT_DATA_DRIVE_SIZE,
-    DEFAULT_LOG_DRIVE_SIZE,
-    INSTANCE_DATA_DRIVES_QUERY,
-    INSTANCE_LOG_DRIVES_QUERY,
-    INSTANCE_TEMPDB_DRIVES_QUERY,
-    TEMPDB_DRIVE_SIZE
-} from './queries';
+import { INSTANCE_DATA_DRIVES_QUERY, INSTANCE_LOG_DRIVES_QUERY, INSTANCE_TEMPDB_DRIVES_QUERY } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boolean) =>
@@ -29,15 +22,15 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     }
     
     $instanceDataDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
-    $defaultDataDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${DEFAULT_DATA_DRIVE_SIZE}" -InstanceName "$instanceServiceName"
+    $defaultDataDriveSize = 100
    
     $instanceLogDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
-    $defaultLogDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${DEFAULT_LOG_DRIVE_SIZE}" -InstanceName "$instanceServiceName"
+    $defaultLogDriveSize = 25
     $defaultLogDriveSizePercent = ($defaultLogDriveSize/$defaultDataDriveSize) * 100
     $defaultLogDriveSizeDetails = @{'size' = "$defaultLogDriveSize"; 'percent' = "$defaultLogDriveSizePercent"}
 
     $instanceTempdbDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_TEMPDB_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
-    $tempDBDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${TEMPDB_DRIVE_SIZE}" -InstanceName "$instanceServiceName"
+    $tempDBDriveSize = 15
     $tempDBDriveSizePercent = ($tempDBDriveSize/$defaultDataDriveSize) * 100
     $tempDBDriveSizeDetails = @{'size' = "$tempDBDriveSize"; 'percent' = "$tempDBDriveSizePercent"}
 
