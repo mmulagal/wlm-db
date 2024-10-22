@@ -458,7 +458,6 @@ async function getMappedOntapVolumes(
                 const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
                 if (volumes && !isEmpty(volumes?.records)) {
                     const volumeRecords = volumes.records.map((record: Record<string, string | number>) => ({
-                        name: record.name,
                         uuid: record.uuid,
                         snapshot_count: record.snapshot_count
                     }));
