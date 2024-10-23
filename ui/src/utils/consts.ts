@@ -171,7 +171,8 @@ export const JOB_MONITORING_TYPE = {
     CREATE_DATABASE: 'CREATE_DATABASE',
     PREPARE_RESOURCE: 'PREPARE_RESOURCE',
     SANDBOX: 'SANDBOX',
-    ASSESSMENT: 'ASSESSMENT'
+    ASSESSMENT: 'ASSESSMENT',
+    OPTIMIZE: 'OPTIMIZE'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -535,6 +536,8 @@ export const OS_VERSIONS_LIST = [
 
 export const SANDBOX_ACTIONS_POLLING_INTERVAL = 5000;
 
+export const OPTIMIZE_POLLING_INTERVAL = 5000;
+
 export const MAX_IOPS_VALUE = 160000;
 
 export const INVENTORY_STATUS = {
@@ -638,11 +641,13 @@ export const GETWELL_STATUS = {
     OPTIMIZED: 'Optimized',
     NOT_OPTIMIZED: 'Not optimized',
     UNDER_PROVISIONED: 'Under-provisioned',
-    OVER_PROVISIONED: 'Over-provisioned'
+    OVER_PROVISIONED: 'Over-provisioned',
+    OPTIMIZING: 'Optimizing'
 };
 
 export const GETWELL_VALUES: any = {
     optimized: 'Optimized',
+    optimizing: 'Optimizing',
     'not-optimized': 'Not optimized',
     'under-provisioned': 'Under-provisioned',
     'over-provisioned': 'Over-provisioned',
@@ -680,3 +685,18 @@ export const GETWELL_CONFIG: any = {
     'default-log-files-location': 'transaction_log_files',
     'default-data-files-location': 'user_data_files'
 };
+
+export const GW_CONFIG_OPTIMIZE_NA = [
+    'User data files (.mdf) placement',
+    'Log files (.ldf) placement',
+    'TempDB placement',
+    'OS type',
+    'Storage tier',
+    'File system headroom',
+    'Log drive size',
+    'TempDB drive size',
+    'Multipath I/O Sessions',
+    'Multipath I/O Status',
+    'Multipath I/O Policy',
+    'NTFS allocation unit size'
+];
