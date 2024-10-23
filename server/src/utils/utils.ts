@@ -84,7 +84,7 @@ function generateDeploymentParams(
 
     if (fsxDataLunSize > MIN_DATA_LUN_SIZE_IN_GIB) {
         // With 35% headroom and 15% for log and temp volumes, we can't go beyond 86TiB, given the max fsxn storage capacity is 192TiB
-        throw createError(412, 'FSx Data LUN Size should be less than 90TiB');
+        throw createError(412, `FSx Data LUN Size should be less than or equal to ${MIN_DATA_LUN_SIZE_IN_GIB} GiB`);
     }
 
     const {
