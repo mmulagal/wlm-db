@@ -35,7 +35,11 @@ import {
     DEFAULT_MSSQL_INSTANCE_NAME,
     DEFAULT_INSTANCE_NAME,
     SECRETS,
-    DatabaseTypes
+    DatabaseTypes,
+    DatabaseTypes,
+    REDIS_URL,
+    REDIS_SCHEMA,
+    MIN_DATA_LUN_SIZE_IN_GIB
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -77,6 +81,11 @@ function generateDeploymentParams(
     const prefix = WLMDB;
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
+
+    if (fsxDataLunSize > MIN_DATA_LUN_SIZE_IN_GIB) {
+        // With 35% headroom and 15% for log and temp volumes, we can't go beyond 86TiB, given the max fsxn storage capacity is 192TiB
+        throw createError(412, 'FSx Data LUN Size should be less than 90TiB');
+    }
 
     const {
         FSxDataLunSizeInMib,
@@ -221,27 +230,29 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode:
         FSxQuorumVolumeSize = 12000; // 12GB
     }
 
+    const totalVolumesSize = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize;
+    // Total FSx Storage Capacity with 35% headroom
+    let FSxStorageCapacity = Math.ceil(totalVolumesSize / 0.65);
+    const FSxBufferVolumeSize = FSxStorageCapacity - totalVolumesSize;
     // StorageCapacity in GiB
-    let FSxStorageCapacity = Math.ceil(
-        (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
-    );
+    FSxStorageCapacity = Math.ceil(FSxStorageCapacity / 1024);
 
     // 20 percent of FSxStorageCapacity
-    let FSxBufferVolumeSize = 0;
+    // let FSxBufferVolumeSize = 0;
     // FSxBufferVolumeSize in GiB initially later converted to MiB
     // If the total fsx storage capacity goes beyond 192TiB Means, we will keep the buffer as 0
     // Otherwise we will calculate the 20 percent of FSxStorageCapacity as the buffer, Even then if that buffer plus fsx storage capacity goes beyond total limit of 192TiB, then we keep the difference
     // between FSxStorageCapacity and Max FSX Storage limit as buffer
-    if (FSxStorageCapacity < MAX_FSX_STORAGE_IN_GIB) {
-        FSxBufferVolumeSize = Math.ceil(0.2 * FSxStorageCapacity);
-        if (FSxStorageCapacity + FSxBufferVolumeSize >= MAX_FSX_STORAGE_IN_GIB) {
-            FSxBufferVolumeSize = Math.ceil((MAX_FSX_STORAGE_IN_GIB - FSxStorageCapacity) * 1024);
-            FSxStorageCapacity += FSxBufferVolumeSize / 1024;
-        } else {
-            FSxBufferVolumeSize = Math.ceil(FSxBufferVolumeSize * 1024);
-            FSxStorageCapacity += FSxBufferVolumeSize / 1024;
-        }
-    }
+    // if (FSxStorageCapacity < MAX_FSX_STORAGE_IN_GIB) {
+    //     FSxBufferVolumeSize = Math.ceil(0.2 * FSxStorageCapacity);
+    //     if (FSxStorageCapacity + FSxBufferVolumeSize >= MAX_FSX_STORAGE_IN_GIB) {
+    //         FSxBufferVolumeSize = Math.ceil((MAX_FSX_STORAGE_IN_GIB - FSxStorageCapacity) * 1024);
+    //         FSxStorageCapacity += FSxBufferVolumeSize / 1024;
+    //     } else {
+    //         FSxBufferVolumeSize = Math.ceil(FSxBufferVolumeSize * 1024);
+    //         FSxStorageCapacity += FSxBufferVolumeSize / 1024;
+    //     }
+    // }
 
     FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
     FSxStorageCapacity = Math.min(FSxStorageCapacity, MAX_FSX_STORAGE_IN_GIB);
