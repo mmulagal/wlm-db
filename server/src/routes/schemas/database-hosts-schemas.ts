@@ -33,7 +33,7 @@ import {
     OptimizeStorageRequestBody
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
-import { OptimizeStorageVolumeConfigs, OptimizeStorageLunConfigs } from '../../utils/continous-optimization-consts';
+import { OptimizeStorageConfigs } from '../../utils/continous-optimization-consts';
 
 // Base Request for resource with credential and region Routes
 const resourceRequest = {
@@ -355,8 +355,8 @@ const TriggerDriftAssessmentSchema = {
     }
 };
 const OptimizeStorageSchemaDescription = `Optimize storage volume and lun for the given database instance. \n
-                  Acceptable values for volume: ${Object.values(OptimizeStorageVolumeConfigs).join(', ')}.
-                  Acceptable values for lun: ${Object.values(OptimizeStorageLunConfigs).join(', ')}.\n
+                  Acceptable values for volume: ${Object.values(OptimizeStorageConfigs).join(', ')}.
+                  Acceptable values for lun: ${Object.values(OptimizeStorageConfigs).join(', ')}.\n
                  objectsToOptimize should be an array of volume names or lun paths`;
 
 const OptimizeStorageSchema = {

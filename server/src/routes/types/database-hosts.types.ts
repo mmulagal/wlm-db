@@ -16,8 +16,7 @@ import { CredentialsIdParams } from './generic.types';
 import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
-    OptimizeStorageLunConfigs,
-    OptimizeStorageVolumeConfigs
+    OptimizeStorageConfigs
 } from '../../utils/continous-optimization-consts';
 
 const DatabaseHostObjectParams = Type.Object({
@@ -640,25 +639,18 @@ const DriftAssessmentResponse = Type.Object({
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
-const OptimizeStorageVolumeRequestParams = Type.Object({
-    configurationName: Type.String(Type.Enum(OptimizeStorageVolumeConfigs)),
-    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
-});
-
-const OptimizeStorageLunRequestParams = Type.Object({
-    configurationName: Type.String(Type.Enum(OptimizeStorageLunConfigs)),
+const OptimizeStorageRequestParams = Type.Object({
+    configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
     objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
 });
 
 const OptimizeStorageRequestBody = Type.Object({
-    volume: Type.Optional(Type.Array(OptimizeStorageVolumeRequestParams)),
-    lun: Type.Optional(Type.Array(OptimizeStorageLunRequestParams))
+    assessments: Type.Optional(Type.Array(OptimizeStorageRequestParams))
 });
 
 type OptimizeStorageRequestBodyType = Static<typeof OptimizeStorageRequestBody>;
 
-type OptimizeStorageVolumeRequestParamsType = Static<typeof OptimizeStorageVolumeRequestParams>;
-type OptimizeStorageLunRequestParamsType = Static<typeof OptimizeStorageLunRequestParams>;
+type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
 
 export {
     DatabaseHostObjectParams,
@@ -747,6 +739,5 @@ export {
     StorageParameterDriftResponseType,
     OptimizeStorageRequestBody,
     OptimizeStorageRequestBodyType,
-    OptimizeStorageVolumeRequestParamsType,
-    OptimizeStorageLunRequestParamsType
+    OptimizeStorageRequestParamsType
 };

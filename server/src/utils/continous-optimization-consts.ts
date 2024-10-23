@@ -25,10 +25,13 @@ enum AwsWellArchitecturedPillars {
     SECURITY = 'Security'
 }
 
+const VOLUME = 'volume';
+const LUN = 'lun';
+
 // Redis
 const REDIS_URL = process.env.REDIS_ENDPOINT || config.get('redis.endpoint') || '127.0.0.1:6379';
 
-enum OptimizeStorageVolumeConfigs {
+enum OptimizeStorageConfigs {
     THIN_PROVISIONING = 'thin-provision',
     AUTOSIZE = 'autosize',
     AUTOSIZE_MODE = 'autosize-mode',
@@ -37,59 +40,63 @@ enum OptimizeStorageVolumeConfigs {
     SNAPSHOT_AUTO_DELETE = 'snapshot-autodelete',
     SPACE_MANAGEMENT = 'space-mgmt-try-first',
     TIERING_MINIMUM_COOLING_DAYS = 'tiering-min-cooling-days',
-    TIERING_POLICY = 'tiering-policy'
-}
-
-enum OptimizeStorageLunConfigs {
+    TIERING_POLICY = 'tiering-policy',
     SPACE_RESERVATION = 'space-reservation-enabled',
     SPACE_ALLOCATION = 'space-allocation-allocated'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'driftAssessmentQueue';
 
-const OptimizeStorageVolumeApiData = {
+const OptimizeStorageApiData = {
     THIN_PROVISIONING: {
         api: '/private/cli/volume',
-        body: { 'space-guarantee': 'none' }
+        body: { 'space-guarantee': 'none' },
+        type: VOLUME
     },
     AUTOSIZE: {
         api: '/private/cli/volume',
-        body: { 'autosize-mode': 'grow' }
+        body: { 'autosize-mode': 'grow' },
+        type: VOLUME
     },
     AUTOSIZE_MODE: {
         api: '/private/cli/volume',
-        body: { 'autosize-mode': 'grow' }
+        body: { 'autosize-mode': 'grow' },
+        type: VOLUME
     },
     FRACTIONAL_RESERVE: {
         api: '/private/cli/volume',
-        body: { 'fractional-reserve': '0' }
+        body: { 'fractional-reserve': '0' },
+        type: VOLUME
     },
     SNAPSHOT_COPY_RESERVE: {
         api: '/private/cli/volume',
-        body: { 'percent-snapshot-space': '0' }
+        body: { 'percent-snapshot-space': '0' },
+        type: VOLUME
     },
     SNAPSHOT_AUTO_DELETE: {
         api: '/private/cli/volume/snapshot/autodelete',
-        body: { 'snapshot-auto-delete': 'true' }
+        body: { 'snapshot-auto-delete': 'true' },
+        type: VOLUME
     },
     TIERING_MINIMUM_COOLING_DAYS: {
         api: '/private/cli/volume',
-        body: { 'tiering-minimum-cooling-days': '7' }
+        body: { 'tiering-minimum-cooling-days': '7' },
+        type: VOLUME
     },
     TIERING_POLICY: {
         api: '/private/cli/volume',
-        body: { 'tiering-policy': 'snapshot-only' }
-    }
-};
-
-const OptimizeStorageLunApiData = {
+        body: { 'tiering-policy': 'snapshot-only' },
+        type: VOLUME
+    },
     SPACE_RESERVATION: {
         api: '/private/cli/lun',
-        body: { 'space-reserve': 'enabled' }
+        body: { 'space-reserve': 'enabled' },
+        type: LUN
     },
     SPACE_ALLOCATION: {
         api: '/private/cli/volume',
-        body: { 'space-allocation': 'enabled' }
+        body: { 'space-allocation': 'enabled' },
+        type: LUN
     }
 };
 
@@ -104,17 +111,15 @@ interface OptimizeInstanceParams {
     region: string;
     databaseHostId: string;
     databaseInstanceId: string;
-    volumeoptimizationTargets?: OptimizeStorageRequestParams[];
-    lunoptimizationTargets?: OptimizeStorageRequestParams[];
+    optimizationTargets: OptimizeStorageRequestParams[];
 }
-
-const VOLUME = 'volume';
-const LUN = 'lun';
 
 const QUERY_PARAMS = {
     volume: 'volume',
     lun: 'path'
 };
+
+const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';
 
 export {
     AssessmentCategories,
@@ -122,13 +127,12 @@ export {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     REDIS_URL,
-    OptimizeStorageVolumeConfigs,
-    OptimizeStorageLunConfigs,
-    OptimizeStorageVolumeApiData,
-    OptimizeStorageLunApiData,
+    OptimizeStorageConfigs,
+    OptimizeStorageApiData,
     OptimizeInstanceParams,
     DRIFT_ASSESSMENT_QUEUE,
     VOLUME,
     LUN,
-    QUERY_PARAMS
+    QUERY_PARAMS,
+    REDIS_SCHEMA
 };

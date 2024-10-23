@@ -533,8 +533,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    volumeoptimizationTargets: request.body.volume,
-                    lunoptimizationTargets: request.body.lun
+                    optimizationTargets: request.body.assessments
                 } as OptimizeInstanceParams);
                 return reply.send(response);
             }

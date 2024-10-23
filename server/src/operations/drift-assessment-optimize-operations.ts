@@ -2,10 +2,7 @@ import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
 import getLogger from '../utils/logger';
-import {
-    OptimizeStorageVolumeRequestParamsType,
-    OptimizeStorageLunRequestParamsType
-} from '../routes/types/database-hosts.types';
+import { OptimizeStorageRequestParamsType } from '../routes/types/database-hosts.types';
 import { Metadata, DatabaseInstance, WorkloadInstance } from '../utils/common-types';
 import { RESOURCESTYPE, HttpErrorCodes, AuditStatus } from '../utils/consts';
 import { callSsmExecution } from './aws/ssm-operations';
@@ -18,14 +15,10 @@ import { driftAssessment } from './drift-assessment';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
-    OptimizeStorageLunConfigs,
-    OptimizeStorageLunApiData,
-    OptimizeStorageVolumeConfigs,
-    OptimizeStorageVolumeApiData,
     OptimizeInstanceParams,
-    LUN,
-    VOLUME,
-    QUERY_PARAMS
+    QUERY_PARAMS,
+    OptimizeStorageConfigs,
+    OptimizeStorageApiData
 } from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
@@ -37,10 +30,9 @@ interface OptimizeStorageParams {
     fsxId: string;
     activeNodeInstanceId: string;
     parentJobId: string;
-    optimizationTargets: OptimizeStorageLunRequestParamsType[] | OptimizeStorageVolumeRequestParamsType[];
+    optimizationTargets: OptimizeStorageRequestParamsType[];
     optimizationConfigs: Record<string, any>;
     apiRequestData: Record<string, any>;
-    optimizeType: string;
     svmName: string;
     serverNameWithHostName: string;
 }
@@ -59,8 +51,7 @@ interface OptimizeOperationParams {
     instanceName: string;
     sqlAuthEnabled: boolean;
     svmName: string;
-    lunoptimizationTargets: OptimizeStorageLunRequestParamsType[];
-    volumeoptimizationTargets: OptimizeStorageVolumeRequestParamsType[];
+    optimizationTargets: OptimizeStorageRequestParamsType[];
 }
 
 async function optimizeOperation(params: OptimizeOperationParams) {
@@ -79,11 +70,9 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         instanceName,
         sqlAuthEnabled,
         svmName,
-        lunoptimizationTargets,
-        volumeoptimizationTargets
+        optimizationTargets
     } = params;
-    logger.info('Optimizing storage for', params);
-    if (lunoptimizationTargets && lunoptimizationTargets.length > 0) {
+    if (optimizationTargets && optimizationTargets.length > 0) {
         await optimizeStorage({
             accountId,
             region,
@@ -91,27 +80,9 @@ async function optimizeOperation(params: OptimizeOperationParams) {
             fsxId,
             activeNodeInstanceId: activeNodeInstanceId!,
             parentJobId,
-            optimizationTargets: lunoptimizationTargets,
-            optimizationConfigs: OptimizeStorageLunConfigs,
-            apiRequestData: OptimizeStorageLunApiData,
-            optimizeType: LUN,
-            svmName,
-            serverNameWithHostName
-        });
-    }
-
-    if (volumeoptimizationTargets && volumeoptimizationTargets.length > 0) {
-        await optimizeStorage({
-            accountId,
-            region,
-            credentialsId,
-            fsxId,
-            activeNodeInstanceId: activeNodeInstanceId!,
-            parentJobId,
-            optimizationTargets: volumeoptimizationTargets,
-            optimizationConfigs: OptimizeStorageVolumeConfigs,
-            apiRequestData: OptimizeStorageVolumeApiData,
-            optimizeType: VOLUME,
+            optimizationTargets,
+            optimizationConfigs: OptimizeStorageConfigs,
+            apiRequestData: OptimizeStorageApiData,
             svmName,
             serverNameWithHostName
         });
@@ -158,15 +129,14 @@ async function optimizeStorage(params: OptimizeStorageParams) {
         optimizationTargets,
         optimizationConfigs,
         apiRequestData,
-        optimizeType,
         svmName,
         serverNameWithHostName
     } = params;
     logger.info(`Optimizing storage for ${accountId} in ${region} for configuration ${optimizationTargets}`);
     try {
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: `Optimize ${optimizeType} for ${serverNameWithHostName}`,
-            description: `Optimize ${optimizeType} for ${serverNameWithHostName}`,
+            name: `Optimize storage for ${serverNameWithHostName}`,
+            description: `Optimize storage for ${serverNameWithHostName}`,
             startTime: Date.now(),
             type: JOBTYPE.OPTIMIZE,
             status: JOBSTATUS.IN_PROGRESS,
@@ -181,11 +151,12 @@ async function optimizeStorage(params: OptimizeStorageParams) {
             );
 
             if (!configKey) {
-                throw new Error(`${optimizeType} configuration not found`);
+                throw new Error('Storage configuration not found');
             }
 
             const apiData = apiRequestData[configKey as keyof typeof apiRequestData];
             const apiBody = JSON.stringify(apiData.body);
+            const optimizeType = apiData.type;
             if (!Array.isArray(objectsToOptimize) || objectsToOptimize.some(obj => !obj)) {
                 throw new Error('objectsToOptimize must be an array with non-empty string elements.');
             }
@@ -225,25 +196,12 @@ async function optimizeStorage(params: OptimizeStorageParams) {
 }
 
 async function optimizeInstance(params: OptimizeInstanceParams) {
-    const {
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseInstanceId,
-        volumeoptimizationTargets,
-        lunoptimizationTargets
-    } = params;
+    const { accountId, credentialsId, region, databaseHostId, databaseInstanceId, optimizationTargets } = params;
     logger.info(
-        `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${volumeoptimizationTargets} ${lunoptimizationTargets}`
+        `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${optimizationTargets}`
     );
 
-    if (
-        volumeoptimizationTargets &&
-        volumeoptimizationTargets.length > 0 &&
-        lunoptimizationTargets &&
-        lunoptimizationTargets.length > 0
-    ) {
+    if (optimizationTargets && optimizationTargets.length === 0) {
         logger.info(`Optimization body is empty ${databaseInstanceId} in ${region}`);
         throw createError(HttpErrorCodes.BAD_REQUEST, 'Optimization body is empty');
     }
@@ -348,8 +306,7 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
             instanceName,
             sqlAuthEnabled: sqlAuthEnabled || false,
             svmName,
-            lunoptimizationTargets,
-            volumeoptimizationTargets
+            optimizationTargets
         } as OptimizeOperationParams);
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;
