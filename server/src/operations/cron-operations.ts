@@ -234,6 +234,7 @@ async function scheduledAssessment() {
         const driftAssessmentWorker = new Worker(
             DRIFT_ASSESSMENT_QUEUE,
             async (job: { data: DriftAssessmentJob }) => {
+                setAsyncLocalStorageResource(ACCOUNT_ID, job.data.accountId);
                 try {
                     await triggerDriftAssessment(
                         job.data.accountId,
