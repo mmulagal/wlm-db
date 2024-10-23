@@ -256,30 +256,6 @@ variable "network_interface_id" {
   default     = ""
 }
 
-variable "network_interface_1_first_private_ip" {
-  description = "Network interface 1 first private ip"
-  type        = string
-  default     = ""
-}
-
-variable "network_interface_1_second_private_ip" {
-  description = "Network interface 1 second private ip"
-  type        = string
-  default     = ""
-}
-
-variable "network_interface_2_first_private_ip" {
-  description = "Network interface 2 first private ip"
-  type        = string
-  default     = ""
-}
-
-variable "network_interface_2_second_private_ip" {
-  description = "Network interface 2 second private ip"
-  type        = string
-  default     = ""
-}
-
 variable "private_subnet1_id" {
   description = "ID of private subnet in an Availability Zone 1 for the workload (For example, subnet-a0246dcd)."
   type        = string
@@ -291,3 +267,18 @@ variable "private_subnet2_id" {
   type        = string
   default     = ""
 }
+
+variable "network_interface_1_id" {
+  description = "value of network interface 1 id"
+  type        = string
+  default     = ""
+}
+
+variable "network_interface_2_id" {
+  description = "value of network interface 2 id"
+  type        = string
+  default     = ""
+}
+
+
+

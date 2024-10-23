@@ -928,7 +928,6 @@ const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: { [key: string]: { name: str
     Ec2EndpointExists: { name: 'ec2_endpoint_exists', type: 'boolean' },
     Ec2MessagesEndpointExists: { name: 'ec2_messages_endpoint_exists', type: 'boolean' },
     EnableCloudWatchLogFeature: { name: 'enable_cloud_watch_log_feature', type: 'boolean' },
-    EncryptedFsxPassword: { name: 'encrypted_fsx_password', type: 'string' },
     FileSystemEncryptionKeyId: { name: 'fsx_encryption_key', type: 'string' },
     FSxAdminPassword: { name: 'fsx_admin_password', type: 'string' },
     FSxAdminUsername: { name: 'fsx_admin_username', type: 'string' },
