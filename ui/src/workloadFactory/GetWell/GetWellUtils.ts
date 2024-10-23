@@ -735,12 +735,6 @@ export const handleOptimizeStorageJob = (
             );
             formatGetWellData(dispatch);
             // Error message for failed optimization API will be returned here
-            // dispatch(
-            //     addNotification({
-            //         notificationType: NOTIFICATION_TYPES.ERROR,
-            //         message: failedMsgData
-            //     })
-            // );
         }
-    }, 10000);
+    }, 10);
 };
