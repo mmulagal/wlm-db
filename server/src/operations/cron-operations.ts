@@ -8,6 +8,7 @@ import IORedis from 'ioredis';
 import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
+    CONTINUOUS_ASSESSMENT_FEATURE,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     TCO_FEATURE

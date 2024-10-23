@@ -634,24 +634,21 @@ async function fetchDriftAssessment(
     const driftAssessmentData: DriftAssessmentResponseType = {};
     const shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
     const shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-    if (shouldCalculateStorageAssessment) {
-        driftAssessmentData.storage = await calculateStorageDrift(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId
-        );
-    }
 
-    if (shouldCalculateComputeAssessment) {
-        driftAssessmentData.compute = await calculateComputeDrift(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId
-        );
+    const [storageAssessmentResponse, computeAssessmentResponse] = await Promise.all([
+        shouldCalculateStorageAssessment
+            ? calculateStorageDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            : Promise.resolve(),
+        shouldCalculateComputeAssessment
+            ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            : Promise.resolve()
+    ]);
+
+    if (storageAssessmentResponse) {
+        driftAssessmentData.storage = storageAssessmentResponse;
+    }
+    if (computeAssessmentResponse) {
+        driftAssessmentData.compute = computeAssessmentResponse;
     }
     return driftAssessmentData;
 }
