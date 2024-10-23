@@ -29,7 +29,11 @@ import { manageInstanceRecommendationPreReqs } from './aws/compute-optimizer-ope
 import { getEc2Arn, getRedisDetails } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
 import { fetchSqlServerInstanceConfiguration } from './recommendation-operations';
-import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
+import {
+    getAsyncLocalStorageResource,
+    getLocalStorage,
+    setAsyncLocalStorageResource
+} from '../utils/async-local-storage';
 import { triggerDriftAssessment } from './drift-assessment';
 import { DriftAssessmentJob } from '../utils/common-types';
 
@@ -158,19 +162,6 @@ async function scheduledAssessment() {
 
     logger.info(`Redis host: ${redisDetails.host}`);
     logger.info(`Redis port: ${redisDetails.port}`);
-    logger.info(`Redis port: ${redisDetails.url}`);
-
-    const redisConnection = new IORedis(redisDetails.url, {
-        maxRetriesPerRequest: null
-    });
-
-    const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
-        connection: redisConnection
-    });
-
-    logger.info('Debug queue');
-    const allJobsCount = await driftAssessmentQueue.getJobCounts();
-    logger.info(JSON.stringify(allJobsCount));
 
     const managedResources = await listResources();
     if (isEmpty(managedResources)) {
@@ -183,7 +174,28 @@ async function scheduledAssessment() {
         return;
     }
 
+    let redisConnection;
     try {
+        redisConnection = new IORedis(redisDetails.url, {
+            maxRetriesPerRequest: null
+        });
+
+        redisConnection.on('error', error => {
+            logger.error('Redis connection error:', error);
+        });
+
+        const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
+            connection: redisConnection
+        });
+
+        driftAssessmentQueue.on('error', error => {
+            logger.error('Queue error:', error);
+        });
+
+        logger.info('Debug queue');
+        const allJobsCount = await driftAssessmentQueue.getJobCounts();
+        logger.info(JSON.stringify(allJobsCount));
+
         await Promise.all(
             managedResources.map(async managedResource => {
                 const {
@@ -230,34 +242,40 @@ async function scheduledAssessment() {
     } catch (error) {
         logger.error(`Error while adding cron assessment job ${error}`);
     }
-    try {
-        const driftAssessmentWorker = new Worker(
-            DRIFT_ASSESSMENT_QUEUE,
-            async (job: { data: DriftAssessmentJob }) => {
-                setAsyncLocalStorageResource(ACCOUNT_ID, job.data.accountId);
-                try {
-                    await triggerDriftAssessment(
-                        job.data.accountId,
-                        job.data.credentialsId,
-                        job.data.region,
-                        job.data.resourceId,
-                        job.data.managedInstanceIds,
-                        AssessmentTriggeredBy.SYSTEM
-                    );
-                } catch (error) {
-                    logger.error('Error processing job:', job, error);
-                }
-            },
-            {
-                connection: redisConnection
-            }
-        );
 
-        driftAssessmentWorker.on('completed', job => {
-            logger.debug(job.id, 'is completed.');
+    if (redisConnection) {
+        getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
+            try {
+                const driftAssessmentWorker = new Worker(
+                    DRIFT_ASSESSMENT_QUEUE,
+                    async (job: { data: DriftAssessmentJob }) => {
+                        setAsyncLocalStorageResource(ACCOUNT_ID, job.data.accountId);
+                        logger.info(`Account id ${getAsyncLocalStorageResource(ACCOUNT_ID)}`);
+                        try {
+                            await triggerDriftAssessment(
+                                job.data.accountId,
+                                job.data.credentialsId,
+                                job.data.region,
+                                job.data.resourceId,
+                                job.data.managedInstanceIds,
+                                AssessmentTriggeredBy.SYSTEM
+                            );
+                        } catch (error) {
+                            logger.error('Error processing job:', job, error);
+                        }
+                    },
+                    {
+                        connection: redisConnection
+                    }
+                );
+
+                driftAssessmentWorker.on('completed', job => {
+                    logger.debug(job.id, 'is completed.');
+                });
+            } catch (error) {
+                logger.error(`Error while triggering scheduled assessment: ${error}.`);
+            }
         });
-    } catch (error) {
-        logger.error(`Error while triggering scheduled assessment: ${error}.`);
     }
 }
 
