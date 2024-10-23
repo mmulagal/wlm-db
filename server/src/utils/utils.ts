@@ -41,7 +41,7 @@ import {
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/mssql/createdb-collations';
-import { REDIS_URL } from './continous-optimization-consts';
+import { REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -668,7 +668,9 @@ function getRedisDetails() {
     } catch (e: any) {
         logger.error(`Unable to fetch redis host and port from ${REDIS_URL}. Error: ${e}.`);
     }
+    const url = `${REDIS_SCHEMA}://${SECRETS.REDIS_PASSWORD}@${REDIS_URL}`;
     return {
+        url,
         host,
         port: Number(port),
         password: SECRETS.REDIS_PASSWORD
