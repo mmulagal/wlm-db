@@ -560,6 +560,7 @@ export const GENERAL = {
     JM_TYPE_PREPARE_RESOURCE: 'Prepare resource',
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
+    JM_TYPE_OPTIMIZE: 'Optimize',
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -1151,7 +1152,8 @@ export const GENERAL = {
     NOTE_PONT_ONE: 'No disruption to your services is expected during this process.',
     NOTE_PONT_TWO:
         'By proceeding, you authorize Workload Factory to automatically perform these actions on your behalf.',
-    NOTE: 'Note'
+    NOTE: 'Note',
+    OPTIMIZATION_NOT_SUPPORTED: 'Optimization not supported for this configuration.'
 };
 
 export const CODE_VIEWER = {
