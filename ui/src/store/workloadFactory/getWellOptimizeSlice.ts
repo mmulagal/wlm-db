@@ -5,6 +5,7 @@ import { GetWellSliceInterface } from '../../utils/types/getWellTypes';
 const initialState: GetWellSliceInterface = {
     optimizePageLoading: false,
     driftAssessmentData: null,
+    isAssessmentAvailable: false,
     selectedHostname: '',
     selectedResourceId: '',
     selectedDatabaseInstance: '',
@@ -14,7 +15,8 @@ const initialState: GetWellSliceInterface = {
     ontapConfigTableData: null,
     optimizationBreakDown: null,
     gwRefreshPage: false,
-    gwTimestamp: ''
+    gwTimestamp: '',
+    optimizingData: {}
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -26,6 +28,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setDriftAssessmentData: (state, action: PayloadAction<any>) => {
             state.driftAssessmentData = action.payload;
+        },
+        setIsAssessmentAvailable: (state, action: PayloadAction<any>) => {
+            state.isAssessmentAvailable = action.payload;
         },
         setGwHostname: (state, action: PayloadAction<any>) => {
             state.selectedHostname = action.payload;
@@ -60,6 +65,7 @@ const getWellOptimizeSlice = createSlice({
         resetGwData: (state, action: PayloadAction<any>) => {
             state.optimizePageLoading = false;
             state.driftAssessmentData = null;
+            state.isAssessmentAvailable = false;
             state.selectedHostname = '';
             state.selectedResourceId = '';
             state.selectedDatabaseInstance = '';
@@ -68,6 +74,9 @@ const getWellOptimizeSlice = createSlice({
             state.osConfigTableData = null;
             state.ontapConfigTableData = null;
             state.optimizationBreakDown = null;
+        },
+        setOptimizingData: (state, action: PayloadAction<any>) => {
+            state.optimizingData = action.payload;
         }
     }
 });
@@ -75,6 +84,7 @@ const getWellOptimizeSlice = createSlice({
 export const {
     setOptimizePageLoading,
     setDriftAssessmentData,
+    setIsAssessmentAvailable,
     setGwHostname,
     setGwResourceId,
     setGwDatabaseInstance,
@@ -85,7 +95,8 @@ export const {
     setOptimizationBreakDown,
     setGwRefreshPage,
     setGwTimestamp,
-    resetGwData
+    resetGwData,
+    setOptimizingData
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

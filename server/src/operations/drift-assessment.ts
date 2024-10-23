@@ -10,14 +10,7 @@ import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/drift-assessment-scripts';
 import storageGoldenConfigData from './drift-assessment/golden-configs/storage';
-import {
-    AssessmentCategories,
-    AssessmentStatus,
-    AssessmentTriggeredBy,
-    AwsWellArchitecturedPillars,
-    HttpErrorCodes,
-    RESOURCESTYPE
-} from '../utils/consts';
+import { HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { StorageAssessment, WorkloadInstance } from '../utils/common-types';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import {
@@ -29,6 +22,12 @@ import { describeFSxVolumes } from '../lib/aws/fsx';
 import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
 import { checkComputeOptimizerEnrollmentStatus } from './recommendation-operations';
 import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
+import {
+    AssessmentCategories,
+    AssessmentStatus,
+    AssessmentTriggeredBy,
+    AwsWellArchitecturedPillars
+} from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -80,13 +79,16 @@ async function calculateStorageDrift(
         let status = AssessmentStatus.OPTIMIZED;
         const objectsInViolation: string[] = [];
         volumes.forEach(volume => {
-            const objectName = volume.Key === 'name' ? volume.Value : '';
-            if (volume.Key === config.parameter) {
-                status = config.value === volume.Value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            }
-            if (status === AssessmentStatus.NOT_OPTIMIZED) {
-                objectsInViolation.push(objectName!);
-            }
+            let objectName = '';
+            Object.entries(volume).forEach(([key, value]) => {
+                objectName = key === 'name' ? value : objectName;
+                if (key === config.parameter) {
+                    status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
+                    if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                        objectsInViolation.push(objectName!);
+                    }
+                }
+            });
         });
         if (status === AssessmentStatus.OPTIMIZED) {
             optimizedCount += 1;
@@ -107,13 +109,17 @@ async function calculateStorageDrift(
         let status = AssessmentStatus.OPTIMIZED;
         const objectsInViolation: string[] = [];
         luns.forEach(lun => {
-            const objectName = lun.Key === 'name' ? lun.Value : '';
-            if (lun.Key === config.parameter) {
-                status = config.value === lun.Value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            }
-            if (status === AssessmentStatus.NOT_OPTIMIZED) {
-                objectsInViolation.push(objectName!);
-            }
+            let objectName = '';
+            Object.entries(lun).forEach(([key, value]) => {
+                objectName = key === 'name' ? value : objectName;
+                if (key === config.parameter) {
+                    status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
+
+                    if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                        objectsInViolation.push(objectName!);
+                    }
+                }
+            });
         });
         if (status === AssessmentStatus.OPTIMIZED) {
             optimizedCount += 1;
@@ -295,7 +301,7 @@ async function calculateComputeDrift(
             }
 
             return {
-                name: 'Compute',
+                name: 'compute-rightsizing',
                 status: findingValue,
                 recommended: AssessmentStatus.OPTIMIZED,
                 severity: 'Critical',
@@ -345,6 +351,13 @@ async function initiateStorageAssessmentCollection(
             ?.map(i => i?.volumeRecords)
             .flat() || [];
     instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
+
+    const volumeDBMap =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeDBMap)
+            .flat() || {};
+
+    instanceRecord.mappedVolumeNames = volumeDBMap.map(volume => volume.name as string);
 
     instanceRecord.mappedLunNames =
         Object.values(instanceVolumeMapping)
@@ -455,7 +468,7 @@ async function initiateCompueAssessment(
     }
 }
 
-async function driftAssesment(
+async function driftAssessment(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -507,10 +520,12 @@ async function driftAssesment(
         errorMessage = e.message || 'Internal Server Error';
         jobStatus = JOBSTATUS.FAILED;
     } finally {
+        const instanceNames = databaseInstanceRecords.map(i => i.name);
         await updateJobDetails(accountId, credentialsId, region, jobId, {
             error: errorMessage,
-            description:
-                'The selected SQL Server instance has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.',
+            description: `The selected SQL Server instance(s) ${instanceNames.join(
+                ','
+            )} has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.`,
             status: jobStatus!,
             endTime: Date.now()
         });
@@ -575,10 +590,14 @@ async function triggerDriftAssessment(
         logger.error(`Error while fetching database instance details ${accountId}, ${databaseHostId}, ${error}`);
     }
 
+    const instanceNames = runningInstances.map(i => i.name);
     if (!isEmpty(runningInstances)) {
+        const jobString = `The selected SQL Server instance(s) ${instanceNames.join(
+            ','
+        )} is/are being scanned for best practice misalignments.`;
         const job = await registerJob(accountId, credentialsId, region, {
-            name: 'The selected SQL Server instance is being scanned for best practice misalignments.',
-            description: 'The selected SQL Server instance is being scanned for best practice misalignments.',
+            name: jobString,
+            description: jobString,
             resourceName: resourceName!,
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),
@@ -586,7 +605,7 @@ async function triggerDriftAssessment(
             type: JOBTYPE.ASSESSMENT
         });
 
-        driftAssesment(accountId, credentialsId, region, job.id, databaseHostId, runningInstances, fields);
+        driftAssessment(accountId, credentialsId, region, job.id, databaseHostId, runningInstances, fields);
 
         return { jobId: job.id };
     }
@@ -612,11 +631,11 @@ async function fetchDriftAssessment(
         // remove the empty spaces in the string & split the fields by comma separated array values
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
-    const driftAssesmentData: DriftAssessmentResponseType = {};
+    const driftAssessmentData: DriftAssessmentResponseType = {};
     const shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
     const shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
     if (shouldCalculateStorageAssessment) {
-        driftAssesmentData.storage = await calculateStorageDrift(
+        driftAssessmentData.storage = await calculateStorageDrift(
             accountId,
             credentialsId,
             region,
@@ -626,7 +645,7 @@ async function fetchDriftAssessment(
     }
 
     if (shouldCalculateComputeAssessment) {
-        driftAssesmentData.compute = await calculateComputeDrift(
+        driftAssessmentData.compute = await calculateComputeDrift(
             accountId,
             credentialsId,
             region,
@@ -634,7 +653,7 @@ async function fetchDriftAssessment(
             databaseInstanceId
         );
     }
-    return driftAssesmentData;
+    return driftAssessmentData;
 }
 
 function getMatchingAssessmentStatus(finding: string) {
@@ -652,4 +671,4 @@ function getMatchingAssessmentStatus(finding: string) {
     }
 }
 
-export { triggerDriftAssessment, fetchDriftAssessment };
+export { triggerDriftAssessment, fetchDriftAssessment, driftAssessment };

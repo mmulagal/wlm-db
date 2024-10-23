@@ -149,7 +149,7 @@ const getDbMappedOntapVolumes = (
     $executableInstanceName = "${executableInstanceName}"
     $logPrefix = '${logPrefix}'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
-
+    $PSToolkitRequiredVersion = '9.15.1.2407'
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_for_$dbname.log.txt" -Append | Out-Null
 
     $responseObject = @{}
@@ -573,10 +573,10 @@ const createVolumeClone = (
                     $sourceSvm = $vol.svm
                 
                     if ($svmProcessed -notcontains $sourceSvm) {
-                        if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
+                        if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP | Where-Object { $_.Version -eq $PSToolkitRequiredVersion })) {
                             Write-Information "$logPrefix NetApp.ONTAP Module does not exist, installing it now"
 
-                            Install-Module -Name NetApp.ONTAP -Force -AllowClobber -SkipPublisherCheck
+                            Install-Module -Name NetApp.ONTAP -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion | Out-Null
                         }
 
                         $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName

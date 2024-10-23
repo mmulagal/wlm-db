@@ -34,7 +34,6 @@ import {
     HOURS_IN_MONTH,
     DEFAULT_MSSQL_INSTANCE_NAME,
     DEFAULT_INSTANCE_NAME,
-    REDIS_URL,
     SECRETS,
     DatabaseTypes
 } from './consts';
@@ -42,6 +41,7 @@ import {
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/mssql/createdb-collations';
+import { REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -661,12 +661,27 @@ const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 
 
 function getRedisDetails() {
     logger.info('in getRedisDetails');
+    let host = '127.0.0.1';
+    let port = '6379';
+    try {
+        [host, port] = REDIS_URL.split(':');
+    } catch (e: any) {
+        logger.error(`Unable to fetch redis host and port from ${REDIS_URL}. Error: ${e}.`);
+    }
+    const url = `${REDIS_SCHEMA}://${SECRETS.REDIS_PASSWORD}@${REDIS_URL}`;
     return {
-        connection: {
-            url: REDIS_URL,
-            password: SECRETS.REDIS_PASSWORD
-        }
+        url,
+        host,
+        port: Number(port),
+        password: SECRETS.REDIS_PASSWORD
     };
+}
+
+function getTimeDifferenceInMinutes(startTime: number, endTime: number = Date.now()) {
+    // Calculate the time difference in minutes
+    logger.debug('Calculate time difference in minutes', { startTime, endTime });
+    const timeDifferenceInMilliseconds = Math.abs(endTime - startTime);
+    return Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
 }
 
 export {
@@ -709,5 +724,6 @@ export {
     getOriginalDatabaseInstanceName,
     decompressSSMResponse,
     retryWithDelay,
-    getRedisDetails
+    getRedisDetails,
+    getTimeDifferenceInMinutes
 };

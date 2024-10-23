@@ -1,6 +1,7 @@
 export interface GetWellSliceInterface {
     optimizePageLoading: boolean;
     driftAssessmentData: AssessmentResponseInterface | null;
+    isAssessmentAvailable: boolean;
     selectedHostname: string;
     selectedResourceId: string;
     selectedDatabaseInstance: string;
@@ -14,6 +15,7 @@ export interface GetWellSliceInterface {
     } | null;
     gwRefreshPage: boolean;
     gwTimestamp: string;
+    optimizingData: any;
 }
 
 interface CountBreakDown {
@@ -41,6 +43,8 @@ export interface AssessmentResponseInterface {
 }
 
 export interface PerConfigInterface {
+    id?: string;
+    type?: string;
     name?: string;
     status?: string;
     current?: string;

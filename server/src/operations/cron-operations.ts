@@ -4,13 +4,10 @@ import ms from 'ms';
 import { STORAGE_TYPE, database_instances as DatabaseInstances } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
 import { Queue, Worker } from 'bullmq';
-import Redis from 'ioredis';
+import IORedis from 'ioredis';
 import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
-    AssessmentTriggeredBy,
-    CONTINUOUS_ASSESSMENT_FEATURE,
-    DRIFT_ASSESSMENT_QUEUE,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     TCO_FEATURE
@@ -36,9 +33,14 @@ import {
     checkComputeOptimizerEnrollmentStatus,
     fetchSqlServerInstanceConfiguration
 } from './recommendation-operations';
-import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
+import {
+    getAsyncLocalStorageResource,
+    getLocalStorage,
+    setAsyncLocalStorageResource
+} from '../utils/async-local-storage';
 import { triggerDriftAssessment } from './drift-assessment';
 import { DriftAssessmentJob, Metadata } from '../utils/common-types';
+import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -243,9 +245,8 @@ async function updateManagedInstRecPrefs() {
 async function scheduledAssessment() {
     const redisDetails = getRedisDetails();
 
-    logger.info(`Redis details ${redisDetails.connection.url}`);
-
-    const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, { connection: new Redis(redisDetails.connection) });
+    logger.info(`Redis host: ${redisDetails.host}`);
+    logger.info(`Redis port: ${redisDetails.port}`);
 
     const managedResources = await listResources();
     if (isEmpty(managedResources)) {
@@ -258,7 +259,28 @@ async function scheduledAssessment() {
         return;
     }
 
+    let redisConnection;
     try {
+        redisConnection = new IORedis(redisDetails.url, {
+            maxRetriesPerRequest: null
+        });
+
+        redisConnection.on('error', error => {
+            logger.error('Redis connection error:', error);
+        });
+
+        const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
+            connection: redisConnection
+        });
+
+        driftAssessmentQueue.on('error', error => {
+            logger.error('Queue error:', error);
+        });
+
+        logger.info('Debug queue');
+        const allJobsCount = await driftAssessmentQueue.getJobCounts();
+        logger.info(JSON.stringify(allJobsCount));
+
         await Promise.all(
             managedResources.map(async managedResource => {
                 const {
@@ -272,29 +294,48 @@ async function scheduledAssessment() {
                     .filter(instance => instance.resource_id === resourceId)
                     .map(instance => instance.database_instance_id);
 
-                logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+                if (!isEmpty(managedInstanceIds)) {
+                    logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
 
-                driftAssessmentQueue.add(
-                    `driftAssessmentFor${resourceId}`,
-                    {
-                        accountId,
-                        credentialsId,
-                        region,
-                        resourceId,
-                        managedInstanceIds
-                    },
-                    {
-                        repeat: { every: 24 * 3600 * 1000 }, // 24 hours in milliseconds
-                        removeOnComplete: true,
-                        removeOnFail: true
+                    try {
+                        driftAssessmentQueue.add(
+                            `driftAssessmentFor${resourceId}`,
+                            {
+                                accountId,
+                                credentialsId,
+                                region,
+                                resourceId,
+                                managedInstanceIds
+                            },
+                            {
+                                // 2hours to observe
+                                repeat: { every: 2 * 3600 * 1000 }, // 24 hours in milliseconds
+                                removeOnComplete: true,
+                                removeOnFail: true
+                            }
+                        );
+                    } catch (error: any) {
+                        logger.error(`Error while add job to the queue. Error: ${error}`);
                     }
-                );
 
-                logger.info(`Added assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+                    logger.info(`Added assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+                } else {
+                    logger.info(`No managed instances found for ${resourceId}.`);
+                }
+            })
+        );
+    } catch (error) {
+        logger.error(`Error while adding cron assessment job ${error}`);
+    }
 
+    if (redisConnection) {
+        getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
+            try {
                 const driftAssessmentWorker = new Worker(
                     DRIFT_ASSESSMENT_QUEUE,
                     async (job: { data: DriftAssessmentJob }) => {
+                        setAsyncLocalStorageResource(ACCOUNT_ID, job.data.accountId);
+                        logger.info(`Account id ${getAsyncLocalStorageResource(ACCOUNT_ID)}`);
                         try {
                             await triggerDriftAssessment(
                                 job.data.accountId,
@@ -309,17 +350,17 @@ async function scheduledAssessment() {
                         }
                     },
                     {
-                        connection: redisDetails.connection
+                        connection: redisConnection
                     }
                 );
 
                 driftAssessmentWorker.on('completed', job => {
                     logger.debug(job.id, 'is completed.');
                 });
-            })
-        );
-    } catch (error) {
-        logger.error(`Error while triggering scheduled assessment: ${error}.`);
+            } catch (error) {
+                logger.error(`Error while triggering scheduled assessment: ${error}.`);
+            }
+        });
     }
 }
 

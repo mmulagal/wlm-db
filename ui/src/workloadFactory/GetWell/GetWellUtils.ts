@@ -1,11 +1,15 @@
+import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
+import store from '../../store/store';
 import {
     setCardData,
+    setDriftAssessmentData,
     setGwTimestamp,
     setOntapConfigTableData,
     setOptimizationBreakDown,
+    setOptimizingData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-import { GETWELL_CONFIG, GETWELL_VALUES } from '../../utils/consts';
+import { GETWELL_CONFIG, GETWELL_VALUES, JOB_MONITORING_STATUS, OPTIMIZE_POLLING_INTERVAL } from '../../utils/consts';
 import { AssessmentResponseInterface, GwCardDataInterface, PerConfigInterface } from '../../utils/types/getWellTypes';
 import { formatNumberWithCustomComma } from '../../utils/utilityFunctions';
 
@@ -55,7 +59,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'File system headroom recommendation',
             description:
-                'To optimize storage performance, provision file system capacity as 1.35 times the size of total database usage.',
+                'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
             values: ['Under-provisioned: 0-35%', 'Optimized: 36-100%', 'Over-provisioned: >100%']
         },
         tags: ['Performance efficiency']
@@ -257,7 +261,7 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
-            value: 'Critical'
+            value: ''
         },
         tags: []
     },
@@ -276,19 +280,23 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
-            value: 'Critical'
+            value: ''
         },
         tags: []
     }
 };
 
 // This function is used to format the data for the individual card main config.
-export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface) => {
+export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
     let cardsData = {};
     let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
     cardMainConfig?.map(category => {
         category?.map((item: PerConfigInterface) => {
             let itemName = item?.name || '';
+            let status = item?.status || '';
+            if (optimizingData?.[itemName]) {
+                status = optimizingData?.[itemName];
+            }
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
             cardsData = {
                 ...cardsData,
@@ -296,7 +304,7 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                     ...(cardDataDefault?.[itemName] || {}),
                     block_two: {
                         ...(cardDataDefault?.[itemName]?.block_two || {}),
-                        value: GETWELL_VALUES[item?.status || ''] || item?.status
+                        value: GETWELL_VALUES?.[status] || status
                     },
                     block_three: {
                         ...(cardDataDefault?.[itemName]?.block_three || {}),
@@ -306,7 +314,8 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                         ...(cardDataDefault?.[itemName]?.block_four || {}),
                         value: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
                     },
-                    tags: item?.tags
+                    tags: item?.tags,
+                    id: item?.name
                 }
             };
         });
@@ -315,22 +324,59 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
 };
 
 // This function is used to format the ONTAP configuration data.
-export const formatOntapConfig = (data: AssessmentResponseInterface) => {
+export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
     let ontapTagsList: Array<string> = [];
-    const ontapConfigList = [
-        ...(data?.storage?.configuration?.volumes || []),
-        ...(data?.storage?.configuration?.luns || [])
-    ];
+    let highestOntapSeverity = 'None';
     let formatOntapConfigList: PerConfigInterface[] = [];
-    ontapConfigList?.map((item: PerConfigInterface) => {
+    let ontapCritical = 0;
+    let ontapWarning = 0;
+    data?.storage?.configuration?.volumes?.map((item: PerConfigInterface) => {
+        let status = item?.status || '';
+        if (optimizingData?.[item?.name || '']) {
+            status = optimizingData?.[item?.name || ''];
+        }
         formatOntapConfigList.push({
             ...item,
+            id: item?.name,
+            type: 'volume',
             name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[item?.status || ''] || item?.status,
+            status: GETWELL_VALUES?.[status] || status,
             severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
         });
+        if (item?.severity === 'critical') {
+            ontapCritical = 1;
+        } else if (item?.severity === 'warning') {
+            ontapWarning = 1;
+        }
         ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
     });
+
+    data?.storage?.configuration?.luns?.map((item: PerConfigInterface) => {
+        let status = item?.status || '';
+        if (optimizingData?.[item?.name || '']) {
+            status = optimizingData?.[item?.name || ''];
+        }
+        formatOntapConfigList.push({
+            ...item,
+            id: item?.name,
+            type: 'lun',
+            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+            status: GETWELL_VALUES?.[status] || status,
+            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+        });
+        if (item?.severity === 'critical') {
+            ontapCritical = 1;
+        } else if (item?.severity === 'warning') {
+            ontapWarning = 1;
+        }
+        ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
+    });
+
+    if (ontapCritical === 1) {
+        highestOntapSeverity = 'Critical';
+    } else if (ontapWarning === 1) {
+        highestOntapSeverity = 'Warning';
+    }
 
     let ontapOptimizedConfig = 0;
     let ontapNotOptimizedConfig = 0;
@@ -344,22 +390,48 @@ export const formatOntapConfig = (data: AssessmentResponseInterface) => {
             }
         });
     });
-    return { formatOntapConfigList, ontapTagsList, ontapOptimizedConfig, ontapNotOptimizedConfig };
+    return {
+        formatOntapConfigList,
+        ontapTagsList,
+        ontapOptimizedConfig,
+        ontapNotOptimizedConfig,
+        highestOntapSeverity
+    };
 };
 
 // This function is used to format the OS configuration data.
-export const formatOsConfig = (data: AssessmentResponseInterface) => {
+export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
     let osTagsList: Array<string> = [];
+    let highestOsSeverity = 'None';
     let formatOsConfigList: PerConfigInterface[] = [];
+    let osCritical = 0;
+    let osWarning = 0;
     data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
+        let status = item?.status || '';
+        if (optimizingData?.[item?.name || '']) {
+            status = optimizingData?.[item?.name || ''];
+        }
         formatOsConfigList.push({
             ...item,
+            id: item?.name,
+            type: 'os',
             name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[item?.status || ''] || item?.status,
+            status: GETWELL_VALUES?.[status] || status,
             severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
         });
+        if (item?.severity === 'critical') {
+            osCritical = 1;
+        } else if (item?.severity === 'warning') {
+            osWarning = 1;
+        }
         osTagsList = [...osTagsList, ...(item?.tags || [])];
     });
+
+    if (osCritical === 1) {
+        highestOsSeverity = 'Critical';
+    } else if (osWarning === 1) {
+        highestOsSeverity = 'Warning';
+    }
 
     let osOptimizedConfig = 0;
     let osNotOptimizedConfig = 0;
@@ -370,7 +442,7 @@ export const formatOsConfig = (data: AssessmentResponseInterface) => {
             osNotOptimizedConfig++;
         }
     });
-    return { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig };
+    return { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity };
 };
 
 // This function is used to format the optimization breakdown data.
@@ -379,12 +451,14 @@ export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) =
         storage: {
             total: data?.storage?.optimisedCount?.total ?? 0,
             optimized: data?.storage?.optimisedCount?.optimised ?? 0,
-            percent: data?.storage?.optimisedCount
-                ? formatNumberWithCustomComma(
-                      ((data?.storage?.optimisedCount?.optimised ?? 0) / (data?.storage?.optimisedCount?.total ?? 1)) *
-                          100
-                  )
-                : 0
+            percent:
+                data?.storage?.optimisedCount && data?.storage?.optimisedCount?.optimised !== 0
+                    ? formatNumberWithCustomComma(
+                          ((data?.storage?.optimisedCount?.optimised ?? 0) /
+                              (data?.storage?.optimisedCount?.total ?? 1)) *
+                              100
+                      )
+                    : 0
         },
         total: {
             // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
@@ -392,23 +466,35 @@ export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) =
             total: data?.storage?.optimisedCount?.total || 0,
             optimized: data?.storage?.optimisedCount?.optimised || 0,
             notOptimized: (data?.storage?.optimisedCount?.total || 0) - (data?.storage?.optimisedCount?.optimised || 0),
-            percent: data?.storage?.optimisedCount
-                ? formatNumberWithCustomComma(
-                      ((data?.storage?.optimisedCount?.optimised || 0) / (data?.storage?.optimisedCount?.total || 1)) *
-                          100
-                  )
-                : 0
+            percent:
+                data?.storage?.optimisedCount && data?.storage?.optimisedCount?.optimised !== 0
+                    ? formatNumberWithCustomComma(
+                          ((data?.storage?.optimisedCount?.optimised || 0) /
+                              (data?.storage?.optimisedCount?.total || 1)) *
+                              100
+                      )
+                    : 0
         }
     };
     return optBreakDown;
 };
 
 // This function is used to format the get well data.
-export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: any) => {
-    let cardsData = formatIndividualCardMainConfig(data);
+export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterface | undefined) => {
+    const state = store.getState();
+    const optimizingData = state.getWellOptimize.optimizingData || {};
+    if (!data) {
+        data = state.getWellOptimize.driftAssessmentData || {};
+    }
+    let cardsData = formatIndividualCardMainConfig(data, optimizingData);
 
-    const { formatOntapConfigList, ontapTagsList, ontapOptimizedConfig, ontapNotOptimizedConfig } =
-        formatOntapConfig(data);
+    const {
+        formatOntapConfigList,
+        ontapTagsList,
+        ontapOptimizedConfig,
+        ontapNotOptimizedConfig,
+        highestOntapSeverity
+    } = formatOntapConfig(data, optimizingData);
 
     cardsData = {
         ...cardsData,
@@ -429,13 +515,14 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
             },
             block_four: {
                 ...cardDataDefault?.ontap_configuration?.block_four,
-                value: 'Critical'
+                value: highestOntapSeverity
             },
             tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index)
         }
     };
 
-    const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig } = formatOsConfig(data);
+    const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity } =
+        formatOsConfig(data, optimizingData);
 
     cardsData = {
         ...cardsData,
@@ -456,7 +543,7 @@ export const formatGetWellData = (data: AssessmentResponseInterface, dispatch: a
             },
             block_four: {
                 ...cardDataDefault?.os_configuration?.block_four,
-                value: 'Warning'
+                value: highestOsSeverity
             },
             tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index)
         }
@@ -574,4 +661,80 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         }
     });
     return filteredCardData;
+};
+
+export const resetGwValuesOnRefresh = (dispatch: any) => {
+    dispatch(setDriftAssessmentData(null));
+    dispatch(setCardData(cardDataDefault));
+    dispatch(setOsConfigTableData(null));
+    dispatch(setOntapConfigTableData(null));
+    dispatch(setOptimizationBreakDown(null));
+};
+
+export const handleOptimizeStorageJob = (
+    res: any,
+    rowData: any,
+    failedMsgData: any,
+    getJobDetailApi: any,
+    dispatch: any
+) => {
+    const state = store.getState();
+    let optimizingData = state.getWellOptimize.optimizingData || {};
+    let { headerSelectedCred, headerSelectedRegion } = state.headers;
+
+    setTimeout(() => {
+        if (res?.data) {
+            const jobInterval = setInterval(() => {
+                getJobDetailApi({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    region: headerSelectedRegion?.label2,
+                    id: res?.data?.jobId
+                }).then((jobRes: any) => {
+                    const status = jobRes?.data?.status;
+                    const state = store.getState();
+                    let optimizingData = state.getWellOptimize.optimizingData || {};
+                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                        dispatch(
+                            setOptimizingData({
+                                ...optimizingData,
+                                [rowData?.id]: 'optimized'
+                            })
+                        );
+                        formatGetWellData(dispatch);
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                message: `${rowData?.name} optimized successfully.`
+                            })
+                        );
+                        clearInterval(jobInterval);
+                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                        dispatch(
+                            setOptimizingData({
+                                ...optimizingData,
+                                [rowData?.id]: 'not-optimized'
+                            })
+                        );
+                        formatGetWellData(dispatch);
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                message: failedMsgData
+                            })
+                        );
+                        clearInterval(jobInterval);
+                    }
+                });
+            }, OPTIMIZE_POLLING_INTERVAL);
+        } else {
+            dispatch(
+                setOptimizingData({
+                    ...optimizingData,
+                    [rowData?.id]: 'not-optimized'
+                })
+            );
+            formatGetWellData(dispatch);
+            // Error message for failed optimization API will be returned here
+        }
+    }, 10);
 };

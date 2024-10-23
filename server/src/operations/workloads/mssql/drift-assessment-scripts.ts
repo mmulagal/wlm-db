@@ -1,13 +1,6 @@
-import { WorkloadInstance } from '../../../utils/common-types';
+import { OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
-import {
-    DEFAULT_DATA_DRIVE_SIZE,
-    DEFAULT_LOG_DRIVE_SIZE,
-    INSTANCE_DATA_DRIVES_QUERY,
-    INSTANCE_LOG_DRIVES_QUERY,
-    INSTANCE_TEMPDB_DRIVES_QUERY,
-    TEMPDB_DRIVE_SIZE
-} from './queries';
+import { INSTANCE_DATA_DRIVES_QUERY, INSTANCE_LOG_DRIVES_QUERY, INSTANCE_TEMPDB_DRIVES_QUERY } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boolean) =>
@@ -29,27 +22,30 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     }
     
     $instanceDataDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
-    $defaultDataDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${DEFAULT_DATA_DRIVE_SIZE}" -InstanceName "$instanceServiceName"
+    $defaultDataDriveSize = 100
    
     $instanceLogDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
-    $defaultLogDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${DEFAULT_LOG_DRIVE_SIZE}" -InstanceName "$instanceServiceName"
+    $defaultLogDriveSize = 25
     $defaultLogDriveSizePercent = ($defaultLogDriveSize/$defaultDataDriveSize) * 100
     $defaultLogDriveSizeDetails = @{'size' = "$defaultLogDriveSize"; 'percent' = "$defaultLogDriveSizePercent"}
 
     $instanceTempdbDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_TEMPDB_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
-    $tempDBDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${TEMPDB_DRIVE_SIZE}" -InstanceName "$instanceServiceName"
+    $tempDBDriveSize = 15
     $tempDBDriveSizePercent = ($tempDBDriveSize/$defaultDataDriveSize) * 100
     $tempDBDriveSizeDetails = @{'size' = "$tempDBDriveSize"; 'percent' = "$tempDBDriveSizePercent"}
 
-    if(($instanceDataDrivedetails -ne $instanceLogDrivedetails) -and ($instanceDataDrivedetails -ne $instanceTempdbDrivedetails)) {
+    $defaultDataDrive = 'shared-drive'
+    if(($instanceDataDrivedetails -notcontains $instanceLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDataDrivedetails )) {
     $defaultDataDrive = 'separate-drive'
     }
-
-    if(($instanceDataDrivedetails -ne $instanceLogDrivedetails) -and ($instanceLogDrivedetails -ne $instanceTempdbDrivedetails)) {
+    
+    $defaultLogDrive = 'shared-drive'
+    if(($instanceDataDrivedetails -notcontains $instanceLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceLogDrivedetails )) {
     $defaultLogDrive = 'separate-drive'
     }
-
-    if(($instanceDataDrivedetails -ne $instanceTempdbDrivedetails) -and ($instanceLogDrivedetails -ne $instanceTempdbDrivedetails)) {
+    
+    $tempdbDrive = 'shared-drive'
+    if(($instanceTempdbDrivedetails -notcontains $instanceDataDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceLogDrivedetails)) {
     $tempdbDrive = 'separate-drive'
     }
 
@@ -132,6 +128,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $sqlInstance = "${instanceRecord.name}"
     $FSxID = "${instanceRecord.fsxFileSystem}"
     $FSxRegion = "${instanceRecord.region}"
+    $MappedVolumeNames = '${JSON.stringify(instanceRecord.mappedVolumeNames)}' | ConvertFrom-Json
   
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
     $sqlCredential = @{'useSqlAuth' = $False}
@@ -146,7 +143,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
     $APIEndpoint = '/storage/volumes'
     $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
-    $ApiQueryFields = "fields=autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
+    $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
     
     ${ontapRestRequest}
     
@@ -156,6 +153,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
     $VolumeList = @()
     # loop through each volume and get data
+    $SvmNames = @()
     foreach ($perVolumeData in $Volumes) {
         # Using PSCustomObject
         $perVolRow = [PSCustomObject]@{
@@ -176,12 +174,14 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "off"
         }
         $VolumeList += $($perVolRow)
+        $SvmNames += $perVolumeData.svm.name
     }
     $DriftAssessmentData['volumes'] = @($($VolumeList))
 
     # Volume footprint details
+    $SvmNamesWithDelimiter = $SvmNames -join '|'
     $APIEndpoint = '/private/cli/volume/show-footprint'
-    $APIQueryFilter = "volume=${instanceRecord.mappedVolumeNames?.join('|')}"
+    $APIQueryFilter = "vserver=$SvmNamesWithDelimiter,volume=${instanceRecord.mappedVolumeNames?.join('|')}"
     $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
     
     $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
@@ -190,7 +190,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $isPerformanceTier100Percent = $true
     # loop through each volume and get data
     foreach ($perVolumeData in $Volumes) {
-       if($perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
+       if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
             $isPerformanceTier100Percent = $false
             break
        }
@@ -253,7 +253,6 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                                         'tempdb-drive-size' = $tempDBDriveSizePercent;
     }
    
-   
     $response = $DriftAssessmentData | ConvertTo-Json -Depth 5
 
     if([string]::IsNullOrEmpty($response)) {
@@ -264,4 +263,24 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     return (Deflate-String $response)
 `;
 
-export { STORAGE_CONFIGURATION_ASSESSMENT };
+const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
+    $WarningPreference = 'SilentlyContinue';
+    $FSxID = '${params.fsxId}'
+    $FSxRegion = '${params.region}'
+    $apiEndpoint = '${params.apiEndpoint}'
+    $apiQueryFilter = '${params.apiQueryFilter}'
+    $apiBody = '${params.apiBody}'
+
+    ${ontapRestRequest}
+
+    $newBody = $apiBody | ConvertFrom-Json
+
+    $body =   $newBody | ConvertTo-Json
+
+    $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
+
+    $ontapResponse | ConvertTo-Json
+    
+`;
+
+export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STORAGE_PARAMS_SCRIPT };
