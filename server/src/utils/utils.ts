@@ -169,6 +169,7 @@ function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMo
 
     logger.info('FSx Storage Capacity', { fsxStorageCapacity });
     /*
+        -- This is for previous calculation --
         fsxCapacity = fsxDataVolumeSize + fsxLogVolumeSize + fsxTempDbVolumeSize + fsxQuorumVolumeSize
         fsxBuffer = 20% of fsxCapacity
         fsxStorageCapacity = fsxCapacity + fsxBuffer = fsxCapacity + 20% of fsxCapacity = 1.2 * fsxCapacity
@@ -176,10 +177,10 @@ function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMo
         fsxBuffer = (0.2) * fsxStorageCapacity/1.2
     */
 
-    let fsxBufferVolumeSize = Math.ceil((0.2 * fsxStorageCapacity) / 1.2);
-    if (fsxStorageCapacity + fsxBufferVolumeSize >= convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB)) {
-        fsxBufferVolumeSize = Math.ceil(convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB) - fsxStorageCapacity);
-    }
+    const fsxBufferVolumeSize = Math.ceil(fsxStorageCapacity * 0.35); // 35% of FSxStorageCapacity
+    // if (fsxStorageCapacity + fsxBufferVolumeSize >= convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB)) {
+    //     fsxBufferVolumeSize = Math.ceil(convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB) - fsxStorageCapacity);
+    // }
     /*
 
     FSxStorageCapacity = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize + FsxBufferVolumeSize
