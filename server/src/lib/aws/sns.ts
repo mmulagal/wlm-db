@@ -6,9 +6,7 @@ import {
     SubscribeCommandInput,
     ConfirmSubscriptionCommand,
     ConfirmSubscriptionCommandInput,
-    CreateTopicCommandInput,
-    SetTopicAttributesCommandInput,
-    SetTopicAttributesCommand
+    CreateTopicCommandInput
 } from '@aws-sdk/client-sns';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -49,17 +47,6 @@ async function createTopic(region: string, input: CreateTopicCommandInput) {
     return resp;
 }
 
-// TODO: delete me; Temporary function to update queues in staging cluster, will be removed
-async function setTopicAttributes(region: string, input: SetTopicAttributesCommandInput) {
-    logger.info('Set SNS topic attributes', { region, input });
-
-    const sns = new SNSClient({ region });
-    const resp = await sns.send(new SetTopicAttributesCommand(input));
-    logger.debug('Set SNS topic attribute response', resp);
-
-    return resp;
-}
-
 // Subscribe topic in WLMDB account
 async function subscribeTopic(region: string, input: SubscribeCommandInput) {
     logger.info('Subscribe to  SNS topic', { region, input });
@@ -82,4 +69,4 @@ async function confirmSubscription(region: string, input: ConfirmSubscriptionCom
     return resp;
 }
 
-export { listTopics, createTopic, setTopicAttributes, subscribeTopic, confirmSubscription };
+export { listTopics, createTopic, subscribeTopic, confirmSubscription };

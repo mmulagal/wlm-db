@@ -41,6 +41,7 @@ interface OptimizeOperationParams {
     accountId: string;
     region: string;
     credentialsId: string;
+    awsAccountId: string;
     fsxId: string;
     activeNodeInstanceId: string;
     parentJobId: string;
@@ -60,6 +61,7 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         accountId,
         region,
         credentialsId,
+        awsAccountId,
         fsxId,
         activeNodeInstanceId,
         parentJobId,
@@ -98,17 +100,19 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         parentJobId
     });
 
-    const instancetoAsses: WorkloadInstance = {
+    const instanceToAssess: WorkloadInstance = {
         id: instanceId,
         name: instanceName,
         type: databaseType,
         region,
         sqlAuthEnabled: sqlAuthEnabled || false,
         fsxFileSystem: fsxId,
-        activeNodeInstanceid: activeNodeInstanceId!
+        activeNodeInstanceid: activeNodeInstanceId!,
+        cloudProviderAccountId: awsAccountId,
+        resourceName: serverNameWithHostName
     };
 
-    await driftAssessment(accountId, credentialsId, region, jobId, databaseHostId, [instancetoAsses]);
+    await driftAssessment(accountId, credentialsId, region, jobId, databaseHostId, [instanceToAssess]);
 
     await updateJobDetails(accountId, credentialsId, region, parentJobId, {
         status: JOBSTATUS.COMPLETED,
@@ -306,7 +310,8 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
             instanceName,
             sqlAuthEnabled: sqlAuthEnabled || false,
             svmName,
-            optimizationTargets
+            optimizationTargets,
+            awsAccountId: resourceDetail.cloud_provider_account_id
         } as OptimizeOperationParams);
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;

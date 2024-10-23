@@ -5,7 +5,8 @@ import {
     StorageSavingsResponse,
     StorageSavingsCalculationsMetricsResponse,
     ManualStorageSavingsRequestBody,
-    ManualStorageSavingsRequestParams
+    ManualStorageSavingsRequestParams,
+    InternalUpdateInstRecQueryString
 } from '../types/storage-savings.types';
 
 const internalUpdateRecommendationPreferenceSchema = {
@@ -13,6 +14,7 @@ const internalUpdateRecommendationPreferenceSchema = {
     hide: process.env.NODE_ENV === 'production',
     summary: 'Internal API to update recommendation preference',
     description: 'Internal API to update recommendation preference',
+    querystring: InternalUpdateInstRecQueryString,
     response: {
         200: {}
     }

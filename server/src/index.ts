@@ -62,8 +62,9 @@ import {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
-    updateInstanceRecommendationPreferences,
-    scheduledAssessment
+    updateTcoInstanceRecommendationPreferences,
+    scheduledAssessment,
+    updateManagedInstanceRecommendationPreferences
 } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
 import { resetCache } from './utils/cache';
@@ -359,7 +360,8 @@ try {
         purgeOlderJobs();
         failLongRunningDeploymentJobs();
         failLongRunningResourcePrepareJobs();
-        updateInstanceRecommendationPreferences();
+        updateTcoInstanceRecommendationPreferences();
+        updateManagedInstanceRecommendationPreferences();
         scheduledAssessment();
     }
 } catch (error) {

@@ -64,13 +64,6 @@ enum HEADERS {
 
 const API_PATH_HEALTH: string = '/health';
 
-// TODO: These variables are not used anywhere. Remove them later.
-// const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
-//     ? `http://${process.env.CLOUD_MANAGER_ENDPOINT}`
-//     : !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
-//     ? config.get<string>('urls.local-connector')
-//     : config.get<string>('urls.cloud-manager');
-
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
@@ -1313,6 +1306,8 @@ const DEMO_STANADLONE_SQL_SERVER_ID = 'f4b7c5d3-e1f6-4g2a-9c4l';
 const DEMO_STANADLONE_INSTANCE_ID = 'i-c5x3z1a7s9d2f3g';
 
 const TCO_FEATURE = 'TCO';
+const CONTINUOUS_ASSESSMENT_FEATURE = 'CONTINUOUS_ASSESSMENT';
+
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const PGSQL_VERSION = 'pgsql-version';
@@ -1722,6 +1717,7 @@ export {
     PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
     PG_TEMPLATE_OPTIONAL_PARAMETERS,
     TCO_FEATURE,
+    CONTINUOUS_ASSESSMENT_FEATURE,
     AWS_SSM_PARAMETER,
     TIMELINE_SERVICE_NAME,
     AuditStatus,

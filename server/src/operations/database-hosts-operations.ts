@@ -2040,7 +2040,7 @@ async function getInstanceDetails(
     };
 
     if (isEmpty(resourceDetails) || isEmpty(databaseInstanceDetails)) {
-        const errorMessage = `No database host by id ${databaseHostId} or instance by instance id ${databaseInstanceDetails} for ${accountId} is found.`;
+        const errorMessage = `No database host by id ${databaseHostId} or instance by instance id ${databaseInstanceDetails?.id} for ${accountId} is found.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
@@ -2066,7 +2066,13 @@ async function getInstanceDetails(
         sqlAuthEnabled
     } as unknown as DatabaseInstance;
 
-    return { activeNodeInstanceId, newDatabaseInstanceDetails, standbyNodeInstanceId };
+    return {
+        activeNodeInstanceId,
+        newDatabaseInstanceDetails,
+        standbyNodeInstanceId,
+        cloudProviderAccountId: resourceDetails?.cloud_provider_account_id,
+        resourceName: resourceDetails?.resource_name
+    };
 }
 
 async function getDatabaseDetails(

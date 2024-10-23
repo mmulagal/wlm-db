@@ -70,6 +70,9 @@
         }
     },
     "db": {
+        "managed-instance":{
+            "update-recommendation-preference": "1d"
+        },
         "tco": {
             "update-recommendation-preference": "1d"
         },
