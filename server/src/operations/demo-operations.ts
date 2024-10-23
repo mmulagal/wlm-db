@@ -12,8 +12,7 @@ import {
     RESOURCE_SOURCE,
     DatabaseTypes,
     SqlServerDeploymentModel,
-    DEMO_STANADLONE_SQL_SERVER_ID,
-    AssessmentCategories
+    DEMO_STANADLONE_SQL_SERVER_ID
 } from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
 import {
@@ -43,6 +42,7 @@ import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { AssessmentCategories } from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
