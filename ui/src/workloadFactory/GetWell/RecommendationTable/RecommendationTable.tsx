@@ -17,9 +17,10 @@ import { useDispatch } from 'react-redux';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
-import { WLF_TABS } from '../../../utils/consts';
+import { GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setOptimizingData } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) => {
     const dispatch = useDispatch();
@@ -34,7 +35,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
+    // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any) => {
+        // Payload can be changed so will update once final payload is available
         let payload = {
             [rowData?.type]: [
                 {
@@ -54,7 +57,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
-                message: `Optimization process initiated for ${rowData?.name}. This process can take upto X minutes.`
+                message: `Optimization process initiated for ${rowData?.name}. This process can take upto 2 minutes.`
             })
         );
 
@@ -98,13 +101,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                     closeDialog();
                 }}
                 customClass={styles.colorSet}
-                hidePrimaryButton={
-                    rowData?.name === 'Multipath I/O Status' ||
-                    rowData?.name === 'Multipath I/O Policy' ||
-                    rowData?.name === 'Multipath I/O Sessions' ||
-                    rowData?.name === 'NTFS allocation unit size' ||
-                    rowData?.name === 'OS type'
-                }
+                hidePrimaryButton={GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name)}
             />
         );
     };
@@ -211,17 +208,31 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                     {'View recommendations'}
                                 </DsTypography>
                             </div>
-                            {!optimizePrintState && (
-                                <div>
-                                    <DsButton
-                                        variant="secondary"
-                                        onClick={() => handleOntapDialog(rowData)}
-                                        isDisabled={rowData?.status === 'Not optimized' ? false : true}
+                            {!optimizePrintState &&
+                                (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) ? (
+                                    <TooltipComponent
+                                        title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                                        placement="bottom"
+                                        width="250px"
+                                        height="50px"
                                     >
-                                        Optimize
-                                    </DsButton>
-                                </div>
-                            )}
+                                        <div>
+                                            <DsButton variant="secondary" isDisabled={true}>
+                                                Optimize
+                                            </DsButton>
+                                        </div>
+                                    </TooltipComponent>
+                                ) : (
+                                    <div>
+                                        <DsButton
+                                            variant="secondary"
+                                            onClick={() => handleOntapDialog(rowData)}
+                                            isDisabled={rowData?.status === 'Not optimized' ? false : true}
+                                        >
+                                            Optimize
+                                        </DsButton>
+                                    </div>
+                                ))}
                         </div>
                     </>
                 );

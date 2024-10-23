@@ -10,7 +10,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
-import { GETWELL_STATUS, WLF_TABS } from '../../../utils/consts';
+import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import { useDispatch } from 'react-redux';
@@ -19,6 +19,7 @@ import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { useLazyGetSubTaskListQuery, useOptimizeStorageConfigMutation } from '../../../utils/apiService';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -86,7 +87,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     };
     const windowSize = useResize();
 
+    // This is the function that will be called when the optimize button is clicked from main cards
     const callOptimizeApi = (type: any) => {
+        // ToDo - This is not supported yet so will update once it is final
         let payload = {
             type: type
         };
@@ -101,7 +104,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
-                message: `Optimization process initiated for ${type}. This process can take upto X minutes.`
+                message: `Optimization process initiated for ${type}. This process can take upto 2 minutes.`
             })
         );
 
@@ -223,18 +226,20 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             {!optimizePrintState &&
                 cardData?.block_one?.value !== 'ONTAP configuration' &&
                 cardData?.block_one?.value !== 'Operating system' &&
-                (cardData?.block_one?.value === 'User data files (.mdf) placement' ||
-                cardData?.block_one?.value === 'Log files (.ldf) placement' ||
-                cardData?.block_one?.value === 'TempDB placement' ? (
+                (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') ? (
                     <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
-                        <DsButton
-                            variant="secondary"
-                            onClick={() => {}}
-                            isDisabled={true}
-                            disabledReason={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="250px"
+                            height="50px"
                         >
-                            Optimize
-                        </DsButton>
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
                     </div>
                 ) : (
                     <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>

@@ -171,7 +171,8 @@ export const JOB_MONITORING_TYPE = {
     CREATE_DATABASE: 'CREATE_DATABASE',
     PREPARE_RESOURCE: 'PREPARE_RESOURCE',
     SANDBOX: 'SANDBOX',
-    ASSESSMENT: 'ASSESSMENT'
+    ASSESSMENT: 'ASSESSMENT',
+    OPTIMIZE: 'OPTIMIZE'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -684,3 +685,18 @@ export const GETWELL_CONFIG: any = {
     'default-log-files-location': 'transaction_log_files',
     'default-data-files-location': 'user_data_files'
 };
+
+export const GW_CONFIG_OPTIMIZE_NA = [
+    'User data files (.mdf) placement',
+    'Log files (.ldf) placement',
+    'TempDB placement',
+    'OS type',
+    'Storage tier',
+    'File system headroom',
+    'Log drive size',
+    'TempDB drive size',
+    'Multipath I/O Sessions',
+    'Multipath I/O Status',
+    'Multipath I/O Policy',
+    'NTFS allocation unit size'
+];
