@@ -573,7 +573,7 @@ const createVolumeClone = (
                     $sourceSvm = $vol.svm
                 
                     if ($svmProcessed -notcontains $sourceSvm) {
-                        if (-not (Get-Module -ListAvailable -name NetApp.ONTAP | Where-Object { $_.Version -eq $PSToolkitRequiredVersion })) {
+                        if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP | Where-Object { $_.Version -eq $PSToolkitRequiredVersion })) {
                             Write-Information "$logPrefix NetApp.ONTAP Module does not exist, installing it now"
 
                             Install-Module -Name NetApp.ONTAP -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion | Out-Null
