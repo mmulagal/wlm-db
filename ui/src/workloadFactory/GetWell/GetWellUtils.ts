@@ -59,7 +59,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'File system headroom recommendation',
             description:
-                'To optimize storage performance, provision file system capacity as 1.35 times the size of total database usage.',
+                'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
             values: ['Under-provisioned: 0-35%', 'Optimized: 36-100%', 'Over-provisioned: >100%']
         },
         tags: ['Performance efficiency']
