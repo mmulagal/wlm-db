@@ -650,10 +650,11 @@ async function fetchDriftAssessment(
             : Promise.resolve({})
     ]);
 
-    if (storageAssessmentResponse) {
+    if (!isEmpty(storageAssessmentResponse)) {
         driftAssessmentData.storage = storageAssessmentResponse;
     }
-    if (computeAssessmentResponse) {
+
+    if (!isEmpty(computeAssessmentResponse)) {
         driftAssessmentData.compute = computeAssessmentResponse;
     }
     return driftAssessmentData;
