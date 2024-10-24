@@ -607,6 +607,7 @@ const DatabaseQueryString = Type.Object({
     nextToken: Type.Optional(Type.String())
 });
 
+const ErrorResponse = Type.Object({ errorMessage: Type.String() });
 const ParameterDriftResponse = Type.Object({
     name: Type.String(),
     status: Type.Enum(AssessmentStatus),
@@ -636,7 +637,7 @@ type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResp
 
 const DriftAssessmentResponse = Type.Object({
     storage: Type.Optional(StorageParameterDriftResponse),
-    compute: Type.Optional(ParameterDriftResponse)
+    compute: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 

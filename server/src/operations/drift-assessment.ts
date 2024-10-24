@@ -27,7 +27,8 @@ import {
     AssessmentCategories,
     AssessmentStatus,
     AssessmentTriggeredBy,
-    AwsWellArchitecturedPillars
+    AwsWellArchitecturedPillars,
+    SEVERITY
 } from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
@@ -267,22 +268,23 @@ async function calculateComputeDrift(
 ) {
     logger.info('Calculating compute drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
-    const { activeNodeInstanceId, cloudProviderAccountId, resourceName } = await getInstanceDetails(
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseInstanceId
-    );
-    if (activeNodeInstanceId && cloudProviderAccountId && resourceName) {
+    let errorMessage = '';
+    try {
+        const { activeNodeInstanceId, cloudProviderAccountId, resourceName } = await getInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
         const { finding, findingReasonCodes, currentInstanceType } =
             (await initiateCompueAssessment(
-                cloudProviderAccountId,
+                cloudProviderAccountId!,
                 accountId,
                 credentialsId,
                 region,
                 activeNodeInstanceId,
-                resourceName
+                resourceName!
             )) || {};
 
         if (finding) {
@@ -292,6 +294,7 @@ async function calculateComputeDrift(
             const overProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses.`;
 
             if (findingValue.includes('provisioned')) {
+                // under_provisioned or over_provisioned
                 const genericRecommendationMessage =
                     'Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.';
                 recommendationMessage =
@@ -305,7 +308,7 @@ async function calculateComputeDrift(
                 name: 'compute-rightsizing',
                 status: findingValue,
                 recommended: AssessmentStatus.OPTIMIZED,
-                severity: 'Critical',
+                severity: SEVERITY.CRITICAL,
                 recommendation: recommendationMessage,
                 objectsInViolation: findingReasonCodes?.map(code => translateFindingReasonCode(code)) || [],
                 tags: [
@@ -314,10 +317,12 @@ async function calculateComputeDrift(
                 ]
             };
         }
+        errorMessage = 'Unable to fetch compute optimizer findings for the selected database host.';
+    } catch (error: any) {
+        errorMessage = `Error while calculating compute drift. ${error.message}`;
+        logger.error({ errorMessage, error });
     }
-    throw createError(
-        'Failed to get compute optimizer recommendation options for the selected database host during Continuous Assessment.'
-    );
+    return { errorMessage };
 }
 async function initiateStorageAssessmentCollection(
     accountId: string,
@@ -452,6 +457,7 @@ async function initiateCompueAssessment(
         errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Assessment. ${error.message}`;
         logger.error({ errorMessage, error });
         jobStatus = JOBSTATUS.FAILED;
+        throw Error(errorMessage);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, jobId, {
             error: errorMessage,
@@ -486,7 +492,7 @@ async function driftAssessment(
     let errorMessage;
     let jobStatus: string = JOBSTATUS.COMPLETED;
 
-    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE, AssessmentCategories.COMPUTE];
+    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE];
 
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
