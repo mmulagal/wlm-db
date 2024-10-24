@@ -557,7 +557,7 @@ async function getTerraformSetup(
 
     const { workloadInstanceType } = ec2Configuration;
     const { sqlServerName, sqlAmiName, sqlCollation } = sqlConfiguration;
-    const { databaseSize } = fsxConfiguration;
+    const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
     // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
     const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
@@ -570,6 +570,22 @@ async function getTerraformSetup(
 
         if (!sqlCollation) {
             throw createError(412, 'Please provide the collation information');
+        }
+
+        if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
+            // FSX 4gbps throughput capacity supported regions
+            const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
+            const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
+            if (!regionExists) {
+                throw createError(
+                    412,
+                    `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
+                );
+            }
+            // check ssd and iops size
+            if (fsxIOPS !== FSX_IOPS) {
+                throw createError(412, 'Supported Fsxn IOPs should be 160000');
+            }
         }
 
         const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
