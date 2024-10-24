@@ -1,6 +1,7 @@
 import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import Promise from 'bluebird';
 import { DriftAssessmentResponseType, StorageParameterDriftResponseType } from '../routes/types/database-hosts.types';
 import getLogger from '../utils/logger';
 import { sqlResponseParsing } from '../utils/utils';
@@ -345,8 +346,10 @@ async function driftAssesment(
     const shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
 
     try {
-        await Promise.all(
-            databaseInstanceRecords.map(async databaseInstanceRecord => {
+        // https://jira.ngage.netapp.com/browse/DBS-4127 fix
+        await Promise.map(
+            databaseInstanceRecords,
+            async databaseInstanceRecord => {
                 if (shouldRunStorageAssessment) {
                     await initiateStorageAssessmentCollection(
                         accountId,
@@ -357,7 +360,10 @@ async function driftAssesment(
                         databaseInstanceRecord
                     );
                 }
-            })
+            },
+            {
+                concurrency: 1
+            }
         );
     } catch (e: any) {
         logger.error(e);
