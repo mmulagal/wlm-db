@@ -677,10 +677,7 @@ function getRedisDetails() {
     } catch (e: any) {
         logger.error(`Unable to fetch redis host and port from ${REDIS_URL}. Error: ${e}.`);
     }
-    let url = `${REDIS_SCHEMA}://${SECRETS.REDIS_PASSWORD}@${REDIS_URL}`;
-    if (process.env.NODE_ENV === 'development') {
-        url = `${REDIS_SCHEMA}://${REDIS_URL}`;
-    }
+    const url = `${REDIS_SCHEMA}://${SECRETS.REDIS_PASSWORD}@${REDIS_URL}`;
     return {
         url,
         host,
