@@ -1,7 +1,7 @@
 import config from 'config';
 import Promise from 'bluebird';
 import ms from 'ms';
-import { STORAGE_TYPE, database_instances as DatabaseInstances } from '@prisma/client';
+import { STORAGE_TYPE, database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
 import { Queue, Worker } from 'bullmq';
 import IORedis from 'ioredis';
@@ -184,7 +184,7 @@ async function updateManagedInstRecPrefs() {
         const trackedEc2InstanceIds = trackedEc2Instances.map(instance => instance.instance_id);
 
         // group managed instances by account_id, region, credentials_id, cloud_provider_account_id, and database_deployment_type so that we can manage a set of instances in bulk
-        const grouped: { [key: string]: DatabaseInstances[] } = managedInstances.reduce(
+        const grouped: { [key: string]: any } = managedInstances.reduce(
             (acc: { [key: string]: DatabaseInstances[] }, managedInstance) => {
                 const key = `${managedInstance.account_id}|${managedInstance.region}|${managedInstance.credentials_id}|${managedInstance.resource.cloud_provider_account_id}|${managedInstance.database_deployment_type}`;
                 if (!acc[key]) {
@@ -200,9 +200,14 @@ async function updateManagedInstRecPrefs() {
             Object.entries(grouped).map(async ([key, instances]) => {
                 const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('|');
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
-                const managedInstanceToBeUpdated = instances.filter(
-                    instance => !trackedEc2InstanceIds.includes(instance.database_instance_id)
-                ); // update compute optimizer recommendation preferences only for managed instances that are not already being tracked, becuase the recommendation preference is static irrespsctive of the number of times it is updated
+                const managedInstanceToBeUpdated = instances.filter((instance: { resource: Resource }) => {
+                    const resourceInfo = instance?.resource;
+                    const { node1InstanceId, node2InstanceId } = resourceInfo?.metadata as unknown as Metadata;
+                    return (
+                        !trackedEc2InstanceIds.includes(node1InstanceId) &&
+                        !trackedEc2InstanceIds.includes(node2InstanceId!)
+                    );
+                }); // update compute optimizer recommendation preferences only for managed instances that are not already being tracked, becuase the recommendation preference is static irrespsctive of the number of times it is updated
                 if (managedInstanceToBeUpdated.length === 0) {
                     logger.info('No new managed instances found to update instance recommendation preferences.');
                     return;
@@ -219,12 +224,11 @@ async function updateManagedInstRecPrefs() {
                         );
                     }
                     if (coOptedIn) {
-                        managedInstanceToBeUpdated.forEach(async instance => {
-                            const { node1InstanceId, node2InstanceId } = instance?.metadata as unknown as Metadata;
+                        managedInstanceToBeUpdated.forEach(async (instance: { resource: Resource }) => {
+                            const { node1InstanceId, node2InstanceId } = instance?.resource
+                                ?.metadata as unknown as Metadata;
 
-                            const instanceId = node1InstanceId || instance.database_instance_id;
-
-                            const instanceIds = [instanceId];
+                            const instanceIds = [node1InstanceId];
                             if (node2InstanceId) {
                                 instanceIds.push(node2InstanceId);
                             }

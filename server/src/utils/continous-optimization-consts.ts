@@ -46,7 +46,10 @@ enum OptimizeStorageConfigs {
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'driftAssessmentQueue';
-
+const SEVERITY = {
+    CRITICAL: 'critical',
+    WARNING: 'warning'
+};
 const OptimizeStorageApiData = {
     THIN_PROVISIONING: {
         api: '/private/cli/volume',
@@ -128,6 +131,7 @@ export {
     AwsWellArchitecturedPillars,
     REDIS_URL,
     OptimizeStorageConfigs,
+    SEVERITY,
     OptimizeStorageApiData,
     OptimizeInstanceParams,
     DRIFT_ASSESSMENT_QUEUE,
