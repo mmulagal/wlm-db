@@ -209,32 +209,36 @@ async function updateManagedInstRecPrefs() {
                 }
 
                 if (managedInstanceToBeUpdated.length > 0) {
+                    let coOptedIn = false;
                     try {
                         await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
+                        coOptedIn = true;
                     } catch (error) {
                         logger.info(
                             `Failed fetching compute otimizer opt in status or Compute optimizer is not enabled for account ${awsAccountId} in region ${region}. Skipping updating instance recommendation preferences for managed instances.`
                         );
                     }
-                }
-                managedInstanceToBeUpdated.forEach(async instance => {
-                    const { node1InstanceId, node2InstanceId } = instance?.metadata as unknown as Metadata;
+                    if (coOptedIn) {
+                        managedInstanceToBeUpdated.forEach(async instance => {
+                            const { node1InstanceId, node2InstanceId } = instance?.metadata as unknown as Metadata;
 
-                    const instanceId = node1InstanceId || instance.database_instance_id;
+                            const instanceId = node1InstanceId || instance.database_instance_id;
 
-                    const instanceIds = [instanceId];
-                    if (node2InstanceId) {
-                        instanceIds.push(node2InstanceId);
+                            const instanceIds = [instanceId];
+                            if (node2InstanceId) {
+                                instanceIds.push(node2InstanceId);
+                            }
+                            await manageInstanceRecommendationPreReqsForManagedInstances(
+                                awsAccountId,
+                                region,
+                                credentialsId,
+                                instanceIds,
+                                accountId,
+                                deploymentType as string
+                            );
+                        });
                     }
-                    await manageInstanceRecommendationPreReqsForManagedInstances(
-                        awsAccountId,
-                        region,
-                        credentialsId,
-                        instanceIds,
-                        accountId,
-                        deploymentType as string
-                    );
-                });
+                }
             })
         );
 
