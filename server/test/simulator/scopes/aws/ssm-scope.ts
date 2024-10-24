@@ -68,6 +68,7 @@ import {
     invokeVirtualMountScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../../src/utils/consts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/drift-assessment-scripts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -496,6 +497,18 @@ const dbSummary = {
     commands: [sqlQueryExecution(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, DATABASES, false)]
 };
 
+const optimizeStorage = {
+    commands: [
+        OPTIMIZE_STORAGE_PARAMS_SCRIPT({
+            fsxId: 'test-fsx-id',
+            region: 'us-east-1',
+            apiEndpoint: '/private/cli/volume',
+            apiQueryFilter: 'vserver=test-svm&volume=vol1',
+            apiBody: JSON.stringify({ 'autosize-mode': 'grow' })
+        })
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -630,7 +643,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: checkScriptUpdate })
     .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand)
     .on(SendCommandCommand, { Parameters: dbSummary })
-    .resolves(listSendCommandCommandResponse.dbSummaryCommand);
+    .resolves(listSendCommandCommandResponse.dbSummaryCommand)
+    .on(SendCommandCommand, { Parameters: optimizeStorage })
+    .resolves(listSendCommandCommandResponse.optimizeStorageCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -772,7 +787,11 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryCommand'
     })
-    .resolves(getCommandInvocationResponse.dbSummaryResponse);
+    .resolves(getCommandInvocationResponse.dbSummaryResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeStorageCommand'
+    })
+    .resolves(getCommandInvocationResponse.optimizeStorageResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
