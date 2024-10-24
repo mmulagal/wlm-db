@@ -18,7 +18,8 @@ import {
     TERRAFORM_FOLDER_PATH,
     TERRAFORM_ROOT_MODULE_DISTRIBUTION,
     FCI,
-    STANDALONE
+    STANDALONE,
+    TF_VARS_CONFIG
 } from '../utils/consts';
 import { isDemo } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -218,6 +219,13 @@ async function createTFVarsFile(
                 metrics
             };
             let terraformVariableString = '';
+            let tfVarsGeneral = '\n# General Configurations\n# -----------------------------\n';
+            let tfVarsEc2 = '\n# EC2 Instance Configurations\n# -----------------------------\n';
+            let tfVarsAd = '\n# Active Directory Configurations\n# -----------------------------\n';
+            let tfVarsFsx = '\n# FSx for ONTAP Configurations\n# -----------------------------\n';
+            let tfVarsSqlServer = '\n# SQL Server Configurations\n# -----------------------------\n';
+            let tfVarsEndpoint = '\n# Endpoint Configurations\n# -----------------------------\n';
+            let tfVarsVpc = '# VPC and Subnet Configurations\n# -----------------------------\n';
             const terraformVariables: any = {};
 
             templateParameters.forEach(e => {
@@ -236,24 +244,51 @@ async function createTFVarsFile(
                                 value = e.ParameterValue ? decodeURIComponent(e.ParameterValue) : '';
                                 break;
                         }
-                        terraformVariableString += `${terraformVariable.name} = ${
+                        const currentKeyValuePair = `${terraformVariable.name} = ${
                             terraformVariable.type === 'string' ? `"${value}"` : value
                         }\n`;
+                        switch (terraformVariable.configType) {
+                            case TF_VARS_CONFIG.General:
+                                tfVarsGeneral += currentKeyValuePair;
+                                break;
+                            case TF_VARS_CONFIG.EC2:
+                                tfVarsEc2 += currentKeyValuePair;
+                                break;
+                            case TF_VARS_CONFIG.AD:
+                                tfVarsAd += currentKeyValuePair;
+                                break;
+                            case TF_VARS_CONFIG.FSX:
+                                tfVarsFsx += currentKeyValuePair;
+                                break;
+                            case TF_VARS_CONFIG.SQLServer:
+                                tfVarsSqlServer += currentKeyValuePair;
+                                break;
+                            case TF_VARS_CONFIG.Endpoint:
+                                tfVarsEndpoint += currentKeyValuePair;
+                                break;
+                            case TF_VARS_CONFIG.VPC:
+                                tfVarsVpc += currentKeyValuePair;
+                                break;
+                            default:
+                                tfVarsGeneral += currentKeyValuePair;
+                                break;
+                        }
                         terraformVariables[terraformVariable.name] = value;
                     }
                 }
             });
 
             for (const item of initializationScriptURLs) {
-                terraformVariableString += `${item.name} = "${item.url}"\n`;
+                tfVarsEc2 += `${item.name} = "${item.url}"\n`;
                 terraformVariables[item.name] = item.url;
             }
 
             for (const [key, value] of Object.entries(tfVariables)) {
-                terraformVariableString += `${key} = "${value}"\n`;
+                tfVarsGeneral += `${key} = "${value}"\n`;
                 terraformVariables[key] = value;
             }
 
+            terraformVariableString += `${tfVarsVpc}${tfVarsEc2}${tfVarsSqlServer}${tfVarsAd}${tfVarsFsx}${tfVarsEndpoint}${tfVarsGeneral}`;
             // Write the Terraform variables to a local file as well.. can be decided whether to use it from local or s3
             const dirPath = `./resources/mssql/${deploymentName}/terraform`;
             const localTfVarsPath = `${dirPath}/terraform.tfvars`;
