@@ -683,7 +683,9 @@ export const GETWELL_CONFIG: any = {
     headroom: 'file_system_headroom',
     'tempdb-files-location': 'tempdb_files',
     'default-log-files-location': 'transaction_log_files',
-    'default-data-files-location': 'user_data_files'
+    'default-data-files-location': 'user_data_files',
+    'compute-rightsizing': 'compute_rightsizing',
+    'operating-system-patch': 'operating_system_patch'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
@@ -698,5 +700,7 @@ export const GW_CONFIG_OPTIMIZE_NA = [
     'Multipath I/O Sessions',
     'Multipath I/O Status',
     'Multipath I/O Policy',
-    'NTFS allocation unit size'
+    'NTFS allocation unit size',
+    'Compute rightsizing',
+    'Operating system patch'
 ];

@@ -1,16 +1,15 @@
-import { Button, DsButton, DsFlashingDotsLoader, DsTypography, Spinner } from '@netapp/design-system';
+import { Button, DsButton, DsFlashingDotsLoader, DsTypography, Popover } from '@netapp/design-system';
 import { useDialog } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
 import styles from './StorageCardComponent.module.scss';
-import GetWellChart from './GetWellChart/GetWellChart';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
-import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
+import { GETWELL_STATUS, GETWELL_VALUES, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import { useDispatch } from 'react-redux';
@@ -20,6 +19,8 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { useLazyGetSubTaskListQuery, useOptimizeStorageConfigMutation } from '../../../utils/apiService';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
+import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
+import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -64,12 +65,74 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         }
     };
 
+    const tooltipListSection = (listObj: { key: string; value: string }[]) => {
+        return (
+            <div className={styles.tooltipLevel}>
+                {listObj?.map((item: any, index: number) => {
+                    return (
+                        <div>
+                            <div className={styles.row}>
+                                <div className={styles.firstPart}>
+                                    <DsTypography variant="Semibold_13">{item.key}</DsTypography>
+                                </div>
+
+                                <div className={styles.secondPart}>
+                                    <DsTypography variant="Regular_13">
+                                        {GETWELL_VALUES?.[item.value || ''] || item?.value}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                            {index !== listObj.length - 1 && <div className={styles.tooltipSeparator} />}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
     const sectionThreeContent = (cardData: any) => {
         if (loading) {
             return (
                 <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
                     <DsFlashingDotsLoader />
                 </div>
+            );
+        } else if (cardData?.block_three?.list) {
+            let listObj: any = [];
+            cardData?.block_three?.list?.map((item: any) => {
+                const parts = item.split(' ');
+                const value = parts.pop() || ''; // Take the last element as value
+                const key = parts.join(' '); // Join the rest as key
+                listObj.push({ key, value });
+            });
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_three?.list?.length > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipListSection(listObj)}
+                                trigger="hover"
+                                delayHide={200}
+                                interactive={true}
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    {cardData?.block_three?.list?.length === 0 && (
+                        <div>
+                            <DisabledTooltipIcon />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {cardData?.block_three?.list?.length + ' values'}
+                    </DsTypography>
+                </div>
+                // <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                //     {cardData?.block_three?.value?.length + ' values'}
+                // </DsTypography>
             );
         } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
             return (
@@ -226,7 +289,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             {!optimizePrintState &&
                 cardData?.block_one?.value !== 'ONTAP configuration' &&
                 cardData?.block_one?.value !== 'Operating system' &&
-                (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') ? (
+                (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
+                cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
                     <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
                         <TooltipComponent
                             title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}

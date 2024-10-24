@@ -283,13 +283,65 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         tags: []
+    },
+    compute_rightsizing: {
+        block_one: {
+            type: 'Compute',
+            value: 'Compute rightsizing'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Rightsizing values',
+            value: '',
+            list: null
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        recommendation: {
+            title: 'Compute rightsizing recommendation',
+            description:
+                'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, we recommend rightsizing based on your workload demands.\nIf your current instance is under-provisioned, upgrading will enhance CPU, memory, and I/O capacity.\nIf it is over-provisioned, downgrading will maintain performance while reducing costs.\nClick Optimize to compare costs between your current and recommended instance types and identify potential savings.'
+        },
+        tags: ['Cost optimization', 'Performance efficiency']
+    },
+    operating_system_patch: {
+        block_one: {
+            type: 'Compute',
+            value: 'Operating system patch'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Missing patches',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        recommendation: {
+            title: 'Operating system patch recommendation',
+            description:
+                'Whenever possible, it is highly recommended to apply the latest patches to ensure security and stability.\nDoing so will help protect your SQL Server DB from vulnerabilities and significantly improve overall system reliability.'
+        },
+        tags: ['Security']
     }
 };
 
 // This function is used to format the data for the individual card main config.
 export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
-    let cardsData = {};
+    let cardsData: any = cardDataDefault;
     let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
+    if (data?.compute?.name === 'compute-rightsizing') {
+        cardMainConfig?.push([data?.compute]);
+    }
     cardMainConfig?.map(category => {
         category?.map((item: PerConfigInterface) => {
             let itemName = item?.name || '';
@@ -308,7 +360,8 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                     },
                     block_three: {
                         ...(cardDataDefault?.[itemName]?.block_three || {}),
-                        value: GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended
+                        value: GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended,
+                        list: item?.objectsInViolation ? item?.objectsInViolation : null
                     },
                     block_four: {
                         ...(cardDataDefault?.[itemName]?.block_four || {}),
@@ -447,30 +500,47 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
 
 // This function is used to format the optimization breakdown data.
 export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) => {
+    let storageCount = {
+        total: data?.storage?.optimisedCount?.total ?? 0,
+        optimized: data?.storage?.optimisedCount?.optimised ?? 0,
+        notOptimized: (data?.storage?.optimisedCount?.total || 0) - (data?.storage?.optimisedCount?.optimised || 0),
+        percent:
+            data?.storage?.optimisedCount && data?.storage?.optimisedCount?.optimised !== 0
+                ? formatNumberWithCustomComma(
+                      ((data?.storage?.optimisedCount?.optimised ?? 0) / (data?.storage?.optimisedCount?.total ?? 1)) *
+                          100
+                  )
+                : 0
+    };
+    let computeCount = {
+        total: 0,
+        optimized: 0,
+        notOptimized: 0,
+        percent: 0
+    };
+    if (data?.compute?.status) {
+        computeCount = {
+            // currently only compute-rizing is supported. Once anything else will be supported than we need to add the count here.
+            total: 1,
+            optimized: data?.compute?.status === 'optimized' ? 1 : 0,
+            notOptimized: data?.compute?.status !== 'optimized' ? 1 : 0,
+            percent: data?.compute?.status === 'optimized' ? 100 : 0
+        };
+    }
+
     let optBreakDown = {
-        storage: {
-            total: data?.storage?.optimisedCount?.total ?? 0,
-            optimized: data?.storage?.optimisedCount?.optimised ?? 0,
-            percent:
-                data?.storage?.optimisedCount && data?.storage?.optimisedCount?.optimised !== 0
-                    ? formatNumberWithCustomComma(
-                          ((data?.storage?.optimisedCount?.optimised ?? 0) /
-                              (data?.storage?.optimisedCount?.total ?? 1)) *
-                              100
-                      )
-                    : 0
-        },
+        storage: storageCount,
+        compute: computeCount,
         total: {
             // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
-            // Currently only storage is supported to directly adding that to the total
-            total: data?.storage?.optimisedCount?.total || 0,
-            optimized: data?.storage?.optimisedCount?.optimised || 0,
-            notOptimized: (data?.storage?.optimisedCount?.total || 0) - (data?.storage?.optimisedCount?.optimised || 0),
+            total: storageCount?.total + computeCount?.total,
+            optimized: storageCount?.optimized + computeCount?.optimized,
+            notOptimized: storageCount?.notOptimized + computeCount?.notOptimized,
             percent:
-                data?.storage?.optimisedCount && data?.storage?.optimisedCount?.optimised !== 0
+                storageCount?.optimized || computeCount?.optimized
                     ? formatNumberWithCustomComma(
-                          ((data?.storage?.optimisedCount?.optimised || 0) /
-                              (data?.storage?.optimisedCount?.total || 1)) *
+                          ((storageCount?.optimized + computeCount?.optimized || 0) /
+                              (storageCount?.total + computeCount?.total || 1)) *
                               100
                       )
                     : 0
@@ -640,7 +710,9 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         transaction_log_files: 'Storage layout',
         tempdb_files: 'Storage layout',
         ontap_configuration: 'Storage configuration',
-        os_configuration: 'Storage configuration'
+        os_configuration: 'Storage configuration',
+        compute_rightsizing: 'Compute',
+        operating_system_patch: 'Compute'
     };
     Object.keys(cardData).map((key: any) => {
         const checkSubCategory = !filters['sub-catagories'] || filters['sub-catagories'].includes(subCategoryData[key]);

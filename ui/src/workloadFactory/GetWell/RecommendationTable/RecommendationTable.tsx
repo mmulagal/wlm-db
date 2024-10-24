@@ -17,7 +17,7 @@ import { useDispatch } from 'react-redux';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
-import { GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
+import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setOptimizingData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
@@ -37,12 +37,12 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
 
     // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any) => {
-        // Payload can be changed so will update once final payload is available
+        // Only 1 config can be passed no
         let payload = {
-            [rowData?.type]: [
+            assessments: [
                 {
-                    configurationName: rowData?.id,
-                    objectsToOptimize: rowData?.objectsInViolation
+                    property: rowData?.id,
+                    objectsList: rowData?.objectsInViolation
                 }
             ]
         };
@@ -209,7 +209,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                 </DsTypography>
                             </div>
                             {!optimizePrintState &&
-                                (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) ? (
+                                (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
+                                rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
                                     <TooltipComponent
                                         title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
                                         placement="bottom"

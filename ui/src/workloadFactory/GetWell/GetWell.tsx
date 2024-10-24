@@ -1238,6 +1238,137 @@ const GetWell = () => {
                             </div>
                         </div>
                     )}
+
+                    {/* Section four */}
+                    {(filteredCardData?.compute_rightsizing || filteredCardData?.operating_system_patch) && (
+                        <div className={styles.sectionClass}>
+                            <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <DsTypography
+                                    style={{
+                                        padding: '0 0 8px'
+                                    }}
+                                    variant="Semibold_16"
+                                >
+                                    Compute
+                                </DsTypography>
+                            </div>
+
+                            <div className={styles.accordionGroups}>
+                                {filteredCardData?.compute_rightsizing && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.compute_rightsizing}
+                                            optimizePrintState={optimizePrintState}
+                                            type="Compute rightsizing"
+                                        />
+                                        <DsAccordion
+                                            id="11"
+                                            variant="Default"
+                                            isDisabled={loading || !cardData?.compute_rightsizing?.block_two?.value}
+                                            isExpanded={optimizePrintState}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.compute_rightsizing?.tags?.map(
+                                                        (perTag: string) => {
+                                                            return <Tag text={perTag} />;
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading || !cardData?.compute_rightsizing?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.compute_rightsizing?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.compute_rightsizing?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {/* {filteredCardData?.operating_system_patch && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.operating_system_patch}
+                                            optimizePrintState={optimizePrintState}
+                                            type="Operating system patch"
+                                        />
+                                        <DsAccordion
+                                            id="12"
+                                            variant="Default"
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.operating_system_patch?.tags?.map(
+                                                        (perTag: string) => {
+                                                            return <Tag text={perTag} />;
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            isDisabled={loading || !cardData?.operating_system_patch?.block_two?.value}
+                                            isExpanded={optimizePrintState}
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ||
+                                                        !cardData?.operating_system_patch?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.operating_system_patch?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.operating_system_patch?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )} */}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

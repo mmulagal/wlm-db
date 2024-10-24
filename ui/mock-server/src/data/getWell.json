@@ -187,7 +187,7 @@
         },
         "sizing": [
             {
-                "name": "log-drive-size",
+                "name": "log-drive-size1",
                 "recommended": "20%-30%",
                 "status": "not-optimized",
                 "severity": "warning",
@@ -261,6 +261,24 @@
                     "Operational excellence"
                 ]
             }
+        ]
+    },
+    "compute": {
+        "name": "compute-rightsizing",
+        "status": "over-provisioned",
+        "recommended": "optimized",
+        "severity": "Critical",
+        "recommendation": "Your current instance m5.large is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses. Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.",
+        "tags": [
+            "Cost optimization",
+            "Performance efficiency"
+        ],
+        "objectsInViolation": [
+            "CPU over-provisioned",
+            "EBS IOPS over-provisioned",
+            "EBS throughput over-provisioned",
+            "Network bandwidth over-provisioned",
+            "Network PPS over-provisioned"
         ]
     }
 }
