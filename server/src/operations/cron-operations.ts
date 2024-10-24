@@ -249,9 +249,6 @@ async function updateManagedInstRecPrefs() {
 async function scheduledAssessment() {
     const redisDetails = getRedisDetails();
 
-    logger.info(`Redis host: ${redisDetails.host}`);
-    logger.info(`Redis port: ${redisDetails.port}`);
-
     const managedResources = await listResources();
     if (isEmpty(managedResources)) {
         logger.error('No managed database resources found.');
