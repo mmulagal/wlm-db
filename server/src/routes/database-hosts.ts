@@ -520,7 +520,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment/optimize`,
             { schema: OptimizeStorageSchema },
             async (request, reply) => {
                 const {
