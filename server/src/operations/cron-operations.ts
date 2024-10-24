@@ -169,11 +169,15 @@ async function updateManagedInstanceRecommendationPreferences() {
     }, Number(ms(config.get('db.manged-instance.update-recommendation-preference'))));
 }
 
+interface DatabaseInstancesIncludingResource extends DatabaseInstances {
+    resource: Resource;
+}
+
 async function updateManagedInstRecPrefs() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
         logger.info('Updating instance recommendation preferences for Continuous assessment feature');
 
-        const managedInstances = await listAllManagedInstances();
+        const managedInstances = (await listAllManagedInstances()) as DatabaseInstancesIncludingResource[];
         if (isEmpty(managedInstances)) {
             logger.error(
                 'No successfully managed database instances found during instance recommendation preference update.'
@@ -184,21 +188,21 @@ async function updateManagedInstRecPrefs() {
         const trackedEc2InstanceIds = trackedEc2Instances.map(instance => instance.instance_id);
 
         // group managed instances by account_id, region, credentials_id, cloud_provider_account_id, and database_deployment_type so that we can manage a set of instances in bulk
-        const grouped: { [key: string]: any } = managedInstances.reduce(
-            (acc: { [key: string]: DatabaseInstances[] }, managedInstance) => {
-                const key = `${managedInstance.account_id}|${managedInstance.region}|${managedInstance.credentials_id}|${managedInstance.resource.cloud_provider_account_id}|${managedInstance.database_deployment_type}`;
+        const grouped: { [key: string]: DatabaseInstancesIncludingResource[] } = managedInstances.reduce(
+            (acc: { [key: string]: DatabaseInstancesIncludingResource[] }, managedInstance) => {
+                const key = `${managedInstance.account_id}||${managedInstance.region}||${managedInstance.credentials_id}||${managedInstance.resource.cloud_provider_account_id}||${managedInstance.database_deployment_type}`;
                 if (!acc[key]) {
                     acc[key] = [];
                 }
                 acc[key].push(managedInstance);
                 return acc;
             },
-            {} as { [key: string]: DatabaseInstances[] }
+            {} as { [key: string]: DatabaseInstancesIncludingResource[] }
         );
 
         await Promise.all(
             Object.entries(grouped).map(async ([key, instances]) => {
-                const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('|');
+                const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('||');
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 const managedInstanceToBeUpdated = instances.filter((instance: { resource: Resource }) => {
                     const resourceInfo = instance?.resource;
