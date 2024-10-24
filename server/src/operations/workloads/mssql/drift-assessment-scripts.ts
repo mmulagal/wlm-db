@@ -1,7 +1,38 @@
 import { OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
-import { INSTANCE_DATA_DRIVES_QUERY, INSTANCE_LOG_DRIVES_QUERY, INSTANCE_TEMPDB_DRIVES_QUERY } from './queries';
+import {
+    INSTANCE_DATA_DRIVES_QUERY,
+    INSTANCE_DEFAULT_DATA_DRIVES_QUERY,
+    INSTANCE_DEFAULT_LOG_DRIVES_QUERY,
+    INSTANCE_LOG_DRIVES_QUERY,
+    INSTANCE_TEMPDB_DRIVES_QUERY
+} from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
+
+const INSTANCE_NETAPP_DRIVES = `
+    Function Get-MappedDrives {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string[]]$drives
+        )
+
+        $disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
+        $results = New-Object System.Collections.ArrayList
+
+        foreach ($disk in $disks) {
+            $partitions = Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+            foreach ($partition in $partitions) {
+                $logicalDisks = Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
+                    foreach ($logicalDisk in $logicalDisks) {
+                        if(($drives -contains $logicalDisk.DeviceID) -and ($disk.Model -like '*NETAPP*')) {
+                            $results += $logicalDisk.DeviceID
+                        }
+                    }
+                }
+            }
+        return $results
+    }
+`;
 
 const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boolean) =>
     `
@@ -21,10 +52,23 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
         ${readSsmParameter(instance)}
     }
     
-    $instanceDataDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
+    ${INSTANCE_NETAPP_DRIVES}
+    
+    $instanceDataDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DEFAULT_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName" 
+
+    $instanceAllDataDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    $instanceDrivesList = @()
+    $instanceAllDataDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
+    $filteredDataDrives = Get-MappedDrives  $instanceDrivesList
     $defaultDataDriveSize = 100
    
-    $instanceLogDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
+    $instanceLogDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DEFAULT_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
+
+    $instanceAllLogDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    $instanceDrivesList = @()
+    $instanceAllLogDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
+    $filteredLogDrives = Get-MappedDrives  $instanceDrivesList
+
     $defaultLogDriveSize = 25
     $defaultLogDriveSizePercent = ($defaultLogDriveSize/$defaultDataDriveSize) * 100
     $defaultLogDriveSizeDetails = @{'size' = "$defaultLogDriveSize"; 'percent' = "$defaultLogDriveSizePercent"}
@@ -219,6 +263,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $LunsList += $($perLunRow)
     }
     $DriftAssessmentData['luns'] = @($($LunsList))
+
+    # gather storage layout data
+    ${INSTANCE_DRIVE_DETAILS_TEMPLATE(instanceRecord.name, instanceRecord.sqlAuthEnabled)}
     
     # gather OS configuration data 
     $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 | Select ProductId,VendorId 
@@ -229,17 +276,20 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $LoadBalancingPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
 
     ${TEST_ISCSI_SESSIONS}
+
     $SessionCount = Test-IscsiSessions
-    $ntfsAllocationUnit = Get-Volume | Where { $_.DriveLetter -in @('S','L','T') }  | select-Object DriveLetter, AllocationUnitSize  
+    $AllDrives = $($filteredDataDrives; $filteredLogDrives)
+    $AllDrives = $AllDrives | select -Unique
+    $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object Name, BlockSize 
+    $ntfsUnitSize = 65536
+    $ntfsAllocationUnit | ForEach-Object -Process {if($_.BlockSize -ne 65536) {$ntfsUnitSize = $_.BlockSize}}
     $DriftAssessmentData['os'] = @{
                                     'mpio-enabled' = $MpioStatus;
                                     'mpio-load-balance-policy' = "$LoadBalancingPolicy";
                                     'mpio-iscsi-count' = "$SessionCount";
-                                    'ntfs-allocation-unit' = $($ntfsAllocationUnit)
+                                    'ntfs-allocation-details' = $($ntfsAllocationUnit);
+                                    'ntfs-allocation-unit-size' = $($ntfsUnitSize);
     }
-
-    # gather storage layout data
-    ${INSTANCE_DRIVE_DETAILS_TEMPLATE(instanceRecord.name, instanceRecord.sqlAuthEnabled)}
     
     $DriftAssessmentData['layout'] = @{
                                         'default-data-files-location' = $defaultDataDrive;
@@ -251,6 +301,8 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                                         'performance-tier' = $isPerformanceTier100Percent
                                         'log-drive-size' = $defaultLogDriveSizePercent;
                                         'tempdb-drive-size' = $tempDBDriveSizePercent;
+                                        'filtered-data-drives' = $filteredDataDrives;
+                                        'filtered-log-drives' = $filteredLogDrives;
     }
    
     $response = $DriftAssessmentData | ConvertTo-Json -Depth 5

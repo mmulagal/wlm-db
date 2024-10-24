@@ -16,7 +16,8 @@ const initialState: GetWellSliceInterface = {
     optimizationBreakDown: null,
     gwRefreshPage: false,
     gwTimestamp: '',
-    optimizingData: {}
+    optimizingData: {},
+    optimizingInstanceData: false
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -74,9 +75,14 @@ const getWellOptimizeSlice = createSlice({
             state.osConfigTableData = null;
             state.ontapConfigTableData = null;
             state.optimizationBreakDown = null;
+            state.optimizingData = null;
+            state.optimizingInstanceData = false;
         },
         setOptimizingData: (state, action: PayloadAction<any>) => {
             state.optimizingData = action.payload;
+        },
+        setOptimizingInstanceData: (state, action: PayloadAction<any>) => {
+            state.optimizingInstanceData = action.payload;
         }
     }
 });
@@ -96,7 +102,8 @@ export const {
     setGwRefreshPage,
     setGwTimestamp,
     resetGwData,
-    setOptimizingData
+    setOptimizingData,
+    setOptimizingInstanceData
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

@@ -7,9 +7,16 @@ import {
     setOntapConfigTableData,
     setOptimizationBreakDown,
     setOptimizingData,
+    setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-import { GETWELL_CONFIG, GETWELL_VALUES, JOB_MONITORING_STATUS, OPTIMIZE_POLLING_INTERVAL } from '../../utils/consts';
+import {
+    GETWELL_CONFIG,
+    GETWELL_STATUS,
+    GETWELL_VALUES,
+    JOB_MONITORING_STATUS,
+    OPTIMIZE_POLLING_INTERVAL
+} from '../../utils/consts';
 import { AssessmentResponseInterface, GwCardDataInterface, PerConfigInterface } from '../../utils/types/getWellTypes';
 import { formatNumberWithCustomComma } from '../../utils/utilityFunctions';
 
@@ -342,11 +349,17 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
     if (data?.compute?.name === 'compute-rightsizing') {
         cardMainConfig?.push([data?.compute]);
     }
-    cardMainConfig?.map(category => {
+    cardMainConfig?.map((category, index) => {
+        let categoryVal = '';
+        if (index === 0 || index === 1) {
+            categoryVal = 'storage';
+        } else if (index === 2) {
+            categoryVal = 'compute';
+        }
         category?.map((item: PerConfigInterface) => {
             let itemName = item?.name || '';
             let status = item?.status || '';
-            if (optimizingData?.[itemName]) {
+            if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
                 status = optimizingData?.[itemName];
             }
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -368,7 +381,8 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                         value: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
                     },
                     tags: item?.tags,
-                    id: item?.name
+                    id: item?.name,
+                    category: categoryVal
                 }
             };
         });
@@ -385,7 +399,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
     let ontapWarning = 0;
     data?.storage?.configuration?.volumes?.map((item: PerConfigInterface) => {
         let status = item?.status || '';
-        if (optimizingData?.[item?.name || '']) {
+        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
             status = optimizingData?.[item?.name || ''];
         }
         formatOntapConfigList.push({
@@ -406,7 +420,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
 
     data?.storage?.configuration?.luns?.map((item: PerConfigInterface) => {
         let status = item?.status || '';
-        if (optimizingData?.[item?.name || '']) {
+        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
             status = optimizingData?.[item?.name || ''];
         }
         formatOntapConfigList.push({
@@ -461,7 +475,7 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
     let osWarning = 0;
     data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
         let status = item?.status || '';
-        if (optimizingData?.[item?.name || '']) {
+        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
             status = optimizingData?.[item?.name || ''];
         }
         formatOsConfigList.push({
@@ -499,34 +513,61 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
 };
 
 // This function is used to format the optimization breakdown data.
-export const formatOptimizationBreakDown = (data: AssessmentResponseInterface) => {
+export const formatOptimizationBreakDown = (cardsData: any, formatOntapConfigList: any, formatOsConfigList: any) => {
+    let optimizedStorage = 0;
+    let notOptimizedStorage = 0;
+    let optimizedCompute = 0;
+    let notOptimizedCompute = 0;
+
+    Object.keys(cardsData).forEach(key => {
+        const nestedObject = cardsData[key];
+        if (nestedObject?.category === 'storage') {
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+                optimizedStorage++;
+            } else {
+                notOptimizedStorage++;
+            }
+        } else if (nestedObject?.category === 'compute') {
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+                optimizedCompute++;
+            } else {
+                notOptimizedCompute++;
+            }
+        }
+    });
+
+    formatOntapConfigList?.forEach((item: any) => {
+        if (item?.status === GETWELL_STATUS.OPTIMIZED) {
+            optimizedStorage++;
+        } else {
+            notOptimizedStorage++;
+        }
+    });
+
+    formatOsConfigList?.forEach((item: any) => {
+        if (item?.status === GETWELL_STATUS.OPTIMIZED) {
+            optimizedStorage++;
+        } else {
+            notOptimizedStorage++;
+        }
+    });
+
     let storageCount = {
-        total: data?.storage?.optimisedCount?.total ?? 0,
-        optimized: data?.storage?.optimisedCount?.optimised ?? 0,
-        notOptimized: (data?.storage?.optimisedCount?.total || 0) - (data?.storage?.optimisedCount?.optimised || 0),
-        percent:
-            data?.storage?.optimisedCount && data?.storage?.optimisedCount?.optimised !== 0
-                ? formatNumberWithCustomComma(
-                      ((data?.storage?.optimisedCount?.optimised ?? 0) / (data?.storage?.optimisedCount?.total ?? 1)) *
-                          100
-                  )
-                : 0
+        total: optimizedStorage + notOptimizedStorage,
+        optimized: optimizedStorage,
+        notOptimized: notOptimizedStorage,
+        percent: optimizedStorage
+            ? formatNumberWithCustomComma((optimizedStorage / (optimizedStorage + notOptimizedStorage)) * 100)
+            : 0
     };
     let computeCount = {
-        total: 0,
-        optimized: 0,
-        notOptimized: 0,
-        percent: 0
+        total: optimizedCompute + notOptimizedCompute,
+        optimized: optimizedCompute,
+        notOptimized: notOptimizedCompute,
+        percent: optimizedCompute
+            ? formatNumberWithCustomComma((optimizedCompute / (optimizedCompute + notOptimizedCompute)) * 100)
+            : 0
     };
-    if (data?.compute?.status) {
-        computeCount = {
-            // currently only compute-rizing is supported. Once anything else will be supported than we need to add the count here.
-            total: 1,
-            optimized: data?.compute?.status === 'optimized' ? 1 : 0,
-            notOptimized: data?.compute?.status !== 'optimized' ? 1 : 0,
-            percent: data?.compute?.status === 'optimized' ? 100 : 0
-        };
-    }
 
     let optBreakDown = {
         storage: storageCount,
@@ -619,7 +660,7 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
         }
     };
 
-    let optBreakDown = formatOptimizationBreakDown(data);
+    let optBreakDown = formatOptimizationBreakDown(cardsData, formatOntapConfigList, formatOsConfigList);
 
     // Dispatch the formatted cards data to the store
     dispatch(setCardData(cardsData));
@@ -741,6 +782,8 @@ export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setOsConfigTableData(null));
     dispatch(setOntapConfigTableData(null));
     dispatch(setOptimizationBreakDown(null));
+    dispatch(setOptimizingData({}));
+    dispatch(setOptimizingInstanceData(false));
 };
 
 export const handleOptimizeStorageJob = (
@@ -779,12 +822,13 @@ export const handleOptimizeStorageJob = (
                                 message: `${rowData?.name} optimized successfully.`
                             })
                         );
+                        dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
                         dispatch(
                             setOptimizingData({
                                 ...optimizingData,
-                                [rowData?.id]: 'not-optimized'
+                                [rowData?.id]: ''
                             })
                         );
                         formatGetWellData(dispatch);
@@ -794,6 +838,7 @@ export const handleOptimizeStorageJob = (
                                 message: failedMsgData
                             })
                         );
+                        dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
                     }
                 });
@@ -802,10 +847,11 @@ export const handleOptimizeStorageJob = (
             dispatch(
                 setOptimizingData({
                     ...optimizingData,
-                    [rowData?.id]: 'not-optimized'
+                    [rowData?.id]: ''
                 })
             );
             formatGetWellData(dispatch);
+            dispatch(setOptimizingInstanceData(false));
             // Error message for failed optimization API will be returned here
         }
     }, 10);

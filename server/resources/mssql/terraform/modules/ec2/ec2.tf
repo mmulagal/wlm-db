@@ -1,9 +1,10 @@
 locals {
-  adsg_not_selected   = var.domain_member_sg_id == "" ? true : false
-  log_feature_enabled = var.enable_cloudwatch_log_feature == true ? "true" : "false"
-  group_set           = local.adsg_not_selected ? [var.workload_security_group_id, var.ontap_security_group_id] : [var.workload_security_group_id, var.ontap_security_group_id, var.domain_member_sg_id]
-  node_type           = var.sql_node_name == "SQL-Node-1" ? "Primary" : "Secondary"
-  tagName             = (var.sql_node_name == "SQL-Node" || var.sql_node_name == "SQL-Node-1") ? var.sql_fsx_server_net_bios_name : var.sql_fsx_server_net_bios_name_2
+  adsg_not_selected     = var.domain_member_sg_id == "" ? true : false
+  log_feature_enabled   = var.enable_cloudwatch_log_feature == true ? "true" : "false"
+  ontap_security_groups = split(",", var.ontap_security_group_id)
+  group_set             = local.adsg_not_selected ? concat([var.workload_security_group_id], local.ontap_security_groups) : concat([var.workload_security_group_id], local.ontap_security_groups, [var.domain_member_sg_id])
+  node_type             = var.sql_node_name == "SQL-Node-1" ? "Primary" : "Secondary"
+  tagName               = (var.sql_node_name == "SQL-Node" || var.sql_node_name == "SQL-Node-1") ? var.sql_fsx_server_net_bios_name : var.sql_fsx_server_net_bios_name_2
 
   user_data = templatefile("${path.module}/user_data.ps1", {
     sql_node_initialization_s3_url = var.sql_node_initialization_s3_url

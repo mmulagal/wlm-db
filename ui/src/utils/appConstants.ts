@@ -230,7 +230,7 @@ export const GENERAL = {
     UNIT: 'Unit',
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
-    ERROR_CAPACITY: 'Supported capacity should be between 120 GiB to 130 TiB.',
+    ERROR_CAPACITY: 'Supported capacity should be between 120 GiB to 86 TiB.',
     //Provisioned IOPS
     AUTOMATIC: 'Automatic',
     USER_PROVISIONED: 'User-provisioned',
@@ -1153,7 +1153,9 @@ export const GENERAL = {
     NOTE_PONT_TWO:
         'By proceeding, you authorize Workload Factory to automatically perform these actions on your behalf.',
     NOTE: 'Note',
-    OPTIMIZATION_NOT_SUPPORTED: 'Optimization not supported for this configuration.'
+    OPTIMIZATION_NOT_SUPPORTED: 'Optimization not supported for this configuration.',
+    OPTIMIZATION_IN_PROGRESS:
+        'An optimization process is currently running in the background for the current instance. Try again once it has completed.'
 };
 
 export const CODE_VIEWER = {

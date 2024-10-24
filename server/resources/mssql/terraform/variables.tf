@@ -196,10 +196,6 @@ variable "private_subnet2_cidrblock" {
   default     = ""
 }
 
-variable "encrypted_fsx_password" {
-  description = "The encrypted password for FSx"
-  type        = string
-}
 
 variable "ebs_volume_size" {
   description = "The size of the EBS volume"

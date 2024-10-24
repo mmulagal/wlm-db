@@ -556,13 +556,35 @@ async function getTerraformSetup(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const { sqlServerName, sqlAmiName } = sqlConfiguration;
+    const { sqlServerName, sqlAmiName, sqlCollation } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
     const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
     // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
     const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
+        // Here 120 & 133120 is in GiB
+        if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > DATABASE_MAX_LUN_SIZE_IN_GIB) {
+            throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
+        }
+
+        if (!sqlCollation) {
+            throw createError(412, 'Please provide the collation information');
+        }
+
+        const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
+            networkConfiguration,
+            sqlConfiguration.sqlDeploymentMode
+        );
+
+        if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
+            const errorMessage = vpcValidationCheck.violationMessage;
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+        }
+
+        // Set EnableDnsSupport and EnableDnsHostnames to true
+        await enableVpcDnsAttributes(credentialsId as string, region as string, networkConfiguration.vpcId);
+
         const { stackName: deploymentName, templateParameters } = await formatTemplateParameters(
             networkConfiguration,
             ec2Configuration,
@@ -1065,15 +1087,7 @@ async function deployCloudFormationTemplate(
     }
 
     // Set EnableDnsSupport and EnableDnsHostnames to true
-    try {
-        await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
-    } catch (error) {
-        logger.error(
-            'Error while setting "EnableDnsSupport" and "EnableDnsHostnames" to true for vpc',
-            networkConfiguration.vpcId,
-            error
-        );
-    }
+    await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         networkConfiguration,

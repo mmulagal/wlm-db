@@ -670,20 +670,8 @@ const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 
 
 function getRedisDetails() {
     logger.info('in getRedisDetails');
-    let host = '127.0.0.1';
-    let port = '6379';
-    try {
-        [host, port] = REDIS_URL.split(':');
-    } catch (e: any) {
-        logger.error(`Unable to fetch redis host and port from ${REDIS_URL}. Error: ${e}.`);
-    }
-    const url = `${REDIS_SCHEMA}://${SECRETS.REDIS_PASSWORD}@${REDIS_URL}`;
-    return {
-        url,
-        host,
-        port: Number(port),
-        password: SECRETS.REDIS_PASSWORD
-    };
+    const url = SECRETS.REDIS_PASSWORD ? `${REDIS_SCHEMA}://${SECRETS.REDIS_PASSWORD}@${REDIS_URL}` : REDIS_URL;
+    return { url };
 }
 
 function getTimeDifferenceInMinutes(startTime: number, endTime: number = Date.now()) {

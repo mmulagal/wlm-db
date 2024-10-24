@@ -1,6 +1,7 @@
 import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import { DriftAssessmentResponseType, StorageParameterDriftResponseType } from '../routes/types/database-hosts.types';
 import getLogger from '../utils/logger';
@@ -351,13 +352,7 @@ async function initiateStorageAssessmentCollection(
             ?.map(i => i?.volumeRecords)
             .flat() || [];
     instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
-
-    const volumeDBMap =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeDBMap)
-            .flat() || {};
-
-    instanceRecord.mappedVolumeNames = volumeDBMap.map(volume => volume.name as string);
+    instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
 
     instanceRecord.mappedLunNames =
         Object.values(instanceVolumeMapping)
@@ -501,8 +496,10 @@ async function driftAssessment(
     const shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
 
     try {
-        await Promise.all(
-            databaseInstanceRecords.map(async databaseInstanceRecord => {
+        // https://jira.ngage.netapp.com/browse/DBS-4127 fix
+        await Promise.map(
+            databaseInstanceRecords,
+            async databaseInstanceRecord => {
                 if (shouldRunStorageAssessment) {
                     await initiateStorageAssessmentCollection(
                         accountId,
@@ -513,7 +510,10 @@ async function driftAssessment(
                         databaseInstanceRecord
                     );
                 }
-            })
+            },
+            {
+                concurrency: 1
+            }
         );
     } catch (e: any) {
         logger.error(e);
@@ -638,16 +638,17 @@ async function fetchDriftAssessment(
     const [storageAssessmentResponse, computeAssessmentResponse] = await Promise.all([
         shouldCalculateStorageAssessment
             ? calculateStorageDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
-            : Promise.resolve(),
+            : Promise.resolve({}),
         shouldCalculateComputeAssessment
             ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
-            : Promise.resolve()
+            : Promise.resolve({})
     ]);
 
-    if (storageAssessmentResponse) {
+    if (!isEmpty(storageAssessmentResponse)) {
         driftAssessmentData.storage = storageAssessmentResponse;
     }
-    if (computeAssessmentResponse) {
+
+    if (!isEmpty(computeAssessmentResponse)) {
         driftAssessmentData.compute = computeAssessmentResponse;
     }
     return driftAssessmentData;
