@@ -11,6 +11,7 @@ export interface GetWellSliceInterface {
     ontapConfigTableData: PerConfigInterface[] | null;
     optimizationBreakDown: {
         storage?: CountBreakDown;
+        compute?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
@@ -40,6 +41,7 @@ export interface AssessmentResponseInterface {
         sizing?: PerConfigInterface[];
         layout?: PerConfigInterface[];
     };
+    compute?: PerConfigInterface;
 }
 
 export interface PerConfigInterface {
@@ -52,6 +54,7 @@ export interface PerConfigInterface {
     severity?: string;
     recommendation?: string;
     tags?: string[];
+    objectsInViolation?: string[] | null;
 }
 
 export interface GwCardDataInterface {
@@ -73,6 +76,7 @@ export interface GwPerConfigCardInterface {
         type: string;
         value: string;
         smallFont?: boolean;
+        list?: string[] | null;
     };
     block_four: {
         type: string;
