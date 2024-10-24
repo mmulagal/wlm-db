@@ -58,7 +58,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
 
     $instanceAllDataDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
     $instanceDrivesList = @()
-    $instanceAllDataDrives | ForEach-Object -Process {$instanceDrivesList += $a.drives}
+    $instanceAllDataDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
     $filteredDataDrives = Get-MappedDrives  $instanceDrivesList
     $defaultDataDriveSize = 100
    
@@ -66,7 +66,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
 
     $instanceAllLogDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
     $instanceDrivesList = @()
-    $instanceAllLogDrives | ForEach-Object -Process {$instanceDrivesList += $a.drives}
+    $instanceAllLogDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
     $filteredLogDrives = Get-MappedDrives  $instanceDrivesList
 
     $defaultLogDriveSize = 25
