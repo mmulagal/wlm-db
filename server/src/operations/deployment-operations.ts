@@ -662,7 +662,7 @@ async function getTerraformSetup(
         };
     } catch (err: any) {
         logger.error('Error while getting terraform setup', err);
-        throw createError(500, 'Error while getting terraform setup');
+        throw createError(500, `Error while getting terraform setup: ${err.message}`);
     }
 }
 
