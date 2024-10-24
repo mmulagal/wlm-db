@@ -898,4 +898,85 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
     };
 }
 
-export { inventoryDemoData };
+const ASSESMENT_CONFIG_DATA = {
+    os: {
+        'mpio-enabled': true,
+        'mpio-iscsi-count': '5',
+        'ntfs-allocation-unit': [
+            { DriveLetter: 'S', AllocationUnitSize: 65536 },
+            { DriveLetter: 'T', AllocationUnitSize: 65536 },
+            { DriveLetter: 'L', AllocationUnitSize: 65536 }
+        ],
+        'mpio-load-balance-policy': 'LB'
+    },
+    luns: [
+        {
+            name: '/vol/wlmdb_sqldata_1728552629461/sqldata',
+            'os-type': 'windows_2008',
+            'space-reservation-enabled': true,
+            'space-allocation-allocated': true
+        },
+        {
+            name: '/vol/wlmdb_sqltemp_1728552629461/tempdb',
+            'os-type': 'windows_2008',
+            'space-reservation-enabled': true,
+            'space-allocation-allocated': true
+        },
+        {
+            name: '/vol/wlmdb_sqldata_1728574994/sqldata',
+            'os-type': 'windows_2008',
+            'space-reservation-enabled': true,
+            'space-allocation-allocated': true
+        }
+    ],
+    layout: {
+        'tempdb-files-location': 'separate-drive',
+        'default-log-files-location': 'separate-drive',
+        'default-data-files-location': 'separate-drive'
+    },
+    sizing: {
+        'log-drive-size': 24.95199566128725,
+        'performance-tier': true,
+        'tempdb-drive-size': 9.9423947935447
+    },
+    volumes: [
+        {
+            name: 'wlmdb_sqldata_1728552629461',
+            autosize: 'on',
+            'autosize-mode': 'grow',
+            'thin-provision': false,
+            'tiering-policy': 'auto',
+            'space-guarantee': 'none',
+            'fractional-reserve': 0,
+            'snapshot-autodelete': false,
+            'snapshot-copy-reserve': 5,
+            'tiering-min-cooling-days': 7
+        },
+        {
+            name: 'wlmdb_sqltemp_1728552629461',
+            autosize: 'on',
+            'autosize-mode': 'grow',
+            'thin-provision': false,
+            'tiering-policy': 'auto',
+            'space-guarantee': 'none',
+            'fractional-reserve': 0,
+            'snapshot-autodelete': false,
+            'snapshot-copy-reserve': 5,
+            'tiering-min-cooling-days': 7
+        },
+        {
+            name: 'wlmdb_sqldata_1728574994',
+            autosize: 'on',
+            'autosize-mode': 'grow',
+            'thin-provision': true,
+            'tiering-policy': 'auto',
+            'space-guarantee': 'none',
+            'fractional-reserve': 0,
+            'snapshot-autodelete': false,
+            'snapshot-copy-reserve': 5,
+            'tiering-min-cooling-days': 7
+        }
+    ]
+};
+
+export { inventoryDemoData, ASSESMENT_CONFIG_DATA };

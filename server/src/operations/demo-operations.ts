@@ -35,7 +35,8 @@ import {
     validationStack2Data,
     sqlStandaloneStackData,
     endpointData,
-    sandboxJobData
+    sandboxJobData,
+    assessmentJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -43,6 +44,7 @@ import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
+import { ASSESMENT_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
 
 const logger = getLogger();
 
@@ -277,86 +279,7 @@ async function createDeploymentMockDataInDB(
         database_instance_id: instanceId,
         creation_time: new Date(Date.now()),
         config_data_type: AssessmentCategories.STORAGE,
-        config_data: {
-            os: {
-                'mpio-enabled': true,
-                'mpio-iscsi-count': '5',
-                'ntfs-allocation-unit': [
-                    { DriveLetter: 'S', AllocationUnitSize: 65536 },
-                    { DriveLetter: 'T', AllocationUnitSize: 65536 },
-                    { DriveLetter: 'L', AllocationUnitSize: 65536 }
-                ],
-                'mpio-load-balance-policy': 'LB'
-            },
-            luns: [
-                {
-                    name: '/vol/wlmdb_sqldata_1728552629461/sqldata',
-                    'os-type': 'windows_2008',
-                    'space-reservation-enabled': true,
-                    'space-allocation-allocated': true
-                },
-                {
-                    name: '/vol/wlmdb_sqltemp_1728552629461/tempdb',
-                    'os-type': 'windows_2008',
-                    'space-reservation-enabled': true,
-                    'space-allocation-allocated': true
-                },
-                {
-                    name: '/vol/wlmdb_sqldata_1728574994/sqldata',
-                    'os-type': 'windows_2008',
-                    'space-reservation-enabled': true,
-                    'space-allocation-allocated': true
-                }
-            ],
-            layout: {
-                'tempdb-files-location': 'separate-drive',
-                'default-log-files-location': 'separate-drive',
-                'default-data-files-location': 'separate-drive'
-            },
-            sizing: {
-                'log-drive-size': 24.95199566128725,
-                'performance-tier': true,
-                'tempdb-drive-size': 9.9423947935447
-            },
-            volumes: [
-                {
-                    name: 'wlmdb_sqldata_1728552629461',
-                    autosize: 'on',
-                    'autosize-mode': 'grow',
-                    'thin-provision': true,
-                    'tiering-policy': 'snapshot_only',
-                    'space-guarantee': 'none',
-                    'fractional-reserve': 0,
-                    'snapshot-autodelete': true,
-                    'snapshot-copy-reserve': 0,
-                    'tiering-min-cooling-days': 7
-                },
-                {
-                    name: 'wlmdb_sqltemp_1728552629461',
-                    autosize: 'on',
-                    'autosize-mode': 'grow',
-                    'thin-provision': true,
-                    'tiering-policy': 'snapshot_only',
-                    'space-guarantee': 'none',
-                    'fractional-reserve': 0,
-                    'snapshot-autodelete': true,
-                    'snapshot-copy-reserve': 0,
-                    'tiering-min-cooling-days': 7
-                },
-                {
-                    name: 'wlmdb_sqldata_1728574994',
-                    autosize: 'on',
-                    'autosize-mode': 'grow',
-                    'thin-provision': true,
-                    'tiering-policy': 'snapshot_only',
-                    'space-guarantee': 'none',
-                    'fractional-reserve': 0,
-                    'snapshot-autodelete': true,
-                    'snapshot-copy-reserve': 0,
-                    'tiering-min-cooling-days': 7
-                }
-            ]
-        }
+        config_data: ASSESMENT_CONFIG_DATA
     };
 
     await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
@@ -626,6 +549,19 @@ async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string
     };
 }
 
+async function createAssessmentJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceNames: string[],
+    credentialsId: string,
+    region: string
+) {
+    logger.debug('Generate mock data for job table', accountId, resourceName, credentialsId, region);
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return assessmentJobData(accountId, resourceName, instanceNames, credentialsId, region, parentJobId);
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -635,5 +571,6 @@ export {
     getVolumeIdsFromStorage,
     updateUserDBIntoInstanceTable,
     updateSandboxDBIntoInstanceData,
-    getEBSVolumesForDemo
+    getEBSVolumesForDemo,
+    createAssessmentJobMockData
 };
