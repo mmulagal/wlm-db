@@ -36,10 +36,7 @@ import {
     DEFAULT_INSTANCE_NAME,
     SECRETS,
     DatabaseTypes,
-    DatabaseTypes,
-    REDIS_URL,
-    REDIS_SCHEMA,
-    MIN_DATA_LUN_SIZE_IN_GIB
+    MAX_DATA_LUN_SIZE_IN_GIB
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -82,9 +79,9 @@ function generateDeploymentParams(
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
 
-    if (fsxDataLunSize > MIN_DATA_LUN_SIZE_IN_GIB) {
+    if (fsxDataLunSize > MAX_DATA_LUN_SIZE_IN_GIB) {
         // With 35% headroom and 15% for log and temp volumes, we can't go beyond 86TiB, given the max fsxn storage capacity is 192TiB
-        throw createError(412, `FSx Data LUN Size should be less than or equal to ${MIN_DATA_LUN_SIZE_IN_GIB} GiB`);
+        throw createError(412, `FSx Data LUN Size should be less than or equal to ${MAX_DATA_LUN_SIZE_IN_GIB} GiB`);
     }
 
     const {

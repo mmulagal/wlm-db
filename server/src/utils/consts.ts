@@ -1249,7 +1249,7 @@ const PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/aws_ssm.zip`;
 const PREPARE_PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/dependent-packages.zip`;
 const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
 const DEFAULT_MSSQL_INSTANCE_NAME = '$env:computername';
-const MIN_DATA_LUN_SIZE_IN_GIB = 86049.3;
+const MAX_DATA_LUN_SIZE_IN_GIB = 86049.3;
 
 const PERMISSION_DENIAL_POSSIBLE_REASONS = {
     MISSING: 'permission statement is missing',
@@ -1731,13 +1731,5 @@ export {
     TERRAFORM_ROOT_MODULE_DISTRIBUTION,
     AWS_CE_TYPE,
     PGSQL_MASTER_TEMPLATE_PATH,
-    AssessmentCategories,
-    AssessmentTriggeredBy,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    REDIS_URL,
-    DRIFT_ASSESSMENT_QUEUE,
-    PGSQL_MASTER_TEMPLATE_PATH,
-    REDIS_SCHEMA,
-    MIN_DATA_LUN_SIZE_IN_GIB
+    MAX_DATA_LUN_SIZE_IN_GIB
 };
