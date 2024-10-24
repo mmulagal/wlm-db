@@ -13,7 +13,7 @@ import { GETWELL_STATUS, GETWELL_VALUES, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from 
 import { useEffect, useState } from 'react';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import { useDispatch } from 'react-redux';
-import { setOptimizingData } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { setOptimizingData, setOptimizingInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -26,9 +26,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
-    const { isAssessmentAvailable, selectedResourceId, selectedDatabaseInstance } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const { isAssessmentAvailable, selectedResourceId, selectedDatabaseInstance, optimizingInstanceData } =
+        useAppSelector(state => state.getWellOptimize);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
@@ -151,9 +150,15 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const callOptimizeApi = (type: any) => {
         // ToDo - This is not supported yet so will update once it is final
         let payload = {
-            type: type
+            assessments: [
+                {
+                    configurationName: type,
+                    objectsToOptimize: []
+                }
+            ]
         };
         // call optimize api
+        dispatch(setOptimizingInstanceData(true));
         dispatch(
             setOptimizingData({
                 ...optimizingData,
@@ -164,7 +169,21 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
-                message: `Optimization process initiated for ${type}. This process can take upto 2 minutes.`
+                message: (
+                    <div>
+                        {`Optimization process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {GENERAL.JOB_MONITORING}.
+                        </Button>
+                    </div>
+                )
             })
         );
 
@@ -302,6 +321,19 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             </div>
                         </TooltipComponent>
                     </div>
+                ) : optimizingInstanceData && cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
+                    <TooltipComponent
+                        title={GENERAL.OPTIMIZATION_IN_PROGRESS}
+                        placement="bottom"
+                        width="330px"
+                        height="65px"
+                    >
+                        <div>
+                            <DsButton variant="secondary" isDisabled={true}>
+                                Optimize
+                            </DsButton>
+                        </div>
+                    </TooltipComponent>
                 ) : (
                     <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
                         <DsButton

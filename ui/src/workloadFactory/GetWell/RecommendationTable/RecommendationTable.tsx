@@ -19,7 +19,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { setOptimizingData } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { setOptimizingData, setOptimizingInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) => {
@@ -28,7 +28,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
 
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
-    const { selectedResourceId, selectedDatabaseInstance, optimizingData } = useAppSelector(
+    const { selectedResourceId, selectedDatabaseInstance, optimizingData, optimizingInstanceData } = useAppSelector(
         state => state.getWellOptimize
     );
 
@@ -41,12 +41,13 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
         let payload = {
             assessments: [
                 {
-                    property: rowData?.id,
-                    objectsList: rowData?.objectsInViolation
+                    configurationName: rowData?.id,
+                    objectsToOptimize: rowData?.objectsInViolation
                 }
             ]
         };
         // call optimize api
+        dispatch(setOptimizingInstanceData(true));
         dispatch(
             setOptimizingData({
                 ...optimizingData,
@@ -57,7 +58,21 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
-                message: `Optimization process initiated for ${rowData?.name}. This process can take upto 2 minutes.`
+                message: (
+                    <div>
+                        {`Optimization process initiated for ${rowData?.name}. This process can take upto 2 minutes. Track progress in `}
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {GENERAL.JOB_MONITORING}.
+                        </Button>
+                    </div>
+                )
             })
         );
 
@@ -216,6 +231,19 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                         placement="bottom"
                                         width="250px"
                                         height="50px"
+                                    >
+                                        <div>
+                                            <DsButton variant="secondary" isDisabled={true}>
+                                                Optimize
+                                            </DsButton>
+                                        </div>
+                                    </TooltipComponent>
+                                ) : optimizingInstanceData && rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
+                                    <TooltipComponent
+                                        title={GENERAL.OPTIMIZATION_IN_PROGRESS}
+                                        placement="bottom"
+                                        width="330px"
+                                        height="65px"
                                     >
                                         <div>
                                             <DsButton variant="secondary" isDisabled={true}>

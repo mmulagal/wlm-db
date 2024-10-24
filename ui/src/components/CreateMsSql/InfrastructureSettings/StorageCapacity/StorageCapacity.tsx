@@ -84,8 +84,8 @@ const StorageCapacity = () => {
 
     const checkError = () => {
         if (
-            (selectedUnit?.label === 'TiB' && (Number(inputText) > 130 || Number(inputText) < 1)) ||
-            (selectedUnit?.label === 'GiB' && (Number(inputText) > 133120 || Number(inputText) < 120)) ||
+            (selectedUnit?.label === 'TiB' && (Number(inputText) > 86 || Number(inputText) < 1)) ||
+            (selectedUnit?.label === 'GiB' && (Number(inputText) > 88064 || Number(inputText) < 120)) ||
             Number.isNaN(Number(inputText)) ||
             !/^\d+(\.\d+)?$/.test(inputText)
         ) {

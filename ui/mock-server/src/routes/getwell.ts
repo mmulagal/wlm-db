@@ -6,7 +6,7 @@ const router = require('express').Router();
 router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, GetWellJson);
-    }, 2000);
+    }, 20);
 });
 
 router.post(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment/optimize`, async (req: {}, res: any) => {
