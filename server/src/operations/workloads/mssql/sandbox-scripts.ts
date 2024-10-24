@@ -573,10 +573,13 @@ const createVolumeClone = (
                     $sourceSvm = $vol.svm
                 
                     if ($svmProcessed -notcontains $sourceSvm) {
+                        Get-Module -ListAvailable -Name NetApp.ONTAP | Remove-Module
                         if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP | Where-Object { $_.Version -eq $PSToolkitRequiredVersion })) {
                             Write-Information "$logPrefix NetApp.ONTAP Module does not exist, installing it now"
 
-                            Install-Module -Name NetApp.ONTAP -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion | Out-Null
+                            Install-Module -Name NetApp.ONTAP -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -Scope CurrentUser | Import-Module
+                        } else {
+                            Import-Module -Name NetApp.ONTAP -Force -RequiredVersion $PSToolkitRequiredVersion
                         }
 
                         $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
