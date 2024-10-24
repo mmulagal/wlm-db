@@ -944,24 +944,24 @@ const ASSESMENT_CONFIG_DATA = {
             name: 'wlmdb_sqldata_1728552629461',
             autosize: 'on',
             'autosize-mode': 'grow',
-            'thin-provision': true,
-            'tiering-policy': 'snapshot_only',
+            'thin-provision': false,
+            'tiering-policy': 'auto',
             'space-guarantee': 'none',
             'fractional-reserve': 0,
-            'snapshot-autodelete': true,
-            'snapshot-copy-reserve': 0,
+            'snapshot-autodelete': false,
+            'snapshot-copy-reserve': 5,
             'tiering-min-cooling-days': 7
         },
         {
             name: 'wlmdb_sqltemp_1728552629461',
             autosize: 'on',
             'autosize-mode': 'grow',
-            'thin-provision': true,
-            'tiering-policy': 'snapshot_only',
+            'thin-provision': false,
+            'tiering-policy': 'auto',
             'space-guarantee': 'none',
             'fractional-reserve': 0,
-            'snapshot-autodelete': true,
-            'snapshot-copy-reserve': 0,
+            'snapshot-autodelete': false,
+            'snapshot-copy-reserve': 5,
             'tiering-min-cooling-days': 7
         },
         {
@@ -969,11 +969,11 @@ const ASSESMENT_CONFIG_DATA = {
             autosize: 'on',
             'autosize-mode': 'grow',
             'thin-provision': true,
-            'tiering-policy': 'snapshot_only',
+            'tiering-policy': 'auto',
             'space-guarantee': 'none',
             'fractional-reserve': 0,
-            'snapshot-autodelete': true,
-            'snapshot-copy-reserve': 0,
+            'snapshot-autodelete': false,
+            'snapshot-copy-reserve': 5,
             'tiering-min-cooling-days': 7
         }
     ]
