@@ -1,7 +1,9 @@
 import { faker } from '@faker-js/faker';
 import {
     createRecommendationForResource,
-    getInstanceRecommendations
+    getInstanceRecommendations,
+    manageInstanceRecommendationPreReqs,
+    translateFindingReasonCode
 } from '../../../src/operations/aws/compute-optimizer-operations';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -11,7 +13,8 @@ import '../../simulator/scopes/aws/compute-optimizer-scope';
 import '../../simulator/scopes/aws/cloud-watch-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/aws/ec2-scope';
-import { ACCOUNT_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
+import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
+import { getEc2Arn } from '../../../src/utils/utils';
 
 describe('Compute optimizer operations', () => {
     it('Create recommendations for resource', async () => {
@@ -56,5 +59,38 @@ describe('Compute optimizer operations', () => {
         );
 
         expect(resp).toBeDefined();
+    });
+
+    it('Manage instance recommendation prerequisites', async () => {
+        const instanceTypes = await manageInstanceRecommendationPreReqs(
+            '464262061435',
+            DEFAULT_AWS_REGION,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            getEc2Arn('464262061435', 'ap-southeast-1', 'i-test'),
+            ACCOUNT_ID,
+            ['i-partner-1', 'i-test'],
+            ['vol-123456789'],
+            'AOAG'
+        );
+        expect(instanceTypes).toBeDefined();
+    });
+
+    it('Manage instance recommendation prerequisites - managed instances', async () => {
+        const instanceTypes = await manageInstanceRecommendationPreReqs(
+            '464262061435',
+            DEFAULT_AWS_REGION,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            getEc2Arn('464262061435', 'ap-southeast-1', 'i-test'),
+            ACCOUNT_ID,
+            ['i-test'],
+            [],
+            'Standalone'
+        );
+        expect(instanceTypes).toBeDefined();
+    });
+
+    it('Translate finding reason code', () => {
+        const resp = translateFindingReasonCode('MemoryOverprovisioned');
+        expect(resp).toEqual('Memory over-provisioned');
     });
 });

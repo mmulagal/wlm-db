@@ -10,11 +10,14 @@ import {
     ServerState,
     UNKNOWN,
     SANDBOX_LIFECYCLE_REFRESH,
-    SANDBOX_LIFECYCLE_REBASELINE,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars
+    SANDBOX_LIFECYCLE_REBASELINE
 } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
+import {
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    OptimizeStorageConfigs
+} from '../../utils/continous-optimization-consts';
 
 const DatabaseHostObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
@@ -632,9 +635,23 @@ const StorageParameterDriftResponse = Type.Object({
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 
 const DriftAssessmentResponse = Type.Object({
-    storage: Type.Optional(StorageParameterDriftResponse)
+    storage: Type.Optional(StorageParameterDriftResponse),
+    compute: Type.Optional(ParameterDriftResponse)
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
+
+const OptimizeStorageRequestParams = Type.Object({
+    configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
+    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
+});
+
+const OptimizeStorageRequestBody = Type.Object({
+    assessments: Type.Optional(Type.Array(OptimizeStorageRequestParams))
+});
+
+type OptimizeStorageRequestBodyType = Static<typeof OptimizeStorageRequestBody>;
+
+type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
 
 export {
     DatabaseHostObjectParams,
@@ -720,5 +737,8 @@ export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
     ParameterDriftResponseType,
-    StorageParameterDriftResponseType
+    StorageParameterDriftResponseType,
+    OptimizeStorageRequestBody,
+    OptimizeStorageRequestBodyType,
+    OptimizeStorageRequestParamsType
 };

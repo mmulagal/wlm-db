@@ -1,15 +1,14 @@
 import config from 'config';
 import Promise from 'bluebird';
 import ms from 'ms';
-import { STORAGE_TYPE } from '@prisma/client';
+import { STORAGE_TYPE, database_instances as DatabaseInstances } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
 import { Queue, Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
-    AssessmentTriggeredBy,
-    DRIFT_ASSESSMENT_QUEUE,
+    CONTINUOUS_ASSESSMENT_FEATURE,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     TCO_FEATURE
@@ -25,17 +24,24 @@ import {
     updateTrackedEc2Record
 } from '../lib/database/db';
 import { getHostAndSqlServerInfo } from './discover-operations';
-import { manageInstanceRecommendationPreReqs } from './aws/compute-optimizer-operations';
+import {
+    manageInstanceRecommendationPreReqs,
+    manageInstanceRecommendationPreReqsForManagedInstances
+} from './aws/compute-optimizer-operations';
 import { getEc2Arn, getRedisDetails } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
-import { fetchSqlServerInstanceConfiguration } from './recommendation-operations';
+import {
+    checkComputeOptimizerEnrollmentStatus,
+    fetchSqlServerInstanceConfiguration
+} from './recommendation-operations';
 import {
     getAsyncLocalStorageResource,
     getLocalStorage,
     setAsyncLocalStorageResource
 } from '../utils/async-local-storage';
 import { triggerDriftAssessment } from './drift-assessment';
-import { DriftAssessmentJob } from '../utils/common-types';
+import { DriftAssessmentJob, Metadata } from '../utils/common-types';
+import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -63,15 +69,15 @@ function purgeOlderJobs() {
 }
 
 // Scheduled task to update and manage EC2 instance recommendation preferences based on recent usage, and remove entries for instances no longer available in AWS."
-function updateInstanceRecommendationPreferences() {
+function updateTcoInstanceRecommendationPreferences() {
     setInterval(async () => {
-        await updatePreferences();
+        await updateTcoInstRecPrefs();
     }, Number(ms(config.get('db.tco.update-recommendation-preference'))));
 }
 
-async function updatePreferences() {
+async function updateTcoInstRecPrefs() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
-        logger.info('Updating instance recommendation preferences');
+        logger.info('Updating instance recommendation preferences for TCO feature');
         const trackedEc2Instances = await listTrackedEc2(TCO_FEATURE);
         await Promise.map(
             trackedEc2Instances,
@@ -154,6 +160,89 @@ async function updatePreferences() {
             { concurrency: 5 }
         );
         logger.info('Updating instance recommendation preferences completed');
+    });
+}
+
+async function updateManagedInstanceRecommendationPreferences() {
+    setInterval(async () => {
+        await updateManagedInstRecPrefs();
+    }, Number(ms(config.get('db.manged-instance.update-recommendation-preference'))));
+}
+
+async function updateManagedInstRecPrefs() {
+    getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
+        logger.info('Updating instance recommendation preferences for Continuous assessment feature');
+
+        const managedInstances = await listAllManagedInstances();
+        if (isEmpty(managedInstances)) {
+            logger.error(
+                'No successfully managed database instances found during instance recommendation preference update.'
+            );
+            return;
+        }
+        const trackedEc2Instances = await listTrackedEc2(CONTINUOUS_ASSESSMENT_FEATURE);
+        const trackedEc2InstanceIds = trackedEc2Instances.map(instance => instance.instance_id);
+
+        // group managed instances by account_id, region, credentials_id, cloud_provider_account_id, and database_deployment_type so that we can manage a set of instances in bulk
+        const grouped: { [key: string]: DatabaseInstances[] } = managedInstances.reduce(
+            (acc: { [key: string]: DatabaseInstances[] }, managedInstance) => {
+                const key = `${managedInstance.account_id}|${managedInstance.region}|${managedInstance.credentials_id}|${managedInstance.resource.cloud_provider_account_id}|${managedInstance.database_deployment_type}`;
+                if (!acc[key]) {
+                    acc[key] = [];
+                }
+                acc[key].push(managedInstance);
+                return acc;
+            },
+            {} as { [key: string]: DatabaseInstances[] }
+        );
+
+        await Promise.all(
+            Object.entries(grouped).map(async ([key, instances]) => {
+                const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('|');
+                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                const managedInstanceToBeUpdated = instances.filter(
+                    instance => !trackedEc2InstanceIds.includes(instance.database_instance_id)
+                ); // update compute optimizer recommendation preferences only for managed instances that are not already being tracked, becuase the recommendation preference is static irrespsctive of the number of times it is updated
+                if (managedInstanceToBeUpdated.length === 0) {
+                    logger.info('No new managed instances found to update instance recommendation preferences.');
+                    return;
+                }
+
+                if (managedInstanceToBeUpdated.length > 0) {
+                    let coOptedIn = false;
+                    try {
+                        await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
+                        coOptedIn = true;
+                    } catch (error) {
+                        logger.info(
+                            `Failed fetching compute otimizer opt in status or Compute optimizer is not enabled for account ${awsAccountId} in region ${region}. Skipping updating instance recommendation preferences for managed instances.`
+                        );
+                    }
+                    if (coOptedIn) {
+                        managedInstanceToBeUpdated.forEach(async instance => {
+                            const { node1InstanceId, node2InstanceId } = instance?.metadata as unknown as Metadata;
+
+                            const instanceId = node1InstanceId || instance.database_instance_id;
+
+                            const instanceIds = [instanceId];
+                            if (node2InstanceId) {
+                                instanceIds.push(node2InstanceId);
+                            }
+                            await manageInstanceRecommendationPreReqsForManagedInstances(
+                                awsAccountId,
+                                region,
+                                credentialsId,
+                                instanceIds,
+                                accountId,
+                                deploymentType as string
+                            );
+                        });
+                    }
+                }
+            })
+        );
+
+        logger.info('Updating instance recommendation preferences for managed instances completed');
     });
 }
 
@@ -283,7 +372,9 @@ export {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
-    updateInstanceRecommendationPreferences,
-    updatePreferences,
+    updateManagedInstanceRecommendationPreferences,
+    updateTcoInstanceRecommendationPreferences,
+    updateTcoInstRecPrefs,
+    updateManagedInstRecPrefs,
     scheduledAssessment
 };

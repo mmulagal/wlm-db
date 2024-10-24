@@ -5,20 +5,6 @@ locals {
   node_type           = var.sql_node_name == "SQL-Node-1" ? "Primary" : "Secondary"
   tagName             = (var.sql_node_name == "SQL-Node" || var.sql_node_name == "SQL-Node-1") ? var.sql_fsx_server_net_bios_name : var.sql_fsx_server_net_bios_name_2
 
-  is_workload_security_group_id_empty            = var.is_standalone == false && var.workload_security_group_id == "" ? "workload_security_group_id is empty. " : ""
-  is_mssql_media_bucket_name_empty               = var.is_standalone == false && var.mssql_media_bucket_name == "" ? "mssql_media_bucket_name is empty. " : ""
-  is_mssql_media_path_key_empty                  = var.is_standalone == false && var.mssql_media_path_key == "" ? "mssql_media_path_key is empty. " : ""
-  is_sql_fsx_ws_fc_name_empty                    = var.is_standalone == false && var.sql_fsx_ws_fc_name == "" ? "sql_fsx_ws_fc_name is empty. " : ""
-  is_sql_fsx_fci_name_empty                      = var.is_standalone == false && var.sql_fsx_fci_name == "" ? "sql_fsx_fci_name is empty. " : ""
-  is_sql_fsx_server_net_bios_name_2_empty        = var.is_standalone == false && var.sql_fsx_server_net_bios_name_2 == "" ? "sql_fsx_server_net_bios_name_2 is empty. " : ""
-  is_network_interface_1_first_private_ip_empty  = var.is_standalone == false && var.network_interface_1_first_private_ip == "" ? "network_interface_1_first_private_ip is empty. " : ""
-  is_network_interface_1_second_private_ip_empty = var.is_standalone == false && var.network_interface_1_second_private_ip == "" ? "network_interface_1_second_private_ip is empty. " : ""
-  is_network_interface_2_first_private_ip_empty  = var.is_standalone == false && var.network_interface_2_first_private_ip == "" ? "network_interface_2_first_private_ip is empty. " : ""
-  is_network_interface_2_second_private_ip_empty = var.is_standalone == false && var.network_interface_2_second_private_ip == "" ? "network_interface_2_second_private_ip is empty. " : ""
-  is_fsx_quorum_volume_name_empty                = var.is_standalone == false && var.fsx_quorum_volume_name == "" ? "fsx_quorum_volume_name is empty. " : ""
-
-  error_message = "${local.is_workload_security_group_id_empty}${local.is_mssql_media_bucket_name_empty}${local.is_mssql_media_path_key_empty}${local.is_sql_fsx_ws_fc_name_empty}${local.is_sql_fsx_fci_name_empty}${local.is_sql_fsx_server_net_bios_name_2_empty}${local.is_network_interface_1_first_private_ip_empty}${local.is_network_interface_1_second_private_ip_empty}${local.is_network_interface_2_first_private_ip_empty}${local.is_network_interface_2_second_private_ip_empty}${local.is_fsx_quorum_volume_name_empty}"
-
   user_data = templatefile("${path.module}/user_data.ps1", {
     sql_node_initialization_s3_url = var.sql_node_initialization_s3_url
     region                         = var.sql_node_aws_location
@@ -40,22 +26,20 @@ locals {
     sql_admin_accounts             = var.sql_admin_accounts
     sql_collation                  = var.sql_collation
 
-    sql_node_name                         = var.sql_node_name
-    is_standalone                         = var.is_standalone
-    workload_security_group_id            = var.workload_security_group_id
-    mssql_media_bucket_name               = var.mssql_media_bucket_name
-    ami_id                                = var.ami_id
-    mssql_media_path_key                  = var.mssql_media_path_key
-    sql_fsx_ws_fc_name                    = var.sql_fsx_ws_fc_name
-    sql_fsx_fci_name                      = var.sql_fsx_fci_name
-    sql_fsx_server_net_bios_name          = var.sql_fsx_server_net_bios_name
-    sql_fsx_server_net_bios_name_2        = var.sql_fsx_server_net_bios_name_2
-    network_interface_1_first_private_ip  = var.network_interface_1_first_private_ip
-    network_interface_1_second_private_ip = var.network_interface_1_second_private_ip
-    network_interface_2_first_private_ip  = var.network_interface_2_first_private_ip
-    network_interface_2_second_private_ip = var.network_interface_2_second_private_ip
-    private_subnet1_id                    = var.private_subnet1_id
-    private_subnet2_id                    = var.private_subnet2_id
+    sql_node_name                  = var.sql_node_name
+    is_standalone                  = var.is_standalone
+    workload_security_group_id     = var.workload_security_group_id
+    mssql_media_bucket_name        = var.mssql_media_bucket_name
+    ami_id                         = var.ami_id
+    mssql_media_path_key           = var.mssql_media_path_key
+    sql_fsx_ws_fc_name             = var.sql_fsx_ws_fc_name
+    sql_fsx_fci_name               = var.sql_fsx_fci_name
+    sql_fsx_server_net_bios_name   = var.sql_fsx_server_net_bios_name
+    sql_fsx_server_net_bios_name_2 = var.sql_fsx_server_net_bios_name_2
+    network_interface_1_id         = var.network_interface_1_id
+    network_interface_2_id         = var.network_interface_2_id
+    private_subnet1_id             = var.private_subnet1_id
+    private_subnet2_id             = var.private_subnet2_id
   })
 }
 
@@ -137,22 +121,3 @@ resource "null_resource" "wait_for_tag_windows" {
   }
 }
 
-# Step 2: Add a null_resource with a local-exec provisioner
-# resource "null_resource" "check_user_data_tag" {
-#   triggers = {
-#     instance_id = aws_instance.sql_node.id
-#   }
-
-#   provisioner "local-exec" {
-#     command = "sh '${path.root}/scripts/check_user_data_tag.sh' '${aws_instance.sql_node.id}' '${var.sql_node_aws_location}'"
-#   }
-# }
-
-# validation for FCI variables
-# resource "null_resource" "validate_fci_variables" {
-#   count = local.error_message != "" ? 1 : 0
-
-#   provisioner "local-exec" {
-#     command = "echo '${local.error_message}' && exit 1"
-#   }
-# }

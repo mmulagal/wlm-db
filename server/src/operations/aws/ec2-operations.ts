@@ -12,7 +12,8 @@ import {
     DescribeSnapshotsCommandInput,
     _InstanceType,
     ImageState,
-    PlatformValues
+    PlatformValues,
+    CpuManufacturer
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import {
@@ -685,6 +686,48 @@ async function determineBiggerInstance(region: string, instanceTypes: _InstanceT
     return biggerInstanceType;
 }
 
+async function getInstanceTypesFromInstanceRequirementsForManagedInstances(
+    credentialsId: string,
+    region: string,
+    instanceId: string
+) {
+    logger.info('Getting instance types from instance requirements for managed instance', {
+        credentialsId,
+        region,
+        instanceId
+    });
+
+    const { Reservations = [] } = await describeInstance(credentialsId, region, {
+        InstanceIds: [instanceId]
+    });
+
+    const instances = Reservations.map(reservation => reservation.Instances || []).flat();
+    const [{ Architecture, VirtualizationType }] = instances;
+    if (Architecture && VirtualizationType) {
+        const params = {
+            ArchitectureTypes: [Architecture],
+            VirtualizationTypes: [VirtualizationType],
+            InstanceRequirements: {
+                AllowedInstanceTypes: ['m*', 'c*', 'r*'], // limit to specific instance types: 'm*', 'c*', 'r*' families.
+                CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES], // Filtering AMD based instances
+                VCpuCount: { Min: 2 },
+                MemoryMiB: { Min: 1024 }
+            }
+        };
+
+        const { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
+            credentialsId,
+            region,
+            params
+        );
+
+        const requiredInstanceTypes = compact(
+            instanceTypes?.map(requiredInstanceType => requiredInstanceType.InstanceType)
+        );
+
+        return requiredInstanceTypes;
+    }
+}
 async function getInstanceTypesFromInstanceRequirements(
     credentialsId: string,
     region: string,
@@ -755,6 +798,7 @@ async function getInstanceTypesFromInstanceRequirements(
                 ArchitectureTypes: [Architecture],
                 VirtualizationTypes: [VirtualizationType],
                 InstanceRequirements: {
+                    CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES], // Filtering AMD based instances; That's a recommendation we've got from the Microsoft specialists in AWS. It is better that across the board we will filter it. Product Management thinks that in general OLTP workloads are associated with Intel processors because of hyper threading technology or something like that.
                     AllowedInstanceTypes: ['m*', 'c*', 'r*'],
                     VCpuCount: { Min: totalMinCpu, Max: totalMaxCpu }, // As per req, Reduced #vcpus - according to #vcpus in use.(for Standard- headroom=20%, for AOAG, headroom = 10%).
                     MemoryMiB: { Min: MemoryInfo?.SizeInMiB }, // As per req, Memory should be the same.
@@ -824,6 +868,7 @@ export {
     enableVpcDnsAttributes,
     getValidationNodeInstanceType,
     isEbsAwsBackupEnabled,
+    getInstanceTypesFromInstanceRequirementsForManagedInstances,
     getInstanceTypesFromInstanceRequirements,
     getInstanceDetailsByPrivateIp,
     determineBiggerInstance,

@@ -371,13 +371,24 @@ function Invoke-RemoteCommands {
             $result = Invoke-Command -ComputerName localhost -ScriptBlock {
                 param($commandString)
                 $command = ConvertFrom-Json $commandString
+                $res = [PSCustomObject]@{
+                    ExitCode = $null
+                    Command  = $command.Command
+                }
                 try {
-                    Start-Process -FilePath "powershell.exe" -ArgumentList "-Command $($command.Command)" -NoNewWindow -Wait -PassThru
+                    $process = Start-Process -FilePath "powershell.exe" -ArgumentList "-Command $($command.Command)" -NoNewWindow -Wait -PassThru
+                    # Return the process exit code
+                    $res.ExitCode = $process.ExitCode
+                    if ($process.ExitCode -ne 0) {
+                        Write-Output "Command execution failed with exit code $($process.ExitCode): $($command.Command)"
+                        throw "Command execution failed with exit code $($process.ExitCode)"
+                    }
                 }
                 catch {
                     Write-Output "Command execution failed: $($command.Command)"
                     throw
                 }
+                return $res
             } -ArgumentList $commandString -Credential $Credential -Authentication Credssp
 
             if ($result.ExitCode -eq 0) {

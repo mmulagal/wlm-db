@@ -1,14 +1,7 @@
 import randomize from 'randomatic';
 import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
-import {
-    AssessmentCategories,
-    AWS_REGIONS,
-    DatabaseTypes,
-    RESOURCE_SOURCE,
-    STORAGE_PROTOCOLS,
-    USER_TOKEN
-} from '../consts';
+import { AWS_REGIONS, DatabaseTypes, RESOURCE_SOURCE, STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
 import getLogger from '../logger';
 import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from '../../operations/demo-operations';
@@ -21,6 +14,7 @@ import { inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
 import { instanceDemoData } from './instancesResponse';
 import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
+import { AssessmentCategories } from '../continous-optimization-consts';
 
 const logger = getLogger();
 
