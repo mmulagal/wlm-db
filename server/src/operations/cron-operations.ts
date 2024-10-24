@@ -215,7 +215,6 @@ async function updateManagedInstRecPrefs() {
                         logger.info(
                             `Failed fetching compute otimizer opt in status or Compute optimizer is not enabled for account ${awsAccountId} in region ${region}. Skipping updating instance recommendation preferences for managed instances.`
                         );
-                        return;
                     }
                 }
                 managedInstanceToBeUpdated.forEach(async instance => {
