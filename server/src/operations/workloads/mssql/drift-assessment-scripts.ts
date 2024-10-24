@@ -1,4 +1,4 @@
-import { WorkloadInstance } from '../../../utils/common-types';
+import { OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import { INSTANCE_DATA_DRIVES_QUERY, INSTANCE_LOG_DRIVES_QUERY, INSTANCE_TEMPDB_DRIVES_QUERY } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
@@ -34,15 +34,18 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     $tempDBDriveSizePercent = ($tempDBDriveSize/$defaultDataDriveSize) * 100
     $tempDBDriveSizeDetails = @{'size' = "$tempDBDriveSize"; 'percent' = "$tempDBDriveSizePercent"}
 
-    if(($instanceDataDrivedetails -ne $instanceLogDrivedetails) -and ($instanceDataDrivedetails -ne $instanceTempdbDrivedetails)) {
+    $defaultDataDrive = 'shared-drive'
+    if(($instanceDataDrivedetails -notcontains $instanceLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDataDrivedetails )) {
     $defaultDataDrive = 'separate-drive'
     }
-
-    if(($instanceDataDrivedetails -ne $instanceLogDrivedetails) -and ($instanceLogDrivedetails -ne $instanceTempdbDrivedetails)) {
+    
+    $defaultLogDrive = 'shared-drive'
+    if(($instanceDataDrivedetails -notcontains $instanceLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceLogDrivedetails )) {
     $defaultLogDrive = 'separate-drive'
     }
-
-    if(($instanceDataDrivedetails -ne $instanceTempdbDrivedetails) -and ($instanceLogDrivedetails -ne $instanceTempdbDrivedetails)) {
+    
+    $tempdbDrive = 'shared-drive'
+    if(($instanceTempdbDrivedetails -notcontains $instanceDataDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceLogDrivedetails)) {
     $tempdbDrive = 'separate-drive'
     }
 
@@ -260,4 +263,24 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     return (Deflate-String $response)
 `;
 
-export { STORAGE_CONFIGURATION_ASSESSMENT };
+const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
+    $WarningPreference = 'SilentlyContinue';
+    $FSxID = '${params.fsxId}'
+    $FSxRegion = '${params.region}'
+    $apiEndpoint = '${params.apiEndpoint}'
+    $apiQueryFilter = '${params.apiQueryFilter}'
+    $apiBody = '${params.apiBody}'
+
+    ${ontapRestRequest}
+
+    $newBody = $apiBody | ConvertFrom-Json
+
+    $body =   $newBody | ConvertTo-Json
+
+    $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
+
+    $ontapResponse | ConvertTo-Json
+    
+`;
+
+export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STORAGE_PARAMS_SCRIPT };

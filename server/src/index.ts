@@ -24,8 +24,7 @@ import {
     JWKS_FULL_NAME,
     WLMDB,
     SSM_COMMAND_CACHE_TYPE,
-    BXP,
-    REDIS_URL
+    BXP
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import {
@@ -63,11 +62,13 @@ import {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
-    updateInstanceRecommendationPreferences,
-    scheduledAssessment
+    updateTcoInstanceRecommendationPreferences,
+    scheduledAssessment,
+    updateManagedInstanceRecommendationPreferences
 } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
 import { resetCache } from './utils/cache';
+import { REDIS_URL } from './utils/continous-optimization-consts';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -359,7 +360,8 @@ try {
         purgeOlderJobs();
         failLongRunningDeploymentJobs();
         failLongRunningResourcePrepareJobs();
-        updateInstanceRecommendationPreferences();
+        updateTcoInstanceRecommendationPreferences();
+        updateManagedInstanceRecommendationPreferences();
         scheduledAssessment();
     }
 } catch (error) {

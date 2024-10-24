@@ -64,13 +64,6 @@ enum HEADERS {
 
 const API_PATH_HEALTH: string = '/health';
 
-// TODO: These variables are not used anywhere. Remove them later.
-// const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
-//     ? `http://${process.env.CLOUD_MANAGER_ENDPOINT}`
-//     : !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
-//     ? config.get<string>('urls.local-connector')
-//     : config.get<string>('urls.cloud-manager');
-
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
@@ -928,7 +921,6 @@ const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: { [key: string]: { name: str
     Ec2EndpointExists: { name: 'ec2_endpoint_exists', type: 'boolean' },
     Ec2MessagesEndpointExists: { name: 'ec2_messages_endpoint_exists', type: 'boolean' },
     EnableCloudWatchLogFeature: { name: 'enable_cloud_watch_log_feature', type: 'boolean' },
-    EncryptedFsxPassword: { name: 'encrypted_fsx_password', type: 'string' },
     FileSystemEncryptionKeyId: { name: 'fsx_encryption_key', type: 'string' },
     FSxAdminPassword: { name: 'fsx_admin_password', type: 'string' },
     FSxAdminUsername: { name: 'fsx_admin_username', type: 'string' },
@@ -1257,6 +1249,7 @@ const PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/aws_ssm.zip`;
 const PREPARE_PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/dependent-packages.zip`;
 const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
 const DEFAULT_MSSQL_INSTANCE_NAME = '$env:computername';
+const MAX_DATA_LUN_SIZE_IN_GIB = 86049.3;
 
 const PERMISSION_DENIAL_POSSIBLE_REASONS = {
     MISSING: 'permission statement is missing',
@@ -1314,6 +1307,8 @@ const DEMO_STANADLONE_SQL_SERVER_ID = 'f4b7c5d3-e1f6-4g2a-9c4l';
 const DEMO_STANADLONE_INSTANCE_ID = 'i-c5x3z1a7s9d2f3g';
 
 const TCO_FEATURE = 'TCO';
+const CONTINUOUS_ASSESSMENT_FEATURE = 'CONTINUOUS_ASSESSMENT';
+
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const PGSQL_VERSION = 'pgsql-version';
@@ -1427,37 +1422,6 @@ const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
 const TIMELINE_SERVICE_NAME = 'WF-Databases';
 
 const EBS_ROOT_VOLUME = 'ROOT_VOLUME';
-
-enum AssessmentCategories {
-    STORAGE = 'storage',
-    COMPUTE = 'compute'
-}
-
-enum AssessmentTriggeredBy {
-    SYSTEM = 'system',
-    USER = 'user'
-}
-
-enum AssessmentStatus {
-    OPTIMIZED = 'optimized',
-    NOT_OPTIMIZED = 'not-optimized',
-    UNDER_PROVISIONED = 'under-provisioned',
-    OVER_PROVISIONED = 'over-provisioned'
-}
-
-enum AwsWellArchitecturedPillars {
-    PERFORMANCE_EFFICIENCY = 'Performance efficiency',
-    RELIABILITY = 'Reliability',
-    COST_OPTIMIZATION = 'Cost optimization',
-    OPERATIONAL_EXCELLENCE = 'Operational excellence',
-    SECURITY = 'Security'
-}
-
-// Redis
-const REDIS_URL = process.env.REDIS_ENDPOINT || config.get('redis.endpoint') || '127.0.0.1:6379';
-const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';
-
-const DRIFT_ASSESSMENT_QUEUE = 'driftAssessmentQueue';
 
 export {
     WLMDB,
@@ -1754,6 +1718,7 @@ export {
     PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
     PG_TEMPLATE_OPTIONAL_PARAMETERS,
     TCO_FEATURE,
+    CONTINUOUS_ASSESSMENT_FEATURE,
     AWS_SSM_PARAMETER,
     TIMELINE_SERVICE_NAME,
     AuditStatus,
@@ -1765,12 +1730,6 @@ export {
     TERRAFORM_FOLDER_PATH,
     TERRAFORM_ROOT_MODULE_DISTRIBUTION,
     AWS_CE_TYPE,
-    AssessmentCategories,
-    AssessmentTriggeredBy,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    REDIS_URL,
-    DRIFT_ASSESSMENT_QUEUE,
     PGSQL_MASTER_TEMPLATE_PATH,
-    REDIS_SCHEMA
+    MAX_DATA_LUN_SIZE_IN_GIB
 };

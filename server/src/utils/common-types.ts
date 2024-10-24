@@ -209,6 +209,8 @@ interface WorkloadInstance {
     mappedVolumesUuids?: string[];
     mappedLunNames?: string[];
     mappedLunUuids?: string[];
+    cloudProviderAccountId: string;
+    resourceName: string;
 }
 
 interface StorageAssessment {
@@ -226,6 +228,14 @@ interface DriftAssessmentJob {
     region: string;
     resourceId: string;
     managedInstanceIds: string[];
+}
+
+interface OptimizeStorageParams {
+    fsxId: string;
+    region: string;
+    apiEndpoint: string;
+    apiQueryFilter: string;
+    apiBody: string;
 }
 
 type VolumeSpaceRecord = {
@@ -264,5 +274,6 @@ export {
     WorkloadInstance,
     StorageAssessment,
     DriftAssessmentJob,
+    OptimizeStorageParams,
     VolumeSpaceRecord
 };

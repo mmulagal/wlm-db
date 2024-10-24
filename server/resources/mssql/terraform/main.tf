@@ -289,19 +289,17 @@ module "fci_sql_node1" {
   sql_node_name                  = "SQL-Node-1"
   operating_system               = local.operating_system
 
-  fsx_quorum_volume_name                = var.fsx_quorum_volume_name
-  sql_fsx_ws_fc_name                    = var.sql_fsx_ws_fc_name
-  sql_fsx_fci_name                      = local.sql_fsx_fci_name
-  is_standalone                         = local.is_standalone
-  workload_security_group_id            = aws_security_group.workload_security_group.id
-  iam_instance_profile                  = aws_iam_instance_profile.fci_sql_fsx_profile[0].name
-  network_interface_id                  = aws_network_interface.sql_node_ni_1[0].id
-  network_interface_1_first_private_ip  = tolist(aws_network_interface.sql_node_ni_1[0].private_ips)[1]
-  network_interface_1_second_private_ip = tolist(aws_network_interface.sql_node_ni_1[0].private_ips)[2]
-  network_interface_2_first_private_ip  = tolist(aws_network_interface.sql_node_ni_2[0].private_ips)[1]
-  network_interface_2_second_private_ip = tolist(aws_network_interface.sql_node_ni_2[0].private_ips)[2]
-  private_subnet1_id                    = var.private_subnet1_id
-  private_subnet2_id                    = var.private_subnet2_id
+  fsx_quorum_volume_name     = var.fsx_quorum_volume_name
+  sql_fsx_ws_fc_name         = var.sql_fsx_ws_fc_name
+  sql_fsx_fci_name           = local.sql_fsx_fci_name
+  is_standalone              = local.is_standalone
+  workload_security_group_id = aws_security_group.workload_security_group.id
+  iam_instance_profile       = aws_iam_instance_profile.fci_sql_fsx_profile[0].name
+  network_interface_id       = aws_network_interface.sql_node_ni_1[0].id
+  network_interface_1_id     = aws_network_interface.sql_node_ni_1[0].id
+  network_interface_2_id     = aws_network_interface.sql_node_ni_2[0].id
+  private_subnet1_id         = var.private_subnet1_id
+  private_subnet2_id         = var.private_subnet2_id
 }
 
 module "fci_sql_node2" {
@@ -350,17 +348,15 @@ module "fci_sql_node2" {
   sql_fsx_server_net_bios_name   = local.sql_fsx_server_net_bios_name
   sql_fsx_server_net_bios_name_2 = local.sql_fsx_server_net_bios_name_2
 
-  fsx_quorum_volume_name                = var.fsx_quorum_volume_name
-  sql_fsx_ws_fc_name                    = var.sql_fsx_ws_fc_name
-  sql_fsx_fci_name                      = local.sql_fsx_fci_name
-  is_standalone                         = local.is_standalone
-  workload_security_group_id            = aws_security_group.workload_security_group.id
-  iam_instance_profile                  = aws_iam_instance_profile.fci_sql_fsx_profile[0].name
-  network_interface_id                  = aws_network_interface.sql_node_ni_2[0].id
-  network_interface_1_first_private_ip  = tolist(aws_network_interface.sql_node_ni_1[0].private_ips)[1]
-  network_interface_1_second_private_ip = tolist(aws_network_interface.sql_node_ni_1[0].private_ips)[2]
-  network_interface_2_first_private_ip  = tolist(aws_network_interface.sql_node_ni_2[0].private_ips)[1]
-  network_interface_2_second_private_ip = tolist(aws_network_interface.sql_node_ni_2[0].private_ips)[2]
-  private_subnet1_id                    = var.private_subnet1_id
-  private_subnet2_id                    = var.private_subnet2_id
+  fsx_quorum_volume_name     = var.fsx_quorum_volume_name
+  sql_fsx_ws_fc_name         = var.sql_fsx_ws_fc_name
+  sql_fsx_fci_name           = local.sql_fsx_fci_name
+  is_standalone              = local.is_standalone
+  workload_security_group_id = aws_security_group.workload_security_group.id
+  iam_instance_profile       = aws_iam_instance_profile.fci_sql_fsx_profile[0].name
+  network_interface_id       = aws_network_interface.sql_node_ni_2[0].id
+  network_interface_1_id     = aws_network_interface.sql_node_ni_1[0].id
+  network_interface_2_id     = aws_network_interface.sql_node_ni_2[0].id
+  private_subnet1_id         = var.private_subnet1_id
+  private_subnet2_id         = var.private_subnet2_id
 }

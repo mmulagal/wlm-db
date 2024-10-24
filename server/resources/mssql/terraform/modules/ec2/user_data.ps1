@@ -34,10 +34,8 @@ $SqlFsxWsFcName = "${sql_fsx_ws_fc_name}"
 $SqlFsxFciName = "${sql_fsx_fci_name}"
 $SqlFsxServerNetBiosName = "${sql_fsx_server_net_bios_name}"
 $SqlFsxServerNetBiosName2 = "${sql_fsx_server_net_bios_name_2}"
-$NetworkInterface1FirstPrivateIp = "${network_interface_1_first_private_ip}"
-$NetworkInterface1SecondPrivateIp = "${network_interface_1_second_private_ip}"
-$NetworkInterface2FirstPrivateIp = "${network_interface_2_first_private_ip}"
-$NetworkInterface2SecondPrivateIp = "${network_interface_2_second_private_ip}"
+$NetworkInterface1Id = "${network_interface_1_id}"
+$NetworkInterface2Id = "${network_interface_2_id}"
 $PrivateSubnet1Id = "${private_subnet1_id}"
 $PrivateSubnet2Id = "${private_subnet2_id}"
 
@@ -73,6 +71,18 @@ else {
   Install-Module -Name AWSPowerShell -Scope CurrentUser
 }
 
+# To get secondary IP addresses of network interface id
+function Get-SecondaryIpAddresses {
+  param (
+    [string]$NetworkInterfaceId
+  )
+
+  $networkInterfaces = Get-EC2NetworkInterface -NetworkInterfaceId $NetworkInterfaceId
+  $secondaryIpAddresses = $networkInterfaces.PrivateIpAddresses | Where-Object { $_.Primary -eq $false }
+
+  return $secondaryIpAddresses.PrivateIpAddress
+}
+
 try {
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
   $InstanceId = Get-InstanceId
@@ -86,6 +96,17 @@ try {
   $Command = "$ScriptDir\Sql-Instance-Initializer.ps1 -Region '$Region' -LogFeatureEnabled '$LogFeatureEnabled' -DeploymentName '$DeploymentName' -SqlServerName '$SqlServerName' -SqlSvmName '$SqlSvmName' -FsxDataVolumeName '$FsxDataVolumeName' -FsxLogVolumeName '$FsxLogVolumeName' -FsxFileSystemId '$FsxFileSystemId' -FsxTempDbVolumeName '$FsxTempDbVolumeName' -FsxDataLunSize '$FsxDataLunSize' -SqlIgroupName '$SqlIgroupName' -FsxVolumeSnapshotPolicy '$FsxVolumeSnapshotPolicy' -AdDnsIpAddresses '$AdDnsIpAddresses' -DomainDnsName '$DomainDnsName' -DomainAdminUser '$DomainAdminUser' -SqlAdminAccounts '$SqlAdminAccounts' -SqlCollation '$SqlCollation' -SqlNodeName '$SqlNodeName' -IsStandalone $IsStandaloneString -WorkloadSecurityGroupId '$WorkloadSecurityGroupId' -MssqlMediaBucketName '$MssqlMediaBucketName' -AmiId '$AmiId'"
   if ($IsStandalone -eq "false") {
     Write-Output "FCI Instance command"
+    # Get secondary IP addresses for the first network interface
+    $SecondaryIpAddresses1 = Get-SecondaryIpAddresses -NetworkInterfaceId $NetworkInterface1Id
+    # Assign the secondary IP addresses to variables
+    $NetworkInterface1FirstPrivateIp = $SecondaryIpAddresses1[0]
+    $NetworkInterface1SecondPrivateIp = $SecondaryIpAddresses1[1]
+
+    # Get secondary IP addresses for the second network interface
+    $SecondaryIpAddresses2 = Get-SecondaryIpAddresses -NetworkInterfaceId $NetworkInterface2Id
+    # Assign the secondary IP addresses to variables
+    $NetworkInterface2FirstPrivateIp = $SecondaryIpAddresses2[0]
+    $NetworkInterface2SecondPrivateIp = $SecondaryIpAddresses2[1]
     $Command += " -FsxQuorumVolumeName '$FsxQuorumVolumeName' -MssqlMediaPathKey '$MssqlMediaPathKey' -SqlFsxWsFcName '$SqlFsxWsFcName' -SqlFsxFciName '$SqlFsxFciName' -SqlFsxServerNetBiosName '$SqlFsxServerNetBiosName' -SqlFsxServerNetBiosName2 '$SqlFsxServerNetBiosName2' -NetworkInterface1FirstPrivateIp '$NetworkInterface1FirstPrivateIp' -NetworkInterface1SecondPrivateIp '$NetworkInterface1SecondPrivateIp' -NetworkInterface2FirstPrivateIp '$NetworkInterface2FirstPrivateIp' -NetworkInterface2SecondPrivateIp '$NetworkInterface2SecondPrivateIp' -PrivateSubnet1Id '$PrivateSubnet1Id' -PrivateSubnet2Id '$PrivateSubnet2Id'"
   }
 

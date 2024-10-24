@@ -3,14 +3,14 @@
         "timestamp": "Thu Oct 17 2024",
         "optimisedCount": {
             "total": 21,
-            "optimised": 19
+            "optimised": 0
         },
         "configuration": {
             "volumes": [
                 {
                     "name": "thin-provision",
                     "recommended": "true",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -22,7 +22,7 @@
                 {
                     "name": "autosize",
                     "recommended": "on",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -34,7 +34,7 @@
                 {
                     "name": "autosize-mode",
                     "recommended": "grow",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -46,7 +46,7 @@
                 {
                     "name": "fractional-reserve",
                     "recommended": "0",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -58,7 +58,7 @@
                 {
                     "name": "snapshot-copy-reserve",
                     "recommended": "0",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -70,7 +70,7 @@
                 {
                     "name": "snapshot-autodelete",
                     "recommended": "true",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "warning",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -82,7 +82,7 @@
                 {
                     "name": "space-mgmt-try-first",
                     "recommended": "volume_grow",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "warning",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -94,7 +94,7 @@
                 {
                     "name": "tiering-policy",
                     "recommended": "snapshot_only",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\n If Not Configured Properly:\n - Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n - Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n - Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n - Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -105,7 +105,7 @@
                 {
                     "name": "tiering-min-cooling-days",
                     "recommended": "7",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "warning",
                     "recommendation": "",
@@ -118,7 +118,7 @@
                 {
                     "name": "os-type",
                     "recommended": "windows_2008",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
@@ -129,7 +129,7 @@
                 {
                     "name": "space-reservation-enabled",
                     "recommended": "true",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "When space reservation is enabled, ONTAP reserves enough space in the volume so that writes to those LUNs do not fail because of a lack of disk space.",
@@ -140,7 +140,7 @@
                 {
                     "name": "space-allocation-allocated",
                     "recommended": "true",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "This option ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.",
@@ -153,7 +153,7 @@
                 {
                     "name": "mpio-enabled",
                     "recommended": "true",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "severity": "critical",
                     "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
                     "tags": [
@@ -164,7 +164,7 @@
                 {
                     "name": "mpio-iscsi-count",
                     "recommended": "5",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "severity": "critical",
                     "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
                     "tags": [
@@ -189,7 +189,7 @@
             {
                 "name": "log-drive-size",
                 "recommended": "20%-30%",
-                "status": "not-optimized23",
+                "status": "not-optimized",
                 "severity": "warning",
                 "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
                 "tags": [
@@ -199,7 +199,7 @@
             {
                 "name": "performance-tier",
                 "recommended": "100%",
-                "status": "optimized",
+                "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity tier may result in slower performance and high latency",
                 "tags": [
@@ -209,7 +209,7 @@
             {
                 "name": "tempdb-drive-size",
                 "recommended": "10%-20%",
-                "status": "optimized",
+                "status": "not-optimized",
                 "severity": "warning",
                 "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
                 "tags": [
@@ -219,7 +219,7 @@
             {
                 "name": "headroom",
                 "recommended": "35%-100%",
-                "status": "optimized",
+                "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                 "tags": [
@@ -231,7 +231,7 @@
             {
                 "name": "tempdb-files-location",
                 "recommended": "separate-drive",
-                "status": "optimized",
+                "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
                 "tags": [
@@ -242,7 +242,7 @@
             {
                 "name": "default-log-files-location",
                 "recommended": "separate-drive",
-                "status": "optimized",
+                "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                 "tags": [
@@ -253,7 +253,7 @@
             {
                 "name": "default-data-files-location",
                 "recommended": "separate-drive",
-                "status": "optimized",
+                "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                 "tags": [
@@ -261,6 +261,24 @@
                     "Operational excellence"
                 ]
             }
+        ]
+    },
+    "compute": {
+        "name": "compute-rightsizing",
+        "status": "over-provisioned",
+        "recommended": "optimized",
+        "severity": "Critical",
+        "recommendation": "Your current instance m5.large is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses. Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.",
+        "tags": [
+            "Cost optimization",
+            "Performance efficiency"
+        ],
+        "objectsInViolation": [
+            "CPU over-provisioned",
+            "EBS IOPS over-provisioned",
+            "EBS throughput over-provisioned",
+            "Network bandwidth over-provisioned",
+            "Network PPS over-provisioned"
         ]
     }
 }

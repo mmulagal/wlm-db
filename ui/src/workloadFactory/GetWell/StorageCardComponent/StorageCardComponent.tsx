@@ -1,21 +1,38 @@
-import { DsButton, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { Button, DsButton, DsFlashingDotsLoader, DsTypography, Popover } from '@netapp/design-system';
 import { useDialog } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
 import styles from './StorageCardComponent.module.scss';
-import GetWellChart from './GetWellChart/GetWellChart';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
-import { GETWELL_STATUS } from '../../../utils/consts';
+import { GETWELL_STATUS, GETWELL_VALUES, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
+import SmallLoader from '../../../common/SmallLoader/SmallLoader';
+import { useDispatch } from 'react-redux';
+import { setOptimizingData } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { useLazyGetSubTaskListQuery, useOptimizeStorageConfigMutation } from '../../../utils/apiService';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
+import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
+import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
+    const dispatch = useDispatch();
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
-    const isAssessmentAvailable = useAppSelector(state => state.getWellOptimize.isAssessmentAvailable);
+    const { isAssessmentAvailable, selectedResourceId, selectedDatabaseInstance } = useAppSelector(
+        state => state.getWellOptimize
+    );
+
+    const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
+    const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const [disableText, setDisableText] = useState(false);
 
@@ -41,9 +58,36 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             );
         } else if (value === GETWELL_STATUS.NOT_OPTIMIZED) {
             return <NotActive />;
+        } else if (value === GETWELL_STATUS.OPTIMIZING) {
+            return <SmallLoader />;
         } else {
             return;
         }
+    };
+
+    const tooltipListSection = (listObj: { key: string; value: string }[]) => {
+        return (
+            <div className={styles.tooltipLevel}>
+                {listObj?.map((item: any, index: number) => {
+                    return (
+                        <div>
+                            <div className={styles.row}>
+                                <div className={styles.firstPart}>
+                                    <DsTypography variant="Semibold_13">{item.key}</DsTypography>
+                                </div>
+
+                                <div className={styles.secondPart}>
+                                    <DsTypography variant="Regular_13">
+                                        {GETWELL_VALUES?.[item.value || ''] || item?.value}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                            {index !== listObj.length - 1 && <div className={styles.tooltipSeparator} />}
+                        </div>
+                    );
+                })}
+            </div>
+        );
     };
 
     const sectionThreeContent = (cardData: any) => {
@@ -51,6 +95,40 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             return (
                 <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
                     <DsFlashingDotsLoader />
+                </div>
+            );
+        } else if (cardData?.block_three?.list) {
+            let listObj: any = [];
+            cardData?.block_three?.list?.map((item: any) => {
+                const parts = item.split(' ');
+                const value = parts.pop() || ''; // Take the last element as value
+                const key = parts.join(' '); // Join the rest as key
+                listObj.push({ key, value });
+            });
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_three?.list?.length > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipListSection(listObj)}
+                                trigger="hover"
+                                delayHide={200}
+                                interactive={true}
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    {cardData?.block_three?.list?.length === 0 && (
+                        <div>
+                            <DisabledTooltipIcon />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {cardData?.block_three?.list?.length + ' values'}
+                    </DsTypography>
                 </div>
             );
         } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
@@ -69,6 +147,53 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     };
     const windowSize = useResize();
 
+    // This is the function that will be called when the optimize button is clicked from main cards
+    const callOptimizeApi = (type: any) => {
+        // ToDo - This is not supported yet so will update once it is final
+        let payload = {
+            type: type
+        };
+        // call optimize api
+        dispatch(
+            setOptimizingData({
+                ...optimizingData,
+                [cardData?.id]: 'optimizing'
+            })
+        );
+        formatGetWellData(dispatch);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: `Optimization process initiated for ${type}. This process can take upto 2 minutes.`
+            })
+        );
+
+        optimizeStorageConfig({
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            regionId: headerSelectedRegion?.label2,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance,
+            payload: payload
+        }).then((res: any) => {
+            const failedMsgData = (
+                <div className={styles.notification}>
+                    {type} failed to optimize.
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {GENERAL.VIEW_JOB_MONITORING}.
+                    </Button>
+                </div>
+            );
+            handleOptimizeStorageJob(res, { id: cardData?.id, name: type }, failedMsgData, getJobDetailApi, dispatch);
+        });
+    };
+
     const handleDialog = () => {
         setDialog(
             <DialogComponent
@@ -76,11 +201,19 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 content={<DialogContent type={type} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => {}}
+                callback={() => {
+                    callOptimizeApi(type);
+                }}
                 closeCallback={() => {
                     closeDialog();
                 }}
                 customClass={styles.colorSet}
+                hidePrimaryButton={
+                    type === 'Storage tier' ||
+                    type === 'User data files (.mdf) placement' ||
+                    type === 'Log files (.ldf) placement' ||
+                    type === 'TempDB placement'
+                }
             />
         );
     };
@@ -152,7 +285,24 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             {/* 6 section */}
             {!optimizePrintState &&
                 cardData?.block_one?.value !== 'ONTAP configuration' &&
-                cardData?.block_one?.value !== 'Operating system' && (
+                cardData?.block_one?.value !== 'Operating system' &&
+                (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
+                cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
+                    <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="250px"
+                            height="50px"
+                        >
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
+                    </div>
+                ) : (
                     <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
                         <DsButton
                             variant="secondary"
@@ -162,7 +312,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             Optimize
                         </DsButton>
                     </div>
-                )}
+                ))}
         </div>
     );
 };

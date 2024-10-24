@@ -48,7 +48,7 @@ const DialogContent = ({ type }: DialogType) => {
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory intends to optimize your SQL Server's performance by adjusting its
+                                Workload Factory recommends optimizing your SQL Server's performance by adjusting its
                                 storage tiers.
                             </DsTypography>
                         </div>
@@ -82,8 +82,8 @@ const DialogContent = ({ type }: DialogType) => {
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Data movement: As a result, your data will be moved from the capacity tier to
-                                        the performance tier.
+                                        Data movement: The data will be moved from the capacity tier to the performance
+                                        tier.
                                     </DsTypography>
                                 </div>
                             </div>
