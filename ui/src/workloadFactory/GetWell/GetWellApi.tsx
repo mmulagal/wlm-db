@@ -5,12 +5,10 @@ import {
     setDriftAssessmentData,
     setOptimizePageLoading,
     setGwRefreshPage,
-    setIsAssessmentAvailable,
-    resetGwData
+    setIsAssessmentAvailable
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation } from '../../utils/apiService';
 import { formatGetWellData, resetGwValuesOnRefresh } from './GetWellUtils';
-import { AssessmentResponseInterface } from '../../utils/types/getWellTypes';
 
 const GetWellApi = () => {
     const dispatch = useDispatch();

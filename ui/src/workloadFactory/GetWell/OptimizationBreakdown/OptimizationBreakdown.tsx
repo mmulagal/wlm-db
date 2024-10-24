@@ -32,10 +32,11 @@ const OptimizationBreakdown = () => {
                         isComingSoon={false}
                     />
                     <OptimizeComponent
-                        value={<ComingSoon />}
+                        value={optimizationBreakDown?.compute?.percent || 0}
+                        data={optimizationBreakDown?.compute}
                         text={'Compute'}
                         image={<Compute />}
-                        isComingSoon={true}
+                        isComingSoon={false}
                     />
                     <OptimizeComponent
                         value={<ComingSoon />}
