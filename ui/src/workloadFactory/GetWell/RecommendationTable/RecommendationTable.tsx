@@ -37,7 +37,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
 
     // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any) => {
-        // Only 1 config can be passed no
+        // Only 1 config can be passed at a time
         let payload = {
             assessments: [
                 {

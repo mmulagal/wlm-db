@@ -24,7 +24,6 @@ import {
     removeObjectFromArray,
     generateDate,
     applyFilter,
-    cardDataDefault,
     resetGwValuesOnRefresh
 } from './GetWellUtils';
 import {

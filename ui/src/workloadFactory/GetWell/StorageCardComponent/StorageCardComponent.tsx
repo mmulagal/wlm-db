@@ -130,9 +130,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         {cardData?.block_three?.list?.length + ' values'}
                     </DsTypography>
                 </div>
-                // <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                //     {cardData?.block_three?.value?.length + ' values'}
-                // </DsTypography>
             );
         } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
             return (

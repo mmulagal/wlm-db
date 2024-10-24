@@ -856,13 +856,6 @@ export const getWellApi = createApi({
                     method: 'POST',
                     body: payload
                 })
-            }),
-            optimizeStorageConfig: builder.mutation({
-                query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment/optimize`,
-                    method: 'POST',
-                    body: payload
-                })
             })
         };
     }
