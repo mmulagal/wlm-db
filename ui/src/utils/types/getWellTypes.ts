@@ -17,6 +17,7 @@ export interface GetWellSliceInterface {
     gwRefreshPage: boolean;
     gwTimestamp: string;
     optimizingData: any;
+    optimizingInstanceData: boolean;
 }
 
 interface CountBreakDown {
@@ -89,4 +90,5 @@ export interface GwPerConfigCardInterface {
         values?: string[] | undefined;
     };
     tags: string[];
+    category?: string;
 }

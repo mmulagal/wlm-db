@@ -182,7 +182,7 @@ const GetWell = () => {
                             ) : (
                                 <Popover
                                     popoverClass={styles['copy-popover']}
-                                    children={`Last update: ${gwTimestamp}`}
+                                    children={`Last update: ${gwTimestamp || GENERAL.NOT_AVAILABLE}`}
                                     trigger="hover"
                                     container={
                                         <div className={styles.refreshIcon} onClick={refreshGetWellPage}>

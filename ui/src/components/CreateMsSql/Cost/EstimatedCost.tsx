@@ -121,8 +121,8 @@ const EstimatedCost = () => {
         if (
             diskSize &&
             diskSizeUnit &&
-            ((diskSizeUnit === 'TiB' && Number(diskSize) <= 130 && Number(diskSize) >= 1) ||
-                (diskSizeUnit === 'GiB' && Number(diskSize) <= 133120 && Number(diskSize) >= 120))
+            ((diskSizeUnit === 'TiB' && Number(diskSize) <= 86 && Number(diskSize) >= 1) ||
+                (diskSizeUnit === 'GiB' && Number(diskSize) <= 88064 && Number(diskSize) >= 120))
         ) {
             validDisk = true;
         }
