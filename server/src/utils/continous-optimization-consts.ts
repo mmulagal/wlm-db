@@ -80,7 +80,7 @@ const OptimizeStorageApiData = {
     },
     TIERING_MINIMUM_COOLING_DAYS: {
         api: '/private/cli/volume',
-        body: { 'tiering-minimum-cooling-days': '7' },
+        body: { 'tiering-policy': 'snapshot-only', 'tiering-minimum-cooling-days': '7' },
         type: VOLUME
     },
     TIERING_POLICY: {
