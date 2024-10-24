@@ -352,13 +352,7 @@ async function initiateStorageAssessmentCollection(
             ?.map(i => i?.volumeRecords)
             .flat() || [];
     instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
-
-    const volumeDBMap =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeDBMap)
-            .flat() || {};
-
-    instanceRecord.mappedVolumeNames = volumeDBMap.map(volume => volume.name as string);
+    instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
 
     instanceRecord.mappedLunNames =
         Object.values(instanceVolumeMapping)
