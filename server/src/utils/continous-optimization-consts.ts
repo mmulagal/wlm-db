@@ -75,7 +75,7 @@ const OptimizeStorageApiData = {
     },
     SNAPSHOT_AUTO_DELETE: {
         api: '/private/cli/volume/snapshot/autodelete',
-        body: { 'snapshot-auto-delete': 'true' },
+        body: { enabled: 'true' },
         type: VOLUME
     },
     TIERING_MINIMUM_COOLING_DAYS: {
@@ -94,7 +94,7 @@ const OptimizeStorageApiData = {
         type: LUN
     },
     SPACE_ALLOCATION: {
-        api: '/private/cli/volume',
+        api: '/private/cli/lun',
         body: { 'space-allocation': 'enabled' },
         type: LUN
     }

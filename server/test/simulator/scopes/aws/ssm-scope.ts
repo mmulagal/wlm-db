@@ -497,17 +497,7 @@ const dbSummary = {
     commands: [sqlQueryExecution(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, DATABASES, false)]
 };
 
-const optimizeStorage = {
-    commands: [
-        OPTIMIZE_STORAGE_PARAMS_SCRIPT({
-            fsxId: 'test-fsx-id',
-            region: 'us-east-1',
-            apiEndpoint: '/private/cli/volume',
-            apiQueryFilter: 'vserver=test-svm&volume=vol1',
-            apiBody: JSON.stringify({ 'autosize-mode': 'grow' })
-        })
-    ]
-};
+const optimizeRegex = /#Storage Optimization Script/;
 
 ssmMock
     .on(SendCommandCommand)
@@ -644,7 +634,11 @@ ssmMock
     .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand)
     .on(SendCommandCommand, { Parameters: dbSummary })
     .resolves(listSendCommandCommandResponse.dbSummaryCommand)
-    .on(SendCommandCommand, { Parameters: optimizeStorage })
+    .on(SendCommandCommand, params => {
+        const newOptimizeRegex = optimizeRegex;
+        const newOptimizeParams = params.Parameters.commands[0];
+        return newOptimizeParams && newOptimizeRegex.test(newOptimizeParams);
+    })
     .resolves(listSendCommandCommandResponse.optimizeStorageCommand);
 
 ssmMock

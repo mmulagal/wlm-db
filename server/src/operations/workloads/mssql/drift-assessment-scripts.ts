@@ -316,6 +316,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 `;
 
 const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
+    #Storage Optimization Script
     $WarningPreference = 'SilentlyContinue';
     $FSxID = '${params.fsxId}'
     $FSxRegion = '${params.region}'
