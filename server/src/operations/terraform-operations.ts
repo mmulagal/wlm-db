@@ -215,7 +215,8 @@ async function createTFVarsFile(
                 creator_tag: deploymentName,
                 deployment_name: deploymentName,
                 role_credentials_id: '',
-                metrics
+                metrics,
+                aws_profile: 'default'
             };
             let terraformVariableString = '';
             const terraformVariables: any = {};

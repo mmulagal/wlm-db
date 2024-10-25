@@ -661,3 +661,9 @@ variable "sql_fsx_fci_name" {
   type        = string
   default     = ""
 }
+
+variable "aws_profile" {
+  description = "The AWS CLI profile to use for this deployment"
+  type        = string
+  default     = "default" # Change this profile name as per your usage
+}
