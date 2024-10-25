@@ -172,7 +172,7 @@ export const JOB_MONITORING_TYPE = {
     PREPARE_RESOURCE: 'PREPARE_RESOURCE',
     SANDBOX: 'SANDBOX',
     ASSESSMENT: 'ASSESSMENT',
-    OPTIMIZE: 'OPTIMIZE'
+    OPTIMIZE: 'OPTIMIZATION'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -677,6 +677,7 @@ export const GETWELL_CONFIG: any = {
     'mpio-enabled': 'Multipath I/O Status',
     'mpio-load-balance-policy': 'Multipath I/O Policy',
     'ntfs-allocation-size': 'NTFS allocation unit size',
+    'ntfs-allocation-unit-size': 'NTFS allocation unit size',
     'log-drive-size': 'transaction_log_drive_size',
     'performance-tier': 'storage_tier',
     'tempdb-drive-size': 'tempdb_drive_size',

@@ -252,7 +252,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                         </div>
                                     </TooltipComponent>
                                 ) : (
-                                    <div>
+                                    <div id={'assessment-optimization'}>
                                         <DsButton
                                             variant="secondary"
                                             onClick={() => handleOntapDialog(rowData)}

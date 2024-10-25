@@ -82,8 +82,8 @@ const DialogContent = ({ type }: DialogType) => {
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Data movement: The data will be moved from the capacity tier to the performance
-                                        tier.
+                                        Data movement: The data will be moved gradually from the capacity tier to the
+                                        performance tier.
                                     </DsTypography>
                                 </div>
                             </div>
@@ -117,8 +117,8 @@ const DialogContent = ({ type }: DialogType) => {
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory is ready to increase the FSx for ONTAP file system capacity to maintain
-                                the right headroom.
+                                Workload Factory recommends increasing the FSx for ONTAP file system capacity to
+                                maintain the right headroom.
                             </DsTypography>
                         </div>
 
@@ -167,9 +167,8 @@ const DialogContent = ({ type }: DialogType) => {
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory intends to recommends updateing the provisioned capacity for your SQL
-                                Server log volume and iSCSI LUN so that their sizing will be 25% of the Uuser data
-                                volume.
+                                Workload Factory recommends updating the provisioned capacity for your SQL Server log
+                                volume and iSCSI LUN so that their sizing will be 25% of the user data volume.
                             </DsTypography>
                         </div>
 
@@ -550,6 +549,55 @@ const DialogContent = ({ type }: DialogType) => {
                                     <DsTypography variant="Regular_14">
                                         Repeat steps 1-4 for all SQL Server drives (Data, Log, TempDB)
                                     </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'Compute rightsizing':
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory is ready to migrate SQL Server EC2 instance from the current instance
+                                type to the recommended instance type
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                What will happen
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        Workload Factory will change the instance type for your Amazon EC2 instance from
+                                        the current instance type to the recommended instance type. Migration effort
+                                        (AWS migration effort)
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">{GENERAL.NOTE_PONT_ONE}</DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">{GENERAL.NOTE_PONT_TWO}</DsTypography>
                                 </div>
                             </div>
                         </div>
