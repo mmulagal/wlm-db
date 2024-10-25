@@ -343,19 +343,32 @@ async function createAndUploadTheTerraformZipFile(
     try {
         if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
             const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform/${deploymentName}.zip`;
-            if (!isDemoFlow) {
-                const archiveFolder = `./resources/mssql/${deploymentName}/${deploymentName}.zip`;
-                const folderToBeZipped = `./resources/mssql/${deploymentName}/terraform`;
-                await createArchive(archiveFolder, folderToBeZipped);
-                await putObjectBucket(
-                    TEMPLATE_BUCKET_REGION,
-                    SIGNED_TEMPLATES_BUCKET_NAME,
-                    customSQLStandaloneTFPath,
-                    '',
-                    archiveFolder
+            try {
+                if (!isDemoFlow) {
+                    const archiveFolder = `./resources/mssql/${deploymentName}/${deploymentName}.zip`;
+                    const folderToBeZipped = `./resources/mssql/${deploymentName}/terraform`;
+                    await createArchive(archiveFolder, folderToBeZipped);
+                    await putObjectBucket(
+                        TEMPLATE_BUCKET_REGION,
+                        SIGNED_TEMPLATES_BUCKET_NAME,
+                        customSQLStandaloneTFPath,
+                        '',
+                        archiveFolder
+                    );
+                }
+            } catch (err: any) {
+                logger.error('Error while creating and uploading terraform zip file', err);
+                throw createError(
+                    HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                    'Error while creating and uploading terraform zip file'
                 );
+            } finally {
+                try {
+                    await rmdir(`./resources/mssql/${deploymentName}`, { recursive: true });
+                } catch (err: any) {
+                    logger.error('Error while deleting the directory', err);
+                }
             }
-            await rmdir(`./resources/mssql/${deploymentName}`, { recursive: true });
             const zipSignedURL = await getPreSignedUrl(
                 TEMPLATE_BUCKET_REGION,
                 SIGNED_TEMPLATES_BUCKET_NAME,
