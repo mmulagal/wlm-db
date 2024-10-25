@@ -424,18 +424,17 @@ async function initiateCompueAssessment(
                 instanceArns: [resourceArn],
                 recommendationPreferences: {
                     cpuVendorArchitectures: [CpuVendorArchitecture.CURRENT] // CURRENT to view recommendations that are based on the same CPU vendor and architecture as the current instance.
-                },
-                filters: [
-                    {
-                        name: 'InferredWorkloadTypes',
-                        values: ['SQLServer']
-                    }
-                ]
+                }
             }
         );
         const {
             instanceRecommendations: [
-                { currentInstanceType, finding, findingReasonCodes, recommendationOptions: coRecOptions }
+                {
+                    currentInstanceType = '',
+                    finding = '',
+                    findingReasonCodes = [],
+                    recommendationOptions: coRecOptions = []
+                } = {}
             ] = []
         } = computeOptimizerInstanceRecommendations || {};
         if (currentInstanceType && finding) {

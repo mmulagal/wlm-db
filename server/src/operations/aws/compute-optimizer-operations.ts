@@ -336,10 +336,6 @@ async function getInstanceRecommendations(
                     values: ['Overprovisioned']
                 },
                 {
-                    name: 'InferredWorkloadTypes',
-                    values: ['SQLServer']
-                },
-                {
                     name: 'FindingReasonCodes',
                     values: [
                         'CPUOverprovisioned',
