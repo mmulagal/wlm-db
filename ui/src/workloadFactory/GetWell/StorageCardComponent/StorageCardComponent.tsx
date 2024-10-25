@@ -335,7 +335,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         </div>
                     </TooltipComponent>
                 ) : (
-                    <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
+                    <div
+                        className={styles.buttonSection}
+                        style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
+                        id={'assessment-optimization'}
+                    >
                         <DsButton
                             variant="secondary"
                             onClick={() => handleDialog()}

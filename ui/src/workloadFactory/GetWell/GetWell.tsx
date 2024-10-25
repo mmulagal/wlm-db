@@ -176,7 +176,7 @@ const GetWell = () => {
                         </DsTypography>
                         {!optimizePrintState &&
                             (loading ? (
-                                <div className={styles.refreshIconDisable}>
+                                <div className={styles.refreshIconDisable} id={'assessment-refresh'}>
                                     <RefreshIcon />
                                 </div>
                             ) : (
@@ -185,7 +185,11 @@ const GetWell = () => {
                                     children={`Last update: ${gwTimestamp || GENERAL.NOT_AVAILABLE}`}
                                     trigger="hover"
                                     container={
-                                        <div className={styles.refreshIcon} onClick={refreshGetWellPage}>
+                                        <div
+                                            className={styles.refreshIcon}
+                                            onClick={refreshGetWellPage}
+                                            id={'assessment-refresh'}
+                                        >
                                             <RefreshIcon />
                                         </div>
                                     }
@@ -226,6 +230,7 @@ const GetWell = () => {
                             >
                                 <div />
                                 <div
+                                    id="assessment-export-pdf"
                                     className={styles.buttonStyle}
                                     onClick={loading || !isAssessmentAvailable ? () => {} : printDocument}
                                 >
