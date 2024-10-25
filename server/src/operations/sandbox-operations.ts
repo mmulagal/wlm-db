@@ -1022,7 +1022,8 @@ async function createVolumeClone(
             destDetails.activeNodeInstanceId,
             accountId,
             false,
-            '360'
+            CUSTOM_SSM_EXECUTION_TIMEOUT,
+            'SandBox: Create Volume Clone'
         );
 
         if (!clonedVolumes) {
