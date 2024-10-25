@@ -376,6 +376,40 @@ const INSTANCE_LOG_DRIVES_QUERY = `${SET_NOCOUNT}
 const INSTANCE_TEMPDB_DRIVES_QUERY = `${SET_NOCOUNT}
         SELECT DISTINCT(SELECT LEFT(physical_name, 1))FROM tempdb.sys.database_files;`;
 
+const INSTANCE_USER_DB_DRIVE_SIZES = `
+        ${SET_NOCOUNT}
+        SELECT 
+            d.name AS databaseName,
+            LEFT(mf.physical_name, 2) AS dataDriveLetter,
+            vs.total_bytes / 1048576 AS dataDriveTotalSizeMB
+        FROM 
+            sys.databases d
+        JOIN 
+            sys.master_files mf ON d.database_id = mf.database_id AND mf.type = 0
+        CROSS APPLY 
+            sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
+        WHERE 
+            d.database_id > 4 or d.name like '%msdb%'
+        ORDER BY 
+            d.name ${FOR_JSON_PATH}`;
+
+const INSTANCE_LOG_DB_DRIVE_SIZES = `
+            ${SET_NOCOUNT}
+            SELECT 
+                d.name AS databaseName,
+                LEFT(mf.physical_name, 2) AS logDriveLetter,
+                vs.total_bytes / 1048576 AS logDriveTotalSizeMB
+            FROM 
+                sys.databases d
+            JOIN 
+                sys.master_files mf ON d.database_id = mf.database_id AND mf.type = 1
+            CROSS APPLY 
+                sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
+            WHERE 
+                d.database_id > 4 or d.name like '%msdb%'
+            ORDER BY 
+                d.name ${FOR_JSON_PATH}`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -412,5 +446,7 @@ export {
     DEFAULT_LOG_DRIVE_SIZE,
     TEMPDB_DRIVE_SIZE,
     INSTANCE_DEFAULT_DATA_DRIVES_QUERY,
-    INSTANCE_DEFAULT_LOG_DRIVES_QUERY
+    INSTANCE_DEFAULT_LOG_DRIVES_QUERY,
+    INSTANCE_USER_DB_DRIVE_SIZES,
+    INSTANCE_LOG_DB_DRIVE_SIZES
 };
