@@ -5,31 +5,20 @@ param(
     [string]$NodeName
 )
 
-$counter = 0
-$timeout = if ($NodeName -in @('Validation-Node-1', 'Validation-Node-2')) { 150 } else { 720 } # 150 * 10 seconds = 25 minutes, 720 * 10 seconds = 2 hours
+$log_file = "${Path}\logs\${NodeName}_check_tag.log"
+Write-Output "Starting wait_for_tag.ps1" | Tee-Object -FilePath $log_file -Append
 
-Write-Output "Starting wait_for_tag.ps1 with timeout: $timeout (10-second intervals)"
+$tag = & "${Path}\scripts\check_tag.ps1" -InstanceId $InstanceId -Region $Location -NodeName $NodeName 2>&1 | Tee-Object -FilePath $log_file -Append
+Write-Output "Tag value: $tag" | Tee-Object -FilePath $log_file -Append
 
-do {
-    $tag = & "${Path}\scripts\check_tag.ps1" $InstanceId $Location
-    Write-Output "Tag value: $tag"
-    
-    if ($tag -eq 'completed') {
-        Write-Output "Tag completed"
-        break
-    }
-    elseif ($tag -eq 'failed') {
-        Write-Output "$NodeName failed to deploy"
-        exit 1
-    }
-    else {
-        Write-Output "Waiting for $NodeName tag... (counter: $counter)"
-        Start-Sleep -Seconds 10
-        $counter++
-        Write-Output "Counter value: $counter"
-        if ($counter -ge $timeout) {
-            Write-Output "$NodeName tag was not created within the timeout period. Stopping deployment."
-            exit 1
-        }
-    }
-} while ($true)
+if ($tag -eq 'completed') {
+    Write-Output "Tag completed" | Tee-Object -FilePath $log_file -Append
+}
+elseif ($tag -eq 'failed') {
+    Write-Output "$NodeName failed to deploy" | Tee-Object -FilePath $log_file -Append
+    exit 1
+}
+else {
+    Write-Output "$NodeName tag was not created within the timeout period. Stopping deployment." | Tee-Object -FilePath $log_file -Append
+    exit 1
+}

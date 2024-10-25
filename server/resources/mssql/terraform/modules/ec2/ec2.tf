@@ -105,11 +105,14 @@ resource "null_resource" "wait_for_tag_mac_or_linux" {
   }
 
   provisioner "local-exec" {
-    command = "sh '${path.root}/scripts/wait_for_tag.sh' '${path.root}' '${aws_instance.sql_node.id}' '${var.sql_node_aws_location}' '${var.sql_node_name}'"
+    command = <<-EOT
+      mkdir -p '${path.root}/logs'
+      sh '${path.root}/scripts/wait_for_tag.sh' '${path.root}' '${aws_instance.sql_node.id}' '${var.sql_node_aws_location}' '${var.sql_node_name}' > '${path.root}/logs/${var.sql_node_name}_wait_for_tag_mac_or_linux.log' 2>&1
+    EOT
   }
 }
 
-#Wait for user data to complete execution on the instance for windows host
+# Wait for user data to complete execution on the instance for windows host
 resource "null_resource" "wait_for_tag_windows" {
   count = var.operating_system == "Windows" ? 1 : 0
 
@@ -118,7 +121,8 @@ resource "null_resource" "wait_for_tag_windows" {
   }
 
   provisioner "local-exec" {
-    command = "powershell.exe -ExecutionPolicy Bypass -File ${path.root}/scripts/wait_for_tag.ps1 ${path.root} ${aws_instance.sql_node.id} ${var.sql_node_aws_location} ${var.sql_node_name}"
+    command = <<-EOT
+      powershell.exe -Command "New-Item -ItemType Directory -Force -Path '${path.root}/logs'; & '${path.root}/scripts/wait_for_tag.ps1' '${path.root}' '${aws_instance.sql_node.id}' '${var.sql_node_aws_location}' '${var.sql_node_name}' > '${path.root}/logs/${var.sql_node_name}_wait_for_tag_windows.log' 2>&1"
+    EOT
   }
 }
-
