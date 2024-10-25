@@ -75,7 +75,7 @@ resource "aws_instance" "validation_node" {
 
   user_data = local.user_data
 
-  instance_initiated_shutdown_behavior = "stop" // enable this to terminate once we are done with staging testing so this will get terminated
+  instance_initiated_shutdown_behavior = "terminate" // enable this to terminate once we are done with staging testing so this will get terminated
 
   timeouts {
     create = "30m"
