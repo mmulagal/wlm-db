@@ -58,7 +58,7 @@ async function calculateStorageDrift(
     );
 
     if (isEmpty(persistedConfigurationData)) {
-        const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found for ${databaseHostId}, ${databaseInstanceId}.`;
+        const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
@@ -403,8 +403,8 @@ async function initiateCompueAssessment(
     let jobStatus: string = JOBSTATUS.COMPLETED;
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: 'The selected database host is being scanned for compute best practice misalignments.',
-        description: 'The selected database host is being scanned for compute best practice misalignments.',
+        name: 'Database host is being scanned for compute best practice misalignments.',
+        description: 'Database host is being scanned for compute best practice misalignments.',
         resourceName: resourceName!,
         initiator: AssessmentTriggeredBy.USER,
         startTime: Date.now(),
@@ -528,7 +528,7 @@ async function driftAssessment(
         const instanceNames = databaseInstanceRecords.map(i => i.name);
         await updateJobDetails(accountId, credentialsId, region, jobId, {
             error: errorMessage,
-            description: `The selected SQL Server instance(s) ${instanceNames.join(
+            description: `SQL Server instance(s) ${instanceNames.join(
                 ','
             )} has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.`,
             status: jobStatus!,
@@ -597,7 +597,7 @@ async function triggerDriftAssessment(
 
     const instanceNames = runningInstances.map(i => i.name);
     if (!isEmpty(runningInstances)) {
-        const jobString = `The selected SQL Server instance(s) ${instanceNames.join(
+        const jobString = `SQL Server instance(s) ${instanceNames.join(
             ','
         )} is/are being scanned for best practice misalignments.`;
         const job = await registerJob(accountId, credentialsId, region, {
