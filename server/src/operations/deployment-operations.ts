@@ -528,6 +528,27 @@ async function getCloudformationTemplate(
     };
 }
 
+function validateFSXThroughputAndIOPS(fsxVolThroughput: number, fsxIOPS: number, region?: string) {
+    logger.info('Validate fsx throughput and iops', fsxVolThroughput, fsxIOPS, region);
+
+    // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
+    if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
+        // FSX 4gbps throughput capacity supported regions
+        const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
+        const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
+        if (!regionExists) {
+            throw createError(
+                412,
+                `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
+            );
+        }
+        // check ssd and iops size
+        if (fsxIOPS !== FSX_IOPS) {
+            throw createError(412, 'Supported Fsxn IOPs should be 160000');
+        }
+    }
+}
+
 async function getTerraformSetup(
     networkConfiguration: CFNetworkConfigurationType,
     ec2Configuration: EC2ConfigurationType,
@@ -572,22 +593,7 @@ async function getTerraformSetup(
             throw createError(412, 'Please provide the collation information');
         }
 
-        if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
-            // FSX 4gbps throughput capacity supported regions
-            const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
-            const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
-            if (!regionExists) {
-                throw createError(
-                    412,
-                    `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
-                );
-            }
-            // check ssd and iops size
-            if (fsxIOPS !== FSX_IOPS) {
-                throw createError(412, 'Supported Fsxn IOPs should be 160000');
-            }
-        }
-
+        validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
         const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
             networkConfiguration,
             sqlConfiguration.sqlDeploymentMode
@@ -709,22 +715,7 @@ async function deployStackOrCreateTemplateURL(
             throw createError(412, 'Please provide the collation information');
         }
 
-        // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
-        if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
-            // FSX 4gbps throughput capacity supported regions
-            const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
-            const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
-            if (!regionExists) {
-                throw createError(
-                    412,
-                    `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
-                );
-            }
-            // check ssd and iops size
-            if (fsxIOPS !== FSX_IOPS) {
-                throw createError(412, 'Supported Fsxn IOPs should be 160000');
-            }
-        }
+        validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
 
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
@@ -1358,21 +1349,7 @@ async function deployPgSql(
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const { sqlServerName } = sqlConfiguration;
 
-    if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
-        // FSX 4gbps throughput capacity supported regions
-        const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
-        const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
-        if (!regionExists) {
-            throw createError(
-                412,
-                `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
-            );
-        }
-        // check ssd and iops size
-        if (fsxIOPS !== FSX_IOPS) {
-            throw createError(412, 'Supported Fsxn IOPs should be 160000');
-        }
-    }
+    validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
 
     let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:15,${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
