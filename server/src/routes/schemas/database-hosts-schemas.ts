@@ -355,8 +355,7 @@ const TriggerDriftAssessmentSchema = {
     }
 };
 const OptimizeStorageSchemaDescription = `Optimize storage volume and lun for the given database instance. \n
-                  Acceptable values for volume: ${Object.values(OptimizeStorageConfigs).join(', ')}.
-                  Acceptable values for lun: ${Object.values(OptimizeStorageConfigs).join(', ')}.\n
+                  Acceptable values for configurationName : ${Object.values(OptimizeStorageConfigs).join(', ')}.\n
                  objectsToOptimize should be an array of volume names or lun paths`;
 
 const OptimizeStorageSchema = {
