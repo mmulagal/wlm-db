@@ -349,7 +349,8 @@ async function initiateStorageAssessmentCollection(
         false,
         instanceRecord.activeNodeInstanceid,
         [instanceRecord.name],
-        instanceRecord.sqlAuthEnabled
+        instanceRecord.sqlAuthEnabled,
+        true
     )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [] }];
 
     const volumeRecords =
