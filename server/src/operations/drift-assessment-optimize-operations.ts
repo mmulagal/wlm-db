@@ -10,7 +10,7 @@ import { getResources, getInstanceInfo } from './database/database-operations';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/drift-assessment-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
-import { getTimeDifferenceInMinutes, sqlResponseParsing } from '../utils/utils';
+import { getTimeDifferenceInMinutes, isDemo, sqlResponseParsing } from '../utils/utils';
 import { driftAssessment } from './drift-assessment';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
@@ -20,6 +20,8 @@ import {
     OptimizeStorageConfigs,
     OptimizeStorageApiData
 } from '../utils/continous-optimization-consts';
+
+const isDemoFlow = isDemo();
 
 const logger = getLogger();
 
@@ -94,7 +96,7 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         name: `Assessment for ${serverNameWithHostName} after optimization`,
         description: `Assessment for ${serverNameWithHostName} after optimization`,
         startTime: Date.now(),
-        type: JOBTYPE.OPTIMIZE,
+        type: JOBTYPE.OPTIMIZATION,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName,
         parentJobId
@@ -113,7 +115,6 @@ async function optimizeOperation(params: OptimizeOperationParams) {
     };
 
     await driftAssessment(accountId, credentialsId, region, jobId, databaseHostId, [instanceToAssess]);
-
     await updateJobDetails(accountId, credentialsId, region, parentJobId, {
         status: JOBSTATUS.COMPLETED,
         endTime: Date.now(),
@@ -137,17 +138,24 @@ async function optimizeStorage(params: OptimizeStorageParams) {
         serverNameWithHostName
     } = params;
     logger.info(`Optimizing storage for ${accountId} in ${region} for configuration ${optimizationTargets}`);
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Optimize storage for ${serverNameWithHostName}`,
+        description: `Optimize storage for ${serverNameWithHostName}`,
+        startTime: Date.now(),
+        type: JOBTYPE.OPTIMIZATION,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: serverNameWithHostName,
+        parentJobId
+    });
+    logger.debug(`Job created with id ${jobId}`);
+    let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let parentJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let newJobError;
+    let parentJobError;
+    let newJobDescription;
+
     try {
-        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: `Optimize storage for ${serverNameWithHostName}`,
-            description: `Optimize storage for ${serverNameWithHostName}`,
-            startTime: Date.now(),
-            type: JOBTYPE.OPTIMIZE,
-            status: JOBSTATUS.IN_PROGRESS,
-            resourceName: serverNameWithHostName,
-            parentJobId
-        });
-        logger.debug(`Job created with id ${jobId}`);
         for (const data of optimizationTargets) {
             const { configurationName, objectsToOptimize } = data;
             const configKey = Object.keys(optimizationConfigs).find(
@@ -177,25 +185,46 @@ async function optimizeStorage(params: OptimizeStorageParams) {
             });
             const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!);
             const parsedResp = sqlResponseParsing(resp);
-            const objectsOptimized = parsedResp.num_records;
-            const optimizeMessage = `Optimized ${objectsOptimized}/${objectsToOptimize.length} ${queryParamKey} ${serverNameWithHostName}, ${parsedResp.cli_output}`;
+            const objectsOptimized = parsedResp.num_records || 0;
+            const optimizeMessage = `Optimized ${objectsOptimized}/${objectsToOptimize.length} ${queryParamKey} ${serverNameWithHostName}`;
             logger.info(optimizeMessage);
-
-            await updateJobDetails(accountId, credentialsId, region, jobId, {
-                status: JOBSTATUS.COMPLETED,
-                endTime: Date.now(),
-                description: optimizeMessage
-            });
+            if (objectsOptimized !== objectsToOptimize.length) {
+                if (objectsOptimized === 0) {
+                    const optimizeErrorMessage = `Failed to optimize  ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
+                    logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
+                    newJobStatus = JOBSTATUS.FAILED;
+                    newJobError = optimizeErrorMessage;
+                } else {
+                    const unOptimizedObjects = objectsToOptimize.filter(obj => !parsedResp.cli_output.includes(obj));
+                    const optimizeErrorMessage = `Failed to optimize  ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
+                    newJobStatus = JOBSTATUS.FAILED;
+                    newJobError = optimizeErrorMessage;
+                }
+            } else {
+                newJobDescription = optimizeMessage;
+                newJobStatus = JOBSTATUS.COMPLETED;
+            }
         }
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;
         logger.error(errorMessage);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
-            status: JOBSTATUS.FAILED,
+        newJobStatus = JOBSTATUS.FAILED;
+        newJobError = errorMessage;
+
+        parentJobStatus = JOBSTATUS.FAILED;
+        parentJobError = errorMessage;
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, jobId, {
+            status: newJobStatus,
             endTime: Date.now(),
-            error: errorMessage
+            error: newJobError,
+            description: newJobDescription
         });
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status: parentJobStatus,
+            endTime: Date.now(),
+            error: parentJobError
+        });
     }
 }
 
@@ -223,12 +252,13 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
     const { metadata, resource_name: sqlServerName } = resourceDetail;
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
-    const { isSSMConnected, activeNodeInstanceId } = await getActiveSqlNode(
+    const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(
         credentialsId,
         region,
         node1InstanceId,
         node2InstanceId
     );
+    logger.info('instancesDetails', instancesDetails);
 
     const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
     const {
@@ -236,9 +266,18 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
         database_instance_name: instanceName,
         database_instance_id: instanceId,
         database_type: databaseType,
-        sqlAuthEnabled,
         fsx_svm_id: svmDetails
     } = instanceDetail as unknown as DatabaseInstance;
+
+    const sqlAuthEnabled =
+        instancesDetails && instanceDetail
+            ? instancesDetails.some(
+                  instance =>
+                      instance.instanceName === instanceDetail.database_instance_name &&
+                      instance.sqlAuthEnabled === true
+              )
+            : false;
+
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
         const errorMessage = `Unable to optimize instnace ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
@@ -252,7 +291,7 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
     const filterParams = {
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName as string,
-        typeFilter: JOBTYPE.OPTIMIZE
+        typeFilter: JOBTYPE.OPTIMIZATION
     };
     const {
         items: [job]
@@ -270,7 +309,7 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
 
     // create the parent job for optimize operation
     const { id: parentJobId } = await registerJob(accountId, credentialsId, region, {
-        type: JOBTYPE.OPTIMIZE,
+        type: JOBTYPE.OPTIMIZATION,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName as string,
         name: `Optimize storage for ${serverNameWithHostName}`,
@@ -291,7 +330,7 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
         const svmList = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId);
         const svmName = svmList?.Name;
 
-        if (!svmName) {
+        if (!svmName && !isDemoFlow) {
             const errorMessage = `No SVM with id ${svmId} found for ${fsxId} in ${region}`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
