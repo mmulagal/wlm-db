@@ -355,7 +355,6 @@ async function createAndUploadTheTerraformZipFile(
                     archiveFolder
                 );
             }
-            await rmdir(`./resources/mssql/${deploymentName}`, { recursive: true });
             const zipSignedURL = await getPreSignedUrl(
                 TEMPLATE_BUCKET_REGION,
                 SIGNED_TEMPLATES_BUCKET_NAME,
@@ -369,6 +368,12 @@ async function createAndUploadTheTerraformZipFile(
     } catch (err: any) {
         logger.error('Error while creating terraform zip file', err);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error while creating terraform zip file');
+    } finally {
+        try {
+            await rmdir(`./resources/mssql/${deploymentName}`, { recursive: true });
+        } catch (err: any) {
+            logger.error('Error while deleting the directory', err);
+        }
     }
 }
 
