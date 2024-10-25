@@ -114,7 +114,8 @@ async function callSsmExecution(
     activeNodeInstanceId: string,
     accountId?: string,
     cacheData: boolean = true,
-    executionTimeout?: string
+    executionTimeout?: string,
+    comment?: string
 ) {
     logger.info('Calling SSM command execution', credentialsId, region, commands, activeNodeInstanceId);
     const cacheHashKey = generateHash(activeNodeInstanceId + commands);
@@ -135,7 +136,8 @@ async function callSsmExecution(
     };
     const params = {
         ...defaultParams,
-        InstanceIds: [activeNodeInstanceId]
+        InstanceIds: [activeNodeInstanceId],
+        ...(comment && { Comment: comment })
     };
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
@@ -172,7 +174,8 @@ async function executeBashSsmCommand(
     activeNodeInstanceId: string,
     accountId?: string,
     cacheData: boolean = true,
-    executionTimeout?: string
+    executionTimeout?: string,
+    comment?: string
 ) {
     logger.info('Calling SSM bash command execution', credentialsId, region, commands, activeNodeInstanceId);
     const cacheHashKey = generateHash(activeNodeInstanceId + commands);
@@ -193,7 +196,8 @@ async function executeBashSsmCommand(
     };
     const params = {
         ...defaultParams,
-        InstanceIds: [activeNodeInstanceId]
+        InstanceIds: [activeNodeInstanceId],
+        ...(comment && { Comment: comment })
     };
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);

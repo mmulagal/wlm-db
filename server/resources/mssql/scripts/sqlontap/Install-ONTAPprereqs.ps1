@@ -3,6 +3,7 @@ param()
 Start-Transcript -Path C:\cfn\log\installontapwindowsfeatures.ps1.txt -Append
 $ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
+$PSToolkitRequiredVersion = '9.15.1.2407'
 
 try {
     Install-WindowsFeature Multipath-IO, Failover-Clustering, RSAT-DNS-Server -IncludeManagementTools
@@ -89,7 +90,7 @@ while ($installPSModulesTries -le 2) {
             Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber
             Install-Module -Name AWS.Tools.SimpleSystemsManagement -Force -AllowClobber
             Install-Module -Name SqlServer -Force -AllowClobber
-            Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck # remove this skip publisher check once the module is signed
+            Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion # remove this skip publisher check once the module is signed
 
             $modulesInstalled = $True
             break
@@ -125,7 +126,7 @@ while ($installPSModulesTries -le 2) {
             Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber -Repository 'AWS'
             Install-Module -Name AWS.Tools.SimpleSystemsManagement -AllowClobber -Repository 'AWS'
             Install-Module -Name SqlServer -Force -AllowClobber -Repository 'AWS'
-            Install-Module -Name netapp.ontap -SkipPublisherCheck -Repository 'AWS'
+            Install-Module -Name netapp.ontap -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -Repository 'AWS'
 
             $modulesInstalled = $True
             break
