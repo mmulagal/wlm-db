@@ -477,7 +477,8 @@ const getMappedOntapVolumesScript = (
     isSystemDatabase: string = '$false',
     instances: string[] = [],
     sqlAuthEnabled: boolean = false,
-    fields: string = ''
+    fields: string = '',
+    includeLogVolumes: boolean = false
 ) => `
     $WarningPreference = 'SilentlyContinue';
     $ProgressPreference = 'SilentlyContinue'
@@ -485,6 +486,7 @@ const getMappedOntapVolumesScript = (
         $responseObject = @{}
     }
 
+    $includeLogVolumes = [System.Convert]::ToBoolean('${includeLogVolumes}')
     try {
         #Requires -Module AWS.Tools.SimpleSystemsManagement
 
@@ -556,6 +558,17 @@ const getMappedOntapVolumesScript = (
                         AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
                         FOR JSON PATH;
 "@
+
+                    if($includeLogVolumes) {
+                        $sqlquery = @"
+                            SET NOCOUNT ON;
+                            SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
+                            CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                            WHERE vs.volume_mount_point != 'C:\\'
+                            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
+                            FOR JSON PATH;
+"@
+                    }
                     # Get the windows volumes of the databases with the mdf file volume name
                     $sqlqueryfordatabaseandvolumelist = @"
                         SET NOCOUNT ON;
@@ -572,6 +585,23 @@ const getMappedOntapVolumesScript = (
                             AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
                         FOR JSON PATH;
 "@
+
+                if($includeLogVolumes) {
+                        $sqlqueryfordatabaseandvolumelist = @"
+                        SET NOCOUNT ON;
+                        SELECT DISTINCT 
+                            DB_NAME(mf.database_id) AS DatabaseName,
+                            vs.logical_volume_name as VolumeName,
+                            vs.volume_id as VolumeId
+                        FROM 
+                            sys.master_files AS mf
+                        CROSS APPLY 
+                            sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                        WHERE 
+                            vs.volume_mount_point != 'C:\\'
+                        FOR JSON PATH;
+"@
+                    }
                 }
 
                 if ($sqlCredential.useSqlAuth -eq $True) {

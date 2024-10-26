@@ -278,7 +278,7 @@ async function calculateComputeDrift(
             databaseInstanceId
         );
         const { finding, findingReasonCodes, currentInstanceType } =
-            (await initiateCompueAssessment(
+            (await initiateComputeAssessment(
                 cloudProviderAccountId!,
                 accountId,
                 credentialsId,
@@ -308,7 +308,7 @@ async function calculateComputeDrift(
                 name: 'compute-rightsizing',
                 status: findingValue,
                 recommended: AssessmentStatus.OPTIMIZED,
-                severity: SEVERITY.CRITICAL,
+                severity: SEVERITY.WARNING,
                 recommendation: recommendationMessage,
                 objectsInViolation: findingReasonCodes?.map(code => translateFindingReasonCode(code)) || [],
                 tags: [
@@ -349,7 +349,8 @@ async function initiateStorageAssessmentCollection(
         false,
         instanceRecord.activeNodeInstanceid,
         [instanceRecord.name],
-        instanceRecord.sqlAuthEnabled
+        instanceRecord.sqlAuthEnabled,
+        true
     )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [] }];
 
     const volumeRecords =
@@ -384,7 +385,7 @@ async function initiateStorageAssessmentCollection(
     ]);
 }
 
-async function initiateCompueAssessment(
+async function initiateComputeAssessment(
     awsAccountId: string,
     accountId: string,
     credentialsId: string,
