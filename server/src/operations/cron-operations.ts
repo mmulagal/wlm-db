@@ -307,16 +307,21 @@ async function scheduledAssessment() {
                     .map(instance => instance.database_instance_id);
 
                 if (!isEmpty(managedInstanceIds)) {
-                    const jobId = generateHash(
+                    const redisJobid = generateHash(
                         `${accountId}-${credentialsId}-${resourceId}-${managedInstanceIds.join(',')}`
                     );
-                    logger.info(
-                        `Adding assessment cron for ${jobId}, ${accountId}, ${credentialsId}, ${resourceId}, ${managedInstanceIds}.`
-                    );
+
+                    logger.info('Adding assessment cron for ', {
+                        redisJobid,
+                        accountId,
+                        credentialsId,
+                        resourceId,
+                        managedInstanceIds
+                    });
 
                     try {
                         driftAssessmentQueue.add(
-                            `driftAssessmentFor-${jobId}`,
+                            `driftAssessmentFor-${redisJobid}`,
                             {
                                 accountId,
                                 credentialsId,
@@ -326,21 +331,25 @@ async function scheduledAssessment() {
                             },
                             {
                                 // 2hours to observe
-                                repeat: { every: 2 * 3600 * 1000 }, // 24 hours in milliseconds
+                                repeat: { every: Number(ms(config.get('redis.cron-job-interval'))) }, // 24 hours in milliseconds
                                 removeOnComplete: true,
                                 removeOnFail: true,
-                                jobId
+                                jobId: redisJobid
                             }
                         );
                     } catch (error: any) {
                         logger.error(`Error while add job to the queue. Error: ${error}`);
                     }
 
-                    logger.info(
-                        `Added assessment cron for ${jobId}, ${accountId}, ${credentialsId}, ${resourceId}, ${managedInstanceIds}.`
-                    );
+                    logger.info('Added assessment cron for ', {
+                        redisJobid,
+                        accountId,
+                        credentialsId,
+                        resourceId,
+                        managedInstanceIds
+                    });
                 } else {
-                    logger.info(`No managed instances found for ${accountId}, ${credentialsId}, ${resourceId}.`);
+                    logger.info('No managed instances found for ', { accountId, credentialsId, resourceId });
                 }
             })
         );
