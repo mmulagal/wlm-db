@@ -85,6 +85,6 @@
     },
     "redis": {
         "endpoint": "127.0.0.1:6379",
-        "cron-job-interval": "24 hours"
+        "cron-job-interval": "2 hours"
     }
 }
