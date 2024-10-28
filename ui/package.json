@@ -1,7 +1,7 @@
 {
     "name": "ui",
     "version": "1.1.0",
-    "homepage": "./",
+    "homepage": "",
     "private": true,
     "dependencies": {
         "@netapp/design-system": "1.5.2",
