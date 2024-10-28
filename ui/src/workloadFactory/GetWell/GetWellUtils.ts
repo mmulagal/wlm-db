@@ -743,10 +743,9 @@ export const generateDate = () => {
 };
 
 // filters card data based on filter tags
-export const applyFilter = (cardData: any, optimizeFilterTags: any, tableData: any) => {
+export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
     let filteredCardData: any = {};
     let configCount = 0;
-    let filteredTableData: any = {};
     const filters = groupByType(optimizeFilterTags, 'value');
     const categoryData: any = {
         file_system_headroom: { category: 'Storage', subCategory: 'Storage sizing' },
@@ -777,31 +776,14 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any, tableData: a
         const checkTags =
             !filters.tags || filters.tags.filter((tag: string) => cardData[key].tags.includes(tag)).length > 0;
 
-        const isInnerTable = tableData[key] ? true : false;
-        if (isInnerTable) {
-            filteredTableData[key] = tableData[key].filter((row: any) => {
-                const isOptmized = row.status === GETWELL_VALUES.optimized;
-                const checkStatus =
-                    !filters.status ||
-                    (filters.status.includes(GETWELL_VALUES.optimized) && isOptmized) ||
-                    (filters.status.includes('Not optimized') && !isOptmized);
-                const checkSeverity = !filters.severity || filters.severity.includes(row.severity);
-                const checkTags =
-                    !filters.tags || filters.tags.filter((tag: string) => row.tags.includes(tag)).length > 0;
-                return checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags;
-            });
-        }
-
-        const innerTableHasData = isInnerTable && filteredTableData[key].length > 0;
-
-        if ((checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags) || innerTableHasData) {
+        if (checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags) {
             filteredCardData[key] = cardData[key];
             if (categoryData[key] && cardData[key]['block_two'].value) {
-                configCount += isInnerTable ? filteredTableData[key].length : 1;
+                configCount++;
             }
         }
     });
-    return { data: filteredCardData, filteredTableData, configCount };
+    return { data: filteredCardData, configCount };
 };
 
 export const resetGwValuesOnRefresh = (dispatch: any) => {

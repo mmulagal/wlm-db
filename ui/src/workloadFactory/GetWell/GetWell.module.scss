@@ -32,7 +32,7 @@
                     margin-top: 5px;
                 }
             }
-            
+
             .refreshIconDisable {
                 svg {
                     --icon-primary-color: var(--text-disabled);
@@ -173,8 +173,14 @@
 
                 .filtersOption {
                     display: flex;
-                    gap: 24px;
                     margin-bottom: 30px;
+
+                    .tagsContainer {
+                        display: flex;
+                        flex-wrap: wrap;
+                        width: calc(100% - 100px);
+                        gap: 24px;
+                    }
                 }
 
                 .filterTag {
