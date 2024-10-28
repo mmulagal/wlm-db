@@ -3,6 +3,7 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
+import moment from 'moment';
 import { DriftAssessmentResponseType, StorageParameterDriftResponseType } from '../routes/types/database-hosts.types';
 import getLogger from '../utils/logger';
 import { getEc2Arn, sqlResponseParsing } from '../utils/utils';
@@ -64,7 +65,7 @@ async function calculateStorageDrift(
     }
 
     const driftAssessmentData: StorageParameterDriftResponseType = {
-        timestamp: persistedConfigurationData.creation_time.toISOString(),
+        timestamp: (moment(persistedConfigurationData.creation_time).unix() * 1000).toString(),
         optimisedCount: { total: 0, optimised: 0 },
         configuration: { volumes: [], luns: [], os: [] },
         sizing: [],
