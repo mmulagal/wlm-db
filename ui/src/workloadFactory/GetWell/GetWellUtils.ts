@@ -536,21 +536,21 @@ export const formatOptimizationBreakDown = (cardsData: any, formatOntapConfigLis
         }
     });
 
-    formatOntapConfigList?.forEach((item: any) => {
-        if (item?.status === GETWELL_STATUS.OPTIMIZED) {
-            optimizedStorage++;
-        } else {
-            notOptimizedStorage++;
-        }
-    });
+    // formatOntapConfigList?.forEach((item: any) => {
+    //     if (item?.status === GETWELL_STATUS.OPTIMIZED) {
+    //         optimizedStorage++;
+    //     } else {
+    //         notOptimizedStorage++;
+    //     }
+    // });
 
-    formatOsConfigList?.forEach((item: any) => {
-        if (item?.status === GETWELL_STATUS.OPTIMIZED) {
-            optimizedStorage++;
-        } else {
-            notOptimizedStorage++;
-        }
-    });
+    // formatOsConfigList?.forEach((item: any) => {
+    //     if (item?.status === GETWELL_STATUS.OPTIMIZED) {
+    //         optimizedStorage++;
+    //     } else {
+    //         notOptimizedStorage++;
+    //     }
+    // });
 
     let storageCount = {
         total: optimizedStorage + notOptimizedStorage,
@@ -628,7 +628,8 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
                 ...cardDataDefault?.ontap_configuration?.block_four,
                 value: highestOntapSeverity
             },
-            tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index)
+            tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
+            category: 'storage'
         }
     };
 
@@ -656,7 +657,8 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
                 ...cardDataDefault?.os_configuration?.block_four,
                 value: highestOsSeverity
             },
-            tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index)
+            tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
+            category: 'storage'
         }
     };
 

@@ -50,6 +50,11 @@
         padding: 8px 16px;
     }
 
+    [class*='dsButtons'] {
+        height: 32px !important;
+        min-width: 140px !important;
+    }
+
     [class*='Table-module_header-row'] {
         position: unset !important;
         [class*='Table-module_header-cell'] {
