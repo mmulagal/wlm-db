@@ -513,7 +513,7 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
 };
 
 // This function is used to format the optimization breakdown data.
-export const formatOptimizationBreakDown = (cardsData: any, formatOntapConfigList: any, formatOsConfigList: any) => {
+export const formatOptimizationBreakDown = (cardsData: any) => {
     let optimizedStorage = 0;
     let notOptimizedStorage = 0;
     let optimizedCompute = 0;
@@ -533,22 +533,6 @@ export const formatOptimizationBreakDown = (cardsData: any, formatOntapConfigLis
             } else {
                 notOptimizedCompute++;
             }
-        }
-    });
-
-    formatOntapConfigList?.forEach((item: any) => {
-        if (item?.status === GETWELL_STATUS.OPTIMIZED) {
-            optimizedStorage++;
-        } else {
-            notOptimizedStorage++;
-        }
-    });
-
-    formatOsConfigList?.forEach((item: any) => {
-        if (item?.status === GETWELL_STATUS.OPTIMIZED) {
-            optimizedStorage++;
-        } else {
-            notOptimizedStorage++;
         }
     });
 
@@ -628,7 +612,8 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
                 ...cardDataDefault?.ontap_configuration?.block_four,
                 value: highestOntapSeverity
             },
-            tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index)
+            tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
+            category: 'storage'
         }
     };
 
@@ -656,11 +641,12 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
                 ...cardDataDefault?.os_configuration?.block_four,
                 value: highestOsSeverity
             },
-            tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index)
+            tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
+            category: 'storage'
         }
     };
 
-    let optBreakDown = formatOptimizationBreakDown(cardsData, formatOntapConfigList, formatOsConfigList);
+    let optBreakDown = formatOptimizationBreakDown(cardsData);
 
     // Dispatch the formatted cards data to the store
     dispatch(setCardData(cardsData));
