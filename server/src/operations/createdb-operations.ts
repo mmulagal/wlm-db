@@ -480,11 +480,12 @@ async function deployDatabase(
             isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
             ({ fsxSvmId } = metadata as unknown as Metadata);
         }
+        const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
 
         // check whether any jobs on the same resource running
         const filterParams = {
             status: JOBSTATUS.IN_PROGRESS,
-            resourceName: sqlServerName as string,
+            resourceName: serverNameWithHostName as string,
             typeFilter: JOBTYPE.CREATE_RESOURCE
         };
         const {
@@ -504,7 +505,6 @@ async function deployDatabase(
             }
         }
 
-        const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
         updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
 
         // create the parent job for database deployment

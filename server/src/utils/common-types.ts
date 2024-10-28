@@ -187,6 +187,7 @@ interface DatabaseInstance {
     databaseType?: string;
     storage_type?: string;
     sqlAuthEnabled?: boolean;
+    isManaged?: boolean;
 }
 
 interface InstanceDetails {
@@ -195,6 +196,62 @@ interface InstanceDetails {
     isDefault?: boolean;
     sqlAuthEnabled?: boolean;
 }
+
+interface WorkloadInstance {
+    id: string;
+    name: string;
+    type: string;
+    region: string;
+    sqlAuthEnabled: boolean;
+    fsxFileSystem: string;
+    activeNodeInstanceid: string;
+    mappedVolumeNames?: string[];
+    mappedVolumesUuids?: string[];
+    mappedLunNames?: string[];
+    mappedLunUuids?: string[];
+    cloudProviderAccountId: string;
+    resourceName: string;
+}
+
+interface StorageAssessment {
+    filesystemId: string;
+    volumes: Array<{ Key?: string; Value?: string }>;
+    luns: Array<{ Key?: string; Value?: string }>;
+    os: Array<{ Key?: string; Value?: string }>;
+    layout: JSON;
+    sizing: JSON;
+}
+
+interface DriftAssessmentJob {
+    accountId: string;
+    credentialsId: string;
+    region: string;
+    resourceId: string;
+    managedInstanceIds: string[];
+}
+
+interface OptimizeStorageParams {
+    fsxId: string;
+    region: string;
+    apiEndpoint: string;
+    apiQueryFilter: string;
+    apiBody: string;
+}
+
+type VolumeSpaceRecord = {
+    uuid: string;
+    name: string;
+    efficiency: {
+        space_savings: {
+            total: number;
+            total_percent: number;
+        };
+    };
+    space: {
+        size: number;
+        used: number;
+    };
+};
 
 export {
     Metadata,
@@ -213,5 +270,10 @@ export {
     databaseInstanceMetadata,
     Sandbox,
     DatabaseInstance,
-    InstanceDetails
+    InstanceDetails,
+    WorkloadInstance,
+    StorageAssessment,
+    DriftAssessmentJob,
+    OptimizeStorageParams,
+    VolumeSpaceRecord
 };

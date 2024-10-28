@@ -1,18 +1,31 @@
 import randomize from 'randomatic';
 import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
-import { AWS_REGIONS, DatabaseTypes, RESOURCE_SOURCE, STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
+import {
+    AWS_REGIONS,
+    DatabaseTypes,
+    DEFAULT_INSTANCE_NAME,
+    RESOURCE_SOURCE,
+    STORAGE_PROTOCOLS,
+    USER_TOKEN
+} from '../consts';
 import getLogger from '../logger';
 import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
-import { createDeploymentMockDataInDB, createFileSystemForDemo } from '../../operations/demo-operations';
+import {
+    createAssessmentJobMockData,
+    createDeploymentMockDataInDB,
+    createFileSystemForDemo
+} from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
 import { listConfig, upsertDatabaseInstance } from '../../lib/database/db';
 import { saveConfig } from '../../operations/database/database-operations';
 import { getAsyncLocalStorageResource } from '../async-local-storage';
-import { listJobs } from '../../lib/database/job';
-import { inventoryDemoData } from './demoInventoryData';
+import { createJobs, listJobs } from '../../lib/database/job';
+import { ASSESMENT_CONFIG_DATA, inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
 import { instanceDemoData } from './instancesResponse';
+import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
+import { AssessmentCategories } from '../continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -119,7 +132,7 @@ async function createDemoResourcesPerRegion(
                     'SQLServer-Dev-01DEV-FinancialAccounts',
                     'SQLServer-Dev-01DEV-EmployeeDirectory',
                     'SQLServer-Dev-01DEV-InventoryControl',
-                    'SQLServer-Prod-01PROD-SupplierManagement'
+                    'SQLServer-Dev-01PROD-SupplierManagement'
                 ]
             },
             {
@@ -132,7 +145,7 @@ async function createDemoResourcesPerRegion(
 
         instances.forEach(async ({ resourceId, name, protocol, sqlInstances }) => {
             await createDemoResources(accountId, region, credentialsId, awsAccountId, name, protocol, resourceId);
-
+            const instanceNames: string[] = [];
             sqlInstances.forEach(instanceName => {
                 createDatabaseInstances(
                     accountId,
@@ -144,7 +157,18 @@ async function createDemoResourcesPerRegion(
                     protocol,
                     {}
                 );
+                const newInstanceName = instanceName.replace(name, '');
+                instanceNames.push(newInstanceName);
             });
+            instanceNames.push(DEFAULT_INSTANCE_NAME);
+            const assessmentJobMockData = await createAssessmentJobMockData(
+                accountId,
+                name,
+                instanceNames,
+                credentialsId,
+                region
+            );
+            await createJobs(accountId, assessmentJobMockData);
         });
     }
 }
@@ -228,11 +252,12 @@ async function createDatabaseInstances(
     storageProtocol: string,
     databaseMetadata: any
 ) {
+    const databaseInstanceId = randomUUID();
     const instanceRecord = {
         resourceId,
         credentialsId,
         region,
-        databaseInstanceId: randomUUID(),
+        databaseInstanceId,
         databaseInstanceName,
         fsxnIds: fsxId,
         isDefault: false,
@@ -247,6 +272,19 @@ async function createDatabaseInstances(
     };
 
     await upsertDatabaseInstance(accountId, instanceRecord);
+
+    const instanceConfigDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: databaseInstanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.STORAGE,
+        config_data: ASSESMENT_CONFIG_DATA
+    };
+
+    await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
 }
 
 export { creadteDemoDBData, returnInventorydata, createConfigurations };

@@ -9,6 +9,7 @@ import createUserDb from './createUserDb';
 import sandbox from './sandbox';
 import exploreSavings from './exploreSavings';
 import inventory from './inventory';
+import getwell from './getwell';
 
 const routes = {
     credentials,
@@ -21,6 +22,7 @@ const routes = {
     chatbot,
     createUserDb,
     exploreSavings,
-    inventory
+    inventory,
+    getwell
 };
 export default routes;

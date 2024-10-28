@@ -11,7 +11,10 @@ param(
     [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Parentstackname
+    [string]$Parentstackname,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform 
 
 )
 #Requires -Modules xFailOverCluster,PSDscResources
@@ -77,7 +80,11 @@ AdditionalNodeAddCluster -OutputPath 'C:\cfn\dsc\AdditionalNodeAddCluster' -Conf
 
 Start-DscConfiguration 'C:\cfn\dsc\AdditionalNodeAddCluster' -Wait -Verbose -Force
 }catch {
-    Write-Output "Failed to add second node to cluster"
+    $FailureReason = "Failed to add second node to cluster"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }

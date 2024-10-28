@@ -51,6 +51,7 @@ if (${PerformFSxCheck} -ne 'true' ) {
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $InstanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
+$ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
 try {
     $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 

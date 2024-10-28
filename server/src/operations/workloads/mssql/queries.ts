@@ -56,7 +56,6 @@ const SERVER_NAME = `${SET_NOCOUNT} SELECT @@SERVERNAME as serverName ${FOR_JSON
 
 const SERVER_INSTALL_DATE = `${SET_NOCOUNT} SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name = N'NT AUTHORITY\\SYSTEM' OR name = N'NT AUTHORITY\\NETWORK SERVICE' ${FOR_JSON_PATH}`;
 const SERVER_PROPERTIES = ` ${SET_NOCOUNT} SELECT SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') as isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode, @@version AS serverDetails, @@SERVERNAME as serverName ${FOR_JSON_PATH}`;
-const SERVER_STATE = `${SET_NOCOUNT} EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'`;
 const CLUSTER_NODES = `${SET_NOCOUNT} SELECT NodeName, is_current_owner FROM sys.dm_os_cluster_nodes ${FOR_JSON_PATH}`;
 const NUMBER_OF_CONNECTIONS = `${SET_NOCOUNT} SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL ${FOR_JSON_PATH}`;
 
@@ -323,6 +322,60 @@ const GET_SANDBOXES = `${SET_NOCOUNT}
     ${FOR_JSON_PATH}) as sandboxes
 `;
 
+const INSTANCE_DEFAULT_DATA_DRIVES_QUERY = `${SET_NOCOUNT} 
+        SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS varchar(38)),1);`;
+
+const INSTANCE_DATA_DRIVES_QUERY = `${SET_NOCOUNT} 
+        select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc = 'ROWS'  FOR JSON AUTO`;
+
+const DEFAULT_DATA_DRIVE_SIZE = `${SET_NOCOUNT}
+        SELECT
+       total_bytes/1024/1024 --/1024
+        FROM sys.master_files mf 
+        CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id)
+        WHERE ((SELECT LEFT(volume_mount_point,1)) = (SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS varchar(38)),1)))
+        GROUP BY
+        volume_mount_point
+        ,total_bytes/1024/1024 --/1024
+        ,available_bytes/1024/1024 --/1024
+        ,CONVERT(INT,CONVERT(DECIMAL(15,2),available_bytes) / total_bytes * 100)
+`;
+
+const DEFAULT_LOG_DRIVE_SIZE = `${SET_NOCOUNT}
+        SELECT
+        total_bytes/1024/1024 --/1024
+        FROM sys.master_files mf 
+        CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id)
+        WHERE ((SELECT LEFT(volume_mount_point,1)) = (SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultLogPath') AS varchar(38)),1)))
+        GROUP BY
+        volume_mount_point
+        ,total_bytes/1024/1024 --/1024
+        ,available_bytes/1024/1024 --/1024
+        ,CONVERT(INT,CONVERT(DECIMAL(15,2),available_bytes) / total_bytes * 100)
+`;
+
+const TEMPDB_DRIVE_SIZE = `${SET_NOCOUNT}
+       SELECT
+        total_bytes/1024/1024 --/1024
+        FROM sys.master_files mf 
+        CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id)
+        WHERE ((SELECT LEFT(volume_mount_point,1)) in (SELECT DISTINCT(SELECT LEFT(physical_name, 1)) FROM tempdb.sys.database_files))
+        GROUP BY
+        volume_mount_point
+        ,total_bytes/1024/1024 --/1024
+        ,available_bytes/1024/1024 --/1024
+        ,CONVERT(INT,CONVERT(DECIMAL(15,2),available_bytes) / total_bytes * 100)
+`;
+
+const INSTANCE_DEFAULT_LOG_DRIVES_QUERY = `${SET_NOCOUNT}
+        SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultLogPath') AS varchar(38)),1);`;
+
+const INSTANCE_LOG_DRIVES_QUERY = `${SET_NOCOUNT}
+        select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc = 'LOG'  FOR JSON AUTO`;
+
+const INSTANCE_TEMPDB_DRIVES_QUERY = `${SET_NOCOUNT}
+        SELECT DISTINCT(SELECT LEFT(physical_name, 1))FROM tempdb.sys.database_files;`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -335,7 +388,6 @@ export {
     MEMORY_UTILISATION,
     SERVER_GUID,
     SERVER_NAME,
-    SERVER_STATE,
     CLUSTER_NODES,
     DB_SIZE,
     SERVER_IO_LATENCY,
@@ -352,5 +404,13 @@ export {
     ENTERPRISE_CHECK_QUERY,
     DATABASES_COUNT_V2,
     SERVER_VERSION,
-    GET_SANDBOXES
+    GET_SANDBOXES,
+    INSTANCE_TEMPDB_DRIVES_QUERY,
+    INSTANCE_DATA_DRIVES_QUERY,
+    INSTANCE_LOG_DRIVES_QUERY,
+    DEFAULT_DATA_DRIVE_SIZE,
+    DEFAULT_LOG_DRIVE_SIZE,
+    TEMPDB_DRIVE_SIZE,
+    INSTANCE_DEFAULT_DATA_DRIVES_QUERY,
+    INSTANCE_DEFAULT_LOG_DRIVES_QUERY
 };

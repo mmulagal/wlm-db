@@ -16,7 +16,7 @@ model deployment {
   deployment_id             String            @db.VarChar(255)
   parent_deployment_id      String?           @db.VarChar(255)
   deployment_name           String            @db.VarChar(255)
-  account_id                String            @db.VarChar(30)
+  account_id                String            @db.VarChar(64)
   cloud_provider_account_id String?           @db.VarChar(80)
   cloud_provider_name       String?           @db.VarChar(30)
   region                    String            @db.VarChar(30)
@@ -37,7 +37,7 @@ model deployment {
 model event {
   id                  String            @id @default(uuid())
   event_id            String            @db.VarChar(255)
-  account_id          String            @db.VarChar(30)
+  account_id          String            @db.VarChar(64)
   deployment_id       String            @db.VarChar(255)
   deployment_name     String            @db.VarChar(255)
   event_status        DEPLOYMENT_STATUS
@@ -55,7 +55,7 @@ model event {
 
 model resource {
   id                        String  @id @default(uuid())
-  account_id                String  @db.VarChar(30)
+  account_id                String  @db.VarChar(64)
   credentials_id            String  @db.VarChar(80) @default("")
   storage_type              STORAGE_TYPE  @default(FSXN)
   resource_id               String  @db.VarChar(255)
@@ -90,7 +90,7 @@ model config {
 
 model job {
   id                        String    @id @default(uuid())@db.VarChar(40)
-  account_id                String    @db.VarChar(30)
+  account_id                String    @db.VarChar(64)
   credentials_id            String    @db.VarChar(80)
   region                    String    @db.VarChar(30)
   type                      JOBTYPE
@@ -114,7 +114,7 @@ model job {
 
 model database_instances {
   id                                String            @id @default(uuid())
-  account_id                        String            @db.VarChar(30)
+  account_id                        String            @db.VarChar(64)
   credentials_id                    String            @db.VarChar(80)
   region                            String            @db.VarChar(30)
   resource_id                       String            @db.VarChar(255)
@@ -146,7 +146,7 @@ model database_instances {
 model tracked_ec2 {
   id                        String   @id @default(uuid()) @db.VarChar(40)
   instance_id               String   @db.VarChar(30)
-  account_id                String   @db.VarChar(30)
+  account_id                String   @db.VarChar(64)
   credentials_id            String   @db.VarChar(80)
   region                    String   @db.VarChar(30)
   feature                   String   @db.VarChar(255)
@@ -160,7 +160,7 @@ model tracked_ec2 {
 
 model database_instance_config_data{
   id                        String   @id @default(uuid()) @db.VarChar(40)
-  account_id                String   @db.VarChar(30)
+  account_id                String   @db.VarChar(64)
   credentials_id            String   @db.VarChar(80)
   region                    String   @db.VarChar(30)
   resource_id               String   @db.VarChar(255)
@@ -189,6 +189,9 @@ enum JOBTYPE {
   CREATE_RESOURCE
   PREPARE_RESOURCE
   SANDBOX
+  ASSESSMENT
+  OPTIMIZATION
+  OPTIMIZE
 }
 
 enum DEPLOYMENT_STATUS {

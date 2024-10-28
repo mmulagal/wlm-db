@@ -108,6 +108,8 @@ describe(' Secrets Manager string', () => {
 
     it('calculateFsxnStorageCapacity storage capacity breakdown', () => {
         const response = calculateFsxnStorageCapacity(2048, 'fci');
+        // Assert that FSxBufferVolumeSize is 35% of FSxStorageCapacity
+        expect(Math.ceil(response.FSxBufferVolumeSize / 1024)).toEqual(Math.ceil(response.FSxStorageCapacity * 0.35));
         expect(response).toBeDefined();
     });
 

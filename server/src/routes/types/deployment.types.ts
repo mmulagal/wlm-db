@@ -49,6 +49,32 @@ const SQLConfiguration = Type.Object({
     isCustomAmi: Type.Optional(Type.Boolean({ default: false }))
 });
 
+const PgSqlConfiguration = Type.Pick(SQLConfiguration, [
+    'sqlAmiId',
+    'sqlAmiName',
+    'sqlDeploymentMode',
+    'sqlServerName'
+]);
+
+const PgSqlCloudFormationTemplateRequestBody = Type.Object({
+    networkConfiguration: CFNetworkConfiguration,
+    ec2Configuration: EC2Configuration,
+    fsxConfiguration: FSXConfiguration,
+    sqlConfiguration: PgSqlConfiguration,
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
+    tags: Type.Optional(
+        Type.Array(
+            Type.Object({
+                key: Type.String(),
+                value: Type.String()
+            })
+        )
+    ),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String())
+});
+
 const CloudFormationTemplateHeader = Type.Object({
     'triggered-from': Type.String({
         enum: ['wizard-advanced', 'wizard-quick', 'chatbot', 'rest-api'],
@@ -99,6 +125,8 @@ const CloudFormationDeploymentResponse = Type.Object({
     cloudFormationStackId: Type.Optional(Type.String()),
     missingPermissions: Type.Optional(MissingPermissions)
 });
+
+const PgSqlCloudFormationDeploymentResponse = Type.Any();
 
 const CloudFormationStaticTemplateResponse = Type.Object({
     url: Type.String(),
@@ -210,6 +238,7 @@ type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
 type CloudFormationStaticTemplateResponseType = Static<typeof CloudFormationStaticTemplateResponse>;
 type CloudFormationDeploymentResponseType = Static<typeof CloudFormationDeploymentResponse>;
+type PgSqlConfigurationType = Static<typeof PgSqlConfiguration>;
 type TerraformSetupResponseType = Static<typeof TerraformSetupResponse>;
 
 export {
@@ -238,6 +267,10 @@ export {
     FsxAvailableRegionsForThroughputListResponse,
     CollationListResponse,
     CollationListQueryString,
+    PgSqlCloudFormationTemplateRequestBody,
+    PgSqlCloudFormationDeploymentResponse,
+    PgSqlConfiguration,
+    PgSqlConfigurationType,
     TerraformSetupResponse,
     TerraformSetupResponseType,
     TerraformSetupRequestBody

@@ -293,7 +293,7 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
 }
 
 async function listResources(
-    accountId: string,
+    accountId?: string,
     resourceId?: string,
     credentialsId?: string,
     region?: string,
@@ -313,11 +313,14 @@ async function listResources(
         pageSize,
         nextToken
     });
-    accountId = checkAccount(accountId);
+
+    if (accountId) {
+        accountId = checkAccount(accountId);
+    }
 
     return prisma.client.resource.findMany({
         where: {
-            account_id: accountId,
+            ...(accountId && { account_id: accountId }),
             ...(resourceId && { resource_id: resourceId }),
             ...(resourceType && { resource_type: resourceType }),
             ...(region && { region }),
@@ -646,11 +649,20 @@ async function updateDatabaseInstanceMetadata(
     });
 }
 
+async function listAllManagedInstances() {
+    return prisma.client.database_instances.findMany({
+        orderBy: {
+            id: 'asc'
+        },
+        include: {
+            resource: true
+        }
+    });
+}
 async function listDatabaseInstances(accountId: string, record: any) {
     logger.info('List database instances for given account/credentialsId', accountId);
 
     const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId } = record;
-
     accountId = checkAccount(accountId);
 
     return prisma.client.database_instances.findMany({
@@ -806,5 +818,6 @@ export {
     createTrackedEc2Records,
     listTrackedEc2,
     removeTrackedEc2Record,
-    updateTrackedEc2Record
+    updateTrackedEc2Record,
+    listAllManagedInstances
 };

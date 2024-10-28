@@ -244,14 +244,14 @@ export const awsApi = createApi({
             }),
             createSqlTemplate: builder.mutation({
                 query: ({ credentialId, region, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/cloudformation/deploy`,
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/cloudformation/deploy`,
                     method: 'POST',
                     body: payload
                 })
             }),
             deploySqlTemplate: builder.mutation({
                 query: ({ credentialId, region, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/cloudformation/deploy`,
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/cloudformation/deploy`,
                     method: 'POST',
                     body: payload
                 })
@@ -265,7 +265,7 @@ export const awsApi = createApi({
             }),
             getSqlServerCollationList: builder.query({
                 query: ({ databaseVersion }) => ({
-                    url: `v1/collations?version=${databaseVersion}`
+                    url: `v1/mssql/collations?version=${databaseVersion}`
                 })
             })
         };
@@ -369,14 +369,14 @@ export const databaseHomeApi = createApi({
             }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
-                    url: `v1/cloudformation/template`,
+                    url: `v1/mssql/cloudformation/template`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getTerraformSetup: builder.mutation({
                 query: ({ payload }) => ({
-                    url: `v1/terraform/setup`,
+                    url: `v1/mssql/terraform/setup`,
                     method: 'POST',
                     body: payload
                 })
@@ -523,7 +523,7 @@ export const createUserDbApi = createApi({
         return {
             getDriveInfoV2: builder.query({
                 query: ({ credentialId, region, id, instanceId, forSandbox }) => ({
-                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/drive-information${
+                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${instanceId}/drive-information${
                         forSandbox ? '?forSandbox=true' : ''
                     }`
                 })
@@ -572,9 +572,9 @@ export const inventoryApi = createApi({
             discoverHosts: builder.query({
                 query: ({ regionId, credentialsId, nextToken = null }) => {
                     if (nextToken) {
-                        return `v1/credentials/${credentialsId}/regions/${regionId}/mssql/discover?pageSize=10&nextToken=${nextToken}`;
+                        return `v1/mssql/credentials/${credentialsId}/regions/${regionId}/discover?pageSize=10&nextToken=${nextToken}`;
                     } else {
-                        return `v1/credentials/${credentialsId}/regions/${regionId}/mssql/discover?pageSize=10`;
+                        return `v1/mssql/credentials/${credentialsId}/regions/${regionId}/discover?pageSize=10`;
                     }
                 },
                 keepUnusedDataFor: 1,
@@ -596,7 +596,7 @@ export const inventoryApi = createApi({
             }),
             registerResourceCredentials: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/discover/resource-credentials`,
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/discover/resource-credentials`,
                     method: 'POST',
                     body: payload
                 })
@@ -604,14 +604,14 @@ export const inventoryApi = createApi({
             getMssqlInstanceData: builder.mutation({
                 query: ({ credentialId, regionId, instances, nextToken = null }) => ({
                     url: nextToken
-                        ? `v1/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&nextToken=${nextToken}`
-                        : `v1/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}`,
+                        ? `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances?instances=${instances}&nextToken=${nextToken}`
+                        : `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances?instances=${instances}`,
                     method: 'GET'
                 })
             }),
             prepareHost: builder.mutation({
                 query: ({ credentialId, regionId, instanceId }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/prepare`,
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/prepare`,
                     method: 'POST'
                 })
             })
@@ -674,20 +674,20 @@ export const inventoryApiV2 = createApi({
             getMssqlInstanceDataV2: builder.mutation({
                 query: ({ credentialId, regionId, instances, fields, nextToken = null }) => ({
                     url: nextToken
-                        ? `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&fields=${fields}&nextToken=${nextToken}`
-                        : `v2/credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&fields=${fields}`,
+                        ? `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances?instances=${instances}&fields=${fields}&nextToken=${nextToken}`
+                        : `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances?instances=${instances}&fields=${fields}`,
                     method: 'GET'
                 })
             }),
             unmanageMssqlInstance: builder.mutation({
                 query: ({ credentialsId, resourceId, dbInstanceId }) => ({
-                    url: `v1/credentials/${credentialsId}/resources/${resourceId}/mssql/instances?databaseInstanceIds=${dbInstanceId}`,
+                    url: `v1/mssql/credentials/${credentialsId}/resources/${resourceId}/instances?databaseInstanceIds=${dbInstanceId}`,
                     method: 'DELETE'
                 })
             }),
             manageMssqlInstance: builder.mutation({
                 query: ({ credentialsId, regionId, payload }) => ({
-                    url: `v2/credentials/${credentialsId}/regions/${regionId}/mssql`,
+                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/manage`,
                     method: 'POST',
                     body: payload
                 })
@@ -808,29 +808,51 @@ export const exploreSavingsApi = createApi({
     endpoints: builder => {
         return {
             getStorageSavings: builder.mutation({
-                query: ({ credentialId, regionId, instanceId, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings`,
+                query: ({ credentialId, regionId, instanceId, payload, type }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/${type}`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getManualStorageSavings: builder.mutation({
-                query: ({ regionId, payload }) => ({
-                    url: `v1/regions/${regionId}/manual-storage-savings`,
+                query: ({ regionId, payload, type }) => ({
+                    url: `v1/mssql/regions/${regionId}/manual-storage-savings/${type}`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getManualViewCalculations: builder.mutation({
-                query: ({ regionId, payload }) => ({
-                    url: `v1/regions/${regionId}/manual-storage-savings/calculations`,
+                query: ({ regionId, payload, type }) => ({
+                    url: `v1/mssql/regions/${regionId}/manual-storage-savings/${type}/calculations`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getViewCalculations: builder.mutation({
-                query: ({ credentialId, regionId, instanceId, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/calculations`,
+                query: ({ credentialId, regionId, instanceId, payload, type }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/${type}/calculations`,
+                    method: 'POST',
+                    body: payload
+                })
+            })
+        };
+    }
+});
+
+export const getWellApi = createApi({
+    reducerPath: 'getWellApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => {
+        return {
+            getMssqlAssessmentData: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment?fields=storage,compute`
+                })
+            }),
+            optimizeStorageConfig: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment/optimize`,
                     method: 'POST',
                     body: payload
                 })
@@ -945,3 +967,5 @@ export const {
     useGetManualStorageSavingsMutation,
     useGetManualViewCalculationsMutation
 } = exploreSavingsApi;
+
+export const { useGetMssqlAssessmentDataMutation, useOptimizeStorageConfigMutation } = getWellApi;

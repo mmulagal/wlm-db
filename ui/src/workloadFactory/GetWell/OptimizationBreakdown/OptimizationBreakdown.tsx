@@ -7,9 +7,12 @@ import { ReactComponent as Compute } from '../../../assets/Compute.svg';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import styles from './OptimizationBreakdown.module.scss';
 import OptimizeComponent from '../OptimizeComponent/OptimizeComponent';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const OptimizationBreakdown = () => {
-    const loading = false;
+    const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
+    const optimizationBreakDown = useAppSelector(state => state.getWellOptimize.optimizationBreakDown);
+
     return (
         <div className={styles.optimizationBreakdown}>
             <div className={styles.headSection}>
@@ -21,12 +24,19 @@ const OptimizationBreakdown = () => {
 
             <div className={styles.mainSection}>
                 <div className={styles.leftSide}>
-                    <OptimizeComponent value={'50%'} text={'Storage'} image={<Storage />} isComingSoon={false} />
                     <OptimizeComponent
-                        value={<ComingSoon />}
+                        value={optimizationBreakDown?.storage?.percent || 0}
+                        data={optimizationBreakDown?.storage}
+                        text={'Storage'}
+                        image={<Storage />}
+                        isComingSoon={false}
+                    />
+                    <OptimizeComponent
+                        value={optimizationBreakDown?.compute?.percent || 0}
+                        data={optimizationBreakDown?.compute}
                         text={'Compute'}
                         image={<Compute />}
-                        isComingSoon={true}
+                        isComingSoon={false}
                     />
                     <OptimizeComponent
                         value={<ComingSoon />}

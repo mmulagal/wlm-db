@@ -1372,5 +1372,30 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "optimizeStorageResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeStorageCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeStorageCommand",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"num_records\":3,\"cli_output\":\"Volume modify successful on volume wlmdb_sqldata_1728552629461 of Vserver wlmdb_sqlsvm_1729483528219. Volume modify successful on volume wlmdb_sqltemp_1728552629461 of Vserver wlmdb_sqlsvm_1729483528219. Volume modify successful on volume wlmdb_sqldata_1729488603 of Vserver wlmdb_sqldata_1728574994\"}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }

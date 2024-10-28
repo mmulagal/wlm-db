@@ -149,7 +149,7 @@ const getDbMappedOntapVolumes = (
     $executableInstanceName = "${executableInstanceName}"
     $logPrefix = '${logPrefix}'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
-
+    $PSToolkitRequiredVersion = '9.15.1.2407'
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_for_$dbname.log.txt" -Append | Out-Null
 
     $responseObject = @{}
@@ -363,6 +363,7 @@ const createVolumeClone = (
     sandboxName: string,
     logPrefix?: string
 ) => `
+    #Requires -Module AWS.Tools.FSX,netapp.ontap
     $fsxid = '${fsxid}'
     $fsxregion = '${fsxregion}'
     $targetSvm = '${targetSvm}'
@@ -573,12 +574,6 @@ const createVolumeClone = (
                     $sourceSvm = $vol.svm
                 
                     if ($svmProcessed -notcontains $sourceSvm) {
-                        if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
-                            Write-Information "$logPrefix NetApp.ONTAP Module does not exist, installing it now"
-
-                            Install-Module -Name NetApp.ONTAP -Force -AllowClobber
-                        }
-
                         $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
 
                         $CloneDataLuns = @()
@@ -1536,6 +1531,7 @@ const getSnapshotsToClone = (
 
 const getConnectionInfo = (instanceName: string, sqlAuthEnabled: boolean) => `
 
+$ProgressPreference = "SilentlyContinue"
 $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 $sqlCredential = @{'useSqlAuth' = $False}
 

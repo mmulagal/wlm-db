@@ -28,7 +28,9 @@ async function listDatabaseInstanceConfigData(
     credentialsId?: string,
     resourceId?: string,
     databaseInstanceId?: string,
-    configDataType?: string
+    configDataType?: string,
+    sort: string = 'creation_time',
+    sortOrder: string = 'desc'
 ) {
     logger.info('Listing database instance config data', {
         accountId,
@@ -47,7 +49,12 @@ async function listDatabaseInstanceConfigData(
             ...(resourceId && { resource_id: resourceId }),
             ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
             ...(configDataType && { config_data_type: configDataType })
-        }
+        },
+        orderBy: [
+            {
+                [sort]: `${sortOrder}`
+            }
+        ]
     });
 }
 

@@ -476,7 +476,9 @@ const getMappedOntapVolumesScript = (
     fsxregion: string,
     isSystemDatabase: string = '$false',
     instances: string[] = [],
-    sqlAuthEnabled: boolean = false
+    sqlAuthEnabled: boolean = false,
+    fields: string = '',
+    includeLogVolumes: boolean = false
 ) => `
     $WarningPreference = 'SilentlyContinue';
     $ProgressPreference = 'SilentlyContinue'
@@ -484,12 +486,14 @@ const getMappedOntapVolumesScript = (
         $responseObject = @{}
     }
 
+    $includeLogVolumes = [System.Convert]::ToBoolean('${includeLogVolumes}')
     try {
         #Requires -Module AWS.Tools.SimpleSystemsManagement
 
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
         $instances = '${JSON.stringify(instances)}' | ConvertFrom-Json
+        $additionalFields = '${fields}'
 
         ${getSqlCredentials(sqlAuthEnabled)}
         $sqlInstances = $instances | ForEach-Object {
@@ -554,6 +558,17 @@ const getMappedOntapVolumesScript = (
                         AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
                         FOR JSON PATH;
 "@
+
+                    if($includeLogVolumes) {
+                        $sqlquery = @"
+                            SET NOCOUNT ON;
+                            SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
+                            CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                            WHERE vs.volume_mount_point != 'C:\\'
+                            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
+                            FOR JSON PATH;
+"@
+                    }
                     # Get the windows volumes of the databases with the mdf file volume name
                     $sqlqueryfordatabaseandvolumelist = @"
                         SET NOCOUNT ON;
@@ -570,6 +585,23 @@ const getMappedOntapVolumesScript = (
                             AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
                         FOR JSON PATH;
 "@
+
+                if($includeLogVolumes) {
+                        $sqlqueryfordatabaseandvolumelist = @"
+                        SET NOCOUNT ON;
+                        SELECT DISTINCT 
+                            DB_NAME(mf.database_id) AS DatabaseName,
+                            vs.logical_volume_name as VolumeName,
+                            vs.volume_id as VolumeId
+                        FROM 
+                            sys.master_files AS mf
+                        CROSS APPLY 
+                            sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                        WHERE 
+                            vs.volume_mount_point != 'C:\\'
+                        FOR JSON PATH;
+"@
+                    }
                 }
 
                 if ($sqlCredential.useSqlAuth -eq $True) {
@@ -710,7 +742,7 @@ const getMappedOntapVolumesScript = (
                     }
 
                     if ($QueryFilter -ne '') {
-                        $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=snapshot_count"}
+                        $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=snapshot_count,$additionalFields"}
                     
 
                         $Response = Invoke-ONTAPRequest @Params
@@ -888,13 +920,14 @@ const getMappedOntapVolumesScript = (
                 $responseObject = @{}
                 $responseObject.add('volumes', $processedRecords)
                 $responseObject.add('volumeDBMap', $volumeDBMap)
+                $responseObject.add('lunNames', $lunResult.LunNames)
                 $instanceRespones[$serverInstanceName] = $responseObject
             } catch {
                 Write-Information "An error occurred while processing the records: $_.Exception.Message"
                 $instanceRespones[$serverInstanceName] = "error: $_"
             }
         }
-        $response = $instanceRespones | ConvertTo-Json -Depth 5
+        $response = $instanceRespones | ConvertTo-Json -Depth 10
 
         if([string]::IsNullOrEmpty($response)) {
             throw "Failed to compress the response because the response is either null or empty. $response"

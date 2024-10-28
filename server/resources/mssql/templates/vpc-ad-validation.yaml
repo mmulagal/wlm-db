@@ -362,10 +362,18 @@ Resources:
                         a-update-DNS:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\validation\Update-DNSServers.ps1
-                                    -DNSIpAddresses '
+                                - - 'powershell.exe -Command "C:\cfn\scripts\common\Update-DNSServers.ps1 -DNSIpAddresses '
+                                  - ''''
                                   - !Ref 'DNSIpAddresses'
-                                  - '''"'
+                                  - ''''
+                                  - ' -Stackname '
+                                  - !Ref 'AWS::StackName'
+                                  - ' -ResourceID ValidationNode1'
+                                  - ' -WaitHandler '
+                                  - '"'
+                                  - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
+                                  - '"'
+                                  - '"'
                             waitAfterCompletion: '0'
                 Finalize:
                     commands:
@@ -463,7 +471,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: terminate
+            InstanceInitiatedShutdownBehavior: stop
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -477,6 +485,8 @@ Resources:
                       - '$FailureReason = "CF endpoint is not reachable. Check your subnet outbound connectivity."'
                       - "\n"
                       - 'try {'
+                      - "\n"
+                      - '$progressPreference = "silentlyContinue"'
                       - "\n"
                       - "$Response = Invoke-WebRequest -Uri 'https://cloudformation."
                       - !Ref 'AWS::Region'
@@ -758,7 +768,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: terminate
+            InstanceInitiatedShutdownBehavior: stop
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -772,6 +782,8 @@ Resources:
                       - '$FailureReason = "CF endpoint is not reachable. Check your subnet outbound connectivity."'
                       - "\n"
                       - 'try {'
+                      - "\n"
+                      - '$progressPreference = "silentlyContinue"'
                       - "\n"
                       - "$Response = Invoke-WebRequest -Uri 'https://cloudformation."
                       - !Ref 'AWS::Region'

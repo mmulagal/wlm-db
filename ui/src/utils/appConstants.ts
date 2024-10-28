@@ -230,7 +230,7 @@ export const GENERAL = {
     UNIT: 'Unit',
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
-    ERROR_CAPACITY: 'Supported capacity should be between 120 GiB to 130 TiB.',
+    ERROR_CAPACITY: 'Supported capacity should be between 120 GiB to 86 TiB.',
     //Provisioned IOPS
     AUTOMATIC: 'Automatic',
     USER_PROVISIONED: 'User-provisioned',
@@ -559,6 +559,8 @@ export const GENERAL = {
     JM_TYPE_CREATE_RESOURCE: 'Create database',
     JM_TYPE_PREPARE_RESOURCE: 'Prepare resource',
     JM_TYPE_SANDBOX: 'Sandbox',
+    JM_TYPE_ASSESSMENT: 'Assessment',
+    JM_TYPE_OPTIMIZE: 'Optimization',
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -702,7 +704,7 @@ export const GENERAL = {
     CF_DOWNLOAD: 'CloudFormation downloaded successfully.',
     CF_NOTICE: 'Notice: access to the YAML configuration file expires after 7 days.',
     TERRAFORM_DOWNLOAD: 'Terraform downloaded successfully',
-    TERRAFORM_NOTICE: 'Notice: access to zip file expires after 7 days',
+    TERRAFORM_NOTICE: 'Notice: Access to the zip file expires after 7 days.',
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
     SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
     SSM_NO_CONNECTION: ['Workload Factory can’t connect to this host.', 'See troubleshooting SSM agent'],
@@ -1146,7 +1148,14 @@ export const GENERAL = {
         'The cost for compute of SQL over EBS is based on current instance type vs. cost of compute of SQL server over FSxN based on your selected instance type.',
     BYOL_TEXT: 'Monthly SQL BYOL costs($)',
     CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI: 'Source database is not hosted on a NetApp iSCSI drive',
-    COMING_SOON: 'Coming soon'
+    COMING_SOON: 'Coming soon',
+    NOTE_PONT_ONE: 'No disruption to your services is expected during this process.',
+    NOTE_PONT_TWO:
+        'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.',
+    NOTE: 'Note',
+    OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
+    OPTIMIZATION_IN_PROGRESS:
+        'An optimization process is currently running in the background for the current instance. Try again once it has completed.'
 };
 
 export const CODE_VIEWER = {

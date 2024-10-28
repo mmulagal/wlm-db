@@ -25,6 +25,7 @@ const ontapRestRequest = `
             # Set the registry key to disable certificate revocation check in case of private subnet
             Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
         }
+        $ProgressPreference = 'SilentlyContinue'
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password

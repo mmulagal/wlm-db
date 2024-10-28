@@ -62,13 +62,18 @@ import {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
-    updateInstanceRecommendationPreferences
+    updateTcoInstanceRecommendationPreferences,
+    scheduledAssessment,
+    updateManagedInstanceRecommendationPreferences
 } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
 import { resetCache } from './utils/cache';
+import { REDIS_URL } from './utils/continous-optimization-consts';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
+
+logger.info(`Redis URL ${REDIS_URL}.`);
 
 const { verifyToken, authorizeJwt } = jwtOperation;
 
@@ -355,7 +360,9 @@ try {
         purgeOlderJobs();
         failLongRunningDeploymentJobs();
         failLongRunningResourcePrepareJobs();
-        updateInstanceRecommendationPreferences();
+        updateTcoInstanceRecommendationPreferences();
+        updateManagedInstanceRecommendationPreferences();
+        scheduledAssessment();
     }
 } catch (error) {
     logger.error('Failed to initialize cron jobs', error);

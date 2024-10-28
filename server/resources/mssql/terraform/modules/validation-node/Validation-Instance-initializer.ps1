@@ -24,7 +24,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$LogGroup,
     [Parameter(Mandatory = $true)]
-    [string]$SqlDeploymentMode
+    [string]$SqlDeploymentMode,
+    [Parameter(Mandatory = $true)]
+    [string]$ValidationNodeName
 )
 
 Write-Output "Starting the initializer script from terraform"
@@ -53,10 +55,8 @@ $OpenSslWin64Zip = "{{{OpenSslWin64Zip}}}"
 function Get-InstanceId {
     try {
         $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
-        #Write-Output "Successfully obtained the token."
 
         $InstanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
-        #Write-Output "Successfully obtained the instance ID: $InstanceId"
         return $InstanceId
     }
     catch {
@@ -212,7 +212,7 @@ function Invoke-WebRequestWithRetry {
     }
 }
 
-function Invoke-Command {
+function Invoke-CommandExecution {
     param(
         [string]$command
     )
@@ -245,23 +245,23 @@ try {
     Invoke-WebRequestWithRetry -Uri "$CommonZip" -OutFile "C:\\cfn\\scripts\\common.zip"
     Write-Output "Downloaded the files successfully"
 
-    Invoke-Command "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\signig_files.zip -Destination C:\\cfn"
-    Invoke-Command "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\OpenSSL-Win64.zip -Destination C:\\cfn"
-    # commented since having issue with signature verification
-    # Invoke-Command "C:\\cfn\\scripts\\Verify-Signature.ps1 -FilePath C:\\cfn\\scripts\\validation.zip -SignatureFilePath C:\\cfn\\signig_files\\validation.sig -PubFilePath C:\\cfn\\signig_files\\validation.pub -ResourceID ValidationNode1 -Stackname '$DeploymentName'"
-    Invoke-Command "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\scripts\\validation.zip -Destination C:\\cfn\\scripts"
-    Invoke-Command "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\scripts\\common.zip -Destination C:\\cfn\\scripts"
+    Invoke-CommandExecution "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\signig_files.zip -Destination C:\\cfn"
+    Invoke-CommandExecution "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\OpenSSL-Win64.zip -Destination C:\\cfn"
+    # comment it only locally since having issue with signature verification
+    Invoke-CommandExecution "C:\\cfn\\scripts\\Verify-Signature.ps1 -FilePath C:\\cfn\\scripts\\validation.zip -SignatureFilePath C:\\cfn\\signig_files\\validation.sig -PubFilePath C:\\cfn\\signig_files\\validation.pub -ResourceID '$ValidationNodeName' -Stackname '$DeploymentName'"
+    Invoke-CommandExecution "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\scripts\\validation.zip -Destination C:\\cfn\\scripts"
+    Invoke-CommandExecution "C:\\cfn\\scripts\\Unzip-Archive.ps1 -Source C:\\cfn\\scripts\\common.zip -Destination C:\\cfn\\scripts"
     Write-Output "Unzipped the files successfully"
 
-    Invoke-Command "C:\\cfn\\scripts\\validation\\Update-DNSServers.ps1 -DNSIpAddresses '${DnsIpAddresses}'"
-    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-VPCConnectivity.ps1 -subnet '${SubnetId}' -region '$Region' -Stackname '$DeploymentName' -ResourceID ValidationNode1 -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
-    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-Credentials.ps1 -DomainName '${DomainDnsName}' -UserName '${DomainAdminUser}' -isSecretManagerSupported 0 -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID ValidationNode1 -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
+    Invoke-CommandExecution "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${DnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$ValidationNodeName' -WaitHandler '${ValidationNode1WaitHandler}'"
+    Invoke-CommandExecution "C:\\cfn\\scripts\\validation\\Validate-VPCConnectivity.ps1 -subnet '${SubnetId}' -region '$Region' -Stackname '$DeploymentName' -ResourceID '$ValidationNodeName' -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
+    Invoke-CommandExecution "C:\\cfn\\scripts\\validation\\Validate-Credentials.ps1 -DomainName '${DomainDnsName}' -UserName '${DomainAdminUser}' -isSecretManagerSupported 0 -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID '$ValidationNodeName' -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
     # run this validate-fsxconnecitivity.ps1 script only for existing fsx file system
     if (![string]::IsNullOrEmpty($FsxFileSystemId)) {
-        Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-FsxConnectivity.ps1 -PerformFSxCheck '${PerformFsxCheck}' -FSxFileSystemId '$FsxFileSystemId' -FSxRegion '$Region' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID ValidationNode1 -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
+        Invoke-CommandExecution "C:\\cfn\\scripts\\validation\\Validate-FsxConnectivity.ps1 -PerformFSxCheck '${PerformFsxCheck}' -FSxFileSystemId '$FsxFileSystemId' -FSxRegion '$Region' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID '$ValidationNodeName' -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
     }
     # this runs for the custom ami verifications
-    Invoke-Command "C:\\cfn\\scripts\\validation\\Validate-Ami.ps1 -IsCustomAmi '${IsCustomAmi}' -Region '$Region' -SQLDeploymentMode '$SqlDeploymentMode' -DomainDNSName '${DomainDnsName}' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID ValidationNode1 -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
+    Invoke-CommandExecution "C:\\cfn\\scripts\\validation\\Validate-Ami.ps1 -IsCustomAmi '${IsCustomAmi}' -Region '$Region' -SQLDeploymentMode '$SqlDeploymentMode' -DomainDNSName '${DomainDnsName}' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID '$ValidationNodeName' -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
     
     New-EC2Tag -Region "$Region" -ResourceId "$InstanceId" -Tag @{ Key = "user_data"; Value = "completed" }
 

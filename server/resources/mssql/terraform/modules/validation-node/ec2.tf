@@ -13,11 +13,12 @@ locals {
     fsx_file_system_id                    = var.fsx_file_system_id
     log_group                             = var.deployment_name
     sql_deployment_mode                   = var.sql_deployment_mode
+    validation_node_name                  = var.validation_node_name
   })
 }
 
 resource "aws_iam_instance_profile" "validation_instance_profile" {
-  name = "${var.deployment_name}_validation_instance_profile"
+  name = "${var.deployment_name}_${var.validation_node_name}_validation_instance_profile"
   role = var.ec2_role_name
 }
 
@@ -26,7 +27,7 @@ data "aws_vpc" "selected" {
 }
 
 resource "aws_security_group" "domain_member_sg" {
-  name        = "${var.deployment_name}_domain_member_sg"
+  name        = "${var.deployment_name}_${var.validation_node_name}_domain_member_sg"
   description = "Domain Members"
   vpc_id      = var.vpc_id
 
@@ -74,14 +75,14 @@ resource "aws_instance" "validation_node" {
 
   user_data = local.user_data
 
-  instance_initiated_shutdown_behavior = "terminate" // enable this once we add sudo shutdown -h now in user data so this will get terminated
+  instance_initiated_shutdown_behavior = "terminate" // enable this to terminate once we are done with staging testing so this will get terminated
 
   timeouts {
     create = "30m"
   }
 
   tags = {
-    Name = "${var.deployment_name}-ValidationNode1"
+    Name = "${var.deployment_name}-${var.validation_node_name}"
   }
 }
 
@@ -95,11 +96,14 @@ resource "null_resource" "wait_for_tag_mac_or_linux" {
   }
 
   provisioner "local-exec" {
-    command = "sh '${path.module}/wait_for_tag.sh' '${path.module}' '${aws_instance.validation_node.id}' '${var.aws_location}'"
+    command = <<-EOT
+      mkdir -p '${path.root}/logs'
+      sh '${path.root}/scripts/wait_for_tag.sh' '${path.root}' '${aws_instance.validation_node.id}' '${var.aws_location}' '${var.validation_node_name}' > '${path.root}/logs/${var.validation_node_name}_wait_for_tag_mac_or_linux.log' 2>&1
+    EOT
   }
 }
 
-#Wait for user data to complete execution on the instance for windows host
+# Wait for user data to complete execution on the instance for windows host
 resource "null_resource" "wait_for_tag_windows" {
   count = var.operating_system == "Windows" ? 1 : 0
 
@@ -108,6 +112,8 @@ resource "null_resource" "wait_for_tag_windows" {
   }
 
   provisioner "local-exec" {
-    command = "powershell.exe -File ${path.module}/wait_for_tag.ps1 ${path.module} ${aws_instance.validation_node.id} ${var.aws_location}"
+    command = <<-EOT
+      powershell.exe -Command "New-Item -ItemType Directory -Force -Path '${path.root}/logs'; & '${path.root}/scripts/wait_for_tag.ps1' '${path.root}' '${aws_instance.validation_node.id}' '${var.aws_location}' '${var.validation_node_name}' > '${path.root}/logs/${var.validation_node_name}_wait_for_tag_windows.log' 2>&1"
+    EOT
   }
 }

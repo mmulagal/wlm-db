@@ -20,7 +20,7 @@ variable "preferred_subnet1_id" {
   type        = string
 }
 
-variable "preferred_subnet_cidrblock" { # check
+variable "preferred_subnet_cidrblock" {
   description = "Cidrblock for preferred subnet."
   type        = string
 }

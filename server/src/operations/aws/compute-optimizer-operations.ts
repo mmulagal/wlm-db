@@ -15,9 +15,12 @@ import {
 import { derivePropertiesFromARN, getEc2Arn } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { getCredentialsDetails } from '../cloud-manager/credentials-operations';
-import { getInstanceTypesFromInstanceRequirements } from './ec2-operations';
+import {
+    getInstanceTypesFromInstanceRequirements,
+    getInstanceTypesFromInstanceRequirementsForManagedInstances
+} from './ec2-operations';
 import { getSqlInstancePricingDetails } from './pricing-operations';
-import { FINDING, TCO_FEATURE } from '../../utils/consts';
+import { CONTINUOUS_ASSESSMENT_FEATURE, FINDING, TCO_FEATURE } from '../../utils/consts';
 import { createTrackedEc2Records, listTrackedEc2, updateTrackedEc2Record } from '../../lib/database/db';
 import { NodeDetails } from '../../utils/common-types';
 
@@ -95,6 +98,76 @@ async function identifyComputeOptimizerRecommendationOptions(
     return recommendationOptionsWithPrices;
 }
 
+async function manageInstanceRecommendationPreReqsForManagedInstances(
+    awsAccountId: string,
+    region: string,
+    credentialsId: string,
+    instanceIds: string[],
+    accountId: string,
+    sqlServerDeploymentType: string
+) {
+    logger.info('Managing instance recommendation prerequisites for managed instances', {
+        awsAccountId,
+        region,
+        credentialsId,
+        instanceIds,
+        accountId,
+        sqlServerDeploymentType
+    });
+
+    let isRecommendationPreferenceExists = false;
+    await Promise.all(
+        instanceIds.map(async instanceId => {
+            const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
+            const instanceTypes =
+                (await getInstanceTypesFromInstanceRequirementsForManagedInstances(
+                    credentialsId,
+                    region,
+                    resourceArn
+                )) || [];
+
+            if (instanceTypes && instanceTypes.length <= 0) {
+                throw new Error(
+                    'Instance types not found for the instance requirements, unable to create recommendation preference'
+                );
+            }
+
+            const { preferredResources: [{ includeList = [] }] = [] } = await getEffectiveRecommendationPreferences(
+                region,
+                credentialsId,
+                accountId,
+                {
+                    resourceArn
+                }
+            );
+
+            isRecommendationPreferenceExists =
+                includeList &&
+                instanceTypes &&
+                includeList?.length > 1 &&
+                instanceTypes.every(item => includeList.includes(item));
+            if (!isRecommendationPreferenceExists) {
+                await createRecommendationForResource(
+                    region,
+                    credentialsId,
+                    accountId,
+                    instanceIds,
+                    instanceTypes,
+                    awsAccountId
+                );
+                await addEc2InstancesToTrackedList(
+                    accountId,
+                    region,
+                    credentialsId,
+                    awsAccountId,
+                    instanceIds,
+                    CONTINUOUS_ASSESSMENT_FEATURE
+                );
+            }
+        })
+    );
+}
+
 async function manageInstanceRecommendationPreReqs(
     awsAccountId: string,
     region: string,
@@ -152,7 +225,7 @@ async function manageInstanceRecommendationPreReqs(
         );
     } else {
         logger.info('Recommendation preference created for the instance, adding the instance to the tracked list');
-        await addEc2InstancesToTrackedList(accountId, region, credentialsId, awsAccountId, instanceIds);
+        await addEc2InstancesToTrackedList(accountId, region, credentialsId, awsAccountId, instanceIds, TCO_FEATURE);
         throw new Error(
             'Recommendation preference created for the instance; it takes about 24hours for compute optimizer to recommend an instance; skipping recommendations'
         );
@@ -166,16 +239,25 @@ async function addEc2InstancesToTrackedList(
     region: string,
     credentialsId: string,
     awsAccountId: string,
-    instanceIds: string[]
+    instanceIds: string[],
+    feature: string
 ) {
-    const trackedEc2Instances = await listTrackedEc2(TCO_FEATURE, accountId, region, credentialsId);
+    logger.info('Adding instance to tracked list', {
+        accountId,
+        region,
+        credentialsId,
+        awsAccountId,
+        instanceIds,
+        feature
+    });
+    const trackedEc2Instances = await listTrackedEc2(feature, accountId, region, credentialsId);
     const records = instanceIds
         .map(instanceId => ({
             account_id: accountId,
             region,
             credentials_id: credentialsId,
             instance_id: instanceId,
-            feature: TCO_FEATURE,
+            feature,
             cloud_provider_account_id: awsAccountId
         }))
         .filter(
@@ -254,10 +336,6 @@ async function getInstanceRecommendations(
                     values: ['Overprovisioned']
                 },
                 {
-                    name: 'InferredWorkloadTypes',
-                    values: ['SQLServer']
-                },
-                {
                     name: 'FindingReasonCodes',
                     values: [
                         'CPUOverprovisioned',
@@ -324,4 +402,38 @@ async function getInstanceRecommendations(
     throw new Error('AWS Account ID details associated with the Database host not found');
 }
 
-export { createRecommendationForResource, getInstanceRecommendations, manageInstanceRecommendationPreReqs };
+const translationMap: { [key: string]: string } = {
+    CPUOverprovisioned: 'CPU over-provisioned',
+    CPUUnderprovisioned: 'CPU under-provisioned',
+    DiskIOPSOverprovisioned: 'Disk IOPS over-provisioned',
+    DiskIOPSUnderprovisioned: 'Disk IOPS under-provisioned',
+    DiskThroughputOverprovisioned: 'Disk throughput over-provisioned',
+    DiskThroughputUnderprovisioned: 'Disk throughput under-provisioned',
+    EBSIOPSOverprovisioned: 'EBS IOPS over-provisioned',
+    EBSIOPSUnderprovisioned: 'EBS IOPS under-provisioned',
+    EBSThroughputOverprovisioned: 'EBS throughput over-provisioned',
+    EBSThroughputUnderprovisioned: 'EBS throughput under-provisioned',
+    GPUMemoryOverprovisioned: 'GPU memory over-provisioned',
+    GPUMemoryUnderprovisioned: 'GPU memory under-provisioned',
+    GPUOverprovisioned: 'GPU over-provisioned',
+    GPUUnderprovisioned: 'GPU under-provisioned',
+    MemoryOverprovisioned: 'Memory over-provisioned',
+    MemoryUnderprovisioned: 'Memory under-provisioned',
+    NetworkBandwidthOverprovisioned: 'Network bandwidth over-provisioned',
+    NetworkBandwidthUnderprovisioned: 'Network bandwidth under-provisioned',
+    NetworkPPSOverprovisioned: 'Network PPS over-provisioned',
+    NetworkPPSUnderprovisioned: 'Network PPS under-provisioned'
+};
+
+function translateFindingReasonCode(key: string): string {
+    logger.info('Translating finding reason code', { key });
+    return translationMap[key] || key; // Return the key itself if no translation is found
+}
+
+export {
+    createRecommendationForResource,
+    getInstanceRecommendations,
+    manageInstanceRecommendationPreReqs,
+    manageInstanceRecommendationPreReqsForManagedInstances,
+    translateFindingReasonCode
+};

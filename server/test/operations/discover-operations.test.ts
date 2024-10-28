@@ -2,7 +2,6 @@ import { faker } from '@faker-js/faker';
 import {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
-    manageSqlServer,
     manageSqlServerV2
 } from '../../src/operations/discover-operations';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
@@ -24,16 +23,16 @@ describe('Discover operations', () => {
         }
     );
 
-    it('Manage an EC2 hosting SQL Server: No SSM connectivity)', async () => {
-        try {
-            await manageSqlServer(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'i-1d9i5v18g5392mf1v');
-        } catch (error: any) {
-            expect(error.message).toEqual(
-                // eslint-disable-next-line quotes
-                "Unable to manage instance 'i-1d9i5v18g5392mf1v'. Reason: no SSM connectivity."
-            );
-        }
-    });
+    // it('Manage an EC2 hosting SQL Server: No SSM connectivity)', async () => {
+    //     try {
+    //         await manageSqlServer(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'i-1d9i5v18g5392mf1v');
+    //     } catch (error: any) {
+    //         expect(error.message).toEqual(
+    //             // eslint-disable-next-line quotes
+    //             "Unable to manage instance 'i-1d9i5v18g5392mf1v'. Reason: no SSM connectivity."
+    //         );
+    //     }
+    // });
 
     it('Manage EC2 hosting SQL Server V2: No SSM connectivity)', async () => {
         const resp = await manageSqlServerV2(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'i-1d9i5v18g5392mf1v', [

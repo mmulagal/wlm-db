@@ -25,7 +25,7 @@ import {
     HttpErrorCodes
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
-import { ResourceDetails } from '../../utils/common-types';
+import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getFsxArn } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
@@ -414,7 +414,8 @@ async function getMappedOntapVolumes(
     isSystemDatabase: boolean,
     activeNodeInstanceId?: string,
     instanceNames?: string[],
-    isSqlAuthEnabled = false
+    isSqlAuthEnabled = false,
+    includeLogVolumes = false
 ) {
     logger.info('Get ontap volumes mapped to data drive of all databases in a server', {
         credentialsId,
@@ -422,7 +423,8 @@ async function getMappedOntapVolumes(
         fileSystemId,
         activeNodeInstanceId,
         isSystemDatabase,
-        isSqlAuthEnabled
+        isSqlAuthEnabled,
+        includeLogVolumes
     });
 
     try {
@@ -438,7 +440,9 @@ async function getMappedOntapVolumes(
             region,
             psIsSystemDatabase,
             instanceNames,
-            isSqlAuthEnabled
+            isSqlAuthEnabled,
+            '',
+            includeLogVolumes
         );
 
         const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId!);
@@ -455,15 +459,16 @@ async function getMappedOntapVolumes(
                 parsedResponse?.[iName] &&
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
             ) {
-                const { volumeDBMap, volumes } = parsedResponse?.[iName] ?? {};
+                const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
                 if (volumes && !isEmpty(volumes?.records)) {
                     const volumeRecords = volumes.records.map((record: Record<string, string | number>) => ({
+                        name: record.name,
                         uuid: record.uuid,
                         snapshot_count: record.snapshot_count
                     }));
-                    instancesResponse[iName] = { volumeRecords, volumeDBMap };
+                    instancesResponse[iName] = { volumeRecords, volumeDBMap, lunNames };
                 } else {
-                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: {} };
+                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: {}, lunNames: [] };
                 }
             } else {
                 logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);
@@ -536,6 +541,76 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
     }
 }
 
+async function getStorageDataFromOntap(
+    activeNodeInstanceId: string,
+    instanceDetails: DatabaseInstance[],
+    isSqlAuthEnabled: boolean
+) {
+    logger.info('Getting storage data from Ontap:', { activeNodeInstanceId, instanceDetails, isSqlAuthEnabled });
+
+    try {
+        const managedInstances = instanceDetails.filter(
+            ({ isManaged, fsxn_ids: fsxnIds }) => isManaged && fsxnIds?.length
+        );
+        const [{ credentials_id: credentialsId, region, fsxn_ids: fsxnId }] = managedInstances;
+
+        const instanceNames = managedInstances.map(({ database_instance_name: instanceName }) => instanceName);
+        const command = getMappedOntapVolumesScript(
+            fsxnId,
+            region,
+            '$false',
+            instanceNames,
+            isSqlAuthEnabled,
+            'efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'
+        );
+        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId);
+
+        const cleanResponse = response?.replaceAll('\r\n', '');
+        let parsedResponse = attempt(JSON.parse, cleanResponse);
+
+        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+        logger.debug({ parsedResponse });
+
+        const instancesResponse: { [key: string]: any } = {};
+        instanceNames?.forEach((iName: string) => {
+            if (
+                parsedResponse?.[iName] &&
+                !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
+            ) {
+                const { volumes } = parsedResponse?.[iName] ?? {};
+                if (volumes && !isEmpty(volumes?.records)) {
+                    const storageSavings = volumes.records.reduce(
+                        (savings: Record<string, number>, { space, efficiency }: VolumeSpaceRecord) => ({
+                            size: savings.size + space.size,
+                            used: savings.used + space.used,
+                            spaceSavings: savings.spaceSavings + efficiency.space_savings.total
+                        }),
+                        {
+                            size: 0,
+                            used: 0,
+                            spaceSavings: 0
+                        } as Record<string, number>
+                    );
+                    // storageSavings.spaceSavingsPercent = (storageSavings.spaceSavings / storageSavings.used) * 100;
+                    instancesResponse[iName] = { ...storageSavings };
+                } else {
+                    instancesResponse[iName] = { size: 0, used: 0, spaceSavings: 0 };
+                }
+            } else {
+                logger.error(
+                    'Failed to get storage savings from ONTAP for the instance:',
+                    iName,
+                    parsedResponse?.[iName]
+                );
+            }
+        });
+
+        return instancesResponse;
+    } catch (error) {
+        logger.error('Failed executing SSM script to get storage data from ONTAP', { error });
+    }
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -546,5 +621,7 @@ export {
     tagFsxResource,
     getCostAllocationTagFsxResource,
     getFsxStorageCapacity,
-    getFSXFileSystemListForDemo
+    getFSXFileSystemListForDemo,
+    getFSXDetails,
+    getStorageDataFromOntap
 };

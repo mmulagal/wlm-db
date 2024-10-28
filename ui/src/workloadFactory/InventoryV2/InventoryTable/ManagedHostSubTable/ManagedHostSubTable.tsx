@@ -57,6 +57,12 @@ import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/
 import UndetectedHostDialogContentV2 from '../UndetectedHostDialogContent/UndetectedHostDialogContentV2';
 import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecondDialogV2';
 import useResize from '../../../../common/hooks/useResize';
+import {
+    setGwDatabaseInstance,
+    setGwDatabaseInstanceName,
+    setGwHostname,
+    setGwResourceId
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 
 const ManagedHostSubTable = ({
     handleManageInstances
@@ -193,6 +199,19 @@ const ManagedHostSubTable = ({
         dispatch(setSelectedDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
     };
 
+    const optimizeAction = (rowData: any) => {
+        const updatedState = store.getState();
+        const { inventoryTableData }: any = updatedState.inventoryV2;
+        const targettedHost = inventoryTableData[hostData.resourceId] || inventoryTableData[hostData.ec2InstanceId];
+        const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
+            (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
+        );
+        dispatch(setGwHostname(hostname));
+        dispatch(setGwResourceId(targettedHost?.resourceId));
+        dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
+        dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
+    };
+
     const resetDialogValues = () => {
         // reset all detect host dialog fields if dialog is closed.
         dispatch(setIsDetectHostError(''));
@@ -208,14 +227,14 @@ const ManagedHostSubTable = ({
         const detectHostRadio = state.inventoryV2.detectHostRadio;
         if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
             handleManageInstances(hostData, [rowData?.databaseInstanceName], true);
-            const manageStartMsg = (
-                <div className={styles.notification}>
-                    {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
-                    <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
-                    {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
-                </div>
-            );
-            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: manageStartMsg }));
+            // const manageStartMsg = (
+            //     <div className={styles.notification}>
+            //         {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
+            //         <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
+            //         {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
+            //     </div>
+            // );
+            // dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: manageStartMsg }));
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         } else {
             const updatedInventoryTableData = updateInstanceStatus('detect', hostData, rowData);
@@ -348,10 +367,6 @@ const ManagedHostSubTable = ({
                     disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                     disableOption = true;
                 }
-                menu.push({
-                    id: 'optimize',
-                    displayName: 'Optimize'
-                });
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
@@ -368,6 +383,12 @@ const ManagedHostSubTable = ({
                     });
                 } else {
                     menu.push(
+                        {
+                            id: 'optimize',
+                            displayName: 'Optimize',
+                            disabled: disableOption,
+                            infoText: disableMessage
+                        },
                         {
                             id: 'viewInstance',
                             displayName: 'View instance',
@@ -489,7 +510,7 @@ const ManagedHostSubTable = ({
                                         if (menuId === 'optimize') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-                                            resourceAction(rowData);
+                                            optimizeAction(rowData);
                                         }
 
                                         if (menuId === 'manage') {

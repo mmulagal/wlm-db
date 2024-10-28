@@ -1,11 +1,14 @@
 import config from 'config';
 import Promise from 'bluebird';
 import ms from 'ms';
-import { STORAGE_TYPE } from '@prisma/client';
-import { compact } from 'lodash-es';
+import { STORAGE_TYPE, database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
+import { compact, isEmpty } from 'lodash-es';
+import { Queue, Worker } from 'bullmq';
+import IORedis from 'ioredis';
 import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
+    CONTINUOUS_ASSESSMENT_FEATURE,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     TCO_FEATURE
@@ -13,13 +16,32 @@ import {
 import getLogger from '../utils/logger';
 import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './database/job-operations';
 
-import { listTrackedEc2, removeTrackedEc2Record, updateTrackedEc2Record } from '../lib/database/db';
+import {
+    listAllManagedInstances,
+    listResources,
+    listTrackedEc2,
+    removeTrackedEc2Record,
+    updateTrackedEc2Record
+} from '../lib/database/db';
 import { getHostAndSqlServerInfo } from './discover-operations';
-import { manageInstanceRecommendationPreReqs } from './aws/compute-optimizer-operations';
-import { getEc2Arn } from '../utils/utils';
+import {
+    manageInstanceRecommendationPreReqs,
+    manageInstanceRecommendationPreReqsForManagedInstances
+} from './aws/compute-optimizer-operations';
+import { getEc2Arn, getRedisDetails } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
-import { fetchSqlServerInstanceConfiguration } from './recommendation-operations';
-import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
+import {
+    checkComputeOptimizerEnrollmentStatus,
+    fetchSqlServerInstanceConfiguration
+} from './recommendation-operations';
+import {
+    getAsyncLocalStorageResource,
+    getLocalStorage,
+    setAsyncLocalStorageResource
+} from '../utils/async-local-storage';
+import { triggerDriftAssessment } from './drift-assessment';
+import { DriftAssessmentJob, Metadata } from '../utils/common-types';
+import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -47,15 +69,15 @@ function purgeOlderJobs() {
 }
 
 // Scheduled task to update and manage EC2 instance recommendation preferences based on recent usage, and remove entries for instances no longer available in AWS."
-function updateInstanceRecommendationPreferences() {
+function updateTcoInstanceRecommendationPreferences() {
     setInterval(async () => {
-        await updatePreferences();
+        await updateTcoInstRecPrefs();
     }, Number(ms(config.get('db.tco.update-recommendation-preference'))));
 }
 
-async function updatePreferences() {
+async function updateTcoInstRecPrefs() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
-        logger.info('Updating instance recommendation preferences');
+        logger.info('Updating instance recommendation preferences for TCO feature');
         const trackedEc2Instances = await listTrackedEc2(TCO_FEATURE);
         await Promise.map(
             trackedEc2Instances,
@@ -141,10 +163,223 @@ async function updatePreferences() {
     });
 }
 
+async function updateManagedInstanceRecommendationPreferences() {
+    setInterval(async () => {
+        await updateManagedInstRecPrefs();
+    }, Number(ms(config.get('db.manged-instance.update-recommendation-preference'))));
+}
+
+interface DatabaseInstancesIncludingResource extends DatabaseInstances {
+    resource: Resource;
+}
+
+async function updateManagedInstRecPrefs() {
+    getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
+        logger.info('Updating instance recommendation preferences for Continuous assessment feature');
+
+        const managedInstances = (await listAllManagedInstances()) as DatabaseInstancesIncludingResource[];
+        if (isEmpty(managedInstances)) {
+            logger.error(
+                'No successfully managed database instances found during instance recommendation preference update.'
+            );
+            return;
+        }
+        const trackedEc2Instances = await listTrackedEc2(CONTINUOUS_ASSESSMENT_FEATURE);
+        const trackedEc2InstanceIds = trackedEc2Instances.map(instance => instance.instance_id);
+
+        // group managed instances by account_id, region, credentials_id, cloud_provider_account_id, and database_deployment_type so that we can manage a set of instances in bulk
+        const grouped: { [key: string]: DatabaseInstancesIncludingResource[] } = managedInstances.reduce(
+            (acc: { [key: string]: DatabaseInstancesIncludingResource[] }, managedInstance) => {
+                const key = `${managedInstance.account_id}||${managedInstance.region}||${managedInstance.credentials_id}||${managedInstance.resource.cloud_provider_account_id}||${managedInstance.database_deployment_type}`;
+                if (!acc[key]) {
+                    acc[key] = [];
+                }
+                acc[key].push(managedInstance);
+                return acc;
+            },
+            {} as { [key: string]: DatabaseInstancesIncludingResource[] }
+        );
+
+        await Promise.all(
+            Object.entries(grouped).map(async ([key, instances]) => {
+                const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('||');
+                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                const managedInstanceToBeUpdated = instances.filter((instance: { resource: Resource }) => {
+                    const resourceInfo = instance?.resource;
+                    const { node1InstanceId, node2InstanceId } = resourceInfo?.metadata as unknown as Metadata;
+                    return (
+                        !trackedEc2InstanceIds.includes(node1InstanceId) &&
+                        !trackedEc2InstanceIds.includes(node2InstanceId!)
+                    );
+                }); // update compute optimizer recommendation preferences only for managed instances that are not already being tracked, becuase the recommendation preference is static irrespsctive of the number of times it is updated
+                if (managedInstanceToBeUpdated.length === 0) {
+                    logger.info('No new managed instances found to update instance recommendation preferences.');
+                    return;
+                }
+
+                if (managedInstanceToBeUpdated.length > 0) {
+                    let coOptedIn = false;
+                    try {
+                        await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
+                        coOptedIn = true;
+                    } catch (error) {
+                        logger.info(
+                            `Failed fetching compute otimizer opt in status or Compute optimizer is not enabled for account ${awsAccountId} in region ${region}. Skipping updating instance recommendation preferences for managed instances.`
+                        );
+                    }
+                    if (coOptedIn) {
+                        managedInstanceToBeUpdated.forEach(async (instance: { resource: Resource }) => {
+                            const { node1InstanceId, node2InstanceId } = instance?.resource
+                                ?.metadata as unknown as Metadata;
+
+                            const instanceIds = [node1InstanceId];
+                            if (node2InstanceId) {
+                                instanceIds.push(node2InstanceId);
+                            }
+                            await manageInstanceRecommendationPreReqsForManagedInstances(
+                                awsAccountId,
+                                region,
+                                credentialsId,
+                                instanceIds,
+                                accountId,
+                                deploymentType as string
+                            );
+                        });
+                    }
+                }
+            })
+        );
+
+        logger.info('Updating instance recommendation preferences for managed instances completed');
+    });
+}
+
+async function scheduledAssessment() {
+    const redisDetails = getRedisDetails();
+
+    const managedResources = await listResources();
+    if (isEmpty(managedResources)) {
+        logger.error('No managed database resources found.');
+        return;
+    }
+    const managedInstances = await listAllManagedInstances();
+    if (isEmpty(managedInstances)) {
+        logger.error('No successfully managed database instances found.');
+        return;
+    }
+
+    let redisConnection;
+    try {
+        redisConnection = new IORedis(redisDetails.url, {
+            maxRetriesPerRequest: null
+        });
+
+        redisConnection.on('error', error => {
+            logger.error('Redis connection error:', error);
+        });
+
+        const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
+            connection: redisConnection
+        });
+
+        driftAssessmentQueue.on('error', error => {
+            logger.error('Queue error:', error);
+        });
+
+        logger.info('Debug queue');
+        const allJobsCount = await driftAssessmentQueue.getJobCounts();
+        logger.info(JSON.stringify(allJobsCount));
+
+        await Promise.all(
+            managedResources.map(async managedResource => {
+                const {
+                    account_id: accountId,
+                    credentials_id: credentialsId,
+                    region,
+                    resource_id: resourceId
+                } = managedResource;
+
+                const managedInstanceIds = managedInstances
+                    .filter(instance => instance.resource_id === resourceId)
+                    .map(instance => instance.database_instance_id);
+
+                if (!isEmpty(managedInstanceIds)) {
+                    logger.info(`Adding assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+
+                    try {
+                        driftAssessmentQueue.add(
+                            `driftAssessmentFor${resourceId}`,
+                            {
+                                accountId,
+                                credentialsId,
+                                region,
+                                resourceId,
+                                managedInstanceIds
+                            },
+                            {
+                                // 2hours to observe
+                                repeat: { every: 2 * 3600 * 1000 }, // 24 hours in milliseconds
+                                removeOnComplete: true,
+                                removeOnFail: true
+                            }
+                        );
+                    } catch (error: any) {
+                        logger.error(`Error while add job to the queue. Error: ${error}`);
+                    }
+
+                    logger.info(`Added assessment cron for ${resourceId}, ${managedInstanceIds}.`);
+                } else {
+                    logger.info(`No managed instances found for ${resourceId}.`);
+                }
+            })
+        );
+    } catch (error) {
+        logger.error(`Error while adding cron assessment job ${error}`);
+    }
+
+    if (redisConnection) {
+        getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
+            try {
+                const driftAssessmentWorker = new Worker(
+                    DRIFT_ASSESSMENT_QUEUE,
+                    async (job: { data: DriftAssessmentJob }) => {
+                        setAsyncLocalStorageResource(ACCOUNT_ID, job.data.accountId);
+                        logger.info(`Account id ${getAsyncLocalStorageResource(ACCOUNT_ID)}`);
+                        try {
+                            await triggerDriftAssessment(
+                                job.data.accountId,
+                                job.data.credentialsId,
+                                job.data.region,
+                                job.data.resourceId,
+                                job.data.managedInstanceIds,
+                                AssessmentTriggeredBy.SYSTEM
+                            );
+                        } catch (error) {
+                            logger.error('Error processing job:', job, error);
+                        }
+                    },
+                    {
+                        connection: redisConnection
+                    }
+                );
+
+                driftAssessmentWorker.on('completed', job => {
+                    logger.debug(job.id, 'is completed.');
+                });
+            } catch (error) {
+                logger.error(`Error while triggering scheduled assessment: ${error}.`);
+            }
+        });
+    }
+}
+
 export {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
-    updateInstanceRecommendationPreferences,
-    updatePreferences
+    updateManagedInstanceRecommendationPreferences,
+    updateTcoInstanceRecommendationPreferences,
+    updateTcoInstRecPrefs,
+    updateManagedInstRecPrefs,
+    scheduledAssessment
 };

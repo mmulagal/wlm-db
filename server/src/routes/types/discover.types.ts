@@ -181,9 +181,9 @@ const MultiInstanceManageResponseBody = Type.Object({
     )
 });
 
-const ManageMsSqlResponseBody = Type.Object({
-    resourceId: Type.String({ description: 'ID of the managed resource' })
-});
+// const ManageMsSqlResponseBody = Type.Object({
+//     resourceId: Type.String({ description: 'ID of the managed resource' })
+// });
 
 const PrepareResourceResponseBody = {
     jobId: Type.String({ description: 'Resource preparation job ID' })
@@ -246,7 +246,6 @@ const MsSqlInstancesRequestQuery = Type.Object({
 export {
     DiscoverMsSqlQuery,
     DiscoverMsSqlResponseBody,
-    ManageMsSqlResponseBody,
     DiscoverMsSqlResponseBodyType,
     SqlServerInstanceInfoType,
     DiscoverResponseInfoType,

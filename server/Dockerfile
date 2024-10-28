@@ -29,6 +29,7 @@ COPY resources/mssql/templates/fsx-new.yaml ./resources/mssql/templates/fsx-new.
 COPY resources/mssql/templates/fsx-existing.yaml ./resources/mssql/templates/fsx-existing.yaml
 COPY resources/mssql/templates/main.tf ./resources/mssql/templates/main.tf
 COPY resources/mssql/terraform ./resources/mssql/terraform/
+COPY resources/pgsql/templates ./resources/pgsql/templates/
 
 COPY dist/src ./
 

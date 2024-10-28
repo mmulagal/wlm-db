@@ -1,11 +1,7 @@
 import { Button, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
-import {
-    FORM_TO_WLF_NAVIGATE,
-    WLF_TABS,
-    FORM_TO_WLF_NAVIGATE_BLUEXP
-} from '../../../../utils/consts';
+import { FORM_TO_WLF_NAVIGATE, WLF_TABS, FORM_TO_WLF_NAVIGATE_BLUEXP } from '../../../../utils/consts';
 import {
     setDeployRedirectToCfLink,
     setIsLoading,
@@ -108,7 +104,11 @@ const MSSqlFooter = () => {
         if (databaseHostEntryPoint === 'inventory') {
             navigate('databases/inventory');
         } else if (databaseHostEntryPoint === 'database') {
-            navigate('/databases');
+            if (isWorkloadFactoryStatus) {
+                navigate('/databases');
+            } else {
+                navigate('../../fsxdb');
+            }
         } else {
             if (isWorkloadFactoryStatus) {
                 navigateToCanvas('/');

@@ -170,7 +170,9 @@ export const JOB_MONITORING_TYPE = {
     CREATE_RESOURCE: 'CREATE_RESOURCE',
     CREATE_DATABASE: 'CREATE_DATABASE',
     PREPARE_RESOURCE: 'PREPARE_RESOURCE',
-    SANDBOX: 'SANDBOX'
+    SANDBOX: 'SANDBOX',
+    ASSESSMENT: 'ASSESSMENT',
+    OPTIMIZE: 'OPTIMIZATION'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -202,14 +204,14 @@ export const CURL_REQ_TEMPLATE = (
 ) => {
     if (isWorkloadFactory) {
         return `
-        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --data-raw '${payload}'
         `;
     } else {
         return `
-        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --header 'x-netapp-referer: BlueXP' \\
@@ -534,6 +536,8 @@ export const OS_VERSIONS_LIST = [
 
 export const SANDBOX_ACTIONS_POLLING_INTERVAL = 5000;
 
+export const OPTIMIZE_POLLING_INTERVAL = 5000;
+
 export const MAX_IOPS_VALUE = 160000;
 
 export const INVENTORY_STATUS = {
@@ -588,7 +592,7 @@ export const PROTECTION_TEXT_STATUS = {
     NO: 'No'
 };
 
-export const PREPARE_API_ENDPOINT = '/mssql/prepare';
+export const PREPARE_API_ENDPOINT = '/prepare';
 
 export const FSX_AZ_TYPE = {
     SINGLE: 'single',
@@ -632,3 +636,74 @@ export const EBS_PROTECTED_OPTIONS = {
     UNPROTECTED: 'Unprotected',
     UNKNOWN: 'Unknown'
 };
+
+export const GETWELL_STATUS = {
+    OPTIMIZED: 'Optimized',
+    NOT_OPTIMIZED: 'Not optimized',
+    UNDER_PROVISIONED: 'Under-provisioned',
+    OVER_PROVISIONED: 'Over-provisioned',
+    OPTIMIZING: 'Optimizing',
+    NOT_APPLICABLE: 'Not applicable'
+};
+
+export const GETWELL_VALUES: any = {
+    optimized: 'Optimized',
+    optimizing: 'Optimizing',
+    'not-applicable': 'Not applicable',
+    'not-optimized': 'Not optimized',
+    'under-provisioned': 'Under-provisioned',
+    'over-provisioned': 'Over-provisioned',
+    separate_drive: 'Separate Drive',
+    'separate-drive': 'Separate Drive',
+    'same-drive': 'Same Drive',
+    same_drive: 'Same Drive',
+    critical: 'Critical',
+    warning: 'Warning',
+    none: 'None'
+};
+
+export const GETWELL_CONFIG: any = {
+    'thin-provision': 'Thin provisioning',
+    autosize: 'Autosize',
+    'autosize-mode': 'Autosize-mode',
+    'fractional-reserve': 'Fractional reserve',
+    'snapshot-copy-reserve': 'Snapshot copy reserve',
+    'snapshot-autodelete': 'Snapshot autodelete',
+    'space-mgmt-try-first': 'Space management',
+    'tiering-policy': 'Tiering policy',
+    'tiering-min-cooling-days': 'Tiering min cooling days',
+    'os-type': 'OS type',
+    'space-reservation-enabled': 'Space reservation',
+    'space-allocation-allocated': 'Space allocation',
+    'mpio-iscsi-count': 'Multipath I/O Sessions',
+    'mpio-enabled': 'Multipath I/O Status',
+    'mpio-load-balance-policy': 'Multipath I/O Policy',
+    'ntfs-allocation-size': 'NTFS allocation unit size',
+    'ntfs-allocation-unit-size': 'NTFS allocation unit size',
+    'log-drive-size': 'transaction_log_drive_size',
+    'performance-tier': 'storage_tier',
+    'tempdb-drive-size': 'tempdb_drive_size',
+    headroom: 'file_system_headroom',
+    'tempdb-files-location': 'tempdb_files',
+    'default-log-files-location': 'transaction_log_files',
+    'default-data-files-location': 'user_data_files',
+    'compute-rightsizing': 'compute_rightsizing',
+    'operating-system-patch': 'operating_system_patch'
+};
+
+export const GW_CONFIG_OPTIMIZE_NA = [
+    'User data files (.mdf) placement',
+    'Log files (.ldf) placement',
+    'TempDB placement',
+    'OS type',
+    'Storage tier',
+    'File system headroom',
+    'Log drive size',
+    'TempDB drive size',
+    'Multipath I/O Sessions',
+    'Multipath I/O Status',
+    'Multipath I/O Policy',
+    'NTFS allocation unit size',
+    'Compute rightsizing',
+    'Operating system patch'
+];

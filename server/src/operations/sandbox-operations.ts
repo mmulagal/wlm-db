@@ -1022,7 +1022,8 @@ async function createVolumeClone(
             destDetails.activeNodeInstanceId,
             accountId,
             false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+            CUSTOM_SSM_EXECUTION_TIMEOUT,
+            'SandBox: Create Volume Clone'
         );
 
         if (!clonedVolumes) {
@@ -1232,7 +1233,8 @@ async function createCloneDb(
         parentJobId,
         destDetails,
         mountPaths,
-        collation
+        collation,
+        fileSuffix
     );
 
     let status: string = JOBSTATUS.IN_PROGRESS;

@@ -441,6 +441,7 @@ async function handleInstanceRecommendation(
             existingInstanceTypesPricingDetails,
             existingInstanceHourlyPrice,
             existingInstanceHourlyPriceWithoutLicense,
+            monthlySqlByolCostPerHost,
             error.message
         );
     }
@@ -1096,4 +1097,9 @@ async function getSqlInstanceLicenseRecommendations(
     throw createError('No SQL Server instances found for the provided EC2 instance.');
 }
 
-export { fetchSqlServerInstanceConfiguration, manualModeComputeLicenseDetails, getSqlInstanceLicenseRecommendations };
+export {
+    fetchSqlServerInstanceConfiguration,
+    manualModeComputeLicenseDetails,
+    getSqlInstanceLicenseRecommendations,
+    checkComputeOptimizerEnrollmentStatus
+};

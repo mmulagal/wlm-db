@@ -70,6 +70,9 @@
         }
     },
     "db": {
+        "managed-instance":{
+            "update-recommendation-preference": "1d"
+        },
         "tco": {
             "update-recommendation-preference": "1d"
         },
@@ -79,5 +82,8 @@
                 "older-than": "90d"
             }
         }
+    },
+    "redis": {
+        "endpoint": "127.0.0.1:6379"
     }
 }
