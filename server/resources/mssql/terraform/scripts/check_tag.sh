@@ -19,10 +19,10 @@ while true; do
 
   if [ "$tag_value" = "completed" ]; then
     echo "completed"
-    break
+    exit 0
   elif [ "$tag_value" = "failed" ]; then
     echo "failed"
-    break
+    exit 1
   else
     echo "The 'user_data' tag was not found. Waiting... (counter: $counter)"
     sleep 10
