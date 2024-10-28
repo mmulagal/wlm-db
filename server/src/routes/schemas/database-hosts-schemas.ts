@@ -353,7 +353,8 @@ const TriggerDriftAssessmentSchema = {
         }
     }
 };
-const OptimizeStorageSchemaDescription = 'Optimize storage volume and lun for the given database instance.';
+const OptimizeStorageSchemaDescription =
+    'Optimize storage parameters as per the best practice for the selected database instance.';
 
 const OptimizeStorageSchema = {
     ...resourceRequest,
