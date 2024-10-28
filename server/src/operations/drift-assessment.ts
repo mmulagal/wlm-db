@@ -64,7 +64,7 @@ async function calculateStorageDrift(
     }
 
     const driftAssessmentData: StorageParameterDriftResponseType = {
-        timestamp: persistedConfigurationData.creation_time.toDateString(),
+        timestamp: persistedConfigurationData.creation_time.toISOString(),
         optimisedCount: { total: 0, optimised: 0 },
         configuration: { volumes: [], luns: [], os: [] },
         sizing: [],
@@ -239,6 +239,10 @@ async function calculateStorageDrift(
                 : sizePercent > 30
                 ? AssessmentStatus.OVER_PROVISIONED
                 : AssessmentStatus.UNDER_PROVISIONED;
+        configCount += 1;
+        if (status === AssessmentStatus.OPTIMIZED) {
+            optimizedCount += 1;
+        }
         driftAssessmentData.sizing.push({
             name: 'headroom',
             recommended: goldenData!.value.toString(),
