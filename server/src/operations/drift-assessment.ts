@@ -220,14 +220,14 @@ async function calculateStorageDrift(
                     !isEmpty(overProvisionedDrives) || !isEmpty(underProvisionedDrives)
                         ? AssessmentStatus.NOT_OPTIMIZED
                         : !isEmpty(ignoredDrives)
-                        ? AssessmentStatus.NOT_AVAILABLE
+                        ? AssessmentStatus.NOT_APPLICABLE
                         : AssessmentStatus.OPTIMIZED;
             }
             if (key === 'data-tempdb-drive-details') {
                 const defaultDataDrive = value.defaultDataDriveLetter;
                 const { tempdbDriveLetter } = value;
                 if (defaultDataDrive === tempdbDriveLetter) {
-                    status = AssessmentStatus.NOT_AVAILABLE;
+                    status = AssessmentStatus.NOT_APPLICABLE;
                 } else {
                     const { defaultDataDriveSize } = value;
                     const { tempdbDriveTotalSizeMB } = value;
