@@ -43,6 +43,7 @@ import { GENERAL } from '../../utils/appConstants';
 const GetWell = () => {
     const dispatch = useDispatch();
     const { optimizeFilterTags, defaultFilterOptions } = useAppSelector(state => state.inventoryV2);
+    const totalConfigCount = useAppSelector(state => state.getWellOptimize.optimizationBreakDown?.total?.total);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
         cardData,
@@ -56,6 +57,7 @@ const GetWell = () => {
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
+    const [configCount, setConfigCount] = useState(0);
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
@@ -130,8 +132,13 @@ const GetWell = () => {
 
     // To apply filters on change of filters or card data
     useEffect(() => {
-        setFilteredCardData(applyFilter(cardData, optimizeFilterTags));
-    }, [cardData, optimizeFilterTags]);
+        const { data, configCount } = applyFilter(cardData, optimizeFilterTags, {
+            ontap_configuration: ontapConfigTableData?.length || 0,
+            os_configuration: osConfigTableData?.length || 0
+        });
+        setFilteredCardData(data);
+        setConfigCount(configCount);
+    }, [cardData, optimizeFilterTags, ontapConfigTableData, osConfigTableData]);
 
     const refreshGetWellPage = () => {
         resetGwValuesOnRefresh(dispatch);
@@ -271,7 +278,14 @@ const GetWell = () => {
                                             }}
                                             variant="Semibold_14"
                                         >
-                                            Configurations: All(26)
+                                            Configurations:{' '}
+                                            {loading
+                                                ? ''
+                                                : `${
+                                                      totalConfigCount === configCount
+                                                          ? `All(${totalConfigCount})`
+                                                          : `${configCount}/${totalConfigCount}`
+                                                  }`}
                                         </DsTypography>
                                     </div>
                                 }
@@ -292,7 +306,7 @@ const GetWell = () => {
                                                         `Categories: (${
                                                             defaultFilterOptions['all-catagories']?.length > 0
                                                                 ? defaultFilterOptions['all-catagories']?.length
-                                                                : 5
+                                                                : 2
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -306,21 +320,6 @@ const GetWell = () => {
                                                             id: 1,
                                                             label: 'Compute',
                                                             value: 'Compute'
-                                                        },
-                                                        {
-                                                            id: 2,
-                                                            label: 'Application',
-                                                            value: 'Application'
-                                                        },
-                                                        {
-                                                            id: 3,
-                                                            label: 'Resiliency',
-                                                            value: 'Resiliency'
-                                                        },
-                                                        {
-                                                            id: 4,
-                                                            label: 'Cloning',
-                                                            value: 'Cloning'
                                                         }
                                                     ]}
                                                     selectionType="multi"
@@ -342,7 +341,7 @@ const GetWell = () => {
                                                         `Sub categories: (${
                                                             defaultFilterOptions['sub-catagories']?.length > 0
                                                                 ? defaultFilterOptions['sub-catagories']?.length
-                                                                : 3
+                                                                : 4
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -362,6 +361,11 @@ const GetWell = () => {
                                                             id: 2,
                                                             label: 'Storage configuration',
                                                             value: 'Storage configuration'
+                                                        },
+                                                        {
+                                                            id: 3,
+                                                            label: 'Compute',
+                                                            value: 'Compute'
                                                         }
                                                     ]}
                                                     selectionType="multi"
@@ -384,7 +388,7 @@ const GetWell = () => {
                                                         `Status: (${
                                                             defaultFilterOptions['status']?.length > 0
                                                                 ? defaultFilterOptions['status']?.length
-                                                                : 5
+                                                                : 2
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -439,7 +443,7 @@ const GetWell = () => {
                                                         `Severity: (${
                                                             defaultFilterOptions['severity']?.length > 0
                                                                 ? defaultFilterOptions['severity']?.length
-                                                                : 5
+                                                                : 2
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -555,11 +559,10 @@ const GetWell = () => {
                                                 }}
                                                 variant="Semibold_14"
                                             >
-                                                All (
-                                                {defaultFilterOptions['all-catagories']?.length > 0
-                                                    ? defaultFilterOptions['all-catagories']?.length
-                                                    : 5}
-                                                )
+                                                {!defaultFilterOptions['all-catagories']?.length ||
+                                                defaultFilterOptions['all-catagories']?.length === 2
+                                                    ? 'All(2)'
+                                                    : `${defaultFilterOptions['all-catagories']?.length}/2`}
                                             </DsTypography>
                                         </div>
 
@@ -584,11 +587,10 @@ const GetWell = () => {
                                                 }}
                                                 variant="Semibold_14"
                                             >
-                                                All (
-                                                {defaultFilterOptions['sub-catagories']?.length > 0
-                                                    ? defaultFilterOptions['sub-catagories']?.length
-                                                    : 3}
-                                                )
+                                                {!defaultFilterOptions['sub-catagories']?.length ||
+                                                defaultFilterOptions['sub-catagories']?.length === 4
+                                                    ? 'All(4)'
+                                                    : `${defaultFilterOptions['sub-catagories']?.length}/4`}
                                             </DsTypography>
                                         </div>
 
@@ -613,11 +615,10 @@ const GetWell = () => {
                                                 }}
                                                 variant="Semibold_14"
                                             >
-                                                All (
-                                                {defaultFilterOptions['status']?.length > 0
-                                                    ? defaultFilterOptions['status']?.length
-                                                    : 2}
-                                                )
+                                                {!defaultFilterOptions['status']?.length ||
+                                                defaultFilterOptions['status']?.length === 2
+                                                    ? 'All(2)'
+                                                    : `${defaultFilterOptions['status']?.length}/2`}
                                             </DsTypography>
                                         </div>
 
@@ -642,11 +643,10 @@ const GetWell = () => {
                                                 }}
                                                 variant="Semibold_14"
                                             >
-                                                All (
-                                                {defaultFilterOptions['severity']?.length > 0
-                                                    ? defaultFilterOptions['severity']?.length
-                                                    : 2}
-                                                )
+                                                {!defaultFilterOptions['severity']?.length ||
+                                                defaultFilterOptions['severity']?.length === 2
+                                                    ? 'All(2)'
+                                                    : `${defaultFilterOptions['severity']?.length}/2`}
                                             </DsTypography>
                                         </div>
 
@@ -671,11 +671,10 @@ const GetWell = () => {
                                                 }}
                                                 variant="Semibold_14"
                                             >
-                                                All (
-                                                {defaultFilterOptions['tags']?.length > 0
-                                                    ? defaultFilterOptions['tags']?.length
-                                                    : 5}
-                                                )
+                                                {!defaultFilterOptions['tags']?.length ||
+                                                defaultFilterOptions['tags']?.length === 5
+                                                    ? 'All(5)'
+                                                    : `${defaultFilterOptions['tags']?.length}/5`}
                                             </DsTypography>
                                         </div>
                                     </div>
