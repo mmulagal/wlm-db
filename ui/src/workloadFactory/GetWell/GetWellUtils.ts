@@ -739,24 +739,27 @@ export const generateDate = () => {
 };
 
 // filters card data based on filter tags
-export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
+export const applyFilter = (cardData: any, optimizeFilterTags: any, tableCountData: any) => {
     let filteredCardData: any = {};
+    let configCount = 0;
     const filters = groupByType(optimizeFilterTags, 'value');
-    const subCategoryData: any = {
-        file_system_headroom: 'Storage sizing',
-        storage_tier: 'Storage sizing',
-        transaction_log_drive_size: 'Storage sizing',
-        tempdb_drive_size: 'Storage sizing',
-        user_data_files: 'Storage layout',
-        transaction_log_files: 'Storage layout',
-        tempdb_files: 'Storage layout',
-        ontap_configuration: 'Storage configuration',
-        os_configuration: 'Storage configuration',
-        compute_rightsizing: 'Compute',
-        operating_system_patch: 'Compute'
+    const categoryData: any = {
+        file_system_headroom: { category: 'Storage', subCategory: 'Storage sizing' },
+        storage_tier: { category: 'Storage', subCategory: 'Storage sizing' },
+        transaction_log_drive_size: { category: 'Storage', subCategory: 'Storage sizing' },
+        tempdb_drive_size: { category: 'Storage', subCategory: 'Storage sizing' },
+        user_data_files: { category: 'Storage', subCategory: 'Storage layout' },
+        transaction_log_files: { category: 'Storage', subCategory: 'Storage layout' },
+        tempdb_files: { category: 'Storage', subCategory: 'Storage layout' },
+        ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
+        os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
+        compute_rightsizing: { category: 'Compute', subCategory: 'Compute' }
     };
     Object.keys(cardData).map((key: any) => {
-        const checkSubCategory = !filters['sub-catagories'] || filters['sub-catagories'].includes(subCategoryData[key]);
+        const checkCategory =
+            !filters['all-catagories'] || filters['all-catagories'].includes(categoryData[key]?.category);
+        const checkSubCategory =
+            !filters['sub-catagories'] || filters['sub-catagories'].includes(categoryData[key]?.subCategory);
 
         const isOptmized = cardData[key]['block_two'].value === GETWELL_VALUES.optimized;
         const checkStatus =
@@ -769,11 +772,14 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         const checkTags =
             !filters.tags || filters.tags.filter((tag: string) => cardData[key].tags.includes(tag)).length > 0;
 
-        if (checkSubCategory && checkStatus && checkSeverity && checkTags) {
+        if (checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags) {
             filteredCardData[key] = cardData[key];
+            if (categoryData[key] && cardData[key]['block_two'].value) {
+                configCount += tableCountData.hasOwnProperty(key) ? tableCountData[key] : 1;
+            }
         }
     });
-    return filteredCardData;
+    return { data: filteredCardData, configCount };
 };
 
 export const resetGwValuesOnRefresh = (dispatch: any) => {
