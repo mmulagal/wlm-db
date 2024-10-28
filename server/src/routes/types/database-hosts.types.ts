@@ -607,6 +607,15 @@ const DatabaseQueryString = Type.Object({
     nextToken: Type.Optional(Type.String())
 });
 
+const SizingViolationResponse = Type.Object({
+    databaseName: Type.String(),
+    dataDriveLetter: Type.String(),
+    dataDriveSizeInBytes: Type.Number(),
+    logDriveLetter: Type.String(),
+    logDriveSizeInBytes: Type.Number()
+});
+type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
+
 const ErrorResponse = Type.Object({ errorMessage: Type.String() });
 const ParameterDriftResponse = Type.Object({
     name: Type.String(),
@@ -615,6 +624,13 @@ const ParameterDriftResponse = Type.Object({
     severity: Type.String(),
     recommendation: Type.String(),
     objectsInViolation: Type.Optional(Type.Array(Type.String())),
+    sizingViolations: Type.Optional(
+        Type.Object({
+            overProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
+            underProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
+            ignoredDrives: Type.Optional(Type.Array(SizingViolationResponse))
+        })
+    ),
     tags: Type.Array(Type.Enum(AwsWellArchitecturedPillars))
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
@@ -741,5 +757,6 @@ export {
     StorageParameterDriftResponseType,
     OptimizeStorageRequestBody,
     OptimizeStorageRequestBodyType,
-    OptimizeStorageRequestParamsType
+    OptimizeStorageRequestParamsType,
+    SizingViolationResponseType
 };

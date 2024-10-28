@@ -329,16 +329,19 @@ const INSTANCE_DATA_DRIVES_QUERY = `${SET_NOCOUNT}
         select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc = 'ROWS'  FOR JSON AUTO`;
 
 const DEFAULT_DATA_DRIVE_SIZE = `${SET_NOCOUNT}
-        SELECT
-       total_bytes/1024/1024 --/1024
-        FROM sys.master_files mf 
-        CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id)
-        WHERE ((SELECT LEFT(volume_mount_point,1)) = (SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS varchar(38)),1)))
-        GROUP BY
-        volume_mount_point
-        ,total_bytes/1024/1024 --/1024
-        ,available_bytes/1024/1024 --/1024
-        ,CONVERT(INT,CONVERT(DECIMAL(15,2),available_bytes) / total_bytes * 100)
+        SELECT 
+            DISTINCT (LEFT(mf.physical_name, 2)) AS dataDriveLetter,
+            vs.total_bytes / 1048576 AS dataDriveTotalSizeMB
+        FROM 
+            sys.master_files mf
+       
+        CROSS APPLY 
+            sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
+            
+        WHERE ((SELECT LEFT(physical_name,1)) = (SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS varchar(38)),1)))
+        
+        ORDER BY 
+            dataDriveLetter ${FOR_JSON_PATH}
 `;
 
 const DEFAULT_LOG_DRIVE_SIZE = `${SET_NOCOUNT}
@@ -355,16 +358,17 @@ const DEFAULT_LOG_DRIVE_SIZE = `${SET_NOCOUNT}
 `;
 
 const TEMPDB_DRIVE_SIZE = `${SET_NOCOUNT}
-       SELECT
-        total_bytes/1024/1024 --/1024
-        FROM sys.master_files mf 
-        CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id)
-        WHERE ((SELECT LEFT(volume_mount_point,1)) in (SELECT DISTINCT(SELECT LEFT(physical_name, 1)) FROM tempdb.sys.database_files))
-        GROUP BY
-        volume_mount_point
-        ,total_bytes/1024/1024 --/1024
-        ,available_bytes/1024/1024 --/1024
-        ,CONVERT(INT,CONVERT(DECIMAL(15,2),available_bytes) / total_bytes * 100)
+            SELECT 
+                LEFT(d.filename, 2) AS tempdbDriveLetter,
+                vs.total_bytes / 1048576 AS tempdbDriveTotalSizeMB
+            FROM 
+                tempDB.sys.sysfiles d
+            JOIN
+                sys.master_files mf ON d.name = mf.name AND d.name = 'tempdev'
+            CROSS APPLY 
+                sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
+            ORDER BY 
+                tempdbDriveLetter ${FOR_JSON_PATH}
 `;
 
 const INSTANCE_DEFAULT_LOG_DRIVES_QUERY = `${SET_NOCOUNT}
