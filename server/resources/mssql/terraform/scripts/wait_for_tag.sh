@@ -5,22 +5,29 @@ InstanceId=$2
 Location=$3
 NodeName=$4
 
-log_file="${Path}/logs/${NodeName}_check_tag.log"
-echo "Starting wait_for_tag.sh"
+wait_for_tag_log_file="${Path}/logs/${NodeName}_wait_for_tag_windows.log"
+check_tag_log_file="${Path}/logs/${NodeName}_check_tag.log"
 
-# Run the check_tag.sh script and log its output
-sh "${Path}/scripts/check_tag.sh" "${InstanceId}" "${Location}" "${NodeName}" >> "$log_file" 2>&1
+# Check if the logs directory exists, if not, create it
+if [ ! -d "${Path}/logs" ]; then
+  mkdir -p "${Path}/logs"
+fi
 
-# Read the last line of the log file to get the tag status
-tag=$(tail -n 1 "$log_file")
-echo "Tag value: $tag"
+echo "Starting wait_for_tag.sh" | tee -a "$wait_for_tag_log_file"
+
+# Run the check_tag.sh script and log its output to check_tag.log
+sh "${Path}/scripts/check_tag.sh" "${InstanceId}" "${Location}" "${NodeName}" >> "$check_tag_log_file" 2>&1
+
+# Read the last line of the check_tag log file to get the tag status
+tag=$(tail -n 1 "$check_tag_log_file")
+echo "Tag value: $tag" | tee -a "$wait_for_tag_log_file"
 
 if [ "$tag" = 'completed' ]; then
-  echo "Tag completed"
+  echo "Tag completed" | tee -a "$wait_for_tag_log_file"
 elif [ "$tag" = 'failed' ]; then
-  echo "${NodeName} failed to deploy"
+  echo "${NodeName} failed to deploy" | tee -a "$wait_for_tag_log_file"
   exit 1
 else
-  echo "${NodeName} tag was not created within the timeout period. Stopping deployment."
+  echo "${NodeName} tag was not created within the timeout period. Stopping deployment." | tee -a "$wait_for_tag_log_file"
   exit 1
 fi
