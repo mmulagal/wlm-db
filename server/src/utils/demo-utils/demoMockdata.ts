@@ -1599,6 +1599,61 @@ function assessmentJobData(
     ];
 }
 
+function optimizeJobData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string
+) {
+    return [
+        {
+            id: parentJobId,
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Optimize storage for ${resourceName}\\${instanceName}.`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now()),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Optimized 3/3 volumes ${resourceName}\\${instanceName}`,
+            description: `Optimized 3/3 volumes ${resourceName}\\${instanceName}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.SANDBOX,
+            start_time: new Date(Date.now()),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.`,
+            description: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.SANDBOX,
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+
 export {
     masterStackData,
     validationStack1Data,
@@ -1610,5 +1665,6 @@ export {
     saveFciConfigurationData,
     saveStandaloneConfigurationData,
     sandboxJobData,
-    assessmentJobData
+    assessmentJobData,
+    optimizeJobData
 };
