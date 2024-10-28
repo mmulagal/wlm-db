@@ -229,8 +229,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                     <TooltipComponent
                                         title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
                                         placement="bottom"
-                                        width="250px"
-                                        height="50px"
+                                        width="120px"
+                                        height="30px"
                                     >
                                         <div>
                                             <DsButton variant="secondary" isDisabled={true}>

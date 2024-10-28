@@ -59,6 +59,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             return <NotActive />;
         } else if (value === GETWELL_STATUS.OPTIMIZING) {
             return <SmallLoader />;
+        } else if (value === GETWELL_STATUS.NOT_APPLICABLE) {
+            return <NotActive />;
         } else {
             return;
         }
@@ -311,8 +313,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         <TooltipComponent
                             title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
                             placement="bottom"
-                            width="250px"
-                            height="50px"
+                            width="120px"
+                            height="30px"
                         >
                             <div>
                                 <DsButton variant="secondary" isDisabled={true}>

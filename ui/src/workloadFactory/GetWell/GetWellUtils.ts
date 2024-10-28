@@ -18,7 +18,7 @@ import {
     OPTIMIZE_POLLING_INTERVAL
 } from '../../utils/consts';
 import { AssessmentResponseInterface, GwCardDataInterface, PerConfigInterface } from '../../utils/types/getWellTypes';
-import { formatNumberWithCustomComma } from '../../utils/utilityFunctions';
+import { formatDateWithTime, formatNumberWithCustomComma } from '../../utils/utilityFunctions';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: GwCardDataInterface = {
@@ -675,7 +675,11 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
     dispatch(setOptimizationBreakDown(optBreakDown));
 
     // Dispatch the timestamp to the store
-    dispatch(setGwTimestamp(data?.storage?.timestamp));
+    dispatch(
+        setGwTimestamp(
+            data?.storage?.timestamp ? formatDateWithTime(data?.storage?.timestamp) : data?.storage?.timestamp
+        )
+    );
 };
 
 export const getUniqueEntries = (arrays: any) => {
