@@ -47,7 +47,12 @@
             display: flex;
             gap: 16px;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 40px;
+
+            .title {
+                width: max-content;
+                white-space: nowrap;
+            }
 
             .separator {
                 border-right: 1px solid var(--text-disabled);
@@ -218,6 +223,10 @@
             display: flex;
             gap: 24px;
             flex-direction: column;
+
+            [class*='isExpanded'] {
+                overflow-y: hidden !important;
+            }
         }
     }
 
