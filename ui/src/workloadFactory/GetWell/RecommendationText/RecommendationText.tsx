@@ -25,7 +25,8 @@ const RecommendationText = ({ data }: { data: { title: string; description: stri
                                         width:
                                             value.includes('Under-provisioned') || value.includes('Over-provisioned')
                                                 ? '180px'
-                                                : 'fit-content'
+                                                : 'fit-content',
+                                        whiteSpace: 'nowrap'
                                     }}
                                 >
                                     {value}

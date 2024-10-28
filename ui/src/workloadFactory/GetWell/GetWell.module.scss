@@ -47,7 +47,12 @@
             display: flex;
             gap: 16px;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 40px;
+
+            .title {
+                width: max-content;
+                white-space: nowrap;
+            }
 
             .separator {
                 border-right: 1px solid var(--text-disabled);
@@ -151,6 +156,7 @@
 
                         [class*='dsTextFieldFrame'] {
                             max-width: 264px !important;
+                            width: 264px;
                         }
 
                         .not-optimized-tooltip {
@@ -218,6 +224,10 @@
             display: flex;
             gap: 24px;
             flex-direction: column;
+
+            [class*='isExpanded'] {
+                overflow-y: hidden !important;
+            }
         }
     }
 

@@ -127,7 +127,7 @@ const GetWell = () => {
                     })
                 );
             });
-        }, 10);
+        }, 100);
     };
 
     // To apply filters on change of filters or card data
@@ -212,13 +212,17 @@ const GetWell = () => {
                     )}
                     {optimizePrintState && (
                         <div className={styles.reportSubHeading}>
-                            <DsTypography variant="Semibold_16">Host name {selectedHostname}</DsTypography>
+                            <DsTypography className={styles.title} variant="Semibold_16">
+                                Host name {selectedHostname}
+                            </DsTypography>
                             <div className={styles.separator} />
-                            <DsTypography variant="Semibold_16">
+                            <DsTypography className={styles.title} variant="Semibold_16">
                                 instance name {selectedDatabaseInstanceName}
                             </DsTypography>
                             <div className={styles.separator} />
-                            <DsTypography variant="Semibold_16">Report date {generateDate()}</DsTypography>
+                            <DsTypography className={styles.title} variant="Semibold_16">
+                                Report date {generateDate()}
+                            </DsTypography>
                         </div>
                     )}
                 </div>
