@@ -1,4 +1,4 @@
-import { DsAccordion, DsSelect, DsTypography, Spinner, DsTooltipInfo, Popover } from '@netapp/design-system';
+import { DsAccordion, DsSelect, DsTypography, Spinner, DsTooltipInfo, Popover, DsButton } from '@netapp/design-system';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
@@ -57,8 +57,6 @@ const GetWell = () => {
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
-    const [filteredOntapConfigTableData, setFilteredOntapConfigTableData] = useState<any>([]);
-    const [filteredOsConfigTableData, setFilteredOsConfigTableData] = useState<any>([]);
     const [configCount, setConfigCount] = useState(0);
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
@@ -134,20 +132,19 @@ const GetWell = () => {
 
     // To apply filters on change of filters or card data
     useEffect(() => {
-        const { data, configCount, filteredTableData } = applyFilter(cardData, optimizeFilterTags, {
-            ontap_configuration: ontapConfigTableData,
-            os_configuration: osConfigTableData
-        });
-        const { ontap_configuration, os_configuration } = filteredTableData;
+        const { data, configCount } = applyFilter(cardData, optimizeFilterTags);
         setFilteredCardData(data);
-        setFilteredOntapConfigTableData(ontap_configuration);
-        setFilteredOsConfigTableData(os_configuration);
         setConfigCount(configCount);
     }, [cardData, optimizeFilterTags, ontapConfigTableData, osConfigTableData]);
 
     const refreshGetWellPage = () => {
         resetGwValuesOnRefresh(dispatch);
         dispatch(setGwRefreshPage(true));
+    };
+
+    const handleFilterClearAll = () => {
+        dispatch(setOptimizeFilterTags([]));
+        dispatch(setDefaultFilterOptions({}));
     };
 
     GetWellApi();
@@ -522,22 +519,33 @@ const GetWell = () => {
                                         </div>
 
                                         <div className={styles.filtersOption}>
-                                            {optimizeFilterTags.map((item: any) => (
-                                                <div className={styles.filterTag}>
-                                                    <DsTypography
-                                                        style={{ color: 'var(--header-notification-text)' }}
-                                                        variant="Semibold_13"
-                                                    >
-                                                        {item.label}
-                                                    </DsTypography>
-                                                    <div
-                                                        onClick={() => handleCancelFilter(item)}
-                                                        className={styles.closeButton}
-                                                    >
-                                                        <Close />
+                                            <div className={styles.tagsContainer}>
+                                                {optimizeFilterTags.map((item: any) => (
+                                                    <div className={styles.filterTag}>
+                                                        <DsTypography
+                                                            style={{ color: 'var(--header-notification-text)' }}
+                                                            variant="Semibold_13"
+                                                        >
+                                                            {item.label}
+                                                        </DsTypography>
+                                                        <div
+                                                            onClick={() => handleCancelFilter(item)}
+                                                            className={styles.closeButton}
+                                                        >
+                                                            <Close />
+                                                        </div>
                                                     </div>
+                                                ))}
+                                            </div>
+                                            {optimizeFilterTags.length ? (
+                                                <div className={styles.clearAll}>
+                                                    <DsButton type="text" onClick={handleFilterClearAll}>
+                                                        {GENERAL.CLEAR_ALL}
+                                                    </DsButton>
                                                 </div>
-                                            ))}
+                                            ) : (
+                                                ''
+                                            )}
                                         </div>
                                     </div>
                                 }
@@ -1180,7 +1188,7 @@ const GetWell = () => {
                                             ]}
                                             children={
                                                 <RecommendationTable
-                                                    tableData={filteredOntapConfigTableData}
+                                                    tableData={ontapConfigTableData}
                                                     isLoading={loading}
                                                     optimizePrintState={optimizePrintState}
                                                 />
@@ -1234,7 +1242,7 @@ const GetWell = () => {
                                             ]}
                                             children={
                                                 <RecommendationTable
-                                                    tableData={filteredOsConfigTableData}
+                                                    tableData={osConfigTableData}
                                                     isLoading={loading}
                                                     optimizePrintState={optimizePrintState}
                                                 />

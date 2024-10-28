@@ -1155,7 +1155,8 @@ export const GENERAL = {
     NOTE: 'Note',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
     OPTIMIZATION_IN_PROGRESS:
-        'An optimization process is currently running in the background for the current instance. Try again once it has completed.'
+        'An optimization process is currently running in the background for the current instance. Try again once it has completed.',
+    CLEAR_ALL: 'Clear all'
 };
 
 export const CODE_VIEWER = {
