@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 
-export const downloadTerraformZip = () => {
+export const downloadTerraformZip = (deploymentModel?: string) => {
     // Create a new instance of JSZip
     var zip = new JSZip();
 
@@ -1392,7 +1392,7 @@ variable "sql_node_initialization_s3_url" {
         link.href = URL.createObjectURL(content);
 
         // Set the download attribute with a default file name
-        link.download = 'terraform.zip';
+        link.download = `TF-WLMDB-Sql${deploymentModel === 'fci' ? 'Fci' : 'Standalone'}-${new Date().getTime()}`;
 
         // Append the anchor to the body
         document.body.appendChild(link);

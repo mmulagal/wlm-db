@@ -1046,7 +1046,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                         handleViewInAwsCloudFormation();
                                                     } else if (menuId === 'downloadZip') {
                                                         if (isDemoMode) {
-                                                            downloadTerraformZip();
+                                                            if (openKey) {
+                                                                const data = rightPanelData[openKey];
+                                                                downloadTerraformZip(data?.dbDeploymentModel?.value);
+                                                            }
                                                         } else if (openKey) {
                                                             handleDownloadTerraform(
                                                                 terraformSetupResponse[openKey]?.url
