@@ -609,9 +609,9 @@ const DatabaseQueryString = Type.Object({
 
 const SizingViolationResponse = Type.Object({
     databaseName: Type.String(),
-    dataDriveLetter: Type.String(),
+    dataDriveLetter: Type.Optional(Type.String()),
     dataDriveTotalSizeMB: Type.Optional(Type.Number()),
-    logDriveLetter: Type.String(),
+    logDriveLetter: Type.Optional(Type.String()),
     logDriveTotalSizeMB: Type.Optional(Type.Number())
 });
 type SizingViolationResponseType = Static<typeof SizingViolationResponse>;

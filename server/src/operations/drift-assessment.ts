@@ -203,11 +203,15 @@ async function calculateStorageDrift(
             if (key === 'data-log-drive-details') {
                 const driveDetails = Array.isArray(value) ? value : [value];
                 driveDetails.forEach((drive: { [x: string]: any }) => {
-                    const { dataDriveLetter } = drive;
-                    const { logDriveLetter } = drive;
-                    if (dataDriveLetter !== logDriveLetter) {
-                        const dataDriveTotalSizeMB = Number(drive.dataDriveTotalSizeMB);
-                        const logDriveTotalSizeMB = Number(drive.logDriveTotalSizeMB);
+                    const { dataDriveLetter, logDriveLetter, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
+                    if (
+                        dataDriveLetter === undefined ||
+                        logDriveLetter === undefined ||
+                        dataDriveTotalSizeMB === undefined ||
+                        logDriveTotalSizeMB === undefined
+                    ) {
+                        ignoredDrives.push(drive as SizingViolationResponseType);
+                    } else if (dataDriveLetter !== logDriveLetter) {
                         const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
                         if (logToDriveSizePercent > 30) {
                             overProvisionedDrives.push(drive as SizingViolationResponseType);
