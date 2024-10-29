@@ -3,6 +3,7 @@
 InstanceId=$1
 Region=$2
 NodeName=$3
+AwsProfile=$4
 
 counter=0
 if [ "$NodeName" = "Validation-Node-1" ] || [ "$NodeName" = "Validation-Node-2" ]; then
@@ -14,7 +15,7 @@ fi
 echo "Checking tag for InstanceId: $InstanceId in Region: $Region with timeout: $timeout (10-second intervals)"
 
 while true; do
-  tag_value=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$InstanceId" "Name=key,Values=user_data" --region $Region --output text --query 'Tags[].Value')
+  tag_value=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$InstanceId" "Name=key,Values=user_data" --region $Region --profile $AwsProfile --output text --query 'Tags[].Value')
   echo "Tag value retrieved: $tag_value"
 
   if [ "$tag_value" = "completed" ]; then

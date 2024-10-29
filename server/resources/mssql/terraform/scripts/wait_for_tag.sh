@@ -4,6 +4,7 @@ Path=$1
 InstanceId=$2
 Location=$3
 NodeName=$4
+AwsProfile=$5
 
 wait_for_tag_log_file="${Path}/logs/${NodeName}_wait_for_tag_windows.log"
 check_tag_log_file="${Path}/logs/${NodeName}_check_tag.log"
@@ -16,7 +17,7 @@ fi
 echo "Starting wait_for_tag.sh" | tee -a "$wait_for_tag_log_file"
 
 # Run the check_tag.sh script and log its output to check_tag.log
-sh "${Path}/scripts/check_tag.sh" "${InstanceId}" "${Location}" "${NodeName}" >> "$check_tag_log_file" 2>&1
+sh "${Path}/scripts/check_tag.sh" "${InstanceId}" "${Location}" "${NodeName}" "${AwsProfile}" >> "$check_tag_log_file" 2>&1
 
 # Read the last line of the check_tag log file to get the tag status
 tag=$(tail -n 1 "$check_tag_log_file")

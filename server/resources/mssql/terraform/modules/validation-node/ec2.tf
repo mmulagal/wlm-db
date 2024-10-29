@@ -96,7 +96,7 @@ resource "null_resource" "wait_for_tag_mac_or_linux" {
   }
 
   provisioner "local-exec" {
-    command = "sh '${path.root}/scripts/wait_for_tag.sh' '${path.root}' '${aws_instance.validation_node.id}' '${var.aws_location}' '${var.validation_node_name}'"
+    command = "sh '${path.root}/scripts/wait_for_tag.sh' '${path.root}' '${aws_instance.validation_node.id}' '${var.aws_location}' '${var.validation_node_name}' '${var.aws_profile}'"
   }
 }
 
@@ -109,6 +109,6 @@ resource "null_resource" "wait_for_tag_windows" {
   }
 
   provisioner "local-exec" {
-    command = "powershell.exe -ExecutionPolicy Bypass -File ${path.root}/scripts/wait_for_tag.ps1 ${path.root} ${aws_instance.validation_node.id} ${var.aws_location} ${var.validation_node_name}"
+    command = "powershell.exe -ExecutionPolicy Bypass -File ${path.root}/scripts/wait_for_tag.ps1 ${path.root} ${aws_instance.validation_node.id} ${var.aws_location} ${var.validation_node_name} ${var.aws_profile}"
   }
 }
