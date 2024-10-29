@@ -36,7 +36,8 @@ import {
     sqlStandaloneStackData,
     endpointData,
     sandboxJobData,
-    assessmentJobData
+    assessmentJobData,
+    optimizeJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -562,6 +563,19 @@ async function createAssessmentJobMockData(
     return assessmentJobData(accountId, resourceName, instanceNames, credentialsId, region, parentJobId);
 }
 
+async function createOptimizeJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string
+) {
+    logger.debug('Generate optimize mock data for job table', accountId, resourceName, credentialsId, region);
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return optimizeJobData(accountId, resourceName, instanceName, credentialsId, region, parentJobId);
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -572,5 +586,6 @@ export {
     updateUserDBIntoInstanceTable,
     updateSandboxDBIntoInstanceData,
     getEBSVolumesForDemo,
-    createAssessmentJobMockData
+    createAssessmentJobMockData,
+    createOptimizeJobMockData
 };

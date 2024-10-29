@@ -227,14 +227,14 @@ const ManagedHostSubTable = ({
         const detectHostRadio = state.inventoryV2.detectHostRadio;
         if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
             handleManageInstances(hostData, [rowData?.databaseInstanceName], true);
-            const manageStartMsg = (
-                <div className={styles.notification}>
-                    {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
-                    <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
-                    {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
-                </div>
-            );
-            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: manageStartMsg }));
+            // const manageStartMsg = (
+            //     <div className={styles.notification}>
+            //         {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
+            //         <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
+            //         {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
+            //     </div>
+            // );
+            // dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: manageStartMsg }));
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         } else {
             const updatedInventoryTableData = updateInstanceStatus('detect', hostData, rowData);

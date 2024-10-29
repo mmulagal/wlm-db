@@ -5,31 +5,31 @@ param(
     [string]$NodeName
 )
 
-$counter = 0
-$timeout = if ($NodeName -in @('Validation-Node-1', 'Validation-Node-2')) { 150 } else { 720 } # 150 * 10 seconds = 25 minutes, 720 * 10 seconds = 2 hours
+$wait_for_tag_log_file = "${Path}\logs\${NodeName}_wait_for_tag_windows.log"
+$check_tag_log_file = "${Path}\logs\${NodeName}_check_tag.log"
 
-Write-Output "Starting wait_for_tag.ps1 with timeout: $timeout (10-second intervals)"
+# Check if the logs directory exists, if not, create it
+if (-not (Test-Path -Path "${Path}\logs")) {
+    New-Item -ItemType Directory -Force -Path "${Path}\logs"
+}
 
-do {
-    $tag = & "${Path}\scripts\check_tag.ps1" $InstanceId $Location
-    Write-Output "Tag value: $tag"
-    
-    if ($tag -eq 'completed') {
-        Write-Output "Tag completed"
-        break
-    }
-    elseif ($tag -eq 'failed') {
-        Write-Output "$NodeName failed to deploy"
-        exit 1
-    }
-    else {
-        Write-Output "Waiting for $NodeName tag... (counter: $counter)"
-        Start-Sleep -Seconds 10
-        $counter++
-        Write-Output "Counter value: $counter"
-        if ($counter -ge $timeout) {
-            Write-Output "$NodeName tag was not created within the timeout period. Stopping deployment."
-            exit 1
-        }
-    }
-} while ($true)
+Write-Output "Starting wait_for_tag.ps1" | Tee-Object -FilePath $wait_for_tag_log_file -Append
+
+# Execute the check_tag script and log the output to check_tag.log
+& "${Path}\scripts\check_tag.ps1" -InstanceId $InstanceId -Region $Location -NodeName $NodeName 2>&1 | Tee-Object -FilePath $check_tag_log_file -Append
+
+# Read the last line of the check_tag log file to get the tag status
+$tag = Get-Content -Path $check_tag_log_file | Select-Object -Last 1
+Write-Output "Tag value: $tag" | Tee-Object -FilePath $wait_for_tag_log_file -Append
+
+if ($tag -eq 'completed') {
+    Write-Output "Tag completed" | Tee-Object -FilePath $wait_for_tag_log_file -Append
+}
+elseif ($tag -eq 'failed') {
+    Write-Output "$NodeName failed to deploy" | Tee-Object -FilePath $wait_for_tag_log_file -Append
+    exit 1
+}
+else {
+    Write-Output "$NodeName tag was not created within the timeout period. Stopping deployment." | Tee-Object -FilePath $wait_for_tag_log_file -Append
+    exit 1
+}

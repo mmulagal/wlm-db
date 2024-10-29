@@ -14,7 +14,8 @@ import { saveFciConfigurationData, saveStandaloneConfigurationData } from './dem
 import {
     createAssessmentJobMockData,
     createDeploymentMockDataInDB,
-    createFileSystemForDemo
+    createFileSystemForDemo,
+    createOptimizeJobMockData
 } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
 import { listConfig, upsertDatabaseInstance } from '../../lib/database/db';
@@ -169,6 +170,15 @@ async function createDemoResourcesPerRegion(
                 region
             );
             await createJobs(accountId, assessmentJobMockData);
+
+            const optimizeJobMockdata = await createOptimizeJobMockData(
+                accountId,
+                name,
+                instanceNames[0],
+                credentialsId,
+                region
+            );
+            await createJobs(accountId, optimizeJobMockdata);
         });
     }
 }

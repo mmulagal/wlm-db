@@ -42,7 +42,7 @@ export const DEFAULT_MASTER_KEY = 'aws/fsx';
 export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge';
 
 // Add credentials link
-export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
+export const CREDENTIAL_STAGE_LINK = 'https://staging.console.bluexp.netapp.com/credentials/wlf';
 export const CREDENTIAL_PROD_LINK = 'https://cloudmanager.netapp.com/credentials/account-credentials';
 
 // Add WF credentials link
@@ -642,12 +642,14 @@ export const GETWELL_STATUS = {
     NOT_OPTIMIZED: 'Not optimized',
     UNDER_PROVISIONED: 'Under-provisioned',
     OVER_PROVISIONED: 'Over-provisioned',
-    OPTIMIZING: 'Optimizing'
+    OPTIMIZING: 'Optimizing',
+    NOT_APPLICABLE: 'Not applicable'
 };
 
 export const GETWELL_VALUES: any = {
     optimized: 'Optimized',
     optimizing: 'Optimizing',
+    'not-applicable': 'Not applicable',
     'not-optimized': 'Not optimized',
     'under-provisioned': 'Under-provisioned',
     'over-provisioned': 'Over-provisioned',

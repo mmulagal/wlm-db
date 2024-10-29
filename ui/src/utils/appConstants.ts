@@ -1153,9 +1153,10 @@ export const GENERAL = {
     NOTE_PONT_TWO:
         'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.',
     NOTE: 'Note',
-    OPTIMIZATION_NOT_SUPPORTED: 'Optimization not supported for this configuration.',
+    OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
     OPTIMIZATION_IN_PROGRESS:
-        'An optimization process is currently running in the background for the current instance. Try again once it has completed.'
+        'An optimization process is currently running in the background for the current instance. Try again once it has completed.',
+    CLEAR_ALL: 'Clear all'
 };
 
 export const CODE_VIEWER = {

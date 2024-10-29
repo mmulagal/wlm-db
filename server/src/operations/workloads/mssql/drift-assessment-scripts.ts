@@ -1,11 +1,15 @@
 import { OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {
+    DEFAULT_DATA_DRIVE_SIZE,
     INSTANCE_DATA_DRIVES_QUERY,
     INSTANCE_DEFAULT_DATA_DRIVES_QUERY,
     INSTANCE_DEFAULT_LOG_DRIVES_QUERY,
+    INSTANCE_LOG_DB_DRIVE_SIZES,
     INSTANCE_LOG_DRIVES_QUERY,
-    INSTANCE_TEMPDB_DRIVES_QUERY
+    INSTANCE_TEMPDB_DRIVES_QUERY,
+    INSTANCE_USER_DB_DRIVE_SIZES,
+    TEMPDB_DRIVE_SIZE
 } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
@@ -54,42 +58,54 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     
     ${INSTANCE_NETAPP_DRIVES}
     
-    $instanceDataDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DEFAULT_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName" 
+    $instanceDefaultDataDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DEFAULT_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName" 
 
     $instanceAllDataDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
     $instanceDrivesList = @()
     $instanceAllDataDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
-    $filteredDataDrives = Get-MappedDrives  $instanceDrivesList
-    $defaultDataDriveSize = 100
-   
-    $instanceLogDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DEFAULT_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
+    $netappDataDrives = Get-MappedDrives  $instanceDrivesList
+
+    $instanceDefaultLogDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DEFAULT_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
 
     $instanceAllLogDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
     $instanceDrivesList = @()
     $instanceAllLogDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
-    $filteredLogDrives = Get-MappedDrives  $instanceDrivesList
+    $netappLogDrives = Get-MappedDrives  $instanceDrivesList
 
-    $defaultLogDriveSize = 25
-    $defaultLogDriveSizePercent = ($defaultLogDriveSize/$defaultDataDriveSize) * 100
-    $defaultLogDriveSizeDetails = @{'size' = "$defaultLogDriveSize"; 'percent' = "$defaultLogDriveSizePercent"}
-
+    $instanceAllDataDrivesSizes = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_USER_DB_DRIVE_SIZES}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    $instanceAllLogDrivesSizes = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DB_DRIVE_SIZES}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    
+    foreach ($dataDrive in $instanceAllDataDrivesSizes) {
+        if($netappDataDrives -contains $dataDrive.dataDriveLetter) {
+            $logDrive = $instanceAllLogDrivesSizes | Where-Object { $_.databaseName -eq $dataDrive.databaseName }
+            if (($logDrive) -and ($netappLogDrives -contains $logDrive.logDriveLetter)) {
+                $dataDrive | Add-Member -MemberType NoteProperty -Name "logDriveLetter" -Value $logDrive.logDriveLetter 
+                $dataDrive | Add-Member -MemberType NoteProperty -Name "logDriveTotalSizeMB" -Value $logDrive.logDriveTotalSizeMB
+                $dataDrive | Add-Member -MemberType NoteProperty -Name "logDrivePercent" -Value ($logDrive.logDriveTotalSizeMB/$dataDrive.dataDriveTotalSizeMB * 100)
+                }
+            } 
+        }
+    
     $instanceTempdbDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_TEMPDB_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
-    $tempDBDriveSize = 15
-    $tempDBDriveSizePercent = ($tempDBDriveSize/$defaultDataDriveSize) * 100
-    $tempDBDriveSizeDetails = @{'size' = "$tempDBDriveSize"; 'percent' = "$tempDBDriveSizePercent"}
+    $defaultDataDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${DEFAULT_DATA_DRIVE_SIZE}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    $defaultTempDBDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${TEMPDB_DRIVE_SIZE}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    foreach ($drive in $defaultTempDBDriveSize) {
+        $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveLetter" -Value $defaultDataDriveSize.dataDriveLetter 
+        $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveSize" -Value $defaultDataDriveSize.dataDriveTotalSizeMB
+    }
 
     $defaultDataDrive = 'shared-drive'
-    if(($instanceDataDrivedetails -notcontains $instanceLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDataDrivedetails )) {
+    if(($instanceDefaultDataDrivedetails -notcontains $instanceDefaultLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDefaultDataDrivedetails )) {
     $defaultDataDrive = 'separate-drive'
     }
     
     $defaultLogDrive = 'shared-drive'
-    if(($instanceDataDrivedetails -notcontains $instanceLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceLogDrivedetails )) {
+    if(($instanceDefaultDataDrivedetails -notcontains $instanceDefaultLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDefaultLogDrivedetails )) {
     $defaultLogDrive = 'separate-drive'
     }
     
     $tempdbDrive = 'shared-drive'
-    if(($instanceTempdbDrivedetails -notcontains $instanceDataDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceLogDrivedetails)) {
+    if(($instanceTempdbDrivedetails -notcontains $instanceDefaultDataDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDefaultLogDrivedetails)) {
     $tempdbDrive = 'separate-drive'
     }
 
@@ -294,15 +310,13 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $DriftAssessmentData['layout'] = @{
                                         'default-data-files-location' = $defaultDataDrive;
                                         'default-log-files-location' = $defaultLogDrive;
-                                        'tempdb-files-location' = $tempdbDrive
+                                        'tempdb-files-location' = $tempdbDrive;
     }
     
     $DriftAssessmentData['sizing'] = @{
-                                        'performance-tier' = $isPerformanceTier100Percent
-                                        'log-drive-size' = $defaultLogDriveSizePercent;
-                                        'tempdb-drive-size' = $tempDBDriveSizePercent;
-                                        'filtered-data-drives' = $filteredDataDrives;
-                                        'filtered-log-drives' = $filteredLogDrives;
+                                        'performance-tier' = $isPerformanceTier100Percent;
+                                        'data-log-drive-details' = $($instanceAllDataDrivesSizes);
+                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);
     }
    
     $response = $DriftAssessmentData | ConvertTo-Json -Depth 5
