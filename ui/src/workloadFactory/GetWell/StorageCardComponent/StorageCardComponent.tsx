@@ -3,6 +3,7 @@ import { useDialog } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
+import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import styles from './StorageCardComponent.module.scss';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -11,7 +12,6 @@ import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
 import { GETWELL_STATUS, GETWELL_VALUES, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
-import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import { useDispatch } from 'react-redux';
 import { setOptimizingData, setOptimizingInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
@@ -57,8 +57,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             );
         } else if (value === GETWELL_STATUS.NOT_OPTIMIZED) {
             return <NotActive />;
-        } else if (value === GETWELL_STATUS.OPTIMIZING) {
-            return <SmallLoader />;
+        } else if (value === GETWELL_STATUS.OPTIMIZING || value === GETWELL_STATUS.ANALYZING) {
+            return <InProgress />;
         } else {
             return;
         }

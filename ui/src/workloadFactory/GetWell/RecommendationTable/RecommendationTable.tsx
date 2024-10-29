@@ -6,6 +6,7 @@ import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Active } from '../../../assets/success.svg';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
+import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import Tag from '../../../common/Tag/Tag';
 import RecommendationTooltip from '../RecommendationTooltip/RecommendationTooltip';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -14,7 +15,6 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useLazyGetSubTaskListQuery, useOptimizeStorageConfigMutation } from '../../../utils/apiService';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
@@ -138,9 +138,11 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                 return (
                     <div className={styles.statusCol}>
                         <div>
-                            {cellData === 'Optimized' && <Active className={styles.statusIcon} />}
-                            {cellData === 'Not optimized' && <NotActive className={styles.statusIcon} />}
-                            {cellData === 'Optimizing' && <SmallLoader />}
+                            {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
+                            {cellData === GETWELL_STATUS.NOT_OPTIMIZED && <NotActive className={styles.statusIcon} />}
+                            {(cellData === GETWELL_STATUS.OPTIMIZING || cellData === GETWELL_STATUS.ANALYZING) && (
+                                <InProgress className={styles.statusIcon} />
+                            )}
                         </div>
                         <div>{cellData}</div>
                     </div>
