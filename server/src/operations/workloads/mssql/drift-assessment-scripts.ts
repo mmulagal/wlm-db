@@ -315,7 +315,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     
     $DriftAssessmentData['sizing'] = @{
                                         'performance-tier' = $isPerformanceTier100Percent;
-                                        'data-log-drive-details' = $($instanceAllDataDrivesSizes);
+                                        'data-log-drive-details' = @($($instanceAllDataDrivesSizes));
                                         'data-tempdb-drive-details' = $($defaultTempDBDriveSize);
     }
    
