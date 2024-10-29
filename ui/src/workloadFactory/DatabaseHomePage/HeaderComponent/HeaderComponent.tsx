@@ -474,7 +474,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                         variant="Regular_14"
                                         className={
                                             selectedHeaderTab === WLF_TABS.INVENTORY ||
-                                            selectedHeaderTab === WLF_TABS.OVERVIEW
+                                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                                            selectedHeaderTab === WLF_TABS.OPTIMIZE
                                                 ? `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart2
