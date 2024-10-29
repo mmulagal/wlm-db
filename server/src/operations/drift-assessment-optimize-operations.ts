@@ -10,7 +10,7 @@ import { getResources, getInstanceInfo } from './database/database-operations';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/drift-assessment-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
-import { getTimeDifferenceInMinutes, isDemo, sqlResponseParsing } from '../utils/utils';
+import { getTimeDifferenceInMinutes, isDemo, sleep, sqlResponseParsing } from '../utils/utils';
 import { driftAssessment } from './drift-assessment';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
@@ -113,6 +113,11 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         cloudProviderAccountId: awsAccountId,
         resourceName: serverNameWithHostName
     };
+
+    // its required to sleep for 5 seconds so that the optimization is completed before drift assessment
+    if (!isDemoFlow) {
+        await sleep(5000);
+    }
 
     await driftAssessment(accountId, credentialsId, region, jobId, databaseHostId, [instanceToAssess]);
     await updateJobDetails(accountId, credentialsId, region, parentJobId, {
