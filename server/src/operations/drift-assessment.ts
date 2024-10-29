@@ -65,7 +65,7 @@ async function calculateStorageDrift(
     }
 
     const driftAssessmentData: StorageParameterDriftResponseType = {
-        timestamp: (moment(persistedConfigurationData.creation_time).unix() * 1000).toString(),
+        timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
         optimisedCount: { total: 0, optimised: 0 },
         configuration: { volumes: [], luns: [], os: [] },
         sizing: [],
