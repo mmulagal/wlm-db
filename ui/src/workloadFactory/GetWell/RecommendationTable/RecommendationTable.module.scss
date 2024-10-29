@@ -47,17 +47,36 @@
     .tags {
         display: flex;
         gap: 8px;
+        padding: 8px 16px;
     }
-    
+
+    [class*='dsButtons'] {
+        height: 32px !important;
+        min-width: 140px !important;
+    }
+
     [class*='Table-module_header-row'] {
         position: unset !important;
         [class*='Table-module_header-cell'] {
             background-color: unset !important;
             border-bottom: 1px solid var(--border);
         }
-        
     }
     [class*='Table-module_cell'] {
         border-left: unset !important;
+    }
+
+    [class*='Popover-module_base'] {
+        max-width: 480px !important;
+        padding: unset !important;
+    }
+
+    [class*='Button-module_content'] {
+        max-width: 152px !important;
+    }
+}
+.colorSet {
+    div {
+        color: var(--text-primary);
     }
 }

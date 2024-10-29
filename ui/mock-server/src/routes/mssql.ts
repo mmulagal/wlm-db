@@ -17,7 +17,7 @@ router.post(
 
 // To check dialog flow on click of create, uncomment cloudFormationUrl and comment cloudFormationStackId
 router.post(
-    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/cloudformation/deploy`,
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/cloudformation/deploy`,
     async (req: {}, res: DeployMssqlTemplate) => {
         const resData = {
             cloudFormationStackId:

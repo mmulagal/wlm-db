@@ -20,7 +20,10 @@ param(
     [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Parentstackname    
+    [string]$Parentstackname,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform    
 
 )
 #Requires -Modules xFailOverCluster,PSDscResources
@@ -138,7 +141,11 @@ Node1ClusterConfig -OutputPath 'C:\cfn\dsc\Node1ClusterConfig' -ConfigurationDat
 Start-DscConfiguration 'C:\cfn\dsc\Node1ClusterConfig' -Wait -Verbose -Force
 
 } catch{
-    Write-Output "Configuring shared disks for Windows cluster failed"
+    $FailureReason = "Configuring shared disks for Windows cluster failed"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }

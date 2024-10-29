@@ -11,6 +11,7 @@ param(
 )
 
 Start-Transcript -Path C:\cfn\log\InstallDscModules.ps1.txt -Append
+$ProgressPreference = "SilentlyContinue"
 
 #get Instance ID
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"

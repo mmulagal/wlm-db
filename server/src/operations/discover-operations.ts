@@ -53,7 +53,6 @@ import {
     PSMODULES_RELATIVE_PATH,
     DatabaseTypes,
     OFFLINE,
-    SQL_SERVICE_STATE,
     NOT_AVAILABLE,
     PREPARE_PSMODULES_RELATIVE_PATH,
     SINGLE_AZ
@@ -85,7 +84,7 @@ import {
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
-import { getDatabaseHostSummary, getDatabaseHostSummaryV2 } from './database-hosts-operations';
+import { getDatabaseHostSummaryV2 } from './database-hosts-operations';
 import {
     copyPowerShellModule,
     validateOntapConnectivity,
@@ -98,6 +97,9 @@ import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
 import { copyScriptsToHost } from './resource-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
+import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { AssessmentCategories } from '../utils/continous-optimization-consts';
+import { ASSESMENT_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -850,124 +852,126 @@ async function validateAndStoreDiscoveredParameters(
     }
 }
 
-async function fetchUnmanagedHostsInformation(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    instances: string[] = []
-) {
-    logger.info('Fetching unmanaged hosts information:', { accountId, credentialsId, region, instances });
+// fetchUnmanagedHostsInformation is unused. Kept here for reference, can be removed later.
 
-    // Modified implementation to fetch SQL Server instance details for EC2 instances with underlying storage details. The code now accepts instances ID array instead of object with ec2InstanceId and storageType. If there are multiple sql instances in an ec2 instance, the code will return multiple resource details for the same ec2 instance. Every item in resourceDetailsList is an ec2 instance - sql instance pair with storage type.
+// async function fetchUnmanagedHostsInformation(
+//     accountId: string,
+//     credentialsId: string,
+//     region: string,
+//     instances: string[] = []
+// ) {
+//     logger.info('Fetching unmanaged hosts information:', { accountId, credentialsId, region, instances });
 
-    const { items: ec2HostDetails } = await getHostAndSqlServerInfo(
-        accountId,
-        credentialsId,
-        region,
-        undefined,
-        undefined,
-        instances
-    );
-    const resourceDetailsList: ResourceDetails[] = [];
+//     // Modified implementation to fetch SQL Server instance details for EC2 instances with underlying storage details. The code now accepts instances ID array instead of object with ec2InstanceId and storageType. If there are multiple sql instances in an ec2 instance, the code will return multiple resource details for the same ec2 instance. Every item in resourceDetailsList is an ec2 instance - sql instance pair with storage type.
 
-    const errorInstances: {
-        id: string;
-        name: string;
-        status: string;
-        errors: string;
-        sqlServerDeploymentType?: string;
-        clusterNodeDetails?: NodeDetails[];
-    }[] = [];
+//     const { items: ec2HostDetails } = await getHostAndSqlServerInfo(
+//         accountId,
+//         credentialsId,
+//         region,
+//         undefined,
+//         undefined,
+//         instances
+//     );
+//     const resourceDetailsList: ResourceDetails[] = [];
 
-    await Promise.all(
-        ec2HostDetails?.map(async ec2Instance => {
-            const [{ nodeIps, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [];
-            let clusterNodeDetails: NodeDetails[] = [];
-            if (
-                (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
-                    sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) &&
-                nodeIps
-            ) {
-                clusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
-            }
-            const sqlServerInstance = ec2Instance?.sqlServerInstances?.find(
-                sqlInstance => sqlInstance.sqlServerState === SQL_SERVICE_STATE.RUNNING
-            );
-            // ec2Instance?.sqlServerInstances?.forEach(sqlInstance => { // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
-            if (!isEmpty(sqlServerInstance)) {
-                const { storage } = sqlServerInstance;
-                let ebsVolumeIds: string[] | undefined = [];
-                let fsxwId: string | undefined;
-                let fsxnId: string | undefined;
-                storage?.forEach(({ type, id }) => {
-                    // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
-                    // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
-                    ebsVolumeIds = type === STORAGE_TYPE.EBS ? ebsVolumeIds?.concat(id) : ebsVolumeIds;
-                    fsxwId = type === STORAGE_TYPE.FSXW ? id : fsxwId;
-                    fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
-                });
+//     const errorInstances: {
+//         id: string;
+//         name: string;
+//         status: string;
+//         errors: string;
+//         sqlServerDeploymentType?: string;
+//         clusterNodeDetails?: NodeDetails[];
+//     }[] = [];
 
-                resourceDetailsList.push({
-                    id: null,
-                    account_id: accountId,
-                    resource_id: ec2Instance.ec2InstanceId,
-                    resource_type: RESOURCESTYPE.MSSQL,
-                    resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
-                    cloud_provider_name: CloudProviders.AWS,
-                    co_relation_id: fsxnId || null,
-                    cloud_provider_account_id: null,
-                    region,
-                    credentials_id: credentialsId,
-                    storage_type: fsxnId
-                        ? STORAGE_TYPE.FSXN
-                        : fsxwId
-                        ? STORAGE_TYPE.FSXW
-                        : ebsVolumeIds.length > 0
-                        ? STORAGE_TYPE.EBS
-                        : NOT_AVAILABLE,
-                    metadata: {
-                        creationDate: Date.now(),
-                        node1InstanceId: ec2Instance.ec2InstanceId
-                    },
-                    ebsVolumeIds,
-                    fsxwId,
-                    sqlServerDeploymentType,
-                    clusterNodeDetails
-                });
-            } else {
-                errorInstances.push({
-                    id: ec2Instance.ec2InstanceId,
-                    name: ec2Instance.ec2InstanceId,
-                    sqlServerDeploymentType,
-                    ...(clusterNodeDetails && { clusterNodeDetails }),
-                    status: 'Down',
-                    errors: 'No active SQL Server instances found'
-                });
-            }
-            // });
-        })
-    );
+//     await Promise.all(
+//         ec2HostDetails?.map(async ec2Instance => {
+//             const [{ nodeIps, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [];
+//             let clusterNodeDetails: NodeDetails[] = [];
+//             if (
+//                 (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
+//                     sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) &&
+//                 nodeIps
+//             ) {
+//                 clusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
+//             }
+//             const sqlServerInstance = ec2Instance?.sqlServerInstances?.find(
+//                 sqlInstance => sqlInstance.sqlServerState === SQL_SERVICE_STATE.RUNNING
+//             );
+//             // ec2Instance?.sqlServerInstances?.forEach(sqlInstance => { // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
+//             if (!isEmpty(sqlServerInstance)) {
+//                 const { storage } = sqlServerInstance;
+//                 let ebsVolumeIds: string[] | undefined = [];
+//                 let fsxwId: string | undefined;
+//                 let fsxnId: string | undefined;
+//                 storage?.forEach(({ type, id }) => {
+//                     // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
+//                     // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
+//                     ebsVolumeIds = type === STORAGE_TYPE.EBS ? ebsVolumeIds?.concat(id) : ebsVolumeIds;
+//                     fsxwId = type === STORAGE_TYPE.FSXW ? id : fsxwId;
+//                     fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
+//                 });
 
-    let response = await Promise.all(
-        resourceDetailsList.map(async resourceDetail =>
-            getDatabaseHostSummary(
-                accountId,
-                resourceDetail.resource_id,
-                'serverDetails,topology,performance,usageEstimation,storage,protection',
-                resourceDetail,
-                false // unmanaged host
-            )
-        )
-    );
-    if (errorInstances.length > 0) {
-        response = response.concat(errorInstances);
-    }
+//                 resourceDetailsList.push({
+//                     id: null,
+//                     account_id: accountId,
+//                     resource_id: ec2Instance.ec2InstanceId,
+//                     resource_type: RESOURCESTYPE.MSSQL,
+//                     resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
+//                     cloud_provider_name: CloudProviders.AWS,
+//                     co_relation_id: fsxnId || null,
+//                     cloud_provider_account_id: null,
+//                     region,
+//                     credentials_id: credentialsId,
+//                     storage_type: fsxnId
+//                         ? STORAGE_TYPE.FSXN
+//                         : fsxwId
+//                         ? STORAGE_TYPE.FSXW
+//                         : ebsVolumeIds.length > 0
+//                         ? STORAGE_TYPE.EBS
+//                         : NOT_AVAILABLE,
+//                     metadata: {
+//                         creationDate: Date.now(),
+//                         node1InstanceId: ec2Instance.ec2InstanceId
+//                     },
+//                     ebsVolumeIds,
+//                     fsxwId,
+//                     sqlServerDeploymentType,
+//                     clusterNodeDetails
+//                 });
+//             } else {
+//                 errorInstances.push({
+//                     id: ec2Instance.ec2InstanceId,
+//                     name: ec2Instance.ec2InstanceId,
+//                     sqlServerDeploymentType,
+//                     ...(clusterNodeDetails && { clusterNodeDetails }),
+//                     status: 'Down',
+//                     errors: 'No active SQL Server instances found'
+//                 });
+//             }
+//             // });
+//         })
+//     );
 
-    return {
-        count: response.length,
-        items: response
-    };
-}
+//     let response = await Promise.all(
+//         resourceDetailsList.map(async resourceDetail =>
+//             getDatabaseHostSummary(
+//                 accountId,
+//                 resourceDetail.resource_id,
+//                 'serverDetails,topology,performance,usageEstimation,storage,protection',
+//                 resourceDetail,
+//                 false // unmanaged host
+//             )
+//         )
+//     );
+//     if (errorInstances.length > 0) {
+//         response = response.concat(errorInstances);
+//     }
+
+//     return {
+//         count: response.length,
+//         items: response
+//     };
+// }
 
 async function fetchUnmanagedHostsInformationV2(
     accountId: string,
@@ -1099,237 +1103,239 @@ async function fetchUnmanagedHostsInformationV2(
     };
 }
 
-async function manageSqlServer(accountId: string, credentialsId: string, region: string, ec2InstanceId: string) {
-    logger.info('Manage EC2 hosting SQL Server', { accountId, credentialsId, region, ec2InstanceId });
+// manageSqlServer & validateEc2InstanceManageability functions are unused now. They are kept here for reference, can be removed later.
 
-    if (isEmpty(ec2InstanceId)) {
-        throw createError(
-            HttpErrorCodes.VALIDATION_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: empty instance ID.`
-        );
-    }
+// async function manageSqlServer(accountId: string, credentialsId: string, region: string, ec2InstanceId: string) {
+//     logger.info('Manage EC2 hosting SQL Server', { accountId, credentialsId, region, ec2InstanceId });
 
-    const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
-    if (ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
-        throw createError(
-            HttpErrorCodes.VALIDATION_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: no SSM connectivity.`
-        );
-    }
+//     if (isEmpty(ec2InstanceId)) {
+//         throw createError(
+//             HttpErrorCodes.VALIDATION_ERROR,
+//             `Unable to manage instance '${ec2InstanceId}'. Reason: empty instance ID.`
+//         );
+//     }
 
-    const missingResourceInfo = await callSsmExecution(
-        credentialsId,
-        region,
-        GET_MISSING_RESOURCE_DETAILS,
-        ec2InstanceId,
-        accountId
-    );
-    logger.debug('Missing resource info', missingResourceInfo);
-    const missingResourceResponse = JSON.parse(missingResourceInfo!);
+//     const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
+//     if (ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+//         throw createError(
+//             HttpErrorCodes.VALIDATION_ERROR,
+//             `Unable to manage instance '${ec2InstanceId}'. Reason: no SSM connectivity.`
+//         );
+//     }
 
-    if (missingResourceResponse[IS_PS7_AVAILABLE] === false) {
-        throw createError(
-            HttpErrorCodes.FAILED_DEPENDENCY,
-            'PowerShell 7 is required for managing the resource. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4 and retry the operation.'
-        );
-    } else if (missingResourceResponse[UNAVAILABLE_PS_MODULES]) {
-        throw createError(
-            HttpErrorCodes.FAILED_DEPENDENCY,
-            `PowerShell modules ${missingResourceResponse[UNAVAILABLE_PS_MODULES]} are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.`
-        );
-    } else if (missingResourceResponse[IS_DATABASE_CREATE_POSSIBLE] === false) {
-        throw createError(
-            HttpErrorCodes.FAILED_DEPENDENCY,
-            'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.'
-        );
-    }
+//     const missingResourceInfo = await callSsmExecution(
+//         credentialsId,
+//         region,
+//         GET_MISSING_RESOURCE_DETAILS,
+//         ec2InstanceId,
+//         accountId
+//     );
+//     logger.debug('Missing resource info', missingResourceInfo);
+//     const missingResourceResponse = JSON.parse(missingResourceInfo!);
 
-    const [discoverInfo, clusterNetworkIpDetails, ec2Details, adDetails] = await Promise.all([
-        getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
-        callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId),
-        describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }),
-        callSsmExecution(credentialsId, region, GET_ACTIVE_DIRECTORY_DETAILS, ec2InstanceId, accountId)
-    ]);
+//     if (missingResourceResponse[IS_PS7_AVAILABLE] === false) {
+//         throw createError(
+//             HttpErrorCodes.FAILED_DEPENDENCY,
+//             'PowerShell 7 is required for managing the resource. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4 and retry the operation.'
+//         );
+//     } else if (missingResourceResponse[UNAVAILABLE_PS_MODULES]) {
+//         throw createError(
+//             HttpErrorCodes.FAILED_DEPENDENCY,
+//             `PowerShell modules ${missingResourceResponse[UNAVAILABLE_PS_MODULES]} are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.`
+//         );
+//     } else if (missingResourceResponse[IS_DATABASE_CREATE_POSSIBLE] === false) {
+//         throw createError(
+//             HttpErrorCodes.FAILED_DEPENDENCY,
+//             'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.'
+//         );
+//     }
 
-    const awsAccountId = ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn?.split(':')[4];
+//     const [discoverInfo, clusterNetworkIpDetails, ec2Details, adDetails] = await Promise.all([
+//         getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
+//         callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId),
+//         describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }),
+//         callSsmExecution(credentialsId, region, GET_ACTIVE_DIRECTORY_DETAILS, ec2InstanceId, accountId)
+//     ]);
 
-    if (isEmpty(awsAccountId)) {
-        logger.error('Failed to get AWS account ID: ', ec2Details);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get AWS account ID.`
-        );
-    }
+//     const awsAccountId = ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn?.split(':')[4];
 
-    if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
-        logger.error(
-            `Failed to get cluster network interface details for EC2 ${ec2InstanceId}. Reason: ${clusterNetworkIpDetails}`
-        );
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get network interface details.`
-        );
-    }
+//     if (isEmpty(awsAccountId)) {
+//         logger.error('Failed to get AWS account ID: ', ec2Details);
+//         throw createError(
+//             HttpErrorCodes.INTERNAL_SERVER_ERROR,
+//             `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get AWS account ID.`
+//         );
+//     }
 
-    if (isEmpty(adDetails) || adDetails?.includes(FAILURE_INFO)) {
-        logger.error(`Failed to get Active Directory details for EC2 ${ec2InstanceId}. Reason: ${adDetails}`);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: Failed to get Active Directory details.`
-        );
-    }
+//     if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
+//         logger.error(
+//             `Failed to get cluster network interface details for EC2 ${ec2InstanceId}. Reason: ${clusterNetworkIpDetails}`
+//         );
+//         throw createError(
+//             HttpErrorCodes.INTERNAL_SERVER_ERROR,
+//             `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get network interface details.`
+//         );
+//     }
 
-    const clusterNetworkIpDetailsInJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails!);
+//     if (isEmpty(adDetails) || adDetails?.includes(FAILURE_INFO)) {
+//         logger.error(`Failed to get Active Directory details for EC2 ${ec2InstanceId}. Reason: ${adDetails}`);
+//         throw createError(
+//             HttpErrorCodes.INTERNAL_SERVER_ERROR,
+//             `Unable to manage instance '${ec2InstanceId}'. Reason: Failed to get Active Directory details.`
+//         );
+//     }
 
-    const node1InstanceId = ec2InstanceId;
-    let node2InstanceId;
+//     const clusterNetworkIpDetailsInJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails!);
 
-    if (clusterNetworkIpDetailsInJson.clusterNetworkIps.length > 1) {
-        // FCI environment
-        const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
-            credentialsId,
-            region,
-            clusterNetworkIpDetailsInJson.clusterNetworkIps
-        );
-        const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
-        if (!isEmpty(temp)) {
-            node2InstanceId = temp.ec2InstanceId;
-        }
-    }
+//     const node1InstanceId = ec2InstanceId;
+//     let node2InstanceId;
 
-    /* Resource ID is obtained either by one instanceID (in case of standalone
-       deployment) or by combining instanceIDs of both node1 and node2 (in case
-       of FCI deployment).  FCI resourceID can be a hash of inst1ID+inst2ID or
-       inst2ID+inst1ID.  Since a resource would have been regisered with either
-       of the instance IDs,  we check need to verify the hash for both
-       combinations.
-    */
-    const resourceId = getMsSqlResourceId(node1InstanceId, node2InstanceId);
-    const resourceId2 = getMsSqlResourceId(node2InstanceId || '', node1InstanceId);
-    const [
-        {
-            items: [resourceDetails1]
-        },
-        {
-            items: [resourceDetails2]
-        }
-    ] = await Promise.all([
-        getResources(accountId, resourceId, credentialsId, region),
-        getResources(accountId, resourceId2, credentialsId, region)
-    ]);
+//     if (clusterNetworkIpDetailsInJson.clusterNetworkIps.length > 1) {
+//         // FCI environment
+//         const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
+//             credentialsId,
+//             region,
+//             clusterNetworkIpDetailsInJson.clusterNetworkIps
+//         );
+//         const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
+//         if (!isEmpty(temp)) {
+//             node2InstanceId = temp.ec2InstanceId;
+//         }
+//     }
 
-    if (!isEmpty(resourceDetails1) || !isEmpty(resourceDetails2)) {
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, 'Instances are already managed by Workload Factory.');
-    }
+//     /* Resource ID is obtained either by one instanceID (in case of standalone
+//        deployment) or by combining instanceIDs of both node1 and node2 (in case
+//        of FCI deployment).  FCI resourceID can be a hash of inst1ID+inst2ID or
+//        inst2ID+inst1ID.  Since a resource would have been regisered with either
+//        of the instance IDs,  we check need to verify the hash for both
+//        combinations.
+//     */
+//     const resourceId = getMsSqlResourceId(node1InstanceId, node2InstanceId);
+//     const resourceId2 = getMsSqlResourceId(node2InstanceId || '', node1InstanceId);
+//     const [
+//         {
+//             items: [resourceDetails1]
+//         },
+//         {
+//             items: [resourceDetails2]
+//         }
+//     ] = await Promise.all([
+//         getResources(accountId, resourceId, credentialsId, region),
+//         getResources(accountId, resourceId2, credentialsId, region)
+//     ]);
 
-    await validateEc2InstanceManageability(discoverInfo, ec2InstanceId);
+//     if (!isEmpty(resourceDetails1) || !isEmpty(resourceDetails2)) {
+//         throw createError(HttpErrorCodes.VALIDATION_ERROR, 'Instances are already managed by Workload Factory.');
+//     }
 
-    const [item] = discoverInfo.items;
-    const [sqlServerInstance] = item?.sqlServerInstances || [];
-    const { storage } = sqlServerInstance;
-    const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
-    const storageProtocols = storage?.filter(elem => elem.type === STORAGE_TYPE.FSXN).map(elem => elem.protocol);
-    await verifyAndAddFSxOntapCredentials(accountId, credentialsId, region, storageInfo!.id);
+//     await validateEc2InstanceManageability(discoverInfo, ec2InstanceId);
 
-    tagResources(credentialsId, region, awsAccountId!, accountId, storageInfo!.id, node1InstanceId, node2InstanceId);
+//     const [item] = discoverInfo.items;
+//     const [sqlServerInstance] = item?.sqlServerInstances || [];
+//     const { storage } = sqlServerInstance;
+//     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+//     const storageProtocols = storage?.filter(elem => elem.type === STORAGE_TYPE.FSXN).map(elem => elem.protocol);
+//     await verifyAndAddFSxOntapCredentials(accountId, credentialsId, region, storageInfo!.id);
 
-    const { domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } = JSON.parse(adDetails!)[
-        ACTIVE_DIRECTORY
-    ];
+//     tagResources(credentialsId, region, awsAccountId!, accountId, storageInfo!.id, node1InstanceId, node2InstanceId);
 
-    try {
-        // Register the resource
-        await createResource(accountId, {
-            resourceId,
-            credentialsId,
-            storageType: STORAGE_TYPE.FSXN,
-            resourceName: sqlServerInstance?.sqlServerName,
-            cloudProviderAccountId: awsAccountId!,
-            cloudProviderName: CloudProviders.AWS,
-            resourceType: RESOURCESTYPE.MSSQL,
-            coRelationId: storageInfo?.id,
-            region,
-            metadata: {
-                creationDate: Date.now(),
-                node1InstanceId,
-                node2InstanceId,
-                sqlDeploymentType:
-                    (sqlServerInstance?.sqlServerNodes?.length || 1) === 1
-                        ? SqlServerDeploymentModel.SQL_STANDALONE_SHORT
-                        : SqlServerDeploymentModel.SQL_FCI_SHORT,
-                source: RESOURCE_SOURCE.DISCOVER,
-                fsxSvmId: { fsxId: storageInfo!.svmId! },
-                storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
-                ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
-            }
-        });
-    } catch (error) {
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Failed to create resource. Reason: ${error}`
-        );
-    }
+//     const { domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } = JSON.parse(adDetails!)[
+//         ACTIVE_DIRECTORY
+//     ];
 
-    return {
-        resourceId
-    };
-}
+//     try {
+//         // Register the resource
+//         await createResource(accountId, {
+//             resourceId,
+//             credentialsId,
+//             storageType: STORAGE_TYPE.FSXN,
+//             resourceName: sqlServerInstance?.sqlServerName,
+//             cloudProviderAccountId: awsAccountId!,
+//             cloudProviderName: CloudProviders.AWS,
+//             resourceType: RESOURCESTYPE.MSSQL,
+//             coRelationId: storageInfo?.id,
+//             region,
+//             metadata: {
+//                 creationDate: Date.now(),
+//                 node1InstanceId,
+//                 node2InstanceId,
+//                 sqlDeploymentType:
+//                     (sqlServerInstance?.sqlServerNodes?.length || 1) === 1
+//                         ? SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+//                         : SqlServerDeploymentModel.SQL_FCI_SHORT,
+//                 source: RESOURCE_SOURCE.DISCOVER,
+//                 fsxSvmId: { fsxId: storageInfo!.svmId! },
+//                 storageProtocol: storageProtocols ? storageProtocols.join() : '',
+//                 ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
+//                 ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
+//             }
+//         });
+//     } catch (error) {
+//         throw createError(
+//             HttpErrorCodes.INTERNAL_SERVER_ERROR,
+//             `Unable to manage instance '${ec2InstanceId}'. Failed to create resource. Reason: ${error}`
+//         );
+//     }
 
-async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlResponseBodyType, ec2InstanceId: string) {
-    logger.debug('Validate EC2 instance manageability', discoverInfo);
+//     return {
+//         resourceId
+//     };
+// }
 
-    try {
-        const { count, items } = discoverInfo;
+// async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlResponseBodyType, ec2InstanceId: string) {
+//     logger.debug('Validate EC2 instance manageability', discoverInfo);
 
-        if (count <= 0) {
-            throw new Error(
-                'only existing instances in running state, have Microsoft Windows as host operating system, architecture is x86_64, and hosting SQL Server 2016 above can be managed. Ensure valid instance ID is provided'
-            );
-        }
+//     try {
+//         const { count, items } = discoverInfo;
 
-        const { ssmState, sqlServerInstances } = items[0];
-        if (ssmState === ConnectionStatus.NOT_CONNECTED) {
-            throw new Error('no SSM connectivity');
-        }
+//         if (count <= 0) {
+//             throw new Error(
+//                 'only existing instances in running state, have Microsoft Windows as host operating system, architecture is x86_64, and hosting SQL Server 2016 above can be managed. Ensure valid instance ID is provided'
+//             );
+//         }
 
-        if (isEmpty(sqlServerInstances)) {
-            throw new Error('no SQL Server instances found');
-        }
+//         const { ssmState, sqlServerInstances } = items[0];
+//         if (ssmState === ConnectionStatus.NOT_CONNECTED) {
+//             throw new Error('no SSM connectivity');
+//         }
 
-        if (
-            sqlServerInstances!.some(elem => elem.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT)
-        ) {
-            throw new Error('Always On Availability Group environments are not supported');
-        }
+//         if (isEmpty(sqlServerInstances)) {
+//             throw new Error('no SQL Server instances found');
+//         }
 
-        // Current supported configuration is expected to be one SQL Server instance per EC2.
-        // If the EC2 has more than one SQL Server instance, we are considering only the first one.
-        const { windowsAuthentication, sqlServerAuthentication, storage, sqlServerNodes, sqlServerInstance } =
-            sqlServerInstances![0] as SqlServerInstanceInfoType;
+//         if (
+//             sqlServerInstances!.some(elem => elem.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT)
+//         ) {
+//             throw new Error('Always On Availability Group environments are not supported');
+//         }
 
-        if (windowsAuthentication === false && sqlServerAuthentication === false) {
-            throw new Error(
-                // eslint-disable-next-line quotes
-                `authentication to SQL Server instance isn't possible. Check if the SQL Server service is running, stored credentials are valid, or windows authentication is disabled`
-            );
-        }
+//         // Current supported configuration is expected to be one SQL Server instance per EC2.
+//         // If the EC2 has more than one SQL Server instance, we are considering only the first one.
+//         const { windowsAuthentication, sqlServerAuthentication, storage, sqlServerNodes, sqlServerInstance } =
+//             sqlServerInstances![0] as SqlServerInstanceInfoType;
 
-        if (isEmpty(storage) || !storage?.some(elem => elem.type === STORAGE_TYPE.FSXN)) {
-            throw new Error(`SQL Server instance '${sqlServerInstance}' isn't hosted on FSx for ONTAP`);
-        }
+//         if (windowsAuthentication === false && sqlServerAuthentication === false) {
+//             throw new Error(
+//                 // eslint-disable-next-line quotes
+//                 `authentication to SQL Server instance isn't possible. Check if the SQL Server service is running, stored credentials are valid, or windows authentication is disabled`
+//             );
+//         }
 
-        logger.debug(sqlServerNodes);
-        // Validate and error out if
-        // - any of the nodes are down; nodes should be up for copying various scripts.
-        // - instances are already managed
-    } catch (error: any) {
-        throw createError(
-            HttpErrorCodes.VALIDATION_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: ${error.message}.`
-        );
-    }
-}
+//         if (isEmpty(storage) || !storage?.some(elem => elem.type === STORAGE_TYPE.FSXN)) {
+//             throw new Error(`SQL Server instance '${sqlServerInstance}' isn't hosted on FSx for ONTAP`);
+//         }
+
+//         logger.debug(sqlServerNodes);
+//         // Validate and error out if
+//         // - any of the nodes are down; nodes should be up for copying various scripts.
+//         // - instances are already managed
+//     } catch (error: any) {
+//         throw createError(
+//             HttpErrorCodes.VALIDATION_ERROR,
+//             `Unable to manage instance '${ec2InstanceId}'. Reason: ${error.message}.`
+//         );
+//     }
+// }
 
 async function rewriteOrDeleteSSMParameter(
     credentialsId: string,
@@ -1868,12 +1874,12 @@ async function manageSqlServerV2(
         }
         if (missingResourceJson[UNAVAILABLE_PS_MODULES]) {
             precheckErrorList.push(
-                `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
+                `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare".`
             );
         }
         if (missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
             precheckErrorList.push(
-                'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".'
+                'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare".'
             );
         }
 
@@ -1922,12 +1928,12 @@ async function manageSqlServerV2(
                         }
                         if (node2missingResourceJson[UNAVAILABLE_PS_MODULES]) {
                             precheckErrorList.push(
-                                `PowerShell modules ${node2missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource on partner node ${node2InstanceId}. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
+                                `PowerShell modules ${node2missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource on partner node ${node2InstanceId}. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare".`
                             );
                         }
                         if (node2missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
                             precheckErrorList.push(
-                                `Files required for database operations are not available on partner node ${node2InstanceId}. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
+                                `Files required for database operations are not available on partner node ${node2InstanceId}. Install them using the API "/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare".`
                             );
                         }
                     }
@@ -2109,7 +2115,19 @@ async function manageSqlServerV2(
                         storageProtocol: storageProtocols ? storageProtocols.join() : '',
                         databaseType: DatabaseTypes.MS_SQL_SERVER
                     });
-
+                    if (isDemoFlow) {
+                        const instanceConfigDataRecord = {
+                            account_id: accountId,
+                            credentials_id: credentialsId,
+                            region,
+                            resource_id: resourceId,
+                            database_instance_id: serverGuid!,
+                            creation_time: new Date(Date.now()),
+                            config_data_type: AssessmentCategories.STORAGE,
+                            config_data: ASSESMENT_CONFIG_DATA
+                        };
+                        await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
+                    }
                     itemsStatus.push({
                         databaseInstanceName: dbInst,
                         databaseInstanceGuid: serverGuid,
@@ -2204,8 +2222,6 @@ async function unmanageDatabaseInstance(
 export {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
-    fetchUnmanagedHostsInformation,
-    manageSqlServer,
     manageSqlServerV2,
     prepareForManage,
     fetchUnmanagedHostsInformationV2,

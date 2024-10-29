@@ -87,7 +87,8 @@ import {
     PG_TEMPLATE_OPTIONAL_PARAMETERS,
     PGSQL_VERSION,
     AuditStatus,
-    FCI
+    FCI,
+    PGSQL_MASTER_TEMPLATE_PATH
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -243,7 +244,7 @@ async function formatTemplateParameters(
             if (encryptedFsxPassword) {
                 templateParams.push({
                     ParameterKey: TEMPLATE_FSX_PASSWORD,
-                    ParameterValue: fsxConfiguration.fsxPassword
+                    ParameterValue: encryptedFsxPassword
                 });
             }
         } catch (error) {
@@ -269,12 +270,10 @@ async function formatTemplateParameters(
     templateParams.push({ ParameterKey: EBS_VOLUME_SIZE, ParameterValue: amiSize.toString() });
 
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
-        if (!servicesWithNoEndpoint.includes(key)) {
-            templateParams.push({
-                ParameterKey: value,
-                ParameterValue: 'true'
-            });
-        }
+        templateParams.push({
+            ParameterKey: value,
+            ParameterValue: servicesWithNoEndpoint.includes(key) ? 'false' : 'true'
+        });
     });
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -529,6 +528,27 @@ async function getCloudformationTemplate(
     };
 }
 
+function validateFSXThroughputAndIOPS(fsxVolThroughput: number, fsxIOPS: number, region?: string) {
+    logger.info('Validate fsx throughput and iops', fsxVolThroughput, fsxIOPS, region);
+
+    // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
+    if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
+        // FSX 4gbps throughput capacity supported regions
+        const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
+        const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
+        if (!regionExists) {
+            throw createError(
+                412,
+                `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
+            );
+        }
+        // check ssd and iops size
+        if (fsxIOPS !== FSX_IOPS) {
+            throw createError(412, 'Supported Fsxn IOPs should be 160000');
+        }
+    }
+}
+
 async function getTerraformSetup(
     networkConfiguration: CFNetworkConfigurationType,
     ec2Configuration: EC2ConfigurationType,
@@ -557,13 +577,36 @@ async function getTerraformSetup(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const { sqlServerName, sqlAmiName } = sqlConfiguration;
-    const { databaseSize } = fsxConfiguration;
+    const { sqlServerName, sqlAmiName, sqlCollation } = sqlConfiguration;
+    const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
     // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
     const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
+        // Here 120 & 133120 is in GiB
+        if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > DATABASE_MAX_LUN_SIZE_IN_GIB) {
+            throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
+        }
+
+        if (!sqlCollation) {
+            throw createError(412, 'Please provide the collation information');
+        }
+
+        validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
+        const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
+            networkConfiguration,
+            sqlConfiguration.sqlDeploymentMode
+        );
+
+        if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
+            const errorMessage = vpcValidationCheck.violationMessage;
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+        }
+
+        // Set EnableDnsSupport and EnableDnsHostnames to true
+        await enableVpcDnsAttributes(credentialsId as string, region as string, networkConfiguration.vpcId);
+
         const { stackName: deploymentName, templateParameters } = await formatTemplateParameters(
             networkConfiguration,
             ec2Configuration,
@@ -588,6 +631,7 @@ async function getTerraformSetup(
             region as string,
             DatabaseTypes.MS_SQL_SERVER,
             tfDeploymentName,
+            sqlConfiguration.sqlDeploymentMode,
             tags?.map(({ key, value }) => ({ Key: key, Value: value })),
             customTerraformModulesPath
         );
@@ -624,7 +668,7 @@ async function getTerraformSetup(
         };
     } catch (err: any) {
         logger.error('Error while getting terraform setup', err);
-        throw createError(500, 'Error while getting terraform setup');
+        throw createError(500, `Error while getting terraform setup: ${err.message}`);
     }
 }
 
@@ -671,22 +715,7 @@ async function deployStackOrCreateTemplateURL(
             throw createError(412, 'Please provide the collation information');
         }
 
-        // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
-        if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
-            // FSX 4gbps throughput capacity supported regions
-            const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
-            const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
-            if (!regionExists) {
-                throw createError(
-                    412,
-                    `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
-                );
-            }
-            // check ssd and iops size
-            if (fsxIOPS !== FSX_IOPS) {
-                throw createError(412, 'Supported Fsxn IOPs should be 160000');
-            }
-        }
+        validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
 
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
@@ -910,7 +939,7 @@ async function createCloudFormationTemplateForUserDeployment(
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
             if (encryptedFsxPassword) {
-                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(fsxConfiguration.fsxPassword)}`;
+                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
             }
         } catch (error) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
@@ -1065,15 +1094,7 @@ async function deployCloudFormationTemplate(
     }
 
     // Set EnableDnsSupport and EnableDnsHostnames to true
-    try {
-        await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
-    } catch (error) {
-        logger.error(
-            'Error while setting "EnableDnsSupport" and "EnableDnsHostnames" to true for vpc',
-            networkConfiguration.vpcId,
-            error
-        );
-    }
+    await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         networkConfiguration,
@@ -1328,21 +1349,7 @@ async function deployPgSql(
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const { sqlServerName } = sqlConfiguration;
 
-    if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
-        // FSX 4gbps throughput capacity supported regions
-        const { regions: fsx4GbSupportedRegions } = getFSXAvailableRegionsForThrougput();
-        const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
-        if (!regionExists) {
-            throw createError(
-                412,
-                `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
-            );
-        }
-        // check ssd and iops size
-        if (fsxIOPS !== FSX_IOPS) {
-            throw createError(412, 'Supported Fsxn IOPs should be 160000');
-        }
-    }
+    validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
 
     let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:15,${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
@@ -1486,7 +1493,7 @@ async function deployCfTemplateForPgSql(
         region
     );
 
-    const customMasterTemplatePath = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath = `${WLMDB}/${stackName}/${PGSQL_MASTER_TEMPLATE_PATH}`;
 
     const signedMasterTemplateUrl = await getPreSignedUrl(
         TEMPLATE_BUCKET_REGION,
@@ -1623,7 +1630,7 @@ async function formatPgSqlTemplateParameters(
             if (encryptedFsxPassword) {
                 templateParams.push({
                     ParameterKey: TEMPLATE_FSX_PASSWORD,
-                    ParameterValue: fsxConfiguration.fsxPassword
+                    ParameterValue: encryptedFsxPassword
                 });
             }
         } catch (error) {
@@ -1759,7 +1766,7 @@ async function createCfTemplateForPgsqlDeployment(
 
     const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
 
-    const customMasterTemplatePath: string = `${WLMDB}/${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${WLMDB}/${derivedParams.StackName}/${PGSQL_MASTER_TEMPLATE_PATH}`;
 
     const signedMasterTemplateUrl = await getPreSignedUrl(
         TEMPLATE_BUCKET_REGION,
@@ -1818,7 +1825,7 @@ async function createCfTemplateForPgsqlDeployment(
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
             if (encryptedFsxPassword) {
-                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(fsxConfiguration.fsxPassword)}`;
+                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
             }
         } catch (error) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);

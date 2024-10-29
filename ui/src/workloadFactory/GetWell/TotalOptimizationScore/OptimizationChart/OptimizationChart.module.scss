@@ -4,6 +4,7 @@
     position: relative;
 
     .center-text {
+        gap: 4px;
         position: absolute;
         width: 100%;
         height: 100%;
@@ -15,8 +16,8 @@
     }
 
     .emptyCircle {
-        width: 184px;
-        height: 184px;
+        width: 200px;
+        height: 200px;
         border-radius: 50%;
         border: 1px solid var(--field-border-disabled);
     }

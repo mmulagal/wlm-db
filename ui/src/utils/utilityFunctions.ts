@@ -1027,6 +1027,10 @@ export const jobMonitoringTypeMapping = (val: string) => {
         typeValue = GENERAL.JM_TYPE_PREPARE_RESOURCE;
     } else if (val === JOB_MONITORING_TYPE.SANDBOX) {
         typeValue = GENERAL.JM_TYPE_SANDBOX;
+    } else if (val === JOB_MONITORING_TYPE.ASSESSMENT) {
+        typeValue = GENERAL.JM_TYPE_ASSESSMENT;
+    } else if (val === JOB_MONITORING_TYPE.OPTIMIZE) {
+        typeValue = GENERAL.JM_TYPE_OPTIMIZE;
     }
     return typeValue;
 };

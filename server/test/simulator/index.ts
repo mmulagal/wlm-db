@@ -9,9 +9,9 @@ async function initiateSimulator() {
             host.includes('bedrock-runtime') ||
             host.includes('sts.') ||
             host.includes('pricing.') ||
-            host.includes('secretsmanager.') || 
+            host.includes('secretsmanager.') ||
             host === CLOUD_MANAGER_ENDPOINT
-    )
+    );
     await import('./scopes/jwt-scope');
     await import('./scopes/cloud-manager/cloud-manager-tenancy-scope');
     await import('./scopes/aws/ec2-scope');
@@ -30,7 +30,6 @@ async function initiateSimulator() {
     await import('./scopes/cloud-manager/cloud-manager-notification-scope');
     await import('./scopes/cloud-manager/workload-factory-credentials-scope');
     await import('./scopes/cloud-manager/wlmdb-scope');
-  
 
     if (process.env.NODE_ENV === 'simulator') {
         // local development and testing environment

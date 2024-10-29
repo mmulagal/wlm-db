@@ -371,7 +371,7 @@ async function processCloudFormationMessages() {
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
             if (!isEmpty(sqsMessages)) {
-                logger.info(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages }); // TODO : REMOVE ME, i print a lot of logs
+                logger.debug(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages });
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
                         const {
@@ -572,7 +572,7 @@ async function processCloudFormationMessages() {
                                                     );
 
                                                     const resourceType =
-                                                        trackSqlDeploymentType === 'Microsoft SQL Server'
+                                                        trackdatabaseType === 'Microsoft SQL server'
                                                             ? RESOURCESTYPE.MSSQL
                                                             : RESOURCESTYPE.PGSQL;
 

@@ -20,6 +20,7 @@ locals {
     local.create_ec2_messages_endpoint,
     local.create_ssm_messages_endpoint
   ])
+  create_multi_zone_sg = !local.single_zone && local.create_sg
 }
 
 resource "aws_security_group" "https_security_group" {
@@ -32,7 +33,7 @@ resource "aws_security_group" "https_security_group" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = local.create_multi_zone_sg ? [var.vpc_cidr, var.preferred_subnet_cidrblock, var.standby_subnet_cidrblock] : [var.vpc_cidr, var.preferred_subnet_cidrblock]
   }
 }
 

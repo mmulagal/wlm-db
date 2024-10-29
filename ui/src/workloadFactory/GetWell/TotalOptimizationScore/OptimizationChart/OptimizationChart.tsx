@@ -2,9 +2,10 @@ import { Chart } from 'chart.js';
 import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import styles from './OptimizationChart.module.scss';
-import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, Typography } from '@netapp/design-system';
 import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 Chart.register(...registerables);
 
@@ -14,7 +15,7 @@ type MultiRingDoughnutPropType = {
 };
 
 const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropType) => {
-    const loading = false;
+    const { optimizePageLoading, isAssessmentAvailable } = useAppSelector(state => state.getWellOptimize);
     const unProtectedColor = '#E0E0E0';
 
     const ref = useRef<HTMLCanvasElement>(null);
@@ -33,7 +34,7 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
         data: {
             datasets: [
                 {
-                    data: [65, 35],
+                    data: [hostData?.percent || 0, 100 - (hostData?.percent || 0)],
                     backgroundColor: ['#68C6B3', unProtectedColor]
                 }
             ]
@@ -49,7 +50,9 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
             setDoughnutChart(myDoughnut);
         }
         return () => {
-            myDoughnut.destroy();
+            if (myDoughnut) {
+                myDoughnut.destroy();
+            }
             // if (hostData?.protectedPercent !== 0 || hostData?.unprotectedPercent !== 0) myDoughnut.destroy();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -58,16 +61,33 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
     return (
         <div className={styles.optimizationChart} id="chart-item">
             <div className={styles['center-text']}>
-                <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                    65%
-                </Typography>
-                <Typography variant="Regular_14">Optimization score</Typography>
-                {loading && <DsFlashingDotsLoader />}
+                {!optimizePageLoading &&
+                    (isAssessmentAvailable ? (
+                        <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
+                            {hostData?.percent || 0}%
+                        </DsTypography>
+                    ) : (
+                        <DsTypography variant="Semibold_16" style={{ lineHeight: 'unset' }} isDisabled={true}>
+                            {GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    ))}
+                {optimizePageLoading && (
+                    <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
+                        {hostData?.percent || 0}%
+                    </DsTypography>
+                )}
+                <DsTypography
+                    variant="Regular_14"
+                    isDisabled={!optimizePageLoading && !isAssessmentAvailable ? true : false}
+                >
+                    Optimization score
+                </DsTypography>
+                {optimizePageLoading && <DsFlashingDotsLoader />}
             </div>
-
-            {(hostData?.protectedPercent !== 0 || hostData?.unprotectedPercent !== 0) && (
+            {(!isAssessmentAvailable || optimizePageLoading) && <div className={styles.emptyCircle}></div>}
+            {isAssessmentAvailable && !optimizePageLoading ? (
                 <canvas ref={ref} id="chart-area" width={200} height={200}></canvas>
-            )}
+            ) : null}
         </div>
     );
 };

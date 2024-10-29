@@ -39,6 +39,56 @@
         border-right: 1px solid var(--border);
     }
 
+    .tooltipContainer {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+
+    .tooltipTable {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        align-self: stretch;
+    }
+
+    .tooltipLevel {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 284px;
+        padding: 8px 0px;
+
+        .tooltipSeparator {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            margin-bottom: 6px;
+
+            .firstPart {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .secondPart {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 120px;
+            }
+        }
+    }
+
     // .fourthSection {
     //     display: flex;
     //     flex-direction: column;
@@ -66,5 +116,16 @@
             height: 32px !important;
             min-width: 140px !important;
         }
+
+        .disabled {
+            background-color: var(--grey-15);
+            color: var(--text-primary);
+        }
+    }
+}
+
+.colorSet {
+    div {
+        color: var(--text-primary);
     }
 }

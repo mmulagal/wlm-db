@@ -35,12 +35,17 @@ import {
     validationStack2Data,
     sqlStandaloneStackData,
     endpointData,
-    sandboxJobData
+    sandboxJobData,
+    assessmentJobData,
+    optimizeJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
+import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { AssessmentCategories } from '../utils/continous-optimization-consts';
+import { ASSESMENT_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
 
 const logger = getLogger();
 
@@ -266,6 +271,19 @@ async function createDeploymentMockDataInDB(
     };
 
     await upsertDatabaseInstance(accountId, instanceRecord);
+
+    const instanceConfigDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: instanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.STORAGE,
+        config_data: ASSESMENT_CONFIG_DATA
+    };
+
+    await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
 
     const data = await createJobMockData(
         accountId,
@@ -532,6 +550,32 @@ async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string
     };
 }
 
+async function createAssessmentJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceNames: string[],
+    credentialsId: string,
+    region: string
+) {
+    logger.debug('Generate mock data for job table', accountId, resourceName, credentialsId, region);
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return assessmentJobData(accountId, resourceName, instanceNames, credentialsId, region, parentJobId);
+}
+
+async function createOptimizeJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string
+) {
+    logger.debug('Generate optimize mock data for job table', accountId, resourceName, credentialsId, region);
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return optimizeJobData(accountId, resourceName, instanceName, credentialsId, region, parentJobId);
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -541,5 +585,7 @@ export {
     getVolumeIdsFromStorage,
     updateUserDBIntoInstanceTable,
     updateSandboxDBIntoInstanceData,
-    getEBSVolumesForDemo
+    getEBSVolumesForDemo,
+    createAssessmentJobMockData,
+    createOptimizeJobMockData
 };

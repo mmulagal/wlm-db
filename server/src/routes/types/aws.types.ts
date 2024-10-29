@@ -158,6 +158,7 @@ const KmsKeysListResponse = Type.Object({
     keys: Type.Array(
         Type.Object({
             id: Type.Optional(Type.String()),
+            arn: Type.Optional(Type.String()),
             name: Type.Optional(Type.String()),
             origin: Type.Optional(Type.String()),
             state: Type.Optional(Type.String()),

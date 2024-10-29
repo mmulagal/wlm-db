@@ -58,3 +58,7 @@
         max-width: 792px !important;
     }
 }
+
+[class*='FlexLayout-module_default-padding'] {
+    overflow-y: auto !important;
+}

@@ -1,6 +1,7 @@
 <powershell>
 
 Write-Output "Starting user data script from terraform"
+$ProgressPreference = "SilentlyContinue";
 $WarningPreference = 'SilentlyContinue';
 
 $Region = "${region}"
@@ -14,8 +15,10 @@ $ValidationNode1WaitHandler = "${validation_node1_wait_handler}"
 $IsCustomAmi = "${is_custom_ami}"
 $PerformFsxCheck = "${perform_fsx_check}"
 $FsxFileSystemId = "${fsx_file_system_id}"
-$LogGroup = "${log_group}_validation_node"
+$ValidationNodeName = "${validation_node_name}"
+$LogGroup = "${log_group}_$ValidationNodeName"
 $SqlDeploymentMode = "${sql_deployment_mode}"
+
 
 Write-Output "Deployment Name: $DeploymentName"
 
@@ -55,7 +58,7 @@ try {
 
     Invoke-WebRequest -Uri $ValidationNodeInitializationS3Url -OutFile "$ScriptDir\Validation-Instance-Initializer.ps1"  -ErrorAction Stop
     
-    $Command = "$ScriptDir\Validation-Instance-Initializer.ps1 -Region '$Region' -DeploymentName '$DeploymentName' -DnsIpAddresses '$DnsIpAddresses' -DomainDnsName '$DomainDnsName' -SubnetId '$SubnetId' -DomainAdminUser '$DomainAdminUser' -ValidationNode1WaitHandler '$ValidationNode1WaitHandler' -IsCustomAmi '$IsCustomAmi' -PerformFsxCheck '$PerformFsxCheck' -LogGroup '$LogGroup' -SqlDeploymentMode '$SqlDeploymentMode'" 
+    $Command = "$ScriptDir\Validation-Instance-Initializer.ps1 -Region '$Region' -DeploymentName '$DeploymentName' -DnsIpAddresses '$DnsIpAddresses' -DomainDnsName '$DomainDnsName' -SubnetId '$SubnetId' -DomainAdminUser '$DomainAdminUser' -ValidationNode1WaitHandler '$ValidationNode1WaitHandler' -IsCustomAmi '$IsCustomAmi' -PerformFsxCheck '$PerformFsxCheck' -LogGroup '$LogGroup' -SqlDeploymentMode '$SqlDeploymentMode' -ValidationNodeName '$ValidationNodeName'" 
     if ($FsxFileSystemId -ne "") {
         $Command += " -FsxFileSystemId $FsxFileSystemId"
     }
