@@ -643,7 +643,8 @@ export const GETWELL_STATUS = {
     UNDER_PROVISIONED: 'Under-provisioned',
     OVER_PROVISIONED: 'Over-provisioned',
     OPTIMIZING: 'Optimizing',
-    NOT_APPLICABLE: 'N/A'
+    NOT_APPLICABLE: 'N/A',
+    ANALYZING: 'Analyzing'
 };
 
 export const GETWELL_VALUES: any = {
@@ -651,6 +652,7 @@ export const GETWELL_VALUES: any = {
     optimizing: 'Optimizing',
     'not-applicable': 'N/A',
     'not-optimized': 'Not optimized',
+    'analyzing': 'Analyzing',
     'under-provisioned': 'Under-provisioned',
     'over-provisioned': 'Over-provisioned',
     separate_drive: 'Separate Drive',
