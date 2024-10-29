@@ -3,7 +3,11 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
-import { DriftAssessmentResponseType, StorageParameterDriftResponseType } from '../routes/types/database-hosts.types';
+import {
+    DriftAssessmentResponseType,
+    SizingViolationResponseType,
+    StorageParameterDriftResponseType
+} from '../routes/types/database-hosts.types';
 import getLogger from '../utils/logger';
 import { getEc2Arn, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageCapacity, getMappedOntapVolumes } from './aws/fsx-operations';
@@ -176,30 +180,69 @@ async function calculateStorageDrift(
     });
 
     Object.entries(sizing).forEach(([key, value]) => {
-        const goldenData = sizingConfigData.find(data => data.parameter === key);
+        let goldenData = sizingConfigData.find(data => data.parameter === key);
+
+        const overProvisionedDrives: SizingViolationResponseType[] = [];
+        const underProvisionedDrives: SizingViolationResponseType[] = [];
+        const ignoredDrives: SizingViolationResponseType[] = [];
+        const optimisedDrives: SizingViolationResponseType[] = [];
+
+        if (key === 'data-log-drive-details') {
+            goldenData = sizingConfigData.find(data => data.parameter === 'log-drive-size');
+        }
+        if (key === 'data-tempdb-drive-details') {
+            goldenData = sizingConfigData.find(data => data.parameter === 'tempdb-drive-size');
+        }
         if (!isEmpty(goldenData)) {
             configCount += 1;
             let status = AssessmentStatus.NOT_OPTIMIZED;
             if (key === 'performance-tier') {
                 status = value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
             }
-            if (key === 'log-drive-size') {
-                const sizePercent = Number(value);
+            if (key === 'data-log-drive-details') {
+                value.forEach((drive: { [x: string]: any }) => {
+                    const { dataDriveLetter } = drive;
+                    const { logDriveLetter } = drive;
+                    if (dataDriveLetter !== logDriveLetter) {
+                        const dataDriveTotalSizeMB = Number(drive.dataDriveTotalSizeMB);
+                        const logDriveTotalSizeMB = Number(drive.logDriveTotalSizeMB);
+                        const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
+                        if (logToDriveSizePercent > 30) {
+                            overProvisionedDrives.push(drive as SizingViolationResponseType);
+                        } else if (logToDriveSizePercent < 20) {
+                            underProvisionedDrives.push(drive as SizingViolationResponseType);
+                        } else {
+                            optimisedDrives.push(drive as SizingViolationResponseType);
+                        }
+                    } else {
+                        ignoredDrives.push(drive as SizingViolationResponseType);
+                    }
+                });
+                key = 'log-drive-size';
                 status =
-                    sizePercent <= 30 || sizePercent >= 20
-                        ? AssessmentStatus.OPTIMIZED
-                        : sizePercent > 30
-                        ? AssessmentStatus.OVER_PROVISIONED
-                        : AssessmentStatus.UNDER_PROVISIONED;
+                    !isEmpty(overProvisionedDrives) || !isEmpty(underProvisionedDrives)
+                        ? AssessmentStatus.NOT_OPTIMIZED
+                        : isEmpty(optimisedDrives) && !isEmpty(ignoredDrives)
+                        ? AssessmentStatus.NOT_APPLICABLE
+                        : AssessmentStatus.OPTIMIZED;
             }
-            if (key === 'tempdb-drive-size') {
-                const sizePercent = Number(value);
-                status =
-                    sizePercent <= 20 || sizePercent >= 10
-                        ? AssessmentStatus.OPTIMIZED
-                        : sizePercent > 20
-                        ? AssessmentStatus.OVER_PROVISIONED
-                        : AssessmentStatus.UNDER_PROVISIONED;
+            if (key === 'data-tempdb-drive-details') {
+                const defaultDataDrive = value.defaultDataDriveLetter;
+                const { tempdbDriveLetter } = value;
+                if (defaultDataDrive === tempdbDriveLetter) {
+                    status = AssessmentStatus.NOT_APPLICABLE;
+                } else {
+                    const { defaultDataDriveSize } = value;
+                    const { tempdbDriveTotalSizeMB } = value;
+                    const tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / defaultDataDriveSize) * 100);
+                    status =
+                        tempdbPercent > 20
+                            ? AssessmentStatus.OVER_PROVISIONED
+                            : tempdbPercent < 10
+                            ? AssessmentStatus.UNDER_PROVISIONED
+                            : AssessmentStatus.OPTIMIZED;
+                }
+                key = 'tempdb-drive-size';
             }
             if (status === AssessmentStatus.OPTIMIZED) {
                 optimizedCount += 1;
@@ -210,7 +253,8 @@ async function calculateStorageDrift(
                 status,
                 severity: goldenData.severity,
                 recommendation: goldenData.recommendation,
-                tags: goldenData.tags
+                tags: goldenData.tags,
+                sizingViolations: { overProvisionedDrives, underProvisionedDrives, ignoredDrives }
             });
         }
     });
@@ -229,8 +273,9 @@ async function calculateStorageDrift(
     }, 0);
 
     try {
-        const headroomPercent =
-            ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100;
+        const headroomPercent = Math.ceil(
+            ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
+        );
         const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
         const sizePercent = Number(headroomPercent);
         const status =

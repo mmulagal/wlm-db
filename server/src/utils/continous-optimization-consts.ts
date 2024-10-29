@@ -14,7 +14,8 @@ enum AssessmentStatus {
     OPTIMIZED = 'optimized',
     NOT_OPTIMIZED = 'not-optimized',
     UNDER_PROVISIONED = 'under-provisioned',
-    OVER_PROVISIONED = 'over-provisioned'
+    OVER_PROVISIONED = 'over-provisioned',
+    NOT_APPLICABLE = 'not-applicable'
 }
 
 enum AwsWellArchitecturedPillars {
