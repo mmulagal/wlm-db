@@ -4,7 +4,9 @@ import DatabaseHomePage from '../DatabaseHomePage';
 import {
     BlueXPListeners,
     Button,
+    ButtonWithDropdown,
     DsBlueXpMenu,
+    DsButton,
     DsTypography,
     Popover,
     SelectField,
@@ -603,46 +605,148 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 <div className={styles.contentArea}>
                                     {selectComponents()}
                                     <div className={styles.content}>
-                                        <Button
-                                            variant="primary"
-                                            onClick={() => {
-                                                dispatch(setDatabaseHostEntryPoint('database'));
-                                                // navigate(WLF_TO_FORM_NAVIGATE);
-                                                if (isWorkloadFactory) {
-                                                    navigate(WLF_TO_FORM_NAVIGATE);
-                                                    postBlueXPMessage({
-                                                        type: BlueXPListeners.navigate,
-                                                        payload: {
-                                                            pathname: './mssql-deploy-wizard',
-                                                            replace: true
-                                                        }
-                                                    });
-                                                } else {
-                                                    navigate('../../fsxdb/mssql-deploy-wizard');
-                                                    postBlueXPMessage({
-                                                        type: BlueXPListeners.navigate,
-                                                        payload: {
-                                                            pathname: '../../fsxdb/mssql-deploy-wizard',
-                                                            replace: true
-                                                        }
-                                                    });
-                                                }
-                                            }}
-                                            id={'deploy-button'}
-                                        >
-                                            <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
-                                        </Button>
-
-                                        {toShowPostgress && (
+                                        {!toShowPostgress && (
                                             <Button
                                                 variant="primary"
                                                 onClick={() => {
-                                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                    dispatch(setDatabaseHostEntryPoint('database'));
+                                                    // navigate(WLF_TO_FORM_NAVIGATE);
+                                                    if (isWorkloadFactory) {
+                                                        navigate(WLF_TO_FORM_NAVIGATE);
+                                                        postBlueXPMessage({
+                                                            type: BlueXPListeners.navigate,
+                                                            payload: {
+                                                                pathname: './mssql-deploy-wizard',
+                                                                replace: true
+                                                            }
+                                                        });
+                                                    } else {
+                                                        navigate('../../fsxdb/mssql-deploy-wizard');
+                                                        postBlueXPMessage({
+                                                            type: BlueXPListeners.navigate,
+                                                            payload: {
+                                                                pathname: '../../fsxdb/mssql-deploy-wizard',
+                                                                replace: true
+                                                            }
+                                                        });
+                                                    }
                                                 }}
                                                 id={'deploy-button'}
                                             >
-                                                <div className={styles.buttonStyle}>{'Deploy Postgress'}</div>
+                                                <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
                                             </Button>
+                                        )}
+
+                                        {toShowPostgress && (
+                                            // <Button
+                                            //     variant="primary"
+                                            //     onClick={() => {
+                                            //         navigate(WLF_TO_PROTECT_NAVIGATE);
+                                            //     }}
+                                            //     id={'deploy-button'}
+                                            // >
+                                            //     <div className={styles.buttonStyle}>{'Deploy PostgreSQL'}</div>
+                                            // </Button>
+                                            <>
+                                                <DsButton
+                                                    children="Actions"
+                                                    variant="Default"
+                                                    dropDown={{
+                                                        trigger: 'click',
+                                                        autoPosition: true,
+                                                        items: [
+                                                            {
+                                                                id: '1',
+                                                                label: GENERAL.DEPLOY_NEW_DATABASE,
+                                                                onClick: () => {
+                                                                    dispatch(setDatabaseHostEntryPoint('database'));
+                                                                    // navigate(WLF_TO_FORM_NAVIGATE);
+                                                                    if (isWorkloadFactory) {
+                                                                        navigate(WLF_TO_FORM_NAVIGATE);
+                                                                        postBlueXPMessage({
+                                                                            type: BlueXPListeners.navigate,
+                                                                            payload: {
+                                                                                pathname: './mssql-deploy-wizard',
+                                                                                replace: true
+                                                                            }
+                                                                        });
+                                                                    } else {
+                                                                        navigate('../../fsxdb/mssql-deploy-wizard');
+                                                                        postBlueXPMessage({
+                                                                            type: BlueXPListeners.navigate,
+                                                                            payload: {
+                                                                                pathname:
+                                                                                    '../../fsxdb/mssql-deploy-wizard',
+                                                                                replace: true
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                id: '2',
+                                                                label: 'Deploy PostgreSQL',
+                                                                onClick: () => navigate(WLF_TO_PROTECT_NAVIGATE)
+                                                            }
+                                                        ]
+                                                    }}
+                                                />
+                                                {/* <ButtonWithDropdown
+                                                    variant="primary"
+                                                    items={[
+                                                        {
+                                                            children: (
+                                                                <div
+                                                                    className={styles.menuItem}
+                                                                    onClick={() => {
+                                                                        dispatch(setDatabaseHostEntryPoint('database'));
+                                                                        // navigate(WLF_TO_FORM_NAVIGATE);
+                                                                        if (isWorkloadFactory) {
+                                                                            navigate(WLF_TO_FORM_NAVIGATE);
+                                                                            postBlueXPMessage({
+                                                                                type: BlueXPListeners.navigate,
+                                                                                payload: {
+                                                                                    pathname: './mssql-deploy-wizard',
+                                                                                    replace: true
+                                                                                }
+                                                                            });
+                                                                        } else {
+                                                                            navigate('../../fsxdb/mssql-deploy-wizard');
+                                                                            postBlueXPMessage({
+                                                                                type: BlueXPListeners.navigate,
+                                                                                payload: {
+                                                                                    pathname:
+                                                                                        '../../fsxdb/mssql-deploy-wizard',
+                                                                                    replace: true
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Typography variant="Regular_14">
+                                                                        {GENERAL.DEPLOY_NEW_DATABASE}
+                                                                    </Typography>
+                                                                </div>
+                                                            )
+                                                        },
+                                                        {
+                                                            children: (
+                                                                <div
+                                                                    className={styles.menuItem}
+                                                                    onClick={() => navigate(WLF_TO_PROTECT_NAVIGATE)}
+                                                                >
+                                                                    <Typography variant="Regular_14">
+                                                                        Deploy PostgreSQL
+                                                                    </Typography>
+                                                                </div>
+                                                            )
+                                                        }
+                                                    ]}
+                                                    placement={'bottom-end'}
+                                                >
+                                                    Actions
+                                                </ButtonWithDropdown> */}
+                                            </>
                                         )}
 
                                         {refreshComponent()}

@@ -1,7 +1,8 @@
 param(
     [string]$InstanceId,
     [string]$Region,
-    [string]$NodeName
+    [string]$NodeName,
+    [string]$AwsProfile
 )
 
 $counter = 0
@@ -10,7 +11,7 @@ $timeout = if ($NodeName -in @('Validation-Node-1', 'Validation-Node-2')) { 150 
 Write-Output "Checking tag for InstanceId: $InstanceId in Region: $Region with timeout: $timeout (10-second intervals)"
 
 while ($true) {
-    $tag_value = aws ec2 describe-tags --filters "Name=resource-id,Values=$InstanceId" "Name=key,Values=user_data" --region $Region --output text --query 'Tags[].Value'
+    $tag_value = aws ec2 describe-tags --filters "Name=resource-id,Values=$InstanceId" "Name=key,Values=user_data" --region $Region --profile $AwsProfile --output text --query 'Tags[].Value'
     Write-Output "Tag value retrieved: $tag_value"
 
     if ($tag_value -eq "completed") {

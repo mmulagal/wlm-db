@@ -76,7 +76,7 @@ model resource {
 
 model config {
   id            String   @id @default(uuid())
-  account_id    String   @db.VarChar(30)
+  account_id    String   @db.VarChar(64)
   name          String   @db.VarChar(255)
   user          String   @db.VarChar(255)
   creation_time DateTime @db.DateTime(3)
@@ -191,7 +191,6 @@ enum JOBTYPE {
   SANDBOX
   ASSESSMENT
   OPTIMIZATION
-  OPTIMIZE
 }
 
 enum DEPLOYMENT_STATUS {

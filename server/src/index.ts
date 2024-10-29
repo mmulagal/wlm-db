@@ -264,7 +264,14 @@ const app = fastify({
                             params: request.params,
                             reqBody: request.body,
                             principal: request.headers.principal,
-                            referer: request.headers.referer
+                            referer: request.headers.referer,
+                            headers: JSON.stringify(
+                                request.headers
+                                    ? Object.fromEntries(
+                                          Object.entries(request.headers).filter(([key]) => key.startsWith('x-netapp'))
+                                      )
+                                    : {}
+                            )
                         });
                     }
                     // Added for testing purpose when we want to clear the ssm cache
@@ -313,7 +320,14 @@ const app = fastify({
                 replyBody,
                 reqBody: body,
                 principal: request.headers.principal,
-                referer: request.headers.referer
+                referer: request.headers.referer,
+                headers: JSON.stringify(
+                    request.headers
+                        ? Object.fromEntries(
+                              Object.entries(request.headers).filter(([key]) => key.startsWith('x-netapp'))
+                          )
+                        : {}
+                )
             });
         }
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
