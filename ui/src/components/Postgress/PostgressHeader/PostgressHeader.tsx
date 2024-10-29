@@ -15,12 +15,13 @@ const PostgressHeader = () => {
     };
     return (
         <Header
-            title={'Postgress database'}
+            title={'Create new PostgreSQL Server'}
             closeButtonProps={{
                 onClick: () => {
                     handleNavigateWithoutDialog();
                 }
             }}
+            style={{ width: '100vw' }}
         ></Header>
     );
 };
