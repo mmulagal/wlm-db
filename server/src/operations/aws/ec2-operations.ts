@@ -809,11 +809,33 @@ async function getInstanceTypesFromInstanceRequirements(
                     NetworkBandwidthGbps: { Min: requiredNetworkBandwidth } // As per req, New Instance's network throughput >= Old Instance's network throughput; in AOAG future network bandwidth = Max{ max (sum) EBS Bandwidth measured + current max network bandwidth measured, src instance type's network }
                 }
             };
-            const { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
+            let { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
                 credentialsId,
                 region,
                 params
             );
+            if (isEmpty(instanceTypes)) {
+                /* As the CPU reduces, memory required also reduces. Network configuration remains the same for a wide range of cpu-memory configurations.
+                FOR EXAMPLE:(https://aws.amazon.com/ec2/instance-types/)
+                    Instance size	vCPU	Memory (GiB)	Instance storage (GB)	Network bandwidth (Gbps)	Amazon EBS bandwidth (Gbps)
+                    m8g.medium         1              4                 EBS-only                  Up to 12.5                       Up to 10
+
+                    m8g.large          2              8                 EBS-only                  Up to 12.5                       Up to 10
+
+                    m8g.xlarge         4             16                 EBS-only                  Up to 12.5                       Up to 10
+                The network bandwidth is the same for all the instance types. So, if the instance type is not found for the given requirements, we can compromise on the memory requirement and retry.
+                */
+
+                logger.warn(
+                    'No instance types found for the given requirements, so compromising on the memory requirement and retrying'
+                );
+                params.InstanceRequirements.MemoryMiB = { Min: 1024 }; // changing the min memory requirement to 1GB as MemoryMiB is a required field in SDK request
+                ({ InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
+                    credentialsId,
+                    region,
+                    params
+                ));
+            }
             const requiredInstanceTypes = compact(
                 instanceTypes?.map(requiredInstanceType => requiredInstanceType.InstanceType)
             );

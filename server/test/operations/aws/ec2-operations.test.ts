@@ -13,13 +13,15 @@ import {
     enableVpcDnsAttributes,
     isEbsAwsBackupEnabled,
     getInstanceDetailsByPrivateIp,
-    getInstanceTypesFromInstanceRequirementsForManagedInstances
+    getInstanceTypesFromInstanceRequirementsForManagedInstances,
+    getInstanceTypesFromInstanceRequirements
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
+import '../../simulator/scopes/aws/cloud-watch-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
@@ -125,6 +127,17 @@ describe('EC2 Operations', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             'i-12345'
+        );
+        expect(response).toBeDefined();
+    });
+
+    it('Get instance types from instance requirements for managed instances', async () => {
+        const response = await getInstanceTypesFromInstanceRequirements(
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            ['i-12345'],
+            ['vol-1234s'],
+            'AOAG'
         );
         expect(response).toBeDefined();
     });
