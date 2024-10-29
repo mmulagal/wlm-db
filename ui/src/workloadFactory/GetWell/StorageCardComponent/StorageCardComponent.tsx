@@ -59,8 +59,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             return <NotActive />;
         } else if (value === GETWELL_STATUS.OPTIMIZING) {
             return <SmallLoader />;
-        } else if (value === GETWELL_STATUS.NOT_APPLICABLE) {
-            return <NotActive />;
         } else {
             return;
         }

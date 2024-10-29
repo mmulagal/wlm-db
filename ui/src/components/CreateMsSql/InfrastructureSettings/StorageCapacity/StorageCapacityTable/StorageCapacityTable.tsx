@@ -47,7 +47,7 @@ const StorageCapacityTable = () => {
                 id: 5,
                 type: GENERAL.BUFFER_SIZE,
                 size: sizeData?.buffer,
-                calculation: `Up to 20% headroom over total capacity`
+                calculation: `35% headroom over total capacity`
             });
         }
         newList.push({
