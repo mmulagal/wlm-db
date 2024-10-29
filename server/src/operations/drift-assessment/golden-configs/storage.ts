@@ -203,7 +203,7 @@ const GOLDEN_CONFIG = {
         },
         {
             parameter: 'headroom',
-            value: '36-100%',
+            value: '35%',
             severity: SEVERITY.CRITICAL,
             recommendation:
                 'For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.',
@@ -211,7 +211,7 @@ const GOLDEN_CONFIG = {
         },
         {
             parameter: 'log-drive-size',
-            value: '20-30%',
+            value: '25%',
             severity: SEVERITY.WARNING,
             recommendation:
                 'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.',
@@ -219,7 +219,7 @@ const GOLDEN_CONFIG = {
         },
         {
             parameter: 'tempdb-drive-size',
-            value: '10-20%',
+            value: '10%',
             severity: SEVERITY.WARNING,
             recommendation:
                 'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
