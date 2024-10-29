@@ -81,7 +81,6 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
             if (($logDrive) -and ($netappLogDrives -contains $logDrive.logDriveLetter)) {
                 $dataDrive | Add-Member -MemberType NoteProperty -Name "logDriveLetter" -Value $logDrive.logDriveLetter 
                 $dataDrive | Add-Member -MemberType NoteProperty -Name "logDriveTotalSizeMB" -Value $logDrive.logDriveTotalSizeMB
-                $dataDrive | Add-Member -MemberType NoteProperty -Name "logDrivePercent" -Value ($logDrive.logDriveTotalSizeMB/$dataDrive.dataDriveTotalSizeMB * 100)
                 }
             } 
         }
