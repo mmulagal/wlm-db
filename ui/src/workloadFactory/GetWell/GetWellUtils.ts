@@ -663,7 +663,9 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
     // Dispatch the timestamp to the store
     dispatch(
         setGwTimestamp(
-            data?.storage?.timestamp ? formatDateWithTime(data?.storage?.timestamp) : data?.storage?.timestamp
+            data?.storage?.timestamp && isNaN(Date.parse(data?.storage?.timestamp))
+                ? formatDateWithTime(data?.storage?.timestamp)
+                : data?.storage?.timestamp
         )
     );
 };

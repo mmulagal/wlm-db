@@ -32,7 +32,7 @@ import {
     setSelectedHeaderTab
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../store/storeHooks';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import GetWellApi from './GetWellApi';
 import { resetGwData, setGwRefreshPage } from '../../store/workloadFactory/getWellOptimizeSlice';
 //@ts-ignore
@@ -146,6 +146,53 @@ const GetWell = () => {
         dispatch(setOptimizeFilterTags([]));
         dispatch(setDefaultFilterOptions({}));
     };
+
+    const generateSubCategoryOptions = useMemo(() => {
+        const selectedCategories = optimizeFilterTags
+            .filter((tag: any) => tag && tag.type === 'all-catagories')
+            .map((tag: any) => tag.value);
+        const options = [
+            {
+                id: 0,
+                label: 'Storage sizing',
+                value: 'Storage sizing',
+                category: 'Storage'
+            },
+            {
+                id: 1,
+                label: 'Storage layout',
+                value: 'Storage layout',
+                category: 'Storage'
+            },
+            {
+                id: 2,
+                label: 'Storage configuration',
+                value: 'Storage configuration',
+                category: 'Storage'
+            },
+            {
+                id: 3,
+                label: 'Compute',
+                value: 'Compute',
+                category: 'Compute'
+            }
+        ];
+        const filteredOptions = selectedCategories.length
+            ? options.filter((option: any) => selectedCategories.includes(option.category))
+            : options;
+        const selectedSubCategories =
+            defaultFilterOptions['sub-catagories']?.filter((id: any) =>
+                filteredOptions.find((option: any) => option.id === id)
+            ) || [];
+        const selectedOptimizeTags = optimizeFilterTags.filter(
+            (tag: any) => tag.type !== 'sub-catagories' || filteredOptions.find((option: any) => option.id === tag.id)
+        );
+        if (optimizeFilterTags.length !== selectedOptimizeTags.length) {
+            dispatch(setOptimizeFilterTags(selectedOptimizeTags));
+        }
+        dispatch(setDefaultFilterOptions({ ...defaultFilterOptions, 'sub-catagories': selectedSubCategories }));
+        return filteredOptions;
+    }, [optimizeFilterTags]);
 
     GetWellApi();
 
@@ -347,33 +394,12 @@ const GetWell = () => {
                                                         `Sub categories: (${
                                                             defaultFilterOptions['sub-catagories']?.length > 0
                                                                 ? defaultFilterOptions['sub-catagories']?.length
-                                                                : 4
+                                                                : generateSubCategoryOptions.length
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
                                                     isCleanable={false}
-                                                    options={[
-                                                        {
-                                                            id: 0,
-                                                            label: 'Storage sizing',
-                                                            value: 'Storage sizing'
-                                                        },
-                                                        {
-                                                            id: 1,
-                                                            label: 'Storage layout',
-                                                            value: 'Storage layout'
-                                                        },
-                                                        {
-                                                            id: 2,
-                                                            label: 'Storage configuration',
-                                                            value: 'Storage configuration'
-                                                        },
-                                                        {
-                                                            id: 3,
-                                                            label: 'Compute',
-                                                            value: 'Compute'
-                                                        }
-                                                    ]}
+                                                    options={generateSubCategoryOptions}
                                                     selectionType="multi"
                                                     isWithActions={true}
                                                     onSelect={(option: any) => handleSelect(option, 'sub-catagories')}
@@ -605,9 +631,10 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['sub-catagories']?.length ||
-                                                defaultFilterOptions['sub-catagories']?.length === 4
-                                                    ? 'All(4)'
-                                                    : `${defaultFilterOptions['sub-catagories']?.length}/4`}
+                                                defaultFilterOptions['sub-catagories']?.length ===
+                                                    generateSubCategoryOptions.length
+                                                    ? `All(${generateSubCategoryOptions.length})`
+                                                    : `${defaultFilterOptions['sub-catagories']?.length}/${generateSubCategoryOptions.length}`}
                                             </DsTypography>
                                         </div>
 
