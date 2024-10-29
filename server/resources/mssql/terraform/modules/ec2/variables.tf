@@ -281,6 +281,6 @@ variable "network_interface_2_id" {
 }
 
 variable "aws_profile" {
-  description = "The name of the aws profile configured on the host"
+  description = "The name of the AWS profile configured on the host"
   type        = string
 }
