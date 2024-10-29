@@ -577,7 +577,7 @@ async function getTerraformSetup(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const { sqlServerName, sqlAmiName, sqlCollation } = sqlConfiguration;
+    const { sqlServerName, sqlAmiName } = sqlConfiguration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
     // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
@@ -589,20 +589,7 @@ async function getTerraformSetup(
             throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
         }
 
-        if (!sqlCollation) {
-            throw createError(412, 'Please provide the collation information');
-        }
-
         validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
-        const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
-            networkConfiguration,
-            sqlConfiguration.sqlDeploymentMode
-        );
-
-        if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
-            const errorMessage = vpcValidationCheck.violationMessage;
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
-        }
 
         // Set EnableDnsSupport and EnableDnsHostnames to true
         await enableVpcDnsAttributes(credentialsId as string, region as string, networkConfiguration.vpcId);
