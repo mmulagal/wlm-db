@@ -322,13 +322,48 @@
     },
     "compute": {
         "name": "compute-rightsizing",
-        "status": "over-provisioned",
+        "status": "under-provisioned",
         "recommended": "optimized",
-        "severity": "Critical",
+        "severity": "warning",
         "recommendation": "Your current instance m5.large is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses. Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.",
         "tags": [
             "Cost optimization",
             "Performance efficiency"
+        ],
+        "recommendationOptions": [
+            {
+                "instanceType": "m6a.large",
+                "rank": 1,
+                "savingsOpportunity": {
+                    "savingsOpportunityPercentage": 37.17,
+                    "estimatedMonthlySavings": {
+                        "currency": "USD",
+                        "value": 57.524
+                    }
+                }
+            },
+            {
+                "instanceType": "m7i-flex.large",
+                "rank": 2,
+                "savingsOpportunity": {
+                    "savingsOpportunityPercentage": 2.311,
+                    "estimatedMonthlySavings": {
+                        "currency": "USD",
+                        "value": 3.576
+                    }
+                }
+            },
+            {
+                "instanceType": "m5a.large",
+                "rank": 3,
+                "savingsOpportunity": {
+                    "savingsOpportunityPercentage": 2.311,
+                    "estimatedMonthlySavings": {
+                        "currency": "USD",
+                        "value": 3.576
+                    }
+                }
+            }
         ],
         "objectsInViolation": [
             "CPU over-provisioned",
