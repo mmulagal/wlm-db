@@ -111,3 +111,8 @@ variable "validation_node_name" {
   description = "The name of the validation node"
   type        = string
 }
+
+variable "aws_profile" {
+  description = "The name of the aws profile configured on the host"
+  type        = string
+}

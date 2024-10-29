@@ -97,6 +97,7 @@ module "validation_node1" {
   sql_deployment_mode                   = var.sql_deployment_mode
   validation_node_name                  = "Validation-Node-1"
   operating_system                      = local.operating_system
+  aws_profile                           = var.aws_profile
 }
 
 // This is only created for the FCI Deployment
@@ -127,6 +128,7 @@ module "validation_node2" {
   sql_deployment_mode                   = var.sql_deployment_mode
   validation_node_name                  = "Validation-Node-2"
   operating_system                      = local.operating_system
+  aws_profile                           = var.aws_profile
 }
 
 module "fsxn_standalone" {
@@ -243,6 +245,7 @@ module "standalone_sql_node" {
   operating_system               = local.operating_system
   is_standalone                  = local.is_standalone
   workload_security_group_id     = aws_security_group.workload_security_group.id
+  aws_profile                    = var.aws_profile
 }
 
 // This is only created for the FCI Deployment
@@ -302,6 +305,7 @@ module "fci_sql_node1" {
   network_interface_2_id     = aws_network_interface.sql_node_ni_2[0].id
   private_subnet1_id         = var.private_subnet1_id
   private_subnet2_id         = var.private_subnet2_id
+  aws_profile                = var.aws_profile
 }
 
 module "fci_sql_node2" {
@@ -361,4 +365,5 @@ module "fci_sql_node2" {
   network_interface_2_id     = aws_network_interface.sql_node_ni_2[0].id
   private_subnet1_id         = var.private_subnet1_id
   private_subnet2_id         = var.private_subnet2_id
+  aws_profile                = var.aws_profile
 }
