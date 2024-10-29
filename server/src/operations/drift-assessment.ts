@@ -5,6 +5,7 @@ import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import moment from 'moment';
 import {
+    ComputeDriftResponseType,
     DriftAssessmentResponseType,
     SizingViolationResponseType,
     StorageParameterDriftResponseType
@@ -31,7 +32,6 @@ import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
 import {
     AssessmentCategories,
     AssessmentStatus,
-    AssessmentTriggeredBy,
     AwsWellArchitecturedPillars,
     SEVERITY
 } from '../utils/continous-optimization-consts';
@@ -327,7 +327,7 @@ async function calculateComputeDrift(
             databaseHostId,
             databaseInstanceId
         );
-        const { finding, findingReasonCodes, currentInstanceType } =
+        const { finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
             (await initiateComputeAssessment(
                 cloudProviderAccountId!,
                 accountId,
@@ -337,9 +337,13 @@ async function calculateComputeDrift(
                 resourceName!
             )) || {};
 
+        let recommendationMessage =
+            'Your current instance is being analyzed for rightsizing. Please check back later for recommendations.';
+        let findingValue = AssessmentStatus.ANALYZING;
+        let objectsInViolation: string[] = [];
+
         if (finding) {
-            let recommendationMessage = '';
-            const findingValue = getMatchingAssessmentStatus(finding);
+            findingValue = getMatchingAssessmentStatus(finding);
             const underProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is under-provisioned. We recommend upgrading it to meet your workload demands. This will provide additional CPU, memory, and I/O capacity, ensuring better performance for your SQL Server DB.`;
             const overProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses.`;
 
@@ -354,20 +358,19 @@ async function calculateComputeDrift(
                 recommendationMessage += ` ${genericRecommendationMessage}`;
             }
 
-            return {
-                name: 'compute-rightsizing',
-                status: findingValue,
-                recommended: AssessmentStatus.OPTIMIZED,
-                severity: SEVERITY.WARNING,
-                recommendation: recommendationMessage,
-                objectsInViolation: findingReasonCodes?.map(code => translateFindingReasonCode(code)) || [],
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            };
+            objectsInViolation = findingReasonCodes?.map(code => translateFindingReasonCode(code));
         }
-        errorMessage = 'Unable to fetch compute optimizer findings for the selected database host.';
+
+        return {
+            name: 'compute-rightsizing',
+            status: findingValue,
+            recommended: AssessmentStatus.OPTIMIZED,
+            severity: SEVERITY.WARNING,
+            recommendation: recommendationMessage,
+            objectsInViolation,
+            tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+            recommendationOptions
+        };
     } catch (error: any) {
         errorMessage = `Error while calculating compute drift. ${error.message}`;
         logger.error({ errorMessage, error });
@@ -448,20 +451,24 @@ async function initiateComputeAssessment(
         accountId,
         credentialsId,
         region,
-        databaseHostId
+        databaseHostId,
+        resourceName
     });
     let errorMessage = '';
-    let jobStatus: string = JOBSTATUS.COMPLETED;
 
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: 'Database host is being scanned for compute best practice misalignments.',
-        description: 'Database host is being scanned for compute best practice misalignments.',
-        resourceName: resourceName!,
-        initiator: AssessmentTriggeredBy.USER,
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT
-    }); // just creating the job and not returning the jobId as we are not using it anywhere; the compute assessment job will be a part of jobs dashboard
+    // P.S: As per email thread "Proposal for Job Monitoring events", job creation here is likely not required.. Commenting out for now, will be added back if needed
+
+    // let jobStatus: string = JOBSTATUS.COMPLETED;
+
+    // const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+    //     name: 'Database host is being scanned for compute best practice misalignments.',
+    //     description: 'Database host is being scanned for compute best practice misalignments.',
+    //     resourceName: resourceName!,
+    //     initiator: AssessmentTriggeredBy.USER,
+    //     startTime: Date.now(),
+    //     status: JOBSTATUS.IN_PROGRESS,
+    //     type: JOBTYPE.ASSESSMENT
+    // }); // just creating the job and not returning the jobId as we are not using it anywhere; the compute assessment job will be a part of jobs dashboard
 
     try {
         await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
@@ -488,35 +495,31 @@ async function initiateComputeAssessment(
                 } = {}
             ] = []
         } = computeOptimizerInstanceRecommendations || {};
-        if (currentInstanceType && finding) {
-            return {
-                currentInstanceType,
-                finding,
-                findingReasonCodes,
-                recommendationOptions: coRecOptions?.map(({ instanceType, rank, savingsOpportunity }) => ({
-                    instanceType,
-                    rank,
-                    savingsOpportunity
-                }))
-            };
-        }
-        throw new Error(
-            'Unable to find current instance type and compute optimizer findings for the selected database host.'
-        );
+        return {
+            currentInstanceType,
+            finding,
+            findingReasonCodes,
+            recommendationOptions: coRecOptions?.map(({ instanceType, rank, savingsOpportunity }) => ({
+                instanceType,
+                rank,
+                savingsOpportunity
+            }))
+        };
     } catch (error: any) {
         errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Assessment. ${error.message}`;
         logger.error({ errorMessage, error });
-        jobStatus = JOBSTATUS.FAILED;
+        // jobStatus = JOBSTATUS.FAILED;
         throw Error(errorMessage);
-    } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
-            error: errorMessage,
-            description:
-                'The selected daatabase host has been scanned for compute best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.',
-            status: jobStatus!,
-            endTime: Date.now()
-        });
     }
+    // finally {
+    //     await updateJobDetails(accountId, credentialsId, region, jobId, {
+    //         error: errorMessage,
+    //         description:
+    //             'The selected daatabase host has been scanned for compute best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.',
+    //         status: jobStatus!,
+    //         endTime: Date.now()
+    //     });
+    // }
 }
 
 async function driftAssessment(
@@ -705,7 +708,7 @@ async function fetchDriftAssessment(
     }
 
     if (!isEmpty(computeAssessmentResponse)) {
-        driftAssessmentData.compute = computeAssessmentResponse;
+        driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
     }
     return driftAssessmentData;
 }

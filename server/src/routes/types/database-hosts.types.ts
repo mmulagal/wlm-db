@@ -635,6 +635,28 @@ const ParameterDriftResponse = Type.Object({
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
 
+const AdditionalComputeParameterDriftResponse = Type.Optional(
+    Type.Object({
+        recommendationOptions: Type.Array(
+            Type.Object({
+                instanceType: Type.String(),
+                rank: Type.Number(),
+                savingsOpportunity: Type.Object({
+                    savingsOpportunityPercentage: Type.Optional(Type.Number()),
+                    estimatedMonthlySavings: Type.Optional(
+                        Type.Object({
+                            currency: Type.Optional(Type.String()),
+                            value: Type.Optional(Type.Number())
+                        })
+                    )
+                })
+            })
+        )
+    })
+);
+
+const ComputeDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalComputeParameterDriftResponse]);
+type ComputeDriftResponseType = Static<typeof ComputeDriftResponse>;
 const StorageParameterDriftResponse = Type.Object({
     timestamp: Type.Number(),
     optimisedCount: Type.Object({
@@ -650,10 +672,9 @@ const StorageParameterDriftResponse = Type.Object({
     layout: Type.Array(ParameterDriftResponse)
 });
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
-
 const DriftAssessmentResponse = Type.Object({
     storage: Type.Optional(StorageParameterDriftResponse),
-    compute: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
+    compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
@@ -754,6 +775,7 @@ export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
     ParameterDriftResponseType,
+    ComputeDriftResponseType,
     StorageParameterDriftResponseType,
     OptimizeStorageRequestBody,
     OptimizeStorageRequestBodyType,

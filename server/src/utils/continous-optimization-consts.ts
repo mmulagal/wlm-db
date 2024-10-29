@@ -15,6 +15,7 @@ enum AssessmentStatus {
     NOT_OPTIMIZED = 'not-optimized',
     UNDER_PROVISIONED = 'under-provisioned',
     OVER_PROVISIONED = 'over-provisioned',
+    ANALYZING = 'analyzing',
     NOT_APPLICABLE = 'not-applicable'
 }
 
