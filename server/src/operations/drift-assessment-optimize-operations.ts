@@ -115,7 +115,7 @@ async function optimizeOperation(params: OptimizeOperationParams) {
     };
 
     // its required to sleep for 5 seconds so that the optimization is completed before drift assessment
-    if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+    if (!isDemoFlow) {
         await sleep(5000);
     }
 
