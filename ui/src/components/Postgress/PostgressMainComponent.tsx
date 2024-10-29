@@ -6,6 +6,7 @@ import PostgressFooter from './PostgressFooter/PostgressFooter';
 import PostgressLayout from './PostgressLayout/PostgressLayout';
 import MssqlApis from '../CreateMsSql/MSSqlServer/MssqlApis';
 import { useAppSelector } from '../../store/storeHooks';
+import PostgreCodebox from './PostgreCodebox/PostgreCodebox';
 
 const PostgressMainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
@@ -21,15 +22,21 @@ const PostgressMainComponent = () => {
                 </>
             )}
             <div>
-                <StepLayout className={styles.header}>
-                    <PostgressHeader />
-                    <WizardContent className={styles.content}>
-                        <PostgressLayout />
-                    </WizardContent>
-                    <WizardFooter>
-                        <PostgressFooter />
-                    </WizardFooter>
-                </StepLayout>
+                <div className={styles.leftSide}>
+                    <StepLayout className={styles.header}>
+                        <PostgressHeader />
+                        <WizardContent className={styles.content}>
+                            <PostgressLayout />
+                        </WizardContent>
+                        <WizardFooter>
+                            <PostgressFooter />
+                        </WizardFooter>
+                    </StepLayout>
+                </div>
+
+                <div className={styles.rightSide}>
+                    <PostgreCodebox />
+                </div>
             </div>
         </div>
     );
