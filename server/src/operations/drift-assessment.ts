@@ -3,6 +3,7 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
+import moment from 'moment';
 import {
     DriftAssessmentResponseType,
     SizingViolationResponseType,
@@ -68,7 +69,7 @@ async function calculateStorageDrift(
     }
 
     const driftAssessmentData: StorageParameterDriftResponseType = {
-        timestamp: persistedConfigurationData.creation_time.toDateString(),
+        timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
         optimisedCount: { total: 0, optimised: 0 },
         configuration: { volumes: [], luns: [], os: [] },
         sizing: [],
@@ -284,6 +285,10 @@ async function calculateStorageDrift(
                 : sizePercent > 30
                 ? AssessmentStatus.OVER_PROVISIONED
                 : AssessmentStatus.UNDER_PROVISIONED;
+        configCount += 1;
+        if (status === AssessmentStatus.OPTIMIZED) {
+            optimizedCount += 1;
+        }
         driftAssessmentData.sizing.push({
             name: 'headroom',
             recommended: goldenData!.value.toString(),

@@ -902,11 +902,12 @@ const ASSESMENT_CONFIG_DATA = {
     os: {
         'mpio-enabled': true,
         'mpio-iscsi-count': '5',
-        'ntfs-allocation-unit': [
+        'ntfs-allocation-details': [
             { DriveLetter: 'S', AllocationUnitSize: 65536 },
             { DriveLetter: 'T', AllocationUnitSize: 65536 },
             { DriveLetter: 'L', AllocationUnitSize: 65536 }
         ],
+        'ntfs-allocation-unit-size': 65536,
         'mpio-load-balance-policy': 'LB'
     },
     luns: [

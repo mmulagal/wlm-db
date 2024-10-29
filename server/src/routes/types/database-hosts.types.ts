@@ -636,7 +636,7 @@ const ParameterDriftResponse = Type.Object({
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
 
 const StorageParameterDriftResponse = Type.Object({
-    timestamp: Type.String(),
+    timestamp: Type.Number(),
     optimisedCount: Type.Object({
         total: Type.Number(),
         optimised: Type.Number()
