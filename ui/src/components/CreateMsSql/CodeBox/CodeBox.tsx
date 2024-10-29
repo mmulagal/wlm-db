@@ -521,7 +521,7 @@ const CodeBox = () => {
                                         <Download
                                             onClick={() => {
                                                 if (isDemoMode) {
-                                                    downloadTerraformZip();
+                                                    downloadTerraformZip(mssqlFormData?.dbDeploymentModel?.value);
                                                 } else {
                                                     handleDownloadTerraform(terraformSetupResponse?.url);
                                                 }
