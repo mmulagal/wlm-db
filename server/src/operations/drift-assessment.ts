@@ -201,7 +201,8 @@ async function calculateStorageDrift(
                 status = value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
             }
             if (key === 'data-log-drive-details') {
-                value.forEach((drive: { [x: string]: any }) => {
+                const driveDetails = Array.isArray(value) ? value : [value];
+                driveDetails.forEach((drive: { [x: string]: any }) => {
                     const { dataDriveLetter } = drive;
                     const { logDriveLetter } = drive;
                     if (dataDriveLetter !== logDriveLetter) {
