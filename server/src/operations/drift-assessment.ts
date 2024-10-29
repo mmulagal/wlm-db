@@ -185,6 +185,7 @@ async function calculateStorageDrift(
         const overProvisionedDrives: SizingViolationResponseType[] = [];
         const underProvisionedDrives: SizingViolationResponseType[] = [];
         const ignoredDrives: SizingViolationResponseType[] = [];
+        const optimisedDrives: SizingViolationResponseType[] = [];
 
         if (key === 'data-log-drive-details') {
             goldenData = sizingConfigData.find(data => data.parameter === 'log-drive-size');
@@ -205,11 +206,13 @@ async function calculateStorageDrift(
                     if (dataDriveLetter !== logDriveLetter) {
                         const dataDriveTotalSizeMB = Number(drive.dataDriveTotalSizeMB);
                         const logDriveTotalSizeMB = Number(drive.logDriveTotalSizeMB);
-                        const logToDriveSizePercent = (logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100;
+                        const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
                         if (logToDriveSizePercent > 30) {
                             overProvisionedDrives.push(drive as SizingViolationResponseType);
                         } else if (logToDriveSizePercent < 20) {
                             underProvisionedDrives.push(drive as SizingViolationResponseType);
+                        } else {
+                            optimisedDrives.push(drive as SizingViolationResponseType);
                         }
                     } else {
                         ignoredDrives.push(drive as SizingViolationResponseType);
@@ -219,7 +222,7 @@ async function calculateStorageDrift(
                 status =
                     !isEmpty(overProvisionedDrives) || !isEmpty(underProvisionedDrives)
                         ? AssessmentStatus.NOT_OPTIMIZED
-                        : !isEmpty(ignoredDrives)
+                        : isEmpty(optimisedDrives) && !isEmpty(ignoredDrives)
                         ? AssessmentStatus.NOT_APPLICABLE
                         : AssessmentStatus.OPTIMIZED;
             }
@@ -231,7 +234,7 @@ async function calculateStorageDrift(
                 } else {
                     const { defaultDataDriveSize } = value;
                     const { tempdbDriveTotalSizeMB } = value;
-                    const tempdbPercent = (tempdbDriveTotalSizeMB / defaultDataDriveSize) * 100;
+                    const tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / defaultDataDriveSize) * 100);
                     status =
                         tempdbPercent > 20
                             ? AssessmentStatus.OVER_PROVISIONED
@@ -270,8 +273,9 @@ async function calculateStorageDrift(
     }, 0);
 
     try {
-        const headroomPercent =
-            ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100;
+        const headroomPercent = Math.ceil(
+            ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
+        );
         const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
         const sizePercent = Number(headroomPercent);
         const status =
