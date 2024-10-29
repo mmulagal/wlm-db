@@ -67,7 +67,7 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'File system headroom recommendation',
             description:
                 'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
-            values: ['Under-provisioned: 0-35%', 'Optimized: 36-100%', 'Over-provisioned: >100%']
+            values: ['Under-provisioned: 0-35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
         },
         tags: ['Performance efficiency']
     },
@@ -92,7 +92,7 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'Log drive size recommendation',
             description:
                 'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
-            values: ['Under-provisioned: 0-20%', 'Optimized: 21-30%', 'Over-provisioned: >31%']
+            values: ['Under-provisioned: 0-20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
         },
         tags: ['Operational excellence']
     },
@@ -117,7 +117,7 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'TempDB drive size recommendation',
             description:
                 'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
-            values: ['Under-provisioned: 0-20%', 'Optimized: 21-30%', 'Over-provisioned: >31%']
+            values: ['Under-provisioned: 0-10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
         tags: ['Operational excellence']
     },
@@ -301,7 +301,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_three: {
-            type: 'Rightsizing values',
+            type: 'Finding reasons',
             value: '',
             list: null
         },
