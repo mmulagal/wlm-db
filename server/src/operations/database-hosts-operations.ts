@@ -2104,14 +2104,23 @@ async function getDatabaseDetails(
         const [{ databases } = { databases: [] }, backedupDatabases, { awsBackup = {}, ontapBackup = {} } = {}] =
             await Promise.all(
                 [
-                    getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName, sqlAuthEnabled),
+                    getDataBasesSummary(
+                        databaseHostId,
+                        activeNodeInstanceId!,
+                        instanceName,
+                        sqlAuthEnabled,
+                        accountId,
+                        credentialsId
+                    ),
                     ...(activeNodeInstanceId && getProtection
                         ? [
                               getNativeSQLBackedupDatabases(
                                   databaseHostId,
                                   activeNodeInstanceId,
                                   [serverInstanceName],
-                                  sqlAuthEnabled
+                                  sqlAuthEnabled,
+                                  accountId,
+                                  credentialsId
                               )
                           ]
                         : [Promise.resolve()]), // Fetch native sql protection status
