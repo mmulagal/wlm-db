@@ -2994,6 +2994,8 @@ async function checkDatabaseIntegrity(
         srcDetails.sqlAuthEnabled
     );
 
+    updateLongRunningAuditGroup(undefined, undefined, `${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`);
+
     if (!databaseDetails && !isDemoFlow) {
         throw createError(
             HttpErrorCodes.NOT_FOUND,
