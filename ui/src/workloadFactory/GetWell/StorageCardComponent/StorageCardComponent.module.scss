@@ -50,6 +50,14 @@
         }
     }
 
+    .tooltipContainer:hover {
+        svg {
+            path {
+                fill: var(--tooltip-icon-hover);
+            }
+        }
+    }
+
     .tooltipTable {
         display: flex;
         align-items: center;
