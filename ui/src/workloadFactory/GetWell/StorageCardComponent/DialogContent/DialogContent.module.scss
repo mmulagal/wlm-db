@@ -20,6 +20,52 @@
                     gap: 16px;
                 }
             }
+
+            .dialog-body {
+                margin-top: 8px;
+                margin-bottom: 8px;
+                .code-box {
+                    max-width: 710px;
+                    background-color: var(--main-background);
+                    padding: 24px 16px 8px 32px;
+                    display: flex;
+                    position: relative;
+                    overflow-y: auto;
+
+                    .code {
+                        width: 100%;
+                        font-weight: 400;
+                        font-size: 14px;
+                        line-height: 24px;
+                        color: var(--text-primary);
+                    }
+
+                    .copy {
+                        width: 100px;
+                        display: flex;
+                        justify-content: flex-end;
+                        height: 20px;
+                        .copy-popover {
+                            width: 140px;
+                            font-size: 13px;
+                            line-height: 20px;
+                            text-align: center;
+                            padding: 2px 2px;
+                        }
+
+                        svg {
+                            cursor: pointer;
+                            &:hover {
+                                fill: var(--icon-primary);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
+}
+
+[class*='DialogLayout-module_default-dialog-layout'] {
+    max-height: unset !important;
 }

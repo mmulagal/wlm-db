@@ -1,7 +1,10 @@
 import styles from './DialogContent.module.scss';
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, Popover } from '@netapp/design-system';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
+import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { GENERAL } from '../../../../utils/appConstants';
+//@ts-ignore
+import CopyToClipboard from 'react-copy-to-clipboard';
 
 type DialogType = {
     type: string;
@@ -26,7 +29,7 @@ const DialogContent = ({ type }: DialogType) => {
                 return 'Space-mgmt-try-first = volume_grow';
             case 'Tiering policy':
                 return 'Tiering-policy = snapshot-only';
-            case 'Tiering min cooling days':
+            case 'Tiering minimum cooling days':
                 return 'Tiering-minimum-cooling-days = 7';
             case 'OS type':
                 return 'OS type = windows_2008 ';
@@ -271,10 +274,7 @@ const DialogContent = ({ type }: DialogType) => {
             case 'Snapshot autodelete':
             case 'Space management':
             case 'Tiering policy':
-            case 'Tiering min cooling days':
-            case 'OS type':
-            case 'Space reservation':
-            case 'Space allocation':
+            case 'Tiering minimum cooling days':
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
@@ -291,16 +291,111 @@ const DialogContent = ({ type }: DialogType) => {
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        Configuration update: The FSx for ONTAP volume configuration will be updated to
+                                        align with vendor best practices for SQL Server.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Optimized configuration
+                            </DsTypography>
+                            <div className={styles['dialog-body']}>
+                                <div className={styles['code-box']}>
+                                    <div className={styles['code']}>
+                                        <pre>
+                                            <DsTypography variant="Regular_14">{`{\n${ontapConfigTextSet()}\n}`}</DsTypography>
+                                        </pre>
+                                    </div>
+                                    <div className={styles['copy']}>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={'Copied'}
+                                            container={
+                                                <CopyToClipboard text={`{\n${ontapConfigTextSet()}\n}`}>
+                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                </CopyToClipboard>
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
                                     <div>
                                         <Bullet />
                                     </div>
+                                    <DsTypography variant="Regular_14">{GENERAL.NOTE_PONT_ONE}</DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">{GENERAL.NOTE_PONT_TWO}</DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'OS type':
+            case 'Space reservation':
+            case 'Space allocation':
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory intends to update the FSx for ONTAP iSCSI LUNs configuration to meet
+                                vendor best practices for SQL Server.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                What will happen
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        Configuration update: The FSx for ONTAP volume configuration will be updated to
-                                        align with vendor best practices for SQL Server. Title: Optimized configuration
-                                        {`{
-                                            ${ontapConfigTextSet()}
-                                        }`}
+                                        Configuration update: The FSx for ONTAP iSCSI LUNs configuration will be updated
+                                        to align with vendor best practices for SQL Server.
                                     </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Optimized configuration
+                            </DsTypography>
+                            <div className={styles['dialog-body']}>
+                                <div className={styles['code-box']}>
+                                    <div className={styles['code']}>
+                                        <pre>
+                                            <DsTypography variant="Regular_14">{`{\n${ontapConfigTextSet()}\n}`}</DsTypography>
+                                        </pre>
+                                    </div>
+                                    <div className={styles['copy']}>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={'Copied'}
+                                            container={
+                                                <CopyToClipboard text={`{\n${ontapConfigTextSet()}\n}`}>
+                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                </CopyToClipboard>
+                                            }
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
