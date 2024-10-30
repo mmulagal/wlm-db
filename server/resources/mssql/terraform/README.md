@@ -1,8 +1,8 @@
-# Terraform Project
+# WLMDB Terraform Deployment
 
 # Deploy an SQL Server on EC2 with Amazon FSx for NetApp ONTAP
 
-This Terraform project automates the deployment of a Windows SQL Server on Amazon EC2, utilizing Amazon FSx for NetApp ONTAP for storage. The deployment can be configured in two different models:
+This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, utilizing Amazon FSx for NetApp ONTAP for storage. The deployment can be configured in two different models:
 
 1. **Failover Cluster Instances (FCI)** with Multi-AZ Amazon FSx for NetApp ONTAP filesystem.
 2. **Standalone Instance (Standalone)** with Single-AZ Amazon FSx for NetApp ONTAP filesystem.
