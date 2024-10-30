@@ -10,7 +10,7 @@ This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, u
 ### Features
 
 - **VPC Endpoints**: Creates VPC Endpoints for private network deployments.
-- **Validation Node**: Creates Single/Multiple validation Ec2 insstances to do the set of validations for the Deployment.
+- **Validation Node**: Creates Single/Multiple validation Ec2 instances to do the set of validations for the Deployment.
 - **FSx for NetApp ONTAP Volumes**: Configures three LUNs on FSxN volumes for SQL Data, SQL Log, and SQL TEMP.
 - **Failover Cluster Support**: If the failover cluster deployment model is chosen, an additional SQL Quorum volume is created.
 - **EC2 Instances**: Deploys EC2 instances with SQL Server 2016, 2019, or 2022 Standard editions.
