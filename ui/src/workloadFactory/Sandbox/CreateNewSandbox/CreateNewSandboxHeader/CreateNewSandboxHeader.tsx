@@ -4,17 +4,30 @@ import styles from './CreateNewSandboxHeader.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { updateRefreshBlocked } from '../../../../store/authSlice';
+import { FORM_TO_WLF_NAVIGATE_BLUEXP } from '../../../../utils/consts';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 function CreateNewSandboxHeader() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const state = useAppSelector(state => state);
+    const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
+
+    const closeHandler = () => {
+        dispatch(updateRefreshBlocked(true));
+        if (isWorkloadFactoryStatus) {
+            navigate('../databases');
+        } else {
+            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+        }
+    };
     return (
         <div className={styles.sandboxHeader}>
             <Header
                 closeButtonProps={{
                     onClick: () => {
                         dispatch(updateRefreshBlocked(true));
-                        navigate('../databases');
+                        closeHandler();
                     }
                 }}
                 title={<div className={styles.leftSideStyle}>{GENERAL.CREATE_NEW_SANDBOX}</div>}
