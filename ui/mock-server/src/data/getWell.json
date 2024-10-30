@@ -10,7 +10,7 @@
                 {
                     "name": "thin-provision",
                     "recommended": "true",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -22,7 +22,7 @@
                 {
                     "name": "autosize",
                     "recommended": "on",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -34,7 +34,7 @@
                 {
                     "name": "autosize-mode",
                     "recommended": "grow",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -46,7 +46,7 @@
                 {
                     "name": "fractional-reserve",
                     "recommended": "0",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -58,7 +58,7 @@
                 {
                     "name": "snapshot-copy-reserve",
                     "recommended": "0",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -70,7 +70,7 @@
                 {
                     "name": "snapshot-autodelete",
                     "recommended": "true",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "warning",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -82,7 +82,7 @@
                 {
                     "name": "space-mgmt-try-first",
                     "recommended": "volume_grow",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "warning",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -94,7 +94,7 @@
                 {
                     "name": "tiering-policy",
                     "recommended": "snapshot_only",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
@@ -120,7 +120,7 @@
                 {
                     "name": "os-type",
                     "recommended": "windows_2008",
-                    "status": "optimized",
+                    "status": "not-optimized",
                     "objectsInViolation": [],
                     "severity": "critical",
                     "recommendation": "ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
