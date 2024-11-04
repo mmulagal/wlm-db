@@ -474,15 +474,15 @@ async function getServerDetails(
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
-
-    const command = [sqlQueryExecutionWithAuth(instanceNames, SERVER_DETAILS, isSqlAuthEnabled)];
+    const updatedInstanceNames = isDemoFlow ? [DEFAULT_INSTANCE_NAME] : instanceNames;
+    const command = [sqlQueryExecutionWithAuth(updatedInstanceNames, SERVER_DETAILS, isSqlAuthEnabled)];
     const serverAllDetails = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
 
     const instancesResponse: { [key: string]: any } = {};
     const parsedResponse = serverAllDetails ? sqlResponseParsing(serverAllDetails) : {};
 
     instanceNames.forEach((iname: any) => {
-        const instanceParsedResponse = parsedResponse[iname];
+        const instanceParsedResponse = isDemoFlow ? parsedResponse[DEFAULT_INSTANCE_NAME] : parsedResponse[iname];
         if (
             instanceParsedResponse &&
             !(typeof instanceParsedResponse === 'string' && instanceParsedResponse.includes('error'))

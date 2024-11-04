@@ -75,7 +75,8 @@ const AUDIT_EXCLUDE_LIST = [
     '/storage-savings',
     '/manual-storage-savings',
     '/calculations',
-    '/sandboxes-meta-update'
+    '/sandboxes-meta-update',
+    '/resource-credentials'
 ];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
