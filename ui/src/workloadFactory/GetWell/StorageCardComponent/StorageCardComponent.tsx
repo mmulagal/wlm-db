@@ -325,8 +325,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <TooltipComponent
                         title={GENERAL.OPTIMIZATION_IN_PROGRESS}
                         placement="bottom"
-                        width="330px"
-                        height="65px"
+                        width="310px"
+                        height="50px"
                     >
                         <div>
                             <DsButton variant="secondary" isDisabled={true}>

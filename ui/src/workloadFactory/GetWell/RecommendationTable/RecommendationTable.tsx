@@ -222,7 +222,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                     />
                                 </div>
                                 <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                                    {'View recommendations'}
+                                    {'View recommendation'}
                                 </DsTypography>
                             </div>
                             {!optimizePrintState &&
@@ -244,8 +244,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                     <TooltipComponent
                                         title={GENERAL.OPTIMIZATION_IN_PROGRESS}
                                         placement="bottom"
-                                        width="330px"
-                                        height="65px"
+                                        width="310px"
+                                        height="50px"
                                     >
                                         <div>
                                             <DsButton variant="secondary" isDisabled={true}>
