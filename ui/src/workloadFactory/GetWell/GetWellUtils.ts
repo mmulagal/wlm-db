@@ -745,7 +745,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         tempdb_files: { category: 'Storage', subCategory: 'Storage layout' },
         ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
         os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
-        compute_rightsizing: { category: 'Compute', subCategory: 'Compute' }
+        compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' }
     };
     Object.keys(cardData).map((key: any) => {
         const checkCategory =
