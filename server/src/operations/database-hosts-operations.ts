@@ -417,7 +417,7 @@ async function getStorageData(
         ebsVolumeIds = ebsVolumeIds || [];
 
         const response = {} as StoragePerStorageTypeResponseType;
-        if (fsxnId && region && credentialsId && !databaseInstanceDetails?.isManaged) {
+        if (fsxnId && region && credentialsId && !(databaseInstanceDetails?.isManaged && !isDemoFlow)) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
                 await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxnId));
             response.fsxn = {
@@ -2267,7 +2267,7 @@ async function getDatabaseInstancesSummary(
             ? isSqlAuthEnabled
             : databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
     }
-    const shouldGetStorageSavingsFromOntap = databaseInstances.some(i => i.isManaged);
+    const shouldGetStorageSavingsFromOntap = databaseInstances.some(i => i.isManaged && !isDemoFlow);
 
     try {
         [
