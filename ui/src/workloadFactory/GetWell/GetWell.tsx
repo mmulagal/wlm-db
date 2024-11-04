@@ -82,7 +82,7 @@ const GetWell = () => {
         } else {
             filters.forEach((filter: any) => {
                 const isSelected = optimizeFilterTags.some(
-                    (selectedFilter: any) => selectedFilter.label === filter.label
+                    (selectedFilter: any) => selectedFilter.value === filter.value
                 );
 
                 if (isSelected) {
@@ -173,7 +173,7 @@ const GetWell = () => {
             {
                 id: 3,
                 label: 'Compute',
-                value: 'Compute',
+                value: 'Compute_sub',
                 category: 'Compute'
             }
         ];
@@ -356,7 +356,12 @@ const GetWell = () => {
                                                     isExpanded={isAccordionOpen ? undefined : false}
                                                     isCleanable={false}
                                                     formatLabel={() =>
-                                                        `Categories: (${
+                                                        `Categories: ${
+                                                            !defaultFilterOptions['all-catagories']?.length ||
+                                                            defaultFilterOptions['all-catagories'].length === 2
+                                                                ? 'All'
+                                                                : ''
+                                                        }(${
                                                             defaultFilterOptions['all-catagories']?.length > 0
                                                                 ? defaultFilterOptions['all-catagories']?.length
                                                                 : 2
@@ -391,7 +396,13 @@ const GetWell = () => {
                                                     }
                                                     isExpanded={isAccordionOpen ? undefined : false}
                                                     formatLabel={() =>
-                                                        `Sub categories: (${
+                                                        `Sub categories: ${
+                                                            !defaultFilterOptions['sub-catagories']?.length ||
+                                                            defaultFilterOptions['sub-catagories'].length ===
+                                                                generateSubCategoryOptions.length
+                                                                ? 'All'
+                                                                : ''
+                                                        }(${
                                                             defaultFilterOptions['sub-catagories']?.length > 0
                                                                 ? defaultFilterOptions['sub-catagories']?.length
                                                                 : generateSubCategoryOptions.length
@@ -417,7 +428,12 @@ const GetWell = () => {
                                                     isExpanded={isAccordionOpen ? undefined : false}
                                                     isCleanable={false}
                                                     formatLabel={() =>
-                                                        `Status: (${
+                                                        `Status: ${
+                                                            !defaultFilterOptions['status']?.length ||
+                                                            defaultFilterOptions['status'].length === 2
+                                                                ? 'All'
+                                                                : ''
+                                                        }(${
                                                             defaultFilterOptions['status']?.length > 0
                                                                 ? defaultFilterOptions['status']?.length
                                                                 : 2
@@ -472,7 +488,12 @@ const GetWell = () => {
                                                     isExpanded={isAccordionOpen ? undefined : false}
                                                     isCleanable={false}
                                                     formatLabel={() =>
-                                                        `Severity: (${
+                                                        `Severity: ${
+                                                            !defaultFilterOptions['severity']?.length ||
+                                                            defaultFilterOptions['severity'].length === 2
+                                                                ? 'All'
+                                                                : ''
+                                                        }(${
                                                             defaultFilterOptions['severity']?.length > 0
                                                                 ? defaultFilterOptions['severity']?.length
                                                                 : 2
@@ -506,7 +527,12 @@ const GetWell = () => {
                                                     isExpanded={isAccordionOpen ? undefined : false}
                                                     isCleanable={false}
                                                     formatLabel={() =>
-                                                        `Tags: (${
+                                                        `Tags: ${
+                                                            !defaultFilterOptions['tags']?.length ||
+                                                            defaultFilterOptions['tags'].length === 5
+                                                                ? 'All'
+                                                                : ''
+                                                        }(${
                                                             defaultFilterOptions['tags']?.length > 0
                                                                 ? defaultFilterOptions['tags']?.length
                                                                 : 5
