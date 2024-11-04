@@ -1,4 +1,4 @@
-# WLMDB Terraform Deployment
+# Workload Factory for Databases Terraform Deployment
 
 # Deploy a SQL Server on EC2 with FSx for ONTAP
 
