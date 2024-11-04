@@ -1,21 +1,37 @@
-# WLMDB Terraform Deployment
+# Workload Factory for Databases Terraform Deployment
 
-# Deploy an SQL Server on EC2 with Amazon FSx for NetApp ONTAP
+# Deploy a SQL Server on EC2 with FSx for ONTAP
 
-This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, utilizing Amazon FSx for NetApp ONTAP for storage. The deployment can be configured in two different models:
+This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, utilizing FSx for ONTAP for storage. The deployment can be configured in two different models:
 
-1. **Failover Cluster Instances (FCI)** with Multi-AZ Amazon FSx for NetApp ONTAP filesystem.
-2. **Standalone Instance (Standalone)** with Single-AZ Amazon FSx for NetApp ONTAP filesystem.
+1. **Failover Cluster Instances (FCI)** with Multi-AZ FSx for ONTAP filesystem.
+2. **Standalone Instance (Standalone)** with Single-AZ FSx for ONTAP filesystem.
 
-### Features
+## Table of Contents
+1. [Features](#features)
+2. [Deployment Models](#deployment-models)
+3. [Prerequisites](#prerequisites)
+4. [Installation](#installation)
+   - [Windows](#windows)
+   - [Mac](#mac)
+   - [Linux](#linux)
+5. [Variables](#variables)
+6. [Initial setup and usage](#initial-setup-and-usage)
+   - [Step 1: Initialize Terraform](#step-1-initialize-terraform)
+   - [Step 2: Update `terraform.tfvars` file](#step-2-update-terraformtfvars-file)
+   - [Step 3: Plan the deployment](#step-3-plan-the-deployment)
+   - [Step 4: Apply the changes](#step-4-apply-the-changes)
+   - [Step 5: Destroy the deployment](#step-5-destroy-the-deployment)
 
-- **VPC Endpoints**: Creates VPC Endpoints for private network deployments.
-- **Validation Node**: Creates Single/Multiple validation Ec2 instances to do the set of validations for the Deployment.
-- **FSx for NetApp ONTAP Volumes**: Configures three LUNs on FSxN volumes for SQL Data, SQL Log, and SQL TEMP.
-- **Failover Cluster Support**: If the failover cluster deployment model is chosen, an additional SQL Quorum volume is created.
-- **EC2 Instances**: Deploys EC2 instances with SQL Server 2016, 2019, or 2022 Standard editions.
+## Modules
 
-### Deployment Models
+- **VPC endpoints**: Creates VPC Endpoints for private network deployments.
+- **Validation node**: Creates Single/Multiple validation Ec2 instances to do the set of validations for the Deployment.
+- **FSx for ONTAP volumes**: Configures three LUNs on FSxN volumes for SQL Data, SQL Log, and SQL TEMP.
+- **Failover cluster support**: If the failover cluster deployment model is chosen, an additional SQL Quorum volume is created.
+- **EC2 instances**: Deploys EC2 instances with SQL Server 2016, 2019, or 2022 Standard editions.
+
+## Deployment Models
 
 1. **Failover Cluster Instances (FCI)**:
    - Multi-AZ deployment for high availability.
@@ -34,7 +50,7 @@ This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, u
     - By default, this project will use the default profile.
     - To use a specific profile, mention the profile name in the `tfvars` file as `aws_profile`.
 
-### Installation
+## Installation
 
 ### Windows
 
@@ -46,7 +62,7 @@ This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, u
 
 **AWS CLI**
 
-1. Download the AWS CLI MSI installer for Windows from the [AWS CLI installation page](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html).
+1. Download the AWS CLI MSI installer for Windows from the [AWS CLI installation page](https://docs.aws.amazon.com/cli/v1/userguide/install-windows.html).
 2. Run the downloaded MSI installer and follow the on-screen instructions.
 
 ### Mac
@@ -89,14 +105,13 @@ This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, u
    ```sh
    sudo ./aws/install
    ```
-```
+   ```
 
 ## Variables
 
 If any validation errors are thrown while running `terraform plan`, please fill in the necessary values to continue the deployment.
 
-```markdown
-## Initial Setup And Usage
+## Initial setup and usage
 
 ### Step 1: Initialize Terraform
 
@@ -106,7 +121,7 @@ Before you can use Terraform, you need to initialize your working directory. Thi
 terraform init
 ```
 
-### Step 2: Update `terraform.tfvars` File
+### Step 2: Update `terraform.tfvars` file
 
 Update a file named `terraform.tfvars` in your project directory if any changes required. This file will contain the values for the variables required by your Terraform configuration. Fill in the necessary variables as described in the [Variables](#variables) section.
 
@@ -118,7 +133,7 @@ region      = "us-west-2"
 instance_type = "t2.medium"
 ```
 
-### Step 3: Plan the Deployment
+### Step 3: Plan the deployment
 
 The `terraform plan` command creates an execution plan, showing you what actions Terraform will take to achieve the desired state defined in your configuration files. This step helps you verify that the changes are as expected before applying them.
 
@@ -126,7 +141,7 @@ The `terraform plan` command creates an execution plan, showing you what actions
 terraform plan
 ```
 
-### Step 4: Apply the Changes
+### Step 4: Apply the changes
 
 The `terraform apply` command executes the actions proposed in the plan to create, update, or delete resources in your infrastructure. Review the plan output carefully before confirming the apply operation.
 
@@ -134,7 +149,7 @@ The `terraform apply` command executes the actions proposed in the plan to creat
 terraform apply
 ```
 
-### Step 5: Destroy the Deployment
+### Step 5: Destroy the deployment
 
 When you no longer need the infrastructure, you can use the `terraform destroy` command to delete all the resources created by Terraform. Use this command with caution, as it will remove all the infrastructure defined in your configuration.
 
