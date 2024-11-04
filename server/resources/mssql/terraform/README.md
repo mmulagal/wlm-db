@@ -23,7 +23,7 @@ This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, u
    - [Step 4: Apply the changes](#step-4-apply-the-changes)
    - [Step 5: Destroy the deployment](#step-5-destroy-the-deployment)
 
-## Features
+## Modules
 
 - **VPC endpoints**: Creates VPC Endpoints for private network deployments.
 - **Validation node**: Creates Single/Multiple validation Ec2 instances to do the set of validations for the Deployment.
