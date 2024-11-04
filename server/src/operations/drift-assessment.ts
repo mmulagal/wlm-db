@@ -420,7 +420,14 @@ async function initiateStorageAssessmentCollection(
 
     const command = STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord);
 
-    const response = await callSsmExecution(credentialsId, region, [command], instanceRecord.activeNodeInstanceid);
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        [command],
+        instanceRecord.activeNodeInstanceid,
+        accountId,
+        false
+    );
 
     const parsedResponse = response ? sqlResponseParsing(response) : {};
 
