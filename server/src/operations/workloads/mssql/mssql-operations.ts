@@ -188,8 +188,8 @@ async function getAllResourceUtilisationDetails(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get active instance information');
     }
     logger.info('Fetching resources utilization from primary', credentialsId, region, activeNodeInstanceId);
-
-    const commands = [RESOURCE_UTILIZATION(instanceNames, isSqlAuthEnabled)];
+    const updatedInstanceNames = isDemoFlow ? [DEFAULT_INSTANCE_NAME] : instanceNames;
+    const commands = [RESOURCE_UTILIZATION(updatedInstanceNames, isSqlAuthEnabled)];
     const resurceUtilizationData = await callSsmExecution(
         credentialsId,
         region,
@@ -203,6 +203,9 @@ async function getAllResourceUtilisationDetails(
     const instancesResponse: { [key: string]: any } = {};
 
     instanceNames.forEach(iName => {
+        const originalDatabaseInstanceName = iName;
+        iName = isDemoFlow ? DEFAULT_INSTANCE_NAME : iName;
+
         if (
             parsedResourceUtilizationData?.[iName] &&
             !(
@@ -233,7 +236,7 @@ async function getAllResourceUtilisationDetails(
                 error: diskError
             };
 
-            instancesResponse[iName] = { cpuUtilization, diskUtilization, memoryUtilization };
+            instancesResponse[originalDatabaseInstanceName] = { cpuUtilization, diskUtilization, memoryUtilization };
         }
     });
 

@@ -85,7 +85,7 @@ const GOLDEN_CONFIG = {
                 value: 'snapshot_only',
                 severity: SEVERITY.CRITICAL,
                 recommendation:
-                    'To ensure high performance of database workloads it is recommended to move only snapshots to capacity tier for cost savings.  Tiering  of snapshots older than 7 days is recommended.',
+                    'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
                 tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
             },
             {
@@ -93,7 +93,7 @@ const GOLDEN_CONFIG = {
                 value: 7,
                 severity: SEVERITY.WARNING,
                 recommendation:
-                    'To ensure high performance of database workloads it is recommended to move only snapshots to capacity tier for cost savings.  Tiering  of snapshots older than 7 days is recommended.',
+                    'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
                 tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION]
             }
         ],
