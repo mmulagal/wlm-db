@@ -280,7 +280,7 @@ const DialogContent = ({ type }: DialogType) => {
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory intends to update the FSx for ONTAP volumes configuration to meet
+                                Workload Factory recommends updating the FSx for ONTAP volumes configuration to meet
                                 vendor best practices for SQL Server.
                             </DsTypography>
                         </div>
@@ -306,20 +306,7 @@ const DialogContent = ({ type }: DialogType) => {
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
                                     <div className={styles['code']}>
-                                        <pre>
-                                            <DsTypography variant="Regular_14">{`{\n${ontapConfigTextSet()}\n}`}</DsTypography>
-                                        </pre>
-                                    </div>
-                                    <div className={styles['copy']}>
-                                        <Popover
-                                            popoverClass={styles['copy-popover']}
-                                            children={'Copied'}
-                                            container={
-                                                <CopyToClipboard text={`{\n${ontapConfigTextSet()}\n}`}>
-                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
-                                                </CopyToClipboard>
-                                            }
-                                        />
+                                        <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
                                     </div>
                                 </div>
                             </div>
@@ -355,7 +342,7 @@ const DialogContent = ({ type }: DialogType) => {
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory intends to update the FSx for ONTAP iSCSI LUNs configuration to meet
+                                Workload Factory recommends updating the FSx for ONTAP iSCSI LUNs configuration to meet
                                 vendor best practices for SQL Server.
                             </DsTypography>
                         </div>
@@ -381,20 +368,7 @@ const DialogContent = ({ type }: DialogType) => {
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
                                     <div className={styles['code']}>
-                                        <pre>
-                                            <DsTypography variant="Regular_14">{`{\n${ontapConfigTextSet()}\n}`}</DsTypography>
-                                        </pre>
-                                    </div>
-                                    <div className={styles['copy']}>
-                                        <Popover
-                                            popoverClass={styles['copy-popover']}
-                                            children={'Copied'}
-                                            container={
-                                                <CopyToClipboard text={`{\n${ontapConfigTextSet()}\n}`}>
-                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
-                                                </CopyToClipboard>
-                                            }
-                                        />
+                                        <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
                                     </div>
                                 </div>
                             </div>

@@ -1154,8 +1154,7 @@ export const GENERAL = {
         'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.',
     NOTE: 'Note',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS:
-        'An optimization process is currently running in the background for the current instance. Try again once it has completed.',
+    OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
     CLEAR_ALL: 'Clear all'
 };
 
