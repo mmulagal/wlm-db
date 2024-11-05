@@ -102,10 +102,10 @@ function PostgressFooter() {
     };
 
     const handleCancel = () => {
-        if (databaseHostEntryPoint === 'database') {
-            navigate('/databases');
+        if (isWorkloadFactoryStatus) {
+            navigate('../databases');
         } else {
-            navigateToCanvas('/');
+            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
         }
     };
 
