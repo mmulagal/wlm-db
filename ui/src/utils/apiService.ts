@@ -258,7 +258,7 @@ export const awsApi = createApi({
             }),
             deployPgsqlTemplate: builder.mutation({
                 query: ({ credentialId, region, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/cloudformation/pgsql/deploy`,
+                    url: `v1/pgsql/credentials/${credentialId}/regions/${region}/cloudformation/deploy`,
                     method: 'POST',
                     body: payload
                 })
