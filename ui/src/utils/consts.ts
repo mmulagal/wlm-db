@@ -27,6 +27,7 @@ export const FSXADMIN = 'fsxadmin';
 // Default database name
 export const SQL_DATABASE = 'sqldatabase';
 export const SQL_USERNAME = 'sqlsa';
+export const POSTGRE_USERNAME = 'postgres';
 
 // Active Directory scenario type
 export const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
@@ -111,6 +112,11 @@ export const FROM_DIALOG = {
     SANDBOX_REFRESH: 'sandbox_refresh'
 };
 
+export const DBType = {
+    POSTGRESQL: 'PostgreSQL',
+    MSSQL: 'Microsoft SQL Server'
+};
+
 export const API_NAME = {
     REGION: 'region',
     VPC: 'vpc',
@@ -145,7 +151,7 @@ export const API_ERRORS = {
     POWERSHELL_7: 'PowerShell 7 is required for managing the resource'
 };
 
-export const WLF_TO_PROTECT_NAVIGATE = '../add-working-environment/database-services/mssql/postgress';
+export const WLF_TO_PROTECT_NAVIGATE = '../postgreSQL-deploy-wizard';
 
 export const STATUS_CONST = {
     UP: 'Up',
@@ -652,7 +658,7 @@ export const GETWELL_VALUES: any = {
     optimizing: 'Optimizing',
     'not-applicable': 'N/A',
     'not-optimized': 'Not optimized',
-    'analyzing': 'Analyzing',
+    analyzing: 'Analyzing',
     'under-provisioned': 'Under-provisioned',
     'over-provisioned': 'Over-provisioned',
     separate_drive: 'Separate drive',

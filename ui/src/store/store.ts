@@ -20,6 +20,7 @@ import {
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
 import mssqlFormSlice from './mssql/mssqlFormSlice';
+import postgreFormSlice from './postgre/postgreFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
 import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
     [resourceApi.reducerPath]: resourceApi.reducer,
     [mssqlSlice.name]: mssqlSlice.reducer,
     [mssqlFormSlice.name]: mssqlFormSlice.reducer,
+    [postgreFormSlice.name]: postgreFormSlice.reducer,
     [msSqlActionSlice.name]: msSqlActionSlice.reducer,
     [resourceSlice.name]: resourceSlice.reducer,
     [configApi.reducerPath]: configApi.reducer,

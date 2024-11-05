@@ -1,0 +1,24 @@
+.db-deployment {
+    .failOver {
+        width: 812px;
+        .radio {
+            margin-top: 16px;
+        }
+        .failoverText {
+            padding-left: 32px;
+            margin-bottom: 16px;
+        }
+
+        .failoverTextDisabled {
+            padding-left: 32px;
+            margin-bottom: 16px;
+            color: rgb(167, 167, 167);
+        }
+    }
+
+    .separator {
+        margin-top: 12px;
+        border-top: 1px solid var(--grey-15);
+        width: 100%;
+    }
+}

@@ -3,24 +3,102 @@ import { Button } from '@netapp/design-system';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
+import { useDispatch } from 'react-redux';
+import { useDeployPgsqlTemplateMutation } from '../../../utils/apiService';
+import {
+    setDeployRedirectToCfLink,
+    setIsLoading,
+    setPermissionData,
+    setPermissionWarning
+} from '../../../store/mssql/msSqlActionSlice';
+import { handleCreatePgsql } from '../PostgreUtils';
+import { GENERAL } from '../../../utils/appConstants';
+import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { FORM_TO_WLF_NAVIGATE, FORM_TO_WLF_NAVIGATE_BLUEXP, WLF_TABS } from '../../../utils/consts';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 
 function PostgressFooter() {
+    const state = useAppSelector(state => state);
+    const dispatch = useDispatch();
     const { databaseHostEntryPoint } = useAppSelector(state => state.msSqlAction);
+    const selectedCredId = useAppSelector(state => state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId);
+    const selectedRegionCode = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode);
+    const isWorkloadFactoryStatus = useAppSelector(state => state.auth?.isWorkloadFactory);
     // const [protectBackup] = useProtectBackupMutation();
     const navigate = useNavigate();
 
-    const protectBackupHandler = async () => {
-        // try {
-        //     const res = await protectBackup({
-        //         payload: {
-        //             rowData: selectedRows[0].retention,
-        //             protectDbName: selectedPolicyDbName
-        //         }
-        //     });
-        //     console.log(res);
-        // } catch {
-        //     console.log('error');
-        // }
+    const [deploySqlTemplate] = useDeployPgsqlTemplateMutation();
+
+    const clickCreatePgsql = async () => {
+        const payload = handleCreatePgsql(state, dispatch);
+        if (payload) {
+            dispatch(setIsLoading(true));
+            dispatch(setDeployRedirectToCfLink(null));
+            deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
+                .then((data: any) => {
+                    dispatch(setIsLoading(false));
+                    if (!data?.error) {
+                        let stackName = data?.data?.cloudFormationStackId;
+                        const url = data?.data?.cloudFormationUrl;
+                        const warning = data?.data?.warningMessage;
+                        if (stackName && !warning) {
+                            // If stackname is present than goes to fullPermissionFlow
+                            fullPermissionFlow(stackName, url);
+                        } else if (url) {
+                            // If url comes it means it has view permissions so it will open AWS account accordion
+                            dispatch(setPermissionWarning(true));
+                            dispatch(setDeployRedirectToCfLink(url));
+                            dispatch(setPermissionData(data?.data?.missingPermissions));
+                        }
+                    }
+                })
+                .catch((error: any) => {
+                    dispatch(setIsLoading(false));
+                });
+        }
+    };
+
+    const fullPermissionFlow = (stackName: string, stackUrl: string) => {
+        let notificationMsg: string | number | NodeJS.Timeout | undefined;
+        // Just show notification in case of full permission and redirect to Homepage after 3 sec
+        if (stackName && stackName.includes('/')) {
+            stackName = stackName.split('/')[1];
+        }
+        let message;
+
+        message = (
+            <>
+                {GENERAL.CREATE_PGSQL_INFO_MESSAGE_WLM[0]}
+                {
+                    <>
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                clearTimeout(notificationMsg);
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                if (isWorkloadFactoryStatus) {
+                                    navigate('../databases');
+                                } else {
+                                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                                }
+
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {GENERAL.CREATE_PGSQL_INFO_MESSAGE_WLM[1]}
+                        </Button>
+                    </>
+                }
+                {GENERAL.CREATE_PGSQL_INFO_MESSAGE_WLM[2]}
+            </>
+        );
+
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
+        notificationMsg = setTimeout(() => {
+            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+            dispatch(setIsRefreshed(true));
+        }, 3000);
     };
 
     const handleCancel = () => {
@@ -36,7 +114,7 @@ function PostgressFooter() {
             <Button variant="secondary" isThin onClick={handleCancel}>
                 Cancel
             </Button>
-            <Button isThin onClick={protectBackupHandler}>
+            <Button isThin onClick={clickCreatePgsql}>
                 Create
             </Button>
         </>

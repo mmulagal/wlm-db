@@ -20,6 +20,16 @@
             display: flex;
         }
 
+        .headingContent {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .tagClass {
+                margin-right: 16px;
+            }
+        }
+
         .easy-create-content {
             display: flex;
             flex-direction: column;

@@ -181,6 +181,8 @@ export const GENERAL = {
     //Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
     FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across multiple Availability Zones',
+    STANDALONE_INSTANCE: 'Standalone instance',
+    HIGH_AVAILABILITY: 'High availability (HA)',
     SINGLE_INSTANCE: 'Single Instance',
     SINGLE_INSTANCE_TEXT: 'Deploy your SQL Server on a single node.',
     //Constants for DB Edition
@@ -339,6 +341,11 @@ export const GENERAL = {
     ],
     CREATE_INFO_MESSAGE_WLM: [
         'Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. Track progress using ',
+        'Job monitoring',
+        '. Estimated time: Up to 2 hours.'
+    ],
+    CREATE_PGSQL_INFO_MESSAGE_WLM: [
+        'PostgreSQL and FSxN for ONTAP deployment has been triggered. Track progress using ',
         'Job monitoring',
         '. Estimated time: Up to 2 hours.'
     ],
