@@ -231,7 +231,7 @@ const License = () => {
                         </div>
                         {licenseType === FORM_OPTIONS.LICENSE_AMI && (
                             <div>
-                                <div className={styles.headings}>
+                                {/* <div className={styles.headings}>
                                     <Typography variant="Semibold_14">{GENERAL.FILTER_SQL_SERVER_AMI}</Typography>
                                     <div className={styles.filterVersions}>
                                         <div className={styles.selectVersion}>
@@ -274,7 +274,7 @@ const License = () => {
                                             />
                                         </div>
                                     </div>
-                                </div>
+                                </div> */}
                                 <div className={styles.headings}>
                                     <Typography variant="Semibold_14">{GENERAL.SELECT_SQL_SERVER_AMI}</Typography>
                                     <div className={styles.handleSelect} title={defaultValeLicense?.label}>

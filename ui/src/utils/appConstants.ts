@@ -344,6 +344,11 @@ export const GENERAL = {
         'Job monitoring',
         '. Estimated time: Up to 2 hours.'
     ],
+    CREATE_PGSQL_INFO_MESSAGE_WLM: [
+        'PostgreSQL and FSxN for ONTAP deployment has been triggered. Track progress using ',
+        'Job monitoring',
+        '. Estimated time: Up to 2 hours.'
+    ],
     IP_DOMAIN: 'SQL Server IP address or domain name',
     AUTHENTICATION_TYPE: 'Authentication type',
     DISCOVER_FORM_HEADING:

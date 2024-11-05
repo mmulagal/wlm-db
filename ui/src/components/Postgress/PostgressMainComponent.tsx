@@ -1,35 +1,42 @@
-import { StepLayout, WizardContent, WizardFooter } from '@netapp/design-system';
+import { Spinner, StepLayout, WizardContent, WizardFooter } from '@netapp/design-system';
 
 import styles from './PostgressMainComponent.module.scss';
 import PostgressHeader from './PostgressHeader/PostgressHeader';
 import PostgressFooter from './PostgressFooter/PostgressFooter';
 import PostgressLayout from './PostgressLayout/PostgressLayout';
 import MssqlApis from '../CreateMsSql/MSSqlServer/MssqlApis';
+import { useAppSelector } from '../../store/storeHooks';
 import PostgreCodebox from './PostgreCodebox/PostgreCodebox';
-import { useDispatch } from 'react-redux';
 
 const PostgressMainComponent = () => {
-    const dispatch = useDispatch();
-    // useEffect(() => {
-    //     dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
-    // }, []);
+    const loading = useAppSelector(state => state.msSqlAction.isLoading);
     MssqlApis();
     return (
         <div className={styles.protectComponent}>
-            <div className={styles.leftSide}>
-                <StepLayout className={styles.header}>
-                    <PostgressHeader />
-                    <WizardContent className={styles.content}>
-                        <PostgressLayout />
-                    </WizardContent>
-                    <WizardFooter>
-                        <PostgressFooter />
-                    </WizardFooter>
-                </StepLayout>
-            </div>
+            {loading && (
+                <>
+                    <div className={styles.loaderOverlay}></div>
+                    <div className={styles.spinnerPlacement}>
+                        <Spinner isLarge />
+                    </div>
+                </>
+            )}
+            <div>
+                <div className={styles.leftSide}>
+                    <StepLayout className={styles.header}>
+                        <PostgressHeader />
+                        <WizardContent className={styles.content}>
+                            <PostgressLayout />
+                        </WizardContent>
+                        <WizardFooter>
+                            <PostgressFooter />
+                        </WizardFooter>
+                    </StepLayout>
+                </div>
 
-            <div className={styles.rightSide}>
-                <PostgreCodebox />
+                <div className={styles.rightSide}>
+                    <PostgreCodebox />
+                </div>
             </div>
         </div>
     );
