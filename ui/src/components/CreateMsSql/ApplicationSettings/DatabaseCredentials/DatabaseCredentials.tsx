@@ -14,7 +14,7 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { dbPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
-import { DBType, SQL_USERNAME } from '../../../../utils/consts';
+import { DBType, POSTGRE_USERNAME, SQL_USERNAME } from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const DatabaseCredentials = () => {
@@ -28,13 +28,13 @@ const DatabaseCredentials = () => {
     const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
-    const [credName, setCredName] = useState(databaseType === DBType.MSSQL ? SQL_USERNAME : 'postgres');
+    const [credName, setCredName] = useState(databaseType === DBType.MSSQL ? SQL_USERNAME : POSTGRE_USERNAME);
 
     useEffect(() => {
         if (databaseType === DBType.MSSQL) {
             dispatch(setDBCredentialsName(SQL_USERNAME));
         } else {
-            dispatch(setDBCredentialsName('postgres'));
+            dispatch(setDBCredentialsName(POSTGRE_USERNAME));
         }
     }, []);
 

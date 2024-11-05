@@ -27,6 +27,7 @@ export const FSXADMIN = 'fsxadmin';
 // Default database name
 export const SQL_DATABASE = 'sqldatabase';
 export const SQL_USERNAME = 'sqlsa';
+export const POSTGRE_USERNAME = 'postgres';
 
 // Active Directory scenario type
 export const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
