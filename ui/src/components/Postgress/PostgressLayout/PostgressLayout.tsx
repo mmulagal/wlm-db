@@ -27,9 +27,25 @@ import EstimatedCost from '../../CreateMsSql/Cost/EstimatedCost';
 import PostgreOperatingSystem from '../PostgreOperatingSystem/PostgreOperatingSystem';
 import PostgreVersion from '../PostgreVersion/PostgreVersion';
 import PostgreServerName from '../PostgreServerName/PostgreServerName';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { setSelectedDBDeploymentModel } from '../../../store/mssql/mssqlFormSlice';
+import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
+import SecurityGroup from '../../CreateMsSql/AwsSettings/SecurityGroup/SecurityGroup';
+import StorageCapacity from '../../CreateMsSql/InfrastructureSettings/StorageCapacity/StorageCapacity';
 
 function PostgressLayout() {
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        dispatch(
+            setSelectedDBDeploymentModel({
+                label: GENERAL.SINGLE_INSTANCE,
+                value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            })
+        );
+    }, []);
 
     return (
         <>
@@ -67,6 +83,7 @@ function PostgressLayout() {
                     <AwsAccount />
                     <RegionVpc />
                     <AvailabilityZone />
+                    <SecurityGroup />
 
                     <Typography
                         style={{
@@ -111,6 +128,7 @@ function PostgressLayout() {
                         <InstanceType />
                         <FSxNSystem />
                         <SnapshotPolicy />
+                        <StorageCapacity />
                         <ProvisionedIOPS />
                         <ThroughputCapacity />
                         <Encryption />
