@@ -48,7 +48,13 @@ import {
     setToTime
 } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
-import { SAVINGS_CALC_MODE, WLF_TABS, WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../../../utils/consts';
+import {
+    DBType,
+    SAVINGS_CALC_MODE,
+    WLF_TABS,
+    WLF_TO_FORM_NAVIGATE,
+    WLF_TO_PROTECT_NAVIGATE
+} from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
 import DatabaseHomeApis from '../DatabaseHomeApis';
@@ -74,6 +80,7 @@ import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 
 type Tab = {
     tab: string;
@@ -649,7 +656,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                             // </Button>
                                             <>
                                                 <DsButton
-                                                    children="Actions"
+                                                    children="Deploy database host"
                                                     variant="Default"
                                                     dropDown={{
                                                         trigger: 'click',
@@ -657,9 +664,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                         items: [
                                                             {
                                                                 id: '1',
-                                                                label: GENERAL.DEPLOY_NEW_DATABASE,
+                                                                label: 'Microsoft SQL Server',
                                                                 onClick: () => {
                                                                     dispatch(setDatabaseHostEntryPoint('database'));
+                                                                    dispatch(setSelectedDatabaseType(DBType.MSSQL));
                                                                     // navigate(WLF_TO_FORM_NAVIGATE);
                                                                     if (isWorkloadFactory) {
                                                                         navigate(WLF_TO_FORM_NAVIGATE);
@@ -685,8 +693,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                             },
                                                             {
                                                                 id: '2',
-                                                                label: 'Deploy PostgreSQL',
-                                                                onClick: () => navigate(WLF_TO_PROTECT_NAVIGATE)
+                                                                label: 'PostgreSQL',
+                                                                onClick: () => {
+                                                                    dispatch(
+                                                                        setSelectedDatabaseType(DBType.POSTGRESQL)
+                                                                    );
+                                                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                                }
                                                             }
                                                         ]
                                                     }}

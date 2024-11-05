@@ -6,8 +6,13 @@ import PostgressFooter from './PostgressFooter/PostgressFooter';
 import PostgressLayout from './PostgressLayout/PostgressLayout';
 import MssqlApis from '../CreateMsSql/MSSqlServer/MssqlApis';
 import PostgreCodebox from './PostgreCodebox/PostgreCodebox';
+import { useDispatch } from 'react-redux';
 
 const PostgressMainComponent = () => {
+    const dispatch = useDispatch();
+    // useEffect(() => {
+    //     dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
+    // }, []);
     MssqlApis();
     return (
         <div className={styles.protectComponent}>

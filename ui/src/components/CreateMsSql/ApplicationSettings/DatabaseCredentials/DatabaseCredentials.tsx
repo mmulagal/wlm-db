@@ -14,12 +14,13 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { dbPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
-import { SQL_USERNAME } from '../../../../utils/consts';
+import { DBType, SQL_USERNAME } from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const DatabaseCredentials = () => {
     const userName = useAppSelector(state => state.mssqlForm.dbCredentials.name);
     const password = useAppSelector(state => state.mssqlForm.dbCredentials.password);
+    const databaseType = useAppSelector(state => state.postgreForm.selectedDatabaseType);
 
     const passwordRef = useRef(null);
 
@@ -27,7 +28,15 @@ const DatabaseCredentials = () => {
     const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
-    const [credName, setCredName] = useState(SQL_USERNAME);
+    const [credName, setCredName] = useState(databaseType === DBType.MSSQL ? SQL_USERNAME : 'postgres');
+
+    useEffect(() => {
+        if (databaseType === DBType.MSSQL) {
+            dispatch(setDBCredentialsName(SQL_USERNAME));
+        } else {
+            dispatch(setDBCredentialsName('postgres'));
+        }
+    }, []);
 
     useEffect(() => {
         setCredName(userName);
@@ -124,11 +133,7 @@ const DatabaseCredentials = () => {
                             <PasswordField
                                 label={GENERAL.PASSWORD}
                                 ref={passwordRef}
-                                error={
-                                    !isDBPasswordFilled
-                                        ? GENERAL.ACTION_REQUIRED
-                                        : dbPassVal(password)
-                                }
+                                error={!isDBPasswordFilled ? GENERAL.ACTION_REQUIRED : dbPassVal(password)}
                                 info={tooltipText()}
                                 //@ts-ignore
                                 isErrorPrefixHidden

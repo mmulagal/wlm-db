@@ -11,10 +11,25 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
 import { setIsWizardTouched } from '../../../store/chatbot/chatbotSlice';
 import CardComponentConfig from '../../../common/CardComponent/CardComponentConfig';
+import { useEffect } from 'react';
+import { DBType } from '../../../utils/consts';
 
-const SelectConfig = () => {
+type SC = {
+    isDisabled?: boolean;
+};
+
+const SelectConfig = ({ isDisabled = false }: SC) => {
     const dispatch = useDispatch();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+    const selectedDatabaseType = useAppSelector(state => state.postgreForm.selectedDatabaseType);
+
+    useEffect(() => {
+        if (selectedDatabaseType === DBType.POSTGRESQL) {
+            dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
+        } else {
+            dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
+        }
+    }, [selectedDatabaseType]);
 
     const clickHandler = (val: string) => {
         dispatch(setSelectConfig(val));
@@ -32,6 +47,7 @@ const SelectConfig = () => {
                 heading={SELECT_CONFIG.QUICK_CREATE}
                 content={SELECT_CONFIG.EASY_CREATE_CONTENT}
                 handleClick={() => clickHandler(SELECT_CONFIG.EASY_CREATE)}
+                isDisabled={isDisabled}
             />
 
             {/* Standard create section here */}

@@ -111,6 +111,11 @@ export const FROM_DIALOG = {
     SANDBOX_REFRESH: 'sandbox_refresh'
 };
 
+export const DBType = {
+    POSTGRESQL: 'PostgreSQL',
+    MSSQL: 'Microsoft SQL Server'
+};
+
 export const API_NAME = {
     REGION: 'region',
     VPC: 'vpc',
@@ -652,7 +657,7 @@ export const GETWELL_VALUES: any = {
     optimizing: 'Optimizing',
     'not-applicable': 'N/A',
     'not-optimized': 'Not optimized',
-    'analyzing': 'Analyzing',
+    analyzing: 'Analyzing',
     'under-provisioned': 'Under-provisioned',
     'over-provisioned': 'Over-provisioned',
     separate_drive: 'Separate drive',
