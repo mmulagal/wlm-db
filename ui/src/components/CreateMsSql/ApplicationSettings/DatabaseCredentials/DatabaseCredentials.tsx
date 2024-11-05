@@ -102,7 +102,9 @@ const DatabaseCredentials = () => {
                 <AccordionCardContent>
                     <Typography>
                         <Typography variant="Regular_14" className={styles.subtext}>
-                            {GENERAL.DATABASE_CREDENTIAL_TEXT}
+                            {databaseType === DBType.MSSQL
+                                ? GENERAL.DATABASE_CREDENTIAL_TEXT
+                                : GENERAL.DATABASE_CREDENTIAL_TEXT_PGSQL}
                         </Typography>
                         <div className={styles.secondContainer}>
                             <TextField

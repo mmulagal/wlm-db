@@ -1,16 +1,18 @@
 import { Header } from '@netapp/design-system';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useNavigate } from 'react-router-dom';
-import { navigateToCanvas } from '../../../utils/appConfig';
+
+import { FORM_TO_WLF_NAVIGATE_BLUEXP } from '../../../utils/consts';
 
 const PostgressHeader = () => {
-    const { databaseHostEntryPoint } = useAppSelector(state => state.msSqlAction);
+    const state = useAppSelector(state => state);
+    const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
     const navigate = useNavigate();
     const handleNavigateWithoutDialog = () => {
-        if (databaseHostEntryPoint === 'database') {
-            navigate('/databases');
+        if (isWorkloadFactoryStatus) {
+            navigate('../databases');
         } else {
-            navigateToCanvas('/');
+            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
         }
     };
     return (
