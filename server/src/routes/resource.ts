@@ -15,6 +15,7 @@ export default function resourceRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     const API_PATH_RESOURCES = '/v1/credentials/:credentialsId/regions/:region/resources';
+    const MSSQL_API_PATH_RESOURCES = '/v1/mssql/credentials/:credentialsId/regions/:region/resources';
 
     server.get(
         `${API_PATH_RESOURCES}/file-systems/credentials-status`,
@@ -43,12 +44,16 @@ export default function resourceRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.get(`${API_PATH_RESOURCES}/managed-hosts`, { schema: GetManagedResourcesSchema }, async (request, reply) => {
-        const {
-            params: { accountId, credentialsId, region },
-            query: { pageSize, nextToken }
-        } = request;
-        const response = await getManagedResources(accountId, credentialsId, region, pageSize, nextToken);
-        return reply.send(response);
-    });
+    server.get(
+        `${MSSQL_API_PATH_RESOURCES}/managed-hosts`,
+        { schema: GetManagedResourcesSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region },
+                query: { pageSize, nextToken }
+            } = request;
+            const response = await getManagedResources(accountId, credentialsId, region, pageSize, nextToken);
+            return reply.send(response);
+        }
+    );
 }

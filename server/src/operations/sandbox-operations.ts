@@ -1582,68 +1582,70 @@ async function updateMetadataForSanbox(
     }
 }
 
-async function updateMetadataForSanboxTesting(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string
-) {
-    logger.info('Updating metadata for sandbox testing', accountId, credentialsId, region, databaseHostId);
-    const {
-        items: [resourceDetail]
-    } = await getResources(accountId, databaseHostId);
+// updateMetadataForSanboxTesting & revertMetadataForSanboxTesting  is unused. Kept here for reference, can be removed later.
 
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
-    }
-    const { metadata } = resourceDetail;
+// async function updateMetadataForSanboxTesting(
+//     accountId: string,
+//     credentialsId: string,
+//     region: string,
+//     databaseHostId: string
+// ) {
+//     logger.info('Updating metadata for sandbox testing', accountId, credentialsId, region, databaseHostId);
+//     const {
+//         items: [resourceDetail]
+//     } = await getResources(accountId, databaseHostId);
 
-    const newMetadata = metadata as unknown as Metadata;
+//     if (isEmpty(resourceDetail)) {
+//         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+//         logger.error(errorMessage);
+//         throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+//     }
+//     const { metadata } = resourceDetail;
 
-    newMetadata.sandboxCreated = true;
-    newMetadata.updatedManually = true;
-    try {
-        await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
-        return 'metadata updated succesfully';
-    } catch (err) {
-        return err;
-    }
-}
+//     const newMetadata = metadata as unknown as Metadata;
 
-async function revertMetadataForSanboxTesting(accountId: string, credentialsId: string, region: string) {
-    const resourceDetails = await listResources(
-        accountId,
-        undefined,
-        credentialsId,
-        region,
-        RESOURCESTYPE.MSSQL,
-        undefined,
-        { updatedManually: true }
-    );
+//     newMetadata.sandboxCreated = true;
+//     newMetadata.updatedManually = true;
+//     try {
+//         await updateResourceMetaData(accountId, credentialsId, databaseHostId, newMetadata);
+//         return 'metadata updated succesfully';
+//     } catch (err) {
+//         return err;
+//     }
+// }
 
-    if (isEmpty(resourceDetails)) {
-        logger.error(`No manually updated resources ${accountId}.`);
-        return 'No manually updated resources';
-    }
+// async function revertMetadataForSanboxTesting(accountId: string, credentialsId: string, region: string) {
+//     const resourceDetails = await listResources(
+//         accountId,
+//         undefined,
+//         credentialsId,
+//         region,
+//         RESOURCESTYPE.MSSQL,
+//         undefined,
+//         { updatedManually: true }
+//     );
 
-    await Promise.all(
-        resourceDetails.map(async resourceDetail => {
-            const { resource_id: resourceId, metadata } = resourceDetail;
-            const newMetadata = metadata as unknown as Metadata;
-            try {
-                delete newMetadata.sandboxCreated;
-                delete newMetadata.updatedManually;
-                await updateResourceMetaData(accountId, credentialsId, resourceId, newMetadata);
-            } catch (err) {
-                logger.error('Failed to update meatadata', resourceId, err);
-            }
-        })
-    );
+//     if (isEmpty(resourceDetails)) {
+//         logger.error(`No manually updated resources ${accountId}.`);
+//         return 'No manually updated resources';
+//     }
 
-    return 'Revereted manually updated metadatas';
-}
+//     await Promise.all(
+//         resourceDetails.map(async resourceDetail => {
+//             const { resource_id: resourceId, metadata } = resourceDetail;
+//             const newMetadata = metadata as unknown as Metadata;
+//             try {
+//                 delete newMetadata.sandboxCreated;
+//                 delete newMetadata.updatedManually;
+//                 await updateResourceMetaData(accountId, credentialsId, resourceId, newMetadata);
+//             } catch (err) {
+//                 logger.error('Failed to update meatadata', resourceId, err);
+//             }
+//         })
+//     );
+
+//     return 'Revereted manually updated metadatas';
+// }
 
 async function updateMetadataForSanboxDeletion(
     accountId: string,
@@ -3356,8 +3358,6 @@ export {
     getSandboxesInfo,
     getSandboxSavings,
     createSandbox,
-    updateMetadataForSanboxTesting,
-    revertMetadataForSanboxTesting,
     getDatabaseMountPointInfo,
     getSandboxConnectionString,
     deleteSandbox,

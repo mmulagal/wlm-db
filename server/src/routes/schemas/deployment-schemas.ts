@@ -96,7 +96,7 @@ const DeploymentStatusSchema = {
 };
 
 const FsxAvailableRegionsForThroughputSchema = {
-    tags: [RouteTags.DEPLOYMENT],
+    tags: [RouteTags.AWS],
     params: AccountIdParams,
     summary: 'Get list of fsx available regions for 4 GBps of throughput capacity',
     description: 'API to get region list to provision FSX 4 GBps of throughput capacity',
