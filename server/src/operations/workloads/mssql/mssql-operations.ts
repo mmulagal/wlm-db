@@ -125,15 +125,19 @@ async function getDataBasesSummary(
     resourceId: string,
     activeNodeInstanceId?: string,
     instanceName?: string,
-    sqlAuthEnabled = false
+    sqlAuthEnabled = false,
+    accountId?: string,
+    credentialsId?: string
 ) {
-    logger.info('Get databases summary for resource:', resourceId, sqlAuthEnabled);
+    logger.info('Get databases summary for resource:', resourceId, sqlAuthEnabled, accountId);
 
-    const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
-    if (!credentialsId || !region || !node1InstanceId) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get database summary');
+    const [resourceDetail] = await listResources(accountId, resourceId, credentialsId);
+    if (!resourceDetail) {
+        throw createError(HttpErrorCodes.NOT_FOUND, `Resource not found for resource id: ${resourceId}`);
     }
 
+    const { region, metadata } = resourceDetail;
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
     if (!activeNodeInstanceId) {
         ({ activeNodeInstanceId, instanceName } = await getActiveSqlNode(
             credentialsId!,
@@ -154,8 +158,8 @@ async function getDataBasesSummary(
         // Changing the logic, as ssm response compression would take care of long responses.
         const commands = sqlQueryExecution(sqlInstanceName, instanceName, DATABASES, sqlAuthEnabled);
         const dbSummary = await callSsmExecution(
-            credentialsId,
-            region,
+            credentialsId!,
+            region!,
             [commands],
             activeNodeInstanceId,
             undefined,
@@ -863,12 +867,19 @@ async function getNativeSQLBackedupDatabases(
     resourceId: string,
     activeNodeInstanceId?: string,
     instanceNames: string[] = [],
-    isSqlAuthEnabled: boolean = false
+    isSqlAuthEnabled: boolean = false,
+    accountId?: string,
+    credentialsId?: string
 ) {
-    logger.info('Fetch SQL native protection status', { resourceId, isSqlAuthEnabled });
+    logger.info('Fetch SQL native protection status', { resourceId, isSqlAuthEnabled, accountId, credentialsId });
 
     try {
-        const [credentialsId, region] = await getResourceDetails(resourceId);
+        const [resourceDetail] = await listResources(accountId, resourceId, credentialsId);
+        if (!resourceDetail) {
+            throw createError(HttpErrorCodes.NOT_FOUND, `Resource not found for resource id: ${resourceId}`);
+        }
+
+        const { region } = resourceDetail;
 
         if (!credentialsId || !region || !activeNodeInstanceId || isEmpty(instanceNames)) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
