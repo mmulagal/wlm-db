@@ -63,7 +63,7 @@ import {
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
     updateTcoInstanceRecommendationPreferences,
-    scheduledAssessment,
+    runScheduledAssessment,
     updateManagedInstanceRecommendationPreferences
 } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
@@ -376,7 +376,7 @@ try {
         failLongRunningResourcePrepareJobs();
         updateTcoInstanceRecommendationPreferences();
         updateManagedInstanceRecommendationPreferences();
-        scheduledAssessment();
+        runScheduledAssessment();
     }
 } catch (error) {
     logger.error('Failed to initialize cron jobs', error);

@@ -250,6 +250,12 @@ async function updateManagedInstRecPrefs() {
     });
 }
 
+async function runScheduledAssessment() {
+    setInterval(async () => {
+        await scheduledAssessment();
+    }, Number(ms(config.get('redis.cron-job-interval'))));
+}
+
 async function scheduledAssessment() {
     const redisDetails = getRedisDetails();
 
@@ -330,7 +336,6 @@ async function scheduledAssessment() {
                                 managedInstanceIds
                             },
                             {
-                                // 2hours to observe
                                 repeat: { every: Number(ms(config.get('redis.cron-job-interval'))) }, // 24 hours in milliseconds
                                 removeOnComplete: true,
                                 removeOnFail: true,
@@ -393,5 +398,6 @@ export {
     updateTcoInstanceRecommendationPreferences,
     updateTcoInstRecPrefs,
     updateManagedInstRecPrefs,
-    scheduledAssessment
+    scheduledAssessment,
+    runScheduledAssessment
 };
