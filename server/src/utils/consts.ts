@@ -1413,7 +1413,15 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
 const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptValidation',
-        url: `${WLMDB}/pgsql/scripts/validate-vpc.sh`
+        url: `${WLMDB}/pgsql/scripts/validation.zip`
+    },
+    {
+        name: 'ScriptVerifySignature',
+        url: `${WLMDB}/pgsql/scripts/verify-signature.sh`
+    },
+    {
+        name: 'ScriptUnzipArchive',
+        url: `${WLMDB}/pgsql/scripts/unzip-archive.sh`
     }
 ];
 
