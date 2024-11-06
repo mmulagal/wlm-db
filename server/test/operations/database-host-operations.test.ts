@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-// import { getDatabases } from '../../src/operations/database-hosts-operations';
+import { getDatabaseHostSummaryV2 } from '../../src/operations/database-hosts-operations';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../simulator/scopes/aws/fsx-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -39,36 +39,37 @@ afterAll(async () => {
     await deleteResource(ACCOUNT_ID, 'fs-f6082f35c1db');
 });
 
-// describe('Database host operations', () => {
-//     it('Get databases in a server', async () => {
-//         const resp = await getDatabases(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
-//         expect(resp).toBeDefined();
-//     });
-
-//     // it('Get databases host summary', async () => {
-//     //     const resp = await getDatabaseHostSummary(
-//     //         ACCOUNT_ID,
-//     //         '36E53042-04E8-40C9-AE69-26E56CB0D216',
-//     //         'serverDetails,performance,usageEstimation,storage,protection',
-//     //         {
-//     //             id: null,
-//     //             account_id: ACCOUNT_ID,
-//     //             resource_id: '36E53042-04E8-40C9-AE69-26E56CB0D216',
-//     //             resource_name: 'test-resource',
-//     //             resource_type: 'MSSQL',
-//     //             co_relation_id: 'fs-f6082f35c1db',
-//     //             cloud_provider_account_id: 'test-aws-account',
-//     //             cloud_provider_name: 'AWS',
-//     //             region: 'ap-southeast-1',
-//     //             credentials_id: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
-//     //             storage_type: 'FSXN',
-//     //             metadata: {
-//     //                 node1InstanceId: 'i-123456678',
-//     //                 node2InstanceId: undefined
-//     //             }
-//     //         },
-//     //         false
-//     //     );
-//     //     expect(resp).toBeDefined();
-//     // });
-// });
+describe('Database host operations', () => {
+    // it('Get databases in a server', async () => {
+    //     const resp = await getDatabases(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
+    //     expect(resp).toBeDefined();
+    // });
+    it('Get databases host summary', async () => {
+        const resp = await getDatabaseHostSummaryV2(
+            ACCOUNT_ID,
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            'serverDetails,performance,usageEstimation,storage,protection',
+            {
+                id: null,
+                account_id: ACCOUNT_ID,
+                resource_id: '36E53042-04E8-40C9-AE69-26E56CB0D216',
+                resource_name: 'test-resource',
+                resource_type: 'MSSQL',
+                co_relation_id: 'fs-f6082f35c1db',
+                cloud_provider_account_id: 'test-aws-account',
+                cloud_provider_name: 'AWS',
+                region: 'ap-southeast-1',
+                credentials_id: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+                storage_type: 'FSXN',
+                metadata: {
+                    node1InstanceId: 'i-123456678',
+                    node2InstanceId: undefined
+                }
+            },
+            false
+        );
+        expect(resp).toBeDefined();
+    });
+});
