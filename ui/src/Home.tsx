@@ -106,6 +106,7 @@ const Home = () => {
                         <Route path={'/create-new-user'} element={<WizardComponent />} />
                         <Route path={'/job-monitor'} element={<JobMonitoring />} />
                         <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
+                        {/* Testing code */}
                         {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
                     </Routes>
                 )}
