@@ -3,9 +3,7 @@ import { RouteTags } from '../../utils/consts';
 
 import {
     DatabaseHostQueryString,
-    DatabaseHostSummaryPerStorageTypeListResponse,
     DatabaseHostSummaryParams,
-    DatabaseHostSummaryPerStorageTypeResponse,
     DatabasesListResponse,
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
@@ -41,44 +39,44 @@ const resourceRequest = {
 };
 
 // Get Database hosts summary details
-const DatabaseHostsSummarySchema = {
-    ...resourceRequest,
-    summary: 'Get database hosts details (deprecated)',
-    description: 'Get database hosts summary details (deprecated)',
-    hide: process.env.NODE_ENV === 'production',
-    querystring: DatabaseHostQueryString,
-    response: {
-        200: DatabaseHostSummaryPerStorageTypeListResponse
-    }
-};
+// const DatabaseHostsSummarySchema = {
+//     ...resourceRequest,
+//     summary: 'Get database hosts details (deprecated)',
+//     description: 'Get database hosts summary details (deprecated)',
+//     hide: process.env.NODE_ENV === 'production',
+//     querystring: DatabaseHostQueryString,
+//     response: {
+//         200: DatabaseHostSummaryPerStorageTypeListResponse
+//     }
+// };
 
 // Get Database host summary details
-const DatabaseHostDetailsSchema = {
-    ...resourceRequest,
-    summary: 'Fetch database server details (deprecated)',
-    description:
-        'Fetch database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
-    params: DatabaseHostSummaryParams,
-    hide: process.env.NODE_ENV === 'production',
-    querystring: DatabaseHostQueryString,
-    response: {
-        200: DatabaseHostSummaryPerStorageTypeResponse
-    }
-};
+// const DatabaseHostDetailsSchema = {
+//     ...resourceRequest,
+//     summary: 'Fetch database server details (deprecated)',
+//     description:
+//         'Fetch database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
+//     params: DatabaseHostSummaryParams,
+//     hide: process.env.NODE_ENV === 'production',
+//     querystring: DatabaseHostQueryString,
+//     response: {
+//         200: DatabaseHostSummaryPerStorageTypeResponse
+//     }
+// };
 
 // Get databases in a database server
-const DatabasesListSchema = {
-    ...resourceRequest,
-    summary: 'Fetch details about databases in a server (deprecated)',
-    description:
-        'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
-    params: DatabaseHostSummaryParams,
-    hide: process.env.NODE_ENV === 'production',
-    querystring: DatabaseQueryString,
-    response: {
-        200: DatabasesListResponse
-    }
-};
+// const DatabasesListSchema = {
+//     ...resourceRequest,
+//     summary: 'Fetch details about databases in a server (deprecated)',
+//     description:
+//         'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
+//     params: DatabaseHostSummaryParams,
+//     hide: process.env.NODE_ENV === 'production',
+//     querystring: DatabaseQueryString,
+//     response: {
+//         200: DatabasesListResponse
+//     }
+// };
 
 // Create database in a database server
 const DatabasesCreateSchema = {
@@ -92,17 +90,17 @@ const DatabasesCreateSchema = {
     }
 };
 
-const GetDriveInfoSchema = {
-    ...resourceRequest,
-    querystring: GetDriveQueryString,
-    hide: process.env.NODE_ENV === 'production',
-    summary: 'Get database host drive information (deprecated)',
-    description: 'Fetch drive info about the database host (deprecated)',
-    params: DatabaseHostSummaryParams,
-    response: {
-        200: DriveInfoResponseBody
-    }
-};
+// const GetDriveInfoSchema = {
+//     ...resourceRequest,
+//     querystring: GetDriveQueryString,
+//     hide: process.env.NODE_ENV === 'production',
+//     summary: 'Get database host drive information (deprecated)',
+//     description: 'Fetch drive info about the database host (deprecated)',
+//     params: DatabaseHostSummaryParams,
+//     response: {
+//         200: DriveInfoResponseBody
+//     }
+// };
 
 const GetDriveInfoSchemaV2 = {
     ...resourceRequest,
@@ -128,16 +126,16 @@ const CreateSandboxSchema = {
     }
 };
 
-const GetCollationDetailsSchema = {
-    ...resourceRequest,
-    summary: 'Get database host collation details (deprecated)',
-    hide: process.env.NODE_ENV === 'production',
-    description: 'Fetch collation details about the database host (deprecated)',
-    params: DatabaseHostSummaryParams,
-    response: {
-        200: CollationInfoResponseBody
-    }
-};
+// const GetCollationDetailsSchema = {
+//     ...resourceRequest,
+//     summary: 'Get database host collation details (deprecated)',
+//     hide: process.env.NODE_ENV === 'production',
+//     description: 'Fetch collation details about the database host (deprecated)',
+//     params: DatabaseHostSummaryParams,
+//     response: {
+//         200: CollationInfoResponseBody
+//     }
+// };
 
 const GetCollationDetailsSchemaV2 = {
     ...resourceRequest,
@@ -371,13 +369,8 @@ const OptimizeStorageSchema = {
 };
 
 export {
-    DatabaseHostsSummarySchema,
-    DatabaseHostDetailsSchema,
-    DatabasesListSchema,
-    GetDriveInfoSchema,
     DatabasesCreateSchema,
     CreateSandboxSchema,
-    GetCollationDetailsSchema,
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,
     PatchResourceForSandboxSchema,
