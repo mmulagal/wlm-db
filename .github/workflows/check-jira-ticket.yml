@@ -1,0 +1,13 @@
+name: Test Jira ID
+on:
+    pull_request:
+        types: [opened, synchronize, edited, reopened]
+    workflow_dispatch:
+jobs:
+    test_jira_id:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Test Jira ID
+              uses: TLVeng/actions/.github/actions/check_jira_id@main
+              with:
+                  jira_token: ${{ secrets.JIRA_TOKEN }}
