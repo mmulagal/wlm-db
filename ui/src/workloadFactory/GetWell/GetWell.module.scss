@@ -192,6 +192,7 @@
                 .filterTag {
                     display: flex;
                     align-items: center;
+                    white-space: nowrap;
                     gap: 24px;
                     height: 26px;
                     width: fit-content;
