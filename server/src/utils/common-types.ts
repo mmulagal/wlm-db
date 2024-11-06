@@ -188,6 +188,7 @@ interface DatabaseInstance {
     storage_type?: string;
     sqlAuthEnabled?: boolean;
     isManaged?: boolean;
+    resource: ResourceDetails;
 }
 
 interface InstanceDetails {
@@ -212,14 +213,32 @@ interface WorkloadInstance {
     cloudProviderAccountId: string;
     resourceName: string;
 }
-
+interface LogDriveDetails {
+    databaseName: string;
+    logDriveLetter: string;
+    dataDriveLetter: string;
+    logDriveTotalSizeMB: number;
+    dataDriveTotalSizeMB: number;
+}
+interface TempDbDriveDetails {
+    tempdbDriveLetter: string;
+    defaultDataDriveSize: number;
+    defaultDataDriveLetter: string;
+    tempdbDriveTotalSizeMB: number;
+    ontapVolumeId: string; // TODO: check assessment
+}
+interface Sizing {
+    'performance-tier': string;
+    'data-log-drive-details': LogDriveDetails;
+    'data-tempdb-drive-details': TempDbDriveDetails;
+}
 interface StorageAssessment {
     filesystemId: string;
     volumes: Array<{ Key?: string; Value?: string }>;
     luns: Array<{ Key?: string; Value?: string }>;
     os: Array<{ Key?: string; Value?: string }>;
     layout: JSON;
-    sizing: JSON;
+    sizing: Sizing;
 }
 
 interface DriftAssessmentJob {
@@ -272,6 +291,8 @@ export {
     DatabaseInstance,
     InstanceDetails,
     WorkloadInstance,
+    LogDriveDetails,
+    TempDbDriveDetails,
     StorageAssessment,
     DriftAssessmentJob,
     OptimizeStorageParams,

@@ -90,7 +90,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     $defaultTempDBDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${TEMPDB_DRIVE_SIZE}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
     foreach ($drive in $defaultTempDBDriveSize) {
         $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveLetter" -Value $defaultDataDriveSize.dataDriveLetter 
-        $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveSize" -Value $defaultDataDriveSize.dataDriveTotalSizeMB
+        $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveSizeMB" -Value $defaultDataDriveSize.dataDriveTotalSizeMB
     }
 
     $defaultDataDrive = 'shared-drive'
