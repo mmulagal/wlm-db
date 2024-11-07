@@ -6,11 +6,13 @@ import { useDispatch } from 'react-redux';
 import { setCloudWatch } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { DBType } from '../../../../utils/consts';
 
 const CloudWatch = () => {
     const dispatch = useDispatch();
 
     const toggle = useAppSelector(state => state.mssqlForm.cloudWatch);
+    const databaseType = useAppSelector(state => state.postgreForm.selectedDatabaseType);
     //Set the Header text here
     const setHeader = () => {
         return <Typography variant="Regular_14">{toggle ? 'Enabled' : 'Disabled'}</Typography>;
@@ -34,7 +36,7 @@ const CloudWatch = () => {
                             {GENERAL.CLOUD_WATCH_MONITORING}
                         </ToggleSelector>
                         <Typography variant="Regular_14" className={styles.subText}>
-                            {GENERAL.CLOUD_WATCH_TEXT}
+                            {databaseType === DBType.MSSQL ?  GENERAL.CLOUD_WATCH_TEXT : GENERAL.CLOUD_WATCH_TEXT_PGSQL}
                         </Typography>
                     </Typography>
                 </AccordionCardContent>
