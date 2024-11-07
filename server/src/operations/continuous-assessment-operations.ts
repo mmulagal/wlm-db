@@ -1,4 +1,3 @@
-import createError from 'http-errors';
 import {
     AssessmentCategories,
     AssessmentStatus,
@@ -10,7 +9,6 @@ import { listDatabaseInstanceConfigData } from '../lib/database/database-instanc
 import { StorageAssessment } from '../utils/common-types';
 import { updateFsxCapacity, updateFsxVolumeSize } from '../lib/aws/fsx';
 import { convertToBytes, sizeInGigaBytes } from '../utils/utils';
-import { getFsxStorageDetails } from './aws/fsx-operations';
 
 const logger = getLogger();
 
@@ -103,13 +101,6 @@ async function logDriveOptimization(
             'Under provisioned: Log drives are under provisioned',
             underProvisionedDrives.map((drive: any) => drive.driveName)
         );
-        const { ssdStorageCapacityInBytes, totalVolumeSizeInBytes } = await getFsxStorageDetails(
-            credentialsId,
-            region,
-            fileSystemId
-        );
-
-        const availableCapacityInBytes = ssdStorageCapacityInBytes - totalVolumeSizeInBytes;
 
         // check if enough room in the FSxN: if there is, increase log volume size  to 25% of data volume. If not, ask user to add permission or increase FSx SSD capacity manually to desired capacity.
 
@@ -117,19 +108,8 @@ async function logDriveOptimization(
             const { dataVolumeSizeInBytes } = drive;
             const requiredLogVolumeSizeBytes = dataVolumeSizeInBytes * 0.25;
 
-            if (availableCapacityInBytes >= requiredLogVolumeSizeBytes) {
-                await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredLogVolumeSizeBytes);
-                logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
-            } else {
-                logger.error(
-                    'Not enough room in the FSx. Please add permission or increase FSx SSD capacity manually to the desired capacity.'
-                );
-                throw createError(
-                    409,
-                    'Not enough room in the FSx. Please add permission or increase FSx SSD capacity manually to the desired capacity.'
-                );
-                // possibly a new API to increase FSx SSD capacity
-            }
+            await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredLogVolumeSizeBytes);
+            logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
         });
     }
     logger.info('Log drives are not under provisioned, no action required');
@@ -154,27 +134,7 @@ async function tempDbDriveOptimization(
 
         const requiredTempDbVolumeSizeBytes = defaultDataDriveSizeBytes * 0.1;
 
-        const { ssdStorageCapacityInBytes, totalVolumeSizeInBytes } = await getFsxStorageDetails(
-            credentialsId,
-            region,
-            fileSystemId
-        );
-
-        const availableCapacityInBytes = ssdStorageCapacityInBytes - totalVolumeSizeInBytes;
-
-        if (availableCapacityInBytes >= requiredTempDbVolumeSizeBytes) {
-            await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredTempDbVolumeSizeBytes);
-            logger.info(`Temp db volume size increased to ${requiredTempDbVolumeSizeBytes} bytes.`);
-            return;
-        }
-        logger.error(
-            'Not enough room in the FSx. Please add permission or increase FSx SSD capacity manually to the desired capacity.'
-        );
-        throw createError(
-            409,
-            'Not enough room in the FSx. Please add permission or increase FSx SSD capacity manually to the desired capacity.'
-        );
-        // possibly a new API to increase FSx SSD capacity
+        return updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredTempDbVolumeSizeBytes);
     }
     logger.info('Temp db drives are not under provisioned, no action required');
 }
