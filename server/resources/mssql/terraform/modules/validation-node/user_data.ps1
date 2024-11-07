@@ -16,7 +16,7 @@ $IsCustomAmi = "${is_custom_ami}"
 $PerformFsxCheck = "${perform_fsx_check}"
 $FsxFileSystemId = "${fsx_file_system_id}"
 $ValidationNodeName = "${validation_node_name}"
-$LogGroup = "${log_group}-Validation-Node"
+$LogGroup = "${log_group}"
 $SqlDeploymentMode = "${sql_deployment_mode}"
 
 
