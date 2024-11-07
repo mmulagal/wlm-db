@@ -219,7 +219,7 @@ const GetWell = () => {
                                     }
                                 },
                                 {
-                                    title: selectedHostname || 'Host name'
+                                    title: `${selectedHostname}/${selectedDatabaseInstanceName}` || 'Host name/instance name'
                                 }
                             ]}
                         />
