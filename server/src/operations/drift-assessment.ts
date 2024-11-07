@@ -278,13 +278,12 @@ async function calculateStorageDrift(
             ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
         );
         const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
-        const sizePercent = Number(headroomPercent);
         const status =
-            sizePercent <= 100 || sizePercent >= 35
-                ? AssessmentStatus.OPTIMIZED
-                : sizePercent > 30
+            headroomPercent < 35
+                ? AssessmentStatus.UNDER_PROVISIONED
+                : headroomPercent > 100 && storage && storage > 1024 // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
                 ? AssessmentStatus.OVER_PROVISIONED
-                : AssessmentStatus.UNDER_PROVISIONED;
+                : AssessmentStatus.OPTIMIZED;
         configCount += 1;
         if (status === AssessmentStatus.OPTIMIZED) {
             optimizedCount += 1;
