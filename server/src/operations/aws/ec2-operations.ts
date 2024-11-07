@@ -431,7 +431,7 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
             { Name: 'platform', Values: ['windows'] },
             { Name: 'is-public', Values: ['true'] },
             { Name: 'owner-alias', Values: ['amazon'] },
-            { Name: 'name', Values: ['Windows_Server-*-English-Full-Base*'] }
+            { Name: 'name', Values: ['Windows_Server-2022-English-Full-Base*'] }
         ]
     });
     const [filteredInstances] =
