@@ -79,7 +79,7 @@ const VpcListResponse = Type.Object({
 });
 
 // AMI Request and Response
-const OS_TYPES = Type.Union([Type.Literal('windows')]);
+const OS_TYPES = Type.Union([Type.Literal('windows'), Type.Literal('amazon-linux')]);
 const DB_TYPES = Type.Union([Type.Literal('sql')]);
 
 const AmiQueryString = Type.Object({
