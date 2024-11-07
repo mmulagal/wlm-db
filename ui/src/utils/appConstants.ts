@@ -1003,8 +1003,8 @@ export const GENERAL = {
         'You can identify potential savings by automatically comparing your database workloads to SQL Server using FSx for ONTAP file systems. Choose a SQL Server host and explore savings.',
     ES_SAVINGS: 'Explore savings',
     MANUAL_EXLORE_SAVINGS: 'Custom configuration cost analysis',
-    EXPLORE_SAVING_MANUALLY: 'Analyze custom configuration for EBS',
-    EXPLORE_SAVING_MANUALLY_FSX: 'Analyze custom configuration for FSx for Windows',
+    EXPLORE_SAVING_MANUALLY: 'Analyze custom configuration for Elastic Block Store (EBS)',
+    EXPLORE_SAVING_MANUALLY_FSX: 'Analyze custom configuration for FSx for Windows File Server',
     MANUAL_EXPLORE_SAVINGS_CONTENT:
         'You can adjust SQL Server, infrastructure, and storage settings to analyze for potential savings between your environment and SQL Server using FSx for ONTAP.',
     INSTANCE_INFORMATION: 'Instance information:',

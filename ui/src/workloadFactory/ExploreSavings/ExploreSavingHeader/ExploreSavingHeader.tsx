@@ -103,6 +103,7 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
+                                        style={{whiteSpace: 'unset'}}
                                         onClick={() => handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}
