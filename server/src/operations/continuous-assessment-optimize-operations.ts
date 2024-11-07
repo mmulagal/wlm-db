@@ -471,8 +471,8 @@ async function optimizeSizing(
         region,
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
-        `Optimize ${type} sizing for ${serverNameWithHostName}`,
-        `Optimize ${type} sizing for ${serverNameWithHostName}`
+        `Optimize ${types} sizing for ${serverNameWithHostName}`,
+        `Optimize ${types} sizing for ${serverNameWithHostName}`
     );
 
     modifySizingAttributes(
