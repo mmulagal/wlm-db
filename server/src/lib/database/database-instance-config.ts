@@ -54,7 +54,11 @@ async function listDatabaseInstanceConfigData(
             {
                 [sort]: `${sortOrder}`
             }
-        ]
+        ],
+        include: {
+            database_instances: true,
+            resource: true
+        }
     });
 }
 

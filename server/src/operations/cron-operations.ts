@@ -35,7 +35,7 @@ import {
     fetchSqlServerInstanceConfiguration
 } from './recommendation-operations';
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { triggerDriftAssessmentDataCollection } from './drift-assessment';
+import { triggerDriftAssessmentDataCollection } from './continuous-assessment-operations';
 import { DriftAssessmentJob, Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy, REDIS_URL } from '../utils/continous-optimization-consts';
 

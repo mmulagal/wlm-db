@@ -35,10 +35,7 @@ import {
     DatabasesListSchemaV2,
     GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
-    GetCollationDetailsSchemaV2,
-    driftAssessmentDataCollection,
-    OptimizeStorageSchema,
-    TriggerDriftAssessmentSchema
+    GetCollationDetailsSchemaV2
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -55,14 +52,9 @@ import {
     checkDatabaseIntegrity,
     getSandboxSnapshots
 } from '../operations/sandbox-operations';
-import { fetchDriftAssessment, triggerDriftAssessmentDataCollection } from '../operations/drift-assessment';
-import { optimizeInstance } from '../operations/drift-assessment-optimize-operations';
-import { AssessmentTriggeredBy, OptimizeInstanceParams } from '../utils/continous-optimization-consts';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_PREFIX_PATH_V2 = '/v2/credentials/:credentialsId/regions/:region';
-
-const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -477,64 +469,6 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     undefined,
                     databaseInstanceId
                 );
-                return reply.send(response);
-            }
-        )
-        .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment`,
-            { schema: driftAssessmentDataCollection },
-            async (request, reply) => {
-                const {
-                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
-                    query: { fields }
-                } = request;
-                const response = await fetchDriftAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    fields
-                );
-                return reply.send(response);
-            }
-        )
-        .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment`,
-            { schema: TriggerDriftAssessmentSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
-                    query: { fields }
-                } = request;
-                const response = await triggerDriftAssessmentDataCollection(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    [databaseInstanceId],
-                    AssessmentTriggeredBy.USER,
-                    fields
-                );
-                return reply.send(response);
-            }
-        )
-        .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment/optimize`,
-            { schema: OptimizeStorageSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
-                } = request;
-
-                const response = await optimizeInstance({
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    optimizationTargets: request.body.assessments
-                } as OptimizeInstanceParams);
                 return reply.send(response);
             }
         );

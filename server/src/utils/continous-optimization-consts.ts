@@ -116,7 +116,7 @@ interface OptimizeStorageRequestParams {
     objectsToOptimize: string[];
 }
 
-interface OptimizeInstanceParams {
+interface OptimizeStorageParams {
     accountId: string;
     credentialsId: string;
     region: string;
@@ -142,7 +142,7 @@ export {
     OPTIMIZE_SIZING_CONFIGS,
     SEVERITY,
     OptimizeStorageApiData,
-    OptimizeInstanceParams,
+    OptimizeStorageParams,
     DRIFT_ASSESSMENT_QUEUE,
     VOLUME,
     LUN,

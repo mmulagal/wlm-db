@@ -188,6 +188,7 @@ interface DatabaseInstance {
     storage_type?: string;
     sqlAuthEnabled?: boolean;
     isManaged?: boolean;
+    resource: ResourceDetails;
 }
 
 interface InstanceDetails {
@@ -220,9 +221,10 @@ interface LogDriveDetails {
     dataDriveTotalSizeMB: number;
 }
 interface TempDbDriveDetails {
-    databaseName: string;
-    tempDbDriveLetter: string;
-    tempDbDriveTotalSizeMB: number;
+    tempdbDriveLetter: string;
+    defaultDataDriveSize: number;
+    defaultDataDriveLetter: string;
+    tempdbDriveTotalSizeMB: number;
 }
 interface Sizing {
     'performance-tier': string;
@@ -288,6 +290,8 @@ export {
     DatabaseInstance,
     InstanceDetails,
     WorkloadInstance,
+    LogDriveDetails,
+    TempDbDriveDetails,
     StorageAssessment,
     DriftAssessmentJob,
     OptimizeStorageParams,
