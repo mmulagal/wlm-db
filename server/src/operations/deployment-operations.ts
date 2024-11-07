@@ -77,7 +77,6 @@ import {
     TEMPLATE_USERNAME_MAPPING,
     PERMISSION_DENIAL_POSSIBLE_REASONS,
     STORAGE_PROTOCOLS,
-    CUSTOM_AMI_VALIDATION_INSTANCE_TYPE,
     EBS_VOLUME_SIZE,
     EBS_DEFAULT_VOLUME_SIZE,
     TEMPLATE_PRIVATESUBNET1_CIDRBLOCK,
@@ -102,12 +101,7 @@ import {
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
-import {
-    getServicesWithNoEndpoint,
-    getValidationNodeInstanceType,
-    getWindowsServerBaseAmi,
-    enableVpcDnsAttributes
-} from './aws/ec2-operations';
+import { getServicesWithNoEndpoint, enableVpcDnsAttributes } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -188,21 +182,8 @@ async function formatTemplateParameters(
         : { roleName: '', providerAccountId: '' };
 
     const stackName = derivedParams.StackName;
-    const validationAmiImage = sqlConfiguration.isCustomAmi
-        ? sqlConfiguration.sqlAmiId
-        : credentialsId && region
-        ? await getWindowsServerBaseAmi(credentialsId!, region!)
-        : '';
-
-    const availabilityZones =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.availabilityZone1!]
-            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
-    const validationNodeInstanceType = sqlConfiguration.isCustomAmi
-        ? CUSTOM_AMI_VALIDATION_INSTANCE_TYPE
-        : credentialsId && region
-        ? await getValidationNodeInstanceType(credentialsId!, region, availabilityZones)
-        : VALIDATION_NODE_INSTANCETYPE.T2MICRO;
+    const validationAmiImage = sqlConfiguration.sqlAmiId;
+    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE.M5XLARGE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
@@ -876,16 +857,8 @@ async function createCloudFormationTemplateForUserDeployment(
     const encodedSignedMasterTemplateURL = encodeURIComponent(signedMasterTemplateUrl);
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
-    const validationAmiImage = sqlConfiguration.isCustomAmi
-        ? sqlConfiguration.sqlAmiId
-        : await getWindowsServerBaseAmi(credentialsId, region);
-    const availabilityZones =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.availabilityZone1!]
-            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
-    const validationNodeInstanceType = sqlConfiguration.isCustomAmi
-        ? CUSTOM_AMI_VALIDATION_INSTANCE_TYPE
-        : await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
+    const validationAmiImage = sqlConfiguration.sqlAmiId;
+    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE.M5XLARGE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
@@ -1567,13 +1540,7 @@ async function formatPgSqlTemplateParameters(
     const stackName = derivedParams.StackName;
 
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-
-    const availabilityZones =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.availabilityZone1!]
-            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
-
-    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
+    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE.M5XLARGE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
@@ -1765,11 +1732,7 @@ async function createCfTemplateForPgsqlDeployment(
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-    const availabilityZones =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.availabilityZone1!]
-            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
-    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
+    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE.M5XLARGE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });

@@ -1265,7 +1265,8 @@ const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
 
 const VALIDATION_NODE_INSTANCETYPE = {
     T2MICRO: 't2.micro',
-    T3MICRO: 't3.micro'
+    T3MICRO: 't3.micro',
+    M5XLARGE: 'm5.xlarge'
 };
 
 const ONLINE = 'ONLINE';
