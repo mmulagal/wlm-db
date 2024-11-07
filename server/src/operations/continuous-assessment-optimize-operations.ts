@@ -4,7 +4,7 @@ import { Metadata, DatabaseInstance, WorkloadInstance, StorageAssessment } from 
 import { HttpErrorCodes, AuditStatus } from '../utils/consts';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceInfo } from './database/database-operations';
-import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/drift-assessment-scripts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/continuous-assessment-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import {
