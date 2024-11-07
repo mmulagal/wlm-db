@@ -81,6 +81,9 @@
                 "interval": "24h",
                 "older-than": "90d"
             }
+        },
+        "assessment": {
+            "interval":"24h"
         }
     },
     "redis": {
