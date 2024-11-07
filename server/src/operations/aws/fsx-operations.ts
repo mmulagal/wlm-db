@@ -27,7 +27,7 @@ import {
 import { getNetworkInterfacesList } from './ec2-operations';
 import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { getFsxArn } from '../../utils/utils';
+import { convertToBytes, getFsxArn } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
 import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
@@ -541,6 +541,24 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
     }
 }
 
+async function getFsxStorageDetails(credentialsId: string, region: string, fileSystemId: string) {
+    logger.info('Getting FSx storage details', { credentialsId, region, fileSystemId });
+    const [fsxSSDCapacity, { Volumes: fsxVolumes }] = await Promise.all([
+        getFsxStorageCapacity(credentialsId, region, fileSystemId),
+        describeFSxVolumes(credentialsId, region, fileSystemId)
+    ]);
+
+    const { storage } = fsxSSDCapacity ?? {};
+    const ssdStorageCapacityInBytes = storage ? convertToBytes(storage, 'GiB') || 0 : 0;
+
+    const totalVolumeSizeInBytes = fsxVolumes?.reduce((total, curr) => {
+        const amount = curr.OntapConfiguration?.SizeInBytes || 0;
+        return total + amount;
+    }, 0);
+
+    return { fsxSSDCapacity, ssdStorageCapacityInBytes, totalVolumeSizeInBytes };
+}
+
 async function getStorageDataFromOntap(
     activeNodeInstanceId: string,
     instanceDetails: DatabaseInstance[],
@@ -623,5 +641,6 @@ export {
     getFsxStorageCapacity,
     getFSXFileSystemListForDemo,
     getFSXDetails,
-    getStorageDataFromOntap
+    getStorageDataFromOntap,
+    getFsxStorageDetails
 };

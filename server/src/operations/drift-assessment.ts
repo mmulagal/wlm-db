@@ -12,7 +12,7 @@ import {
 } from '../routes/types/database-hosts.types';
 import getLogger from '../utils/logger';
 import { getEc2Arn, sqlResponseParsing } from '../utils/utils';
-import { getFsxStorageCapacity, getMappedOntapVolumes } from './aws/fsx-operations';
+import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/drift-assessment-scripts';
@@ -25,7 +25,6 @@ import {
     listDatabaseInstanceConfigData
 } from '../lib/database/database-instance-config';
 import { listResources } from '../lib/database/db';
-import { describeFSxVolumes } from '../lib/aws/fsx';
 import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
 import { checkComputeOptimizerEnrollmentStatus } from './recommendation-operations';
 import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
@@ -43,6 +42,88 @@ const lunConfigData = storageGoldenConfigData.configuration.lun;
 const osConfigData = storageGoldenConfigData.configuration.os;
 const layoutConfigData = storageGoldenConfigData.layout;
 const sizingConfigData = storageGoldenConfigData.sizing;
+
+function getLogVolumeDrift(logVolumes: { [x: string]: any }, status: AssessmentStatus, key: string) {
+    logger.info('Getting log volume drift', logVolumes);
+    const overProvisionedDrives: SizingViolationResponseType[] = [];
+    const underProvisionedDrives: SizingViolationResponseType[] = [];
+    const ignoredDrives: SizingViolationResponseType[] = [];
+    const optimisedDrives: SizingViolationResponseType[] = [];
+
+    const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
+    driveDetails.forEach((drive: { [x: string]: any }) => {
+        const { dataDriveLetter, logDriveLetter, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
+        if (!dataDriveLetter || !logDriveLetter || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
+            ignoredDrives.push(drive as SizingViolationResponseType);
+        } else if (dataDriveLetter !== logDriveLetter) {
+            const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
+            if (logToDriveSizePercent > 30) {
+                overProvisionedDrives.push(drive as SizingViolationResponseType);
+            } else if (logToDriveSizePercent < 20) {
+                underProvisionedDrives.push(drive as SizingViolationResponseType);
+            } else {
+                optimisedDrives.push(drive as SizingViolationResponseType);
+            }
+        } else {
+            ignoredDrives.push(drive as SizingViolationResponseType);
+        }
+    });
+    key = 'log-drive-size';
+    status =
+        !isEmpty(overProvisionedDrives) || !isEmpty(underProvisionedDrives)
+            ? AssessmentStatus.NOT_OPTIMIZED
+            : isEmpty(optimisedDrives) && !isEmpty(ignoredDrives)
+            ? AssessmentStatus.NOT_APPLICABLE
+            : AssessmentStatus.OPTIMIZED;
+
+    return { key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives, optimisedDrives };
+}
+
+function getTempDbVolumeDrift(value: any, status: AssessmentStatus, key: string) {
+    logger.info('Getting tempdb volume drift', value);
+    const {
+        tempdbDriveLetter,
+        defaultDataDriveLetter: defaultDataDrive,
+        defaultDataDriveSizeMB,
+        tempdbDriveTotalSizeMB
+    } = value;
+
+    let tempdbPercent = 0;
+    if (defaultDataDrive === tempdbDriveLetter) {
+        status = AssessmentStatus.NOT_APPLICABLE;
+    } else {
+        tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / defaultDataDriveSizeMB) * 100);
+        status =
+            tempdbPercent > 20
+                ? AssessmentStatus.OVER_PROVISIONED
+                : tempdbPercent < 10
+                ? AssessmentStatus.UNDER_PROVISIONED
+                : AssessmentStatus.OPTIMIZED;
+    }
+    key = 'tempdb-drive-size';
+    return { status, key, tempdbPercent, defaultDataDriveSizeMB };
+}
+
+async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
+    logger.info('Getting headroom drift', { credentialsId, region, fileSystemId });
+    const { ssdStorageCapacityInBytes, totalVolumeSizeInBytes } = await getFsxStorageDetails(
+        credentialsId,
+        region,
+        fileSystemId
+    );
+
+    const headroomPercent = Math.ceil(
+        ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
+    );
+    const sizePercent = Number(headroomPercent);
+    const status =
+        sizePercent <= 100 || sizePercent >= 35
+            ? AssessmentStatus.OPTIMIZED
+            : sizePercent > 30
+            ? AssessmentStatus.OVER_PROVISIONED
+            : AssessmentStatus.UNDER_PROVISIONED;
+    return { status, headroomPercent, ssdStorageCapacityInBytes, totalVolumeSizeInBytes };
+}
 
 async function calculateStorageDrift(
     accountId: string,
@@ -183,10 +264,9 @@ async function calculateStorageDrift(
     Object.entries(sizing).forEach(([key, value]) => {
         let goldenData = sizingConfigData.find(data => data.parameter === key);
 
-        const overProvisionedDrives: SizingViolationResponseType[] = [];
-        const underProvisionedDrives: SizingViolationResponseType[] = [];
-        const ignoredDrives: SizingViolationResponseType[] = [];
-        const optimisedDrives: SizingViolationResponseType[] = [];
+        let overProvisionedDrives;
+        let underProvisionedDrives;
+        let ignoredDrives;
 
         if (key === 'data-log-drive-details') {
             goldenData = sizingConfigData.find(data => data.parameter === 'log-drive-size');
@@ -201,49 +281,14 @@ async function calculateStorageDrift(
                 status = value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
             }
             if (key === 'data-log-drive-details') {
-                const driveDetails = Array.isArray(value) ? value : [value];
-                driveDetails.forEach((drive: { [x: string]: any }) => {
-                    const { dataDriveLetter, logDriveLetter, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
-                    if (!dataDriveLetter || !logDriveLetter || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
-                        ignoredDrives.push(drive as SizingViolationResponseType);
-                    } else if (dataDriveLetter !== logDriveLetter) {
-                        const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
-                        if (logToDriveSizePercent > 30) {
-                            overProvisionedDrives.push(drive as SizingViolationResponseType);
-                        } else if (logToDriveSizePercent < 20) {
-                            underProvisionedDrives.push(drive as SizingViolationResponseType);
-                        } else {
-                            optimisedDrives.push(drive as SizingViolationResponseType);
-                        }
-                    } else {
-                        ignoredDrives.push(drive as SizingViolationResponseType);
-                    }
-                });
-                key = 'log-drive-size';
-                status =
-                    !isEmpty(overProvisionedDrives) || !isEmpty(underProvisionedDrives)
-                        ? AssessmentStatus.NOT_OPTIMIZED
-                        : isEmpty(optimisedDrives) && !isEmpty(ignoredDrives)
-                        ? AssessmentStatus.NOT_APPLICABLE
-                        : AssessmentStatus.OPTIMIZED;
+                ({ key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives } = getLogVolumeDrift(
+                    value,
+                    status,
+                    key
+                ));
             }
             if (key === 'data-tempdb-drive-details') {
-                const defaultDataDrive = value.defaultDataDriveLetter;
-                const { tempdbDriveLetter } = value;
-                if (defaultDataDrive === tempdbDriveLetter) {
-                    status = AssessmentStatus.NOT_APPLICABLE;
-                } else {
-                    const { defaultDataDriveSize } = value;
-                    const { tempdbDriveTotalSizeMB } = value;
-                    const tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / defaultDataDriveSize) * 100);
-                    status =
-                        tempdbPercent > 20
-                            ? AssessmentStatus.OVER_PROVISIONED
-                            : tempdbPercent < 10
-                            ? AssessmentStatus.UNDER_PROVISIONED
-                            : AssessmentStatus.OPTIMIZED;
-                }
-                key = 'tempdb-drive-size';
+                ({ status, key } = getTempDbVolumeDrift(value, status, key));
             }
             if (status === AssessmentStatus.OPTIMIZED) {
                 optimizedCount += 1;
@@ -260,31 +305,10 @@ async function calculateStorageDrift(
         }
     });
 
-    const [fsxSSDCapacity, { Volumes }] = await Promise.all([
-        getFsxStorageCapacity(credentialsId, region, filesystemId),
-        describeFSxVolumes(credentialsId, region, filesystemId)
-    ]);
-
-    const { storage } = fsxSSDCapacity ?? {};
-    const ssdStorageCapacityInBytes = storage ? storage * 1024 * 1024 * 1024 : 0;
-
-    const totalVolumeSizeInBytes = Volumes?.reduce((total, curr) => {
-        const amount = curr.OntapConfiguration?.SizeInBytes || 0;
-        return total + amount;
-    }, 0);
-
+    // Headroom drift assessment
     try {
-        const headroomPercent = Math.ceil(
-            ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
-        );
         const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
-        const sizePercent = Number(headroomPercent);
-        const status =
-            sizePercent <= 100 || sizePercent >= 35
-                ? AssessmentStatus.OPTIMIZED
-                : sizePercent > 30
-                ? AssessmentStatus.OVER_PROVISIONED
-                : AssessmentStatus.UNDER_PROVISIONED;
+        const { status } = await getHeadroomDrift(credentialsId, region, filesystemId);
         configCount += 1;
         if (status === AssessmentStatus.OPTIMIZED) {
             optimizedCount += 1;
@@ -529,7 +553,7 @@ async function initiateComputeAssessment(
     // }
 }
 
-async function driftAssessment(
+async function driftAssessmentDataCollection(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -597,7 +621,8 @@ async function driftAssessment(
         });
     }
 }
-async function triggerDriftAssessment(
+
+async function triggerDriftAssessmentDataCollection(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -671,7 +696,15 @@ async function triggerDriftAssessment(
             type: JOBTYPE.ASSESSMENT
         });
 
-        driftAssessment(accountId, credentialsId, region, job.id, databaseHostId, runningInstances, fields);
+        driftAssessmentDataCollection(
+            accountId,
+            credentialsId,
+            region,
+            job.id,
+            databaseHostId,
+            runningInstances,
+            fields
+        );
 
         return { jobId: job.id };
     }
@@ -735,4 +768,12 @@ function getMatchingAssessmentStatus(finding: string) {
     }
 }
 
-export { triggerDriftAssessment, fetchDriftAssessment, driftAssessment };
+export {
+    triggerDriftAssessmentDataCollection,
+    fetchDriftAssessment,
+    driftAssessmentDataCollection,
+    getHeadroomDrift,
+    getLogVolumeDrift,
+    getTempDbVolumeDrift,
+    getFsxStorageDetails
+};

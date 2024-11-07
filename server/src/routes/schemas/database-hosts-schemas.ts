@@ -328,7 +328,7 @@ const GetSandboxSnapshotsSchema = {
     }
 };
 
-const DriftAssessment = {
+const driftAssessmentDataCollection = {
     ...resourceRequest,
     summary: 'Get database instance parameters drift from recommended settings',
     description: 'Get database instance parameters drift from recommended settings',
@@ -396,7 +396,7 @@ export {
     GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,
-    DriftAssessment,
+    driftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
     OptimizeStorageSchema
 };

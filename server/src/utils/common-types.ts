@@ -212,14 +212,30 @@ interface WorkloadInstance {
     cloudProviderAccountId: string;
     resourceName: string;
 }
-
+interface LogDriveDetails {
+    databaseName: string;
+    logDriveLetter: string;
+    dataDriveLetter: string;
+    logDriveTotalSizeMB: number;
+    dataDriveTotalSizeMB: number;
+}
+interface TempDbDriveDetails {
+    databaseName: string;
+    tempDbDriveLetter: string;
+    tempDbDriveTotalSizeMB: number;
+}
+interface Sizing {
+    'performance-tier': string;
+    'data-log-drive-details': LogDriveDetails;
+    'data-tempdb-drive-details': TempDbDriveDetails;
+}
 interface StorageAssessment {
     filesystemId: string;
     volumes: Array<{ Key?: string; Value?: string }>;
     luns: Array<{ Key?: string; Value?: string }>;
     os: Array<{ Key?: string; Value?: string }>;
     layout: JSON;
-    sizing: JSON;
+    sizing: Sizing;
 }
 
 interface DriftAssessmentJob {

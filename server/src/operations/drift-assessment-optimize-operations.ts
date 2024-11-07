@@ -11,7 +11,7 @@ import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/drift-assessme
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import { getTimeDifferenceInMinutes, isDemo, sleep, sqlResponseParsing } from '../utils/utils';
-import { driftAssessment } from './drift-assessment';
+import { driftAssessmentDataCollection } from './drift-assessment';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -119,7 +119,7 @@ async function optimizeOperation(params: OptimizeOperationParams) {
         await sleep(5000);
     }
 
-    await driftAssessment(accountId, credentialsId, region, jobId, databaseHostId, [instanceToAssess]);
+    await driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, [instanceToAssess]);
     await updateJobDetails(accountId, credentialsId, region, parentJobId, {
         status: JOBSTATUS.COMPLETED,
         endTime: Date.now(),
@@ -332,8 +332,7 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
             fsxId as string
         );
 
-        const svmList = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId);
-        const svmName = svmList?.Name;
+        const { Name: svmName } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
 
         if (!svmName && !isDemoFlow) {
             const errorMessage = `No SVM with id ${svmId} found for ${fsxId} in ${region}`;

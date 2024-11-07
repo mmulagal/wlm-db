@@ -35,7 +35,7 @@ import {
     fetchSqlServerInstanceConfiguration
 } from './recommendation-operations';
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { triggerDriftAssessment } from './drift-assessment';
+import { triggerDriftAssessmentDataCollection } from './drift-assessment';
 import { DriftAssessmentJob, Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy, REDIS_URL } from '../utils/continous-optimization-consts';
 
@@ -364,7 +364,7 @@ async function scheduledAssessment() {
                 async (job: { data: DriftAssessmentJob }) => {
                     setAsyncLocalStorageResource(ACCOUNT_ID, job.data.accountId);
                     try {
-                        await triggerDriftAssessment(
+                        await triggerDriftAssessmentDataCollection(
                             job.data.accountId,
                             job.data.credentialsId,
                             job.data.region,

@@ -16,7 +16,9 @@ import {
     ListTagsForResourceCommandInput,
     DescribeVolumesCommandInput,
     DescribeStorageVirtualMachinesCommandInput,
-    DescribeBackupsCommandInput
+    DescribeBackupsCommandInput,
+    UpdateVolumeCommand,
+    UpdateFileSystemCommand
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -159,6 +161,53 @@ async function createTag(credentialsId: string, region: string, accountId: strin
     }
 }
 
+async function updateFsxVolumeSize(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    fsxVolumeId: string,
+    fsxVolumeSizeBytes: number
+) {
+    logger.info('Updating FSX volume', { credentialsId, region, fsxVolumeId });
+    try {
+        const client = await getFSxClient(credentialsId, region, accountId);
+        const response = await client.send(
+            new UpdateVolumeCommand({
+                VolumeId: fsxVolumeId,
+                OntapConfiguration: {
+                    SizeInMegabytes: fsxVolumeSizeBytes / 1024 / 1024,
+                    SizeInBytes: fsxVolumeSizeBytes // if only SizeInMegabytes is provided, SizeInBytes was not reflected in describe volumes response. Seems like a bug on AWS SDK.
+                }
+            })
+        );
+        logger.info('FSX volume updated successfully:', response);
+    } catch (err) {
+        logger.error('Error updating FSX volume:', err);
+    }
+}
+
+async function updateFsxCapacity(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    fsxFsId: string,
+    newFsxStorageCapactiyGiB: number
+) {
+    logger.info('Updating FSX capacity', { credentialsId, region, fsxFsId });
+    try {
+        const client = await getFSxClient(credentialsId, region, accountId);
+        const response = await client.send(
+            new UpdateFileSystemCommand({
+                FileSystemId: fsxFsId,
+                StorageCapacity: newFsxStorageCapactiyGiB
+            })
+        );
+        logger.info('FSX file system capacity updated successfully:', response);
+    } catch (err) {
+        logger.error('Error updating file system capacity:', err);
+    }
+}
+
 export {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -166,5 +215,7 @@ export {
     describeFSxBackups,
     describeFSx,
     listResourceTags,
-    createTag
+    createTag,
+    updateFsxVolumeSize,
+    updateFsxCapacity
 };
