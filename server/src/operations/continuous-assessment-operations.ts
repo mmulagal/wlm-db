@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import {
     AssessmentCategories,
     AssessmentStatus,
@@ -120,7 +121,11 @@ async function logDriveOptimization(
                 await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredLogVolumeSizeBytes);
                 logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
             } else {
-                logger.warn(
+                logger.error(
+                    'Not enough room in the FSx. Please add permission or increase FSx SSD capacity manually to the desired capacity.'
+                );
+                throw createError(
+                    409,
                     'Not enough room in the FSx. Please add permission or increase FSx SSD capacity manually to the desired capacity.'
                 );
                 // possibly a new API to increase FSx SSD capacity
@@ -162,7 +167,11 @@ async function tempDbDriveOptimization(
             logger.info(`Temp db volume size increased to ${requiredTempDbVolumeSizeBytes} bytes.`);
             return;
         }
-        logger.warn(
+        logger.error(
+            'Not enough room in the FSx. Please add permission or increase FSx SSD capacity manually to the desired capacity.'
+        );
+        throw createError(
+            409,
             'Not enough room in the FSx. Please add permission or increase FSx SSD capacity manually to the desired capacity.'
         );
         // possibly a new API to increase FSx SSD capacity
