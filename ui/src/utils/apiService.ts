@@ -399,12 +399,12 @@ export const workloadFactoryResourceApiV2 = createApi({
         return {
             getResourceDetailsV2: builder.query({
                 query: ({ credentialId, region, id, sqlInstanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology`
                 })
             }),
             getDatabaseListV2: builder.query({
                 query: ({ credentialId, region, id, sqlInstanceId, fields = false }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}/databases${
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}/databases${
                         fields ? '?fields=protection' : ''
                     }`
                 })
@@ -530,7 +530,7 @@ export const createUserDbApi = createApi({
         return {
             getDriveInfoV2: builder.query({
                 query: ({ credentialId, region, id, instanceId, forSandbox }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${instanceId}/drive-information${
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/drive-information${
                         forSandbox ? '?forSandbox=true' : ''
                     }`
                 })
