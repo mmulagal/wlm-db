@@ -243,12 +243,15 @@ export const GENERAL = {
     //SIMPLE NOTIFICATION SERVICES
     SNS: 'Enable the Simple Notification Service (SNS) for this configuration',
     SNS_TEXT: 'Enter an SNS topic for Microsoft SQL Server to send notifications and alerts.',
+    SNS_TEXT_PGSQL: 'Enter an SNS topic for PostgreSQL Server to send notifications and alerts.',
     ARN: 'ARN',
     //Cloud watch
     CLOUD_WATCH_MONITORING: 'CloudWatch monitoring',
     RESOURCE_ROLLBACK: 'Resource rollback',
     CLOUD_WATCH_TEXT:
         'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
+        CLOUD_WATCH_TEXT_PGSQL:
+        'Set up monitors and automated insights for this PostgreSQL deployment using CloudWatch Application Insights.',
     //Resource Text
     RESOURCE_TEXT_ONE: 'When a deployment fails, your provisioned resources will not be rolled back by default.',
     RESOURCE_TEXT_TWO:
