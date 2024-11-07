@@ -399,12 +399,12 @@ export const workloadFactoryResourceApiV2 = createApi({
         return {
             getResourceDetailsV2: builder.query({
                 query: ({ credentialId, region, id, sqlInstanceId }) => ({
-                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology`
                 })
             }),
             getDatabaseListV2: builder.query({
                 query: ({ credentialId, region, id, sqlInstanceId, fields = false }) => ({
-                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}/databases${
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${sqlInstanceId}/databases${
                         fields ? '?fields=protection' : ''
                     }`
                 })
@@ -530,21 +530,21 @@ export const createUserDbApi = createApi({
         return {
             getDriveInfoV2: builder.query({
                 query: ({ credentialId, region, id, instanceId, forSandbox }) => ({
-                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${instanceId}/drive-information${
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instance/${instanceId}/drive-information${
                         forSandbox ? '?forSandbox=true' : ''
                     }`
                 })
             }),
             createUserDB: builder.mutation({
                 query: ({ credentialId, region, id, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database`,
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getCollationListV2: builder.query({
                 query: ({ credentialId, region, id, instanceId }) => ({
-                    url: `v2/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/collation`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/collation`
                 })
             })
         };
@@ -560,9 +560,9 @@ export const inventoryApi = createApi({
             getManagedHostData: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${regionId}/resources/managed-hosts?nextToken=${nextToken}`;
+                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/resources/managed-hosts?nextToken=${nextToken}`;
                     } else {
-                        return `v1/credentials/${credentialId}/regions/${regionId}/resources/managed-hosts`;
+                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/resources/managed-hosts`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -636,15 +636,15 @@ export const inventoryApiV2 = createApi({
                 query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
                     if (isDemoMode) {
                         if (nextToken) {
-                            return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
                         } else {
-                            return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation`;
                         }
                     } else {
                         if (nextToken) {
-                            return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2&nextToken=${nextToken}`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2&nextToken=${nextToken}`;
                         } else {
-                            return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2`;
                         }
                     }
                 },
@@ -662,9 +662,9 @@ export const inventoryApiV2 = createApi({
             getDatabaseHostsListV2: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
-                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology&nextToken=${nextToken}`;
+                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology&nextToken=${nextToken}`;
                     } else {
-                        return `v2/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology`;
+                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -712,9 +712,9 @@ export const sandboxApi = createApi({
             getDatabaseHostsForSandboxV2: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
-                        return `v2/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage&nextToken=${nextToken}`;
+                        return `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage&nextToken=${nextToken}`;
                     } else {
-                        return `v2/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage`;
+                        return `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts?fields=nodeTopology,databaseInstanceTopology,storage`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -731,9 +731,9 @@ export const sandboxApi = createApi({
             getSandboxList: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts/sandboxes?nextToken=${nextToken}`;
+                        return `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/sandboxes?nextToken=${nextToken}`;
                     } else {
-                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts/sandboxes`;
+                        return `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/sandboxes`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -749,59 +749,59 @@ export const sandboxApi = createApi({
             }),
             getSandboxSavings: builder.query({
                 query: ({ credentialId, region }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/sandboxes/savings`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/sandboxes/savings`
                 })
             }),
             createSandbox: builder.mutation({
                 query: ({ credentialId, region, payload }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/sandboxes`,
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/sandboxes`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getConnectionInfo: builder.query({
                 query: ({ regionId, credentialsId, databaseHostId, instanceId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/connection-string`
+                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/connection-string`
                 })
             }),
             getSplitEstimateInfo: builder.query({
                 query: ({ regionId, credentialsId, databaseHostId, instanceId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/split-estimate`
+                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/split-estimate`
                 })
             }),
             getDatabaseMountPoints: builder.query({
                 query: ({ region, credentialId, databaseHostId, databaseName, instanceId }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-mount-points?databaseName=${databaseName}&databaseInstanceId=${instanceId}`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-mount-points?databaseName=${databaseName}&databaseInstanceId=${instanceId}`
                 })
             }),
             deleteSandbox: builder.mutation({
                 query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}`,
+                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}`,
                     method: 'DELETE'
                 })
             }),
             updateSandbox: builder.mutation({
                 query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName, payload }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}`,
+                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}`,
                     method: 'PATCH',
                     body: payload
                 })
             }),
             splitSandbox: builder.mutation({
                 query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/split`,
+                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/split`,
                     method: 'POST'
                 })
             }),
             checkIntegrity: builder.mutation({
                 query: ({ credentialsId, regionId, databaseHostId, instanceId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/check-integrity`,
+                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/check-integrity`,
                     method: 'POST'
                 })
             }),
             getRollbackSnapshots: builder.query({
                 query: ({ credentialId, region, databaseHostId, instanceId, sandboxName }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/snapshots`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${instanceId}/sandboxes/${sandboxName}/snapshots`
                 })
             })
         };
