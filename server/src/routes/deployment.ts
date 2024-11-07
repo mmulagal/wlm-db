@@ -15,13 +15,11 @@ import {
     DeploymentStatusListSchema,
     DeploymentStatusSchema,
     DeployTemplateSchema,
-    DeploymentSummaryListSchema,
     FsxAvailableRegionsForThroughputSchema,
     CollationListSchema,
     PgSqlDeployTemplateSchema,
     TerraformSetupSchema
 } from './schemas/deployment-schemas';
-import { getDeploymentJobsSummary } from '../operations/jobs-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_MSSQL_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -124,14 +122,6 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .get('/v1/deployments', { schema: DeploymentSummaryListSchema }, async (request, reply) => {
-            const {
-                params: { accountId },
-                query: { statuses, nextToken }
-            } = request;
-            const response = await getDeploymentJobsSummary(accountId, statuses, nextToken);
-            return reply.send(response!);
-        })
         .get(
             '/v1/fsx-4gbps-supported-regions',
             { schema: FsxAvailableRegionsForThroughputSchema },

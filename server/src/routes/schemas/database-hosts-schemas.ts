@@ -190,17 +190,6 @@ const PatchResourceForSandboxSchema = {
     }
 };
 
-const RevertPatchResourceForSandboxSchema = {
-    params: CredentialsIdParams,
-    tags: [RouteTags.SANDBOX],
-    hide: process.env.NODE_ENV === 'production',
-    summary: 'Revert  for sandboxcreation resource metadata ',
-    description: 'Revert  for sandboxcreation resource metadata.',
-    response: {
-        200: Type.Any()
-    }
-};
-
 const GetSandboxConnectionStringSchema = {
     params: SandboxParams,
     tags: [RouteTags.SANDBOX],
@@ -374,7 +363,6 @@ export {
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,
     PatchResourceForSandboxSchema,
-    RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
     GetSandboxConnectionStringSchema,
     DeleteSandboxSchema,
