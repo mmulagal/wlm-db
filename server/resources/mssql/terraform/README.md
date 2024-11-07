@@ -8,47 +8,49 @@ This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, u
 2. **Standalone Instance (Standalone)** with Single-AZ FSx for ONTAP filesystem.
 
 ## Table of Contents
-1. [Features](#features)
+
+1. [Modules](#modules)
 2. [Deployment Models](#deployment-models)
 3. [Prerequisites](#prerequisites)
 4. [Installation](#installation)
-   - [Windows](#windows)
-   - [Mac](#mac)
-   - [Linux](#linux)
+    - [Windows](#windows)
+    - [Mac](#mac)
+    - [Linux](#linux)
 5. [Variables](#variables)
 6. [Initial setup and usage](#initial-setup-and-usage)
-   - [Step 1: Initialize Terraform](#step-1-initialize-terraform)
-   - [Step 2: Update `terraform.tfvars` file](#step-2-update-terraformtfvars-file)
-   - [Step 3: Plan the deployment](#step-3-plan-the-deployment)
-   - [Step 4: Apply the changes](#step-4-apply-the-changes)
-   - [Step 5: Destroy the deployment](#step-5-destroy-the-deployment)
+    - [Step 1: Initialize Terraform](#step-1-initialize-terraform)
+    - [Step 2: Update `terraform.tfvars` file](#step-2-update-terraformtfvars-file)
+    - [Step 3: Plan the deployment](#step-3-plan-the-deployment)
+    - [Step 4: Apply the changes](#step-4-apply-the-changes)
+    - [Step 5: Destroy the deployment](#step-5-destroy-the-deployment)
 
 ## Modules
 
-- **VPC endpoints**: Creates VPC Endpoints for private network deployments.
-- **Validation node**: Creates Single/Multiple validation Ec2 instances to do the set of validations for the Deployment.
-- **FSx for ONTAP volumes**: Configures three LUNs on FSxN volumes for SQL Data, SQL Log, and SQL TEMP.
-- **Failover cluster support**: If the failover cluster deployment model is chosen, an additional SQL Quorum volume is created.
-- **EC2 instances**: Deploys EC2 instances with SQL Server 2016, 2019, or 2022 Standard editions.
+-   **VPC endpoints**: Creates VPC Endpoints for private network deployments.
+-   **Validation node**: Creates Single/Multiple validation Ec2 instances to do the set of validations for the Deployment.
+-   **FSx for ONTAP volumes**: Configures three LUNs on FSxN volumes for SQL Data, SQL Log, and SQL TEMP.
+-   **Failover cluster support**: If the failover cluster deployment model is chosen, an additional SQL Quorum volume is created.
+-   **EC2 instances**: Deploys EC2 instances with SQL Server 2016, 2019, or 2022 Standard editions.
 
 ## Deployment Models
 
 1. **Failover Cluster Instances (FCI)**:
-   - Multi-AZ deployment for high availability.
-   - Creates multiple validation EC2 instances.
-   - Configures SQL Quorum volume for cluster management.
+
+    - Multi-AZ deployment for high availability.
+    - Creates multiple validation EC2 instances.
+    - Configures SQL Quorum volume for cluster management.
 
 2. **Standalone Instance**:
-   - Single-AZ deployment.
-   - Creates a single validation EC2 instance.
+    - Single-AZ deployment.
+    - Creates a single validation EC2 instance.
 
 ## Prerequisites
 
 -   Terraform v1.9.5 or later
 -   AWS account
 -   AWS CLI installed and configured with your account
-    - By default, this project will use the default profile.
-    - To use a specific profile, mention the profile name in the `tfvars` file as `aws_profile`.
+    -   By default, this project will use the default profile.
+    -   To use a specific profile, mention the profile name in the `tfvars` file as `aws_profile`.
 
 ## Installation
 
@@ -70,17 +72,17 @@ This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, u
 **Terraform**
 
 1. If you have Homebrew installed, you can install Terraform by running:
-   ```sh
-   brew install terraform
-   ```
+    ```sh
+    brew install terraform
+    ```
 2. If you don't have Homebrew, you can download the appropriate package for your system from the [Terraform downloads page](https://www.terraform.io/downloads.html) and move the Terraform binary to `/usr/local/bin/`.
 
 **AWS CLI**
 
 1. If you have Homebrew installed, you can install AWS CLI by running:
-   ```sh
-   brew install awscli
-   ```
+    ```sh
+    brew install awscli
+    ```
 2. If you don't have Homebrew, you can download the AWS CLI package from the [AWS CLI installation page](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html) and follow the instructions to install it.
 
 ### Linux
@@ -90,22 +92,26 @@ This Terraform automates the deployment of a Windows SQL Server on Amazon EC2, u
 1. Download the appropriate package for your system from the [Terraform downloads page](https://www.terraform.io/downloads.html).
 2. Unzip the downloaded file to a directory of your choice.
 3. Move the Terraform binary to `/usr/local/bin/`:
-   ```sh
-   sudo mv terraform /usr/local/bin/
-   ```
+    ```sh
+    sudo mv terraform /usr/local/bin/
+    ```
 
 **AWS CLI**
 
 1. Download the AWS CLI package from the [AWS CLI installation page](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html).
 2. Unzip the package:
-   ```sh
-   unzip awscliv2.zip
-   ```
+    ```sh
+    unzip awscliv2.zip
+    ```
 3. Run the install script:
-   ```sh
-   sudo ./aws/install
-   ```
-   ```
+
+    ```sh
+    sudo ./aws/install
+    ```
+
+    ```
+
+    ```
 
 ## Variables
 
@@ -158,4 +164,7 @@ terraform destroy
 ```
 
 **Note:** Please use the `terraform destroy` command carefully, as it will delete all the infrastructure created via Terraform.
+
+```
+
 ```
