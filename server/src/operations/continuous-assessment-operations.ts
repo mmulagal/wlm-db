@@ -108,16 +108,16 @@ async function logDriveOptimization(
             fileSystemId
         );
 
+        const availableCapacityInBytes = ssdStorageCapacityInBytes - totalVolumeSizeInBytes;
+
         // check if enough room in the FSxN: if there is, increase log volume size  to 25% of data volume. If not, ask user to add permission or increase FSx SSD capacity manually to desired capacity.
 
         underProvisionedDrives.forEach(async (drive: any) => {
             const { dataVolumeSizeInBytes } = drive;
             const requiredLogVolumeSizeBytes = dataVolumeSizeInBytes * 0.25;
 
-            const availableCapacityInBytes = ssdStorageCapacityInBytes - totalVolumeSizeInBytes;
-
             if (availableCapacityInBytes >= requiredLogVolumeSizeBytes) {
-                await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredLogVolumeSizeBytes); // Assume this function increases the log volume size
+                await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredLogVolumeSizeBytes);
                 logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
             } else {
                 logger.warn(
@@ -158,7 +158,7 @@ async function tempDbDriveOptimization(
         const availableCapacityInBytes = ssdStorageCapacityInBytes - totalVolumeSizeInBytes;
 
         if (availableCapacityInBytes >= requiredTempDbVolumeSizeBytes) {
-            await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredTempDbVolumeSizeBytes); // Assume this function increases the tempdb volume size
+            await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredTempDbVolumeSizeBytes);
             logger.info(`Temp db volume size increased to ${requiredTempDbVolumeSizeBytes} bytes.`);
             return;
         }
