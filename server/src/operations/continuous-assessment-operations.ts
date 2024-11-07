@@ -104,13 +104,15 @@ async function logDriveOptimization(
 
         // check if enough room in the FSxN: if there is, increase log volume size  to 25% of data volume. If not, ask user to add permission or increase FSx SSD capacity manually to desired capacity.
 
-        underProvisionedDrives.forEach(async (drive: any) => {
-            const { dataVolumeSizeInBytes } = drive;
-            const requiredLogVolumeSizeBytes = dataVolumeSizeInBytes * 0.25;
+        await Promise.all(
+            underProvisionedDrives.map(async (drive: any) => {
+                const { dataVolumeSizeInBytes } = drive;
+                const requiredLogVolumeSizeBytes = dataVolumeSizeInBytes * 0.25;
 
-            await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredLogVolumeSizeBytes);
-            logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
-        });
+                await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredLogVolumeSizeBytes);
+                logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
+            })
+        );
     }
     logger.info('Log drives are not under provisioned, no action required');
 }
