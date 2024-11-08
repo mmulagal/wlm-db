@@ -227,13 +227,7 @@
                     "ssm:GetCommandInvocation",
                     "ssm:SendCommand",
                     "ssm:GetConnectionStatus",
-                    "fsx:ListTagsForResource",
-                    "compute-optimizer:GetEnrollmentStatus",
-                    "compute-optimizer:PutRecommendationPreferences",
-                    "compute-optimizer:GetEffectiveRecommendationPreferences",
-                    "compute-optimizer:GetEC2InstanceRecommendations",
-                    "autoscaling:DescribeAutoScalingGroups",
-                    "autoscaling:DescribeAutoScalingInstances"
+                    "fsx:ListTagsForResource"
                 ],
                 "Resource": ["*"]
             },
