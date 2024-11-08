@@ -46,7 +46,7 @@ import deploymentJobsRoutes from './routes/jobs';
 import serviceStatusRoutes from './routes/service-status';
 import discoverRoutes from './routes/discover';
 import storageSavingsRoutes from './routes/storage-savings';
-import continuousAssessmentRoutes from './routes/continuous-assessment';
+import continuousOptimizationRoutes from './routes/continuous-optimization';
 
 import {
     createAuditGroup,
@@ -217,7 +217,7 @@ const app = fastify({
             discoverRoutes(instance);
             resourceRoutes(instance);
             storageSavingsRoutes(instance);
-            continuousAssessmentRoutes(instance);
+            continuousOptimizationRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }

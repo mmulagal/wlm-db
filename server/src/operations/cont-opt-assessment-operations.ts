@@ -9,8 +9,8 @@ import { getEc2Arn, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
-import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-assessment-scripts';
-import storageGoldenConfigData from './continuous-assessment/golden-configs/storage';
+import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
+import storageGoldenConfigData from './continuous-optimization/golden-configs/storage';
 import { HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { LogDriveDetails, StorageAssessment, TempDbDriveDetails, WorkloadInstance } from '../utils/common-types';
 import { registerJob, updateJobDetails } from './database/job-operations';
@@ -33,7 +33,7 @@ import {
     DriftAssessmentResponseType,
     SizingViolationResponseType,
     StorageParameterDriftResponseType
-} from '../routes/types/continuous-assessment.types';
+} from '../routes/types/continuous-optimization.types';
 
 const logger = getLogger();
 
@@ -525,7 +525,7 @@ async function initiateComputeAssessment(
             }))
         };
     } catch (error: any) {
-        errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Assessment. ${error.message}`;
+        errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Optimization. ${error.message}`;
         logger.error({ errorMessage, error });
         throw Error(errorMessage);
     }

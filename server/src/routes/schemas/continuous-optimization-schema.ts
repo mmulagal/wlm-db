@@ -10,7 +10,7 @@ import {
     OptimizeStorageRequestBody,
     OptimizeSizingQueryParams,
     DriftAssessmentResponse
-} from '../types/continuous-assessment.types';
+} from '../types/continuous-optimization.types';
 
 const resourceRequest = {
     tags: [RouteTags.RESOURCE],

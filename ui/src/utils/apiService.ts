@@ -854,12 +854,12 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/continuous-assessment?fields=storage,compute`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute`
                 })
             }),
             optimizeStorageConfig: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/continuous-assessment/optimize/storage`,
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage`,
                     method: 'POST',
                     body: payload
                 })

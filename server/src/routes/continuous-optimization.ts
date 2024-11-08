@@ -3,24 +3,24 @@ import { FastifyInstance } from 'fastify/types/instance';
 import {
     fetchDriftAssessment,
     triggerDriftAssessmentDataCollection
-} from '../operations/continuous-assessment-operations';
+} from '../operations/cont-opt-assessment-operations';
 import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
 import {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
     OptimizeStorageSchema,
     OptimizeSizingSchema
-} from './schemas/continuous-assessment-schema';
-import { optimizeStorage, optimizeSizing } from '../operations/continuous-assessment-optimize-operations';
+} from './schemas/continuous-optimization-schema';
+import { optimizeStorage, optimizeSizing } from '../operations/cont-opt-optimize-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
-export default function continuousAssessmentRoutes(fastify: FastifyInstance) {
+export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server
         .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/continuous-assessment`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
             { schema: DriftAssessmentDataCollection },
             async (request, reply) => {
                 const {
@@ -39,7 +39,7 @@ export default function continuousAssessmentRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/continuous-assessment`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
             { schema: TriggerDriftAssessmentSchema },
             async (request, reply) => {
                 const {
@@ -59,7 +59,7 @@ export default function continuousAssessmentRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/continuous-assessment/optimize/storage`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-configuration`,
             { schema: OptimizeStorageSchema },
             async (request, reply) => {
                 const {
@@ -78,7 +78,7 @@ export default function continuousAssessmentRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/continuous-assessment/optimize/sizing`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-sizing`,
             { schema: OptimizeSizingSchema },
             async (request, reply) => {
                 const {

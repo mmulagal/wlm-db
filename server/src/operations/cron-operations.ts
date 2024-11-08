@@ -35,7 +35,7 @@ import {
     fetchSqlServerInstanceConfiguration
 } from './recommendation-operations';
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { triggerDriftAssessmentDataCollection } from './continuous-assessment-operations';
+import { triggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { DriftAssessmentJob, Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy, REDIS_URL } from '../utils/continous-optimization-consts';
 
@@ -171,7 +171,7 @@ interface DatabaseInstancesIncludingResource extends DatabaseInstances {
 
 async function updateManagedInstRecPrefs() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
-        logger.info('Updating instance recommendation preferences for Continuous assessment feature');
+        logger.info('Updating instance recommendation preferences for Continuous optimization feature');
 
         const managedInstances = (await listAllManagedInstances()) as DatabaseInstancesIncludingResource[];
         if (isEmpty(managedInstances)) {

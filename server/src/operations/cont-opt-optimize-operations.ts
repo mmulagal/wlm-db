@@ -4,7 +4,7 @@ import { Metadata, DatabaseInstance, WorkloadInstance, StorageAssessment } from 
 import { HttpErrorCodes, AuditStatus } from '../utils/consts';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceInfo } from './database/database-operations';
-import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/continuous-assessment-scripts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import {
@@ -20,7 +20,7 @@ import {
     getHeadroomDrift,
     getLogVolumeDrift,
     getTempDbVolumeDrift
-} from './continuous-assessment-operations';
+} from './cont-opt-assessment-operations';
 import { describeFSxStorageVirtualMachines, updateFsxCapacity, updateFsxVolumeSize } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -34,7 +34,7 @@ import {
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
-import { OptimizeStorageRequestParamsType } from '../routes/types/continuous-assessment.types';
+import { OptimizeStorageRequestParamsType } from '../routes/types/continuous-optimization.types';
 
 const isDemoFlow = isDemo();
 
@@ -409,13 +409,13 @@ async function modifySizingAttributes(
                     break;
                 }
                 default:
-                    throw new Error('Invalid optimization type');
+                    throw createError('Invalid optimization type');
             }
         }
         jobStatus = JOBSTATUS.COMPLETED;
         updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (error) {
-        errorMessage = `Error while optimizing sizing ${error}`;
+        errorMessage = `Error while optimizing sizing: ${error}`;
         logger.error(errorMessage);
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
@@ -465,7 +465,7 @@ async function optimizeSizing(
     const { filesystemId } = storageAssessmentConfigData;
 
     const serverNameWithHostName = getServerNameWithHostname(sqlServerName!, instanceName);
-    const parentJobId = await handleOptimizeJobCreation(
+    const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
         region,
@@ -481,11 +481,11 @@ async function optimizeSizing(
         region,
         filesystemId,
         typesList,
-        parentJobId,
+        jobId,
         storageAssessmentConfigData
     );
 
-    return { parentJobId };
+    return { jobId };
 }
 
 async function headroomOptimization(
