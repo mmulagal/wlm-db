@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { getDatabaseHostSummary, getDatabases } from '../../src/operations/database-hosts-operations';
+import { getDatabaseHostSummaryV2 } from '../../src/operations/database-hosts-operations';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../simulator/scopes/aws/fsx-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -40,15 +40,16 @@ afterAll(async () => {
 });
 
 describe('Database host operations', () => {
-    it('Get databases in a server', async () => {
-        const resp = await getDatabases(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
-        expect(resp).toBeDefined();
-    });
-
+    // it('Get databases in a server', async () => {
+    //     const resp = await getDatabases(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
+    //     expect(resp).toBeDefined();
+    // });
     it('Get databases host summary', async () => {
-        const resp = await getDatabaseHostSummary(
+        const resp = await getDatabaseHostSummaryV2(
             ACCOUNT_ID,
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
             'serverDetails,performance,usageEstimation,storage,protection',
             {
                 id: null,

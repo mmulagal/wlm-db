@@ -1,27 +1,17 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
-    getDatabaseHostsSummary,
     getDatabaseHostsSummaryV2,
-    getDatabaseHostSummary,
-    getDatabases,
     getDatabaseHostSummaryV2,
     getDatabaseHostInstanceSummary,
     getDatabasesV2
 } from '../operations/database-hosts-operations';
 import { deployDatabase, getCollationDetails, getDriveInfo } from '../operations/createdb-operations';
 import {
-    DatabaseHostDetailsSchema,
-    DatabasesListSchema,
-    DatabaseHostsSummarySchema,
     DatabasesCreateSchema,
-    GetDriveInfoSchema,
     CreateSandboxSchema,
-    GetCollationDetailsSchema,
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,
-    PatchResourceForSandboxSchema,
-    RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
     GetSandboxConnectionStringSchema,
     DeleteSandboxSchema,
@@ -46,8 +36,6 @@ import {
     getSandboxesInfo,
     getDatabaseMountPointInfo,
     getSandboxSavings,
-    revertMetadataForSanboxTesting,
-    updateMetadataForSanboxTesting,
     deleteSandbox,
     getSandboxSplitEstimate,
     updateSandboxLifeCycle,
@@ -59,34 +47,15 @@ import { fetchDriftAssessment, triggerDriftAssessment } from '../operations/drif
 import { optimizeInstance } from '../operations/drift-assessment-optimize-operations';
 import { AssessmentTriggeredBy, OptimizeInstanceParams } from '../utils/continous-optimization-consts';
 
-const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
-const API_PREFIX_PATH_V2 = '/v2/credentials/:credentialsId/regions/:region';
-
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server
-        .get(`${API_PREFIX_PATH}/database-hosts`, { schema: DatabaseHostsSummarySchema }, async (request, reply) => {
-            const {
-                params: { accountId, credentialsId, region },
-                query: { fields, nextToken, vpcId, fsxId }
-            } = request;
-            const response = await getDatabaseHostsSummary(
-                accountId,
-                fields,
-                nextToken,
-                region,
-                credentialsId,
-                vpcId,
-                fsxId
-            );
-            return reply.send(response);
-        })
         // TODO: Accept instance id, database name as query params for more granularity
         .get(
-            `${API_PREFIX_PATH}/database-hosts/sandboxes/savings`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/sandboxes/savings`,
             { schema: GetSandboxSavingsSchema },
             async (request, reply) => {
                 const {
@@ -96,32 +65,8 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId`,
-            { schema: DatabaseHostDetailsSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, databaseHostId },
-                    query: { fields }
-                } = request;
-                const response = await getDatabaseHostSummary(accountId, databaseHostId, fields);
-                return reply.send(response);
-            }
-        )
-        .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/databases`,
-            { schema: DatabasesListSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, databaseHostId },
-                    query: { fields }
-                } = request;
-                const response = await getDatabases(accountId, databaseHostId, fields);
-                return reply.send(response);
-            }
-        )
         .post(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database`,
             { schema: DatabasesCreateSchema },
             async (request, reply) => {
                 const {
@@ -143,30 +88,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/drive-information`,
-            { schema: GetDriveInfoSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, databaseHostId, credentialsId, region },
-                    query: { forSandbox }
-                } = request;
-                const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region, forSandbox);
-                return reply.send(response);
-            }
-        )
-        .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/collation`,
-            { schema: GetCollationDetailsSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, databaseHostId, credentialsId, region }
-                } = request;
-                const response = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
-                return reply.send(response);
-            }
-        )
-        .get(
-            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/collation`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/collation`,
             { schema: GetCollationDetailsSchemaV2 },
             async (request, reply) => {
                 const {
@@ -184,7 +106,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
         )
         // TODO: Accept instance id as query params for more granularity
         .get(
-            `${API_PREFIX_PATH}/database-hosts/sandboxes`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/sandboxes`,
             { schema: GetSandboxesInfoSchema },
             async (request, reply) => {
                 const {
@@ -196,7 +118,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-mount-points`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-mount-points`,
             { schema: GetSandboxesMountPointSchema },
             async (request, reply) => {
                 const {
@@ -214,29 +136,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .patch(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes-meta-update`,
-            { schema: PatchResourceForSandboxSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId }
-                } = request;
-                const response = await updateMetadataForSanboxTesting(accountId, credentialsId, region, databaseHostId);
-                return reply.send(response);
-            }
-        )
-        .patch(
-            `${API_PREFIX_PATH}/database-hosts/revert-sandboxes-meta-update`,
-            { schema: RevertPatchResourceForSandboxSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region }
-                } = request;
-                const response = await revertMetadataForSanboxTesting(accountId, credentialsId, region);
-                return reply.send(response);
-            }
-        )
-        .post(`${API_PREFIX_PATH}/sandboxes`, { schema: CreateSandboxSchema }, async (request, reply) => {
+        .post(`${MSSQL_API_PREFIX_PATH}/sandboxes`, { schema: CreateSandboxSchema }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region },
                 body: { source, destination, tag, mountPoints }
@@ -253,7 +153,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             return reply.code(202).send(response);
         })
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/connection-string`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/connection-string`,
             { schema: GetSandboxConnectionStringSchema },
             async (request, reply) => {
                 const {
@@ -271,7 +171,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/split-estimate`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/split-estimate`,
             { schema: GetSandboxSplitEstimateSchema },
             async (request, reply) => {
                 const {
@@ -289,7 +189,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .delete(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName`,
             { schema: DeleteSandboxSchema },
             async (request, reply) => {
                 const {
@@ -307,7 +207,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .patch(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName`,
             { schema: SandboxLifeCycleSchema },
             async (request, reply) => {
                 const {
@@ -328,7 +228,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/split`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/split`,
             { schema: SandboxSplitSchema },
             async (request, reply) => {
                 const {
@@ -346,7 +246,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH_V2}/database-hosts`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts`,
             { schema: DatabaseHostsSummarySchemaV2 },
             async (request, reply) => {
                 const {
@@ -367,7 +267,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId`,
             { schema: DatabaseHostDetailsSchemaV2 },
             async (request, reply) => {
                 const {
@@ -385,7 +285,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instance/:databaseInstanceId`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId`,
             { schema: DatabaseHostInstanceDetailsSchema },
             async (request, reply) => {
                 const {
@@ -404,7 +304,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instance/:databaseInstanceId/databases`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/databases`,
             { schema: DatabasesListSchemaV2 },
             async (request, reply) => {
                 const {
@@ -423,7 +323,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/check-integrity`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/check-integrity`,
             { schema: CheckSandboxIntegritySchema },
             async (request, reply) => {
                 const {
@@ -441,7 +341,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/snapshots`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/snapshots`,
             { schema: GetSandboxSnapshotsSchema },
             async (request, reply) => {
                 const {
@@ -461,7 +361,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instance/:databaseInstanceId/drive-information`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drive-information`,
             { schema: GetDriveInfoSchemaV2 },
             async (request, reply) => {
                 const {
