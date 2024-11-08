@@ -34,7 +34,10 @@ import {
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
-import { OptimizeStorageRequestParamsType } from '../routes/types/continuous-optimization.types';
+import {
+    OptimizeStorageRequestParamsType,
+    SizingViolationResponseType
+} from '../routes/types/continuous-optimization.types';
 
 const isDemoFlow = isDemo();
 
@@ -523,7 +526,7 @@ async function headroomOptimization(
             // increase newFsxStorageCapactiy so that increment is atleast 10%
             newFsxStorageCapacity = increase > 10 ? newFsxStorageCapacity : ssdStorageCapacityInBytes * 1.1;
 
-            const newFsxStorageCapactiyGiB = sizeInGigaBytes(newFsxStorageCapacity);
+            const newFsxStorageCapactiyGiB = sizeInGigaBytes(newFsxStorageCapacity, 'B');
             return updateFsxCapacity(credentialsId, region, accountId, fileSystemId, newFsxStorageCapactiyGiB);
         }
         errorMessage = 'Headroom is more than 35%, no action required';
@@ -570,23 +573,24 @@ async function logDriveOptimization(
     let errorMessage;
     try {
         if (underProvisionedDrives.length > 0) {
-            logger.info(
-                'Under provisioned: Log drives are under provisioned',
-                underProvisionedDrives.map((drive: any) => drive.driveName)
-            );
             await Promise.all(
-                underProvisionedDrives.map(async (drive: any) => {
-                    const { dataVolumeSizeInBytes } = drive;
-                    const requiredLogVolumeSizeBytes = dataVolumeSizeInBytes * 0.25; // Increase log volume to 25% of data volume
+                underProvisionedDrives.map(async (drive: SizingViolationResponseType) => {
+                    const { dataDriveTotalSizeMB = 0 } = drive;
+                    if (dataDriveTotalSizeMB > 0) {
+                        const requiredLogVolumeSizeMB = dataDriveTotalSizeMB * 0.25; // Increase log volume to 25% of data volume
+                        const requiredLogVolumeSizeBytes = convertToBytes(requiredLogVolumeSizeMB, 'MiB') || 0;
 
-                    await updateFsxVolumeSize(
-                        credentialsId,
-                        region,
-                        accountId,
-                        fileSystemId,
-                        requiredLogVolumeSizeBytes
-                    );
-                    logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
+                        await updateFsxVolumeSize(
+                            credentialsId,
+                            region,
+                            accountId,
+                            'replace with fsx volume ID', // TODO: this has to be fsx volume ID
+                            requiredLogVolumeSizeBytes
+                        );
+                        logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
+                    } else {
+                        throw createError(400, 'Data drive size is unavailable, cannot calculate log drive size');
+                    }
                 })
             );
             jobStatus = JOBSTATUS.COMPLETED;
@@ -643,7 +647,13 @@ async function tempDbDriveOptimization(
 
             const requiredTempDbVolumeSizeBytes = defaultDataDriveSizeBytes * 0.1; // Increase tempDB volume to 10% of data volume
 
-            await updateFsxVolumeSize(credentialsId, region, accountId, fileSystemId, requiredTempDbVolumeSizeBytes);
+            await updateFsxVolumeSize(
+                credentialsId,
+                region,
+                accountId,
+                'replace with fsx volume ID',
+                requiredTempDbVolumeSizeBytes
+            ); // TODO: this has to be fsx volume ID
 
             jobStatus = JOBSTATUS.COMPLETED;
 
