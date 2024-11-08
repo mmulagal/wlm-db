@@ -219,7 +219,9 @@ const GetWell = () => {
                                     }
                                 },
                                 {
-                                    title: `${selectedHostname}/${selectedDatabaseInstanceName}` || 'Host name/instance name'
+                                    title:
+                                        `${selectedHostname}/${selectedDatabaseInstanceName}` ||
+                                        'Host name/instance name'
                                 }
                             ]}
                         />

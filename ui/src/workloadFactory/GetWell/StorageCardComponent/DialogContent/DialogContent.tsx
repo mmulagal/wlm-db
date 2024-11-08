@@ -41,6 +41,8 @@ const DialogContent = ({ type }: DialogType) => {
                 return 'Multipath I/O Status = Enabled';
             case 'Multipath I/O Policy':
                 return 'Multipath I/O Policy = Round Robin';
+            case 'Multipath I/O Sessions':
+                return 'Multipath I/O Sessions = 5';
         }
     };
     const setContent = () => {
@@ -76,7 +78,7 @@ const DialogContent = ({ type }: DialogType) => {
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Cloud retrieval policy update: The cloud retrieval policy will also be updated.
+                                        Cloud retrieval policy update: The cloud retrieval policy will be updated.
                                     </DsTypography>
                                 </div>
 
@@ -221,7 +223,7 @@ const DialogContent = ({ type }: DialogType) => {
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory intends to update the provisioned capacity for your SQL Server TempDB
+                                Workload Factory recommends updating the provisioned capacity for your SQL Server TempDB
                                 volume and iSCSI LUN so that their sizing will be 10% of the user data volume.
                             </DsTypography>
                         </div>
@@ -398,69 +400,14 @@ const DialogContent = ({ type }: DialogType) => {
                 );
 
             case 'Multipath I/O Status':
-                return (
-                    <div className={styles['storage-tier-block']}>
-                        <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
-                            <DsTypography variant="Regular_14">
-                                Workload Factory intends to update Microsoft Multipath I/O configuration to meet vendor
-                                best practices for SQL Server.
-                            </DsTypography>
-                        </div>
-
-                        <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
-                            </DsTypography>
-                            <div className={styles.content}>
-                                <div className={styles.row}>
-                                    <div>
-                                        <Bullet />
-                                    </div>
-                                    <DsTypography variant="Regular_14">
-                                        Configuration update: The Microsoft Multipath I/O configuration will be updated
-                                        to align with vendor best practices for SQL Server. Title: Optimized
-                                        configuration
-                                        {`{
-                                            ${ontapConfigTextSet()}
-                                        }`}
-                                    </DsTypography>
-                                </div>
-                                <DsTypography variant="Regular_14">
-                                    Warning/Disclaimer/note: This process will require a temporary downtime of your SQL
-                                    Server services. Please take proper safety steps, such as performing necessary
-                                    backups and notifying affected users, to avoid any unintended downtime or data loss
-                                </DsTypography>
-                            </div>
-                        </div>
-
-                        <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                {GENERAL.NOTE}
-                            </DsTypography>
-                            <div className={styles.content}>
-                                <div className={styles.row}>
-                                    <div>
-                                        <Bullet />
-                                    </div>
-                                    <DsTypography variant="Regular_14">
-                                        By proceeding, you authorize Workload Factory to automatically perform these
-                                        actions on your behalf and acknowledge the required downtime
-                                    </DsTypography>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-
             case 'Multipath I/O Policy':
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory intends to update Microsoft Multipath I/O configuration to meet vendor
-                                best practices for SQL Server.
+                                Workload Factory recommends updating Microsoft Multipath I/O configuration to meet
+                                vendor best practices for SQL Server.
                             </DsTypography>
                         </div>
 
@@ -470,23 +417,24 @@ const DialogContent = ({ type }: DialogType) => {
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
-                                    <div>
-                                        <Bullet />
-                                    </div>
                                     <DsTypography variant="Regular_14">
                                         Configuration update: The Microsoft Multipath I/O configuration will be updated
-                                        to align with vendor best practices for SQL Server. Title: Optimized
-                                        configuration
-                                        {`{
-                                            ${ontapConfigTextSet()}
-                                        }`}
+                                        to align with vendor best practices for SQL Server.
                                     </DsTypography>
                                 </div>
-                                <DsTypography variant="Regular_14">
-                                    Warning/Disclaimer/note: This process will require a temporary downtime of your SQL
-                                    Server services. Please take proper safety steps, such as performing necessary
-                                    backups and notifying affected users, to avoid any unintended downtime or data loss
-                                </DsTypography>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Optimized configuration
+                            </DsTypography>
+                            <div className={styles['dialog-body']}>
+                                <div className={styles['code-box']}>
+                                    <div className={styles['code']}>
+                                        <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -499,10 +447,14 @@ const DialogContent = ({ type }: DialogType) => {
                                     <div>
                                         <Bullet />
                                     </div>
-                                    <DsTypography variant="Regular_14">
-                                        By proceeding, you authorize Workload Factory to automatically perform these
-                                        actions on your behalf and acknowledge the required downtime
-                                    </DsTypography>
+                                    <DsTypography variant="Regular_14">{GENERAL.OS_NOTE_POINT_ONE}</DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">{GENERAL.OS_NOTE_POINT_TWO}</DsTypography>
                                 </div>
                             </div>
                         </div>
@@ -526,17 +478,23 @@ const DialogContent = ({ type }: DialogType) => {
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
-                                    <div>
-                                        <Bullet />
-                                    </div>
                                     <DsTypography variant="Regular_14">
                                         Configuration update: The Microsoft Multipath I/O configuration will be updated
-                                        to align with vendor best practices for SQL Server. Title: Optimized
-                                        configuration
-                                        {`{
-                                            Multipath I/O Sessions = 5
-                                        }`}
+                                        to align with vendor best practices for SQL Server.
                                     </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Optimized configuration
+                            </DsTypography>
+                            <div className={styles['dialog-body']}>
+                                <div className={styles['code-box']}>
+                                    <div className={styles['code']}>
+                                        <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -570,39 +528,53 @@ const DialogContent = ({ type }: DialogType) => {
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                This process involves data loss and downtime. Carefully verify that all data has been
-                                backed up and all necessary actions have been taken before proceeding. Ensure that all
-                                files and data are moved to a different drive before starting the formatting process.
+                                Before taking action, you should understand that changing the NTFS allocation unit size
+                                to 64K requires reformatting the drives. This is a manual process that can only be done
+                                by the user and can lead to data loss if not handled properly.
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Please note the following important considerations:
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Downtime warning</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                It is crucial that you schedule this task during a maintenance window to minimize
+                                disruptions to your operations. This process could involve data loss and downtime. To
+                                prepare, carefully verify that all data has been backed up, and ensure that all files
+                                and data are moved to a different drive before starting the reformatting process.
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Optimization steps:
+                                Optimization steps
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
                                     </div>
-                                    <DsTypography variant="Regular_14">Open Windows Disk Management</DsTypography>
+                                    <DsTypography variant="Regular_14">Open Windows Disk Management.</DsTypography>
                                 </div>
+
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Identify the SQL drives (Data, Log, TempDB)
+                                        Identify the SQL drives to format (Data, Log, TempDB).
                                     </DsTypography>
                                 </div>
+
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
                                     </div>
-                                    <DsTypography variant="Regular_14">
-                                        Format drive: Perform a quick format
-                                    </DsTypography>
+                                    <DsTypography variant="Regular_14">Format one drive at a time.</DsTypography>
                                 </div>
+
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
@@ -611,6 +583,7 @@ const DialogContent = ({ type }: DialogType) => {
                                         Select 64K in the Allocation unit size drop-down menu.
                                     </DsTypography>
                                 </div>
+
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />

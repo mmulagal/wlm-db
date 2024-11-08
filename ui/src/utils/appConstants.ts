@@ -250,7 +250,7 @@ export const GENERAL = {
     RESOURCE_ROLLBACK: 'Resource rollback',
     CLOUD_WATCH_TEXT:
         'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
-        CLOUD_WATCH_TEXT_PGSQL:
+    CLOUD_WATCH_TEXT_PGSQL:
         'Set up monitors and automated insights for this PostgreSQL deployment using CloudWatch Application Insights.',
     //Resource Text
     RESOURCE_TEXT_ONE: 'When a deployment fails, your provisioned resources will not be rolled back by default.',
@@ -1164,10 +1164,16 @@ export const GENERAL = {
     NOTE_PONT_ONE: 'No disruption to your services is expected during this process.',
     NOTE_PONT_TWO:
         'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.',
+    OS_NOTE_POINT_ONE:
+        'This process will require a temporary downtime of your SQL Server services. Perform necessary backups and notify affected users, to avoid any unintended downtime or data loss.',
+    OS_NOTE_POINT_TWO:
+        'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and acknowledge the required downtime.',
     NOTE: 'Note',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
     OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
-    CLEAR_ALL: 'Clear all'
+    CLEAR_ALL: 'Clear all',
+    RIGHTSIZING_TOOLTIP:
+        'Right-sizing recommendations are based on AWS Compute Optimizer; the analysis can take up to 14 days as it reviews metrics from this period to provide accurate suggestions.'
 };
 
 export const CODE_VIEWER = {

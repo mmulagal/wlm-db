@@ -44,6 +44,10 @@
         gap: 8px;
         align-items: center;
 
+        .tooltip {
+            max-width: 296px;
+        }
+
         svg {
             position: relative;
             top: 2px;
