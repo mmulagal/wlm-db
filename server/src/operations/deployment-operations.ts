@@ -183,7 +183,7 @@ async function formatTemplateParameters(
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE.M5XLARGE;
+    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
@@ -858,7 +858,7 @@ async function createCloudFormationTemplateForUserDeployment(
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE.M5XLARGE;
+    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
@@ -1540,7 +1540,7 @@ async function formatPgSqlTemplateParameters(
     const stackName = derivedParams.StackName;
 
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE.M5XLARGE;
+    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
@@ -1732,7 +1732,7 @@ async function createCfTemplateForPgsqlDeployment(
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE.M5XLARGE;
+    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
