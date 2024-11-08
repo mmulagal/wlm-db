@@ -1,14 +1,23 @@
 #!/bin/bash
-$SOURCE = $1
-$DESTINATION = $2
+usage() {
+    echo "Usage: $0 -s <source> -d <destination>"
+    exit 1
+}
+
+# Parse command-line arguments
+while getopts "s:d:" opt; do
+    case $opt in
+        s) Source="$OPTARG" ;;
+        d) Destination="$OPTARG" ;;
+        *) usage ;;
+    esac
+done
 
 # Check if source and destination are provided
-if [ -z "$SOURCE" ] || [ -z "$DESTINATION" ]; then
-    echo "Usage: $0 <source> <destination>" >&2
-    exit 1
+if [ -z "$Source" ] || [ -z "$Destination" ]; then
+    usage
 fi
 
-echo "Unpacking $SOURCE to $DESTINATION"
-
-# Unzip the archive
-unzip "$SOURCE" -d "$DESTINATION"
+echo "Unpacking $Source to $Destination"
+unzip "$Source" -d "$Destination"
+chmod -R 755 /home/ec2-user/cfn/scripts

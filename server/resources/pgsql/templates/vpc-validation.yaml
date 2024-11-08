@@ -147,6 +147,7 @@ Resources:
                     config:
                         - CreateTempFolder
                         - FetchResources
+                        - ScriptSignatureVerificationandExtract
                         - Finalize       
                 CreateTempFolder:
                     commands:
@@ -171,37 +172,11 @@ Resources:
                             group: ec2-user
                 ScriptSignatureVerificationandExtract:
                     commands:
-                        a-unpack-signatures:
-                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
-                                C:\cfn\signig_files.zip -Destination C:\cfn
+                        a-change-to-sudo-user:
+                            command: sudo su
                             waitAfterCompletion: 0
-                        b-unpack-openssl:
-                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
-                                C:\cfn\OpenSSL-Win64.zip -Destination C:\cfn
-                            waitAfterCompletion: 0
-                        c-verify-validation-signature:
-                            command: !Join
-                                - ''
-                                - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\validation.zip -SignatureFilePath C:\cfn\signig_files\validation.sig 
-                                    -PubFilePath C:\cfn\signig_files\validation.pub -ResourceID ValidationNode1 -Stackname '"
-                                  - !Ref 'AWS::StackName'
-                                  - '''"'
-                            waitAfterCompletion: 0
-                        d-unpack-validation-scripts:
-                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
-                                C:\cfn\scripts\validation.zip -Destination C:\cfn\scripts
-                            waitAfterCompletion: 0
-                        e-verify-common-signature:
-                            command: !Join
-                                - ''
-                                - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\common.zip -SignatureFilePath C:\cfn\signig_files\common.sig 
-                                    -PubFilePath C:\cfn\signig_files\common.pub -ResourceID ValidationNode1 -Stackname '"
-                                  - !Ref 'AWS::StackName'
-                                  - '''"'
-                            waitAfterCompletion: 0
-                        f-unpack-common-scripts:
-                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
-                                C:\cfn\scripts\common.zip -Destination C:\cfn\scripts
+                        b-unpack-validation-scripts:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/validation.zip -d /home/ec2-user/cfn/scripts
                             waitAfterCompletion: 0
                 Finalize:
                     commands:
@@ -210,7 +185,7 @@ Resources:
                                 - '/home/ec2-user/cfn/scripts/validate-vpc.sh ${subnetId} ${AWS::Region} ${AWS::StackName} ValidationNode1'
                                 - subnetId: !Ref 'SubnetID'
                             waitAfterCompletion: '0'
-                        e-signal-resource:
+                        b-signal-resource:
                             command: !Sub 'cfn-signal -e $? --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
                             waitAfterCompletion: '0'
