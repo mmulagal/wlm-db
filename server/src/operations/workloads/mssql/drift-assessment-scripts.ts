@@ -194,6 +194,9 @@ const USER_DATABASE_LAYOUT = (instanceRecord: WorkloadInstance) => `
         ${slqcmdExecutionTemplate}
 
         $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "$instanceServiceName" 
+        if([string]::IsNullOrEmpty($queryResponse)) {
+            throw "No user databases found."
+        }
         $responseObject = Get-SerialNumberOfWinVolumes $queryResponse
         $responseObject = Get-LunFromSerialNumber $responseObject
         $responseObject = Get-VolumeIdFromName $responseObject
