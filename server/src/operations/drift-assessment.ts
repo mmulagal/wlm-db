@@ -517,7 +517,7 @@ async function initiateStorageAssessmentCollection(
         [instanceRecord.name],
         instanceRecord.sqlAuthEnabled,
         true
-    )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [], volumeLunMapping: {} }];
+    )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [] }];
 
     const volumeRecords =
         Object.values(instanceVolumeMapping)
