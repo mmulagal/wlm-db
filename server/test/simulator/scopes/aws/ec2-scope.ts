@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
+import sinon from 'sinon';
 import { faker } from '@faker-js/faker';
 import { cloneDeep, sample } from 'lodash-es';
 import {
@@ -46,6 +47,7 @@ import modifyVpcAttributesResponse from '../../responses/aws/modify-vpc-attribut
 import describeSnapshotsResponse from '../../responses/aws/describe-snapshots.json';
 import instanceTypesFromRequirements from '../../responses/aws/ec2-instance-types-from-requirements.json';
 import { inventoryDemoData } from '../../../../src/utils/demo-utils/demoInventoryData';
+import * as ec2Utils from '../../../../src/lib/aws/ec2';
 import { TEST_STOPPED_EC2_INSTANCE_ID } from '../../../utils/consts';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
@@ -198,8 +200,7 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
         return { Reservations: reservations };
     }
 
-    if(command.InstanceIds[0] === TEST_STOPPED_EC2_INSTANCE_ID) {
-        const dummyInstanceDetails = cloneDeep(describeInstanceResponse.Reservations[0].Instances[0]);
+    if (command.InstanceIds[0] === TEST_STOPPED_EC2_INSTANCE_ID) {
         const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
         dummyResevation.Instances[0].State.Name = 'stopped';
         return { Reservations: [dummyResevation] };
@@ -306,3 +307,37 @@ ec2Mock.on(ModifyInstanceAttributeCommand).resolves({
         totalRetryDelay: 0
     }
 });
+
+ec2Mock.on(DescribeInstanceStatusCommand).resolves({
+    InstanceStatuses: [
+        {
+            InstanceId: 'instanceId',
+            InstanceState: { Name: 'running' },
+            InstanceStatus: { Status: 'ok' },
+            SystemStatus: { Status: 'ok' }
+        }
+    ]
+});
+
+sinon
+    .stub(ec2Utils, 'waitForInstanceOk')
+    .resolves({
+        state: 'SUCCESS',
+        reason: {
+            $metadata: {
+                httpStatusCode: 200,
+                requestId: '08202b6c-9ce2-438a-ba09-dd31b539a046',
+                attempts: 1,
+                totalRetryDelay: 0
+            },
+            InstanceStatuses: [
+                {
+                    AvailabilityZone: 'ap-southeast-1b',
+                    InstanceId: 'i-03325779d5dfa1649',
+                    InstanceState: { Code: 16, Name: 'running' },
+                    InstanceStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' },
+                    SystemStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' }
+                }
+            ]
+        }
+    });
