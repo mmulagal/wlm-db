@@ -183,7 +183,6 @@ async function formatTemplateParameters(
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
@@ -207,7 +206,7 @@ async function formatTemplateParameters(
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: VALIDATION_NODE_INSTANCETYPE },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
@@ -858,7 +857,6 @@ async function createCloudFormationTemplateForUserDeployment(
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
@@ -884,7 +882,7 @@ async function createCloudFormationTemplateForUserDeployment(
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: VALIDATION_NODE_INSTANCETYPE },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
@@ -894,7 +892,7 @@ async function createCloudFormationTemplateForUserDeployment(
         { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr?.toString() || '' },
         { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
     ];
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${validationNodeInstanceType}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${VALIDATION_NODE_INSTANCETYPE}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
@@ -1540,7 +1538,6 @@ async function formatPgSqlTemplateParameters(
     const stackName = derivedParams.StackName;
 
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
@@ -1566,7 +1563,7 @@ async function formatPgSqlTemplateParameters(
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: VALIDATION_NODE_INSTANCETYPE },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
@@ -1732,7 +1729,6 @@ async function createCfTemplateForPgsqlDeployment(
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-    const validationNodeInstanceType = VALIDATION_NODE_INSTANCETYPE;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
@@ -1758,7 +1754,7 @@ async function createCfTemplateForPgsqlDeployment(
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: VALIDATION_NODE_INSTANCETYPE },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
@@ -1769,7 +1765,7 @@ async function createCfTemplateForPgsqlDeployment(
         { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
     ];
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${validationNodeInstanceType}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${VALIDATION_NODE_INSTANCETYPE}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
 
     if (fsxConfiguration.fsxPassword) {
         try {
