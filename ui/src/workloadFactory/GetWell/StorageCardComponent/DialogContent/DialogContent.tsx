@@ -1,7 +1,7 @@
 import styles from './DialogContent.module.scss';
 import { DsTypography, SelectField } from '@netapp/design-system';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
-import { GENERAL } from '../../../../utils/appConstants';
+import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedRecommendedInstance } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { useDispatch } from 'react-redux';
@@ -21,10 +21,8 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
     const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
         let options: optionType[] = [];
         recommendationOptions?.map((option: any) => {
-            let label2 = "Savings opportunity: " + option?.savingsOpportunity?.savingsOpportunityPercentage + "%";
-            options.push(
-                generateOptionType(option?.instanceType, option?.instanceType, label2, false, '')
-            );
+            let label2 = 'Savings opportunity: ' + option?.savingsOpportunity?.savingsOpportunityPercentage + '%';
+            options.push(generateOptionType(option?.instanceType, option?.instanceType, label2, false, ''));
         });
         if (options.length > 1) {
             dispatch(setSelectedRecommendedInstance(options[0]));
@@ -622,21 +620,20 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">{GETWELL_DIALOG_CONTENT.ACTION_SUMMARY}</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory is ready to migrate your SQL Server EC2 instance from the current
-                                instance type to the recommended instance type
+                                {GETWELL_DIALOG_CONTENT.COMPUTE_RS_AS_DESC}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                User action required
+                                {GETWELL_DIALOG_CONTENT.USER_ACTION_REQUIRED}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        Select one of the recommended instance types.
+                                        {GETWELL_DIALOG_CONTENT.SELECT_INSTANCE}
                                     </DsTypography>
                                 </div>
                                 <div className={styles.instanceTypeContainer}>
@@ -660,7 +657,7 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
                         {selectedDatabaseStorageType === 'FCI' ? (
                             <div className={styles['first-section']}>
                                 <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                    What will happen
+                                    {GETWELL_DIALOG_CONTENT.WHAT_WILL_HAPPEN}
                                 </DsTypography>
                                 <div className={styles.content}>
                                     <div className={styles.row}>
@@ -668,10 +665,7 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
                                             <Bullet />
                                         </div>
                                         <DsTypography variant="Regular_14">
-                                            Instance type change: Workload Factory will change the instance type for
-                                            your Amazon EC2 instance from the current instance type to the recommended
-                                            instance type on both SQL Server Always On Failover Cluster Instances (FCI)
-                                            nodes. Migration effort {'<AWS migration effort>'}.
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_WWH_DESC_FCI[0]}
                                         </DsTypography>
                                     </div>
 
@@ -680,9 +674,7 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
                                             <Bullet />
                                         </div>
                                         <DsTypography variant="Regular_14">
-                                            Failover and Failback: The migration will involve failing over and falling
-                                            back from the primary node in your SQL Server Always On Failover Cluster
-                                            Instances (FCI) to ensure a smooth transition.
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_WWH_DESC_FCI[1]}
                                         </DsTypography>
                                     </div>
                                 </div>
@@ -690,15 +682,12 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
                         ) : (
                             <div className={styles['first-section']}>
                                 <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                    What will happen
+                                    {GETWELL_DIALOG_CONTENT.WHAT_WILL_HAPPEN}
                                 </DsTypography>
                                 <div className={styles.content}>
                                     <div className={styles.row}>
                                         <DsTypography variant="Regular_14">
-                                            Workload Factory will change the instance type for your Amazon EC2 instance
-                                            from the current instance type to the recommended instance type. Migration
-                                            effort
-                                            {'<AWS migration effort>'}
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_WWH_DESC_STANDALONE}
                                         </DsTypography>
                                     </div>
                                 </div>
@@ -707,7 +696,7 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Downtime Warning
+                                {GETWELL_DIALOG_CONTENT.DOWNTIME_WARNING}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
@@ -716,13 +705,11 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
                                     </div>
                                     {selectedDatabaseStorageType === 'FCI' ? (
                                         <DsTypography variant="Regular_14">
-                                            No disruption to your services is expected during this process.
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_FCI[0]}
                                         </DsTypography>
                                     ) : (
                                         <DsTypography variant="Regular_14">
-                                            This process will require a temporary downtime of your SQL Server EC2
-                                            instance. Perform necessary backups and notify affected users, to avoid any
-                                            unintended downtime or data loss.
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_STANDALONE[0]}
                                         </DsTypography>
                                     )}
                                 </div>
@@ -733,13 +720,11 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
                                     </div>
                                     {selectedDatabaseStorageType === 'FCI' ? (
                                         <DsTypography variant="Regular_14">
-                                            Click Continue to authorize Workload Factory to automatically perform these
-                                            actions on your behalf.
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_FCI[1]}
                                         </DsTypography>
                                     ) : (
                                         <DsTypography variant="Regular_14">
-                                            Click Continue to authorize Workload Factory to automatically perform these
-                                            actions on your behalf and acknowledge the required downtime.
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_STANDALONE[1]}
                                         </DsTypography>
                                     )}
                                 </div>
