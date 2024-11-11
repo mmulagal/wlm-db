@@ -21,8 +21,9 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
     const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
         let options: optionType[] = [];
         recommendationOptions?.map((option: any) => {
+            let label2 = "Savings opportunity: " + option?.savingsOpportunity?.savingsOpportunityPercentage + "%";
             options.push(
-                generateOptionType(option?.instanceType, option?.instanceType, option?.instanceType, false, '')
+                generateOptionType(option?.instanceType, option?.instanceType, label2, false, '')
             );
         });
         if (options.length > 1) {
