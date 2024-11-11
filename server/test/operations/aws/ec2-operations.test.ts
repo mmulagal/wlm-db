@@ -14,7 +14,8 @@ import {
     isEbsAwsBackupEnabled,
     getInstanceDetailsByPrivateIp,
     getInstanceTypesFromInstanceRequirementsForManagedInstances,
-    getInstanceTypesFromInstanceRequirements
+    getInstanceTypesFromInstanceRequirements,
+    waitForInstanceToBeStopped
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -140,5 +141,11 @@ describe('EC2 Operations', () => {
             'AOAG'
         );
         expect(response).toBeDefined();
+    });
+
+    it('Wait for instance to be stopped', async () => {
+        await expect(
+            await waitForInstanceToBeStopped(credentialsId, DEFAULT_AWS_REGION, 'i-12345')
+        ).resolves.not.toThrow();
     });
 });

@@ -47,7 +47,12 @@ import {
     GetInstanceTypesFromInstanceRequirementsCommandInput,
     GetInstanceTypesFromInstanceRequirementsCommand,
     paginateDescribeVolumes,
-    Volume
+    Volume,
+    StopInstancesCommand,
+    ModifyInstanceAttributeCommand,
+    StartInstancesCommand,
+    waitUntilInstanceStatusOk,
+    DescribeInstanceStatusCommandInput
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -404,6 +409,73 @@ async function paginateDescribeEbsVolumes(
     return volumeList;
 }
 
+async function stopInstance(credentialsId: string, region: string, instanceId: string) {
+    logger.info('Stop instance', { credentialsId, region, instanceId });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const resp = await ec2.send(
+        new StopInstancesCommand({
+            InstanceIds: [instanceId]
+        })
+    );
+    logger.debug('Stop instance response:', resp);
+
+    return resp;
+}
+
+async function modifyInstanceType(credentialsId: string, region: string, instanceId: string, instanceType: string) {
+    logger.info('Change instance type', { credentialsId, region, instanceId, instanceType });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const resp = await ec2.send(
+        new ModifyInstanceAttributeCommand({
+            InstanceId: instanceId,
+            InstanceType: {
+                Value: instanceType
+            }
+        })
+    );
+    logger.debug('Change instance type response:', resp);
+
+    return resp;
+}
+
+async function startInstance(credentialsId: string, region: string, instanceId: string) {
+    logger.info('Start instance', { credentialsId, region, instanceId });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const resp = await ec2.send(
+        new StartInstancesCommand({
+            InstanceIds: [instanceId]
+        })
+    );
+    logger.debug('Start instance response:', resp);
+
+    return resp;
+}
+
+async function waitForInstanceOk(credentialsId: string, region: string, instanceId: string) {
+    logger.info('Wait for instance status to be OK', { credentialsId, region, instanceId });
+
+    try {
+        const params: DescribeInstanceStatusCommandInput = {
+            InstanceIds: [instanceId]
+        };
+        const ec2 = await getEC2Client(region, credentialsId);
+
+        // Wait until the instance status is OK
+        return await waitUntilInstanceStatusOk(
+            { client: ec2, maxWaitTime: 300 }, // maxWaitTime is in seconds
+            params
+        );
+    } catch (error) {
+        logger.error('Error waiting for instance status to be OK:', error);
+    }
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -427,5 +499,9 @@ export {
     describeInstanceTypeOfferings,
     describeSnapshots,
     getInstanceTypesFromInstanceRequirementsCommand,
-    paginateDescribeEbsVolumes
+    paginateDescribeEbsVolumes,
+    stopInstance,
+    startInstance,
+    modifyInstanceType,
+    waitForInstanceOk
 };

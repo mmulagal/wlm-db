@@ -16,6 +16,7 @@ import {
     CpuManufacturer
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
+import ms from 'ms';
 import {
     AMI_OWNERS,
     AWSQueryFields,
@@ -47,7 +48,7 @@ import {
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
-import { filterSqlAmis, getResourceNameFromTags, isDemo } from '../../utils/utils';
+import { filterSqlAmis, getResourceNameFromTags, isDemo, sleep } from '../../utils/utils';
 import { getEbsVolumeUtilization, getInstanceUtilization } from './cloud-watch-operations';
 import {
     ResourceDetails,
@@ -878,6 +879,31 @@ async function getInstanceDetailsByPrivateIp(credentialsId: string, region: stri
     return instanceDetails;
 }
 
+async function waitForInstanceToBeStopped(credentialsId: string, region: string, instanceId: string) {
+    logger.info('Waiting for instance to be stopped', { credentialsId, region, instanceId });
+
+    const maxRetries = 10;
+    const delay = '30s'; // 30 seconds wait ; total wait maxRetries * delay = 300s
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const { Reservations: [{ Instances: [{ State: { Name: instanceState = '' } = {} }] = [] } = {}] = [] } =
+            await describeInstance(credentialsId, region, { InstanceIds: [instanceId] });
+
+        if (!instanceState) {
+            throw new Error('Instance state not found');
+        }
+
+        if (instanceState === 'stopped') {
+            return true;
+        }
+        if (instanceState === 'stopping') {
+            await sleep(ms(delay));
+        }
+    }
+
+    throw new Error(`Instance ${instanceId} in ${region} did not stop within the expected time`);
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -898,5 +924,6 @@ export {
     getInstanceTypesFromInstanceRequirements,
     getInstanceDetailsByPrivateIp,
     determineBiggerInstance,
-    determineSmallerInstance
+    determineSmallerInstance,
+    waitForInstanceToBeStopped
 };

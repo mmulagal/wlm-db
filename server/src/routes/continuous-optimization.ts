@@ -9,9 +9,10 @@ import {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
     OptimizeStorageSchema,
-    OptimizeSizingSchema
+    OptimizeSizingSchema,
+    OptimizeComputeSchema
 } from './schemas/continuous-optimization-schema';
-import { optimizeStorage, optimizeSizing } from '../operations/cont-opt-optimize-operations';
+import { optimizeStorage, optimizeSizing, optimizeCompute } from '../operations/cont-opt-optimize-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -93,6 +94,26 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     databaseHostId,
                     databaseInstanceId,
                     type
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/compute`,
+            { schema: OptimizeComputeSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    body: { instanceType }
+                } = request;
+
+                const response = await optimizeCompute(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    instanceType
                 );
                 return reply.send(response);
             }

@@ -96,6 +96,12 @@ const OptimizeSizingQueryParams = Type.Object({
 
 type OptimizeSizingQueryParamsType = Static<typeof OptimizeSizingQueryParams>;
 
+const OptimizeComputeRequestBody = Type.Object({
+    instanceType: Type.String()
+});
+
+type OptimizeComputeRequestBodyType = Static<typeof OptimizeComputeRequestBody>;
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -107,5 +113,7 @@ export {
     OptimizeStorageRequestBodyType,
     OptimizeStorageRequestParamsType,
     OptimizeSizingQueryParams,
-    OptimizeSizingQueryParamsType
+    OptimizeSizingQueryParamsType,
+    OptimizeComputeRequestBody,
+    OptimizeComputeRequestBodyType
 };

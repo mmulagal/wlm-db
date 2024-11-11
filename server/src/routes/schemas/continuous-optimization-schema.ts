@@ -9,7 +9,8 @@ import {
 import {
     OptimizeStorageRequestBody,
     OptimizeSizingQueryParams,
-    DriftAssessmentResponse
+    DriftAssessmentResponse,
+    OptimizeComputeRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -74,4 +75,23 @@ const OptimizeSizingSchema = {
     }
 };
 
-export { DriftAssessmentDataCollection, TriggerDriftAssessmentSchema, OptimizeStorageSchema, OptimizeSizingSchema };
+const OptimizeComputeSchema = {
+    ...resourceRequest,
+    summary: 'Optimize compute',
+    description: 'Optimize compute as per the best practice for the selected database instance.',
+    params: DatabaseHostInstanceSummaryParams,
+    body: OptimizeComputeRequestBody,
+    tags: [RouteTags.ASSESSMENT],
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
+export {
+    DriftAssessmentDataCollection,
+    TriggerDriftAssessmentSchema,
+    OptimizeStorageSchema,
+    OptimizeSizingSchema,
+    OptimizeComputeSchema
+};

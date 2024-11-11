@@ -21,7 +21,11 @@ import {
     DescribeSnapshotsCommand,
     ImageState,
     PlatformValues,
-    GetInstanceTypesFromInstanceRequirementsCommand
+    GetInstanceTypesFromInstanceRequirementsCommand,
+    StopInstancesCommand,
+    StartInstancesCommand,
+    DescribeInstanceStatusCommand,
+    ModifyInstanceAttributeCommand
 } from '@aws-sdk/client-ec2';
 import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
@@ -234,3 +238,62 @@ ec2Mock.on(DescribeVolumesCommand).callsFake(async (command: DescribeVolumesComm
 ec2Mock.on(DescribeSnapshotsCommand).resolves(describeSnapshotsResponse);
 
 ec2Mock.on(GetInstanceTypesFromInstanceRequirementsCommand).resolves(instanceTypesFromRequirements);
+
+ec2Mock.on(StopInstancesCommand).resolves({
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: '6a5c3d60-1b68-400e-b986-4ef080ea9800',
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    StoppingInstances: [
+        {
+            CurrentState: { Code: 80, Name: 'stopped' },
+            InstanceId: 'i-03325779d5dfa1649',
+            PreviousState: { Code: 16, Name: 'running' }
+        }
+    ]
+});
+ec2Mock.on(StartInstancesCommand).resolves({
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: '9accf85a-96be-4d54-b745-4760e443205e',
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    StartingInstances: [
+        {
+            CurrentState: { Code: 0, Name: 'pending' },
+            InstanceId: 'i-03325779d5dfa1649',
+            PreviousState: { Code: 80, Name: 'stopped' }
+        }
+    ]
+});
+ec2Mock.on(DescribeInstanceStatusCommand).resolves({
+    state: 'SUCCESS',
+    reason: {
+        $metadata: {
+            httpStatusCode: 200,
+            requestId: 'e5ed0529-a129-4435-8e2c-25c92f2fa6df',
+            attempts: 1,
+            totalRetryDelay: 0
+        },
+        InstanceStatuses: [
+            {
+                AvailabilityZone: 'ap-southeast-1b',
+                InstanceId: 'i-03325779d5dfa1649',
+                InstanceState: { Code: 16, Name: 'running' },
+                InstanceStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' },
+                SystemStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' }
+            }
+        ]
+    }
+});
+ec2Mock.on(ModifyInstanceAttributeCommand).resolves({
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: '1c670b4e-f0f9-41a6-aca7-a00c855b1a2d',
+        attempts: 1,
+        totalRetryDelay: 0
+    }
+});

@@ -758,5 +758,6 @@ export {
     getHeadroomDrift,
     getLogVolumeDrift,
     getTempDbVolumeDrift,
-    getFsxStorageDetails
+    getFsxStorageDetails,
+    calculateComputeDrift
 };

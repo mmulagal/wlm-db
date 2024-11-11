@@ -2,7 +2,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
 import { Metadata, DatabaseInstance, WorkloadInstance, StorageAssessment } from '../utils/common-types';
 import { HttpErrorCodes, AuditStatus } from '../utils/consts';
-import { callSsmExecution } from './aws/ssm-operations';
+import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getInstanceInfo } from './database/database-operations';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
@@ -16,6 +16,7 @@ import {
     sizeInGigaBytes
 } from '../utils/utils';
 import {
+    calculateComputeDrift,
     driftAssessmentDataCollection,
     getHeadroomDrift,
     getLogVolumeDrift,
@@ -38,6 +39,10 @@ import {
     OptimizeStorageRequestParamsType,
     SizingViolationResponseType
 } from '../routes/types/continuous-optimization.types';
+import { listResources } from '../lib/database/db';
+import { modifyInstanceType, startInstance, stopInstance, waitForInstanceOk } from '../lib/aws/ec2';
+import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from './workloads/mssql/discover-consts';
+import { getInstanceDetailsByPrivateIp, waitForInstanceToBeStopped } from './aws/ec2-operations';
 
 const isDemoFlow = isDemo();
 
@@ -725,4 +730,141 @@ async function handleOptimizeJobCreation(
 
     return id;
 }
-export { optimizeStorage, optimizeSizing };
+
+async function optimizeCompute(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    instanceType: string
+) {
+    logger.info('Optimizing compute', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        instanceType
+    });
+
+    const { recommendationOptions } = await calculateComputeDrift(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    );
+    const recommendedInstanceTypes = recommendationOptions?.map(option => option.instanceType) || [];
+    if (!recommendedInstanceTypes.includes(instanceType)) {
+        throw createError(400, 'Invalid instance type, please choose from the recommended instance types');
+    }
+
+    const [{ resource_name: resourceName, metadata }] = await listResources(
+        accountId,
+        databaseHostId,
+        credentialsId,
+        region
+    );
+
+    const jobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        resourceName!,
+        JOBTYPE.OPTIMIZATION,
+        `Optimize EC2 compute for ${resourceName}`,
+        `Optimize compute-right sizing for ${resourceName}`
+    );
+
+    let jobStatus;
+    let errorMessage = '';
+    // TODO: check for all the permissions required for the operation
+    try {
+        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+        const { activeNodeInstanceId } = await getActiveSqlNode(
+            credentialsId,
+            region,
+            node1InstanceId,
+            node2InstanceId
+        );
+        if (activeNodeInstanceId) {
+            if (node2InstanceId) {
+                // more than one node in the cluster
+                const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
+                if (!connectionStatus) {
+                    throw createError(500, 'SSM connection is not available for the selected instance');
+                }
+                const clusterNetworkIpDetails = await callSsmExecution(
+                    credentialsId,
+                    region,
+                    CLUSTER_NETWORK_IP_INFO_PS1,
+                    node2InstanceId,
+                    accountId
+                );
+                if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
+                    throw createError('Failed to get network interface details during compute optimization.');
+                } else if (clusterNetworkIpDetails) {
+                    const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } =
+                        JSON.parse(clusterNetworkIpDetails);
+                    // get all nodes in a cluster
+                    if (clusterNetworkIpDetailsJson.clusterNetworkIps.length > 1) {
+                        const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
+                            credentialsId,
+                            region,
+                            clusterNetworkIpDetailsJson.clusterNetworkIps
+                        );
+                        const clusterNodeInstanceIds = clusterNodeDetails.map(node => node.ec2InstanceId);
+                        const nonPrimaryNodeInstanceIds = clusterNodeInstanceIds.filter(
+                            nodeId => nodeId !== activeNodeInstanceId
+                        );
+                        // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
+                        for (const nodeId of nonPrimaryNodeInstanceIds) {
+                            await updateNodeInstanceType(credentialsId, region, nodeId, instanceType);
+                        }
+                        logger.info('Instance type updated for all secondary nodes in the cluster');
+                    }
+                }
+            }
+            await updateNodeInstanceType(credentialsId, region, activeNodeInstanceId, instanceType); // modify instance type for the primary node ; secondary nodes are already modified at this point
+            jobStatus = JOBSTATUS.COMPLETED;
+        }
+
+        jobStatus = JOBSTATUS.FAILED;
+        errorMessage = 'No active node found in the cluster';
+    } catch (error) {
+        errorMessage = `Error while optimizing compute ${error}`;
+        logger.error(errorMessage);
+
+        jobStatus = JOBSTATUS.FAILED;
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, jobId, {
+            status: jobStatus || JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function updateNodeInstanceType(credentialsId: string, region: string, instanceId: string, instanceType: string) {
+    logger.info(`Updating instance type for ${instanceId} to ${instanceType}`);
+
+    try {
+        await stopInstance(credentialsId, region, instanceId);
+        if (!isDemo()) {
+            await waitForInstanceToBeStopped(credentialsId, region, instanceId);
+        }
+        await modifyInstanceType(credentialsId, region, instanceId, instanceType);
+        await startInstance(credentialsId, region, instanceId);
+        await waitForInstanceOk(credentialsId, region, instanceId);
+    } catch (error) {
+        const errorMessage = `Failed to update instance type for ${instanceId} to ${instanceType}. ${error}`;
+
+        logger.error(errorMessage);
+        throw createError(500, errorMessage);
+    }
+}
+
+export { optimizeStorage, optimizeSizing, optimizeCompute };
