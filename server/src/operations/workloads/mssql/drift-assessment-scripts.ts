@@ -13,6 +13,199 @@ import {
 } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
+const USER_DATABASE_LAYOUT = (instanceRecord: WorkloadInstance) => `
+    $WarningPreference = 'SilentlyContinue';
+    $sqlInstance = "${instanceRecord.name}"
+    $FSxID = "${instanceRecord.fsxFileSystem}"
+    $FSxRegion = "${instanceRecord.region}"
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
+    $PSToolkitRequiredVersion = '9.15.1.2407'
+
+    $responseObject = @{}
+    $responseObject['data'] = @()
+    $responseObject['log'] = @()
+
+    # Build sql instance service name
+    $instanceServiceName = "$env:COMPUTERNAME"
+    if ($sqlInstance -ne 'MSSQLSERVER') {
+        $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
+    }
+    
+    try {
+        $sqlquery = @"
+            SET NOCOUNT ON;
+            SELECT DISTINCT db.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb FROM sys.master_files AS mf
+            join sys.databases db
+            on db.database_id = mf.database_id
+            CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+            where db.database_id > 4
+            FOR JSON PATH;
+"@
+
+        Function Get-SerialNumberOfWinVolumes {
+            param(
+                [Parameter(Mandatory = $true)]
+                [string[]]$sqlresponse
+            )
+
+            $responseObject = [ordered]@{}
+            $responseObject['data'] = @()
+            $responseObject['log'] = @()
+
+            $winvolumes = $sqlresponse | ConvertFrom-Json 
+            foreach ($winvolume in $winvolumes) {
+
+                # check in winvolume volume id is null or empty string
+
+                if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
+                    
+                    $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype
+
+                    if ($vol.bustype -ne 'iscsi') {
+                        throw "Protocol Error: The database should be using iscsi protocol"
+                    }
+
+                    $object = @{
+                        "name" = $winvolume.name
+                        "fileName" = $winvolume.filename
+                        "lunSerialNumber" = $vol.serialnumber
+                        "fileId" = $winvolume.fileid
+                        "fileType" = $winvolume.type
+                        "sizeInMb" = $winvolume.sizeInMb
+                    }
+                    $type = 'data'
+                    if ($winvolume.type -ne 0) {
+                        $type = 'log'
+                    }
+                    $responseObject[$type] += $object
+                    }
+                }
+
+            return $responseObject
+        }
+    
+        ${ontapRestRequest}
+
+        Function Get-LunFromSerialNumber($responseObject) {
+            Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
+    
+            $QueryFilter = ''
+            foreach ($vol in $responseObject.data) {
+                $QueryFilter += $vol.lunSerialNumber + '|'
+            }
+
+            foreach ($vol in $responseObject.log) {
+                $QueryFilter += $vol.lunSerialNumber + '|'
+            }
+
+            $QueryFilter = $QueryFilter.TrimEnd('|')
+
+            $Params = @{
+                "ApiEndPoint" = "/storage/luns"
+            }
+    
+            if ($QueryFilter -ne '') {
+                $QueryFilter = [System.Web.HttpUtility]::UrlEncode($QueryFilter)
+                $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
+            }
+    
+            $params += @{"ApiQueryFields" = "fields=svm.name,location.volume.*"}
+    
+            $Response = Invoke-ONTAPRequest @Params
+    
+            $LunRecords = $Response.records
+    
+            if ($LunRecords.count -gt 0) {
+                $LunRecords | ForEach-Object {
+                    $lunrecord = $_
+                    foreach ($dataVol in $responseObject.data) {
+                        if ($dataVol.lunSerialNumber -ceq $lunrecord.serial_number) {
+                            $dataVol.Add("lunPath", $lunrecord.name)
+                            $dataVol.Add("volumeName", $lunrecord.location.volume.name)
+                            $dataVol.Add("volumeUuid", $lunrecord.location.volume.uuid)
+                            $dataVol.Add("svm", $lunrecord.svm.name)
+                        }
+                    }
+
+                    foreach ($logVol in $responseObject.log) {
+                        if ($logVol.lunSerialNumber -ceq $lunrecord.serial_number) {
+                            $logVol.Add("lunPath", $lunrecord.name)
+                            $logVol.Add("volumeName", $lunrecord.location.volume.name)
+                            $logVol.Add("volumeUuid", $lunrecord.location.volume.uuid)
+                            $logVol.Add("svm", $lunrecord.svm.name)
+                        }
+                    }
+                }
+            } else {
+                
+            }
+            return $responseObject
+        }
+    
+        Function Get-VolumeIdFromName($responseObject) {
+            
+            $QueryFilter = ''
+
+            ($responseObject.data + $responseObject.log) | ForEach-Object {
+                $QueryFilter += $_.volumeName + '|'
+            }
+
+            $QueryFilter = $QueryFilter.TrimEnd('|')
+    
+            $Params = @{
+                "ApiEndPoint" = "/storage/volumes"
+            }
+    
+            if ($QueryFilter -ne '') {
+                $QueryFilter = [System.Web.HttpUtility]::UrlEncode($QueryFilter)
+                $Params += @{"ApiQueryFilter" = "name=$QueryFilter"}
+            }
+    
+            $params += @{"ApiQueryFields" = "fields=clone.*"}
+    
+            $Response = Invoke-ONTAPRequest @Params
+    
+            $volumeRecords = $Response.records
+    
+            if ($volumeRecords.count -gt 0) {
+                $volumeRecords | ForEach-Object {
+                    $volrecord = $_
+                    if ($volrecord.clone.is_flexclone -eq $true) {
+                        ($responseObject.data + $responseObject.log) | ForEach-Object {
+                            if ($_.volumeName -eq $volrecord.name) {
+                                $_.Add('parentSvm', $volrecord.clone.parent_svm.name)
+                                $_.Add('parentVolume', $volrecord.clone.parent_volume.name)
+                                $_.Add('parentVolumeUuid', $volrecord.clone.parent_volume.uuid)
+                                $_.Add('parentSnapshot', $volrecord.clone.parent_snapshot.name)
+                                $_.Add('splitEstimate', $volrecord.clone.split_estimate)
+                            }
+                        }
+                    }
+                }
+            }
+            return $responseObject
+        }
+
+        $sqlCredential = @{'useSqlAuth' = $False}
+        if($sqlAuthEnabled) {
+            ${readSsmParameter(instanceRecord.name)}
+        }
+
+        ${slqcmdExecutionTemplate}
+
+        $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "$instanceServiceName" 
+        $responseObject = Get-SerialNumberOfWinVolumes $queryResponse
+        $responseObject = Get-LunFromSerialNumber $responseObject
+        $responseObject = Get-VolumeIdFromName $responseObject
+       
+    } catch {
+        if ($responseObject -eq $null) {
+            $responseObject = @{}
+        }
+        $responseObject['error'] = $_.Exception.Message
+    } 
+`;
+
 const INSTANCE_NETAPP_DRIVES = `
     Function Get-MappedDrives {
         param(
@@ -282,6 +475,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     # gather storage layout data
     ${INSTANCE_DRIVE_DETAILS_TEMPLATE(instanceRecord.name, instanceRecord.sqlAuthEnabled)}
     
+    # gather user database layout data
+    ${USER_DATABASE_LAYOUT(instanceRecord)}
+
     # gather OS configuration data 
     $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 | Select ProductId,VendorId 
     $MpioStatus = $false
@@ -310,6 +506,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                                         'default-data-files-location' = $defaultDataDrive;
                                         'default-log-files-location' = $defaultLogDrive;
                                         'tempdb-files-location' = $tempdbDrive;
+                                        'user-database-layout' = $($responseObject);
     }
     
     $DriftAssessmentData['sizing'] = @{
@@ -349,4 +546,4 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     
 `;
 
-export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STORAGE_PARAMS_SCRIPT };
+export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STORAGE_PARAMS_SCRIPT, USER_DATABASE_LAYOUT };

@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash-es';
+import { countBy, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
@@ -17,13 +17,10 @@ import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/drift-assessment-scripts';
 import storageGoldenConfigData from './drift-assessment/golden-configs/storage';
-import { HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { StorageAssessment, WorkloadInstance } from '../utils/common-types';
 import { registerJob, updateJobDetails } from './database/job-operations';
-import {
-    createDatabaseInstanceConfigData,
-    listDatabaseInstanceConfigData
-} from '../lib/database/database-instance-config';
+
 import { listResources } from '../lib/database/db';
 import { describeFSxVolumes } from '../lib/aws/fsx';
 import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
@@ -35,6 +32,10 @@ import {
     AwsWellArchitecturedPillars,
     SEVERITY
 } from '../utils/continous-optimization-consts';
+import {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData
+} from '../lib/database/database-instance-config';
 
 const logger = getLogger();
 
@@ -44,6 +45,26 @@ const osConfigData = storageGoldenConfigData.configuration.os;
 const layoutConfigData = storageGoldenConfigData.layout;
 const sizingConfigData = storageGoldenConfigData.sizing;
 
+interface DatabaseVolumeRecord {
+    svm: string;
+    volumeName: string;
+    fileId?: number;
+    lunSerialNumber: string;
+    name: string;
+    fileName: string;
+    lunPath: string;
+    volumeUuid: string;
+    sizeInMb: number;
+    fileType: number;
+    logVolume?: string;
+    logLunPath?: string;
+    logFileName?: string;
+    logSize?: number;
+    logVolumeUuid?: string;
+    databaseSizeInGb?: number;
+    logSizeInMb?: number;
+}
+
 async function calculateStorageDrift(
     accountId: string,
     credentialsId: string,
@@ -51,7 +72,7 @@ async function calculateStorageDrift(
     databaseHostId: string,
     databaseInstanceId: string
 ) {
-    logger.info('calculateStorageDrift', accountId, credentialsId, region, databaseHostId);
+    logger.info('calculateStorageDrift', accountId, credentialsId, region, databaseHostId, databaseInstanceId);
 
     const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
         accountId,
@@ -176,6 +197,100 @@ async function calculateStorageDrift(
                 severity: goldenData.severity,
                 recommendation: goldenData.recommendation,
                 tags: goldenData.tags
+            });
+        }
+        if (key === 'user-database-layout') {
+            const dataVolumes = value.data;
+            const logVolumes = value.log;
+            const reconstuctedValue = dataVolumes.filter((data: DatabaseVolumeRecord) =>
+                logVolumes.forEach((log: DatabaseVolumeRecord) => {
+                    if (data.name === log.name) {
+                        data.logVolume = log.volumeName;
+                        data.logLunPath = log.lunPath;
+                        data.logFileName = log.fileName;
+                        data.logSizeInMb = log.sizeInMb;
+                        data.logVolumeUuid = log.volumeUuid;
+                        data.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
+                        return !0;
+                    }
+                })
+            );
+
+            // start user database layout assessment
+            // each database is on separate data and log lun
+            const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = reconstuctedValue.filter(
+                (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
+            );
+
+            // each database is on separate data and log volume
+            const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = reconstuctedValue.filter(
+                (data: DatabaseVolumeRecord) => data.volumeUuid === data.logVolumeUuid
+            );
+
+            const databasesAbove500Gb: DatabaseVolumeRecord[] = reconstuctedValue.filter(
+                (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
+            );
+
+            const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
+            const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
+            const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
+            const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
+
+            const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
+            const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
+            const databasesSharingDataLuns = Object.values(groupByDataLun).filter(count => count > 1);
+            const databasesSharingLogLuns = Object.values(groupByLogLun).filter(count => count > 1);
+
+            let recommended = '';
+            let status = AssessmentStatus.OPTIMIZED;
+            let recommendationString = '';
+            let severity = 'critical';
+
+            if (!isEmpty(databasesOnSameDataLogLun)) {
+                recommended = 'separate-data-log-lun-per-database';
+                status = AssessmentStatus.NOT_OPTIMIZED;
+                severity = 'critical';
+            } else if (!isEmpty(databasesOnSameDataLogVolume)) {
+                recommended = 'separate-data-log-volume-per-database';
+                status = AssessmentStatus.NOT_OPTIMIZED;
+                severity = 'warning';
+            } else if (databasesAbove500Gb.length > 1) {
+                if (
+                    !isEmpty(databasesSharingDataVolumes) ||
+                    !isEmpty(databasesSharingLogVolumes) ||
+                    !isEmpty(databasesSharingDataLuns) ||
+                    !isEmpty(databasesSharingLogLuns)
+                ) {
+                    recommended = 'separate-data-log-lun-volume-for-large-database';
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    severity = 'critical';
+                    recommendationString =
+                        'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
+                }
+            } else if (!isEmpty(databasesSharingDataLuns) || !isEmpty(databasesSharingLogLuns)) {
+                recommended = 'separate-data-log-lun-for-large-database';
+                status = AssessmentStatus.NOT_OPTIMIZED;
+                severity = 'critical';
+                recommendationString =
+                    'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
+            } else if (!isEmpty(databasesSharingDataVolumes) || !isEmpty(databasesSharingLogVolumes)) {
+                recommended = 'separate-data-log-volume-for-large-database';
+                status = AssessmentStatus.NOT_OPTIMIZED;
+                severity = 'warning';
+                recommendationString =
+                    'Consolidate small-to-medium size databases that are less critical or have fewer I/O requirements to a single volume';
+            }
+
+            driftAssessmentData.layout.push({
+                name: 'user-database-layout',
+                recommended,
+                status,
+                severity,
+                recommendation: recommendationString,
+                tags: [
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                ]
             });
         }
     });
@@ -403,7 +518,7 @@ async function initiateStorageAssessmentCollection(
         [instanceRecord.name],
         instanceRecord.sqlAuthEnabled,
         true
-    )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [] }];
+    )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [], volumeLunMapping: {} }];
 
     const volumeRecords =
         Object.values(instanceVolumeMapping)
@@ -417,15 +532,16 @@ async function initiateStorageAssessmentCollection(
             ?.map(i => i.lunNames)
             .flat() || [];
 
-    const command = STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord);
+    const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
 
     const response = await callSsmExecution(
         credentialsId,
         region,
-        [command],
+        command,
         instanceRecord.activeNodeInstanceid,
         accountId,
-        false
+        false,
+        CUSTOM_SSM_EXECUTION_TIMEOUT
     );
 
     const parsedResponse = response ? sqlResponseParsing(response) : {};
@@ -734,4 +850,4 @@ function getMatchingAssessmentStatus(finding: string) {
     }
 }
 
-export { triggerDriftAssessment, fetchDriftAssessment, driftAssessment };
+export { triggerDriftAssessment, fetchDriftAssessment, driftAssessment, calculateStorageDrift };
