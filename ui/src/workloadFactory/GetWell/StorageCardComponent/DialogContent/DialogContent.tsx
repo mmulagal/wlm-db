@@ -1,16 +1,36 @@
 import styles from './DialogContent.module.scss';
-import { DsTypography, Popover } from '@netapp/design-system';
+import { DsTypography, SelectField } from '@netapp/design-system';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
-import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { GENERAL } from '../../../../utils/appConstants';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { setSelectedRecommendedInstance } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { useDispatch } from 'react-redux';
+import { optionType } from '@netapp/design-system/dist/components/Select';
+import { useMemo } from 'react';
+import { generateOptionType } from '../../../../utils/utilityFunctions';
 
 type DialogType = {
     type: string;
+    recommendationOptions?: any;
 };
 
-const DialogContent = ({ type }: DialogType) => {
+const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
+    const dispatch = useDispatch();
+    const { selectedRecommendedInstance, selectedDatabaseStorageType } = useAppSelector(state => state.getWellOptimize);
+
+    const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
+        let options: optionType[] = [];
+        recommendationOptions?.map((option: any) => {
+            options.push(
+                generateOptionType(option?.instanceType, option?.instanceType, option?.instanceType, false, '')
+            );
+        });
+        if (options.length > 1) {
+            dispatch(setSelectedRecommendedInstance(options[0]));
+        }
+        return options;
+    }, [recommendationOptions]);
+
     const ontapConfigTextSet = () => {
         switch (type) {
             case 'Autosize':
@@ -603,43 +623,124 @@ const DialogContent = ({ type }: DialogType) => {
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory is ready to migrate SQL Server EC2 instance from the current instance
-                                type to the recommended instance type
+                                Workload Factory is ready to migrate your SQL Server EC2 instance from the current
+                                instance type to the recommended instance type
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                User action required
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        Workload Factory will change the instance type for your Amazon EC2 instance from
-                                        the current instance type to the recommended instance type. Migration effort
-                                        (AWS migration effort)
+                                        Select one of the recommended instance types.
                                     </DsTypography>
+                                </div>
+                                <div className={styles.instanceTypeContainer}>
+                                    <SelectField
+                                        label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
+                                        isClearable={false}
+                                        isDisabled={recommendationOptions?.missingPermissions}
+                                        variant="two-lines"
+                                        value={selectedRecommendedInstance}
+                                        onChange={(selectedOptions: any): void => {
+                                            dispatch(setSelectedRecommendedInstance(selectedOptions));
+                                        }}
+                                        isSearchable={generateRecommendedInstanceTypes?.length > 5}
+                                        options={generateRecommendedInstanceTypes}
+                                        className={`${styles.widthSet}`}
+                                    />
                                 </div>
                             </div>
                         </div>
 
+                        {selectedDatabaseStorageType === 'FCI' ? (
+                            <div className={styles['first-section']}>
+                                <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                    What will happen
+                                </DsTypography>
+                                <div className={styles.content}>
+                                    <div className={styles.row}>
+                                        <div>
+                                            <Bullet />
+                                        </div>
+                                        <DsTypography variant="Regular_14">
+                                            Instance type change: Workload Factory will change the instance type for
+                                            your Amazon EC2 instance from the current instance type to the recommended
+                                            instance type on both SQL Server Always On Failover Cluster Instances (FCI)
+                                            nodes. Migration effort {'<AWS migration effort>'}.
+                                        </DsTypography>
+                                    </div>
+
+                                    <div className={styles.row}>
+                                        <div>
+                                            <Bullet />
+                                        </div>
+                                        <DsTypography variant="Regular_14">
+                                            Failover and Failback: The migration will involve failing over and falling
+                                            back from the primary node in your SQL Server Always On Failover Cluster
+                                            Instances (FCI) to ensure a smooth transition.
+                                        </DsTypography>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className={styles['first-section']}>
+                                <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                    What will happen
+                                </DsTypography>
+                                <div className={styles.content}>
+                                    <div className={styles.row}>
+                                        <DsTypography variant="Regular_14">
+                                            Workload Factory will change the instance type for your Amazon EC2 instance
+                                            from the current instance type to the recommended instance type. Migration
+                                            effort
+                                            {'<AWS migration effort>'}
+                                        </DsTypography>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                {GENERAL.NOTE}
+                                Downtime Warning
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
                                     </div>
-                                    <DsTypography variant="Regular_14">{GENERAL.NOTE_PONT_ONE}</DsTypography>
+                                    {selectedDatabaseStorageType === 'FCI' ? (
+                                        <DsTypography variant="Regular_14">
+                                            No disruption to your services is expected during this process.
+                                        </DsTypography>
+                                    ) : (
+                                        <DsTypography variant="Regular_14">
+                                            This process will require a temporary downtime of your SQL Server EC2
+                                            instance. Perform necessary backups and notify affected users, to avoid any
+                                            unintended downtime or data loss.
+                                        </DsTypography>
+                                    )}
                                 </div>
 
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
                                     </div>
-                                    <DsTypography variant="Regular_14">{GENERAL.NOTE_PONT_TWO}</DsTypography>
+                                    {selectedDatabaseStorageType === 'FCI' ? (
+                                        <DsTypography variant="Regular_14">
+                                            Click Continue to authorize Workload Factory to automatically perform these
+                                            actions on your behalf.
+                                        </DsTypography>
+                                    ) : (
+                                        <DsTypography variant="Regular_14">
+                                            Click Continue to authorize Workload Factory to automatically perform these
+                                            actions on your behalf and acknowledge the required downtime.
+                                        </DsTypography>
+                                    )}
                                 </div>
                             </div>
                         </div>
