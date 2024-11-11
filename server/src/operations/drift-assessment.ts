@@ -211,7 +211,6 @@ async function calculateStorageDrift(
                         data.logSizeInMb = log.sizeInMb;
                         data.logVolumeUuid = log.volumeUuid;
                         data.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
-                        return !0;
                     }
                 })
             );
