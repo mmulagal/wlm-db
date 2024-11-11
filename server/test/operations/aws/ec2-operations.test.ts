@@ -24,7 +24,7 @@ import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/aws/cloud-watch-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID, TEST_STOPPED_EC2_INSTANCE_ID } from '../../utils/consts';
 
 const WINDOWS = 'windows';
 const SQL = 'sql';
@@ -144,8 +144,7 @@ describe('EC2 Operations', () => {
     });
 
     it('Wait for instance to be stopped', async () => {
-        await expect(
-            await waitForInstanceToBeStopped(credentialsId, DEFAULT_AWS_REGION, 'i-12345')
-        ).resolves.not.toThrow();
+        const response = await waitForInstanceToBeStopped(credentialsId, DEFAULT_AWS_REGION, TEST_STOPPED_EC2_INSTANCE_ID)
+        expect(response).toBeTruthy();
     });
 });

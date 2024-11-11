@@ -46,6 +46,7 @@ import modifyVpcAttributesResponse from '../../responses/aws/modify-vpc-attribut
 import describeSnapshotsResponse from '../../responses/aws/describe-snapshots.json';
 import instanceTypesFromRequirements from '../../responses/aws/ec2-instance-types-from-requirements.json';
 import { inventoryDemoData } from '../../../../src/utils/demo-utils/demoInventoryData';
+import { TEST_STOPPED_EC2_INSTANCE_ID } from '../../../utils/consts';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
 const KeyFingerprint = `${faker.string.alphanumeric(20)}`;
@@ -168,6 +169,7 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
             instancesQueryPrivateIps = filtered?.Values;
         }
     }
+
     if (instanceFilters && instancesQueryPrivateIps) {
         const reservations = [];
         const { items } = inventoryDemoData('fsx', 'ebsTest'); // private-ip-address filter is only added to get partner node details of instances using ebs; revisit when the filter is used for other purposes
@@ -194,6 +196,13 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
         });
 
         return { Reservations: reservations };
+    }
+
+    if(command.InstanceIds[0] === TEST_STOPPED_EC2_INSTANCE_ID) {
+        const dummyInstanceDetails = cloneDeep(describeInstanceResponse.Reservations[0].Instances[0]);
+        const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
+        dummyResevation.Instances[0].State.Name = 'stopped';
+        return { Reservations: [dummyResevation] };
     }
     return describeInstanceResponse;
 });
