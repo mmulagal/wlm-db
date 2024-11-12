@@ -52,7 +52,7 @@ async function registerFsxOntapCredentials(
     fsxId: string,
     fsxPassword: string
 ) {
-    logger.info('Registering FSx for ONTAP credentials ', { accountId, credentialsId, region, fsxId, fsxPassword });
+    logger.info('Registering FSx for ONTAP credentials ', { accountId, credentialsId, region, fsxId });
 
     const { token } = await getWfServiceToken();
 
