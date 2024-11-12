@@ -11,8 +11,8 @@ import JobMonitoringDownloads from '../data/jobMonitoringDownload.json';
 import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
 import DiscoverEC2 from '../data/discoverEc2V2.json';
 import CredentialsStatus from '../data/credentialsStatus.json';
-import MssqlInstances from '../data/mssqlInstances.json';
 import ManagedInstanceList from '../data/managedInstanceList.json';
+import MssqlInstanceData from '../data/mssqlInstance.json';
 
 const router = require('express').Router();
 
@@ -30,10 +30,18 @@ router.get(
 );
 
 router.get(
-    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts/:id/databases`,
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:id/database-instances/:instanceId/databases`,
     async (req: {}, res: any) => {
         await delay(3000);
         generateResponse(res, 200, DatabaseList);
+    }
+);
+
+router.get(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:id/database-instances/:instanceId`,
+    async (req: {}, res: any) => {
+        await delay(3000);
+        generateResponse(res, 200, MssqlInstanceData);
     }
 );
 
@@ -131,7 +139,7 @@ router.post(
 );
 
 router.get(
-    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/resources/managed-hosts`,
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/resources/managed-hosts`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, ManagedInstanceList);

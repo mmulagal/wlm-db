@@ -4,13 +4,13 @@ import styles from './PostgressMainComponent.module.scss';
 import PostgressHeader from './PostgressHeader/PostgressHeader';
 import PostgressFooter from './PostgressFooter/PostgressFooter';
 import PostgressLayout from './PostgressLayout/PostgressLayout';
-import MssqlApis from '../CreateMsSql/MSSqlServer/MssqlApis';
 import { useAppSelector } from '../../store/storeHooks';
 import PostgreCodebox from './PostgreCodebox/PostgreCodebox';
+import PostgreApis from './PostgreServer/PostgreApis';
 
 const PostgressMainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
-    MssqlApis();
+    PostgreApis();
     return (
         <div className={styles.protectComponent}>
             {loading && (

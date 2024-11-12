@@ -5,12 +5,8 @@ export const initialPostgreState: any = {
     selectedDatabaseType: '',
     postgreDeploymentType: GENERAL.STANDALONE_INSTANCE,
     postgreOS: {},
-    postgreVersion: {},
-    postgreServerName: 'pgsqlserver',
-    dbCredentials: {
-        name: 'postgres',
-        password: ''
-    }
+    postgreVersion: '16',
+    postgreServerName: 'pgsqlserver'
 };
 
 const postgreFormSlice = createSlice({
@@ -47,7 +43,9 @@ export const {
     setPostgreDeploymentType,
     setPostgreOperatingSystem,
     setPostgreVersion,
-    setPostgreServerName
+    setPostgreServerName,
+    setPostgreDBCredentialsName,
+    setPostgreDBCredentialsPassword
 } = postgreFormSlice.actions;
 
 export default postgreFormSlice;

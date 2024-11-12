@@ -151,16 +151,6 @@ function Install-SSMAgent {
     )
 
     try {
-        Get-Service AmazonSSMAgent -ErrorAction Stop
-        Write-Output "Setting SSM Agent service to start automatically"
-        Set-Service -Name AmazonSSMAgent -StartupType Automatic
-        Start-Sleep -Seconds 30
-   
-        Write-Output "Restarting SSM Agent service"
-        Restart-Service AmazonSSMAgent -Force -ErrorAction Continue
-        Start-Sleep -Seconds 30
-    }
-    catch {
         $progressPreference = "silentlyContinue"
         $SSMAgentUrl = "https://amazon-ssm-$Region.s3.$Region.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe"
         Write-Output "Downloading SSM Agent from $SSMAgentUrl"
@@ -168,15 +158,18 @@ function Install-SSMAgent {
       
         Write-Output "Installing SSM Agent"
         Start-Process -FilePath "$env:USERPROFILE\Desktop\SSMAgent_latest.exe" -ArgumentList '/S'
-        Start-Sleep -Seconds 30
+        Start-Sleep -Seconds 60
   
         Write-Output "Setting SSM Agent service to start automatically"
         Set-Service -Name AmazonSSMAgent -StartupType Automatic
-        Start-Sleep -Seconds 30
+        Start-Sleep -Seconds 45
   
         Write-Output "Restarting SSM Agent service"
         Restart-Service AmazonSSMAgent -Force -ErrorAction Continue
         Start-Sleep -Seconds 30
+    }
+    catch {
+        Write-Output "An error occurred while installing SSM Agent: $_"
     }
 }
 

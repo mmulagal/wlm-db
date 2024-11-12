@@ -8,8 +8,6 @@ import {
     DeploymentStatusObjectParams,
     CloudFormationStaticTemplateRequestBody,
     CloudFormationStaticTemplateResponse,
-    DeploymentSummaryQueryString,
-    DeploymentSummaryListResponse,
     CloudFormationTemplateHeader,
     FsxAvailableRegionsForThroughputListResponse,
     CollationListResponse,
@@ -37,17 +35,6 @@ const CloudFormationTemplateSchema = {
     body: CloudFormationStaticTemplateRequestBody,
     response: {
         200: CloudFormationStaticTemplateResponse
-    }
-};
-
-const DeploymentSummaryListSchema = {
-    tags: [RouteTags.DEPLOYMENT],
-    params: AccountIdParams,
-    summary: 'Get deployment jobs summary',
-    description: 'API to get deployment jobs summary for given deployment status types',
-    querystring: DeploymentSummaryQueryString,
-    response: {
-        200: DeploymentSummaryListResponse
     }
 };
 
@@ -96,7 +83,7 @@ const DeploymentStatusSchema = {
 };
 
 const FsxAvailableRegionsForThroughputSchema = {
-    tags: [RouteTags.DEPLOYMENT],
+    tags: [RouteTags.AWS],
     params: AccountIdParams,
     summary: 'Get list of fsx available regions for 4 GBps of throughput capacity',
     description: 'API to get region list to provision FSX 4 GBps of throughput capacity',
@@ -133,7 +120,6 @@ export {
     DeploymentStatusListSchema,
     DeploymentStatusSchema,
     CloudFormationTemplateSchema,
-    DeploymentSummaryListSchema,
     FsxAvailableRegionsForThroughputSchema,
     CollationListSchema,
     PgSqlDeployTemplateSchema,

@@ -5,7 +5,7 @@ import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import moment from 'moment';
 import getLogger from '../utils/logger';
-import { getEc2Arn, sqlResponseParsing } from '../utils/utils';
+import { getEc2Arn, sizeInGigaBytes, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
@@ -119,13 +119,13 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
     const headroomPercent = Math.ceil(
         ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
     );
-    const sizePercent = Number(headroomPercent);
+    const ssdStorageCapacityGB = sizeInGigaBytes(ssdStorageCapacityInBytes);
     const status =
-        sizePercent <= 100 || sizePercent >= 35
-            ? AssessmentStatus.OPTIMIZED
-            : sizePercent > 30
+        headroomPercent < 35
+            ? AssessmentStatus.UNDER_PROVISIONED
+            : headroomPercent > 100 && ssdStorageCapacityGB && ssdStorageCapacityGB > 1024 // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
             ? AssessmentStatus.OVER_PROVISIONED
-            : AssessmentStatus.UNDER_PROVISIONED;
+            : AssessmentStatus.OPTIMIZED;
     return { status, headroomPercent, ssdStorageCapacityInBytes, totalVolumeSizeInBytes };
 }
 

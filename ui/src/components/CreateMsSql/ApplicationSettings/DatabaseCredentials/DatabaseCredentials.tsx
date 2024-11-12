@@ -131,6 +131,7 @@ const DatabaseCredentials = () => {
                                 }}
                                 value={credName}
                                 className={styles.textField}
+                                isDisabled={databaseType === DBType.POSTGRESQL}
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}

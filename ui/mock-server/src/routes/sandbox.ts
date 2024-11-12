@@ -4,7 +4,7 @@ import { BASE_URL, generateResponse } from '../utils/appUtils';
 const router = require('express').Router();
 
 router.get(
-    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts/sandboxes`,
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/sandboxes`,
     async (req: {}, res: Sandboxes) => {
         const retData = {
             count: 4,
@@ -60,7 +60,7 @@ router.get(
 );
 
 router.get(
-    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts/sandbox-savings`,
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/sandboxes/savings`,
     async (req: {}, res: Sandboxes) => {
         const retData = {
             consumedStorage: 10000,

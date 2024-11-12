@@ -19,7 +19,7 @@ const PostgreOperatingSystem = () => {
 
     const generateOSValues = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        const osValues = ['Amazon Linux 2023 AMI', 'Amazon Linux 2'];
+        const osValues = ['Amazon Linux 2023 AMI'];
         osValues.map((val: any, idx: number) => {
             const option = generateOptionType(val, val, val, false, '');
             options.push(option);
@@ -59,6 +59,7 @@ const PostgreOperatingSystem = () => {
                                 }}
                                 isSearchable={generateOSValues.length > 5}
                                 options={generateOSValues}
+                                isDisabled={true}
                             />
                         </div>
                     </DsTypography>

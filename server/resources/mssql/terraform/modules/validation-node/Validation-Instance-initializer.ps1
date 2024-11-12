@@ -71,18 +71,6 @@ function Install-SSMAgent {
     )
 
     try {
-        Get-Service AmazonSSMAgent -ErrorAction Stop
-        # Set the SSM Agent service to start automatically
-        Write-Output "Setting SSM Agent service to start automatically"
-        Set-Service -Name AmazonSSMAgent -StartupType Automatic
-        Start-Sleep -Seconds 30
-     
-        # Restart the SSM Agent service
-        Write-Output "Restarting SSM Agent service"
-        Restart-Service AmazonSSMAgent -Force -ErrorAction Continue
-        Start-Sleep -Seconds 30
-    }
-    catch {
         $progressPreference = "silentlyContinue"
         $SSMAgentUrl = "https://amazon-ssm-$Region.s3.$Region.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe"
         Write-Output "Downloading SSM Agent from $SSMAgentUrl"
@@ -91,17 +79,20 @@ function Install-SSMAgent {
         # Install the SSM Agent
         Write-Output "Installing SSM Agent"
         Start-Process -FilePath "$env:USERPROFILE\Desktop\SSMAgent_latest.exe" -ArgumentList '/S'
-        Start-Sleep -Seconds 30
+        Start-Sleep -Seconds 60
     
         # Set the SSM Agent service to start automatically
         Write-Output "Setting SSM Agent service to start automatically"
         Set-Service -Name AmazonSSMAgent -StartupType Automatic
-        Start-Sleep -Seconds 30
+        Start-Sleep -Seconds 45
     
         # Restart the SSM Agent service
         Write-Output "Restarting SSM Agent service"
         Restart-Service AmazonSSMAgent -Force -ErrorAction Continue
         Start-Sleep -Seconds 30
+    }
+    catch {
+        Write-Output "An error occurred while installing SSM Agent: $_"
     }
 }
 
@@ -137,7 +128,7 @@ else {
                         "Id"         = "CfnInitLog"
                         "FullName"   = "AWS.EC2.Windows.CloudWatch.CustomLog.CustomLogInputComponent,AWS.EC2.Windows.CloudWatch"
                         "Parameters" = @{
-                            "LogDirectoryPath" = "C:\\cfn\\log"
+                            "LogDirectoryPath" = "C:\cfn\log"
                             "LogName"          = "CfnInit"
                             "Levels"           = "7"
                             "TimestampFormat"  = "yyyy-MM-dd HH:mm:ss,fff"
@@ -152,9 +143,9 @@ else {
                         "Parameters" = @{
                             "AccessKey" = ""
                             "SecretKey" = ""
-                            "Region"    = $Region
-                            "LogGroup"  = $LogGroup
-                            "LogStream" = $InstanceId
+                            "Region"    = "$Region"
+                            "LogGroup"  = "$LogGroup"
+                            "LogStream" = "{instance_id}"
                         }
                     },
                     @{
@@ -163,7 +154,7 @@ else {
                         "Parameters" = @{
                             "AccessKey" = ""
                             "SecretKey" = ""
-                            "Region"    = $Region
+                            "Region"    = "$Region"
                             "NameSpace" = "Windows/Default"
                         }
                     }
@@ -180,7 +171,10 @@ else {
         $json = $config | ConvertTo-Json -Depth 10
     
         # Write the JSON to the configuration file
-        $json | Out-File -FilePath $ConfigFilePath
+        $json | Out-File -FilePath $ConfigFilePath -Encoding ascii
+        Start-Sleep -Seconds 30
+        Restart-Service AmazonSSMAgent -Force -ErrorAction Continue
+        Start-Sleep -Seconds 30
     }
     catch {
         Write-Output "An error occurred while configuring the CloudWatch Logs agent: $($_.Exception.Message)"

@@ -4,7 +4,7 @@ import MssqlInstancesV2 from '../data/mssqlInstancesV2.json';
 
 const router = require('express').Router();
 
-router.get(`${BASE_URL}/v2/credentials/:credentialsId/regions/:region/database-hosts`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, DatabaseHostsV2);
     }, 2000);

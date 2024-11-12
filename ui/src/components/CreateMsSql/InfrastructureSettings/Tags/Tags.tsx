@@ -48,7 +48,7 @@ const Tags = () => {
     };
 
     const handleChange = (idx: number, prop: string, value: string) => {
-        const re = /^([a-zA-Z0-9_.:/=+-@]*)$/;
+        const re = /^([a-zA-Z0-9+\\=._:/@+-]*)$/;
         if (!value || re.test(value)) {
             const updatedTags = [
                 ...tags.map((tag: Tag) => {
