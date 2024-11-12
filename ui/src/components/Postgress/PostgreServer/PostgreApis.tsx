@@ -1,0 +1,390 @@
+import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
+import {
+    useGetCredentialsQuery,
+    useGetFsxnListQuery,
+    useGetInstanceTypesQuery,
+    useGetKeyPairsQuery,
+    useGetKmsKeysQuery,
+    useGetRegionsQuery,
+    useGetSGListQuery,
+    useGetSnsTopicsQuery,
+    useGetThroughputRegionListQuery,
+    useGetVPCListQuery,
+    useGetWlmdbPoliciesQuery
+} from '../../../utils/apiService';
+import {
+    addCredentials,
+    addFsxnList,
+    addInstanceTypeList,
+    addKeyPairList,
+    addKmsKeysList,
+    addPolicies,
+    addRegions,
+    addSGList,
+    addSnsList,
+    addVpcList,
+    getThroughputRegionList
+} from '../../../store/mssql/mssqlSlice';
+import { useEffect, useState } from 'react';
+
+import { API_NAME, AWS_ASSUME_ROLE, VPC_API_FIELDS } from '../../../utils/consts';
+import { formatKmsData } from '../../../utils/utilityFunctions';
+import { SELECT_CONFIG } from '../../../utils/appConstants';
+import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
+import {
+    selectDefaultEncryption,
+    selectDefaultInstanceType,
+} from '../../CreateMsSql/MSSqlServer/MSSqlUtils';
+
+const PostgreApis = () => {
+    const dispatch = useAppDispatch();
+    const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+
+    // CredentialId state
+    const [selectedCredId, setSelectedCredId] = useState(undefined);
+
+    // RegionCode state
+    const [selectedRegionCode, setSelectedRegionCode] = useState(undefined);
+
+    // VPC ID state
+    const [selectedVpcId, setSelectedVpcId] = useState(undefined);
+
+    // credSkip to skip APi call when credentialId is not defined
+    const [credSkip, setCredSkip] = useState(true);
+
+    // credAndRegionSkip to skip APi call when credentialId and regionCode is not defined
+    const [credAndRegionSkip, setCredAndRegionSkip] = useState(true);
+
+    // fsxnSkip to skip FSxN API call when credentialId, regionCode, vpcId is not defined
+    const [vpcDependentApiSkip, setVpcDependentApiSkip] = useState(true);
+
+    //Getting the Data from state
+    const selectedCredentialData = useAppSelector(state => state.mssqlForm.awsAccount.selectedCredential);
+    const selectedRegionData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion);
+    const selectedVpcData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
+    const osVersion = useAppSelector(state => state.mssqlForm.operatingSystem);
+    const dbEdition = useAppSelector(state => state.mssqlForm.dbEdition);
+    const dbVersion = useAppSelector(state => state.mssqlForm.dbVersion);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
+
+    const { data: policiesList, isFetching: policiesLoading, isError: policiesError } = useGetWlmdbPoliciesQuery({});
+
+    const {
+        data: throughputRegionList,
+        isFetching: throughputRegionListLoading,
+        isError: throughputRegionListError
+    } = useGetThroughputRegionListQuery({});
+
+    // API call to get credentials list for user account
+    const {
+        data: credentialData,
+        isFetching: credentialLoading,
+        isError: credentialError
+    } = useGetCredentialsQuery({ credentialsType: AWS_ASSUME_ROLE });
+
+    // API call to get regions list for credentials
+    const {
+        data: regionsData,
+        isFetching: regionsLoading,
+        isError: regionsError
+    } = useGetRegionsQuery(
+        { credentialId: selectedCredId },
+        {
+            skip: credSkip
+        }
+    );
+
+    // API call to get VPC list for selected credentials and region
+    const {
+        data: vpcData,
+        isFetching: vpcLoading,
+        isError: vpcError
+    } = useGetVPCListQuery(
+        { credentialId: selectedCredId, region: selectedRegionCode, fields: VPC_API_FIELDS },
+        {
+            skip: credAndRegionSkip
+        }
+    );
+
+    // API call to get VPC list for selected credentials and region
+    const {
+        data: sgData,
+        isFetching: sgLoading,
+        isError: sgError
+    } = useGetSGListQuery(
+        { credentialId: selectedCredId, region: selectedRegionCode, vpcId: selectedVpcId },
+        {
+            skip: vpcDependentApiSkip
+        }
+    );
+
+    // API call to get SNS Topics list for selected credentials and region
+    const {
+        data: snsData,
+        isFetching: snsLoading,
+        isError: snsError
+    } = useGetSnsTopicsQuery(
+        { credentialId: selectedCredId, region: selectedRegionCode },
+        {
+            skip: credAndRegionSkip
+        }
+    );
+
+    // API call to get KMS Keys list for selected credentials and region
+    const {
+        data: kmsList,
+        isFetching: kmsLoading,
+        isError: kmsError
+    } = useGetKmsKeysQuery(
+        { credentialId: selectedCredId, region: selectedRegionCode },
+        {
+            skip: credAndRegionSkip
+        }
+    );
+
+    // API call to get Key Pairs list for selected credentials and region
+    const {
+        data: keyPairData,
+        isFetching: keyPairLoading,
+        isError: keyPairError
+    } = useGetKeyPairsQuery(
+        { credentialId: selectedCredId, region: selectedRegionCode },
+        {
+            skip: credAndRegionSkip
+        }
+    );
+
+    // API call to get Instance Types list for selected credentials and region
+    const {
+        data: instanceTypeData,
+        isFetching: instanceTypeLoading,
+        isError: instanceTypeError
+    } = useGetInstanceTypesQuery(
+        { credentialId: selectedCredId, region: selectedRegionCode },
+        {
+            skip: credAndRegionSkip
+        }
+    );
+
+    // API call to get FSxN list for selected credentials, region and vpc
+    const {
+        data: fsxnData,
+        isFetching: fsxnLoading,
+        isError: fsxnError
+    } = useGetFsxnListQuery(
+        { credentialId: selectedCredId, region: selectedRegionCode, vpcId: selectedVpcId },
+        {
+            skip: vpcDependentApiSkip
+        }
+    );
+
+    // To add policies information in MssqlEntities
+    useEffect(() => {
+        dispatch(addPolicies({ policiesList, policiesLoading, policiesError }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [policiesList, policiesLoading, policiesError]);
+
+    // To get Throughput region list
+    useEffect(() => {
+        dispatch(
+            getThroughputRegionList({ throughputRegionList, throughputRegionListLoading, throughputRegionListError })
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [throughputRegionList, throughputRegionListLoading, throughputRegionListError]);
+
+    // To add credentials information in MssqlEntities
+    useEffect(() => {
+        dispatch(addCredentials({ credentialData, credentialLoading, credentialError }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [credentialData, credentialLoading, credentialError]);
+
+    //Handle dependency cases
+    useEffect(() => {
+        const credId = selectedCredentialData?.data ? selectedCredentialData.data?.credentialsId : undefined;
+        const regionCode = selectedRegionData?.data ? selectedRegionData.data?.regionCode : undefined;
+        const vpcId = selectedVpcData?.data ? selectedVpcData?.data?.id : undefined;
+        if (regionCode) {
+            setSelectedRegionCode(regionCode);
+        }
+        if (vpcId) {
+            setSelectedVpcId(vpcId);
+        }
+        if (credId) {
+            setCredSkip(false);
+            setSelectedCredId(credId);
+        } else {
+            setCredSkip(true);
+        }
+        if (credId && regionCode) {
+            setCredAndRegionSkip(false);
+        } else {
+            setCredAndRegionSkip(true);
+        }
+        if (vpcId && regionCode && credId) {
+            setVpcDependentApiSkip(false);
+        } else {
+            setVpcDependentApiSkip(true);
+        }
+    }, [selectedCredentialData, selectedRegionData, selectedVpcData, osVersion, dbEdition, dbVersion]);
+
+    // To add credentials information in MssqlEntities
+    useEffect(() => {
+        if (regionsError) {
+            dispatch(addRegions({ undefined, regionsLoading, regionsError }));
+        } else {
+            dispatch(addRegions({ regionsData, regionsLoading, regionsError }));
+        }
+        if (
+            !regionsLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.REGION)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.REGION));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [regionsData, regionsError, regionsLoading]);
+
+    // To add VPC information in MssqlEntities
+    useEffect(() => {
+        if (vpcError) {
+            dispatch(addVpcList({ undefined, vpcLoading, vpcError }));
+        } else {
+            dispatch(addVpcList({ vpcData, vpcLoading, vpcError }));
+        }
+        if (
+            !vpcLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.VPC)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.VPC));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [vpcData, vpcLoading, vpcError]);
+
+    // To add VPC information in MssqlEntities
+    useEffect(() => {
+        if (sgError) {
+            dispatch(addSGList({ undefined, sgLoading, sgError }));
+        } else {
+            dispatch(addSGList({ sgData, sgLoading, sgError }));
+        }
+        if (
+            !sgLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.SG)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.SG));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sgData, sgLoading, sgError]);
+
+    // To add SNS information in MssqlEntities
+    useEffect(() => {
+        if (snsError) {
+            dispatch(addSnsList({ undefined, snsLoading, snsError }));
+        } else {
+            dispatch(addSnsList({ snsData, snsLoading, snsError }));
+        }
+        if (
+            !snsLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.SNS)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.SNS));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [snsData, snsLoading, snsError]);
+
+    // To add KMS Keys in MssqlEntities
+    useEffect(() => {
+        if (kmsError) {
+            dispatch(addKmsKeysList({ undefined, kmsLoading, kmsError }));
+        } else {
+            const kmsData = formatKmsData(kmsList);
+            dispatch(addKmsKeysList({ kmsData, kmsLoading, kmsError }));
+            if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
+                selectDefaultEncryption(kmsData, dispatch);
+            }
+        }
+        if (
+            !kmsLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.KMS)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.KMS));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [kmsList, kmsLoading, kmsError]);
+
+    // To add Key Pair in MssqlEntities
+    useEffect(() => {
+        if (keyPairError) {
+            dispatch(addKeyPairList({ undefined, keyPairLoading, keyPairError }));
+        } else {
+            dispatch(addKeyPairList({ keyPairData, keyPairLoading, keyPairError }));
+        }
+        if (
+            !keyPairLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.KEYPAIR)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.KEYPAIR));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [keyPairData, keyPairLoading, keyPairError]);
+
+    // To add Instance Type in MssqlEntities
+    useEffect(() => {
+        if (instanceTypeError) {
+            dispatch(addInstanceTypeList({ undefined, instanceTypeLoading, instanceTypeError }));
+        } else {
+            dispatch(addInstanceTypeList({ instanceTypeData, instanceTypeLoading, instanceTypeError }));
+            if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
+                selectDefaultInstanceType(instanceTypeData, dispatch);
+            }
+        }
+        if (
+            !instanceTypeLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.INSTANCE)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.INSTANCE));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [instanceTypeData, instanceTypeLoading, instanceTypeError]);
+
+    // To add FSxN in MssqlEntities
+    useEffect(() => {
+        const vpcId = selectedVpcData?.data ? selectedVpcData?.data?.id : undefined;
+        if (!vpcId) {
+            dispatch(addFsxnList({ undefined, fsxnLoading, fsxnError }));
+        } else {
+            if (fsxnError) {
+                dispatch(addFsxnList({ undefined, fsxnLoading, fsxnError }));
+            } else {
+                dispatch(addFsxnList({ fsxnData, fsxnLoading, fsxnError }));
+            }
+            if (
+                !fsxnLoading &&
+                isLoadConfig &&
+                refetchApiCount?.isLoading &&
+                refetchApiCount?.expected.includes(API_NAME.FSXN)
+            ) {
+                dispatch(setRefetchApiCountRan(API_NAME.FSXN));
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fsxnData, fsxnLoading, fsxnError, selectedVpcData]);
+
+    return;
+};
+
+export default PostgreApis;
