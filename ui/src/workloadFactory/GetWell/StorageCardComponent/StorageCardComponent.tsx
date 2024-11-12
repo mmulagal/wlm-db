@@ -89,6 +89,50 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         );
     };
 
+    const sectionTwoContent = (cardData: any) => {
+        if (loading) {
+            return (
+                <div style={{ height: '22px', display: 'flex', alignItems: 'center' }}>
+                    <DsFlashingDotsLoader />
+                </div>
+            );
+        } else {
+            return (
+                <div className={styles.tooltipContainer}>
+                    <div className={styles.statusTopSection}>
+                        <div className={styles.svgSection}>
+                            {setImage(cardData?.block_two?.value || GENERAL.NOT_AVAILABLE)}
+                        </div>
+                        <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                            {cardData?.block_two?.value || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    </div>
+                    {cardData?.block_two?.value === GETWELL_STATUS.ANALYZING &&
+                        cardData?.block_one?.value === 'Compute rightsizing' && (
+                            <div className={styles.tooltip}>
+                                <Popover
+                                    popoverClass={''}
+                                    children={
+                                        <div className={styles.tooltipLevel}>
+                                            <DsTypography variant="Regular_13">
+                                                {GENERAL.RIGHTSIZING_TOOLTIP}
+                                            </DsTypography>
+                                        </div>
+                                    }
+                                    trigger="hover"
+                                    delayHide={200}
+                                    interactive={true}
+                                    isAppendedToBody={false}
+                                    container={<TooltipIcon />}
+                                    placement="bottom"
+                                />
+                            </div>
+                        )}
+                </div>
+            );
+        }
+    };
+
     const sectionThreeContent = (cardData: any) => {
         if (loading) {
             return (
@@ -217,7 +261,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         setDialog(
             <DialogComponent
                 header={`${type} optimization`}
-                content={<DialogContent type={type} />}
+                content={<DialogContent type={type} recommendationOptions={cardData?.recommendationOptions} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -246,21 +290,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
             {/* Section Two */}
             <div className={styles.commonSection}>
-                {loading && (
-                    <div style={{ height: '22px', display: 'flex', alignItems: 'center' }}>
-                        <DsFlashingDotsLoader />
-                    </div>
-                )}
-                {!loading && (
-                    <div className={styles.statusTopSection}>
-                        <div className={styles.svgSection}>
-                            {setImage(cardData?.block_two?.value || GENERAL.NOT_AVAILABLE)}
-                        </div>
-                        <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                            {cardData?.block_two?.value || GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                    </div>
-                )}
+                {sectionTwoContent(cardData)}
+
                 <DsTypography variant="Regular_14" isDisabled={disableText}>
                     {cardData?.block_two?.type}
                 </DsTypography>

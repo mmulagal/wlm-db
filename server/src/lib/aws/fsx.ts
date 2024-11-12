@@ -18,7 +18,8 @@ import {
     DescribeStorageVirtualMachinesCommandInput,
     DescribeBackupsCommandInput,
     UpdateVolumeCommand,
-    UpdateFileSystemCommand
+    UpdateFileSystemCommand,
+    DescribeVolumesCommand
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -208,6 +209,16 @@ async function updateFsxCapacity(
     }
 }
 
+async function describeVolumes(credentialsId: string, region: string, params: DescribeVolumesCommandInput) {
+    logger.info('Describe FSx volumes:', { credentialsId, region, params });
+
+    const client = await getFSxClient(credentialsId, region);
+    const response = await client.send(new DescribeVolumesCommand(params));
+
+    logger.debug('Decribe FSx volumes response:', response);
+
+    return response;
+}
 export {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -217,5 +228,6 @@ export {
     listResourceTags,
     createTag,
     updateFsxVolumeSize,
-    updateFsxCapacity
+    updateFsxCapacity,
+    describeVolumes
 };

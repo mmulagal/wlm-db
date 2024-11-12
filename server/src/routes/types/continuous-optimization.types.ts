@@ -11,7 +11,11 @@ const SizingViolationResponse = Type.Object({
     dataDriveLetter: Type.Optional(Type.String()),
     dataDriveTotalSizeMB: Type.Optional(Type.Number()),
     logDriveLetter: Type.Optional(Type.String()),
-    logDriveTotalSizeMB: Type.Optional(Type.Number())
+    logDriveTotalSizeMB: Type.Optional(Type.Number()),
+    ontapVolumeUuid: Type.String(), // TODO: check assessment
+    lunName: Type.String(), // TODO: check assessment
+    lunUuid: Type.String(), // TODO: check assessment
+    svmName: Type.String() // TODO: check assessment
 });
 type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
 
@@ -90,17 +94,16 @@ type OptimizeStorageRequestBodyType = Static<typeof OptimizeStorageRequestBody>;
 
 type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
 
-const OptimizeSizingQueryParams = Type.Object({
-    type: Type.String(Type.Enum(OPTIMIZE_SIZING_CONFIGS))
-});
-
-type OptimizeSizingQueryParamsType = Static<typeof OptimizeSizingQueryParams>;
-
 const OptimizeComputeRequestBody = Type.Object({
     instanceType: Type.String()
 });
 
 type OptimizeComputeRequestBodyType = Static<typeof OptimizeComputeRequestBody>;
+const OptimizeSizingRequestBody = Type.Object({
+    type: Type.Array(Type.Enum(OPTIMIZE_SIZING_CONFIGS))
+});
+
+type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 
 export {
     DriftAssessmentResponse,
@@ -112,8 +115,8 @@ export {
     OptimizeStorageRequestBody,
     OptimizeStorageRequestBodyType,
     OptimizeStorageRequestParamsType,
-    OptimizeSizingQueryParams,
-    OptimizeSizingQueryParamsType,
     OptimizeComputeRequestBody,
-    OptimizeComputeRequestBodyType
+    OptimizeComputeRequestBodyType,
+    OptimizeSizingRequestBody,
+    OptimizeSizingRequestBodyType
 };

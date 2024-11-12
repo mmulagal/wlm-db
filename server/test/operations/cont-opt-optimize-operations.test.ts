@@ -238,24 +238,9 @@ describe('Continuous optimization optimize operations', () => {
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
-            `${(OPTIMIZE_SIZING_CONFIGS.HEADROOM, OPTIMIZE_SIZING_CONFIGS.LOG_DRIVE_SIZE)}`
+            [OPTIMIZE_SIZING_CONFIGS.HEADROOM, OPTIMIZE_SIZING_CONFIGS.LOG_DRIVE_SIZE]
         );
 
         expect(response.jobId).toBeDefined();
-    });
-
-    it('Optimize sizing parameters - invalid type', async () => {
-        try {
-            await optimizeSizing(
-                ACCOUNT_ID,
-                CREDENTIALS_ID,
-                DEFAULT_AWS_REGION,
-                RESOURCE_ID,
-                'f4b7c5d3-e1f6-4g2a-9b5d',
-                'invalid-type'
-            );
-        } catch (error) {
-            expect(error).toBeDefined();
-        }
     });
 });

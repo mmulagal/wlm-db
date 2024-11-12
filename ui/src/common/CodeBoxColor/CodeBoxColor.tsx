@@ -8,9 +8,10 @@ type codeBoxTypes = {
     region: string;
     actualData: any;
     endpoint: string;
+    dbType?: string;
 };
 
-const CodeBoxColor = ({ credID, region, actualData, endpoint }: codeBoxTypes) => {
+const CodeBoxColor = ({ credID, region, actualData, endpoint, dbType='mssql' }: codeBoxTypes) => {
     const baseUrl = getBaseUrl();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
@@ -104,7 +105,7 @@ const CodeBoxColor = ({ credID, region, actualData, endpoint }: codeBoxTypes) =>
         actualData && (
             <div className={styles.codeBox}>
                 <div style={{ width: 'max-content' }}>
-                    {`curl --location --request POST ${baseUrl}/mssql/credentials/`}
+                    {`curl --location --request POST ${baseUrl}/${dbType}/credentials/`}
                     <span className={credID === '<CredentialId>' ? `${styles.highlightWord}` : ''}>{`${credID}`}</span>
                     <span>{`/regions/`}</span>
                     <span className={region === '<Region>' ? `${styles.highlightWord}` : ''}>{`${region}`}</span>

@@ -319,25 +319,23 @@ ec2Mock.on(DescribeInstanceStatusCommand).resolves({
     ]
 });
 
-sinon
-    .stub(ec2Utils, 'waitForInstanceOk')
-    .resolves({
-        state: 'SUCCESS',
-        reason: {
-            $metadata: {
-                httpStatusCode: 200,
-                requestId: '08202b6c-9ce2-438a-ba09-dd31b539a046',
-                attempts: 1,
-                totalRetryDelay: 0
-            },
-            InstanceStatuses: [
-                {
-                    AvailabilityZone: 'ap-southeast-1b',
-                    InstanceId: 'i-03325779d5dfa1649',
-                    InstanceState: { Code: 16, Name: 'running' },
-                    InstanceStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' },
-                    SystemStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' }
-                }
-            ]
-        }
-    });
+sinon.stub(ec2Utils, 'waitForInstanceOk').resolves({
+    state: 'SUCCESS',
+    reason: {
+        $metadata: {
+            httpStatusCode: 200,
+            requestId: '08202b6c-9ce2-438a-ba09-dd31b539a046',
+            attempts: 1,
+            totalRetryDelay: 0
+        },
+        InstanceStatuses: [
+            {
+                AvailabilityZone: 'ap-southeast-1b',
+                InstanceId: 'i-03325779d5dfa1649',
+                InstanceState: { Code: 16, Name: 'running' },
+                InstanceStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' },
+                SystemStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' }
+            }
+        ]
+    }
+});

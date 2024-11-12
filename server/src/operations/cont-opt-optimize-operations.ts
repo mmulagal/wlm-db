@@ -1,5 +1,6 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
+import { compact } from 'lodash-es';
 import { Metadata, DatabaseInstance, WorkloadInstance, StorageAssessment } from '../utils/common-types';
 import { HttpErrorCodes, AuditStatus } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
@@ -22,7 +23,7 @@ import {
     getLogVolumeDrift,
     getTempDbVolumeDrift
 } from './cont-opt-assessment-operations';
-import { describeFSxStorageVirtualMachines, updateFsxCapacity, updateFsxVolumeSize } from '../lib/aws/fsx';
+import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity, updateFsxVolumeSize } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
     OptimizeStorageParams,
@@ -39,10 +40,11 @@ import {
     OptimizeStorageRequestParamsType,
     SizingViolationResponseType
 } from '../routes/types/continuous-optimization.types';
-import { listResources } from '../lib/database/db';
+import { getFsxVolumeDetails, getFsxnVolIdsFromOntapVolIds } from './aws/fsx-operations';
 import { modifyInstanceType, startInstance, stopInstance, waitForInstanceOk } from '../lib/aws/ec2';
-import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from './workloads/mssql/discover-consts';
 import { getInstanceDetailsByPrivateIp, waitForInstanceToBeStopped } from './aws/ec2-operations';
+import { listResources } from '../lib/database/db';
+import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from './workloads/mssql/discover-consts';
 
 const isDemoFlow = isDemo();
 
@@ -80,6 +82,96 @@ interface OptimizeStorageOperationParams {
     optimizationTargets: OptimizeStorageRequestParamsType[];
 }
 
+async function handleOptimizeJobCreation(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    serverNameWithHostName: string,
+    jobType: string,
+    jobName: string,
+    jobDescription: string,
+    parentJobId?: string
+) {
+    updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
+
+    const filterParams = {
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: serverNameWithHostName as string,
+        typeFilter: jobType,
+        ...(parentJobId && { parentJobId })
+    };
+    const {
+        items: [job]
+    } = await getJobs(accountId, credentialsId, region, filterParams);
+
+    if (job) {
+        const timeDifferenceInMinutes = getTimeDifferenceInMinutes(job.startTime);
+        if (timeDifferenceInMinutes <= 5) {
+            throw createError(
+                412,
+                `Optimization is not available now since another optimization is in progress with job ID ${job.id}.`
+            );
+        }
+    }
+
+    // create the parent job for optimize operation
+    const { id } = await registerJob(accountId, credentialsId, region, {
+        type: jobType,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: serverNameWithHostName as string,
+        name: jobName,
+        startTime: Date.now(),
+        description: jobDescription,
+        ...(parentJobId && { parentJobId })
+    });
+    logger.debug(`Job created with id ${id}`);
+
+    return id;
+}
+
+async function triggerAssessmentAfterOptimization(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    databaseHostId: string,
+    serverNameWithHostName: string,
+    parentJobId: string,
+    instanceToAssess: WorkloadInstance
+) {
+    logger.info('Triggering assessment after optimization', {
+        credentialsId,
+        region,
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        instanceToAssess
+    });
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Assessment for ${serverNameWithHostName} after optimization`,
+        description: `Assessment for ${serverNameWithHostName} after optimization`,
+        startTime: Date.now(),
+        type: JOBTYPE.OPTIMIZATION,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: serverNameWithHostName,
+        parentJobId
+    });
+
+    // its required to sleep for 5 seconds so that the optimization is completed before drift assessment
+    if (!isDemoFlow) {
+        await sleep(5000);
+    }
+
+    await driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, [instanceToAssess]);
+    await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        status: JOBSTATUS.COMPLETED,
+        endTime: Date.now(),
+        description: `Optimization completed for ${serverNameWithHostName}`
+    });
+    updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+}
+
 async function optimizeStorageAttributes(params: OptimizeStorageOperationParams) {
     logger.info('Optimizing storage for', params);
     const {
@@ -115,16 +207,6 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
         });
     }
 
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Assessment for ${serverNameWithHostName} after optimization`,
-        description: `Assessment for ${serverNameWithHostName} after optimization`,
-        startTime: Date.now(),
-        type: JOBTYPE.OPTIMIZATION,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName,
-        parentJobId
-    });
-
     const instanceToAssess: WorkloadInstance = {
         id: instanceId,
         name: instanceName,
@@ -136,19 +218,15 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
         cloudProviderAccountId: awsAccountId,
         resourceName: serverNameWithHostName
     };
-
-    // its required to sleep for 5 seconds so that the optimization is completed before drift assessment
-    if (!isDemoFlow) {
-        await sleep(5000);
-    }
-
-    await driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, [instanceToAssess]);
-    await updateJobDetails(accountId, credentialsId, region, parentJobId, {
-        status: JOBSTATUS.COMPLETED,
-        endTime: Date.now(),
-        description: `Optimization completed for ${serverNameWithHostName}`
-    });
-    updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+    await triggerAssessmentAfterOptimization(
+        credentialsId,
+        region,
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        instanceToAssess
+    );
 }
 
 async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
@@ -257,18 +335,23 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
     }
 }
 
-async function optimizeStorage(params: OptimizeStorageParams) {
-    const { accountId, credentialsId, region, databaseHostId, databaseInstanceId, optimizationTargets } = params;
-    logger.info(
-        `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${optimizationTargets}`
-    );
-
-    if (optimizationTargets && optimizationTargets.length === 0) {
-        logger.info(`Optimization body is empty ${databaseInstanceId} in ${region}`);
-        throw createError(HttpErrorCodes.BAD_REQUEST, 'Optimization body is empty');
-    }
+async function activeSqlNodeDetails(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Getting active node details', {
+        credentialsId,
+        region,
+        accountId,
+        databaseHostId,
+        databaseInstanceId
+    });
 
     const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+
     const {
         fsxn_ids: fsxId,
         database_instance_name: instanceName,
@@ -303,8 +386,58 @@ async function optimizeStorage(params: OptimizeStorageParams) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    // check whether any jobs on the same resource running
     const serverNameWithHostName = getServerNameWithHostname(sqlServerName!, instanceName);
+
+    return {
+        sqlAuthEnabled,
+        activeNodeInstanceId,
+        fsxId,
+        instanceId,
+        instanceName,
+        sqlServerName,
+        databaseType,
+        svmDetails,
+        awsAccountId: resourceDetail.cloud_provider_account_id,
+        serverNameWithHostName
+    };
+}
+
+async function getSvmNameFromId(credentialsId: string, region: string, fsxId: string, svmId: string) {
+    logger.info('Getting SVM name from id', { credentialsId, region, fsxId, svmId });
+
+    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+        credentialsId,
+        region,
+        fsxId as string
+    );
+
+    const { Name: svmName } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
+
+    return svmName;
+}
+async function optimizeStorage(params: OptimizeStorageParams) {
+    const { accountId, credentialsId, region, databaseHostId, databaseInstanceId, optimizationTargets } = params;
+    logger.info(
+        `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${optimizationTargets}`
+    );
+
+    if (optimizationTargets && optimizationTargets.length === 0) {
+        logger.info(`Optimization body is empty ${databaseInstanceId} in ${region}`);
+        throw createError(HttpErrorCodes.BAD_REQUEST, 'Optimization body is empty');
+    }
+
+    const {
+        sqlAuthEnabled,
+        activeNodeInstanceId,
+        fsxId,
+        instanceId,
+        instanceName,
+        databaseType,
+        svmDetails,
+        awsAccountId,
+        serverNameWithHostName
+    } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
+    // check whether any jobs on the same resource running
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -318,14 +451,7 @@ async function optimizeStorage(params: OptimizeStorageParams) {
     const svmDetailsObject = svmDetails as Record<string, string>;
     const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
     try {
-        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
-            credentialsId,
-            region,
-            fsxId as string
-        );
-
-        const { Name: svmName } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
-
+        const svmName = await getSvmNameFromId(credentialsId, region, fsxId, svmId);
         if (!svmName && !isDemoFlow) {
             const errorMessage = `No SVM with id ${svmId} found for ${fsxId} in ${region}`;
             logger.error(errorMessage);
@@ -346,7 +472,7 @@ async function optimizeStorage(params: OptimizeStorageParams) {
             sqlAuthEnabled: sqlAuthEnabled || false,
             svmName,
             optimizationTargets,
-            awsAccountId: resourceDetail.cloud_provider_account_id
+            awsAccountId
         } as OptimizeStorageOperationParams);
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;
@@ -368,9 +494,12 @@ async function modifySizingAttributes(
     credentialsId: string,
     region: string,
     filesystemId: string,
-    typesList: string[],
+    typesList: OPTIMIZE_SIZING_CONFIGS[],
     parentJobId: string,
-    configData: StorageAssessment
+    configData: StorageAssessment,
+    serverNameWithHostName: string,
+    databaseHostId: string,
+    databaseInstanceId: string
 ) {
     logger.info('Modifying sizing attributes ', {
         accountId,
@@ -378,7 +507,11 @@ async function modifySizingAttributes(
         region,
         filesystemId,
         typesList,
-        parentJobId
+        parentJobId,
+        configData,
+        serverNameWithHostName,
+        databaseHostId,
+        databaseInstanceId
     });
     let errorMessage = '';
     let jobStatus;
@@ -398,7 +531,10 @@ async function modifySizingAttributes(
                         region,
                         filesystemId,
                         logDriveDetails,
-                        parentJobId
+                        parentJobId,
+                        serverNameWithHostName,
+                        databaseHostId,
+                        databaseInstanceId
                     );
                     break;
                 }
@@ -412,7 +548,10 @@ async function modifySizingAttributes(
                         region,
                         filesystemId,
                         tempdbDriveDetails,
-                        parentJobId
+                        parentJobId,
+                        serverNameWithHostName,
+                        databaseHostId,
+                        databaseInstanceId
                     );
                     break;
                 }
@@ -434,66 +573,6 @@ async function modifySizingAttributes(
             error: errorMessage
         });
     }
-}
-async function optimizeSizing(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    types: string
-) {
-    logger.info('Optimizing sizing ', { accountId, credentialsId, region, databaseHostId, databaseInstanceId, types });
-
-    const typesList = types.split(',');
-    if (typesList.length === 0) {
-        logger.info(`Optimization body is empty ${databaseInstanceId} in ${region}`);
-        throw createError(HttpErrorCodes.BAD_REQUEST, 'Optimization body is empty');
-    } else {
-        typesList.forEach(
-            type =>
-                OPTIMIZE_SIZING_CONFIGS[type as keyof typeof OPTIMIZE_SIZING_CONFIGS] ||
-                createError(HttpErrorCodes.BAD_REQUEST, 'Invalid optimization type')
-        );
-    }
-    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-        accountId,
-        region,
-        credentialsId,
-        databaseHostId,
-        databaseInstanceId,
-        AssessmentCategories.STORAGE
-    );
-    const {
-        config_data: configData,
-        database_instances: { database_instance_name: instanceName },
-        resource: { resource_name: sqlServerName }
-    } = persistedConfigurationData;
-    const storageAssessmentConfigData = configData as unknown as StorageAssessment;
-    const { filesystemId } = storageAssessmentConfigData;
-
-    const serverNameWithHostName = getServerNameWithHostname(sqlServerName!, instanceName);
-    const jobId = await handleOptimizeJobCreation(
-        accountId,
-        credentialsId,
-        region,
-        serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
-        `Optimize ${types} sizing for ${serverNameWithHostName}`,
-        `Optimize ${types} sizing for ${serverNameWithHostName}`
-    );
-
-    modifySizingAttributes(
-        accountId,
-        credentialsId,
-        region,
-        filesystemId,
-        typesList,
-        jobId,
-        storageAssessmentConfigData
-    );
-
-    return { jobId };
 }
 
 async function headroomOptimization(
@@ -526,13 +605,22 @@ async function headroomOptimization(
 
         if (headroomPercent < 35) {
             logger.info('Under provisioned: Headroom is less than 35%');
+
+            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
+            const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
+            const existingFsxStorageCapacityGiB = fileSystem?.StorageCapacity;
             let newFsxStorageCapacity = totalVolumeSizeInBytes / 0.64;
             const increase = ((newFsxStorageCapacity - ssdStorageCapacityInBytes) / ssdStorageCapacityInBytes) * 100;
             // increase newFsxStorageCapactiy so that increment is atleast 10%
             newFsxStorageCapacity = increase > 10 ? newFsxStorageCapacity : ssdStorageCapacityInBytes * 1.1;
 
             const newFsxStorageCapactiyGiB = sizeInGigaBytes(newFsxStorageCapacity, 'B');
-            return updateFsxCapacity(credentialsId, region, accountId, fileSystemId, newFsxStorageCapactiyGiB);
+            if (existingFsxStorageCapacityGiB && existingFsxStorageCapacityGiB < newFsxStorageCapactiyGiB) {
+                return updateFsxCapacity(credentialsId, region, accountId, fileSystemId, newFsxStorageCapactiyGiB);
+            }
+            errorMessage =
+                'Headroom configuration has been changed since we last assessed. It aligns with best practice recommendations now, no action required';
+            jobStatus = JOBSTATUS.WARNING;
         }
         errorMessage = 'Headroom is more than 35%, no action required';
         jobStatus = JOBSTATUS.WARNING;
@@ -549,15 +637,68 @@ async function headroomOptimization(
     }
 }
 
+async function resizeLogLun(
+    credentialsId: string,
+    region: string,
+    svmName: string,
+    fileSystemId: string,
+    lunUuid: string,
+    requiredLogVolumeSizeMB: number,
+    activeNodeInstanceId: string
+) {
+    logger.info('Resizing log LUN ', {
+        credentialsId,
+        region,
+        svmName,
+        fileSystemId,
+        lunUuid,
+        requiredLogVolumeSizeMB,
+        activeNodeInstanceId
+    });
+
+    const apiEndpoint = `/storage/luns/${lunUuid}`;
+
+    const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
+        fsxId: fileSystemId,
+        region,
+        apiEndpoint,
+        apiQueryFilter: '',
+        apiBody: JSON.stringify({ space: { size: 21474836480 } })
+    });
+    try {
+        await callSsmExecution(
+            credentialsId,
+            region,
+            [ssmCommand, '$null = (echo "RESCAN" | diskpart)'],
+            activeNodeInstanceId
+        );
+    } catch (error) {
+        throw createError(400, `Error while resizing log LUN ${error}`);
+    }
+}
+
 async function logDriveOptimization(
     accountId: string,
     credentialsId: string,
     region: string,
     fileSystemId: string,
     logDriveDetails: any,
-    parentJobId: string
+    parentJobId: string,
+    serverNameWithHostName: string,
+    databaseHostId: string,
+    databaseInstanceId: string
 ) {
-    logger.info('Optimizing log drive ', { accountId, credentialsId, region, fileSystemId, logDriveDetails });
+    logger.info('Optimizing log drive ', {
+        accountId,
+        credentialsId,
+        region,
+        fileSystemId,
+        logDriveDetails,
+        parentJobId,
+        serverNameWithHostName,
+        databaseHostId,
+        databaseInstanceId
+    });
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -578,29 +719,115 @@ async function logDriveOptimization(
     let errorMessage;
     try {
         if (underProvisionedDrives.length > 0) {
-            await Promise.all(
-                underProvisionedDrives.map(async (drive: SizingViolationResponseType) => {
-                    const { dataDriveTotalSizeMB = 0 } = drive;
-                    if (dataDriveTotalSizeMB > 0) {
-                        const requiredLogVolumeSizeMB = dataDriveTotalSizeMB * 0.25; // Increase log volume to 25% of data volume
-                        const requiredLogVolumeSizeBytes = convertToBytes(requiredLogVolumeSizeMB, 'MiB') || 0;
+            const underProvisionedOntapVolIds =
+                compact(underProvisionedDrives.map(drive => drive.ontapVolumeUuid)) || [];
 
-                        await updateFsxVolumeSize(
-                            credentialsId,
-                            region,
-                            accountId,
-                            'replace with fsx volume ID', // TODO: this has to be fsx volume ID
-                            requiredLogVolumeSizeBytes
-                        );
-                        logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
-                    } else {
-                        throw createError(400, 'Data drive size is unavailable, cannot calculate log drive size');
-                    }
-                })
+            const { volumeIds: fsxVolumeIdList, uuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
+                credentialsId,
+                region,
+                accountId,
+                underProvisionedOntapVolIds
             );
-            jobStatus = JOBSTATUS.COMPLETED;
 
-            updateLongRunningAuditGroup(AuditStatus.SUCCESS, errorMessage);
+            const underProvisionedVolumeDetails = await getFsxVolumeDetails(
+                credentialsId,
+                region,
+                accountId,
+                fsxVolumeIdList
+            );
+
+            const {
+                sqlAuthEnabled,
+                activeNodeInstanceId,
+                fsxId,
+                instanceId,
+                instanceName,
+                databaseType,
+                awsAccountId
+            } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
+
+            if (activeNodeInstanceId) {
+                await Promise.all(
+                    underProvisionedDrives.map(async (drive: SizingViolationResponseType) => {
+                        const { dataDriveTotalSizeMB = 0, lunUuid, ontapVolumeUuid, svmName } = drive;
+                        if (dataDriveTotalSizeMB > 0) {
+                            const requiredLogVolumeSizeMB = dataDriveTotalSizeMB * 0.25; // Increase log volume to 25% of data volume
+                            const requiredLogVolumeSizeBytes = convertToBytes(requiredLogVolumeSizeMB, 'MiB') || 0;
+                            const [matchingFsxVolumeId] =
+                                Object.entries(uuidVolumeIdMap).find(
+                                    ([, ontapVolumeId]) => ontapVolumeId === ontapVolumeUuid
+                                ) || [];
+                            const existingVolumeDetails = underProvisionedVolumeDetails.find(
+                                volume => volume.VolumeId === matchingFsxVolumeId
+                            );
+                            if (
+                                existingVolumeDetails?.OntapConfiguration?.SizeInBytes &&
+                                existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredLogVolumeSizeBytes &&
+                                matchingFsxVolumeId
+                            ) {
+                                await updateFsxVolumeSize(
+                                    credentialsId,
+                                    region,
+                                    accountId,
+                                    matchingFsxVolumeId,
+                                    requiredLogVolumeSizeBytes
+                                );
+                                logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
+
+                                /*
+                                dataVolSize  = dataLun + 10% dataLun = 1.1 dataLun
+                                dataLunSize = dataVolSize / 1.1
+                                logLunSize = 25% dataLunSize
+                                logLunSize = 25% (dataVolSize / 1.1)  = .227 dataVolSize
+                                */
+                                const logLunSizeBytes = convertToBytes(dataDriveTotalSizeMB * 0.227, 'MiB') || 0;
+                                await resizeLogLun(
+                                    credentialsId,
+                                    region,
+                                    svmName,
+                                    fileSystemId,
+                                    lunUuid,
+                                    logLunSizeBytes,
+                                    activeNodeInstanceId
+                                );
+
+                                const instanceToAssess: WorkloadInstance = {
+                                    id: instanceId,
+                                    name: instanceName,
+                                    type: databaseType,
+                                    region,
+                                    sqlAuthEnabled: sqlAuthEnabled || false,
+                                    fsxFileSystem: fsxId,
+                                    activeNodeInstanceid: activeNodeInstanceId!,
+                                    cloudProviderAccountId: awsAccountId!,
+                                    resourceName: serverNameWithHostName
+                                };
+                                await triggerAssessmentAfterOptimization(
+                                    credentialsId,
+                                    region,
+                                    accountId,
+                                    databaseHostId,
+                                    serverNameWithHostName,
+                                    parentJobId,
+                                    instanceToAssess
+                                );
+                            } else {
+                                errorMessage =
+                                    'Some log drives configuration changed since we last assessed, no action required for those';
+                                jobStatus = JOBSTATUS.WARNING;
+                            }
+                        } else {
+                            throw createError(400, 'Data drive size is unavailable, cannot calculate log drive size');
+                        }
+                    })
+                );
+                jobStatus = JOBSTATUS.COMPLETED;
+
+                updateLongRunningAuditGroup(AuditStatus.SUCCESS, errorMessage);
+            } else {
+                errorMessage = `Unable to get active node instance id or svm details associated with log LUN, cannot optimize log drive size for database instance ${databaseInstanceId}`;
+                jobStatus = JOBSTATUS.WARNING;
+            }
         } else {
             errorMessage = 'Log drives are not under provisioned, no action required';
             jobStatus = JOBSTATUS.WARNING;
@@ -624,9 +851,22 @@ async function tempDbDriveOptimization(
     region: string,
     fileSystemId: string,
     tempDbDriveDetails: any,
-    parentJobId: string
+    parentJobId: string,
+    serverNameWithHostName: string,
+    databaseHostId: string,
+    databaseInstanceId: string
 ) {
-    logger.info('Optimizing temp db drive ', { accountId, credentialsId, region, fileSystemId, tempDbDriveDetails });
+    logger.info('Optimizing temp db drive ', {
+        accountId,
+        credentialsId,
+        region,
+        fileSystemId,
+        tempDbDriveDetails,
+        parentJobId,
+        serverNameWithHostName,
+        databaseHostId,
+        databaseInstanceId
+    });
     let errorMessage = '';
     let jobStatus;
     const jobId = await handleOptimizeJobCreation(
@@ -641,7 +881,7 @@ async function tempDbDriveOptimization(
     );
 
     try {
-        const { defaultDataDriveSize, tempdbPercent } = getTempDbVolumeDrift(
+        const { defaultDataDriveSize, tempdbPercent, ontapVolumeId } = getTempDbVolumeDrift(
             tempDbDriveDetails,
             AssessmentStatus.UNDER_PROVISIONED,
             'tempdb-drive-size'
@@ -652,17 +892,60 @@ async function tempDbDriveOptimization(
 
             const requiredTempDbVolumeSizeBytes = defaultDataDriveSizeBytes * 0.1; // Increase tempDB volume to 10% of data volume
 
-            await updateFsxVolumeSize(
-                credentialsId,
-                region,
-                accountId,
-                'replace with fsx volume ID',
-                requiredTempDbVolumeSizeBytes
-            ); // TODO: this has to be fsx volume ID
+            // get the volume ID from the drive details, make a get call to check if the volume size is less than requiredTempDbVolumeSizeBytes and update the volume size
+            const {
+                volumeIds: [tempDbFsxVolumeId]
+            } = await getFsxnVolIdsFromOntapVolIds(credentialsId, region, accountId, [ontapVolumeId]);
 
-            jobStatus = JOBSTATUS.COMPLETED;
+            const [existingVolumeDetails] = await getFsxVolumeDetails(credentialsId, region, accountId, [
+                tempDbFsxVolumeId
+            ]);
+            if (
+                existingVolumeDetails?.OntapConfiguration?.SizeInBytes &&
+                existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredTempDbVolumeSizeBytes &&
+                tempDbFsxVolumeId
+            ) {
+                await updateFsxVolumeSize(
+                    credentialsId,
+                    region,
+                    accountId,
+                    tempDbFsxVolumeId,
+                    requiredTempDbVolumeSizeBytes
+                );
+                const {
+                    sqlAuthEnabled,
+                    activeNodeInstanceId,
+                    fsxId,
+                    instanceId,
+                    instanceName,
+                    databaseType,
+                    awsAccountId
+                } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
 
-            updateLongRunningAuditGroup(AuditStatus.SUCCESS, errorMessage);
+                const instanceToAssess: WorkloadInstance = {
+                    id: instanceId,
+                    name: instanceName,
+                    type: databaseType,
+                    region,
+                    sqlAuthEnabled: sqlAuthEnabled || false,
+                    fsxFileSystem: fsxId,
+                    activeNodeInstanceid: activeNodeInstanceId!,
+                    cloudProviderAccountId: awsAccountId!,
+                    resourceName: serverNameWithHostName
+                };
+                await triggerAssessmentAfterOptimization(
+                    credentialsId,
+                    region,
+                    accountId,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    instanceToAssess
+                );
+            } else {
+                errorMessage = 'TempDB drive volume size changed since we last assessed, no action required';
+                jobStatus = JOBSTATUS.WARNING;
+            }
         } else {
             errorMessage = 'TempDB drives are not under provisioned, no action required';
             jobStatus = JOBSTATUS.WARNING;
@@ -684,51 +967,62 @@ function getServerNameWithHostname(sqlServerName: string, instanceName: string) 
     return instanceName && sqlServerName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
 }
 
-async function handleOptimizeJobCreation(
+async function optimizeSizing(
     accountId: string,
     credentialsId: string,
     region: string,
-    serverNameWithHostName: string,
-    jobType: string,
-    jobName: string,
-    jobDescription: string,
-    parentJobId?: string
+    databaseHostId: string,
+    databaseInstanceId: string,
+    types: OPTIMIZE_SIZING_CONFIGS[]
 ) {
-    updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
+    logger.info('Optimizing sizing ', { accountId, credentialsId, region, databaseHostId, databaseInstanceId, types });
 
-    const filterParams = {
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName as string,
-        typeFilter: jobType,
-        ...(parentJobId && { parentJobId })
-    };
-    const {
-        items: [job]
-    } = await getJobs(accountId, credentialsId, region, filterParams);
-
-    if (job) {
-        const timeDifferenceInMinutes = getTimeDifferenceInMinutes(job.startTime);
-        if (timeDifferenceInMinutes <= 5) {
-            throw createError(
-                412,
-                `Optimization is not available now since another optimization is in progress with job ID ${job.id}.`
-            );
-        }
+    if (types.length === 0) {
+        logger.info(`Optimization body is empty ${databaseInstanceId} in ${region}`);
+        throw createError(HttpErrorCodes.BAD_REQUEST, 'Optimization body is empty');
     }
 
-    // create the parent job for optimize operation
-    const { id } = await registerJob(accountId, credentialsId, region, {
-        type: jobType,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName as string,
-        name: jobName,
-        startTime: Date.now(),
-        description: jobDescription,
-        ...(parentJobId && { parentJobId })
-    });
-    logger.debug(`Job created with id ${id}`);
+    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId,
+        AssessmentCategories.STORAGE
+    );
+    const {
+        config_data: configData,
+        database_instances: { database_instance_name: instanceName },
+        resource: { resource_name: sqlServerName }
+    } = persistedConfigurationData;
+    const storageAssessmentConfigData = configData as unknown as StorageAssessment;
+    const { filesystemId } = storageAssessmentConfigData;
 
-    return id;
+    const serverNameWithHostName = getServerNameWithHostname(sqlServerName!, instanceName);
+    const jobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        serverNameWithHostName,
+        JOBTYPE.OPTIMIZATION,
+        `Optimize ${types} sizing for ${serverNameWithHostName}`,
+        `Optimize ${types} sizing for ${serverNameWithHostName}`
+    );
+
+    modifySizingAttributes(
+        accountId,
+        credentialsId,
+        region,
+        filesystemId,
+        types,
+        jobId,
+        storageAssessmentConfigData,
+        serverNameWithHostName,
+        databaseHostId,
+        databaseInstanceId
+    );
+
+    return { jobId };
 }
 
 async function optimizeCompute(

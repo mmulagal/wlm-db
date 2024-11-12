@@ -60,6 +60,7 @@ import useResize from '../../../../common/hooks/useResize';
 import {
     setGwDatabaseInstance,
     setGwDatabaseInstanceName,
+    setGwDatabaseStorageType,
     setGwHostname,
     setGwResourceId
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
@@ -210,6 +211,7 @@ const ManagedHostSubTable = ({
         dispatch(setGwResourceId(targettedHost?.resourceId));
         dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
         dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
+        dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
     };
 
     const resetDialogValues = () => {

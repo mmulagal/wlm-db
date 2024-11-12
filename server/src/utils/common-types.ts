@@ -225,6 +225,7 @@ interface TempDbDriveDetails {
     defaultDataDriveSize: number;
     defaultDataDriveLetter: string;
     tempdbDriveTotalSizeMB: number;
+    ontapVolumeId: string; // TODO: check assessment
 }
 interface Sizing {
     'performance-tier': string;

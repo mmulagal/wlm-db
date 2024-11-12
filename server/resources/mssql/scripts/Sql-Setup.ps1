@@ -207,7 +207,7 @@ else {
                             "Id"         = "CfnInitLog"
                             "FullName"   = "AWS.EC2.Windows.CloudWatch.CustomLog.CustomLogInputComponent,AWS.EC2.Windows.CloudWatch"
                             "Parameters" = @{
-                                "LogDirectoryPath" = "C:\\cfn\\log"
+                                "LogDirectoryPath" = "C:\cfn\log"
                                 "LogName"          = "CfnInit"
                                 "Levels"           = "7"
                                 "TimestampFormat"  = "yyyy-MM-dd HH:mm:ss,fff"
@@ -222,9 +222,9 @@ else {
                             "Parameters" = @{
                                 "AccessKey" = ""
                                 "SecretKey" = ""
-                                "Region"    = $Region
-                                "LogGroup"  = $DeploymentName
-                                "LogStream" = $InstanceId
+                                "Region"    = "$Region"
+                                "LogGroup"  = "$DeploymentName"
+                                "LogStream" = "{instance_id}"
                             }
                         },
                         @{
@@ -233,7 +233,7 @@ else {
                             "Parameters" = @{
                                 "AccessKey" = ""
                                 "SecretKey" = ""
-                                "Region"    = $Region
+                                "Region"    = "$Region"
                                 "NameSpace" = "Windows/Default"
                             }
                         }
@@ -256,7 +256,10 @@ else {
         $json = $config | ConvertTo-Json -Depth 10
     
         # Write the JSON to the configuration file
-        $json | Out-File -FilePath $ConfigFilePath
+        $json | Out-File -FilePath $ConfigFilePath -Encoding ascii
+        Start-Sleep -Seconds 30
+        Restart-Service AmazonSSMAgent -Force -ErrorAction Continue
+        Start-Sleep -Seconds 30
     }
     catch {
         Write-Output "An error occurred while configuring the CloudWatch Logs agent: $($_.Exception.Message)"

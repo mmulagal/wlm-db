@@ -12,7 +12,8 @@ import {
     describeFSxBackups,
     listResourceTags,
     createTag,
-    describeFSx
+    describeFSx,
+    describeVolumes
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -629,6 +630,21 @@ async function getStorageDataFromOntap(
     }
 }
 
+async function getFsxVolumeDetails(credentialsId: string, region: string, fsxId: string, fsxVolumeIds: string[]) {
+    logger.info('Get FSx volume details', { credentialsId, region, fsxId, fsxVolumeIds });
+
+    const params = {
+        FileSystemId: fsxId,
+        VolumeIds: fsxVolumeIds
+    };
+
+    const { Volumes: fsxVolumes } = await describeVolumes(credentialsId, region, params);
+    if (!fsxVolumes) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get FSx volume details');
+    }
+    return fsxVolumes;
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -642,5 +658,7 @@ export {
     getFSXFileSystemListForDemo,
     getFSXDetails,
     getStorageDataFromOntap,
-    getFsxStorageDetails
+    getFsxStorageDetails,
+    getFsxVolumeDetails,
+    getFsxnVolIdsFromOntapVolIds
 };

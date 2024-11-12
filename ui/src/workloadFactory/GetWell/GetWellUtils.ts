@@ -382,7 +382,8 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                     },
                     tags: item?.tags,
                     id: item?.name,
-                    category: categoryVal
+                    category: categoryVal,
+                    recommendationOptions: index === 2 ? item?.recommendationOptions || [] : null
                 }
             };
         });

@@ -84,7 +84,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
-                    query: { type }
+                    body: { type }
                 } = request;
 
                 const response = await optimizeSizing(

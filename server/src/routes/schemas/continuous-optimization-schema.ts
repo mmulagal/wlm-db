@@ -8,7 +8,7 @@ import {
 } from '../types/database-hosts.types';
 import {
     OptimizeStorageRequestBody,
-    OptimizeSizingQueryParams,
+    OptimizeSizingRequestBody,
     DriftAssessmentResponse,
     OptimizeComputeRequestBody
 } from '../types/continuous-optimization.types';
@@ -66,7 +66,7 @@ const OptimizeSizingSchema = {
     summary: 'Optimize storage sizing',
     description: 'Optimize sizing parameters as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
-    querystring: OptimizeSizingQueryParams,
+    body: OptimizeSizingRequestBody,
     tags: [RouteTags.ASSESSMENT],
     response: {
         200: {

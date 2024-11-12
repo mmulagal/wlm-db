@@ -134,7 +134,7 @@ const ExploreSavingsTableV2 = () => {
                 { label: GENERAL.FSX_FOR_WINDOWS, value: GENERAL.FSX_FOR_WINDOWS }
             ],
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return cellData === 'EBS' ? 'Elastic Block Store (EBS)' : cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
@@ -148,7 +148,7 @@ const ExploreSavingsTableV2 = () => {
                     <div>
                         {cellData && Number(cellData) !== 0 ? (
                             <>
-                                <Typography variant="Regular_14">{cellData + ' instances'}</Typography>
+                                <Typography variant="Regular_14">{cellData} {Number(cellData) > 1 ? 'instances' : 'instance'}</Typography>
                             </>
                         ) : (
                             ''

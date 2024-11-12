@@ -16,7 +16,7 @@ $IsCustomAmi = "${is_custom_ami}"
 $PerformFsxCheck = "${perform_fsx_check}"
 $FsxFileSystemId = "${fsx_file_system_id}"
 $ValidationNodeName = "${validation_node_name}"
-$LogGroup = "${log_group}_$ValidationNodeName"
+$LogGroup = "${log_group}"
 $SqlDeploymentMode = "${sql_deployment_mode}"
 
 
@@ -48,7 +48,7 @@ if (Get-Module -ListAvailable -Name AWSPowerShell) {
 }
 else {
     Write-Host "AWS PowerShell module is not installed."
-    Install-Module -Name AWSPowerShell -Scope CurrentUser
+    Install-Module -Name AWSPowerShell -Scope CurrentUser -Force
 }
 
 try {
