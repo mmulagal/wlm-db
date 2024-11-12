@@ -1422,6 +1422,10 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptUnzipArchive',
         url: `${WLMDB}/pgsql/scripts/unzip-archive.sh`
+    },
+    {
+        name: 'ArtifactsSignatures',
+        url: `${WLMDB}/pgsql/signig_files.zip`
     }
 ];
 
