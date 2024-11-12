@@ -9,6 +9,7 @@ const initialState: any = {
     activeDirectorySelected: true,
     fsxNNameSelected: true,
     dbNameSelected: true,
+    pgDbNameSelected: true,
     licenseIdSelected: true,
     isLoading: false, // To load page while create or save form or estimate cost
     isLoadConfig: false, // To show loading in load config
@@ -67,6 +68,9 @@ const msSqlActionSlice = createSlice({
         },
         setDBNameValue(state, action: PayloadAction<any>) {
             state.dbNameSelected = action.payload;
+        },
+        setPgDBNameValue(state, action: PayloadAction<any>) {
+            state.pgDbNameSelected = action.payload;
         },
         setIsLoading(state, action: PayloadAction<any>) {
             state.isLoading = action.payload;
@@ -160,6 +164,7 @@ export const {
     setActiveDirectoryValue,
     setFSXNNameValue,
     setDBNameValue,
+    setPgDBNameValue,
     setIsLoading,
     setLicenseIdValue,
     setIsLoadConfig,

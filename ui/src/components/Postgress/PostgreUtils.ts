@@ -1,13 +1,11 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import {
-    setActiveDirectoryValue,
     setAZSelectedValue,
     setCreateHit,
     setCreatePressed,
     setDBCredentialPasswordValue,
-    setDBNameValue,
     setFSXNNameValue,
-    setLicenseIdValue,
+    setPgDBNameValue,
     setVPCSelectedValue
 } from '../../store/mssql/msSqlActionSlice';
 import { FORM_OPTIONS, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../utils/consts';
@@ -17,21 +15,7 @@ import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSli
 import { GENERAL } from '../../utils/appConstants';
 
 const createPgsqlPayload = (state: any) => {
-    let payload: PgsqlRequestBody;
-    const [licenseId, licenceName] = (() => {
-        const licenseType = state.mssqlForm.license?.selectedLicenseType;
-        if (licenseType === FORM_OPTIONS.LICENSE_AMI) {
-            return [
-                state.mssqlForm.license?.selectedLicenseId?.value,
-                state.mssqlForm.license?.selectedLicenseId?.data?.amiName
-            ];
-        } else {
-            return [
-                state.mssqlForm.license?.selectedCustomAMI?.value,
-                state.mssqlForm.license?.selectedCustomAMI?.data?.amiName
-            ];
-        }
-    })();
+    let payload;
 
     const encryptionKey = (() => {
         const encryptionType = state.mssqlForm.encryption?.encryptionType;
@@ -159,10 +143,10 @@ const createPgsqlPayload = (state: any) => {
         },
         sqlConfiguration: {
             sqlDeploymentMode: state.mssqlForm.dbDeploymentModel?.value || SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE,
-            isCustomAmi: state.mssqlForm.license?.selectedLicenseType === FORM_OPTIONS.CUSTOM_AMI ? true : false,
-            sqlAmiId: licenseId || '',
-            sqlAmiName: licenceName || '',
-            sqlServerName: state.mssqlForm.dbName || ''
+            sqlServerName: state.postgreForm.postgreServerName || '',
+            serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
+            serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
+            sqlVersion: state.postgreForm.postgreVersion?.value || ''
         },
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
         enableCloudWatch: state.mssqlForm.cloudWatch,
@@ -190,12 +174,13 @@ const handleCreatePgsql = (state: any, dispatch: Dispatch) => {
             (state.mssqlForm.dbDeploymentModel?.label === GENERAL.SINGLE_INSTANCE &&
                 (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
                     !state.mssqlForm.availabilityZones.selectedSubnetNode1));
+        
+        const dbCredStateValue = !state.mssqlForm.dbCredentials.password;
 
         const fsxStateValue =
             (isFsxnNew(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNPassword) ||
             (isFsxnExisting(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNExistingName);
 
-        const licenseIdCheck = !state.mssqlForm.license.selectedLicenseId;
         //Check for VPC values
         if (vpcStateValue) {
             dispatch(setVPCSelectedValue(false));
@@ -213,30 +198,28 @@ const handleCreatePgsql = (state: any, dispatch: Dispatch) => {
         dispatch(setFSXNNameValue(fsxStateValue ? false : true));
 
         //Check for DB Name - InvalidName
-        const input = state.mssqlForm.dbName;
+        const input = state.postgreForm.postgreServerName;
         const dataBaseNameValue =
             (input && input.length > 15) || !/^[a-zA-Z0-9]/.test(input?.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
         const isDBValueValid = dataBaseNameValue ? true : false;
         if (dataBaseNameValue) {
-            dispatch(setDBNameValue(false));
+            dispatch(setPgDBNameValue(false));
         } else {
-            dispatch(setDBNameValue(true));
+            dispatch(setPgDBNameValue(true));
         }
 
-        //Check for License ID
-        if (licenseIdCheck) {
-            dispatch(setLicenseIdValue(false));
-        } else {
-            dispatch(setLicenseIdValue(true));
-        }
+        //Check for DB cred password
+        dispatch(setDBCredentialPasswordValue(dbCredStateValue ? false : true));
+        const checkForUserName = isValidUserName(state.mssqlForm.dbCredentials.name);
 
         //Proceed for post call
         if (
             !vpcStateValue &&
             !azStateValue &&
+            !dbCredStateValue &&
             !fsxStateValue &&
             !isDBValueValid &&
-            !licenseIdCheck &&
+            !checkForUserName &&
             !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)
         ) {
             payload = createPgsqlPayload(state);
@@ -246,10 +229,10 @@ const handleCreatePgsql = (state: any, dispatch: Dispatch) => {
                 ? 'VPC'
                 : azStateValue
                 ? 'Availability Zone'
+                : dbCredStateValue
+                ? 'DB credentials'
                 : fsxStateValue
                 ? 'FSx'
-                : licenseIdCheck
-                ? 'License information'
                 : '';
             if (state.chatbot.isShow) {
                 dispatch(
