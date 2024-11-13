@@ -28,7 +28,8 @@ import {
     DatabaseHostOptionalInstanceSummaryParams,
     DatabaseQueryString,
     DriftAssessmentResponse,
-    OptimizeStorageRequestBody
+    OptimizeStorageRequestBody,
+    OptimizeOperatingSystemRequestBody
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -356,6 +357,19 @@ const OptimizeStorageSchema = {
         }
     }
 };
+const OptimizeOperatingSystemSchema = {
+    ...resourceRequest,
+    summary: 'Optimize MPIO settings',
+    description: 'Optimize MPIO settings parameters as per the best practice for the selected database instance.',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: OptimizeOperatingSystemRequestBody,
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
 
 export {
     DatabasesCreateSchema,
@@ -379,5 +393,6 @@ export {
     GetCollationDetailsSchemaV2,
     DriftAssessment,
     TriggerDriftAssessmentSchema,
-    OptimizeStorageSchema
+    OptimizeStorageSchema,
+    OptimizeOperatingSystemSchema
 };

@@ -16,6 +16,7 @@ import { CredentialsIdParams } from './generic.types';
 import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
+    OptimizeOperatingSystemParams,
     OptimizeStorageConfigs
 } from '../../utils/continous-optimization-consts';
 
@@ -687,6 +688,10 @@ const OptimizeStorageRequestBody = Type.Object({
     assessments: Type.Optional(Type.Array(OptimizeStorageRequestParams))
 });
 
+const OptimizeOperatingSystemRequestBody = Type.Object({
+    configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
+});
+
 type OptimizeStorageRequestBodyType = Static<typeof OptimizeStorageRequestBody>;
 
 type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
@@ -780,5 +785,6 @@ export {
     OptimizeStorageRequestBody,
     OptimizeStorageRequestBodyType,
     OptimizeStorageRequestParamsType,
-    SizingViolationResponseType
+    SizingViolationResponseType,
+    OptimizeOperatingSystemRequestBody
 };

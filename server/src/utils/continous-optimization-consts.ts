@@ -47,6 +47,10 @@ enum OptimizeStorageConfigs {
     SPACE_ALLOCATION = 'space-allocation-allocated'
 }
 
+enum OptimizeOperatingSystemParams {
+    MPIO_POLICY = 'mpio-policy'
+}
+
 const DRIFT_ASSESSMENT_QUEUE = 'driftAssessmentQueue';
 const SEVERITY = {
     CRITICAL: 'critical',
@@ -140,5 +144,6 @@ export {
     VOLUME,
     LUN,
     QUERY_PARAMS,
-    REDIS_SCHEMA
+    REDIS_SCHEMA,
+    OptimizeOperatingSystemParams
 };
