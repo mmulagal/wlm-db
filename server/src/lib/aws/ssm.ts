@@ -132,31 +132,6 @@ async function deleteParameters(credentialsId: string, region: string, ssmParame
     return ssmClient.send(new DeleteParametersCommand({ Names: ssmParameterNames }));
 }
 
-async function getAmazonLinuxAMI(region: string, credentialsId: string) {
-    logger.info('Getting Amazon Linux AMI', { region, credentialsId });
-
-    try {
-        const ssmClient = await getSSMClient(region, credentialsId);
-        const parametersInput: GetParametersByPathCommandInput = {
-            Path: '/aws/service/ami-amazon-linux-latest',
-            Recursive: false,
-            WithDecryption: true
-        };
-
-        const paginator = paginateGetParametersByPath({ client: ssmClient }, parametersInput);
-        const amazonLinuxAmis = [];
-        for await (const page of paginator) {
-            if (page.Parameters?.length) {
-                amazonLinuxAmis.push(...page.Parameters);
-            }
-        }
-        logger.info('Describe AWS FSx regions response:', amazonLinuxAmis);
-        return amazonLinuxAmis;
-    } catch (error) {
-        logger.error('Failed to get Amazon Linux AMIs', error);
-    }
-}
-
 export {
     getSSMClient,
     sendSSMCommand,
@@ -165,6 +140,5 @@ export {
     getConnectionStatus,
     putParameter,
     getParameter,
-    deleteParameters,
-    getAmazonLinuxAMI
+    deleteParameters
 };

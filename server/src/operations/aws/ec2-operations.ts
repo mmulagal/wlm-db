@@ -59,7 +59,6 @@ import {
     NodeDetails
 } from '../../utils/common-types';
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
-import { getAmazonLinuxAMI } from '../../lib/aws/ssm';
 
 const logger = getLogger();
 
@@ -317,19 +316,6 @@ async function getAmiList(
             return { amis: [] };
         }
     } else {
-        if (osType === 'amazon-linux') {
-            const amazonAmis = (await getAmazonLinuxAMI(region, credentialsId)) || [];
-            const filteredAmis = [];
-            for (const ami of amazonAmis) {
-                if (ami?.Name?.includes('amazon-linux')) {
-                    filteredAmis.push({
-                        name: ami.Name,
-                        imageId: ami.Value
-                    });
-                }
-            }
-            return { amis: filteredAmis };
-        }
         const amiFilter =
             osType === 'windows'
                 ? { Name: 'name', Values: filterSqlAmis(osVersion, databaseVersion, databaseEdition) }
