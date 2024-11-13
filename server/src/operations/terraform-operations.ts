@@ -19,9 +19,10 @@ import {
     TERRAFORM_ROOT_MODULE_DISTRIBUTION,
     FCI,
     STANDALONE,
-    TF_VARS_CONFIG
+    TF_VARS_CONFIG,
+    INITIALIZER
 } from '../utils/consts';
-import { isDemo } from '../utils/utils';
+import { getArtifactsRegionBucketName, isDemo } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { generateSignedUrls } from './template-operations';
 
@@ -124,7 +125,8 @@ async function uploadInitializerScripts(
                     deploymentName,
                     'ValidationInitializerTemplate',
                     contents,
-                    'validation_node_initialization_s3_url'
+                    'validation_node_initialization_s3_url',
+                    region
                 );
             } else if (initializerName === TEMPLATE_TYPES.SQLSTANDALONE) {
                 const contents = template({
@@ -160,7 +162,8 @@ async function uploadInitializerScripts(
                     deploymentName,
                     templateName,
                     contents,
-                    'sql_node_initialization_s3_url'
+                    'sql_node_initialization_s3_url',
+                    region
                 );
             } else {
                 // Yet to implement for FCI
@@ -174,23 +177,24 @@ async function uploadInitializerScripts(
     }
 }
 
-async function processTemplate(deploymentName: string, templateName: string, contents: string, urlName: string) {
-    logger.info('Processing template', templateName, contents, deploymentName, urlName);
+async function processTemplate(
+    deploymentName: string,
+    templateName: string,
+    contents: string,
+    urlName: string,
+    region: string
+) {
+    logger.info('Processing template', templateName, contents, deploymentName, urlName, region);
 
     const initializerTemplate = TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS.find(asset => asset.name === templateName);
 
-    const customInitializerTemplatePath: string = `${WLMDB}/${deploymentName}/${initializerTemplate!.url}`;
-    await putObjectBucket(
-        TEMPLATE_BUCKET_REGION,
-        SIGNED_TEMPLATES_BUCKET_NAME,
-        customInitializerTemplatePath,
-        contents
-    );
-    const initializerS3ignedURL = await getPreSignedUrl(
-        TEMPLATE_BUCKET_REGION,
-        SIGNED_TEMPLATES_BUCKET_NAME,
-        customInitializerTemplatePath
-    );
+    const customInitializerTemplatePath: string = `${WLMDB}/${INITIALIZER}/${deploymentName}/${
+        initializerTemplate!.url
+    }`;
+    const bucketName = getArtifactsRegionBucketName(region);
+
+    await putObjectBucket(region, bucketName, customInitializerTemplatePath, contents);
+    const initializerS3ignedURL = await getPreSignedUrl(region, bucketName, customInitializerTemplatePath);
     return {
         name: urlName,
         url: initializerS3ignedURL,

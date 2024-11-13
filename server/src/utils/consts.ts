@@ -536,6 +536,7 @@ const AWS_REGIONS = new Map<string, string>([
 ]);
 
 const WLMDB = 'wlmdb';
+const INITIALIZER = 'Initializer';
 
 const ARTIFACT_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.artifacts');
 const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
@@ -1781,5 +1782,6 @@ export {
     AWS_CE_TYPE,
     PGSQL_MASTER_TEMPLATE_PATH,
     MAX_DATA_LUN_SIZE_IN_GIB,
-    TF_VARS_CONFIG
+    TF_VARS_CONFIG,
+    INITIALIZER
 };
