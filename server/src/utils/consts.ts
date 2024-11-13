@@ -1263,10 +1263,7 @@ const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
 
-const VALIDATION_NODE_INSTANCETYPE = {
-    T2MICRO: 't2.micro',
-    T3MICRO: 't3.micro'
-};
+const VALIDATION_NODE_INSTANCETYPE = 'm5.xlarge';
 
 const ONLINE = 'ONLINE';
 const OFFLINE = 'OFFLINE';

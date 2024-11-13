@@ -77,7 +77,6 @@ import {
     TEMPLATE_USERNAME_MAPPING,
     PERMISSION_DENIAL_POSSIBLE_REASONS,
     STORAGE_PROTOCOLS,
-    CUSTOM_AMI_VALIDATION_INSTANCE_TYPE,
     EBS_VOLUME_SIZE,
     EBS_DEFAULT_VOLUME_SIZE,
     TEMPLATE_PRIVATESUBNET1_CIDRBLOCK,
@@ -102,12 +101,7 @@ import {
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
-import {
-    getServicesWithNoEndpoint,
-    getValidationNodeInstanceType,
-    getWindowsServerBaseAmi,
-    enableVpcDnsAttributes
-} from './aws/ec2-operations';
+import { getServicesWithNoEndpoint, enableVpcDnsAttributes } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -188,21 +182,7 @@ async function formatTemplateParameters(
         : { roleName: '', providerAccountId: '' };
 
     const stackName = derivedParams.StackName;
-    const validationAmiImage = sqlConfiguration.isCustomAmi
-        ? sqlConfiguration.sqlAmiId
-        : credentialsId && region
-        ? await getWindowsServerBaseAmi(credentialsId!, region!)
-        : '';
-
-    const availabilityZones =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.availabilityZone1!]
-            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
-    const validationNodeInstanceType = sqlConfiguration.isCustomAmi
-        ? CUSTOM_AMI_VALIDATION_INSTANCE_TYPE
-        : credentialsId && region
-        ? await getValidationNodeInstanceType(credentialsId!, region, availabilityZones)
-        : VALIDATION_NODE_INSTANCETYPE.T2MICRO;
+    const validationAmiImage = sqlConfiguration.sqlAmiId;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
@@ -226,7 +206,7 @@ async function formatTemplateParameters(
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: VALIDATION_NODE_INSTANCETYPE },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
@@ -876,16 +856,7 @@ async function createCloudFormationTemplateForUserDeployment(
     const encodedSignedMasterTemplateURL = encodeURIComponent(signedMasterTemplateUrl);
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
-    const validationAmiImage = sqlConfiguration.isCustomAmi
-        ? sqlConfiguration.sqlAmiId
-        : await getWindowsServerBaseAmi(credentialsId, region);
-    const availabilityZones =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.availabilityZone1!]
-            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
-    const validationNodeInstanceType = sqlConfiguration.isCustomAmi
-        ? CUSTOM_AMI_VALIDATION_INSTANCE_TYPE
-        : await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
+    const validationAmiImage = sqlConfiguration.sqlAmiId;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
@@ -911,7 +882,7 @@ async function createCloudFormationTemplateForUserDeployment(
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: VALIDATION_NODE_INSTANCETYPE },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
@@ -921,7 +892,7 @@ async function createCloudFormationTemplateForUserDeployment(
         { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr?.toString() || '' },
         { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
     ];
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${validationNodeInstanceType}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${VALIDATION_NODE_INSTANCETYPE}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
@@ -1568,13 +1539,6 @@ async function formatPgSqlTemplateParameters(
 
     const validationAmiImage = sqlConfiguration.sqlAmiId;
 
-    const availabilityZones =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.availabilityZone1!]
-            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
-
-    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
-
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
@@ -1599,7 +1563,7 @@ async function formatPgSqlTemplateParameters(
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: VALIDATION_NODE_INSTANCETYPE },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
@@ -1765,11 +1729,6 @@ async function createCfTemplateForPgsqlDeployment(
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     const validationAmiImage = sqlConfiguration.sqlAmiId;
-    const availabilityZones =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.availabilityZone1!]
-            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
-    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
@@ -1795,7 +1754,7 @@ async function createCfTemplateForPgsqlDeployment(
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: VALIDATION_NODE_INSTANCETYPE },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
@@ -1806,7 +1765,7 @@ async function createCfTemplateForPgsqlDeployment(
         { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
     ];
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${validationNodeInstanceType}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${VALIDATION_NODE_INSTANCETYPE}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
 
     if (fsxConfiguration.fsxPassword) {
         try {
