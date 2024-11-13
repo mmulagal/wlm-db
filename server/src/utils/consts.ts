@@ -1374,6 +1374,7 @@ const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     sqlServerName: 'SqlServerName',
+    sqlVersion: 'SqlVersion',
 
     workloadInstanceType: 'WorkloadInstanceType',
     keyPairName: 'KeyPairName',

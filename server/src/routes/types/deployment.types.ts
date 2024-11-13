@@ -46,14 +46,15 @@ const SQLConfiguration = Type.Object({
     sqlServerName: Type.String(),
     sqlAmiName: Type.String(),
     sqlCollation: Type.String(),
-    isCustomAmi: Type.Optional(Type.Boolean({ default: false }))
+    isCustomAmi: Type.Optional(Type.Boolean({ default: false })),
+    sqlVersion: Type.Optional(Type.String({ enum: ['postgresql15', 'postgresql16'] }))
 });
 
 const PgSqlConfiguration = Type.Pick(SQLConfiguration, [
-    'sqlAmiId',
     'sqlAmiName',
     'sqlDeploymentMode',
-    'sqlServerName'
+    'sqlServerName',
+    'sqlVersion'
 ]);
 
 const PgSqlCloudFormationTemplateRequestBody = Type.Object({
@@ -213,7 +214,7 @@ type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
 type CloudFormationStaticTemplateResponseType = Static<typeof CloudFormationStaticTemplateResponse>;
 type CloudFormationDeploymentResponseType = Static<typeof CloudFormationDeploymentResponse>;
-type PgSqlConfigurationType = Static<typeof PgSqlConfiguration>;
+type PgSqlConfigurationType = Static<typeof PgSqlConfiguration> & { sqlAmiId?: string };
 type TerraformSetupResponseType = Static<typeof TerraformSetupResponse>;
 
 export {

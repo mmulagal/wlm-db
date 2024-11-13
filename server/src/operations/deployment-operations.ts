@@ -126,9 +126,11 @@ import {
     createTFVarsFile,
     createRootModuleFile
 } from './terraform-operations';
+import { getParameter } from '../lib/aws/ssm';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
+const AL2023AMINAME = '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64';
 
 async function getSubnetsCidr(
     credentialsId: string,
@@ -1335,6 +1337,12 @@ async function deployPgSql(
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const { sqlServerName } = sqlConfiguration;
+    const al2023AmiId = await getParameter(credentialsId, region, AL2023AMINAME);
+    if (al2023AmiId) {
+        sqlConfiguration.sqlAmiId = al2023AmiId;
+    } else {
+        throw createError(412, 'Amazon Linux 2023 AMI is not available');
+    }
 
     validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
 
@@ -1834,7 +1842,9 @@ async function createCfTemplateForPgsqlDeployment(
                 BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} } = {}] = []
             } = {}
         ] = []
-    } = await getAmis(credentialsId, region, { ImageIds: [sqlConfiguration.sqlAmiId] });
+    } = await getAmis(credentialsId, region, {
+        ImageIds: [sqlConfiguration.sqlAmiId ? sqlConfiguration.sqlAmiId : '']
+    });
 
     const amiSize = Math.max(amiVolumeSize, EBS_DEFAULT_VOLUME_SIZE);
     templateParams += `&param_${EBS_VOLUME_SIZE}=${amiSize}`;
