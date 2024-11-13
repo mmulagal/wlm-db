@@ -1509,7 +1509,7 @@ async function verifyAndCreateCredentials(
     sqlCredentials: DiscoverCredentialsType[],
     instanceIds: string[]
 ) {
-    logger.info('Verify and create credentials', { instanceId, fsxCredentials, sqlCredentials });
+    logger.info('Verify and create credentials', { instanceId });
 
     if (fsxCredentials) {
         const SSMParameter = await getParameter(
