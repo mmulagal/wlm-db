@@ -1,18 +1,40 @@
 param (
     [string[]]$InstanceNames = @(),
-    [string]$SqlUsername,
-    [SecureString]$SqlPassword
+    [string]$SqlUsername
 )
+
+$osEdition = (Get-WmiObject -Class Win32_OperatingSystem).Caption
+$cpuCount = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
+$ramSize = (Get-WmiObject -Class Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1GB
+
+
+function Get-FCIName {
+    param (
+        [string]$sqlServerNameToFind
+    )
+
+    $ipResources = Get-ClusterResource | Where-Object {$_.ResourceType -eq "IP Address"} -ErrorAction SilentlyContinue
+
+    $filteredResources = $ipResources | Where-Object {
+        $_.OwnerGroup -match "^SQL Server \(([^)]+)\)"
+    } | Select-Object @{Name='FCIName'; Expression={[regex]::Match($_.Name, '\(([^)]+)\)').Groups[1].Value}},
+                  @{Name='SQLServerName'; Expression={[regex]::Match($_.OwnerGroup, 'SQL Server \(([^)]+)\)').Groups[1].Value}}
+
+    $fciName = $filteredResources | Where-Object { $_.SQLServerName -eq $sqlServerNameToFind } | Select-Object -ExpandProperty FCIName
+
+    return $fciName
+}
+
 
 function Invoke-SQLQuery {
     param (
         [string]$Query,
         [string]$InstanceName,
         [string]$SqlUsername,
-        [SecureString]$SqlPassword
+        [string]$SqlPassword
     )
 
-    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -W -h-1"
+    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -W -h -1 "
 
     if (![string]::IsNullOrEmpty($SqlUsername) -and ![string]::IsNullOrEmpty($SqlPassword)) {
         $sqlcmd += " -U $SqlUsername -P $SqlPassword"
@@ -26,32 +48,86 @@ function Invoke-SQLQuery {
     }
 }
 
-$osEdition = (Get-WmiObject -Class Win32_OperatingSystem).Caption
-$cpuCount = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
-$ramSize = (Get-WmiObject -Class Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1GB
+function GetClusterNodeDetails {
+
+ param (
+        [string]$nodeName
+    )
+
+      # Retrieve OS edition
+    $osEdition = (Get-CimInstance -ClassName Win32_OperatingSystem -ComputerName $nodeName).Caption
+
+    # Retrieve CPU count
+    $cpuCount = (Get-CimInstance -ClassName Win32_ComputerSystem -ComputerName $nodeName).NumberOfLogicalProcessors
+
+    # Retrieve RAM size
+    $ramSize = (Get-CimInstance -ClassName Win32_PhysicalMemory -ComputerName $nodeName | Measure-Object -Property Capacity -Sum).Sum / 1GB
+       
+
+   $nodeDetails = @{
+        "odEdition"              = $osEdition
+        "numberOfVirtualCPUs"  = $cpuCount
+        "RAMSize"           = $ramSize
+    }
+    return $nodeDetails
+}
+
+
+
+if($SqlUsername){
+    $encryptedSqlPassword = Read-Host -Prompt "Enter Password" -AsSecureString
+    $SqlPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+    [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($encryptedSqlPassword)
+)
+}
+
+
 $nodeNames = @()
+$hostName = hostname
 $belongsToCluster = $false
 try{
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue
     if ($clusterNodes){
         $nodeNames = $clusterNodes | Select-Object -ExpandProperty Name
         $belongsToCluster = $true
+      
     }
  }catch{
     $belongsToCluster = $false
  }
 
+
  
-$windowsConfig = @{
-    "OS Edition" = $osEdition
-    "Number of virtual CPUs" = $cpuCount
-    "RAM Size (GB)" = $ramSize
-    "Belongs to Cluster" = $belongsToCluster 
-    "Node Names" = $nodeNames
+$hostDetails = @{
+    "osEdition" = $osEdition
+    "numberOfVirtualCPUs" = $cpuCount
+    "RAMSize" = $ramSize
+    
+}
+
+ $windowsConfig = @{
+    "belongsToCluster" = $belongsToCluster
+    "NodeDetails" = @()
+}
+
+$windowsConfig["NodeDetails"] += @{
+    $hostname = $hostDetails
 }
 
 if($belongsToCluster){
-    $windowsConfig.Add("Cluster Node Names",$clusterNodes)
+
+    $windowsConfig.Add("ClusterNodeNames",$nodeNames)
+    $windowsClusterName = Get-Cluster | Select-Object Name
+    $windowsConfig.Add("windowsClusterName",$windowsClusterName)
+    $remoteClusterNodes = $nodeNames | Where-Object { $_ -ne $hostname }
+    foreach ($node in $remoteClusterNodes) {
+        $clusterResult = GetClusterNodeDetails -nodeName $node
+        $windowsConfig["NodeDetails"] += @{
+            $node = $clusterResult
+        }
+    }
+
+
 }
 
 $sqlServiceList = Get-WmiObject win32_service | Where-Object { $_.DisplayName -like 'sql server (*' }
@@ -60,17 +136,27 @@ $finalInstancesList = @()
 ForEach ($sqlService in $sqlServiceList) {
     $isDefaultInstance = -Not $sqlService.Name.Contains('$')
     $instanceName = $sqlService.Name -Replace "MSSQL\$", ""
-    $instanceState = $sqlService.State 
-    $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\$instanceName" }
-    if ($instanceState -eq "Running") { 
-        if ($InstanceNames.Count -gt 0) {
-            if ($InstanceNames -contains $instanceName) {
-                $finalInstancesList += $serverInstance
-            }
+    $fciName = $fciName = Get-FCIName -sqlServerNameToFind $instanceName -ErrorAction SilentlyContinue
+   if ($fciName) {
+    $serverInstance = if ($isDefaultInstance) { 
+        $fciName 
+    } else { 
+        "$fciName\$instanceName" 
+    }
+} else {
+    $serverInstance = if ($isDefaultInstance) { 
+        "$Env:ComputerName" 
+    } else { 
+        "$Env:ComputerName\$instanceName" 
+    }
+}
+    if ($InstanceNames.Count -gt 0) {
+        if ($InstanceNames -contains $instanceName) {
+            $finalInstancesList += $serverInstance
+        }
         } else {
             $finalInstancesList += $serverInstance
         }
-    }
 }
 
 $queries = @{
@@ -90,11 +176,15 @@ SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');
 "@
 
 sqlVersion = @"
-SELECT @@VERSION AS SQLServerVersion;
+SET NOCOUNT ON;SELECT @@VERSION AS SQLServerVersion;
 "@
 
 noOfDatabases = @"
 SET NOCOUNT ON; SELECT count(name) FROM sys.databases;
+"@
+
+collation = @"
+SET NOCOUNT ON; SELECT SERVERPROPERTY('Collation') AS ServerCollation;
 "@
 
 cpuUtilization = @"
@@ -128,7 +218,7 @@ isClustered = @"
 SET NOCOUNT ON; SELECT SERVERPROPERTY('IsClustered')
 "@
 
-Iops = @"
+iops = @"
 SET NOCOUNT ON;
 DECLARE @SQLRestartDateTime Datetime;
 DECLARE @TimeInSeconds Float;
@@ -149,7 +239,86 @@ FROM
 
 "@
 
-StorageDetailsByDB = @"
+licenceUsgaeDetails = @"
+SET NOCOUNT ON;
+
+IF (SELECT CASE WHEN CONVERT(sysname, SERVERPROPERTY('EngineEdition')) = '3' THEN 1 ELSE 0 END) = 1
+BEGIN
+    -- SQL Server is Enterprise Edition
+    IF OBJECT_ID('tempdb.dbo.#EnterpriseFeaturesDB') IS NOT NULL
+        DROP TABLE #EnterpriseFeaturesDB;
+
+    CREATE TABLE #EnterpriseFeaturesDB
+    (
+        DatabaseName VARCHAR(100),
+        Feature_Name VARCHAR(100)
+    );
+
+    EXEC sp_MSforeachdb
+    N'
+    USE [?];
+    IF (SELECT COUNT(*) FROM sys.dm_db_persisted_sku_features) > 0
+    BEGIN
+        INSERT INTO #EnterpriseFeaturesDB
+        SELECT DB_NAME() AS DatabaseName, Feature_Name
+        FROM sys.dm_db_persisted_sku_features;
+    END';
+
+    -- Create a table to store the results
+    CREATE TABLE #Results (IsUsingFeature INT, FeatureDescription VARCHAR(100));
+
+    -- Modify each SELECT statement to insert into the results table
+    INSERT INTO #Results
+    SELECT IIF(COUNT(1) > 0, 1, 0), 'User Databases are using Enterprise Level Features'
+    FROM #EnterpriseFeaturesDB
+    UNION
+    SELECT IIF(COUNT(1) > 0, 1, 0), 'You have Availability Groups with > 1 database'
+    FROM sys.availability_databases_cluster Databaselist
+    INNER JOIN sys.availability_groups_cluster Groups ON Databaselist.group_id = Groups.group_id
+    GROUP BY [name] HAVING COUNT([database_name]) > 1
+    UNION
+    SELECT IIF(COUNT(1) > 0, 1, 0), 'You have read-only Replicas'
+    FROM sys.availability_replicas
+    WHERE secondary_role_allow_connections <> 0
+    UNION
+    SELECT IIF(COUNT(1) > 0, 1, 0), 'You have Asynchronous commit Replicas'
+    FROM sys.availability_replicas
+    WHERE availability_mode = 0
+    UNION
+    SELECT IIF(COUNT(1) > 0, 1, 0), 'You are using Resource Governor'
+    FROM sys.dm_resource_governor_resource_pools
+    WHERE name NOT IN ('internal', 'default')
+    UNION
+    SELECT IIF(COUNT(1) > 0, 1, 0), 'You are using peer-to-peer replication'
+    FROM sys.dm_repl_articles
+    WHERE intPublicationOptions = 0x1
+    UNION
+    SELECT IIF(COUNT(1) > 0, 1, 0), 'You are using R or Python extensions'
+    FROM sys.dm_external_script_requests
+    WHERE language IN ('R', 'Python')
+    UNION SELECT IIF(COUNT(1) > 0, 1, 0), 'Tempdb metadata memory-optimized is enabled'
+    FROM sys.configurations
+    WHERE name = N'tempdb metadata memory-optimized'
+    AND value_in_use = 1
+    UNION
+    SELECT IIF(COUNT(1) > 48, 1, 0), 'SQL Server has > 48 vCPU'
+    FROM sys.dm_os_schedulers WITH (NOLOCK)
+    WHERE scheduler_id < 255 AND [status] = 'VISIBLE ONLINE'
+    UNION
+    SELECT IIF(COUNT(1) > 0, 1, 0), 'SQL Server has > 128 GB Memory'
+    FROM sys.dm_os_sys_memory
+    WHERE total_physical_memory_kb / 1024 / 1024 > 128
+    UNION
+    SELECT IIF(COUNT(1) > 0, 1, 0), 'You are using asynchronous mirroring'
+    FROM sys.database_mirroring
+    WHERE mirroring_safety_level = 1;
+
+    -- Finally, select from the results table using the FOR JSON clause
+    SELECT * FROM #Results FOR JSON PATH;
+END
+"@
+
+storageDetailsByDB = @"
 SET NOCOUNT ON;
 WITH db_size_cte AS (
     SELECT 
@@ -196,35 +365,94 @@ ORDER BY
 
 }
 
-$results = @{}
+$results = @()
+
 
 ForEach ($instance in $finalInstancesList) {
     $instanceResults = @{}
-    ForEach ($queryKey in $queries.Keys) {
-        $query = $queries[$queryKey]
-        $output = Invoke-SQLQuery -Query $query -InstanceName $instance -SqlUsername $SqlUsername -SqlPassword $SqlPassword
-        if ($output) {
-            $instanceResults[$queryKey] = $output
-        } else {
-            $instanceResults[$queryKey] = "Error running query '$queryKey' on instance $instance"
-        }
-    }
-    if ($instance -match '\\') {
+     if ($instance -match '\\') {
         $instanceName = $instance.Split('\')[-1]
     }else{
         $instanceName = "MSSQLSERVER"
     }
-    $results[$instanceName] = $instanceResults
+    
+    #check Sql auth 
+   if($SqlUsername){
+       
+        $sqlAuthTest = Invoke-SQLQuery -Query "select @@version" -InstanceName $instance -SqlUsername $SqlUsername -SqlPassword $SqlPassword
+
+        if($sqlAuthTest)
+        {
+            Write-Output "sql auth verified "
+            $verifiedSqlUsername = $SqlUsername
+            $verifiedSqlPassword = $SqlPassword
+        }
+        else{   
+            Write-Output "Given sql username and password is not valid for instance $instanceName. Trying windows auth"
+        }
+        }
+    
+    ForEach ($queryKey in $queries.Keys) {
+        $query = $queries[$queryKey]
+        $output = Invoke-SQLQuery -Query $query -InstanceName $instance -SqlUsername $verifiedSqlUsername -SqlPassword $verifiedSqlPassword
+        if ($output) {
+            try {
+                $tempOutput = $output[0] | ConvertFrom-Json
+                $jsonOutput = $tempOutput | ConvertTo-Json -Depth 4
+                $instanceResults[$queryKey] = $jsonOutput   
+            }
+            catch{
+                $instanceResults[$queryKey] = $output   
+            }     
+        } else {
+        Write-Output "Error running query '$queryKey' on instance $instance"
+            $instanceResults[$queryKey] = "Error running query '$queryKey' on instance $instance"
+        }
+            
+    
+    }
+    switch ($true) {
+    {  $instanceResults['isClustered'] -eq 1 } {
+        $instanceResults['deploymentType'] = 'fci'
+        $clusterNodeQuery = "SET NOCOUNT ON; 
+        SELECT 
+        NodeName, 
+        CASE 
+            WHEN is_current_owner = 1 THEN 'Primary'
+            ELSE 'Standby'
+        END AS NodeRole
+        FROM sys.dm_os_cluster_nodes FOR JSON PATH; "
+        $instanceResults["ownerNodes"] = Invoke-SQLQuery -Query $clusterNodeQuery -InstanceName $instance -SqlUsername $SqlUsername -SqlPassword $SqlPassword
+        break
+    }
+    { $instanceResults['isHadrEnabled'] -eq 1 } {
+        $instanceResults['deploymentType'] = 'AOAG'
+        break
+    }
+    default {
+        $instanceResults['deploymentType'] = 'standalone'
+        $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') FOR JSON PATH; "
+        $instanceResults["ownerNode"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instance -SqlUsername $SqlUsername -SqlPassword $SqlPassword
+    }
 }
+
+        $instanceResults.Remove('isClustered')
+        $instanceResults.Remove('isHadrEnabled')
+     
+   
+  $results += @{ $instanceName = $instanceResults }
+
+}
+
 $finalOutput = @{}
 
-$finalOutput['WindowsConfig'] = $windowsConfig
+$finalOutput['windowsConfig'] = $windowsConfig
 
 $finalOutput['sqlServerInfo'] = $results
 
-$jsonResults = $finalOutput | ConvertTo-Json
+$jsonResults = $finalOutput | ConvertTo-Json -Depth 8
 
-$outputFilePath = Join-Path -Path $PSScriptRoot -ChildPath "TCOResponse.json"
+$outputFilePath = Join-Path -Path $PSScriptRoot -ChildPath ("TCOResponse-" + (Get-Date -Format "yyyyMMddHHmmss") + ".json")
  
 $jsonResults | Out-File -FilePath $outputFilePath 
 
