@@ -519,11 +519,14 @@ async function initiateComputeAssessment(
             currentInstanceType,
             finding,
             findingReasonCodes,
-            recommendationOptions: coRecOptions?.map(({ instanceType, rank, savingsOpportunity }) => ({
-                instanceType,
-                rank,
-                savingsOpportunity
-            }))
+            recommendationOptions: coRecOptions?.map(
+                ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
+                    instanceType,
+                    rank,
+                    savingsOpportunity,
+                    platformDifferences
+                })
+            )
         };
     } catch (error: any) {
         errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Optimization. ${error.message}`;

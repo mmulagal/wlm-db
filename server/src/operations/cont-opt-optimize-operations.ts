@@ -1,6 +1,6 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
-import { compact } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import { Metadata, DatabaseInstance, WorkloadInstance, StorageAssessment } from '../utils/common-types';
 import { HttpErrorCodes, AuditStatus } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
@@ -1049,9 +1049,18 @@ async function optimizeCompute(
         databaseHostId,
         databaseInstanceId
     );
-    const recommendedInstanceTypes = recommendationOptions?.map(option => option.instanceType) || [];
+    const recommendedInstanceTypes =
+        recommendationOptions?.map(({ instanceType: recommendedInstanceType }) => recommendedInstanceType) || [];
     if (!recommendedInstanceTypes.includes(instanceType)) {
         throw createError(400, 'Invalid instance type, please choose from the recommended instance types');
+    }
+
+    const platformDifferences =
+        recommendationOptions?.find(
+            ({ instanceType: recommendedInstanceType }) => recommendedInstanceType === instanceType
+        )?.platformDifferences || [];
+    if (!isEmpty(platformDifferences)) {
+        throw createError(400, 'We dont support the selected instance type as it has platform differences');
     }
 
     const [{ resource_name: resourceName, metadata }] = await listResources(
@@ -1068,12 +1077,12 @@ async function optimizeCompute(
         resourceName!,
         JOBTYPE.OPTIMIZATION,
         `Optimize EC2 compute for ${resourceName}`,
-        `Optimize compute-right sizing for ${resourceName}`
+        `Optimize EC2 compute for ${resourceName}`
     );
 
     let jobStatus;
     let errorMessage = '';
-    // TODO: check for all the permissions required for the operation
+
     try {
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         const { activeNodeInstanceId } = await getActiveSqlNode(
@@ -1102,13 +1111,14 @@ async function optimizeCompute(
                     const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } =
                         JSON.parse(clusterNetworkIpDetails);
                     // get all nodes in a cluster
-                    if (clusterNetworkIpDetailsJson.clusterNetworkIps.length > 1) {
+                    const { clusterNetworkIps } = clusterNetworkIpDetailsJson;
+                    if (clusterNetworkIps.length > 1) {
                         const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
                             credentialsId,
                             region,
-                            clusterNetworkIpDetailsJson.clusterNetworkIps
+                            clusterNetworkIps
                         );
-                        const clusterNodeInstanceIds = clusterNodeDetails.map(node => node.ec2InstanceId);
+                        const clusterNodeInstanceIds = clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId);
                         const nonPrimaryNodeInstanceIds = clusterNodeInstanceIds.filter(
                             nodeId => nodeId !== activeNodeInstanceId
                         );
@@ -1150,6 +1160,17 @@ async function updateNodeInstanceType(credentialsId: string, region: string, ins
         if (!isDemo()) {
             await waitForInstanceToBeStopped(credentialsId, region, instanceId);
         }
+
+        // https://repost.aws/knowledge-center/resize-instance
+        // check if instance has elastic IP or not
+        // check for Spot Instance While a Spot Instance is stopped, you can modify some of its instance attributes, but not the instance type.
+        // check instance type compatibility https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html
+        // upggrade PV drivers on ec2 windows instances
+        // check for autoscaling instance
+        // check ebs volume limits https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/volume_limits.html
+        // check and migrate to nitro based instanceshttps://docs.aws.amazon.com/AWSEC2/latest/UserGuide/migrating-latest-types.html#auto-upgrade
+        // no hypervisor, no architecture
+
         await modifyInstanceType(credentialsId, region, instanceId, instanceType);
         await startInstance(credentialsId, region, instanceId);
         await waitForInstanceOk(credentialsId, region, instanceId);
