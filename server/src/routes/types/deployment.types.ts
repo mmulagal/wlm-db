@@ -50,12 +50,7 @@ const SQLConfiguration = Type.Object({
     sqlVersion: Type.Optional(Type.String({ enum: ['postgresql15', 'postgresql16'] }))
 });
 
-const PgSqlConfiguration = Type.Pick(SQLConfiguration, [
-    'sqlAmiName',
-    'sqlDeploymentMode',
-    'sqlServerName',
-    'sqlVersion'
-]);
+const PgSqlConfiguration = Type.Pick(SQLConfiguration, ['sqlDeploymentMode', 'sqlServerName', 'sqlVersion']);
 
 const PgSqlCloudFormationTemplateRequestBody = Type.Object({
     networkConfiguration: CFNetworkConfiguration,
