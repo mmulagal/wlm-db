@@ -20,7 +20,8 @@ import {
     FCI,
     STANDALONE,
     TF_VARS_CONFIG,
-    INITIALIZER
+    INITIALIZER,
+    MSSQL
 } from '../utils/consts';
 import { getArtifactsRegionBucketName, isDemo } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -188,7 +189,7 @@ async function processTemplate(
 
     const initializerTemplate = TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS.find(asset => asset.name === templateName);
 
-    const customInitializerTemplatePath: string = `${WLMDB}/${INITIALIZER}/${deploymentName}/${
+    const customInitializerTemplatePath: string = `${WLMDB}/${MSSQL}/${INITIALIZER}/${deploymentName}/${
         initializerTemplate!.url
     }`;
     const bucketName = getArtifactsRegionBucketName(region);
