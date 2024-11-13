@@ -49,15 +49,11 @@ const JobMonitoringTable = () => {
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
     const [skipApiCall, setSkipApiCall] = useState(true);
-    const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
-    const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
 
     // Filter options to use while downloading
     const [typeFilter, setTypeFilter] = useState<string | null>(null);
@@ -68,13 +64,6 @@ const JobMonitoringTable = () => {
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
-
-    useEffect(() => {
-        if (headerSelectedCred && headerSelectedRegion) {
-            setCredId(headerSelectedCred?.data?.credentialsId);
-            setRegionId(headerSelectedRegion?.label2);
-        }
-    }, [headerSelectedCred, headerSelectedRegion]);
 
     const menuItems = (row: any) => {
         return [
@@ -128,8 +117,6 @@ const JobMonitoringTable = () => {
             dispatch(setSubJobsDataLoading(false));
         } else {
             subTaskListApi({
-                credentialId: credId,
-                region: regionId,
                 id: jobId
             })
                 .then(data => {
@@ -154,8 +141,6 @@ const JobMonitoringTable = () => {
         isError: jmJobsListError
     } = useGetFullJobsListQuery(
         {
-            credentialId: credId,
-            region: regionId,
             nextToken: jobsCursor,
             startTime: time?.startTime,
             endTime: time?.endTime,
@@ -221,7 +206,7 @@ const JobMonitoringTable = () => {
 
     const lastColDetails = () => {
         return {
-            id: '8',
+            id: '10',
             Header: '',
             accessor: 'name',
             renderCell: (cellData: any, rowData: any) => {
@@ -421,6 +406,36 @@ const JobMonitoringTable = () => {
                 return (
                     <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
                         {formatDate}
+                    </div>
+                );
+            }
+        },
+        {
+            id: '8',
+            Header: 'Credential',
+            accessor: 'credId',
+            isSortable: true,
+            width: '200px',
+            filterOptions: 'auto',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
+                        {cellData}
+                    </div>
+                );
+            }
+        },
+        {
+            id: '9',
+            Header: 'Region',
+            accessor: 'region',
+            isSortable: true,
+            width: '200px',
+            filterOptions: 'auto',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
+                        {cellData}
                     </div>
                 );
             }

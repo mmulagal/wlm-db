@@ -807,14 +807,11 @@ export const handleOptimizeStorageJob = (
 ) => {
     const state = store.getState();
     let optimizingData = state.getWellOptimize.optimizingData || {};
-    let { headerSelectedCred, headerSelectedRegion } = state.headers;
 
     setTimeout(() => {
         if (res?.data) {
             const jobInterval = setInterval(() => {
                 getJobDetailApi({
-                    credentialId: headerSelectedCred?.data?.credentialsId,
-                    region: headerSelectedRegion?.label2,
                     id: res?.data?.jobId
                 }).then((jobRes: any) => {
                     const status = jobRes?.data?.status;
