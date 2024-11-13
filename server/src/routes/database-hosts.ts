@@ -441,7 +441,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment/optimize/storage-operating-system`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-operating-system`,
             { schema: OptimizeOperatingSystemSchema },
             async (request, reply) => {
                 const {

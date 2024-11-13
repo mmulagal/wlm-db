@@ -37,7 +37,8 @@ import {
     endpointData,
     sandboxJobData,
     assessmentJobData,
-    optimizeJobData
+    optimizeJobData,
+    optimizeOperatingSystemJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -576,6 +577,25 @@ async function createOptimizeJobMockData(
     return optimizeJobData(accountId, resourceName, instanceName, credentialsId, region, parentJobId);
 }
 
+async function createOperatingSystemOptimizeJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string
+) {
+    logger.debug(
+        'Generate operating system optimize mock data for job table',
+        accountId,
+        resourceName,
+        credentialsId,
+        region
+    );
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return optimizeOperatingSystemJobData(accountId, resourceName, instanceName, credentialsId, region, parentJobId);
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -587,5 +607,6 @@ export {
     updateSandboxDBIntoInstanceData,
     getEBSVolumesForDemo,
     createAssessmentJobMockData,
-    createOptimizeJobMockData
+    createOptimizeJobMockData,
+    createOperatingSystemOptimizeJobMockData
 };

@@ -4,7 +4,7 @@ import createError from 'http-errors';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import getLogger from '../utils/logger';
 import { Metadata, DatabaseInstance, WorkloadInstance } from '../utils/common-types';
-import { RESOURCESTYPE, HttpErrorCodes } from '../utils/consts';
+import { RESOURCESTYPE, HttpErrorCodes, AuditStatus } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getResources, getInstanceInfo } from './database/database-operations';
 
@@ -71,10 +71,6 @@ async function validateMpioPolicyToRoundRobin(
             false
         );
         parsedValidateMPIOPolicyChangeResponse = sqlResponseParsing(validateMPIOPolicyChangeResponse);
-        logger.info('@@@@@@@@@@@@@@@@@@@@');
-        logger.info({ parsedValidateMPIOPolicyChangeResponse });
-        logger.info({ preCheck });
-        logger.info('@@@@@@@@@@@@@@@@@@@@');
         if (!parsedValidateMPIOPolicyChangeResponse.remediated && !preCheck) {
             const errorMessage = `Failed to set MPIO policy to Round Robin on ${serverNameWithHostName}.`;
             logger.error(errorMessage);
@@ -229,6 +225,10 @@ async function optimize(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) {
             endTime: Date.now(),
             error: jobError
         });
+        updateLongRunningAuditGroup(
+            jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
+            errorMessage
+        );
     }
 }
 
@@ -299,26 +299,38 @@ async function optimizeOperatingSystemSettings(
         startTime: Date.now(),
         description: `Optimize operating system configuration for ${serverNameWithHostName}`
     });
+    try {
+        optimize({
+            accountId,
+            region,
+            credentialsId,
+            parentJobId,
+            serverNameWithHostName,
+            sqlDeploymentType,
+            activeNodeInstanceId,
+            databaseHostId,
+            fsxId,
+            instanceId,
+            instanceName,
+            databaseType,
+            databaseInstanceId,
+            sqlAuthEnabled,
+            awsAccountId: resourceDetail.cloud_provider_account_id!
+        });
+    } catch (error) {
+        const errorMessage = `Error while optimizing operating system settings ${error}`;
+        logger.error(errorMessage);
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
 
-    optimize({
-        accountId,
-        region,
-        credentialsId,
-        parentJobId,
-        serverNameWithHostName,
-        sqlDeploymentType,
-        activeNodeInstanceId,
-        databaseHostId,
-        fsxId,
-        instanceId,
-        instanceName,
-        databaseType,
-        databaseInstanceId,
-        sqlAuthEnabled,
-        awsAccountId: resourceDetail.cloud_provider_account_id!
-    });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
 
     return { jobId: parentJobId };
 }
 
-export { optimizeOperatingSystemSettings, validateMpioPolicyToRoundRobin };
+export { optimizeOperatingSystemSettings };
