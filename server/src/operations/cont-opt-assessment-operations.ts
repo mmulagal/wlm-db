@@ -52,7 +52,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const optimisedDrives: SizingViolationResponseType[] = [];
 
     const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
-    driveDetails.forEach((drive: { [x: string]: any }) => {
+    driveDetails.forEach((drive: LogDriveDetails) => {
         const { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(drive as SizingViolationResponseType);

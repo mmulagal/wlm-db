@@ -1,7 +1,14 @@
 import { JOBSTATUS, JOBTYPE, resource } from '@prisma/client';
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
-import { Metadata, DatabaseInstance, WorkloadInstance, StorageAssessment } from '../utils/common-types';
+import {
+    Metadata,
+    DatabaseInstance,
+    WorkloadInstance,
+    StorageAssessment,
+    TempDbDriveDetails,
+    LogDriveDetails
+} from '../utils/common-types';
 import { HttpErrorCodes, AuditStatus } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getInstanceInfo } from './database/database-operations';
@@ -690,7 +697,7 @@ async function logDriveOptimization(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    logDriveDetails: any,
+    logDriveDetails: LogDriveDetails[],
     parentJobId: string,
     serverNameWithHostName: string,
     databaseHostId: string,
@@ -858,7 +865,7 @@ async function tempDbDriveOptimization(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    tempDbDriveDetails: any,
+    tempDbDriveDetails: TempDbDriveDetails,
     parentJobId: string,
     serverNameWithHostName: string,
     databaseHostId: string,
