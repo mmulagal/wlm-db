@@ -25,7 +25,7 @@ async function validateMpioPolicyToRoundRobin(
     preCheck: boolean = false,
     runningOnPrimaryNode: boolean = true
 ) {
-    logger.info(`Validate MPIO policy to Round Robin for ${optimizeMpioPolicyParams}`);
+    logger.info(`Validate MPIO policy to Round Robin for ${optimizeMpioPolicyParams} on ${runningOnPrimaryNode}`);
     const { accountId, credentialsId, region, parentJobId, serverNameWithHostName, activeNodeInstanceId } =
         optimizeMpioPolicyParams;
 
@@ -84,8 +84,11 @@ async function validateMpioPolicyToRoundRobin(
     return parsedValidateMPIOPolicyChangeResponse;
 }
 
-async function setMpioPolicyToRoundRobin(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) {
-    logger.info(`Setting MPIO policy to Round Robin for ${optimizeMpioPolicyParams}`);
+async function setMpioPolicyToRoundRobin(
+    optimizeMpioPolicyParams: OptimizeMpioPolicyParams,
+    runningOnPrimaryNode: boolean = true
+) {
+    logger.info(`Setting MPIO policy to Round Robin for ${optimizeMpioPolicyParams} on ${runningOnPrimaryNode}`);
     const {
         accountId,
         credentialsId,
@@ -98,7 +101,9 @@ async function setMpioPolicyToRoundRobin(optimizeMpioPolicyParams: OptimizeMpioP
     } = optimizeMpioPolicyParams;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-    const jobDescription = `Setting MPIO policy to Round Robin on ${serverNameWithHostName} and rebooting instance.`;
+    const jobDescription = `Setting MPIO policy to Round Robin on ${serverNameWithHostName} and rebooting instance on ${
+        runningOnPrimaryNode ? 'primary node' : 'standby node'
+    }.`;
     let jobError;
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
@@ -187,12 +192,14 @@ async function optimize(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) {
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError;
     try {
-        // Block for primary node
+        // For primary node
         let validateMpioPolicyToRoundRobinResponse = await validateMpioPolicyToRoundRobin(
             optimizeMpioPolicyParams,
             true
         );
+
         optimizeMpioPolicyParams.currentPolicy = validateMpioPolicyToRoundRobinResponse.policy;
+
         if (!validateMpioPolicyToRoundRobinResponse.remediated) {
             optimizeMpioPolicyParams.changeClusterOwnership = !validateMpioPolicyToRoundRobinResponse.remediated;
             await setMpioPolicyToRoundRobin(optimizeMpioPolicyParams);
@@ -201,7 +208,6 @@ async function optimize(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) {
 
         if (sqlDeploymentType === 'FCI') {
             // If ownership is changed, fetch active and standby node
-
             const activeNode = optimizeMpioPolicyParams.standbyNodeInstanceId;
             optimizeMpioPolicyParams.activeNodeInstanceId = optimizeMpioPolicyParams.standbyNodeInstanceId;
             optimizeMpioPolicyParams.standbyNodeInstanceId = activeNode;
@@ -214,10 +220,8 @@ async function optimize(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) {
             );
             if (!validateMpioPolicyToRoundRobinResponse.remediated) {
                 optimizeMpioPolicyParams.changeClusterOwnership = !validateMpioPolicyToRoundRobinResponse.remediated;
-                // Set policy set on standby node
                 optimizeMpioPolicyParams.currentPolicy = validateMpioPolicyToRoundRobinResponse.policy;
-
-                await setMpioPolicyToRoundRobin(optimizeMpioPolicyParams);
+                await setMpioPolicyToRoundRobin(optimizeMpioPolicyParams, false);
                 await validateMpioPolicyToRoundRobin(optimizeMpioPolicyParams, false);
             }
         }

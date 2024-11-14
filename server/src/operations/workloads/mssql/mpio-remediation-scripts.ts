@@ -25,7 +25,7 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams) =>
     }
    
     if($sqlDeploymentType -ceq "standalone") {
-        Start-Process -FilePath "shutdown.exe" -ArgumentList @("/r") -Wait -NoNewWindow
+        ${RESTART_INSTANCE}
     }
     elseif($sqlDeploymentType -ceq "fci")  {
         if($changeClusterOwnership -eq $true) {
@@ -37,10 +37,8 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams) =>
         }
         
         if($currentPolicy -cne "RR") {
-
             ${RESTART_INSTANCE}
         }       
-
     }
 `;
 
