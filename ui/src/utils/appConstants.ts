@@ -1172,6 +1172,7 @@ export const GENERAL = {
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
     OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
     CLEAR_ALL: 'Clear all',
+    COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     RIGHTSIZING_TOOLTIP:
         'Right-sizing recommendations are based on AWS Compute Optimizer; the analysis can take up to 14 days as it reviews metrics from this period to provide accurate suggestions.'
 };

@@ -170,28 +170,28 @@ Resources:
                             mode: '000755'
                             owner: ec2-user
                             group: ec2-user
-                        # /home/ec2-user/cfn/signig_files.zip:
-                        #     source: {{{ ArtifactsSignatures }}}
-                        #     mode: '000755'
-                        #     owner: ec2-user
-                        #     group: ec2-user
+                        /home/ec2-user/cfn/signig_files.zip:
+                            source: {{{ ArtifactsSignatures }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
                 ScriptSignatureVerificationandExtract:
                     commands:
                         a-change-to-sudo-user:
                             command: sudo su
                             waitAfterCompletion: 0
-                        # b-unpack-signatures:
-                        #     command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/signig_files.zip -d /home/ec2-user/cfn
-                        #     waitAfterCompletion: 0
-                        # c-verify-validation-signature:
-                        #     command: !Join
-                        #         - ''
-                        #         - - /home/ec2-user/cfn/scripts/verify-signature.sh -f /home/ec2-user/cfn/scripts/validation.zip -s /home/ec2-user/cfn/signig_files/validation.sig 
-                        #             -p /home/ec2-user/cfn/signig_files/validation.pub -r ValidationNode1 -n '"
-                        #           - !Ref 'AWS::StackName'
-                        #           - '''"'
-                        #     waitAfterCompletion: 0
-                        b-unpack-validation-scripts:
+                        b-unpack-signatures:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/signig_files.zip -d /home/ec2-user/cfn
+                            waitAfterCompletion: 0
+                        c-verify-validation-signature:
+                            command: !Join
+                                - ''
+                                - - /home/ec2-user/cfn/scripts/verify-signature.sh -f /home/ec2-user/cfn/scripts/validation.zip -s /home/ec2-user/cfn/signig_files/validation.zip.sig 
+                                    -p /home/ec2-user/cfn/signig_files/validation.zip.pub -r ValidationNode1 -n "
+                                  - !Ref 'AWS::StackName'
+                                  - '"'
+                            waitAfterCompletion: 0
+                        d-unpack-validation-scripts:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/validation.zip -d /home/ec2-user/cfn/scripts
                             waitAfterCompletion: 0
                 Finalize:

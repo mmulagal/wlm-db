@@ -179,6 +179,16 @@
                     ]
                 },
                 {
+                    "name": "ntfs-allocation-unit-size",
+                    "recommended": "65536",
+                    "status": "optimized",
+                    "severity": "critical",
+                    "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
+                    "tags": [
+                        "Performance efficiency"
+                    ]
+                },
+                {
                     "name": "mpio-load-balance-policy",
                     "recommended": "RR",
                     "status": "optimized",
@@ -187,16 +197,6 @@
                     "tags": [
                         "Performance efficiency",
                         "Reliability"
-                    ]
-                },
-                {
-                    "name": "ntfs-allocation-unit-size",
-                    "recommended": "65536",
-                    "status": "optimized",
-                    "severity": "critical",
-                    "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
-                    "tags": [
-                        "Performance efficiency"
                     ]
                 }
             ]

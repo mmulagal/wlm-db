@@ -9,7 +9,6 @@ import {
     getVpcSecurityGroups,
     getVpcEndpoints,
     getServicesWithNoEndpoint,
-    getValidationNodeInstanceType,
     enableVpcDnsAttributes,
     isEbsAwsBackupEnabled,
     getInstanceDetailsByPrivateIp,
@@ -101,14 +100,6 @@ describe('EC2 Operations', () => {
             'rtb-2'
         ]);
         expect(response).toBeDefined();
-    });
-
-    it('Get validation node instance tyoe', async () => {
-        const response = await getValidationNodeInstanceType(credentialsId, DEFAULT_AWS_REGION, [
-            'availability-zone-1',
-            'availability-zone-2'
-        ]);
-        expect(response).toEqual('t3.micro');
     });
 
     it('Modify vpc dns attributes', async () => {

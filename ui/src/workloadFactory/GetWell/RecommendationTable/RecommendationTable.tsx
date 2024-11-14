@@ -38,14 +38,31 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
     // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any) => {
         // Only 1 config can be passed at a time
-        let payload = {
-            assessments: [
-                {
-                    configurationName: rowData?.id,
-                    objectsToOptimize: rowData?.objectsInViolation
-                }
-            ]
-        };
+        let payload = {};
+        let apiCall = null;
+        if (rowData?.type === 'volume' || rowData?.type === 'lun') {
+            apiCall = optimizeStorageConfig;
+            payload = {
+                assessments: [
+                    {
+                        configurationName: rowData?.id,
+                        objectsToOptimize: rowData?.objectsInViolation
+                    }
+                ]
+            };
+        } else {
+            // TODO: For rowData type os new API will get added so change this accordingly
+            apiCall = optimizeStorageConfig;
+            payload = {
+                assessments: [
+                    {
+                        configurationName: rowData?.id,
+                        objectsToOptimize: rowData?.objectsInViolation
+                    }
+                ]
+            };
+        }
+
         // call optimize api
         dispatch(setOptimizingInstanceData(true));
         dispatch(
@@ -76,7 +93,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             })
         );
 
-        optimizeStorageConfig({
+        apiCall({
             credentialId: headerSelectedCred?.data?.credentialsId,
             regionId: headerSelectedRegion?.label2,
             databaseHostId: selectedResourceId,
@@ -240,7 +257,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                             </DsButton>
                                         </div>
                                     </TooltipComponent>
-                                ) : optimizingInstanceData && rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
+                                ) : optimizingInstanceData &&
+                                  rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
+                                  rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
                                     <TooltipComponent
                                         title={GENERAL.OPTIMIZATION_IN_PROGRESS}
                                         placement="bottom"

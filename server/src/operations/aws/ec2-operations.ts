@@ -24,7 +24,6 @@ import {
     ENDPOINTS_DEPLOYMENT,
     HttpErrorCodes,
     SqlServerDeploymentModel,
-    VALIDATION_NODE_INSTANCETYPE,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
 import {
@@ -40,7 +39,6 @@ import {
     describeTags,
     describeEndpoints,
     modifyVpcAttributes,
-    describeInstanceTypeOfferings,
     describeSnapshots,
     describeInstance,
     describeInstanceType,
@@ -591,25 +589,6 @@ async function enableVpcDnsAttributes(credentialsId: string, region: string, vpc
     }
 }
 
-async function getValidationNodeInstanceType(credentialsId: string, region: string, availabilityZones: string[]) {
-    logger.info('Get instance type offerings ', credentialsId, region, availabilityZones);
-
-    const response = await describeInstanceTypeOfferings(credentialsId, region, {
-        LocationType: 'availability-zone',
-        Filters: [{ Name: 'instance-type', Values: ['t2.micro', 't3.micro'] }]
-    });
-
-    const t2microSupportedZones = response.InstanceTypeOfferings?.filter(e =>
-        e.InstanceType?.includes(VALIDATION_NODE_INSTANCETYPE.T2MICRO)
-    ).map(e => e.Location as string);
-
-    const instanceType = availabilityZones.every(a => t2microSupportedZones?.includes(a))
-        ? VALIDATION_NODE_INSTANCETYPE.T2MICRO
-        : VALIDATION_NODE_INSTANCETYPE.T3MICRO;
-
-    return instanceType;
-}
-
 async function isEbsAwsBackupEnabled(credentialsId: string, region: string, ebsVolumeIds: string[]) {
     logger.info('Check if EBS AWS backup is enabled', {
         credentialsId,
@@ -984,7 +963,6 @@ export {
     getVpcSecurityGroups,
     getServicesWithNoEndpoint,
     enableVpcDnsAttributes,
-    getValidationNodeInstanceType,
     isEbsAwsBackupEnabled,
     getInstanceTypesFromInstanceRequirementsForManagedInstances,
     getInstanceTypesFromInstanceRequirements,

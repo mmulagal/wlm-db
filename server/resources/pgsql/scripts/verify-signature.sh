@@ -23,27 +23,24 @@ done
 if [ -z "$FilePath" ] || [ -z "$SignatureFilePath" ] || [ -z "$PubFilePath" ] || [ -z "$ResourceID" ] || [ -z "$Stackname" ]; then
     usage
 fi
-
 # Set error handling
 set -e
-
-# Start logging
-logfile="/cfn/log/verifysignature.log"
-exec > >(tee -a "$logfile") 2>&1
 
 # Get Instance ID
 token=$(curl -s -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" "http://169.254.169.254/latest/api/token")
 instanceID=$(curl -s -H "X-aws-ec2-metadata-token: $token" "http://169.254.169.254/latest/meta-data/instance-id")
 
-logfilename=$(basename "$FilePath")
+mkdir -p /home/ec2-user/cfn/log/
+logfilename=/home/ec2-user/cfn/log/$(basename "$FilePath").log
 
 # Verify signature
-openssl dgst -sha256 -verify "$PubFilePath" -signature "$SignatureFilePath" "$FilePath" > "/cfn/log/$logfilename.txt" 2>&1
+openssl dgst -sha256 -verify "$PubFilePath" -signature "$SignatureFilePath" "$FilePath" > "$logfilename" 2>&1
 
 # Check if verified or not
-if grep -q "Verified OK" "/cfn/log/$logfilename.txt"; then
+if grep -q "Verified OK" "$logfilename"; then
     echo "Signature verified successfully."
 else
     echo "Signature verification failed."
+    aws cloudformation signal-resource --stack-name "$Stackname" --logical-resource-id "$ResourceID" --status "FAILED" --unique-id "$instanceID" --reason "Verifying the signature of comprssed files failed"
     exit 1
 fi

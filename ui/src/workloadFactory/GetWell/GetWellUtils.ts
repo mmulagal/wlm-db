@@ -18,7 +18,7 @@ import {
     OPTIMIZE_POLLING_INTERVAL
 } from '../../utils/consts';
 import { AssessmentResponseInterface, GwCardDataInterface, PerConfigInterface } from '../../utils/types/getWellTypes';
-import { formatDateWithTime, formatNumberWithCustomComma } from '../../utils/utilityFunctions';
+import { formatDateWithTime, formatNumberWithCustomComma, sortListOfDict } from '../../utils/utilityFunctions';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: GwCardDataInterface = {
@@ -494,6 +494,8 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
         }
         osTagsList = [...osTagsList, ...(item?.tags || [])];
     });
+
+    formatOsConfigList = sortListOfDict(formatOsConfigList, 'name');
 
     if (osCritical === 1) {
         highestOsSeverity = 'Critical';

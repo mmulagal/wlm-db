@@ -219,13 +219,20 @@ interface LogDriveDetails {
     dataDriveLetter: string;
     logDriveTotalSizeMB: number;
     dataDriveTotalSizeMB: number;
+    lunUuid: string;
+    svmName: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
 }
 interface TempDbDriveDetails {
     tempdbDriveLetter: string;
-    defaultDataDriveSize: number;
+    dataDriveTotalSizeMB: number;
     defaultDataDriveLetter: string;
     tempdbDriveTotalSizeMB: number;
-    ontapVolumeId: string; // TODO: check assessment
+    lunUuid: string;
+    svmName: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
 }
 interface Sizing {
     'performance-tier': string;

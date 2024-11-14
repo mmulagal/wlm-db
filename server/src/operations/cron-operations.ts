@@ -38,6 +38,7 @@ import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-lo
 import { triggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { DriftAssessmentJob, Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy, REDIS_URL } from '../utils/continous-optimization-consts';
+import { purgeOlderAssessmentRecords } from './database/instance-config-operations';
 
 const logger = getLogger();
 
@@ -390,6 +391,12 @@ async function scheduledAssessment() {
     }
 }
 
+async function purgeAssessmentData() {
+    setInterval(async () => {
+        await purgeOlderAssessmentRecords();
+    }, Number(ms(config.get('db.assessment.purge-interval'))));
+}
+
 export {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
@@ -399,5 +406,6 @@ export {
     updateTcoInstRecPrefs,
     updateManagedInstRecPrefs,
     scheduledAssessment,
-    runScheduledAssessment
+    runScheduledAssessment,
+    purgeAssessmentData
 };

@@ -181,7 +181,7 @@ async function updateFsxVolumeSize(
                 }
             })
         );
-        logger.info('FSX volume updated successfully:', response);
+        logger.debug('FSX volume updated successfully:', response);
     } catch (err) {
         logger.error('Error updating FSX volume:', err);
     }
@@ -203,7 +203,7 @@ async function updateFsxCapacity(
                 StorageCapacity: newFsxStorageCapactiyGiB
             })
         );
-        logger.info('FSX file system capacity updated successfully:', response);
+        logger.debug('FSX file system capacity updated successfully:', response);
     } catch (err) {
         logger.error('Error updating file system capacity:', err);
     }
