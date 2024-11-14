@@ -779,9 +779,9 @@ async function logDriveOptimization(
                                 await resizeLogLun(
                                     credentialsId,
                                     region,
-                                    svmName,
+                                    svmName!,
                                     fileSystemId,
-                                    lunUuid,
+                                    lunUuid!,
                                     logLunSizeBytes,
                                     activeNodeInstanceId
                                 );
@@ -876,21 +876,21 @@ async function tempDbDriveOptimization(
     );
 
     try {
-        const { defaultDataDriveSize, tempdbPercent, ontapVolumeId } = getTempDbVolumeDrift(
+        const { dataDriveTotalSizeMB, tempdbPercent, ontapVolumeUuid } = getTempDbVolumeDrift(
             tempDbDriveDetails,
             AssessmentStatus.UNDER_PROVISIONED,
             'tempdb-drive-size'
         );
 
         if (tempdbPercent < 10) {
-            const defaultDataDriveSizeBytes = convertToBytes(defaultDataDriveSize, 'MiB') || 0;
+            const defaultDataDriveSizeBytes = convertToBytes(dataDriveTotalSizeMB, 'MiB') || 0;
 
             const requiredTempDbVolumeSizeBytes = defaultDataDriveSizeBytes * 0.1; // Increase tempDB volume to 10% of data volume
 
             // get the volume ID from the drive details, make a get call to check if the volume size is less than requiredTempDbVolumeSizeBytes and update the volume size
             const {
                 volumeIds: [tempDbFsxVolumeId]
-            } = await getFsxnVolIdsFromOntapVolIds(credentialsId, region, accountId, [ontapVolumeId]);
+            } = await getFsxnVolIdsFromOntapVolIds(credentialsId, region, accountId, [ontapVolumeUuid]);
 
             const [existingVolumeDetails] = await getFsxVolumeDetails(credentialsId, region, accountId, [
                 tempDbFsxVolumeId

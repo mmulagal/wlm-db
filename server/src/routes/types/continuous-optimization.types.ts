@@ -7,15 +7,16 @@ import {
 } from '../../utils/continous-optimization-consts';
 
 const SizingViolationResponse = Type.Object({
-    databaseName: Type.String(),
-    dataDriveLetter: Type.Optional(Type.String()),
+    dataAccessPath: Type.Optional(Type.String()),
     dataDriveTotalSizeMB: Type.Optional(Type.Number()),
-    logDriveLetter: Type.Optional(Type.String()),
+    logAccessPath: Type.Optional(Type.String()),
     logDriveTotalSizeMB: Type.Optional(Type.Number()),
-    ontapVolumeUuid: Type.String(), // TODO: check assessment
-    lunName: Type.String(), // TODO: check assessment
-    lunUuid: Type.String(), // TODO: check assessment
-    svmName: Type.String() // TODO: check assessment
+    svmName: Type.Optional(Type.String()),
+    ontapVolumeName: Type.Optional(Type.String()),
+    ontapVolumeUuid: Type.Optional(Type.String()),
+    lunUuid: Type.Optional(Type.String()),
+    tempdbAccessPath: Type.Optional(Type.String()),
+    tempdbDriveTotalSizeMB: Type.Optional(Type.Number())
 });
 type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
 
