@@ -6,7 +6,9 @@ import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
 import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/cloud-watch-scope';
-import { optimizeSizing, optimizeStorage } from '../../src/operations/cont-opt-optimize-operations';
+import '../simulator/scopes/aws/compute-optimizer-scope';
+
+import { optimizeCompute, optimizeSizing, optimizeStorage } from '../../src/operations/cont-opt-optimize-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import { AssessmentCategories, OPTIMIZE_SIZING_CONFIGS } from '../../src/utils/continous-optimization-consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
@@ -239,6 +241,19 @@ describe('Continuous optimization optimize operations', () => {
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
             [OPTIMIZE_SIZING_CONFIGS.HEADROOM, OPTIMIZE_SIZING_CONFIGS.LOG_DRIVE_SIZE]
+        );
+
+        expect(response.jobId).toBeDefined();
+    });
+
+    it('Optimize compute parameters', async () => {
+        const response = await optimizeCompute(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            'm5.large'
         );
 
         expect(response.jobId).toBeDefined();

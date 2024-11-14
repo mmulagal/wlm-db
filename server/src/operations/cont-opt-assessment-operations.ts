@@ -561,14 +561,16 @@ async function initiateComputeAssessment(
             currentInstanceType,
             finding,
             findingReasonCodes,
-            recommendationOptions: coRecOptions?.map(
-                ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
-                    instanceType,
-                    rank,
-                    savingsOpportunity,
-                    platformDifferences
-                })
-            )
+            recommendationOptions: coRecOptions
+                ?.filter(({ platformDifferences }) => platformDifferences?.length === 0)
+                ?.map(
+                    ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
+                        instanceType,
+                        rank,
+                        savingsOpportunity,
+                        platformDifferences
+                    }) // return only such recommandation options that has no platform difference. Migration to different platform cannot be supported programatically from our application.
+                )
         };
     } catch (error: any) {
         errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Optimization. ${error.message}`;

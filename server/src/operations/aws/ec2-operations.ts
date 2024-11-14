@@ -900,6 +900,7 @@ async function instanceTypeChangePreReqs(
 
         const instances = Reservations.map(reservation => reservation.Instances || []).flat();
 
+        // elastic IP check
         try {
             const publicIpAddresses = compact(instances.map(({ PublicIpAddress }) => PublicIpAddress)) || [];
             if (!isEmpty(publicIpAddresses)) {
@@ -918,6 +919,7 @@ async function instanceTypeChangePreReqs(
             throw error;
         }
 
+        // spot instance check
         const instanceLifecycles = compact(instances.map(({ InstanceLifecycle }) => InstanceLifecycle)) || [];
         if (!isEmpty(instanceLifecycles)) {
             instanceLifecycles.some(lifecycle => {
@@ -928,6 +930,19 @@ async function instanceTypeChangePreReqs(
             });
         }
 
+        // more than 26 volumes to be attached to an instance
+        const blockDeviceMappings = compact(instances.map(({ BlockDeviceMappings }) => BlockDeviceMappings)) || [];
+        blockDeviceMappings.some(blockDeviceMapping => {
+            if (blockDeviceMapping.length > 26) {
+                throw createError(
+                    500,
+                    'The instance type change operation cannot be performed because the instance has more than 26 volumes attached'
+                );
+            }
+            return false;
+        });
+
+        // autoscaling group check
         const { AutoScalingInstances: autoScalingInstances } = await describeAutoscalingInstances(
             credentialsId,
             region,

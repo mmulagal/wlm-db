@@ -1,4 +1,4 @@
-import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import { JOBSTATUS, JOBTYPE, resource } from '@prisma/client';
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
 import { Metadata, DatabaseInstance, WorkloadInstance, StorageAssessment } from '../utils/common-types';
@@ -1033,78 +1033,28 @@ async function optimizeSizing(
     return { jobId };
 }
 
-async function optimizeCompute(
-    accountId: string,
+async function handleComputeRemediation(
     credentialsId: string,
     region: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    instanceType: string
+    accountId: string,
+    instanceType: string,
+    resourceDetails: resource[],
+    jobId: string
 ) {
-    logger.info('Optimizing compute', {
-        accountId,
+    logger.info('Handling compute remediation', {
         credentialsId,
         region,
-        databaseHostId,
-        databaseInstanceId,
-        instanceType
+        accountId,
+        instanceType,
+        resourceDetails,
+        jobId
     });
-
-    const { recommendationOptions } = await calculateComputeDrift(
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseInstanceId
-    );
-    const recommendedInstanceTypes =
-        recommendationOptions?.map(({ instanceType: recommendedInstanceType }) => recommendedInstanceType) || [];
-    if (!recommendedInstanceTypes.includes(instanceType)) {
-        throw createError(400, 'Invalid instance type, please choose from the recommended instance types');
-    }
-
-    /*
-     As per https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html), Its riskier to programatically configure the parameters to overcome these limitations.
-        Most of these differences between the current and recommended instance types are captured in `platformDifferences` in the response of compute-optimizer.(https://docs.aws.amazon.com/compute-optimizer/latest/ug/view-ec2-recommendations.html#ec2-platform-differences) .
-        So proceeding with the optimization only if there are no platform differences between the current and recommended instance types.
-
-        Additional considerations:
-        https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/change-instance-type-of-ebs-backed-instance.html
-
-        If your instance has a public IPv4 address, that is not an Elastic IP, we release the address and give your instance a new public IPv4 address.
-        If your instance is in an Auto Scaling group, the Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and might terminate it and launch a replacement instance.
-        You can't change the instance type of a Spot Instance.
-    */
-
-    const platformDifferences =
-        recommendationOptions?.find(
-            ({ instanceType: recommendedInstanceType }) => recommendedInstanceType === instanceType
-        )?.platformDifferences || [];
-    if (!isEmpty(platformDifferences)) {
-        throw createError(400, 'We dont support the selected instance type as it has platform differences');
-    }
-
-    const [{ resource_name: resourceName, metadata }] = await listResources(
-        accountId,
-        databaseHostId,
-        credentialsId,
-        region
-    );
-
-    const jobId = await handleOptimizeJobCreation(
-        accountId,
-        credentialsId,
-        region,
-        resourceName!,
-        JOBTYPE.OPTIMIZATION,
-        `Optimize EC2 compute for ${resourceName}`,
-        `Optimize EC2 compute for ${resourceName}`
-    );
 
     let jobStatus;
     let errorMessage = '';
 
     try {
+        const [{ metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
             credentialsId,
@@ -1141,7 +1091,9 @@ async function optimizeCompute(
                             region,
                             clusterNetworkIps
                         );
-                        const clusterNodeInstanceIds = clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId);
+                        const clusterNodeInstanceIds = compact(
+                            clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId)
+                        );
 
                         instanceIdsList.push(...clusterNodeInstanceIds);
 
@@ -1194,19 +1146,21 @@ async function optimizeCompute(
                     }
                 }
             } else {
-                // single node cluster
+                // single node cluster/standalone
                 await instanceTypeChangePreReqs(credentialsId, region, accountId, instanceIdsList);
             }
 
-            await updateNodeInstanceType(credentialsId, region, activeNodeInstanceId, instanceType); // modify instance type for the primary node ; secondary nodes are already modified at this point
+            await updateNodeInstanceType(credentialsId, region, activeNodeInstanceId, instanceType); // modify instance type for the primary node ; secondary nodes if any are already modified at this point
             // move all cluster groups to the primary node
-            const ownershipTransferStatus = await moveClusterGroupOwnership(
-                credentialsId,
-                region,
-                instanceName,
-                activeNodeInstanceId
-            );
-            logger.info('Primary node ownership transferred to', { instanceName, ownershipTransferStatus });
+            if (node2InstanceId) {
+                const ownershipTransferStatus = await moveClusterGroupOwnership(
+                    credentialsId,
+                    region,
+                    instanceName,
+                    activeNodeInstanceId
+                );
+                logger.info('Primary node ownership transferred to', { instanceName, ownershipTransferStatus });
+            }
             jobStatus = JOBSTATUS.COMPLETED;
             return;
         }
@@ -1227,6 +1181,75 @@ async function optimizeCompute(
             endTime: Date.now()
         });
     }
+}
+async function optimizeCompute(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    instanceType: string
+) {
+    logger.info('Optimizing compute', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        instanceType
+    });
+
+    const { recommendationOptions } = await calculateComputeDrift(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    );
+    const recommendedInstanceTypes =
+        recommendationOptions?.map(({ instanceType: recommendedInstanceType }) => recommendedInstanceType) || [];
+    if (!isDemo() && !recommendedInstanceTypes.includes(instanceType)) {
+        throw createError(400, 'Invalid instance type, please choose from the recommended instance types');
+    }
+
+    /*
+        As per https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html), Its riskier to programatically configure the parameters to overcome these limitations.
+        Most of these differences between the current and recommended instance types are captured in `platformDifferences` in the response of compute-optimizer.(https://docs.aws.amazon.com/compute-optimizer/latest/ug/view-ec2-recommendations.html#ec2-platform-differences) .
+        So proceeding with the optimization only if there are no platform differences between the current and recommended instance types.
+
+        Additional considerations:
+        https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/change-instance-type-of-ebs-backed-instance.html
+
+        If your instance has a public IPv4 address, that is not an Elastic IP, we release the address and give your instance a new public IPv4 address.
+        If your instance is in an Auto Scaling group, the Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and might terminate it and launch a replacement instance.
+        You can't change the instance type of a Spot Instance.
+        The maximum number of Amazon EBS volumes that you can attach to an instance depends on the instance type and instance size. You can't change to an instance type or instance size that does not support the number of volumes that are already attached to your instance. For more information, see Amazon EBS volume limits for Amazon EC2 instances.
+    */
+
+    const platformDifferences =
+        recommendationOptions?.find(
+            ({ instanceType: recommendedInstanceType }) => recommendedInstanceType === instanceType
+        )?.platformDifferences || [];
+    if (!isEmpty(platformDifferences)) {
+        throw createError(400, 'We dont support the selected instance type as it has platform differences');
+    }
+
+    const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    const [{ resource_name: resourceName }] = resourceDetails;
+    const jobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        resourceName!,
+        JOBTYPE.OPTIMIZATION,
+        `Optimize EC2 compute for ${resourceName}`,
+        `Optimize EC2 compute for ${resourceName}`
+    );
+
+    handleComputeRemediation(credentialsId, region, accountId, instanceType, resourceDetails, jobId);
+
+    return { jobId };
 }
 
 async function moveClusterGroupOwnership(
@@ -1279,18 +1302,6 @@ async function updateNodeInstanceType(credentialsId: string, region: string, ins
         if (!isDemo()) {
             await waitForInstanceToBeStopped(credentialsId, region, instanceId);
         }
-
-        /*
-        concerns
-        // https://repost.aws/knowledge-center/resize-instance
-        // check if instance has elastic IP or not
-        // check for Spot Instance While a Spot Instance is stopped, you can modify some of its instance attributes, but not the instance type.
-        // check instance type compatibility https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html
-        // check for autoscaling instance
-        // check ebs volume limits https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/volume_limits.html
-        // check and migrate to nitro based instanceshttps://docs.aws.amazon.com/AWSEC2/latest/UserGuide/migrating-latest-types.html#auto-upgrade
-        // no hypervisor, no architecture
-*/
         await modifyInstanceType(credentialsId, region, instanceId, instanceType);
         await startInstance(credentialsId, region, instanceId);
         await waitForInstanceOk(credentialsId, region, instanceId);
