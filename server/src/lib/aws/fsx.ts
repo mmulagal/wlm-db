@@ -181,7 +181,7 @@ async function updateFsxVolumeSize(
                 }
             })
         );
-        logger.info('FSX volume updated successfully:', response);
+        logger.debug('FSX volume updated successfully:', response);
     } catch (err) {
         logger.error('Error updating FSX volume:', err);
     }
