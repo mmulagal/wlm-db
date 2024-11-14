@@ -1475,6 +1475,15 @@ const TIMELINE_SERVICE_NAME = 'WF-Databases';
 
 const EBS_ROOT_VOLUME = 'ROOT_VOLUME';
 
+const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
+    'compute-optimizer:GetEnrollmentStatus',
+    'compute-optimizer:PutRecommendationPreferences',
+    'compute-optimizer:GetEffectiveRecommendationPreferences',
+    'compute-optimizer:GetEC2InstanceRecommendations',
+    'autoscaling:DescribeAutoScalingGroups',
+    'autoscaling:DescribeAutoScalingInstances'
+];
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1785,6 +1794,7 @@ export {
     PGSQL_MASTER_TEMPLATE_PATH,
     MAX_DATA_LUN_SIZE_IN_GIB,
     TF_VARS_CONFIG,
+    PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
     INITIALIZER,
     MSSQL
 };

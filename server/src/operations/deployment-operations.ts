@@ -97,7 +97,8 @@ import {
     isNetworkConfigurationViolated,
     sleep,
     splitDomainUsername,
-    getCollationForMSSQLVersion
+    getCollationForMSSQLVersion,
+    filterActions
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
@@ -1166,11 +1167,10 @@ function prepareResourceActionMap(statements: [PolicyStatement]) {
     }[] = [];
     statements.forEach(({ Resource, Action, Condition }) => {
         const actionMap = [];
-        if (isArray(Action)) {
-            actionMap.push(...Action);
-        } else {
-            actionMap.push(Action);
-        }
+
+        const filteredActions = filterActions(Action);
+        actionMap.push(...filteredActions);
+
         const resourceConditions: ContextEntry[] = [];
 
         if (!isEmpty(Condition)) {
