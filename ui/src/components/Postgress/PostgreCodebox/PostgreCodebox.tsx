@@ -5,14 +5,35 @@ import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg'
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
-import { useMemo, useState } from 'react';
+//@ts-ignore
+import Highlighter from 'react-highlight-words';
+import { useEffect, useMemo, useState } from 'react';
 import { CODE_VIEWER } from '../../../utils/appConstants';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
-import { generateOptionType } from '../../../utils/utilityFunctions';
-import { UI_IDS } from '../../../utils/consts';
+import { generateOptionType, getCredDetails } from '../../../utils/utilityFunctions';
+import { CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE, DEPLOY_ENDPOINT, PGSQL_CURL_REQ_TEMPLATE, UI_IDS } from '../../../utils/consts';
+import { useAppSelector } from '../../../store/storeHooks';
+import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
+import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
+import { addEscapeInCli, setMaskedPassword } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
+import { createPgsqlPayload } from '../PostgreUtils';
+import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
+import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
+
+const _ = require('lodash');
 
 const PostgreCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
+    const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
+    const [formData, setFormData] = useState<any>(null); // Saving form data on template API call
+    const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
+    const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
+
+    const mssqlFormData = useAppSelector(state => state.mssqlForm);
+    const pgsqlFormData = useAppSelector(state => state.postgreForm);
+    const { isWorkloadFactory, isDemoMode } = useAppSelector(state => state?.auth);
+
+    const [loadTemplateData] = useGetTemplatesMutation();
 
     //Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
@@ -33,13 +54,47 @@ const PostgreCodebox = () => {
         } 
     };
 
+    useEffect(() => {
+        getMaskedRestResponse(mssqlFormData, pgsqlFormData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mssqlFormData, pgsqlFormData]);
+
+     // This will set masked data
+    const getMaskedRestResponse = (actualData: any,pgsqlFormData:any) => {
+        const changeObjectForm = {
+            mssqlForm: setMaskedPassword(actualData),
+            postgreForm: setMaskedPassword(pgsqlFormData)
+        };
+        const resBody = createPgsqlPayload(changeObjectForm);
+        //@ts-ignore
+        setRightPanelMaskedResponse(resBody);
+    };
+
+    const setDisplayedDataInCodeBox = () => {
+        if (dropDownValue === CODE_VIEWER.REST_API) {
+            const actualData = mssqlFormData;
+            // To get accountid, credid and region from saved config
+            const credDetails = getCredDetails(actualData);
+            return false ? (
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
+            ) : (
+                <>
+                    <CodeBoxColor
+                        credID={credDetails.credId}
+                        region={credDetails.region}
+                        actualData={rightPanelMaskedResponse}
+                        endpoint={DEPLOY_ENDPOINT}
+                        dbType='pgsql'
+                    />
+                </>
+            );
+        }
+    };
+
     return (
         <div className={styles.postgreCodebox}>
             <div className={styles.createNewUserCodeBox}>
                 <CodeBoxHeading />
-
-
-
                 <div className={styles.createDbHeader}>
                     <DsTypography variant="Regular_16" className={styles.createDBText}>
                         PostgreSQL
@@ -85,7 +140,7 @@ const PostgreCodebox = () => {
                         </div>
                     </div>
 
-                    <CodeBoxScroll dropDownValue={dropDownValue} setDisplayedDataInCodeBox={''} />
+                    <CodeBoxScroll dropDownValue={dropDownValue} setDisplayedDataInCodeBox={setDisplayedDataInCodeBox()} />
                 </div>
             </div>
         </div>

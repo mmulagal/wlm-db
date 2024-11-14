@@ -459,7 +459,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "Standalone",
                     "databaseInstanceErrors": ""
                 },
                 {
@@ -518,7 +518,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "Standalone",
                     "databaseInstanceErrors": ""
                 },
                 {
@@ -583,7 +583,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "Standalone",
                     "databaseInstanceErrors": ""
                 },
                 {
@@ -648,7 +648,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "Standalone",
                     "databaseInstanceErrors": ""
                 }
             ]

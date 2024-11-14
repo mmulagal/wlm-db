@@ -89,4 +89,40 @@ async function removeDatabaseInstanceConfigData(
     });
 }
 
-export { createDatabaseInstanceConfigData, listDatabaseInstanceConfigData, removeDatabaseInstanceConfigData };
+async function removeAllButLatestDatabaseInstanceConfigData(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    resourceId: string,
+    databaseInstanceId: string,
+    latestCreatedTime: Date
+) {
+    logger.info('Remove all but latest assessment data', {
+        accountId,
+        region,
+        credentialsId,
+        resourceId,
+        databaseInstanceId,
+        latestCreatedTime
+    });
+
+    return prisma.client.database_instance_config_data.deleteMany({
+        where: {
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            resource_id: resourceId,
+            database_instance_id: databaseInstanceId,
+            creation_time: {
+                lt: latestCreatedTime
+            }
+        }
+    });
+}
+
+export {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData,
+    removeDatabaseInstanceConfigData,
+    removeAllButLatestDatabaseInstanceConfigData
+};

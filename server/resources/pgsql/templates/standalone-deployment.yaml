@@ -71,6 +71,9 @@ Parameters:
   AMIID:
     Description: The AMI ID for the EC2 instances.
     Type: String
+  SQLVersion:
+    Description: The version of PostgreSQL to install.
+    Type: String
 
 Resources:
   LaunchWizardSqlFSxProfile:
@@ -130,6 +133,7 @@ Resources:
             archive_dir=/$fsxlogvolumename/logs/archived_logs
             psql_svcs=postgresql
             dbname=testDB
+            pgsql_version=${SQLVersion}
 
             echo $fsxsvmid
 
@@ -175,12 +179,8 @@ Resources:
               echo "Log volume already exists."
             fi
 
-            # Add the PostgreSQL 15 repository
-            sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm --skip-broken
-            check_status "Failed to add PostgreSQL repository"
-
-            # Install PostgreSQL and NFS utilities
-            sudo yum install -y postgresql15 postgresql15-server nfs-utils
+            # Install PostgreSQL and NFS utilities based on the specified version
+            sudo yum install -y $pgsql_version  $pgsql_version-server nfs-utils
             check_status "Failed to install PostgreSQL or NFS utilities"
 
             # Add PostgreSQL binaries to PATH
@@ -289,11 +289,11 @@ Resources:
             check_status "Failed to clone pgvector repository"
 
             # Install PostgreSQL development packages
-            sudo yum install -y postgresql15-private-devel --allowerasing
-            check_status "Failed to install postgresql15-private-devel"
+            sudo yum install -y $pgsql_version-private-devel --allowerasing
+            check_status "Failed to install $pgsql_version-private-devel"
 
-            sudo yum install -y postgresql15-server-devel
-            check_status "Failed to install postgresql15-server-devel"
+            sudo yum install -y $pgsql_version-server-devel
+            check_status "Failed to install $pgsql_version-server-devel"
 
             # Build and install pgvector
             cd pgvector

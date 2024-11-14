@@ -1258,3 +1258,27 @@ export const CHATBOT = {
         ABOUT_CHAT: 'About chat'
     }
 };
+
+export const GETWELL_DIALOG_CONTENT = {
+    ACTION_SUMMARY: 'Action summary',
+    USER_ACTION_REQUIRED: 'User action required',
+    WHAT_WILL_HAPPEN: 'What will happen',
+    DOWNTIME_WARNING: 'Downtime Warning',
+    SELECT_INSTANCE: 'Select one of the recommended instance types.',
+    COMPUTE_RS_AS_DESC:
+        'Workload Factory is ready to migrate your SQL Server EC2 instance from the current instance type to the recommended instance type',
+    COMPUTE_RS_WWH_DESC_FCI: [
+        'Instance type change: Workload Factory will change the instance type for your Amazon EC2 instance from the current instance type to the recommended instance type on both SQL Server Always On Failover Cluster Instances (FCI) nodes. Migration effort <AWS migration effort>.',
+        'Failover and Failback: The migration will involve failing over and falling back from the primary node in your SQL Server Always On Failover Cluster Instances (FCI) to ensure a smooth transition.'
+    ],
+    COMPUTE_RS_WWH_DESC_STANDALONE:
+        'Workload Factory will change the instance type for your Amazon EC2 instance from the current instance type to the recommended instance type. Migration effort <AWS migration effort>.',
+    COMPUTE_RS_DTW_NOTES_FCI: [
+        'No disruption to your services is expected during this process.',
+        'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf.'
+    ],
+    COMPUTE_RS_DTW_NOTES_STANDALONE: [
+        'This process will require a temporary downtime of your SQL Server EC2 instance. Perform necessary backups and notify affected users, to avoid any unintended downtime or data loss.',
+        'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and acknowledge the required downtime.'
+    ]
+};

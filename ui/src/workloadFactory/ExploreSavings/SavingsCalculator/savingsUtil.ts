@@ -1640,7 +1640,8 @@ export const ExploreSaveConfiguration = (
     saveConfigData: any,
     closeDialog: any,
     msSqlInstance: any,
-    fsxData: any
+    fsxData: any,
+    configRefetch: any
 ) => {
     const state = store.getState();
     const saveConfigName = state.exploreSavings.saveConfigName;
@@ -1670,6 +1671,7 @@ export const ExploreSaveConfiguration = (
                             message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS
                         })
                     );
+                    configRefetch();
                 }
                 closeDialog();
                 dispatch(setIsSaveConfigLoading(false));

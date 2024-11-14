@@ -147,6 +147,7 @@ Resources:
                     config:
                         - CreateTempFolder
                         - FetchResources
+                        - ScriptSignatureVerificationandExtract
                         - Finalize       
                 CreateTempFolder:
                     commands:
@@ -154,19 +155,53 @@ Resources:
                             command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
                 FetchResources:
                     files:
-                        /home/ec2-user/cfn/scripts/validate-vpc.sh:
+                        /home/ec2-user/cfn/scripts/verify-signature.sh:
+                            source: {{{ ScriptVerifySignature }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/scripts/unzip-archive.sh:
+                            source: {{{ ScriptUnzipArchive }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/scripts/validation.zip:
                             source: {{{ ScriptValidation }}}
                             mode: '000755'
                             owner: ec2-user
                             group: ec2-user
+                        /home/ec2-user/cfn/signig_files.zip:
+                            source: {{{ ArtifactsSignatures }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                ScriptSignatureVerificationandExtract:
+                    commands:
+                        a-change-to-sudo-user:
+                            command: sudo su
+                            waitAfterCompletion: 0
+                        b-unpack-signatures:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/signig_files.zip -d /home/ec2-user/cfn
+                            waitAfterCompletion: 0
+                        c-verify-validation-signature:
+                            command: !Join
+                                - ''
+                                - - /home/ec2-user/cfn/scripts/verify-signature.sh -f /home/ec2-user/cfn/scripts/validation.zip -s /home/ec2-user/cfn/signig_files/validation.sig 
+                                    -p /home/ec2-user/cfn/signig_files/validation.pub -r ValidationNode1 -n '"
+                                  - !Ref 'AWS::StackName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        d-unpack-validation-scripts:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/validation.zip -d /home/ec2-user/cfn/scripts
+                            waitAfterCompletion: 0
                 Finalize:
                     commands:
                         a-validate-vpc:
                             command: !Sub 
-                                - '/home/ec2-user/cfn/scripts/validate-vpc.sh ${subnetId} ${AWS::Region} ${AWS::StackName} ValidationNode1'
+                                - '/home/ec2-user/cfn/scripts/validation/validate-vpc.sh ${subnetId} ${AWS::Region} ${AWS::StackName} ValidationNode1'
                                 - subnetId: !Ref 'SubnetID'
                             waitAfterCompletion: '0'
-                        e-signal-resource:
+                        b-signal-resource:
                             command: !Sub 'cfn-signal -e $? --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
                             waitAfterCompletion: '0'

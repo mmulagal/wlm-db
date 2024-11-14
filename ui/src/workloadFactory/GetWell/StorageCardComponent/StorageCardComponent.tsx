@@ -261,7 +261,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         setDialog(
             <DialogComponent
                 header={`${type} optimization`}
-                content={<DialogContent type={type} />}
+                content={<DialogContent type={type} recommendationOptions={cardData?.recommendationOptions} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
