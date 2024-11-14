@@ -186,8 +186,8 @@ Resources:
                         c-verify-validation-signature:
                             command: !Join
                                 - ''
-                                - - /home/ec2-user/cfn/scripts/verify-signature.sh -f /home/ec2-user/cfn/scripts/validation.zip -s /home/ec2-user/cfn/signig_files/validation.sig 
-                                    -p /home/ec2-user/cfn/signig_files/validation.pub -r ValidationNode1 -n '"
+                                - - /home/ec2-user/cfn/scripts/verify-signature.sh -f /home/ec2-user/cfn/scripts/validation.zip -s /home/ec2-user/cfn/signig_files/validation.zip.sig 
+                                    -p /home/ec2-user/cfn/signig_files/validation.zip.pub -r ValidationNode1 -n '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
