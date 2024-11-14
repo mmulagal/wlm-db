@@ -5,7 +5,7 @@ import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import moment from 'moment';
 import getLogger from '../utils/logger';
-import { getEc2Arn, sizeInGigaBytes, sqlResponseParsing } from '../utils/utils';
+import { convertToBytes, getEc2Arn, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
@@ -52,11 +52,11 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const optimisedDrives: SizingViolationResponseType[] = [];
 
     const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
-    driveDetails.forEach((drive: LogDriveDetails) => {
-        const { dataDriveLetter, logDriveLetter, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
-        if (!dataDriveLetter || !logDriveLetter || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
+    driveDetails.forEach((drive: { [x: string]: any }) => {
+        const { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
+        if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(drive as SizingViolationResponseType);
-        } else if (dataDriveLetter !== logDriveLetter) {
+        } else if (dataAccessPath !== logAccessPath) {
             const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
             if (logToDriveSizePercent > 30) {
                 overProvisionedDrives.push(drive as SizingViolationResponseType);
@@ -83,28 +83,68 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
 function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatus, key: string) {
     logger.info('Getting tempdb volume drift', value);
 
-    const {
-        tempdbDriveLetter,
-        defaultDataDriveLetter: defaultDataDrive,
-        defaultDataDriveSize,
-        tempdbDriveTotalSizeMB,
-        ontapVolumeId
-    } = value;
+    const overProvisionedDrives: SizingViolationResponseType[] = [];
+    const underProvisionedDrives: SizingViolationResponseType[] = [];
+    const ignoredDrives: SizingViolationResponseType[] = [];
 
     let tempdbPercent = 0;
-    if (defaultDataDrive === tempdbDriveLetter) {
+    const {
+        dataDriveTotalSizeMB,
+        tempdbDriveTotalSizeMB,
+        defaultDataDriveLetter,
+        tempdbDriveLetter,
+        lunUuid,
+        svmName,
+        ontapVolumeName,
+        ontapVolumeUuid
+    } = value;
+    if (defaultDataDriveLetter === tempdbDriveLetter) {
         status = AssessmentStatus.NOT_APPLICABLE;
+
+        ignoredDrives.push({
+            dataDriveTotalSizeMB,
+            tempdbDriveTotalSizeMB,
+            dataAccessPath: defaultDataDriveLetter,
+            tempdbAccessPath: tempdbDriveLetter,
+            lunUuid,
+            svmName,
+            ontapVolumeName,
+            ontapVolumeUuid
+        });
     } else {
-        tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / defaultDataDriveSize) * 100);
+        tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
         status =
             tempdbPercent > 20
                 ? AssessmentStatus.OVER_PROVISIONED
                 : tempdbPercent < 10
                 ? AssessmentStatus.UNDER_PROVISIONED
                 : AssessmentStatus.OPTIMIZED;
+        if (status === AssessmentStatus.OVER_PROVISIONED) {
+            overProvisionedDrives.push({
+                dataDriveTotalSizeMB,
+                tempdbDriveTotalSizeMB,
+                dataAccessPath: defaultDataDriveLetter,
+                tempdbAccessPath: tempdbDriveLetter,
+                lunUuid,
+                svmName,
+                ontapVolumeName,
+                ontapVolumeUuid
+            });
+        } else if (status === AssessmentStatus.UNDER_PROVISIONED) {
+            underProvisionedDrives.push({
+                dataDriveTotalSizeMB,
+                tempdbDriveTotalSizeMB,
+                dataAccessPath: defaultDataDriveLetter,
+                tempdbAccessPath: tempdbDriveLetter,
+                lunUuid,
+                svmName,
+                ontapVolumeName,
+                ontapVolumeUuid
+            });
+        }
     }
     key = 'tempdb-drive-size';
-    return { status, key, tempdbPercent, defaultDataDriveSize, ontapVolumeId };
+    return { status, key, tempdbPercent, dataDriveTotalSizeMB, ontapVolumeUuid };
 }
 
 async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
@@ -119,11 +159,13 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
     const headroomPercent = Math.ceil(
         ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
     );
-    const ssdStorageCapacityGB = sizeInGigaBytes(ssdStorageCapacityInBytes);
+    const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
     const status =
         headroomPercent < 35
             ? AssessmentStatus.UNDER_PROVISIONED
-            : headroomPercent > 100 && ssdStorageCapacityGB && ssdStorageCapacityGB > 1024 // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
+            : headroomPercent > 100 &&
+              ssdStorageCapacityInBytes &&
+              ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
             ? AssessmentStatus.OVER_PROVISIONED
             : AssessmentStatus.OPTIMIZED;
     return { status, headroomPercent, ssdStorageCapacityInBytes, totalVolumeSizeInBytes };
