@@ -17,10 +17,15 @@ import { setOptimizingData, setOptimizingInstanceData } from '../../../store/wor
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { useLazyGetSubTaskListQuery, useOptimizeStorageConfigMutation } from '../../../utils/apiService';
+import {
+    useLazyGetSubTaskListQuery,
+    useOptimizeComputeConfigMutation,
+    useOptimizeStorageConfigMutation
+} from '../../../utils/apiService';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
+import store from '../../../store/store';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -31,6 +36,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
+    const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const [disableText, setDisableText] = useState(false);
@@ -192,15 +198,28 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     // This is the function that will be called when the optimize button is clicked from main cards
     const callOptimizeApi = (type: any) => {
-        // ToDo - This is not supported yet so will update once it is final
-        let payload = {
-            assessments: [
-                {
-                    configurationName: type,
-                    objectsToOptimize: []
-                }
-            ]
-        };
+        let payload = {};
+        let apiCall = null;
+        if (type === GENERAL.COMPUTE_RIGHTSIZING) {
+            apiCall = optimizeComputeConfig;
+            const state = store.getState();
+            const { selectedRecommendedInstance } = state.getWellOptimize;
+            payload = {
+                instanceType: selectedRecommendedInstance?.value
+            };
+        } else {
+            // ToDo - More type will come like optimize for sizing and layout here
+            apiCall = optimizeStorageConfig;
+            payload = {
+                assessments: [
+                    {
+                        configurationName: type,
+                        objectsToOptimize: []
+                    }
+                ]
+            };
+        }
+
         // call optimize api
         dispatch(setOptimizingInstanceData(true));
         dispatch(
@@ -231,7 +250,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             })
         );
 
-        optimizeStorageConfig({
+        apiCall({
             credentialId: headerSelectedCred?.data?.credentialsId,
             regionId: headerSelectedRegion?.label2,
             databaseHostId: selectedResourceId,
@@ -352,7 +371,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             </div>
                         </TooltipComponent>
                     </div>
-                ) : optimizingInstanceData && cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
+                ) : optimizingInstanceData &&
+                  cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
+                  cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
                     <TooltipComponent
                         title={GENERAL.OPTIMIZATION_IN_PROGRESS}
                         placement="bottom"
