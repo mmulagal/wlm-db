@@ -1063,7 +1063,8 @@ async function fetchUnmanagedHostsInformationV2(
                             ? STORAGE_TYPE.FSXW
                             : ebsVolumeIds.length > 0
                             ? STORAGE_TYPE.EBS
-                            : NOT_AVAILABLE
+                            : NOT_AVAILABLE,
+                        resource: resourceDetails
                     });
                 });
                 resourceDetailsList.push(resourceDetails);

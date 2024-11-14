@@ -331,6 +331,7 @@ const INSTANCE_DATA_DRIVES_QUERY = `${SET_NOCOUNT}
 const DEFAULT_DATA_DRIVE_SIZE = `${SET_NOCOUNT}
         SELECT 
             DISTINCT (LEFT(mf.physical_name, 2)) AS dataDriveLetter,
+            mf.physical_name AS dataDrivePath,
             vs.total_bytes / 1048576 AS dataDriveTotalSizeMB
         FROM 
             sys.master_files mf
@@ -338,7 +339,7 @@ const DEFAULT_DATA_DRIVE_SIZE = `${SET_NOCOUNT}
         CROSS APPLY 
             sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
             
-        WHERE ((SELECT LEFT(physical_name,1)) = (SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS varchar(38)),1)))
+        WHERE mf.name = 'master'
         
         ORDER BY 
             dataDriveLetter ${FOR_JSON_PATH}
@@ -360,6 +361,7 @@ const DEFAULT_LOG_DRIVE_SIZE = `${SET_NOCOUNT}
 const TEMPDB_DRIVE_SIZE = `${SET_NOCOUNT}
             SELECT 
                 LEFT(d.filename, 2) AS tempdbDriveLetter,
+                mf.physical_name AS tempdbDrivePath,
                 vs.total_bytes / 1048576 AS tempdbDriveTotalSizeMB
             FROM 
                 tempDB.sys.sysfiles d
@@ -385,6 +387,7 @@ const INSTANCE_USER_DB_DRIVE_SIZES = `
         SELECT 
             d.name AS databaseName,
             LEFT(mf.physical_name, 2) AS dataDriveLetter,
+            mf.physical_name AS dataDrivePath,
             vs.total_bytes / 1048576 AS dataDriveTotalSizeMB
         FROM 
             sys.databases d
@@ -402,6 +405,7 @@ const INSTANCE_LOG_DB_DRIVE_SIZES = `
             SELECT 
                 d.name AS databaseName,
                 LEFT(mf.physical_name, 2) AS logDriveLetter,
+                mf.physical_name AS logDrivePath,
                 vs.total_bytes / 1048576 AS logDriveTotalSizeMB
             FROM 
                 sys.databases d
