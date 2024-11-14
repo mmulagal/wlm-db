@@ -17,7 +17,7 @@ const OptimizationBreakdown = () => {
         <div className={styles.optimizationBreakdown}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Optimization Breakdown by category
+                    Optimization breakdown by category
                 </DsTypography>
                 {loading && <DsFlashingDotsLoader />}
             </div>
@@ -40,7 +40,7 @@ const OptimizationBreakdown = () => {
                     />
                     <OptimizeComponent
                         value={<ComingSoon />}
-                        text={'Applications'}
+                        text={'Application (SQL Server)'}
                         image={<Applications />}
                         isComingSoon={true}
                     />
