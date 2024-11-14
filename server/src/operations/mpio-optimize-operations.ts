@@ -31,9 +31,12 @@ async function validateMpioPolicyToRoundRobin(
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError;
-    const jobDescription = `Check current MPIO policy on ${
-        runningOnPrimaryNode ? 'primary node' : 'standby node'
-    } in ${serverNameWithHostName}.`;
+    const jobDescription =
+        optimizeMpioPolicyParams.sqlDeploymentType !== 'Standalone'
+            ? `Check current MPIO policy on ${
+                  runningOnPrimaryNode ? 'primary node' : 'standby node'
+              } in ${serverNameWithHostName}.`
+            : `Check current MPIO policy in ${serverNameWithHostName}`;
     let parsedValidateMPIOPolicyChangeResponse;
 
     // Validate the MPIO policy change
@@ -101,9 +104,12 @@ async function setMpioPolicyToRoundRobin(
     } = optimizeMpioPolicyParams;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-    const jobDescription = `Setting MPIO policy to Round Robin on ${serverNameWithHostName} and rebooting instance on ${
-        runningOnPrimaryNode ? 'primary node' : 'standby node'
-    }.`;
+    const jobDescription =
+        optimizeMpioPolicyParams.sqlDeploymentType !== 'Standalone'
+            ? `Setting MPIO policy to Round Robin on ${serverNameWithHostName}, rebooting instance and changing cluster ownership on ${
+                  runningOnPrimaryNode ? 'primary node' : 'standby node'
+              }.`
+            : `Setting MPIO policy to Round Robin on ${serverNameWithHostName} and rebooting instance.`;
     let jobError;
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
@@ -193,6 +199,10 @@ async function optimize(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) {
     let jobError;
     try {
         // For primary node
+        // Check if MPIO policy is set to Round Robin
+        // If not, set MPIO policy to Round Robin
+        // If standalone, reboot instance
+        // If FCI, change cluster ownership and reboot instance
         let validateMpioPolicyToRoundRobinResponse = await validateMpioPolicyToRoundRobin(
             optimizeMpioPolicyParams,
             true
@@ -207,12 +217,17 @@ async function optimize(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) {
         }
 
         if (sqlDeploymentType === 'FCI') {
-            // If ownership is changed, fetch active and standby node
             const activeNode = optimizeMpioPolicyParams.standbyNodeInstanceId;
             optimizeMpioPolicyParams.activeNodeInstanceId = optimizeMpioPolicyParams.standbyNodeInstanceId;
             optimizeMpioPolicyParams.standbyNodeInstanceId = activeNode;
 
-            // Run validation on standby node
+            // For standby node
+            // Check if MPIO policy is set to Round Robin
+            // Case Not set to RR on standby
+            // 1. Check if ownership was changed from primary to standby, if yes change back to primary
+            // 2. Reboot instance
+            // Case set to RR on standby
+            // 1. Check if ownership was changed from primary to standby, if yes change back to primary. Else no action needed
             validateMpioPolicyToRoundRobinResponse = await validateMpioPolicyToRoundRobin(
                 optimizeMpioPolicyParams,
                 true,
@@ -225,7 +240,6 @@ async function optimize(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) {
                 await validateMpioPolicyToRoundRobin(optimizeMpioPolicyParams, false);
             }
         }
-        await sleep(30000);
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: `Assessment for ${serverNameWithHostName} after optimization`,
             description: `Assessment for ${serverNameWithHostName} after optimization`,
