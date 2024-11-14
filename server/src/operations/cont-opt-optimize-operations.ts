@@ -720,14 +720,14 @@ async function logDriveOptimization(
             const { volumeIds: fsxVolumeIdList, uuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
                 credentialsId,
                 region,
-                accountId,
+                fileSystemId,
                 underProvisionedOntapVolIds
             );
 
             const underProvisionedVolumeDetails = await getFsxVolumeDetails(
                 credentialsId,
                 region,
-                accountId,
+                fileSystemId,
                 fsxVolumeIdList
             );
 
@@ -828,7 +828,7 @@ async function logDriveOptimization(
             jobStatus = JOBSTATUS.WARNING;
         }
     } catch (error) {
-        errorMessage = `Error while optimizing tempDb sizing ${error}`;
+        errorMessage = `Error while optimizing log volume sizing ${error}`;
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
