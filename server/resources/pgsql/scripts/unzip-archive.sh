@@ -20,4 +20,4 @@ fi
 
 echo "Unpacking $Source to $Destination"
 unzip "$Source" -d "$Destination"
-chmod -R 755 /home/ec2-user/cfn/scripts
+chmod -R 755 /home/ec2-user/cfn
