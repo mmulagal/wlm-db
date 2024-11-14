@@ -46,7 +46,11 @@ import {
 } from '../routes/types/continuous-optimization.types';
 import { getFsxVolumeDetails, getFsxnVolIdsFromOntapVolIds } from './aws/fsx-operations';
 import { modifyInstanceType, startInstance, stopInstance, waitForInstanceOk } from '../lib/aws/ec2';
-import { getInstanceDetailsByPrivateIp, waitForInstanceToBeStopped } from './aws/ec2-operations';
+import {
+    getInstanceDetailsByPrivateIp,
+    instanceTypeChangePreReqs,
+    waitForInstanceToBeStopped
+} from './aws/ec2-operations';
 import { listResources } from '../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from './workloads/mssql/discover-consts';
 
@@ -1059,6 +1063,19 @@ async function optimizeCompute(
         throw createError(400, 'Invalid instance type, please choose from the recommended instance types');
     }
 
+    /*
+     As per https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html), Its riskier to programatically configure the parameters to overcome these limitations.
+        Most of these differences between the current and recommended instance types are captured in `platformDifferences` in the response of compute-optimizer.(https://docs.aws.amazon.com/compute-optimizer/latest/ug/view-ec2-recommendations.html#ec2-platform-differences) .
+        So proceeding with the optimization only if there are no platform differences between the current and recommended instance types.
+
+        Additional considerations:
+        https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/change-instance-type-of-ebs-backed-instance.html
+
+        If your instance has a public IPv4 address, that is not an Elastic IP, we release the address and give your instance a new public IPv4 address.
+        If your instance is in an Auto Scaling group, the Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and might terminate it and launch a replacement instance.
+        You can't change the instance type of a Spot Instance.
+    */
+
     const platformDifferences =
         recommendationOptions?.find(
             ({ instanceType: recommendedInstanceType }) => recommendedInstanceType === instanceType
@@ -1097,6 +1114,7 @@ async function optimizeCompute(
         );
 
         if (activeNodeInstanceId) {
+            const instanceIdsList = [activeNodeInstanceId];
             if (node2InstanceId) {
                 // more than one node in the cluster
                 const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
@@ -1124,6 +1142,12 @@ async function optimizeCompute(
                             clusterNetworkIps
                         );
                         const clusterNodeInstanceIds = clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId);
+
+                        instanceIdsList.push(...clusterNodeInstanceIds);
+
+                        // run elastic IP address; spot instance and autoscaling instance check for all nodes in the cluster; throws error if any node has does not meets the criteria
+                        await instanceTypeChangePreReqs(credentialsId, region, accountId, clusterNodeInstanceIds);
+
                         const nonPrimaryNodeInstanceIds = clusterNodeInstanceIds.filter(
                             nodeId => nodeId !== activeNodeInstanceId
                         );
@@ -1169,6 +1193,9 @@ async function optimizeCompute(
                         }
                     }
                 }
+            } else {
+                // single node cluster
+                await instanceTypeChangePreReqs(credentialsId, region, accountId, instanceIdsList);
             }
 
             await updateNodeInstanceType(credentialsId, region, activeNodeInstanceId, instanceType); // modify instance type for the primary node ; secondary nodes are already modified at this point
@@ -1259,7 +1286,6 @@ async function updateNodeInstanceType(credentialsId: string, region: string, ins
         // check if instance has elastic IP or not
         // check for Spot Instance While a Spot Instance is stopped, you can modify some of its instance attributes, but not the instance type.
         // check instance type compatibility https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html
-        // upggrade PV drivers on ec2 windows instances
         // check for autoscaling instance
         // check ebs volume limits https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/volume_limits.html
         // check and migrate to nitro based instanceshttps://docs.aws.amazon.com/AWSEC2/latest/UserGuide/migrating-latest-types.html#auto-upgrade

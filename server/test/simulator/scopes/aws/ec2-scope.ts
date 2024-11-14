@@ -26,7 +26,8 @@ import {
     StopInstancesCommand,
     StartInstancesCommand,
     DescribeInstanceStatusCommand,
-    ModifyInstanceAttributeCommand
+    ModifyInstanceAttributeCommand,
+    DescribeAddressesCommand
 } from '@aws-sdk/client-ec2';
 import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
@@ -318,6 +319,41 @@ ec2Mock.on(DescribeInstanceStatusCommand).resolves({
         }
     ]
 });
+
+ec2Mock.on(DescribeAddressesCommand).resolves({
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: '7fd613e9-2724-4c25-a4f9-47811ca1b0a2',
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    Addresses: [
+        {
+            PublicIp: '18.140.87.228',
+            AllocationId: 'eipalloc-096a63803291b1516',
+            AssociationId: 'eipassoc-037f20b4fe123d0c1',
+            Domain: 'vpc',
+            NetworkInterfaceId: 'eni-06640ea3618cb7bf1',
+            NetworkInterfaceOwnerId: '464262061435',
+            PrivateIpAddress: '172.31.48.9',
+            PublicIpv4Pool: 'amazon',
+            NetworkBorderGroup: 'ap-southeast-1'
+        }
+    ]
+});
+
+/* Sample error response
+ec2Mock.on(DescribeAddressesCommand).resolves({'$metadata': {
+    httpStatusCode: 400,
+    requestId: 'e390cac9-59cb-4fdc-822d-12a1f0dd0741',
+    extendedRequestId: undefined,
+    cfId: undefined,
+    attempts: 1,
+    totalRetryDelay: 0
+  },
+  Code: 'InvalidAddress.NotFound'
+})
+*/
 
 sinon.stub(ec2Utils, 'waitForInstanceOk').resolves({
     state: 'SUCCESS',

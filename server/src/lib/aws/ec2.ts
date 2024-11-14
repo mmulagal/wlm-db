@@ -52,7 +52,9 @@ import {
     ModifyInstanceAttributeCommand,
     StartInstancesCommand,
     waitUntilInstanceStatusOk,
-    DescribeInstanceStatusCommandInput
+    DescribeInstanceStatusCommandInput,
+    DescribeAddressesCommand,
+    DescribeAddressesCommandInput
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -479,6 +481,17 @@ async function waitForInstanceOk(credentialsId: string, region: string, instance
     }
 }
 
+async function describeAddresses(credentialsId: string, region: string, params: DescribeAddressesCommandInput) {
+    logger.info('Describe addresses', { credentialsId, region, params });
+
+    const ec2 = await getEC2Client(region);
+
+    const response = await ec2.send(new DescribeAddressesCommand(params)); // throws error if any of the public IP is not elastic IP
+    logger.debug('Describe addresses response:', response);
+
+    return response;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -506,5 +519,6 @@ export {
     stopInstance,
     startInstance,
     modifyInstanceType,
-    waitForInstanceOk
+    waitForInstanceOk,
+    describeAddresses
 };

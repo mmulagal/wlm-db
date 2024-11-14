@@ -44,7 +44,8 @@ import {
     describeSnapshots,
     describeInstance,
     describeInstanceType,
-    getInstanceTypesFromInstanceRequirementsCommand
+    getInstanceTypesFromInstanceRequirementsCommand,
+    describeAddresses
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
@@ -60,6 +61,7 @@ import {
     NodeDetails
 } from '../../utils/common-types';
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
+import describeAutoscalingInstances from '../../lib/aws/auto-scaling';
 
 const logger = getLogger();
 
@@ -904,6 +906,70 @@ async function waitForInstanceToBeStopped(credentialsId: string, region: string,
     throw new Error(`Instance ${instanceId} in ${region} did not stop within the expected time`);
 }
 
+async function instanceTypeChangePreReqs(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    instanceIds: string[]
+) {
+    logger.info('Checking instance type change prerequisites', { credentialsId, region, accountId, instanceIds });
+
+    try {
+        const { Reservations = [] } = await describeInstance(credentialsId, region, {
+            InstanceIds: instanceIds
+        });
+
+        const instances = Reservations.map(reservation => reservation.Instances || []).flat();
+
+        try {
+            const publicIpAddresses = compact(instances.map(({ PublicIpAddress }) => PublicIpAddress)) || [];
+            if (!isEmpty(publicIpAddresses)) {
+                return await describeAddresses(credentialsId, region, {
+                    PublicIps: publicIpAddresses
+                });
+            }
+        } catch (error: any) {
+            logger.error('Error while checking elastic IP address', error);
+            if (error?.Code && error.Code === 'InvalidAddress.NotFound') {
+                throw createError(
+                    500,
+                    'Elastic IP address not found. On instance type change, Amazon EC2 releases the address and give your instance a new public IPv4 address'
+                );
+            }
+            throw error;
+        }
+
+        const instanceLifecycles = compact(instances.map(({ InstanceLifecycle }) => InstanceLifecycle)) || [];
+        if (!isEmpty(instanceLifecycles)) {
+            instanceLifecycles.some(lifecycle => {
+                if (lifecycle === 'spot') {
+                    throw createError(500, 'Instance type of a Spot Instance cannot be changed');
+                }
+                return false;
+            });
+        }
+
+        const { AutoScalingInstances: autoScalingInstances } = await describeAutoscalingInstances(
+            credentialsId,
+            region,
+            accountId,
+            {
+                InstanceIds: instanceIds
+            }
+        );
+
+        if (autoScalingInstances?.length) {
+            throw createError(
+                500,
+                'Instances are part of an auto-scaling group. The Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and might terminate it and launch a replacement instance'
+            );
+        }
+    } catch (error: any) {
+        logger.error('Error while checking instance type change prerequisites', error);
+        throw error;
+    }
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -925,5 +991,6 @@ export {
     getInstanceDetailsByPrivateIp,
     determineBiggerInstance,
     determineSmallerInstance,
-    waitForInstanceToBeStopped
+    waitForInstanceToBeStopped,
+    instanceTypeChangePreReqs
 };

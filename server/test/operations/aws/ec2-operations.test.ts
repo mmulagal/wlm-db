@@ -15,7 +15,8 @@ import {
     getInstanceDetailsByPrivateIp,
     getInstanceTypesFromInstanceRequirementsForManagedInstances,
     getInstanceTypesFromInstanceRequirements,
-    waitForInstanceToBeStopped
+    waitForInstanceToBeStopped,
+    instanceTypeChangePreReqs
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -155,5 +156,13 @@ describe('EC2 Operations', () => {
             TEST_STOPPED_EC2_INSTANCE_ID
         );
         expect(response).toBeTruthy();
+    });
+
+    it('Instance type change pre-reqs', async () => {
+        try {
+            await instanceTypeChangePreReqs(credentialsId, DEFAULT_AWS_REGION, ACCOUNT_ID, ['i-12345']);
+        } catch (error) {
+            expect(error).toBeUndefined();
+        }
     });
 });
