@@ -349,4 +349,80 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     
 `;
 
-export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STORAGE_PARAMS_SCRIPT };
+const CHECK_NODE_STATUS = (nodeName: string) => `
+    Function Check-NodeStatus {
+        param (
+            [Parameter(Mandatory = $true)]
+            [string]$NodeName
+        )
+        
+        try {
+            # Get the specific cluster node
+            $node = Get-ClusterNode -Name $NodeName
+            
+            # Check if the node is "Up" and Test-Connection succeeds
+            if ($node.State -eq "Up" -and (Test-Connection -ComputerName $NodeName -Count 1 -Quiet)) {
+                $result = @{ status = 'success' }
+            } else {
+                $result = @{ status = 'failed' }
+            }
+        } catch {
+            # Handle any errors that occur
+            $result = @{ status = 'failed'; error = $_.Exception.Message }
+        } finally {
+            # Convert the result to JSON
+            $result | ConvertTo-Json -Compress
+        }
+    }
+    $jsonResult = Check-NodeStatus -NodeName "${nodeName}"
+    Write-Output $jsonResult
+`;
+
+const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `Function Move-AllClusterGroups {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$TargetNodeName
+    )
+    
+    $result = @()
+    
+    try {
+        # Get all cluster groups
+        $clusterGroups = Get-ClusterGroup
+        
+        # Iterate over each cluster group
+        $clusterGroups | ForEach-Object {
+            if ($_.Name -match "SQL Server") {
+                $clusterGroupName = $_.Name
+                $groupResult = @{
+                    groupName = $clusterGroupName
+                    status = 'success'
+                    error = $null
+                }
+                try {
+                    # Move the cluster group to the target node
+                    Move-ClusterGroup -Name $clusterGroupName -Node $TargetNodeName
+                    $groupResult.status = 'success'
+                } catch {
+                    # Update status and error in case of failure
+                    $groupResult.status = 'failed'
+                    $groupResult.error = $_.Exception.Message
+                }
+                # Add group result to result array
+                $result += $groupResult
+            }
+        }
+    } catch {
+        # Handle any errors that occur
+        $result = @(@{ status = 'failed'; error = $_.Exception.Message })
+    } finally {
+        # Convert the result to JSON and output
+        $jsonResult = $result | ConvertTo-Json -Compress
+        Write-Output $jsonResult
+    }
+}
+$jsonResult = Move-AllClusterGroups -TargetNodeName "${nodeName}"
+Write-Output $jsonResult
+`;
+
+export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STORAGE_PARAMS_SCRIPT, CHECK_NODE_STATUS, MOVE_ALL_CLUSTER_GROUPS };

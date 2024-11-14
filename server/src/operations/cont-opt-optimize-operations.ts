@@ -5,7 +5,11 @@ import { Metadata, DatabaseInstance, WorkloadInstance, StorageAssessment } from 
 import { HttpErrorCodes, AuditStatus } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getInstanceInfo } from './database/database-operations';
-import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/continuous-optimization-scripts';
+import {
+    CHECK_NODE_STATUS,
+    MOVE_ALL_CLUSTER_GROUPS,
+    OPTIMIZE_STORAGE_PARAMS_SCRIPT
+} from './workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import {
@@ -1085,12 +1089,13 @@ async function optimizeCompute(
 
     try {
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-        const { activeNodeInstanceId } = await getActiveSqlNode(
+        const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
             credentialsId,
             region,
             node1InstanceId,
             node2InstanceId
         );
+
         if (activeNodeInstanceId) {
             if (node2InstanceId) {
                 // more than one node in the cluster
@@ -1127,11 +1132,56 @@ async function optimizeCompute(
                             await updateNodeInstanceType(credentialsId, region, nodeId, instanceType);
                         }
                         logger.info('Instance type updated for all secondary nodes in the cluster');
+
+                        // pick one of the nodes in the cluster to transfer primary node ownership
+                        const clusteNodeInstanceNames = compact(
+                            clusterNodeDetails.map(
+                                ({ ec2InstanceId, ec2InstanceName }) =>
+                                    ec2InstanceId !== activeNodeInstanceId && ec2InstanceName
+                            )
+                        );
+
+                        let targetNodeName;
+                        for (const nodeName of clusteNodeInstanceNames) {
+                            const resp = await callSsmExecution(
+                                credentialsId,
+                                region,
+                                [CHECK_NODE_STATUS(nodeName)],
+                                activeNodeInstanceId
+                            );
+                            const { status } = sqlResponseParsing(resp);
+                            if (status === 'success') {
+                                targetNodeName = nodeName;
+                                break;
+                            }
+                        }
+                        // move all cluster groups to the selected node
+                        if (targetNodeName) {
+                            const nodesTransferred = await moveClusterGroupOwnership(
+                                credentialsId,
+                                region,
+                                targetNodeName,
+                                activeNodeInstanceId
+                            );
+                            logger.info('Primary node ownership transferred to', { targetNodeName, nodesTransferred });
+                        } else {
+                            throw createError(500, 'Failed to find a node to transfer primary node ownership');
+                        }
                     }
                 }
             }
+
             await updateNodeInstanceType(credentialsId, region, activeNodeInstanceId, instanceType); // modify instance type for the primary node ; secondary nodes are already modified at this point
+            // move all cluster groups to the primary node
+            const ownershipTransferStatus = await moveClusterGroupOwnership(
+                credentialsId,
+                region,
+                instanceName,
+                activeNodeInstanceId
+            );
+            logger.info('Primary node ownership transferred to', { instanceName, ownershipTransferStatus });
             jobStatus = JOBSTATUS.COMPLETED;
+            return;
         }
 
         jobStatus = JOBSTATUS.FAILED;
@@ -1152,6 +1202,48 @@ async function optimizeCompute(
     }
 }
 
+async function moveClusterGroupOwnership(
+    credentialsId: string,
+    region: string,
+    targetNodeName: string,
+    activeNodeInstanceId: string
+) {
+    logger.info('Moving cluster group ownership', {
+        credentialsId,
+        region,
+        targetNodeName,
+        activeNodeInstanceId
+    });
+    const resp = await callSsmExecution(
+        credentialsId,
+        region,
+        [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
+        activeNodeInstanceId
+    );
+
+    let clusterGroupOwnershipTransferStatus = sqlResponseParsing(resp);
+    if (!Array.isArray(clusterGroupOwnershipTransferStatus)) {
+        clusterGroupOwnershipTransferStatus = [clusterGroupOwnershipTransferStatus];
+    }
+
+    if (
+        clusterGroupOwnershipTransferStatus.some(
+            ({ status }: { status: string; groupName: string; error: string }) => status === 'failed'
+        )
+    ) {
+        const failedClusterGroups = clusterGroupOwnershipTransferStatus.filter(
+            ({ status }: { status: string }) => status === 'failed'
+        );
+        throw createError(
+            500,
+            'Failed to transfer primary node ownership. Failed cluster groups',
+            failedClusterGroups ? JSON.stringify(failedClusterGroups) : []
+        );
+    }
+
+    return clusterGroupOwnershipTransferStatus;
+}
+
 async function updateNodeInstanceType(credentialsId: string, region: string, instanceId: string, instanceType: string) {
     logger.info(`Updating instance type for ${instanceId} to ${instanceType}`);
 
@@ -1161,6 +1253,8 @@ async function updateNodeInstanceType(credentialsId: string, region: string, ins
             await waitForInstanceToBeStopped(credentialsId, region, instanceId);
         }
 
+        /*
+        concerns
         // https://repost.aws/knowledge-center/resize-instance
         // check if instance has elastic IP or not
         // check for Spot Instance While a Spot Instance is stopped, you can modify some of its instance attributes, but not the instance type.
@@ -1170,7 +1264,7 @@ async function updateNodeInstanceType(credentialsId: string, region: string, ins
         // check ebs volume limits https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/volume_limits.html
         // check and migrate to nitro based instanceshttps://docs.aws.amazon.com/AWSEC2/latest/UserGuide/migrating-latest-types.html#auto-upgrade
         // no hypervisor, no architecture
-
+*/
         await modifyInstanceType(credentialsId, region, instanceId, instanceType);
         await startInstance(credentialsId, region, instanceId);
         await waitForInstanceOk(credentialsId, region, instanceId);
