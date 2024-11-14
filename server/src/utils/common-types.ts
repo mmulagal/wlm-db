@@ -253,6 +253,28 @@ type VolumeSpaceRecord = {
     };
 };
 
+interface OptimizeMpioPolicyParams {
+    accountId: string;
+    region: string;
+    credentialsId: string;
+    parentJobId: string;
+    fsxId: string;
+    instanceId: string;
+    instanceName: string;
+    databaseType: string;
+    sqlAuthEnabled: boolean;
+    serverNameWithHostName: string;
+    databaseHostId: string;
+    databaseInstanceId: string;
+    sqlDeploymentType?: string;
+    activeNodeInstanceId?: string;
+    standbyNodeInstanceId?: string;
+    standbyNodeName?: string;
+    awsAccountId: string;
+    changeClusterOwnership?: boolean;
+    currentPolicy?: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -275,5 +297,6 @@ export {
     StorageAssessment,
     DriftAssessmentJob,
     OptimizeStorageParams,
-    VolumeSpaceRecord
+    VolumeSpaceRecord,
+    OptimizeMpioPolicyParams
 };

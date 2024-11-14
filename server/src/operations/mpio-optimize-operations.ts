@@ -3,8 +3,8 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import getLogger from '../utils/logger';
-import { Metadata, DatabaseInstance, WorkloadInstance } from '../utils/common-types';
-import { RESOURCESTYPE, HttpErrorCodes, AuditStatus } from '../utils/consts';
+import { Metadata, DatabaseInstance, WorkloadInstance, OptimizeMpioPolicyParams } from '../utils/common-types';
+import { RESOURCESTYPE, HttpErrorCodes, AuditStatus, FCI } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getResources, getInstanceInfo } from './database/database-operations';
 
@@ -13,34 +13,17 @@ import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 import { registerJob, updateJobDetails } from './database/job-operations';
-import { sleep, sqlResponseParsing } from '../utils/utils';
+import { getResourceNameFromTags, sleep, sqlResponseParsing } from '../utils/utils';
 import { CHECK_MPIO_POLICY, REMEDIATE_MPIO_POLICY } from './workloads/mssql/mpio-remediation-scripts';
 import { driftAssessment } from './drift-assessment';
+import { describeInstance } from '../lib/aws/ec2';
 
 const logger = getLogger();
 
-interface OptimizeMpioPolicyParams {
-    accountId: string;
-    region: string;
-    credentialsId: string;
-    parentJobId: string;
-    fsxId: string;
-    instanceId: string;
-    instanceName: string;
-    databaseType: string;
-    sqlAuthEnabled: boolean;
-    serverNameWithHostName: string;
-    databaseHostId: string;
-    databaseInstanceId: string;
-    sqlDeploymentType?: string;
-    activeNodeInstanceId?: string;
-    standbyNodeInstanceId?: string;
-    awsAccountId: string;
-}
-
 async function validateMpioPolicyToRoundRobin(
     optimizeMpioPolicyParams: OptimizeMpioPolicyParams,
-    preCheck: boolean = false
+    preCheck: boolean = false,
+    runningOnPrimaryNode: boolean = true
 ) {
     logger.info(`Validate MPIO policy to Round Robin for ${optimizeMpioPolicyParams}`);
     const { accountId, credentialsId, region, parentJobId, serverNameWithHostName, activeNodeInstanceId } =
@@ -48,7 +31,9 @@ async function validateMpioPolicyToRoundRobin(
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError;
-    const jobDescription = `Validate MPIO policy to Round Robin on ${serverNameWithHostName}.`;
+    const jobDescription = `Check current MPIO policy on ${
+        runningOnPrimaryNode ? 'primary node' : 'standby node'
+    } in ${serverNameWithHostName}.`;
     let parsedValidateMPIOPolicyChangeResponse;
 
     // Validate the MPIO policy change
@@ -108,7 +93,8 @@ async function setMpioPolicyToRoundRobin(optimizeMpioPolicyParams: OptimizeMpioP
         parentJobId,
         serverNameWithHostName,
         sqlDeploymentType,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        standbyNodeInstanceId
     } = optimizeMpioPolicyParams;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
@@ -125,8 +111,25 @@ async function setMpioPolicyToRoundRobin(optimizeMpioPolicyParams: OptimizeMpioP
         parentJobId
     });
     try {
+        // Fetch standby node name
+        if (sqlDeploymentType === FCI) {
+            if (!standbyNodeInstanceId) {
+                const errorMessage = `Unable to fetch standby node id for ${serverNameWithHostName}.`;
+                logger.error(errorMessage);
+                jobStatus = JOBSTATUS.FAILED;
+                jobError = errorMessage;
+                throw errorMessage;
+            }
+            const standbyNodeDetails = await describeInstance(credentialsId, region, {
+                InstanceIds: [standbyNodeInstanceId!]
+            });
+            const standbyNodeName = await getResourceNameFromTags(
+                standbyNodeDetails.Reservations?.[0].Instances?.[0].Tags
+            );
+            optimizeMpioPolicyParams.standbyNodeName = standbyNodeName;
+        }
         // Set MPIO policy to Round Robin and reboot instance
-        const ssmCommand = REMEDIATE_MPIO_POLICY(sqlDeploymentType!);
+        const ssmCommand = REMEDIATE_MPIO_POLICY(optimizeMpioPolicyParams);
         await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!);
         let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId!);
         let retries = 3;
@@ -177,20 +180,48 @@ async function optimize(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) {
         serverNameWithHostName,
         databaseHostId,
         awsAccountId,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        sqlDeploymentType
     } = optimizeMpioPolicyParams;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError;
     try {
-        const validateMpioPolicyToRoundRobinResponse = await validateMpioPolicyToRoundRobin(
+        // Block for primary node
+        let validateMpioPolicyToRoundRobinResponse = await validateMpioPolicyToRoundRobin(
             optimizeMpioPolicyParams,
             true
         );
+        optimizeMpioPolicyParams.currentPolicy = validateMpioPolicyToRoundRobinResponse.policy;
         if (!validateMpioPolicyToRoundRobinResponse.remediated) {
+            optimizeMpioPolicyParams.changeClusterOwnership = !validateMpioPolicyToRoundRobinResponse.remediated;
             await setMpioPolicyToRoundRobin(optimizeMpioPolicyParams);
             await validateMpioPolicyToRoundRobin(optimizeMpioPolicyParams, false);
         }
+
+        if (sqlDeploymentType === 'FCI') {
+            // If ownership is changed, fetch active and standby node
+
+            const activeNode = optimizeMpioPolicyParams.standbyNodeInstanceId;
+            optimizeMpioPolicyParams.activeNodeInstanceId = optimizeMpioPolicyParams.standbyNodeInstanceId;
+            optimizeMpioPolicyParams.standbyNodeInstanceId = activeNode;
+
+            // Run validation on standby node
+            validateMpioPolicyToRoundRobinResponse = await validateMpioPolicyToRoundRobin(
+                optimizeMpioPolicyParams,
+                true,
+                false
+            );
+            if (!validateMpioPolicyToRoundRobinResponse.remediated) {
+                optimizeMpioPolicyParams.changeClusterOwnership = !validateMpioPolicyToRoundRobinResponse.remediated;
+                // Set policy set on standby node
+                optimizeMpioPolicyParams.currentPolicy = validateMpioPolicyToRoundRobinResponse.policy;
+
+                await setMpioPolicyToRoundRobin(optimizeMpioPolicyParams);
+                await validateMpioPolicyToRoundRobin(optimizeMpioPolicyParams, false);
+            }
+        }
+        await sleep(30000);
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: `Assessment for ${serverNameWithHostName} after optimization`,
             description: `Assessment for ${serverNameWithHostName} after optimization`,
@@ -257,7 +288,7 @@ async function optimizeOperatingSystemSettings(
     const { metadata, resource_name: sqlServerName } = resourceDetail;
     const { sqlDeploymentType, node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
-    const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(
+    const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
         credentialsId,
         region,
         node1InstanceId,
@@ -315,7 +346,8 @@ async function optimizeOperatingSystemSettings(
             databaseType,
             databaseInstanceId,
             sqlAuthEnabled,
-            awsAccountId: resourceDetail.cloud_provider_account_id!
+            awsAccountId: resourceDetail.cloud_provider_account_id!,
+            standbyNodeInstanceId
         });
     } catch (error) {
         const errorMessage = `Error while optimizing operating system settings ${error}`;

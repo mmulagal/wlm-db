@@ -1,3 +1,5 @@
+import { OptimizeMpioPolicyParams } from '../../../utils/common-types';
+
 const CHECK_MPIO_POLICY = `
 
 $currentMpioPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
@@ -9,15 +11,37 @@ if ($currentMpioPolicy -ceq "RR") {
              "policy" = $currentMpioPolicy} | ConvertTo-Json
 
 `;
-const REMEDIATE_MPIO_POLICY = (sqlDeploymentType: string) =>
+
+const RESTART_INSTANCE = 'Start-Process -FilePath "shutdown.exe" -ArgumentList @("/r") -Wait -NoNewWindow';
+
+const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams) =>
     `
-    $sqlDeploymentType = "${sqlDeploymentType}"
-    
-    Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR 
+    $sqlDeploymentType = "${mpioParams.sqlDeploymentType}"
+    $currentPolicy = "${mpioParams.currentPolicy}"
+    $changeClusterOwnership = [System.Convert]::ToBoolean('${mpioParams.changeClusterOwnership}')
+
+    if($currentPolicy -cne "RR") {
+        Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR 
+    }
    
     if($sqlDeploymentType -ceq "standalone") {
         Start-Process -FilePath "shutdown.exe" -ArgumentList @("/r") -Wait -NoNewWindow
     }
+    elseif($sqlDeploymentType -ceq "fci")  {
+        if($changeClusterOwnership -eq $true) {
+
+            $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server (${mpioParams.instanceName})")
+            $SQLGroup = $SQLRoleGroup[0]
+            Move-ClusterGroup -Name $SQLGroup -Node ${mpioParams.standbyNodeName}
+
+        }
+        
+        if($currentPolicy -cne "RR") {
+
+            ${RESTART_INSTANCE}
+        }       
+
+    }
 `;
 
-export { REMEDIATE_MPIO_POLICY, CHECK_MPIO_POLICY };
+export { REMEDIATE_MPIO_POLICY, CHECK_MPIO_POLICY, RESTART_INSTANCE };
