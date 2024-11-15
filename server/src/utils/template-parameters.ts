@@ -7,6 +7,13 @@ const PARAMETERS = [
         allowedValues: ['SINGLE_AZ_1', 'MULTI_AZ_1']
     },
     {
+        name: 'SqlVersion',
+        description: 'Version for the Sql',
+        type: 'String',
+        default: 'postgresql16',
+        allowedValues: ['postgresql15', 'postgresql16']
+    },
+    {
         name: 'SQLDeploymentMode',
         description: 'SQL Server deployment mode',
         type: 'String',

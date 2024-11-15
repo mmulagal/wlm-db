@@ -4,15 +4,15 @@ import { ExploreSaveConfiguration, MSSQLServerInstance, calculatedFSXData, setRe
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useNavigate } from 'react-router-dom';
 import { Text } from '../../../../ui-components/Typography';
-import { FROM_DIALOG, SAVINGS_CALC_MODE, WLF_TO_FORM_NAVIGATE } from '../../../../utils/consts';
+import { FROM_DIALOG, MAX_SAVED_CONFIG, SAVINGS_CALC_MODE, WLF_TO_FORM_NAVIGATE } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { GENERAL } from '../../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { setSaveConfigName } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useDispatch } from 'react-redux';
-import { useSaveConfigDataMutation } from '../../../../utils/apiService';
+import { useGetConfigListQuery, useSaveConfigDataMutation } from '../../../../utils/apiService';
 import { LoadRecommendedConfig } from '../../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { setIsLoadConfig, setIsLoading, setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
 
@@ -52,6 +52,14 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const [fsxData, setFsxData] = useState({});
     const [msSqlInstance, setMsSqlInstance] = useState({});
     const [storageType, setStorageType] = useState('');
+    //To get configDatalist
+    const [configData, setConfigData] = useState<any>([]);
+
+    const { data: configDataList, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
+
+    useEffect(() => {
+        setConfigData(configDataList || []);
+    }, [configDataList]);
 
     useEffect(() => {
         if (
@@ -133,7 +141,16 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                 content={<SaveConfigSavings description={GENERAL.ES_SAVE_CONFIG_DESC} />}
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => ExploreSaveConfiguration(dispatch, saveConfigData, closeDialog, msSqlInstance, fsxData)}
+                callback={() =>
+                    ExploreSaveConfiguration(
+                        dispatch,
+                        saveConfigData,
+                        closeDialog,
+                        msSqlInstance,
+                        fsxData,
+                        configRefetch
+                    )
+                }
                 closeCallback={() => {
                     dispatch(setSaveConfigName(''));
                 }}
@@ -189,20 +206,36 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                     ) : (
                         !printState && (
                             <div id="es-save-config">
-                                <DsButton
-                                    type="text"
-                                    isDisabled={
-                                        storageSavingsLoading ||
-                                        selectedHostDetails?.loading ||
-                                        viewCalculationsLoading ||
-                                        isMutliFsx ||
-                                        disableState ||
-                                        !storageSavingsResponse
-                                    }
-                                    onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
-                                >
-                                    {GENERAL.ES_SAVE_CONFIG}
-                                </DsButton>
+                                {configData?.length >= MAX_SAVED_CONFIG ? (
+                                    <Popover
+                                        popoverClass={styles['popover']}
+                                        children={SELECT_CONFIG.MAX_CONFIG_LIMIT}
+                                        trigger="hover"
+                                        container={
+                                            <div id="es-save-config">
+                                                <DsButton type="text" isDisabled={true}>
+                                                    {GENERAL.ES_SAVE_CONFIG}
+                                                </DsButton>
+                                            </div>
+                                        }
+                                    />
+                                ) : (
+                                    <DsButton
+                                        type="text"
+                                        isDisabled={
+                                            storageSavingsLoading ||
+                                            selectedHostDetails?.loading ||
+                                            viewCalculationsLoading ||
+                                            isMutliFsx ||
+                                            disableState ||
+                                            !storageSavingsResponse ||
+                                            configLoading
+                                        }
+                                        onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
+                                    >
+                                        {GENERAL.ES_SAVE_CONFIG}
+                                    </DsButton>
+                                )}
                             </div>
                         )
                     ),

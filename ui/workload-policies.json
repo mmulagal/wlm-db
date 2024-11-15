@@ -115,7 +115,13 @@
                     "ssm:UpdateAssociationStatus",
                     "ssm:UpdateInstanceAssociationStatus",
                     "ssm:UpdateInstanceInformation",
-                    "ssmmessages:*"
+                    "ssmmessages:*",
+                    "compute-optimizer:GetEnrollmentStatus",
+                    "compute-optimizer:PutRecommendationPreferences",
+                    "compute-optimizer:GetEffectiveRecommendationPreferences",
+                    "compute-optimizer:GetEC2InstanceRecommendations",
+                    "autoscaling:DescribeAutoScalingGroups",
+                    "autoscaling:DescribeAutoScalingInstances"
                 ],
                 "Resource": "*"
             },

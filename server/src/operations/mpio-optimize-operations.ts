@@ -15,8 +15,8 @@ import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import { getResourceNameFromTags, sleep, sqlResponseParsing } from '../utils/utils';
 import { CHECK_MPIO_POLICY, REMEDIATE_MPIO_POLICY } from './workloads/mssql/mpio-remediation-scripts';
-import { driftAssessment } from './drift-assessment';
 import { describeInstance } from '../lib/aws/ec2';
+import { driftAssessmentDataCollection } from './cont-opt-assessment-operations';
 
 const logger = getLogger();
 
@@ -261,7 +261,9 @@ async function optimize(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) {
             resourceName: serverNameWithHostName,
             cloudProviderAccountId: awsAccountId
         };
-        await driftAssessment(accountId, credentialsId, region, jobId, databaseHostId, [instanceToAssess]);
+        await driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, [
+            instanceToAssess
+        ]);
     } catch (error) {
         const errorMessage = `Error while optimizing mpio configuration ${jobError}`;
         jobStatus = JOBSTATUS.FAILED;

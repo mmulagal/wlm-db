@@ -1063,7 +1063,8 @@ async function fetchUnmanagedHostsInformationV2(
                             ? STORAGE_TYPE.FSXW
                             : ebsVolumeIds.length > 0
                             ? STORAGE_TYPE.EBS
-                            : NOT_AVAILABLE
+                            : NOT_AVAILABLE,
+                        resource: resourceDetails
                     });
                 });
                 resourceDetailsList.push(resourceDetails);
@@ -1509,7 +1510,7 @@ async function verifyAndCreateCredentials(
     sqlCredentials: DiscoverCredentialsType[],
     instanceIds: string[]
 ) {
-    logger.info('Verify and create credentials', { instanceId, fsxCredentials, sqlCredentials });
+    logger.info('Verify and create credentials', { instanceId });
 
     if (fsxCredentials) {
         const SSMParameter = await getParameter(

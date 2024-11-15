@@ -73,6 +73,7 @@ import {
     CHECK_MPIO_POLICY,
     REMEDIATE_MPIO_POLICY
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 
 const ssmMock = mockClient(SSMClient);
 

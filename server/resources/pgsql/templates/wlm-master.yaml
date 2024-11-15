@@ -77,6 +77,8 @@ Metadata:
         default: Key pair name
       SQLAMIID:
         default: PG SQL node ami id
+      SqlVersion:
+        default: PG SQL version
       EBSVolumeSize:
         default: Size of the EBS Volume.
       VPCName:
@@ -237,6 +239,8 @@ Parameters:
   {{{PrivateSubnet1Cidrblock}}}
 
   {{{PrivateSubnet2Cidrblock}}}
+
+  {{{SqlVersion}}}
        
 Conditions:
   NewOntapFsx: !Equals [!Ref "FSxFileSystemId", ""]
@@ -604,6 +608,8 @@ Resources:
           Ref: RouteTable1Id
         AMIID:
           Ref: SQLAMIID
+        SQLVersion:
+          Ref: SqlVersion
         VPCID:
           Ref: VPCID
         VPCCIDR:

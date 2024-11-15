@@ -25,11 +25,7 @@ import {
     DatabasesListSchemaV2,
     GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
-    GetCollationDetailsSchemaV2,
-    DriftAssessment,
-    OptimizeStorageSchema,
-    TriggerDriftAssessmentSchema,
-    OptimizeOperatingSystemSchema
+    GetCollationDetailsSchemaV2
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -44,10 +40,6 @@ import {
     checkDatabaseIntegrity,
     getSandboxSnapshots
 } from '../operations/sandbox-operations';
-import { fetchDriftAssessment, triggerDriftAssessment } from '../operations/drift-assessment';
-import { optimizeInstance } from '../operations/drift-assessment-optimize-operations';
-import { AssessmentTriggeredBy, OptimizeInstanceParams } from '../utils/continous-optimization-consts';
-import { optimizeOperatingSystemSettings } from '../operations/mpio-optimize-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -379,85 +371,6 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     undefined,
                     databaseInstanceId
                 );
-                return reply.send(response);
-            }
-        )
-        .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment`,
-            { schema: DriftAssessment },
-            async (request, reply) => {
-                const {
-                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
-                    query: { fields }
-                } = request;
-                const response = await fetchDriftAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    fields
-                );
-                return reply.send(response);
-            }
-        )
-        .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment`,
-            { schema: TriggerDriftAssessmentSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
-                    query: { fields }
-                } = request;
-                const response = await triggerDriftAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    [databaseInstanceId],
-                    AssessmentTriggeredBy.USER,
-                    fields
-                );
-                return reply.send(response);
-            }
-        )
-        .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/drift-assessment/optimize`,
-            { schema: OptimizeStorageSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
-                } = request;
-
-                const response = await optimizeInstance({
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    optimizationTargets: request.body.assessments
-                } as OptimizeInstanceParams);
-                return reply.send(response);
-            }
-        )
-        .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-operating-system`,
-            { schema: OptimizeOperatingSystemSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
-                    body: { configurationName }
-                } = request;
-
-                const response = await optimizeOperatingSystemSettings(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    configurationName
-                );
-
                 return reply.send(response);
             }
         );

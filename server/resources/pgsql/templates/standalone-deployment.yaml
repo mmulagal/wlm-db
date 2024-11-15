@@ -71,6 +71,9 @@ Parameters:
   AMIID:
     Description: The AMI ID for the EC2 instances.
     Type: String
+  SQLVersion:
+    Description: The version of PostgreSQL to install.
+    Type: String
 
 Resources:
   LaunchWizardSqlFSxProfile:
@@ -130,6 +133,7 @@ Resources:
             archive_dir=/$fsxlogvolumename/logs/archived_logs
             psql_svcs=postgresql
             dbname=testDB
+            pgsql_version=${SQLVersion}
 
             echo $fsxsvmid
 
@@ -175,12 +179,8 @@ Resources:
               echo "Log volume already exists."
             fi
 
-            # Add the PostgreSQL 15 repository
-            sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm --skip-broken
-            check_status "Failed to add PostgreSQL repository"
-
-            # Install PostgreSQL and NFS utilities
-            sudo yum install -y postgresql15 postgresql15-server nfs-utils
+            # Install PostgreSQL and NFS utilities based on the specified version
+            sudo yum install -y $pgsql_version  $pgsql_version-server nfs-utils
             check_status "Failed to install PostgreSQL or NFS utilities"
 
             # Add PostgreSQL binaries to PATH
@@ -212,17 +212,17 @@ Resources:
             check_status "Failed to initialize PostgreSQL database cluster on FSxN volume"
 
             # Increase shared memory limits
-            echo "kernel.shmmax = 68719476736" | sudo tee -a /$fsxdatavolumename/postgresql.conf
-            echo "kernel.shmall = 4294967296" | sudo tee -a /$fsxdatavolumename/postgresql.conf
-            sudo sysctl --system
+            # echo "kernel.shmmax = 68719476736" | sudo tee -a /$fsxdatavolumename/postgresql.conf
+            # echo "kernel.shmall = 4294967296" | sudo tee -a /$fsxdatavolumename/postgresql.conf
+            # sudo sysctl --system
             
-            check_status "Failed to increase shared memory limits"
+            # check_status "Failed to increase shared memory limits"
 
             # Increase shared buffer in postgresql.conf
-            sudo sed -i "s|^shared_buffers =.*|shared_buffers = 4GB|" /$fsxdatavolumename/postgresql.conf
+            # sudo sed -i "s|^shared_buffers =.*|shared_buffers = 4GB|" /$fsxdatavolumename/postgresql.conf
 
             # Increase work_mem in postgresql.conf
-            sudo sed -i "s|^#work_mem =.*|work_mem = 32MB|" /$fsxdatavolumename/postgresql.conf
+            # sudo sed -i "s|^#work_mem =.*|work_mem = 32MB|" /$fsxdatavolumename/postgresql.conf
 
             # Update PostgreSQL configuration to use the new data and log directories
             sudo sed -i "s|^#data_directory =.*|data_directory = '/$fsxdatavolumename'|" /$fsxdatavolumename/postgresql.conf
@@ -289,11 +289,11 @@ Resources:
             check_status "Failed to clone pgvector repository"
 
             # Install PostgreSQL development packages
-            sudo yum install -y postgresql15-private-devel --allowerasing
-            check_status "Failed to install postgresql15-private-devel"
+            sudo yum install -y $pgsql_version-private-devel --allowerasing
+            check_status "Failed to install $pgsql_version-private-devel"
 
-            sudo yum install -y postgresql15-server-devel
-            check_status "Failed to install postgresql15-server-devel"
+            sudo yum install -y $pgsql_version-server-devel
+            check_status "Failed to install $pgsql_version-server-devel"
 
             # Build and install pgvector
             cd pgvector
