@@ -11,6 +11,8 @@
         "startTime": 1708681054000,
         "description": "Creating user database on the SQL Server with provided configuration.",
         "endTime": 1708681137000,
+        "credentialsId": "1234567",
+        "region": "us-east-1",
         "subJobs": [
             {
                 "id": "cca916aa-4eb4-4fbe-9834-55e55cf6ff37",
@@ -61,6 +63,8 @@
         "resourceName": "SQL",
         "parentJobId": "",
         "error": "",
+        "credentialsId": "1234567",
+        "region": "us-east-1",
         "subJobs": [
             {
               "id": "9876543219236789",
@@ -276,6 +280,8 @@
         "resourceName": "SQL",
         "parentJobId": "",
         "error": "",
+        "credentialsId": "1234567",
+        "region": "us-east-1",
         "subJobs": [
             {
               "id": "9876543219236789",
@@ -491,6 +497,8 @@
         "resourceName": "SQL",
         "parentJobId": "",
         "error": "Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1].",
+        "credentialsId": "1234567",
+        "region": "us-east-1",
         "subJobs": [
             {
               "id": "9876543219236789",
@@ -706,6 +714,8 @@
         "resourceName": "SQL",
         "parentJobId": "",
         "error": "",
+        "credentialsId": "1234567",
+        "region": "us-east-1",
         "subJobs": [
             {
               "id": "9876543219236789",
@@ -921,6 +931,8 @@
         "resourceName": "SQL",
         "parentJobId": "",
         "error": "",
+        "credentialsId": "1234567",
+        "region": "us-east-1",
         "subJobs": [
             {
               "id": "9876543219236789",
@@ -1136,6 +1148,8 @@
         "resourceName": "SQL",
         "parentJobId": "",
         "error": "",
+        "credentialsId": "1234567",
+        "region": "us-east-1",
         "subJobs": [
             {
               "id": "9876543219236789",

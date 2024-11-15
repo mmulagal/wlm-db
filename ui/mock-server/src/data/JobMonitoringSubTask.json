@@ -9,6 +9,8 @@
   "resourceName": "SQL",
   "parentJobId": "",
   "error": "",
+  "credentialsId": "1234567",
+  "region": "us-east-1",
   "subJobs": [
     {
       "id": "9876543219236789",

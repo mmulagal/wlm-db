@@ -413,7 +413,7 @@ const JobMonitoringTable = () => {
         {
             id: '8',
             Header: 'Credential',
-            accessor: 'credId',
+            accessor: 'credentialsId',
             isSortable: true,
             width: '200px',
             filterOptions: 'auto',
