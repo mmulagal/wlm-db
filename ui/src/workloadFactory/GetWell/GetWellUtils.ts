@@ -373,12 +373,6 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                 status = optimizingData?.[itemName];
             }
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
-            // let isMissingPermissions = false;
-            // if (index === 2) {
-            //     if (item?.errorMessage && item.errorMessage.includes("is not authorized to perform: ")) {
-            //         isMissingPermissions = true;
-            //     }
-            // }
             cardsData = {
                 ...cardsData,
                 [itemName]: {
