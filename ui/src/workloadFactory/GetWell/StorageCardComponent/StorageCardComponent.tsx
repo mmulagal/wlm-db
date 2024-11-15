@@ -26,6 +26,8 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 import store from '../../../store/store';
+import LearnHowDialog from '../../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -68,6 +70,17 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else {
             return;
         }
+    };
+
+    const handleLearnHowClick = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.LEARN_HOW_DIALOG.ASSESSMENT_TITLE}
+                content={<LearnHowDialog type={'assessment'} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => closeDialog()}
+            />
+        );
     };
 
     const tooltipListSection = (listObj: { key: string; value: string }[]) => {
@@ -178,6 +191,18 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
                         {cardData?.block_three?.list?.length + ' values'}
                     </DsTypography>
+                </div>
+            );
+        } else if (cardData?.isMissingPermissions && cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING) {
+            return (
+                <div className={styles.warningMsg}>
+                    <WarningIcon
+                        //@ts-ignore
+                        style={{ width: '16px', height: '16px', '--icon-primary-color': 'var(--warning' }}
+                    />
+                    <DsButton type="text" onClick={handleLearnHowClick}>
+                        {GENERAL.UNSUPPORTED_PERMISSIONS}
+                    </DsButton>
                 </div>
             );
         } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
