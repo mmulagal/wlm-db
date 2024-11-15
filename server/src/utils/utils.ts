@@ -12,6 +12,7 @@ import isBase64 from 'is-base64';
 import { inflateRaw } from 'node:zlib';
 import { promisify } from 'util';
 import { getAsyncLocalStorageResource } from './async-local-storage';
+import { RegionDetailsType } from '../routes/types/generic.types';
 
 import {
     SQL_AMI_NAMES,
@@ -36,7 +37,8 @@ import {
     DEFAULT_INSTANCE_NAME,
     SECRETS,
     DatabaseTypes,
-    MAX_DATA_LUN_SIZE_IN_GIB
+    MAX_DATA_LUN_SIZE_IN_GIB,
+    AWS_REGIONS
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -681,6 +683,13 @@ function getTimeDifferenceInMinutes(startTime: number, endTime: number = Date.no
     return Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
 }
 
+function getRegionDetails(region: string): RegionDetailsType {
+    return {
+        name: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : '',
+        code: region
+    };
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -722,5 +731,6 @@ export {
     decompressSSMResponse,
     retryWithDelay,
     getRedisDetails,
-    getTimeDifferenceInMinutes
+    getTimeDifferenceInMinutes,
+    getRegionDetails
 };

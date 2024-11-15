@@ -1,11 +1,21 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { CredentialsIdParams } from './generic.types';
+import {
+    CredentialsIdParams,
+    CredentialsIdRegionQueryParams,
+    CredentialsIdRegionParams,
+    RegionDetails
+} from './generic.types';
 
-const JobSummaryQueryString = Type.Object({
-    startTime: Type.Optional(Type.Number()),
-    endTime: Type.Optional(Type.Number())
-});
+const JobSummaryQueryString = Type.Composite([
+    CredentialsIdRegionQueryParams,
+    Type.Object({
+        startTime: Type.Optional(Type.Number()),
+        endTime: Type.Optional(Type.Number())
+    })
+]);
+
+type JobSummaryQueryType = Static<typeof JobSummaryQueryString>;
 
 const JobSummaryResponse = Type.Object({
     inProgress: Type.Number(),
@@ -25,20 +35,23 @@ const JobSummaryByTimeResponse = Type.Array(Type.Optional(JobSummaryByTimeRecord
 
 type JobSummaryByTimeRecordType = Static<typeof JobSummaryByTimeRecord>;
 
-const ListJobsQueryString = Type.Object({
-    parentJobId: Type.Optional(Type.String()),
-    sort: Type.Optional(Type.String()),
-    sortOrder: Type.Optional(Type.String()),
-    initiator: Type.Optional(Type.String()),
-    type: Type.Optional(Type.String()),
-    status: Type.Optional(Type.String()),
-    startTime: Type.Optional(Type.Number()),
-    endTime: Type.Optional(Type.Number()),
-    limit: Type.Optional(Type.Number()),
-    nextToken: Type.Optional(Type.String()),
-    includeSubJobs: Type.Optional(Type.Boolean()),
-    resourceName: Type.Optional(Type.String())
-});
+const ListJobsQueryString = Type.Composite([
+    CredentialsIdRegionQueryParams,
+    Type.Object({
+        parentJobId: Type.Optional(Type.String()),
+        sort: Type.Optional(Type.String()),
+        sortOrder: Type.Optional(Type.String()),
+        initiator: Type.Optional(Type.String()),
+        type: Type.Optional(Type.String()),
+        status: Type.Optional(Type.String()),
+        startTime: Type.Optional(Type.Number()),
+        endTime: Type.Optional(Type.Number()),
+        limit: Type.Optional(Type.Number()),
+        nextToken: Type.Optional(Type.String()),
+        includeSubJobs: Type.Optional(Type.Boolean()),
+        resourceName: Type.Optional(Type.String())
+    })
+]);
 
 type ListJobsQueryType = Static<typeof ListJobsQueryString>;
 
@@ -59,13 +72,15 @@ const JobObject = Type.Object({
 
 const ListJobsResponse = Type.Object({
     count: Type.Number(),
-    items: Type.Array(JobObject),
+    items: Type.Array(Type.Composite([CredentialsIdRegionParams, JobObject])),
     nextToken: Type.Optional(Type.String())
 });
 
 const JobDetailsResponse = Type.Object({
     id: Type.String(),
     accountId: Type.String(),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(RegionDetails),
     name: Type.String(),
     status: Type.String(),
     description: Type.Optional(Type.String()),
@@ -131,8 +146,8 @@ const CreateJobRequestBody = Type.Object({
 const CreateJobResponse = Type.Object({
     count: Type.Number()
 });
-
-const JobsParams = Type.Composite([CredentialsIdParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })]);
+const JobsParams = Type.Object({ accountId: Type.String({ minLength: 1 }), jobId: Type.String({ minLength: 1 }) });
+const JobsParamsWriter = Type.Composite([CredentialsIdParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })]);
 
 export {
     ListJobsQueryString,
@@ -148,9 +163,11 @@ export {
     CreateJobObject,
     JobRecordType,
     JobsParams,
+    JobsParamsWriter,
     JobSummaryQueryString,
     JobSummaryResponse,
     JobSummaryResponseType,
     JobSummaryByTimeResponse,
-    JobSummaryByTimeRecordType
+    JobSummaryByTimeRecordType,
+    JobSummaryQueryType
 };

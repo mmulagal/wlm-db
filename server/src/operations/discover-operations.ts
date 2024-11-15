@@ -1637,11 +1637,13 @@ async function prepareForManage(accountId: string, credentialsId: string, region
     const jobFilterParams = {
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: ec2InstanceId,
-        typeFilter: JOBTYPE.PREPARE_RESOURCE
+        typeFilter: JOBTYPE.PREPARE_RESOURCE,
+        credentialsId,
+        region
     };
     const {
         items: [job]
-    } = await getJobs(accountId, credentialsId, region, jobFilterParams);
+    } = await getJobs(accountId, jobFilterParams);
     if (job) {
         const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
         const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));

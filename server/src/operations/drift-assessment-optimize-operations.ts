@@ -296,11 +296,13 @@ async function optimizeInstance(params: OptimizeInstanceParams) {
     const filterParams = {
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName as string,
-        typeFilter: JOBTYPE.OPTIMIZATION
+        typeFilter: JOBTYPE.OPTIMIZATION,
+        credentialsId,
+        region
     };
     const {
         items: [job]
-    } = await getJobs(accountId, credentialsId, region, filterParams);
+    } = await getJobs(accountId, filterParams);
 
     if (job) {
         const timeDifferenceInMinutes = getTimeDifferenceInMinutes(job.startTime);
