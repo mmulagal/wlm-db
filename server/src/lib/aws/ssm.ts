@@ -74,15 +74,15 @@ async function getParametersByPath(credentialsId?: string, region?: string, path
     };
 
     const paginator = paginateGetParametersByPath({ client: ssmClient }, parametersInput);
-    const fsxRegionParameters = [];
+    const pathParameters = [];
     for await (const page of paginator) {
         if (page.Parameters?.length) {
-            fsxRegionParameters.push(...page.Parameters);
+            pathParameters.push(...page.Parameters);
         }
     }
-    logger.debug('Get parameter by path command response:', fsxRegionParameters);
+    logger.debug('Get parameter by path command response:', pathParameters);
 
-    return fsxRegionParameters;
+    return pathParameters;
 }
 
 async function getConnectionStatus(credentialsId: string, region: string, params: GetConnectionStatusCommandInput) {
