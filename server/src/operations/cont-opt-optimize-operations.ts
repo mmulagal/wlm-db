@@ -1230,9 +1230,10 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
         }
 
         if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
-            const activeNode = optimizeMpioPolicyParams.standbyNodeInstanceId;
-            optimizeMpioPolicyParams.activeNodeInstanceId = optimizeMpioPolicyParams.standbyNodeInstanceId;
-            optimizeMpioPolicyParams.standbyNodeInstanceId = activeNode;
+            [optimizeMpioPolicyParams.activeNodeInstanceId, optimizeMpioPolicyParams.standbyNodeInstanceId] = [
+                optimizeMpioPolicyParams.standbyNodeInstanceId,
+                optimizeMpioPolicyParams.activeNodeInstanceId
+            ];
 
             // For standby node
             // Check if MPIO policy is set to Round Robin
