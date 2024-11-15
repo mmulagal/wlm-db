@@ -59,6 +59,7 @@ export interface PerConfigInterface {
     tags?: string[];
     objectsInViolation?: string[] | null;
     recommendationOptions?: any;
+    errorMessage?: string;
 }
 
 export interface GwCardDataInterface {
