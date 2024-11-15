@@ -39,6 +39,7 @@ import {
 const logger = getLogger();
 
 interface DatabaseVolumeRecord {
+    ontapVolumeUuid: string | undefined;
     svm: string;
     volumeName: string;
     fileId?: number;
@@ -329,38 +330,48 @@ async function calculateStorageDrift(
         if (key === 'user-database-layout') {
             const dataVolumes = value.data;
             const logVolumes = value.log;
-            const reconstuctedValue = dataVolumes.filter((data: DatabaseVolumeRecord) =>
+            const dataLogVolumeDetails: DatabaseVolumeRecord[] = [];
+            dataVolumes.map((data: DatabaseVolumeRecord) =>
                 logVolumes.forEach((log: DatabaseVolumeRecord) => {
                     if (data.name === log.name) {
-                        data.logVolume = log.volumeName;
-                        data.logLunPath = log.lunPath;
-                        data.logFileName = log.fileName;
-                        data.logSizeInMb = log.sizeInMb;
-                        data.logVolumeUuid = log.volumeUuid;
-                        data.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
+                        const volDetails = data as DatabaseVolumeRecord;
+                        volDetails.logVolume = log.volumeName;
+                        volDetails.logLunPath = log.lunPath;
+                        volDetails.logFileName = log.fileName;
+                        volDetails.logSizeInMb = log.sizeInMb;
+                        volDetails.logVolumeUuid = log.ontapVolumeUuid;
+                        volDetails.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
+                        dataLogVolumeDetails.push(volDetails);
                     }
                 })
             );
 
             // start user database layout assessment
             // each database is on separate data and log lun
-            const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = reconstuctedValue.filter(
+            const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                 (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
             );
+            logger.info({ databasesOnSameDataLogLun }); // Todo: remove this line
 
             // each database is on separate data and log volume
-            const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = reconstuctedValue.filter(
+            const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                 (data: DatabaseVolumeRecord) => data.volumeUuid === data.logVolumeUuid
             );
+            logger.info({ databasesOnSameDataLogVolume }); // Todo: remove this line
 
-            const databasesAbove500Gb: DatabaseVolumeRecord[] = reconstuctedValue.filter(
+            const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                 (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
             );
+            logger.info({ databasesAbove500Gb }); // Todo: remove this line
 
             const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
             const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
             const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
             const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
+            logger.info({ groupByDataVolume }); // Todo: remove this line
+            logger.info({ groupByLogVolume }); // Todo: remove this line
+            logger.info({ groupByDataLun }); // Todo: remove this line
+            logger.info({ groupByLogLun }); // Todo: remove this line
 
             const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
             const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
