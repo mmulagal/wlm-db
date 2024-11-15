@@ -1,0 +1,116 @@
+import { Static, Type } from '@fastify/type-provider-typebox';
+import {
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    OPTIMIZE_SIZING_CONFIGS,
+    OptimizeStorageConfigs
+} from '../../utils/continous-optimization-consts';
+
+const SizingViolationResponse = Type.Object({
+    dataAccessPath: Type.Optional(Type.String()),
+    dataDriveTotalSizeMB: Type.Optional(Type.Number()),
+    logAccessPath: Type.Optional(Type.String()),
+    logDriveTotalSizeMB: Type.Optional(Type.Number()),
+    svmName: Type.Optional(Type.String()),
+    ontapVolumeName: Type.Optional(Type.String()),
+    ontapVolumeUuid: Type.Optional(Type.String()),
+    lunUuid: Type.Optional(Type.String()),
+    tempdbAccessPath: Type.Optional(Type.String()),
+    tempdbDriveTotalSizeMB: Type.Optional(Type.Number())
+});
+type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
+
+const ErrorResponse = Type.Object({ errorMessage: Type.String() });
+const ParameterDriftResponse = Type.Object({
+    name: Type.String(),
+    status: Type.Enum(AssessmentStatus),
+    recommended: Type.String(),
+    severity: Type.String(),
+    recommendation: Type.String(),
+    objectsInViolation: Type.Optional(Type.Array(Type.String())),
+    sizingViolations: Type.Optional(
+        Type.Object({
+            overProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
+            underProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
+            ignoredDrives: Type.Optional(Type.Array(SizingViolationResponse))
+        })
+    ),
+    tags: Type.Array(Type.Enum(AwsWellArchitecturedPillars))
+});
+type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
+
+const AdditionalComputeParameterDriftResponse = Type.Optional(
+    Type.Object({
+        recommendationOptions: Type.Array(
+            Type.Object({
+                instanceType: Type.String(),
+                rank: Type.Number(),
+                savingsOpportunity: Type.Object({
+                    savingsOpportunityPercentage: Type.Optional(Type.Number()),
+                    estimatedMonthlySavings: Type.Optional(
+                        Type.Object({
+                            currency: Type.Optional(Type.String()),
+                            value: Type.Optional(Type.Number())
+                        })
+                    )
+                })
+            })
+        )
+    })
+);
+
+const ComputeDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalComputeParameterDriftResponse]);
+type ComputeDriftResponseType = Static<typeof ComputeDriftResponse>;
+const StorageParameterDriftResponse = Type.Object({
+    timestamp: Type.Number(),
+    optimisedCount: Type.Object({
+        total: Type.Number(),
+        optimised: Type.Number()
+    }),
+    configuration: Type.Object({
+        volumes: Type.Array(ParameterDriftResponse),
+        luns: Type.Array(ParameterDriftResponse),
+        os: Type.Array(ParameterDriftResponse)
+    }),
+    sizing: Type.Array(ParameterDriftResponse),
+    layout: Type.Array(ParameterDriftResponse)
+});
+type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
+const DriftAssessmentResponse = Type.Object({
+    storage: Type.Optional(StorageParameterDriftResponse),
+    compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse]))
+});
+type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
+
+const OptimizeStorageRequestParams = Type.Object({
+    configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
+    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
+});
+
+const OptimizeStorageRequestBody = Type.Object({
+    assessments: Type.Optional(Type.Array(OptimizeStorageRequestParams))
+});
+
+type OptimizeStorageRequestBodyType = Static<typeof OptimizeStorageRequestBody>;
+
+type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
+
+const OptimizeSizingRequestBody = Type.Object({
+    type: Type.Array(Type.Enum(OPTIMIZE_SIZING_CONFIGS))
+});
+
+type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
+
+export {
+    DriftAssessmentResponse,
+    DriftAssessmentResponseType,
+    ParameterDriftResponseType,
+    ComputeDriftResponseType,
+    StorageParameterDriftResponseType,
+    SizingViolationResponseType,
+    OptimizeStorageRequestBody,
+    OptimizeStorageRequestBodyType,
+    OptimizeStorageRequestParamsType,
+    OptimizeSizingRequestBody,
+    OptimizeSizingRequestBodyType
+};

@@ -676,6 +676,9 @@ async function listDatabaseInstances(accountId: string, record: any) {
         },
         orderBy: {
             id: 'asc'
+        },
+        include: {
+            resource: true
         }
     });
 }

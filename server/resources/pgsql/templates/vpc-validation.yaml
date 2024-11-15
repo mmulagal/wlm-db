@@ -187,9 +187,9 @@ Resources:
                             command: !Join
                                 - ''
                                 - - /home/ec2-user/cfn/scripts/verify-signature.sh -f /home/ec2-user/cfn/scripts/validation.zip -s /home/ec2-user/cfn/signig_files/validation.zip.sig 
-                                    -p /home/ec2-user/cfn/signig_files/validation.zip.pub -r ValidationNode1 -n '"
+                                    -p /home/ec2-user/cfn/signig_files/validation.zip.pub -r ValidationNode1 -n "
                                   - !Ref 'AWS::StackName'
-                                  - '''"'
+                                  - '"'
                             waitAfterCompletion: 0
                         d-unpack-validation-scripts:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/validation.zip -d /home/ec2-user/cfn/scripts

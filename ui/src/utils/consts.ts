@@ -389,6 +389,32 @@ export const CREATE_DB_CURL_REQ_TEMPLATE = (
     }
 };
 
+export const CREATE_PGSQL_CURL_REQ_TEMPLATE = (
+    baseUrl: string,
+    credentialId: string,
+    region: string,    
+    token: string,
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
+
 export const CREATE_SANDBOX_CURL_REQ_TEMPLATE = (
     baseUrl: string,
     credentialId: string,
@@ -731,13 +757,9 @@ export const GW_CONFIG_OPTIMIZE_NA = [
     'TempDB placement',
     'OS type',
     'Storage tier',
-    'File system headroom',
-    'Log drive size',
-    'TempDB drive size',
     'Multipath I/O Sessions',
     'Multipath I/O Status',
     'Multipath I/O Policy',
     'NTFS allocation unit size',
-    'Compute rightsizing',
     'Operating system patch'
 ];
