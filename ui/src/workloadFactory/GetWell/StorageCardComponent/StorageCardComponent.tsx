@@ -20,7 +20,8 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigMutation,
-    useOptimizeStorageConfigMutation
+    useOptimizeStorageConfigMutation,
+    useOptimizeStorageSizingMutation
 } from '../../../utils/apiService';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
@@ -37,6 +38,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
+    const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const [disableText, setDisableText] = useState(false);
@@ -200,13 +202,18 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const callOptimizeApi = (type: any) => {
         let payload = {};
         let apiCall = null;
+        const state = store.getState();
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
             apiCall = optimizeComputeConfig;
-            const state = store.getState();
             const { selectedRecommendedInstance } = state.getWellOptimize;
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
+        } else if(type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
+            apiCall = optimizeStorageSizing;
+            payload = {
+                type: [cardData?.id]
+            }
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -291,10 +298,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 }}
                 customClass={styles.colorSet}
                 hidePrimaryButton={
-                    type === 'Storage tier' ||
-                    type === 'User data files (.mdf) placement' ||
-                    type === 'Log files (.ldf) placement' ||
-                    type === 'TempDB placement'
+                    type === 'User data files (.mdf) placement'
                 }
             />
         );
