@@ -209,12 +209,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
-        } else if(type === 'Storage tier' || type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
+        } else if(type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
             apiCall = optimizeStorageSizing;
-            const { selectedRecommendedInstance } = state.getWellOptimize;
             payload = {
-                instanceType: selectedRecommendedInstance?.value
-            };
+                type: [cardData?.id]
+            }
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -370,7 +369,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary">
+                                <DsButton variant="secondary" isDisabled={true}>
                                     Optimize
                                 </DsButton>
                             </div>
@@ -386,7 +385,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         height="50px"
                     >
                         <div>
-                            <DsButton variant="secondary">
+                            <DsButton variant="secondary" isDisabled={true}>
                                 Optimize
                             </DsButton>
                         </div>

@@ -756,6 +756,7 @@ export const GW_CONFIG_OPTIMIZE_NA = [
     'Log files (.ldf) placement',
     'TempDB placement',
     'OS type',
+    'Storage tier',
     'Multipath I/O Sessions',
     'Multipath I/O Status',
     'Multipath I/O Policy',
