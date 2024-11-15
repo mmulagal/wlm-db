@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CODE_VIEWER } from '../../../utils/appConstants';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType, getCredDetails } from '../../../utils/utilityFunctions';
-import { CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE, DEPLOY_ENDPOINT, PGSQL_CURL_REQ_TEMPLATE, UI_IDS } from '../../../utils/consts';
+import {  CREATE_PGSQL_CURL_REQ_TEMPLATE, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE, DEPLOY_ENDPOINT, PGSQL_CURL_REQ_TEMPLATE, UI_IDS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
@@ -28,6 +28,10 @@ const PostgreCodebox = () => {
     const [formData, setFormData] = useState<any>(null); // Saving form data on template API call
     const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
+
+    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
+    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
+  
 
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const pgsqlFormData = useAppSelector(state => state.postgreForm);
@@ -68,6 +72,22 @@ const PostgreCodebox = () => {
         const resBody = createPgsqlPayload(changeObjectForm);
         //@ts-ignore
         setRightPanelMaskedResponse(resBody);
+    };
+
+      // To copy response based on dropdown selection
+      const copyResponseData = () => {
+        const actualData = mssqlFormData;
+        const baseUrl = getBaseUrl();
+        const restApiPayload = CREATE_PGSQL_CURL_REQ_TEMPLATE(
+            baseUrl,
+            selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
+            selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,           
+            CRED_PLACEHOLDERS.TOKEN,
+            JSON.stringify(rightPanelMaskedResponse, null, 2),
+            isWorkloadFactory
+        );
+        return restApiPayload;
+       
     };
 
     const setDisplayedDataInCodeBox = () => {
@@ -129,7 +149,7 @@ const PostgreCodebox = () => {
                                     popoverClass={styles['copy-popover']}
                                     children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                     container={
-                                        <CopyToClipboard text={''}>
+                                        <CopyToClipboard text={copyResponseData()}>
                                             <div className={styles.menuItem} id={''}>
                                                 <Copy />
                                             </div>

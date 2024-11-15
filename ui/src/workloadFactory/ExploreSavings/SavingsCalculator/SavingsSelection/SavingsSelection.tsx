@@ -211,7 +211,7 @@ const SavingsSelection = ({ printState }: any) => {
         setDialog(
             <DialogComponent
                 header={GENERAL.LEARN_HOW_DIALOG.TITLE}
-                content={<LearnHowDialog />}
+                content={<LearnHowDialog type={'tco'} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => closeDialog()}
             />

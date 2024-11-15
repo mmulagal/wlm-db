@@ -660,7 +660,7 @@ async function listAllManagedInstances() {
     });
 }
 async function listDatabaseInstances(accountId: string, record: any) {
-    logger.info('List database instances for given account/credentialsId', accountId);
+    logger.info('List database instances for given account and record', { accountId, record });
 
     const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId } = record;
     accountId = checkAccount(accountId);

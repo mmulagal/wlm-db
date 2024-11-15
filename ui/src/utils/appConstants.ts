@@ -954,6 +954,9 @@ export const GENERAL = {
     LEARN_HOW: 'Learn how',
     LEARN_HOW_DIALOG: {
         TITLE: 'Improve compute cost accuracy',
+        ASSESSMENT_TITLE: 'Improve compute assessment',
+        ASSESSMENT_HEADER_TEXT:
+            'For getting recommendations on Compute rightsizing based on AWS cloud watch metrics and Compute Optimizer, follow these steps.',
         HEADER_TEXT:
             'For more accurate results based on AWS cloud watch metrics and Compute Optimizer, follow these steps.',
         STEP1_HEADER: 'Grant AWS cloud watch and compute optimizer permissions.',
