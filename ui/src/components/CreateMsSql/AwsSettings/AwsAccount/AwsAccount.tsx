@@ -94,6 +94,7 @@ const AwsAccount = () => {
     const dbCredPassword = useAppSelector(state => state.mssqlForm.dbCredentials?.password);
     const fsxCredPassword = useAppSelector(state => state.mssqlForm.fsxN?.fsxNPassword);
     const licenseIdSelectedCheck = useAppSelector(state => state.msSqlAction.licenseIdSelected);
+    const isProperPgSqlDbName = useAppSelector(state => state.msSqlAction.pgDbNameSelected);
 
     useEffect(() => {
         const dbPasswordValPass = !dbPassVal(dbCredPassword) ? true : false;
@@ -110,7 +111,8 @@ const AwsAccount = () => {
                 !isFsxNNameFilled ||
                 !fsxPasswordValPass ||
                 !licenseIdSelectedCheck ||
-                !isProperDBName)
+                !isProperDBName ||
+                !isProperPgSqlDbName)
         ) {
             accordionContext({
                 1: noAccount || permissionWarning ? true : false,
@@ -120,7 +122,8 @@ const AwsAccount = () => {
                 13: !isActiveDirectoryFilled ? true : false,
                 15: !isFsxNNameFilled || !fsxPasswordValPass ? true : false,
                 9: !licenseIdSelectedCheck ? true : false,
-                10: !isProperDBName ? true : false
+                10: !isProperDBName ? true : false,
+                27: !isProperPgSqlDbName ? true : false
             });
             dispatch(setCreatePressed(false));
         }

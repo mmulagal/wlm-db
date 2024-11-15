@@ -151,7 +151,7 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
-    ASSESSMENT = 'Assessment'
+    ASSESSMENT = 'Continuous Optimization'
 }
 
 enum HttpErrorCodes {
@@ -536,6 +536,8 @@ const AWS_REGIONS = new Map<string, string>([
 ]);
 
 const WLMDB = 'wlmdb';
+const INITIALIZER = 'initializer';
+const MSSQL = 'mssql';
 
 const ARTIFACT_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.artifacts');
 const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
@@ -1263,10 +1265,7 @@ const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
 
-const VALIDATION_NODE_INSTANCETYPE = {
-    T2MICRO: 't2.micro',
-    T3MICRO: 't3.micro'
-};
+const VALIDATION_NODE_INSTANCETYPE = 'm5.xlarge';
 
 const ONLINE = 'ONLINE';
 const OFFLINE = 'OFFLINE';
@@ -1374,6 +1373,7 @@ const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     sqlServerName: 'SqlServerName',
+    sqlVersion: 'SqlVersion',
 
     workloadInstanceType: 'WorkloadInstanceType',
     keyPairName: 'KeyPairName',
@@ -1413,7 +1413,19 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
 const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptValidation',
-        url: `${WLMDB}/pgsql/scripts/validate-vpc.sh`
+        url: `${WLMDB}/pgsql/scripts/validation.zip`
+    },
+    {
+        name: 'ScriptVerifySignature',
+        url: `${WLMDB}/pgsql/scripts/verify-signature.sh`
+    },
+    {
+        name: 'ScriptUnzipArchive',
+        url: `${WLMDB}/pgsql/scripts/unzip-archive.sh`
+    },
+    {
+        name: 'ArtifactsSignatures',
+        url: `${WLMDB}/pgsql/signig_files.zip`
     }
 ];
 
@@ -1462,6 +1474,15 @@ const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
 const TIMELINE_SERVICE_NAME = 'WF-Databases';
 
 const EBS_ROOT_VOLUME = 'ROOT_VOLUME';
+
+const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
+    'compute-optimizer:GetEnrollmentStatus',
+    'compute-optimizer:PutRecommendationPreferences',
+    'compute-optimizer:GetEffectiveRecommendationPreferences',
+    'compute-optimizer:GetEC2InstanceRecommendations',
+    'autoscaling:DescribeAutoScalingGroups',
+    'autoscaling:DescribeAutoScalingInstances'
+];
 
 export {
     WLMDB,
@@ -1772,5 +1793,8 @@ export {
     AWS_CE_TYPE,
     PGSQL_MASTER_TEMPLATE_PATH,
     MAX_DATA_LUN_SIZE_IN_GIB,
-    TF_VARS_CONFIG
+    TF_VARS_CONFIG,
+    PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
+    INITIALIZER,
+    MSSQL
 };

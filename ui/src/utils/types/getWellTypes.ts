@@ -6,6 +6,7 @@ export interface GetWellSliceInterface {
     selectedResourceId: string;
     selectedDatabaseInstance: string;
     selectedDatabaseInstanceName: string;
+    selectedDatabaseStorageType: string;
     cardData: any;
     osConfigTableData: PerConfigInterface[] | null;
     ontapConfigTableData: PerConfigInterface[] | null;
@@ -18,6 +19,7 @@ export interface GetWellSliceInterface {
     gwTimestamp: string;
     optimizingData: any;
     optimizingInstanceData: boolean;
+    selectedRecommendedInstance: any;
 }
 
 interface CountBreakDown {
@@ -56,6 +58,8 @@ export interface PerConfigInterface {
     recommendation?: string;
     tags?: string[];
     objectsInViolation?: string[] | null;
+    recommendationOptions?: any;
+    errorMessage?: string;
 }
 
 export interface GwCardDataInterface {

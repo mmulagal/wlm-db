@@ -68,7 +68,7 @@ import {
     invokeVirtualMountScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../../src/utils/consts';
-import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/drift-assessment-scripts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 
 const ssmMock = mockClient(SSMClient);
 

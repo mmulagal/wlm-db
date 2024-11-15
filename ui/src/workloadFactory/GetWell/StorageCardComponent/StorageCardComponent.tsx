@@ -17,10 +17,18 @@ import { setOptimizingData, setOptimizingInstanceData } from '../../../store/wor
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { useLazyGetSubTaskListQuery, useOptimizeStorageConfigMutation } from '../../../utils/apiService';
+import {
+    useLazyGetSubTaskListQuery,
+    useOptimizeComputeConfigMutation,
+    useOptimizeStorageConfigMutation,
+    useOptimizeStorageSizingMutation
+} from '../../../utils/apiService';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
+import store from '../../../store/store';
+import LearnHowDialog from '../../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -31,6 +39,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
+    const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
+    const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const [disableText, setDisableText] = useState(false);
@@ -62,6 +72,17 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else {
             return;
         }
+    };
+
+    const handleLearnHowClick = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.LEARN_HOW_DIALOG.ASSESSMENT_TITLE}
+                content={<LearnHowDialog type={'assessment'} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => closeDialog()}
+            />
+        );
     };
 
     const tooltipListSection = (listObj: { key: string; value: string }[]) => {
@@ -174,6 +195,18 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </DsTypography>
                 </div>
             );
+        } else if (cardData?.isMissingPermissions && cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING) {
+            return (
+                <div className={styles.warningMsg}>
+                    <WarningIcon
+                        //@ts-ignore
+                        style={{ width: '16px', height: '16px', '--icon-primary-color': 'var(--warning' }}
+                    />
+                    <DsButton type="text" onClick={handleLearnHowClick}>
+                        {GENERAL.UNSUPPORTED_PERMISSIONS}
+                    </DsButton>
+                </div>
+            );
         } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
@@ -192,15 +225,33 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     // This is the function that will be called when the optimize button is clicked from main cards
     const callOptimizeApi = (type: any) => {
-        // ToDo - This is not supported yet so will update once it is final
-        let payload = {
-            assessments: [
-                {
-                    configurationName: type,
-                    objectsToOptimize: []
-                }
-            ]
-        };
+        let payload = {};
+        let apiCall = null;
+        const state = store.getState();
+        if (type === GENERAL.COMPUTE_RIGHTSIZING) {
+            apiCall = optimizeComputeConfig;
+            const { selectedRecommendedInstance } = state.getWellOptimize;
+            payload = {
+                instanceType: selectedRecommendedInstance?.value
+            };
+        } else if(type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
+            apiCall = optimizeStorageSizing;
+            payload = {
+                type: [cardData?.id]
+            }
+        } else {
+            // ToDo - More type will come like optimize for sizing and layout here
+            apiCall = optimizeStorageConfig;
+            payload = {
+                assessments: [
+                    {
+                        configurationName: type,
+                        objectsToOptimize: []
+                    }
+                ]
+            };
+        }
+
         // call optimize api
         dispatch(setOptimizingInstanceData(true));
         dispatch(
@@ -231,7 +282,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             })
         );
 
-        optimizeStorageConfig({
+        apiCall({
             credentialId: headerSelectedCred?.data?.credentialsId,
             regionId: headerSelectedRegion?.label2,
             databaseHostId: selectedResourceId,
@@ -261,7 +312,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         setDialog(
             <DialogComponent
                 header={`${type} optimization`}
-                content={<DialogContent type={type} />}
+                content={<DialogContent type={type} recommendationOptions={cardData?.recommendationOptions} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -272,10 +323,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 }}
                 customClass={styles.colorSet}
                 hidePrimaryButton={
-                    type === 'Storage tier' ||
-                    type === 'User data files (.mdf) placement' ||
-                    type === 'Log files (.ldf) placement' ||
-                    type === 'TempDB placement'
+                    type === 'User data files (.mdf) placement'
                 }
             />
         );
@@ -352,7 +400,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             </div>
                         </TooltipComponent>
                     </div>
-                ) : optimizingInstanceData && cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
+                ) : optimizingInstanceData &&
+                  cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
+                  cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
                     <TooltipComponent
                         title={GENERAL.OPTIMIZATION_IN_PROGRESS}
                         placement="bottom"

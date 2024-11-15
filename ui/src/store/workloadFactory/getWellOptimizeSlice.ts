@@ -10,6 +10,7 @@ const initialState: GetWellSliceInterface = {
     selectedResourceId: '',
     selectedDatabaseInstance: '',
     selectedDatabaseInstanceName: '',
+    selectedDatabaseStorageType: '',
     cardData: cardDataDefault,
     osConfigTableData: null,
     ontapConfigTableData: null,
@@ -17,7 +18,8 @@ const initialState: GetWellSliceInterface = {
     gwRefreshPage: false,
     gwTimestamp: '',
     optimizingData: {},
-    optimizingInstanceData: false
+    optimizingInstanceData: false,
+    selectedRecommendedInstance: null
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -45,6 +47,9 @@ const getWellOptimizeSlice = createSlice({
         setGwDatabaseInstanceName: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseInstanceName = action.payload;
         },
+        setGwDatabaseStorageType: (state, action: PayloadAction<any>) => {
+            state.selectedDatabaseStorageType = action.payload;
+        },
         setCardData: (state, action: PayloadAction<any>) => {
             state.cardData = action.payload;
         },
@@ -71,18 +76,23 @@ const getWellOptimizeSlice = createSlice({
             state.selectedResourceId = '';
             state.selectedDatabaseInstance = '';
             state.selectedDatabaseInstanceName = '';
+            state.selectedDatabaseStorageType = '';
             state.cardData = cardDataDefault;
             state.osConfigTableData = null;
             state.ontapConfigTableData = null;
             state.optimizationBreakDown = null;
             state.optimizingData = null;
             state.optimizingInstanceData = false;
+            state.selectedRecommendedInstance = null;
         },
         setOptimizingData: (state, action: PayloadAction<any>) => {
             state.optimizingData = action.payload;
         },
         setOptimizingInstanceData: (state, action: PayloadAction<any>) => {
             state.optimizingInstanceData = action.payload;
+        },
+        setSelectedRecommendedInstance: (state, action: PayloadAction<any>) => {
+            state.selectedRecommendedInstance = action.payload;
         }
     }
 });
@@ -95,6 +105,7 @@ export const {
     setGwResourceId,
     setGwDatabaseInstance,
     setGwDatabaseInstanceName,
+    setGwDatabaseStorageType,
     setCardData,
     setOsConfigTableData,
     setOntapConfigTableData,
@@ -103,7 +114,8 @@ export const {
     setGwTimestamp,
     resetGwData,
     setOptimizingData,
-    setOptimizingInstanceData
+    setOptimizingInstanceData,
+    setSelectedRecommendedInstance
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

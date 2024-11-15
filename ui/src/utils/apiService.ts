@@ -854,12 +854,26 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment?fields=storage,compute`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute`
+                })
+            }),
+            optimizeStorageSizing: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-sizing`,
+                    method: 'POST',
+                    body: payload
                 })
             }),
             optimizeStorageConfig: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/drift-assessment/optimize`,
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-configuration`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            optimizeComputeConfig: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/compute`,
                     method: 'POST',
                     body: payload
                 })
@@ -976,4 +990,5 @@ export const {
     useGetManualViewCalculationsMutation
 } = exploreSavingsApi;
 
-export const { useGetMssqlAssessmentDataMutation, useOptimizeStorageConfigMutation } = getWellApi;
+export const { useGetMssqlAssessmentDataMutation, useOptimizeStorageConfigMutation, useOptimizeComputeConfigMutation, useOptimizeStorageSizingMutation } =
+    getWellApi;
