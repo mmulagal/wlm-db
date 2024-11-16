@@ -294,11 +294,13 @@ interface OptimizeMpioPolicyParams {
     databaseInstanceId: string;
     sqlDeploymentType?: string;
     activeNodeInstanceId?: string;
+    activeNodeName?: string;
     standbyNodeInstanceId?: string;
     standbyNodeName?: string;
     awsAccountId: string;
     changeClusterOwnership?: boolean;
-    currentPolicy?: string;
+    activeNodeCurrentPolicy?: string;
+    standbyNodeCurrentPolicy?: string;
 }
 
 export {

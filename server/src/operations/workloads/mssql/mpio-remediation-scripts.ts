@@ -14,10 +14,13 @@ if ($currentMpioPolicy -ceq "RR") {
 
 const RESTART_INSTANCE = 'Start-Process -FilePath "shutdown.exe" -ArgumentList @("/r") -Wait -NoNewWindow';
 
-const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams) =>
+const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPrimaryNode: boolean) =>
     `
     $sqlDeploymentType = "${mpioParams.sqlDeploymentType}"
-    $currentPolicy = "${mpioParams.currentPolicy}"
+    $runningOnPrimaryNode = [System.Convert]::ToBoolean('${runningOnPrimaryNode}')
+    $currentPolicy = "${
+        runningOnPrimaryNode ? mpioParams.activeNodeCurrentPolicy : mpioParams.standbyNodeCurrentPolicy
+    }"
     $changeClusterOwnership = [System.Convert]::ToBoolean('${mpioParams.changeClusterOwnership}')
 
     if($currentPolicy -cne "RR") {
@@ -32,7 +35,9 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams) =>
 
             $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server (${mpioParams.instanceName})")
             $SQLGroup = $SQLRoleGroup[0]
-            Move-ClusterGroup -Name $SQLGroup -Node ${mpioParams.standbyNodeName}
+            Move-ClusterGroup -Name $SQLGroup -Node ${
+                runningOnPrimaryNode ? mpioParams.standbyNodeName : mpioParams.activeNodeName
+            }
 
         }
         

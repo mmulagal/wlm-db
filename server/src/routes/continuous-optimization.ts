@@ -12,8 +12,11 @@ import {
     OptimizeSizingSchema,
     OptimizeOperatingSystemSchema
 } from './schemas/continuous-optimization-schema';
-import { optimizeStorage, optimizeSizing } from '../operations/cont-opt-optimize-operations';
-import { optimizeOperatingSystemSettings } from '../operations/mpio-optimize-operations';
+import {
+    optimizeStorage,
+    optimizeSizing,
+    optimizeOperatingSystemSettings
+} from '../operations/cont-opt-optimize-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
