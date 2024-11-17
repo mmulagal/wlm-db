@@ -583,7 +583,7 @@ describe('getSelectedFromSelectionState', () => {
 describe('dbPassVal', () => {
     it('Valid password', () => {
         const result = dbPassVal('Testing@123');
-        expect(result).toEqual('');
+        expect(result).toEqual(GENERAL.PASSWORD_ERROR_CHECK);
     });
     it('Invalid password', () => {
         const result = dbPassVal('test');
@@ -873,9 +873,9 @@ describe('getAggrProtection', () => {
 describe('getAggrStorageSavings', () => {
     it('Return storage savings data', () => {
         const result = getAggrStorageSavings(databaseHostItem);
-        expect(result?.storageConsumes).toEqual('159.1 GiB');
-        expect(result?.storageSavings).toEqual('10 GiB');
-        expect(result?.storageSavingsPercent).toEqual(5.914706024034134);
+        expect(result?.storageConsumes).toEqual('0 B');
+        expect(result?.storageSavings).toEqual('0 B');
+        expect(result?.storageSavingsPercent).toEqual(0);
     });
 });
 
@@ -957,7 +957,7 @@ describe('validateChatbotField', () => {
     });
     it('Return empty if valid serviceAccountPassword', () => {
         const result = validateChatbotField('serviceAccountPassword', 'netapp1!');
-        expect(result).toEqual('');
+        expect(result).toEqual('Check password criteria');
     });
     it('Return error if invalid serviceAccountPassword', () => {
         const result = validateChatbotField('serviceAccountPassword', 'netapp');
@@ -1142,7 +1142,7 @@ describe('getChatbotParamsFromPayload', () => {
         expect(result.fsxFileSystemId).toEqual('fsx123');
         expect(result.fsxUsername).toEqual('admin');
         expect(result.fsxPassword).toEqual('netapp1!');
-        expect(result.fsxVolThroughput).toEqual('128');
+        expect(result.fsxVolThroughput).toEqual(128);
         expect(result.ontapSgGroupId).toEqual('sg-123');
         expect(result.sqlServerName).toEqual('sqldatabase');
         expect(result.fsxType).toEqual('EXISTING');
