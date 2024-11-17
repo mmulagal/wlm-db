@@ -1,0 +1,19 @@
+.header-button-pgsql {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    width: 83%;
+    justify-content: end;
+
+    .separator {
+        border-right: 1px solid #e0e0e0;
+        height: 16px;
+    }
+
+    .popover {
+        max-width: 390px;
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 20px;
+    }
+}
