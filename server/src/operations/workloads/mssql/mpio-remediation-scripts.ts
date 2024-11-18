@@ -1,8 +1,10 @@
 import { OptimizeMpioPolicyParams } from '../../../utils/common-types';
 
 const CHECK_MPIO_POLICY = `
-
+Start-Transcript -Path "C:\\cfn\\log\\mpio-policy-remediation.log.txt" -Append | Out-Null
 $currentMpioPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
+Write-Output "Current MPIO policy is $currentMpioPolicy"
+Stop-Transcript | Out-Null
 if ($currentMpioPolicy -eq "RR") {
    return @{"remediated" = $true
              "policy" = $currentMpioPolicy} | ConvertTo-Json
@@ -16,6 +18,7 @@ const RESTART_INSTANCE = 'Start-Process -FilePath "shutdown.exe" -ArgumentList @
 
 const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPrimaryNode: boolean) =>
     `
+    Start-Transcript -Path "C:\\cfn\\log\\mpio-policy-remediation.log.txt" -Append | Out-Null
     $sqlDeploymentType = "${mpioParams.sqlDeploymentType}"
     $runningOnPrimaryNode = [System.Convert]::ToBoolean('${runningOnPrimaryNode}')
     $currentPolicy = "${
@@ -23,18 +26,29 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPr
     }"
     $changeClusterOwnership = [System.Convert]::ToBoolean('${mpioParams.changeClusterOwnership}')
 
+    Write-output "SQL deployment mode is $sqlDeploymentType"
+    Write-output "Running on primary node is $runningOnPrimaryNode"
+    Write-output "Current MPIO policy is $currentPolicy"
+    Write-output "Ownership change needed $changeClusterOwnership"
+
     if($currentPolicy -ne "RR") {
-        Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR 
+        Write-output "Setting MPIO policy to RR"
+        Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR   
     }
    
     if($sqlDeploymentType -eq "standalone") {
+        Write-output "Restarting standalone instance"
         ${RESTART_INSTANCE}
     }
     elseif($sqlDeploymentType -eq "fci")  {
         if($changeClusterOwnership -eq $true) {
-
+            
             $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server (${mpioParams.instanceName})")
+            Write-output "SQL Role group is $SQLRoleGroup"
             $SQLGroup = $SQLRoleGroup[0]
+            Write-output "Moving cluster onwership to ${
+                runningOnPrimaryNode ? mpioParams.standbyNodeName : mpioParams.activeNodeName
+            }"
             Move-ClusterGroup -Name $SQLGroup -Node ${
                 runningOnPrimaryNode ? mpioParams.standbyNodeName : mpioParams.activeNodeName
             }
@@ -42,9 +56,11 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPr
         }
         
         if($currentPolicy -ne "RR") {
+            Write-output "Restarting FCI instance"
             ${RESTART_INSTANCE}
         }       
     }
+    Stop-Transcript | Out-Null
 `;
 
 export { REMEDIATE_MPIO_POLICY, CHECK_MPIO_POLICY, RESTART_INSTANCE };
