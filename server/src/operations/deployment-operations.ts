@@ -511,6 +511,157 @@ async function getCloudformationTemplate(
     };
 }
 
+async function getPgSqlCfTemplate(
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: PgSqlConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    triggeredFrom: string,
+    tags?: Array<{ key: string; value: string }>,
+    credentialsId?: string,
+    region?: string
+): Promise<CloudFormationStaticTemplateResponseType> {
+    logger.info('PGSQL Cloud formation template ', {
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        fsxConfiguration,
+        sqlConfiguration,
+        triggeredFrom,
+        tags
+    });
+
+    const { workloadInstanceType } = ec2Configuration;
+    const { sqlServerName, sqlVersion } = sqlConfiguration;
+    const { databaseSize } = fsxConfiguration;
+
+    const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+
+    const { stackName, templateParameters } = await formatPgSqlTemplateParameters(
+        networkConfiguration,
+        ec2Configuration,
+        fsxConfiguration,
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch,
+        metrics,
+        credentialsId,
+        region,
+        true
+    );
+
+    logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
+
+    region = !isEmpty(region) ? region : DEFAULT_AWS_REGION;
+
+    // const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${PGSQL_MASTER_TEMPLATE_PATH}`;
+    const signedMasterTemplateUrl = await getPreSignedUrl(
+        TEMPLATE_BUCKET_REGION,
+        SIGNED_TEMPLATES_BUCKET_NAME,
+        customMasterTemplatePath
+    );
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters);
+
+    // Generate Signed-url and upload to bucket
+    // await uploadTemplates(
+    //     region!,
+    //     DatabaseTypes.MS_SQL_SERVER,
+    //     stackName,
+    //     tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+    //     customMasterTemplatePath,
+    //     templateParamsInCfFormat
+    // );
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        region!,
+        DatabaseTypes.PG_SQL,
+        stackName,
+        [],
+        customMasterTemplatePath,
+        templateParamsInCfFormat
+    );
+
+    let masterTemplateContents;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        const filePathSim = path.join(
+            process.cwd(),
+            '..',
+            'server',
+            'test',
+            'simulator',
+            'responses',
+            'aws',
+            'mock-master-template.yaml'
+        );
+
+        const filePathDemo = path.join(
+            process.cwd(),
+            '..',
+            'wlmdb',
+            'test',
+            'simulator',
+            'responses',
+            'aws',
+            'mock-master-template.yaml'
+        );
+        const filePath = process.env.NODE_ENV === 'demo' ? filePathDemo : filePathSim;
+        const yamlString = fs.readFileSync(filePath, 'utf8');
+        masterTemplateContents = yamlString;
+    } else {
+        // Sleep for 2 seconds for master template to be uploaded
+        await sleep(2000);
+        const response = await getObjectBucket(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customMasterTemplatePath
+        );
+        masterTemplateContents = await response.Body?.transformToString();
+    }
+
+    // Generate parameters list for cli command
+    const specialCharacters = ['!', '&'];
+    let cliParams: string = '';
+    templateParameters.forEach(e => {
+        if (e.ParameterKey === FSX_ADMIN_PASSWORD) {
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                fsxConfiguration.fsxPassword
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
+        } else {
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
+        }
+    });
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${
+        region ? `--region ${region}` : ''
+    }`;
+
+    // Generate parameters list for quick create url command
+    let urlParams: string = `stackName=${stackName}`;
+    templateParameters.forEach(e => {
+        urlParams += `&param_${e.ParameterKey}=${
+            e.ParameterValue ? encodeURIComponent(e.ParameterValue) : e.ParameterValue
+        }`;
+    });
+
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
+        region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
+    }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
+
+    return {
+        url: signedTemplateURL,
+        template: masterTemplateContents || '',
+        cliCommand: cloudFormationCli
+    };
+}
+
 function validateFSXThroughputAndIOPS(fsxVolThroughput: number, fsxIOPS: number, region?: string) {
     logger.info('Validate fsx throughput and iops', fsxVolThroughput, fsxIOPS, region);
 
@@ -1888,5 +2039,6 @@ export {
     getFSXAvailableRegionsForThrougput,
     getCollationDetailsForDeployment,
     deployPgSql,
-    getTerraformSetup
+    getTerraformSetup,
+    getPgSqlCfTemplate
 };
