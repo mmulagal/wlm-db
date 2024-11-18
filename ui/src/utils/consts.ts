@@ -757,9 +757,6 @@ export const GW_CONFIG_OPTIMIZE_NA = [
     'TempDB placement',
     'OS type',
     'Storage tier',
-    'Multipath I/O Sessions',
-    'Multipath I/O Status',
-    'Multipath I/O Policy',
     'NTFS allocation unit size',
     'Operating system patch'
 ];

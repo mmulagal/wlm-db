@@ -12,7 +12,7 @@ import RecommendationTooltip from '../RecommendationTooltip/RecommendationToolti
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
 import { GENERAL } from '../../../utils/appConstants';
-import { useLazyGetSubTaskListQuery, useOptimizeStorageConfigMutation } from '../../../utils/apiService';
+import { useLazyGetSubTaskListQuery, useOptimizeOperatingSystemMutation, useOptimizeStorageConfigMutation } from '../../../utils/apiService';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
@@ -33,6 +33,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
     );
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
+    const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     // This is the function that will be called when the user clicks on the optimize button from sub menus
@@ -51,16 +52,10 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                 ]
             };
         } else {
-            // TODO: For rowData type os new API will get added so change this accordingly
-            apiCall = optimizeStorageConfig;
+            apiCall = optimizeOs;
             payload = {
-                assessments: [
-                    {
-                        configurationName: rowData?.id,
-                        objectsToOptimize: rowData?.objectsInViolation
-                    }
-                ]
-            };
+                configurationName: rowData?.id,
+            }
         }
 
         // call optimize api
@@ -136,7 +131,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                 hidePrimaryButton={GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name)}
             />
         );
-    };
+    };    
     const ColDefs: ColumnProps[] = [
         {
             id: '1',

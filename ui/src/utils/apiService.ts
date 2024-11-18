@@ -871,6 +871,13 @@ export const getWellApi = createApi({
                     body: payload
                 })
             }),
+            optimizeOperatingSystem: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-operating-system`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             optimizeComputeConfig: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/compute`,
@@ -990,5 +997,5 @@ export const {
     useGetManualViewCalculationsMutation
 } = exploreSavingsApi;
 
-export const { useGetMssqlAssessmentDataMutation, useOptimizeStorageConfigMutation, useOptimizeComputeConfigMutation, useOptimizeStorageSizingMutation } =
+export const { useGetMssqlAssessmentDataMutation, useOptimizeStorageConfigMutation, useOptimizeComputeConfigMutation, useOptimizeStorageSizingMutation, useOptimizeOperatingSystemMutation } =
     getWellApi;
