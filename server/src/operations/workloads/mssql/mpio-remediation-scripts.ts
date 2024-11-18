@@ -3,7 +3,7 @@ import { OptimizeMpioPolicyParams } from '../../../utils/common-types';
 const CHECK_MPIO_POLICY = `
 
 $currentMpioPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
-if ($currentMpioPolicy -ceq "RR") {
+if ($currentMpioPolicy -eq "RR") {
    return @{"remediated" = $true
              "policy" = $currentMpioPolicy} | ConvertTo-Json
 }
@@ -23,14 +23,14 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPr
     }"
     $changeClusterOwnership = [System.Convert]::ToBoolean('${mpioParams.changeClusterOwnership}')
 
-    if($currentPolicy -cne "RR") {
+    if($currentPolicy -ne "RR") {
         Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR 
     }
    
-    if($sqlDeploymentType -ceq "standalone") {
+    if($sqlDeploymentType -eq "standalone") {
         ${RESTART_INSTANCE}
     }
-    elseif($sqlDeploymentType -ceq "fci")  {
+    elseif($sqlDeploymentType -eq "fci")  {
         if($changeClusterOwnership -eq $true) {
 
             $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server (${mpioParams.instanceName})")
@@ -41,7 +41,7 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPr
 
         }
         
-        if($currentPolicy -cne "RR") {
+        if($currentPolicy -ne "RR") {
             ${RESTART_INSTANCE}
         }       
     }
