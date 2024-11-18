@@ -121,7 +121,7 @@ import {
     createTFVarsFile,
     createRootModuleFile
 } from './terraform-operations';
-import { getParameter } from '../lib/aws/ssm';
+import { getParametersByPath } from '../lib/aws/ssm';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -1308,7 +1308,8 @@ async function deployPgSql(
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const { sqlServerName } = sqlConfiguration;
-    const al2023AmiId = await getParameter(credentialsId, region, AL2023AMINAME);
+    const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
+    const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023AMINAME)?.Value;
     if (al2023AmiId) {
         sqlConfiguration.sqlAmiId = al2023AmiId;
     } else {

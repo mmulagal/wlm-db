@@ -1027,6 +1027,8 @@ async function fetchUnmanagedHostsInformationV2(
                 ebsVolumeIds: [],
                 ec2UsageOperation: ec2Instance.ec2UsageOperation
             };
+            const clonedResourceDetails = cloneDeep(resourceDetails);
+
             if (ec2Instance?.sqlServerInstances && ec2Instance?.sqlServerInstances.length > 0) {
                 ec2Instance?.sqlServerInstances?.forEach(sqlServerInstance => {
                     // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
@@ -1064,7 +1066,7 @@ async function fetchUnmanagedHostsInformationV2(
                             : ebsVolumeIds.length > 0
                             ? STORAGE_TYPE.EBS
                             : NOT_AVAILABLE,
-                        resource: resourceDetails
+                        resource: clonedResourceDetails
                     });
                 });
                 resourceDetailsList.push(resourceDetails);

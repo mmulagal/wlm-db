@@ -10,6 +10,11 @@ router.get(
             generateResponse(res, 200, GetWellJson);
         }, 20);
     }
+    // For compute missing permissions case update compute object as below under getWell.json
+    // "compute": {
+    //     "errorMessage":"Error while calculating compute drift. Failed to get compute optimizer recommendation options for the selected database host during Continuous Assessment. User: arn:aws:sts::464262061435:assumed-role/preprod_automation_role/CredentialsAssumeRoleValidator is not authorized to perform: compute-optimizer:GetEnrollmentStatus on resource: * because no identity-based policy allows the compute-optimizer:GetEnrollmentStatus action",
+    //     "error":{}
+    // }
 );
 
 router.post(

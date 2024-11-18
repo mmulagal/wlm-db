@@ -4,11 +4,22 @@ import { GENERAL } from '../../../../../utils/appConstants';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import { ReactComponent as CopyIcon } from '../../../../../assets/ic_copy.svg';
+import { useEffect, useState } from 'react';
 
-const LearnHowDialog = () => {
+const LearnHowDialog = ({ type }: { type: string }) => {
+    const [headerText, setHeaderText] = useState<string>('');
+
+    useEffect(() => {
+        if (type === 'tco') {
+            setHeaderText(GENERAL.LEARN_HOW_DIALOG.HEADER_TEXT);
+        } else if (type === 'assessment') {
+            setHeaderText(GENERAL.LEARN_HOW_DIALOG.ASSESSMENT_HEADER_TEXT);
+        }
+    });
+
     return (
         <div className={styles.learnHowDialog}>
-            <DsTypography variant="Regular_14">{GENERAL.LEARN_HOW_DIALOG.HEADER_TEXT} </DsTypography>
+            <DsTypography variant="Regular_14">{headerText} </DsTypography>
             <div className={styles.accordionSectionEC}>
                 <AccordionController isGrouped>
                     <div className={styles.firstAccordion}>
