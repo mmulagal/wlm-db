@@ -188,6 +188,7 @@ interface DatabaseInstance {
     storage_type?: string;
     sqlAuthEnabled?: boolean;
     isManaged?: boolean;
+    resource: ResourceDetails;
 }
 
 interface InstanceDetails {
@@ -212,14 +213,57 @@ interface WorkloadInstance {
     cloudProviderAccountId: string;
     resourceName: string;
 }
+interface LogDriveDetails {
+    databaseName: string;
+    logDriveLetter: string;
+    dataDriveLetter: string;
+    logDriveTotalSizeMB: number;
+    dataDriveTotalSizeMB: number;
+    lunUuid: string;
+    svmName: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
+}
+interface TempDbDriveDetails {
+    tempdbDriveLetter: string;
+    dataDriveTotalSizeMB: number;
+    defaultDataDriveLetter: string;
+    tempdbDriveTotalSizeMB: number;
+    lunUuid: string;
+    svmName: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
+}
+interface Sizing {
+    'performance-tier': string;
+    'data-log-drive-details': LogDriveDetails;
+    'data-tempdb-drive-details': TempDbDriveDetails;
+}
 
+interface UserDatabaseLayout {
+    name: string;
+    lunPath: string;
+    lunUuid: string;
+    svmName: string;
+    fileName: string;
+    sizeInMb: number;
+    lunSerialNumber: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
+}
+interface StorageLayout {
+    'user-database-layout:': { log: [UserDatabaseLayout]; data: [UserDatabaseLayout] };
+    'tempdb-files-location': string;
+    'default-log-files-location': string;
+    'default-data-files-location': string;
+}
 interface StorageAssessment {
     filesystemId: string;
     volumes: Array<{ Key?: string; Value?: string }>;
     luns: Array<{ Key?: string; Value?: string }>;
     os: Array<{ Key?: string; Value?: string }>;
     layout: JSON;
-    sizing: JSON;
+    sizing: Sizing;
 }
 
 interface DriftAssessmentJob {
@@ -253,6 +297,30 @@ type VolumeSpaceRecord = {
     };
 };
 
+interface OptimizeMpioPolicyParams {
+    accountId: string;
+    region: string;
+    credentialsId: string;
+    parentJobId: string;
+    fsxId: string;
+    instanceId: string;
+    instanceName: string;
+    databaseType: string;
+    sqlAuthEnabled: boolean;
+    serverNameWithHostName: string;
+    databaseHostId: string;
+    databaseInstanceId: string;
+    sqlDeploymentType?: string;
+    activeNodeInstanceId?: string;
+    activeNodeName?: string;
+    standbyNodeInstanceId?: string;
+    standbyNodeName?: string;
+    awsAccountId: string;
+    changeClusterOwnership?: boolean;
+    activeNodeCurrentPolicy?: string;
+    standbyNodeCurrentPolicy?: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -272,8 +340,12 @@ export {
     DatabaseInstance,
     InstanceDetails,
     WorkloadInstance,
+    LogDriveDetails,
+    TempDbDriveDetails,
     StorageAssessment,
     DriftAssessmentJob,
     OptimizeStorageParams,
-    VolumeSpaceRecord
+    VolumeSpaceRecord,
+    OptimizeMpioPolicyParams,
+    StorageLayout
 };

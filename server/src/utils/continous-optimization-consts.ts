@@ -47,6 +47,16 @@ enum OptimizeStorageConfigs {
     SPACE_ALLOCATION = 'space-allocation-allocated'
 }
 
+enum OptimizeOperatingSystemParams {
+    MPIO_POLICY = 'mpio-policy'
+}
+
+enum OPTIMIZE_SIZING_CONFIGS {
+    HEADROOM = 'headroom',
+    LOG_DRIVE_SIZE = 'log-drive-size',
+    TEMPDB_DRIVE_SIZE = 'tempdb-drive-size'
+}
+
 const DRIFT_ASSESSMENT_QUEUE = 'driftAssessmentQueue';
 const SEVERITY = {
     CRITICAL: 'critical',
@@ -110,7 +120,7 @@ interface OptimizeStorageRequestParams {
     objectsToOptimize: string[];
 }
 
-interface OptimizeInstanceParams {
+interface OptimizeStorageParams {
     accountId: string;
     credentialsId: string;
     region: string;
@@ -133,12 +143,14 @@ export {
     AwsWellArchitecturedPillars,
     REDIS_URL,
     OptimizeStorageConfigs,
+    OPTIMIZE_SIZING_CONFIGS,
     SEVERITY,
     OptimizeStorageApiData,
-    OptimizeInstanceParams,
+    OptimizeStorageParams,
     DRIFT_ASSESSMENT_QUEUE,
     VOLUME,
     LUN,
     QUERY_PARAMS,
-    REDIS_SCHEMA
+    REDIS_SCHEMA,
+    OptimizeOperatingSystemParams
 };

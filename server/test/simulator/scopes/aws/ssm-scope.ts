@@ -69,6 +69,11 @@ import {
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../../src/utils/consts';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/drift-assessment-scripts';
+import {
+    CHECK_MPIO_POLICY,
+    REMEDIATE_MPIO_POLICY
+} from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -497,6 +502,14 @@ const dbSummary = {
     commands: [sqlQueryExecution(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, DATABASES, false)]
 };
 
+const validateMpio = {
+    commands: [CHECK_MPIO_POLICY]
+};
+
+const setMpioPolicy = {
+    commands: [REMEDIATE_MPIO_POLICY]
+};
+
 const optimizeRegex = /#Storage Optimization Script/;
 
 ssmMock
@@ -639,7 +652,11 @@ ssmMock
         const newOptimizeParams = params.Parameters.commands[0];
         return newOptimizeParams && newOptimizeRegex.test(newOptimizeParams);
     })
-    .resolves(listSendCommandCommandResponse.optimizeStorageCommand);
+    .resolves(listSendCommandCommandResponse.optimizeStorageCommand)
+    .on(SendCommandCommand, { Parameters: validateMpio })
+    .resolves(listSendCommandCommandResponse.validateMpioCommand)
+    .on(SendCommandCommand, { Parameters: setMpioPolicy })
+    .resolves(listSendCommandCommandResponse.setMpioPolicyCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -785,7 +802,16 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeStorageCommand'
     })
-    .resolves(getCommandInvocationResponse.optimizeStorageResponse);
+    .resolves(getCommandInvocationResponse.optimizeStorageResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioCommand'
+    })
+    .resolvesOnce(getCommandInvocationResponse.validateMpioNotRRCommandResponse)
+    .resolves(getCommandInvocationResponse.validateMpioCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setMpioPolicyCommand'
+    })
+    .resolves(getCommandInvocationResponse.setMpioPolicyCommandResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

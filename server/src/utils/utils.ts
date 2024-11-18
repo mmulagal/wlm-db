@@ -38,6 +38,7 @@ import {
     SECRETS,
     DatabaseTypes,
     MAX_DATA_LUN_SIZE_IN_GIB,
+    PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
     AWS_REGIONS
 } from './consts';
 
@@ -683,6 +684,13 @@ function getTimeDifferenceInMinutes(startTime: number, endTime: number = Date.no
     return Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
 }
 
+function filterActions(actions: string | string[]) {
+    if (Array.isArray(actions)) {
+        return actions.filter(action => !PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT.includes(action));
+    }
+    return PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT.includes(actions) ? [] : [actions];
+}
+
 function getRegionDetails(region: string): RegionDetailsType {
     return {
         name: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : '',
@@ -732,5 +740,6 @@ export {
     retryWithDelay,
     getRedisDetails,
     getTimeDifferenceInMinutes,
+    filterActions,
     getRegionDetails
 };

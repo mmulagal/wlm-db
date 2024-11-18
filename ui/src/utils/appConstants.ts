@@ -77,15 +77,19 @@ export const GENERAL = {
     LANDING_ZONE: 'Landing zone',
     VIEW_API_REQUEST: 'View API request',
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL Server configuration',
+    LOAD_CONFIG_PGSQL_HEADER: 'Load PostgreSQL Server configuration',
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
     SAVE_CONFIG_HEADER: 'Save Microsoft SQL Server configuration',
+    SAVE_CONFIG_PGSQL_HEADER: 'Save PostgreSQL Server configuration',
     RENAME_CONFIG: 'Rename configuration',
     DELETE_CONFIG: 'Delete configuration',
     DELETE_CONFIG_TEXT: 'Are you sure to delete configuration',
     DELETE_CONFIG_NOTIFICATION: 'Configuration deleted successfully.',
     SAVE_CONFIG_CONTENT:
         'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
+        SAVE_CONFIG_PGSQL_CONTENT:
+        'You can save this PostgreSQL Server configuration and load the configuration later for a future PostgreSQL Server deployment.',
     RENAME_CONFIG_CONTENT: ['Enter a new name for the ', ' configuration'],
     RENAME_CONFIG_NOTIFICATION: 'Configuration name changed successfully.',
     CONFIG_NAME: 'Configuration name',
@@ -954,6 +958,9 @@ export const GENERAL = {
     LEARN_HOW: 'Learn how',
     LEARN_HOW_DIALOG: {
         TITLE: 'Improve compute cost accuracy',
+        ASSESSMENT_TITLE: 'Improve compute assessment',
+        ASSESSMENT_HEADER_TEXT:
+            'For getting recommendations on Compute rightsizing based on AWS cloud watch metrics and Compute Optimizer, follow these steps.',
         HEADER_TEXT:
             'For more accurate results based on AWS cloud watch metrics and Compute Optimizer, follow these steps.',
         STEP1_HEADER: 'Grant AWS cloud watch and compute optimizer permissions.',
@@ -1172,6 +1179,7 @@ export const GENERAL = {
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
     OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
     CLEAR_ALL: 'Clear all',
+    COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     RIGHTSIZING_TOOLTIP:
         'Right-sizing recommendations are based on AWS Compute Optimizer; the analysis can take up to 14 days as it reviews metrics from this period to provide accurate suggestions.'
 };

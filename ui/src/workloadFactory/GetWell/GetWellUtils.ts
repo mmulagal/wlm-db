@@ -18,7 +18,7 @@ import {
     OPTIMIZE_POLLING_INTERVAL
 } from '../../utils/consts';
 import { AssessmentResponseInterface, GwCardDataInterface, PerConfigInterface } from '../../utils/types/getWellTypes';
-import { formatDateWithTime, formatNumberWithCustomComma } from '../../utils/utilityFunctions';
+import { formatDateWithTime, formatNumberWithCustomComma, sortListOfDict } from '../../utils/utilityFunctions';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: GwCardDataInterface = {
@@ -346,8 +346,18 @@ export const cardDataDefault: GwCardDataInterface = {
 export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
     let cardsData: any = cardDataDefault;
     let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
+    let computeMissingPermissions = false;
     if (data?.compute?.name === 'compute-rightsizing') {
         cardMainConfig?.push([data?.compute]);
+    } else if (data?.compute?.errorMessage && data?.compute?.errorMessage.includes('is not authorized to perform: ')) {
+        computeMissingPermissions = true;
+        cardMainConfig?.push([
+            {
+                ...data?.compute,
+                name: 'compute-rightsizing',
+                errorMessage: data?.compute?.errorMessage
+            }
+        ]);
     }
     cardMainConfig?.map((category, index) => {
         let categoryVal = '';
@@ -383,7 +393,8 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                     tags: item?.tags,
                     id: item?.name,
                     category: categoryVal,
-                    recommendationOptions: index === 2 ? item?.recommendationOptions || [] : null
+                    recommendationOptions: index === 2 ? item?.recommendationOptions || [] : null,
+                    isMissingPermissions: index === 2 ? computeMissingPermissions : null
                 }
             };
         });
@@ -494,6 +505,8 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
         }
         osTagsList = [...osTagsList, ...(item?.tags || [])];
     });
+
+    formatOsConfigList = sortListOfDict(formatOsConfigList, 'name');
 
     if (osCritical === 1) {
         highestOsSeverity = 'Critical';
