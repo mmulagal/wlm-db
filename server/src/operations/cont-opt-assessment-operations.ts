@@ -219,86 +219,81 @@ async function calculateStorageDrift(
 
     const driftAssessmentData: StorageParameterDriftResponseType = {
         timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
-        optimisedCount: { total: 0, optimised: 0 },
         configuration: { volumes: [], luns: [], os: [] },
         sizing: [],
         layout: []
     };
 
     const { config_data: configData } = persistedConfigurationData;
-    const { volumes, luns, os, layout, sizing, filesystemId } = configData as unknown as StorageAssessment;
-    let configCount = 0;
-    let optimizedCount = 0;
+    const { volumes, luns, os, layout, sizing, filesystemId, errors } = configData as unknown as StorageAssessment;
 
-    volumeConfigData.forEach(config => {
-        configCount += 1;
-        let status = AssessmentStatus.OPTIMIZED;
-        const objectsInViolation: string[] = [];
-        volumes.forEach(volume => {
-            let objectName = '';
-            Object.entries(volume).forEach(([key, value]) => {
-                objectName = key === 'name' ? value : objectName;
-                if (key === config.parameter) {
-                    status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
-                    if (status === AssessmentStatus.NOT_OPTIMIZED) {
-                        objectsInViolation.push(objectName!);
+    if (errors.volumes) {
+        driftAssessmentData.configuration.volumes.push({ errorMessage: errors.volumes });
+    } else {
+        volumeConfigData.forEach(config => {
+            let status = AssessmentStatus.OPTIMIZED;
+            const objectsInViolation: string[] = [];
+            volumes.forEach(volume => {
+                let objectName = '';
+                Object.entries(volume).forEach(([key, value]) => {
+                    objectName = key === 'name' ? value : objectName;
+                    if (key === config.parameter) {
+                        status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
+                        if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                            objectsInViolation.push(objectName!);
+                        }
                     }
-                }
+                });
+            });
+
+            driftAssessmentData.configuration.volumes.push({
+                name: config.parameter,
+                recommended: config.value.toString(),
+                status,
+                objectsInViolation,
+                severity: config.severity,
+                recommendation: config.recommendation,
+                tags: config.tags
             });
         });
-        if (status === AssessmentStatus.OPTIMIZED) {
-            optimizedCount += 1;
-        }
-        driftAssessmentData.configuration.volumes.push({
-            name: config.parameter,
-            recommended: config.value.toString(),
-            status,
-            objectsInViolation,
-            severity: config.severity,
-            recommendation: config.recommendation,
-            tags: config.tags
-        });
-    });
+    }
+    if (errors.luns) {
+        driftAssessmentData.configuration.luns.push({ errorMessage: errors.luns });
+    } else {
+        lunConfigData.forEach(config => {
+            let status = AssessmentStatus.OPTIMIZED;
+            const objectsInViolation: string[] = [];
+            luns.forEach(lun => {
+                let objectName = '';
+                Object.entries(lun).forEach(([key, value]) => {
+                    objectName = key === 'name' ? value : objectName;
+                    if (key === config.parameter) {
+                        status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
 
-    lunConfigData.forEach(config => {
-        configCount += 1;
-        let status = AssessmentStatus.OPTIMIZED;
-        const objectsInViolation: string[] = [];
-        luns.forEach(lun => {
-            let objectName = '';
-            Object.entries(lun).forEach(([key, value]) => {
-                objectName = key === 'name' ? value : objectName;
-                if (key === config.parameter) {
-                    status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
-
-                    if (status === AssessmentStatus.NOT_OPTIMIZED) {
-                        objectsInViolation.push(objectName!);
+                        if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                            objectsInViolation.push(objectName!);
+                        }
                     }
-                }
+                });
+            });
+
+            driftAssessmentData.configuration.luns.push({
+                name: config.parameter,
+                recommended: config.value.toString(),
+                status,
+                objectsInViolation,
+                severity: config.severity,
+                recommendation: config.recommendation,
+                tags: config.tags
             });
         });
-        if (status === AssessmentStatus.OPTIMIZED) {
-            optimizedCount += 1;
-        }
-        driftAssessmentData.configuration.luns.push({
-            name: config.parameter,
-            recommended: config.value.toString(),
-            status,
-            objectsInViolation,
-            severity: config.severity,
-            recommendation: config.recommendation,
-            tags: config.tags
-        });
-    });
+    }
 
     Object.entries(os).forEach(([key, value]) => {
         const goldenData = osConfigData.find(data => data.parameter === key);
         if (!isEmpty(goldenData)) {
-            configCount += 1;
             const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            if (status === AssessmentStatus.OPTIMIZED) {
-                optimizedCount += 1;
-            }
+
             driftAssessmentData.configuration.os.push({
                 name: key,
                 recommended: goldenData.value.toString(),
@@ -310,196 +305,197 @@ async function calculateStorageDrift(
         }
     });
 
-    Object.entries(layout).forEach(([key, value]) => {
-        const goldenData = layoutConfigData.find(data => data.parameter === key);
-        if (!isEmpty(goldenData)) {
-            configCount += 1;
-            const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            if (status === AssessmentStatus.OPTIMIZED) {
-                optimizedCount += 1;
+    if (errors.layout) {
+        driftAssessmentData.layout.push({ errorMessage: errors.layout });
+    } else {
+        Object.entries(layout).forEach(([key, value]) => {
+            const goldenData = layoutConfigData.find(data => data.parameter === key);
+            if (!isEmpty(goldenData)) {
+                const status =
+                    goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+
+                driftAssessmentData.layout.push({
+                    name: key,
+                    recommended: goldenData.value.toString(),
+                    status,
+                    severity: goldenData.severity,
+                    recommendation: goldenData.recommendation,
+                    tags: goldenData.tags
+                });
             }
-            driftAssessmentData.layout.push({
-                name: key,
-                recommended: goldenData.value.toString(),
-                status,
-                severity: goldenData.severity,
-                recommendation: goldenData.recommendation,
-                tags: goldenData.tags
-            });
-        }
-        if (key === 'user-database-layout') {
-            const dataVolumes = value.data;
-            const logVolumes = value.log;
-            const dataLogVolumeDetails: DatabaseVolumeRecord[] = [];
-            dataVolumes.map((data: DatabaseVolumeRecord) =>
-                logVolumes.forEach((log: DatabaseVolumeRecord) => {
-                    if (data.name === log.name) {
-                        const volDetails = data as DatabaseVolumeRecord;
-                        volDetails.logVolume = log.volumeName;
-                        volDetails.logLunPath = log.lunPath;
-                        volDetails.logFileName = log.fileName;
-                        volDetails.logSizeInMb = log.sizeInMb;
-                        volDetails.logVolumeUuid = log.ontapVolumeUuid;
-                        volDetails.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
-                        dataLogVolumeDetails.push(volDetails);
+            if (key === 'user-database-layout') {
+                const dataVolumes = value.data;
+                const logVolumes = value.log;
+                const dataLogVolumeDetails: DatabaseVolumeRecord[] = [];
+                dataVolumes.map((data: DatabaseVolumeRecord) =>
+                    logVolumes.forEach((log: DatabaseVolumeRecord) => {
+                        if (data.name === log.name) {
+                            const volDetails = data as DatabaseVolumeRecord;
+                            volDetails.logVolume = log.volumeName;
+                            volDetails.logLunPath = log.lunPath;
+                            volDetails.logFileName = log.fileName;
+                            volDetails.logSizeInMb = log.sizeInMb;
+                            volDetails.logVolumeUuid = log.ontapVolumeUuid;
+                            volDetails.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
+                            dataLogVolumeDetails.push(volDetails);
+                        }
+                    })
+                );
+
+                // start user database layout assessment
+                // each database is on separate data and log lun
+                const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
+                    (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
+                );
+                logger.info({ databasesOnSameDataLogLun }); // Todo: remove this line
+
+                // each database is on separate data and log volume
+                const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
+                    (data: DatabaseVolumeRecord) => data.volumeUuid === data.logVolumeUuid
+                );
+                logger.info({ databasesOnSameDataLogVolume }); // Todo: remove this line
+
+                const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
+                    (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
+                );
+                logger.info({ databasesAbove500Gb }); // Todo: remove this line
+
+                const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
+                const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
+                const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
+                const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
+                logger.info({ groupByDataVolume }); // Todo: remove this line
+                logger.info({ groupByLogVolume }); // Todo: remove this line
+                logger.info({ groupByDataLun }); // Todo: remove this line
+                logger.info({ groupByLogLun }); // Todo: remove this line
+
+                const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
+                const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
+                const databasesSharingDataLuns = Object.values(groupByDataLun).filter(count => count > 1);
+                const databasesSharingLogLuns = Object.values(groupByLogLun).filter(count => count > 1);
+
+                let recommended = '';
+                let status = AssessmentStatus.OPTIMIZED;
+                let recommendationString = '';
+                let severity = 'critical';
+
+                if (!isEmpty(databasesOnSameDataLogLun)) {
+                    recommended = 'separate-data-log-lun-per-database';
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    severity = 'critical';
+                } else if (!isEmpty(databasesOnSameDataLogVolume)) {
+                    recommended = 'separate-data-log-volume-per-database';
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    severity = 'warning';
+                } else if (databasesAbove500Gb.length > 1) {
+                    if (
+                        !isEmpty(databasesSharingDataVolumes) ||
+                        !isEmpty(databasesSharingLogVolumes) ||
+                        !isEmpty(databasesSharingDataLuns) ||
+                        !isEmpty(databasesSharingLogLuns)
+                    ) {
+                        recommended = 'separate-data-log-lun-volume-for-large-database';
+                        status = AssessmentStatus.NOT_OPTIMIZED;
+                        severity = 'critical';
+                        recommendationString =
+                            'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
                     }
-                })
-            );
-
-            // start user database layout assessment
-            // each database is on separate data and log lun
-            const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
-                (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
-            );
-            logger.info({ databasesOnSameDataLogLun }); // Todo: remove this line
-
-            // each database is on separate data and log volume
-            const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
-                (data: DatabaseVolumeRecord) => data.volumeUuid === data.logVolumeUuid
-            );
-            logger.info({ databasesOnSameDataLogVolume }); // Todo: remove this line
-
-            const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
-                (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
-            );
-            logger.info({ databasesAbove500Gb }); // Todo: remove this line
-
-            const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
-            const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
-            const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
-            const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
-            logger.info({ groupByDataVolume }); // Todo: remove this line
-            logger.info({ groupByLogVolume }); // Todo: remove this line
-            logger.info({ groupByDataLun }); // Todo: remove this line
-            logger.info({ groupByLogLun }); // Todo: remove this line
-
-            const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
-            const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
-            const databasesSharingDataLuns = Object.values(groupByDataLun).filter(count => count > 1);
-            const databasesSharingLogLuns = Object.values(groupByLogLun).filter(count => count > 1);
-
-            let recommended = '';
-            let status = AssessmentStatus.OPTIMIZED;
-            let recommendationString = '';
-            let severity = 'critical';
-
-            if (!isEmpty(databasesOnSameDataLogLun)) {
-                recommended = 'separate-data-log-lun-per-database';
-                status = AssessmentStatus.NOT_OPTIMIZED;
-                severity = 'critical';
-            } else if (!isEmpty(databasesOnSameDataLogVolume)) {
-                recommended = 'separate-data-log-volume-per-database';
-                status = AssessmentStatus.NOT_OPTIMIZED;
-                severity = 'warning';
-            } else if (databasesAbove500Gb.length > 1) {
-                if (
-                    !isEmpty(databasesSharingDataVolumes) ||
-                    !isEmpty(databasesSharingLogVolumes) ||
-                    !isEmpty(databasesSharingDataLuns) ||
-                    !isEmpty(databasesSharingLogLuns)
-                ) {
-                    recommended = 'separate-data-log-lun-volume-for-large-database';
+                } else if (!isEmpty(databasesSharingDataLuns) || !isEmpty(databasesSharingLogLuns)) {
+                    recommended = 'separate-data-log-lun-for-large-database';
                     status = AssessmentStatus.NOT_OPTIMIZED;
                     severity = 'critical';
                     recommendationString =
                         'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
+                } else if (!isEmpty(databasesSharingDataVolumes) || !isEmpty(databasesSharingLogVolumes)) {
+                    recommended = 'separate-data-log-volume-for-large-database';
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    severity = 'warning';
+                    recommendationString =
+                        'Consolidate small-to-medium size databases that are less critical or have fewer I/O requirements to a single volume';
                 }
-            } else if (!isEmpty(databasesSharingDataLuns) || !isEmpty(databasesSharingLogLuns)) {
-                recommended = 'separate-data-log-lun-for-large-database';
-                status = AssessmentStatus.NOT_OPTIMIZED;
-                severity = 'critical';
-                recommendationString =
-                    'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
-            } else if (!isEmpty(databasesSharingDataVolumes) || !isEmpty(databasesSharingLogVolumes)) {
-                recommended = 'separate-data-log-volume-for-large-database';
-                status = AssessmentStatus.NOT_OPTIMIZED;
-                severity = 'warning';
-                recommendationString =
-                    'Consolidate small-to-medium size databases that are less critical or have fewer I/O requirements to a single volume';
-            }
 
-            driftAssessmentData.layout.push({
-                name: 'user-database-layout',
-                recommended,
-                status,
-                severity,
-                recommendation: recommendationString,
-                tags: [
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            });
-        }
-    });
-
-    Object.entries(sizing).forEach(([key, value]) => {
-        let goldenData = sizingConfigData.find(data => data.parameter === key);
-
-        let overProvisionedDrives;
-        let underProvisionedDrives;
-        let ignoredDrives;
-
-        if (key === 'data-log-drive-details') {
-            goldenData = sizingConfigData.find(data => data.parameter === 'log-drive-size');
-        }
-        if (key === 'data-tempdb-drive-details') {
-            goldenData = sizingConfigData.find(data => data.parameter === 'tempdb-drive-size');
-        }
-        if (!isEmpty(goldenData)) {
-            configCount += 1;
-            let status = AssessmentStatus.NOT_OPTIMIZED;
-            if (key === 'performance-tier') {
-                status = value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            }
-            if (key === 'data-log-drive-details') {
-                ({ key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives } = getLogVolumeDrift(
-                    value,
+                driftAssessmentData.layout.push({
+                    name: 'user-database-layout',
+                    recommended,
                     status,
-                    key
-                ));
+                    severity,
+                    recommendation: recommendationString,
+                    tags: [
+                        AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
+                        AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                    ]
+                });
             }
-            if (key === 'data-tempdb-drive-details') {
-                ({ status, key } = getTempDbVolumeDrift(value, status, key));
-            }
-            if (status === AssessmentStatus.OPTIMIZED) {
-                optimizedCount += 1;
-            }
-            driftAssessmentData.sizing.push({
-                name: key,
-                recommended: goldenData.value.toString(),
-                status,
-                severity: goldenData.severity,
-                recommendation: goldenData.recommendation,
-                tags: goldenData.tags,
-                sizingViolations: { overProvisionedDrives, underProvisionedDrives, ignoredDrives }
-            });
-        }
-    });
-
-    // Headroom drift assessment
-    try {
-        const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
-        const { status } = await getHeadroomDrift(credentialsId, region, filesystemId);
-        configCount += 1;
-        if (status === AssessmentStatus.OPTIMIZED) {
-            optimizedCount += 1;
-        }
-        driftAssessmentData.sizing.push({
-            name: 'headroom',
-            recommended: goldenData!.value.toString(),
-            status,
-            severity: goldenData!.severity,
-            recommendation: goldenData!.recommendation,
-            tags: goldenData!.tags
         });
-    } catch (error: any) {
-        logger.error(
-            `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`
-        );
     }
 
-    driftAssessmentData.optimisedCount.total = configCount;
-    driftAssessmentData.optimisedCount.optimised = optimizedCount;
+    if (errors.sizing) {
+        driftAssessmentData.sizing.push({ errorMessage: errors.sizing });
+    } else {
+        Object.entries(sizing).forEach(([key, value]) => {
+            let goldenData = sizingConfigData.find(data => data.parameter === key);
+
+            let overProvisionedDrives;
+            let underProvisionedDrives;
+            let ignoredDrives;
+
+            if (key === 'data-log-drive-details') {
+                goldenData = sizingConfigData.find(data => data.parameter === 'log-drive-size');
+            }
+            if (key === 'data-tempdb-drive-details') {
+                goldenData = sizingConfigData.find(data => data.parameter === 'tempdb-drive-size');
+            }
+            if (!isEmpty(goldenData)) {
+                let status = AssessmentStatus.NOT_OPTIMIZED;
+                if (key === 'performance-tier') {
+                    status = value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+                }
+                if (key === 'data-log-drive-details') {
+                    ({ key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives } = getLogVolumeDrift(
+                        value,
+                        status,
+                        key
+                    ));
+                }
+                if (key === 'data-tempdb-drive-details') {
+                    ({ status, key } = getTempDbVolumeDrift(value, status, key));
+                }
+
+                driftAssessmentData.sizing.push({
+                    name: key,
+                    recommended: goldenData.value.toString(),
+                    status,
+                    severity: goldenData.severity,
+                    recommendation: goldenData.recommendation,
+                    tags: goldenData.tags,
+                    sizingViolations: { overProvisionedDrives, underProvisionedDrives, ignoredDrives }
+                });
+            }
+        });
+    }
+
+    // Headroom drift assessment
+    if (errors.sizing) {
+        driftAssessmentData.sizing.push({ errorMessage: errors.sizing });
+    } else {
+        try {
+            const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
+            const { status } = await getHeadroomDrift(credentialsId, region, filesystemId);
+
+            driftAssessmentData.sizing.push({
+                name: 'headroom',
+                recommended: goldenData!.value.toString(),
+                status,
+                severity: goldenData!.severity,
+                recommendation: goldenData!.recommendation,
+                tags: goldenData!.tags
+            });
+        } catch (error: any) {
+            logger.error(
+                `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`
+            );
+        }
+    }
 
     return driftAssessmentData;
 }

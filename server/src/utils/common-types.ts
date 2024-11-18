@@ -264,6 +264,16 @@ interface StorageAssessment {
     os: Array<{ Key?: string; Value?: string }>;
     layout: JSON;
     sizing: Sizing;
+    errors: {
+        volumes: string;
+        luns: string;
+        'volumes-footprint': string;
+        layout: string;
+        sizing: string;
+        'mpio-policy': string;
+        'iscsi-sessions': string;
+        'ntfs-allocation': string;
+    };
 }
 
 interface DriftAssessmentJob {
