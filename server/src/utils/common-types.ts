@@ -239,6 +239,24 @@ interface Sizing {
     'data-log-drive-details': LogDriveDetails;
     'data-tempdb-drive-details': TempDbDriveDetails;
 }
+
+interface UserDatabaseLayout {
+    name: string;
+    lunPath: string;
+    lunUuid: string;
+    svmName: string;
+    fileName: string;
+    sizeInMb: number;
+    lunSerialNumber: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
+}
+interface StorageLayout {
+    'user-database-layout:': { log: [UserDatabaseLayout]; data: [UserDatabaseLayout] };
+    'tempdb-files-location': string;
+    'default-log-files-location': string;
+    'default-data-files-location': string;
+}
 interface StorageAssessment {
     filesystemId: string;
     volumes: Array<{ Key?: string; Value?: string }>;
@@ -303,5 +321,6 @@ export {
     StorageAssessment,
     DriftAssessmentJob,
     OptimizeStorageParams,
-    VolumeSpaceRecord
+    VolumeSpaceRecord,
+    StorageLayout
 };
