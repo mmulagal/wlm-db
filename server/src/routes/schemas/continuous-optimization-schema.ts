@@ -9,7 +9,8 @@ import {
 import {
     OptimizeStorageRequestBody,
     OptimizeSizingRequestBody,
-    DriftAssessmentResponse
+    DriftAssessmentResponse,
+    OptimizeOperatingSystemRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -74,4 +75,24 @@ const OptimizeSizingSchema = {
     }
 };
 
-export { DriftAssessmentDataCollection, TriggerDriftAssessmentSchema, OptimizeStorageSchema, OptimizeSizingSchema };
+const OptimizeOperatingSystemSchema = {
+    ...resourceRequest,
+    summary: 'Optimize MPIO settings',
+    description: 'Optimize MPIO settings parameters as per the best practice for the selected database instance.',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: OptimizeOperatingSystemRequestBody,
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
+
+export {
+    DriftAssessmentDataCollection,
+    TriggerDriftAssessmentSchema,
+    OptimizeStorageSchema,
+    OptimizeSizingSchema,
+    OptimizeOperatingSystemSchema
+};

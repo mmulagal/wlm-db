@@ -3,6 +3,7 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     OPTIMIZE_SIZING_CONFIGS,
+    OptimizeOperatingSystemParams,
     OptimizeStorageConfigs
 } from '../../utils/continous-optimization-consts';
 
@@ -101,6 +102,10 @@ const OptimizeSizingRequestBody = Type.Object({
 
 type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 
+const OptimizeOperatingSystemRequestBody = Type.Object({
+    configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
+});
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -112,5 +117,6 @@ export {
     OptimizeStorageRequestBodyType,
     OptimizeStorageRequestParamsType,
     OptimizeSizingRequestBody,
-    OptimizeSizingRequestBodyType
+    OptimizeSizingRequestBodyType,
+    OptimizeOperatingSystemRequestBody
 };

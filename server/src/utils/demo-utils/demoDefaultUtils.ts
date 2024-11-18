@@ -15,6 +15,7 @@ import {
     createAssessmentJobMockData,
     createDeploymentMockDataInDB,
     createFileSystemForDemo,
+    createOperatingSystemOptimizeJobMockData,
     createOptimizeJobMockData
 } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
@@ -179,6 +180,15 @@ async function createDemoResourcesPerRegion(
                 region
             );
             await createJobs(accountId, optimizeJobMockdata);
+
+            const operatingSystemOptimizeJobMockData = await createOperatingSystemOptimizeJobMockData(
+                accountId,
+                name,
+                instanceNames[0],
+                credentialsId,
+                region
+            );
+            await createJobs(accountId, operatingSystemOptimizeJobMockData);
         });
     }
 }
