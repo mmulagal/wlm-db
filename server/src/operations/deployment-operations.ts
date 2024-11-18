@@ -538,6 +538,14 @@ async function getPgSqlCfTemplate(
     const { sqlServerName, sqlVersion } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
 
+    const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
+    const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023AMINAME)?.Value;
+    if (al2023AmiId) {
+        sqlConfiguration.sqlAmiId = al2023AmiId;
+    } else {
+        throw createError(412, 'Amazon Linux 2023 AMI is not available');
+    }
+
     const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     const { stackName, templateParameters } = await formatPgSqlTemplateParameters(
@@ -557,7 +565,6 @@ async function getPgSqlCfTemplate(
 
     region = !isEmpty(region) ? region : DEFAULT_AWS_REGION;
 
-    // const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
     const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${PGSQL_MASTER_TEMPLATE_PATH}`;
     const signedMasterTemplateUrl = await getPreSignedUrl(
         TEMPLATE_BUCKET_REGION,
@@ -571,21 +578,11 @@ async function getPgSqlCfTemplate(
     const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters);
 
     // Generate Signed-url and upload to bucket
-    // await uploadTemplates(
-    //     region!,
-    //     DatabaseTypes.MS_SQL_SERVER,
-    //     stackName,
-    //     tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-    //     customMasterTemplatePath,
-    //     templateParamsInCfFormat
-    // );
-
-    // Generate Signed-url and upload to bucket
     await uploadTemplates(
         region!,
         DatabaseTypes.PG_SQL,
         stackName,
-        [],
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
         customMasterTemplatePath,
         templateParamsInCfFormat
     );
