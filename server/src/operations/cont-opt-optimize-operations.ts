@@ -1,7 +1,6 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
-import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import {
     Metadata,
     DatabaseInstance,
@@ -11,7 +10,7 @@ import {
     OptimizeMpioPolicyParams
 } from '../utils/common-types';
 import { HttpErrorCodes, AuditStatus, SqlServerDeploymentModel, RESOURCESTYPE } from '../utils/consts';
-import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
+import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
@@ -1186,25 +1185,6 @@ async function setMpioPolicyToRoundRobin(
             [ssmCommand],
             runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!
         );
-        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId!);
-        let retries = 3;
-        while (retries > 0) {
-            retries -= 1;
-            await sleep(20000);
-            if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                jobStatus = JOBSTATUS.COMPLETED;
-                break;
-            }
-
-            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId!);
-        }
-        if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
-            const errorMessage = `Failed to set MPIO policy to Round Robin on ${serverNameWithHostName}.`;
-            logger.error(errorMessage);
-            jobStatus = JOBSTATUS.FAILED;
-            jobError = errorMessage;
-            throw errorMessage;
-        }
     } catch (error) {
         const errorMessage = `Error while setting MPIO policy to Round Robin ${error}`;
         logger.error(errorMessage);
