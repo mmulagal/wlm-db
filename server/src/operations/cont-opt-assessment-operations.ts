@@ -648,6 +648,46 @@ async function initiateStorageAssessmentCollection(
             config_data: parsedResponse
         }
     ]);
+
+    const resourceWithInstanceName = `${instanceRecord.resourceName}\\${instanceRecord.name}`;
+    const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
+    const configJobStatus =
+        isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
+            ? JOBSTATUS.FAILED
+            : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
+            ? JOBSTATUS.COMPLETED
+            : JOBSTATUS.WARNING;
+
+    await registerJob(accountId, credentialsId, region, {
+        name: 'Storage configuration assessment',
+        description: 'Storage configuration assessment',
+        resourceName: resourceWithInstanceName,
+        startTime: Date.now(),
+        endTime: Date.now(),
+        status: configJobStatus,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId: jobId
+    });
+    await registerJob(accountId, credentialsId, region, {
+        name: 'Storage layout assessment',
+        description: 'Storage layout assessment',
+        resourceName: resourceWithInstanceName,
+        startTime: Date.now(),
+        endTime: Date.now(),
+        status: isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId: jobId
+    });
+    await registerJob(accountId, credentialsId, region, {
+        name: 'Storage sizing assessment',
+        description: 'Storage sizing assessment',
+        resourceName: resourceWithInstanceName,
+        startTime: Date.now(),
+        endTime: Date.now(),
+        status: isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId: jobId
+    });
 }
 
 async function initiateComputeAssessment(

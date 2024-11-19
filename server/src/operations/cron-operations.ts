@@ -287,12 +287,18 @@ async function scheduledAssessment() {
         const allJobsCount = await driftAssessmentQueue.getJobCounts();
         logger.info(JSON.stringify(allJobsCount));
 
-        driftAssessmentQueue.add('driftAssessment', {
-            repeat: { every: Number(ms(config.get('redis.cron-job-interval'))) }, // 24 hours in milliseconds
-            removeOnComplete: true,
-            removeOnFail: true,
-            jobId: 'driftAssessment'
-        });
+        driftAssessmentQueue.add(
+            'driftAssessment',
+            {},
+            {
+                repeat: { every: Number(ms(config.get('redis.cron-job-interval'))) }, // 24 hours in milliseconds
+                removeOnComplete: true,
+                removeOnFail: true,
+                jobId: 'driftAssessment'
+            }
+        );
+
+        logger.info(`Drift assessment job added to queue with interval ${config.get('redis.cron-job-interval')}.`);
 
         getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
             const driftAssessmentWorker = new Worker(
@@ -334,6 +340,5 @@ export {
     updateManagedInstRecPrefs,
     scheduledAssessment,
     runScheduledAssessment,
-    purgeAssessmentData,
-    DatabaseInstancesIncludingResource
+    purgeAssessmentData
 };
