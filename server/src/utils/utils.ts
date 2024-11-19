@@ -693,7 +693,7 @@ function filterActions(actions: string | string[]) {
 
 function getRegionDetails(region: string): RegionDetailsType {
     return {
-        name: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : '',
+        name: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region) : '',
         code: region
     };
 }

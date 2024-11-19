@@ -13,7 +13,8 @@ import {
     camelizeKeys,
     fsxStorageCapacityBreakdown,
     convertGiBToBytes,
-    calculateFsxnStorageCapacity
+    calculateFsxnStorageCapacity,
+    getRegionDetails
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -116,5 +117,11 @@ describe(' Secrets Manager string', () => {
     it('FSx storage capacity breakdown Standalone', () => {
         const response = fsxStorageCapacityBreakdown(convertGiBToBytes(3664), 'standalone');
         expect(response.fsxQuorumVolumeSize).toEqual(0);
+    });
+
+    it('should return region name for region key', () => {
+        expect(getRegionDetails('42').name).toBeDefined();
+        expect(getRegionDetails('42').name).toBe('');
+        expect(getRegionDetails('eu-west-1')).toEqual({name: 'Europe (Ireland)', code: 'eu-west-1'});
     });
 });
