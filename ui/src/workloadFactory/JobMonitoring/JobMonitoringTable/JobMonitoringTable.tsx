@@ -410,36 +410,7 @@ const JobMonitoringTable = () => {
                 );
             }
         },
-        {
-            id: '8',
-            Header: 'Credential',
-            accessor: 'credentialsId',
-            isSortable: true,
-            width: '200px',
-            filterOptions: 'auto',
-            renderCell: (cellData: any) => {
-                return (
-                    <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
-                        {cellData}
-                    </div>
-                );
-            }
-        },
-        {
-            id: '9',
-            Header: 'Region',
-            accessor: 'region',
-            isSortable: true,
-            width: '200px',
-            filterOptions: 'auto',
-            renderCell: (cellData: any) => {
-                return (
-                    <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
-                        {cellData}
-                    </div>
-                );
-            }
-        },
+        
         lastColDetails()
     ];
 
