@@ -119,7 +119,12 @@ function formatJobDbSchema(accountId: string, credentialsId: string, region: str
     };
 }
 
-async function registerJobs(accountId: string, credentialsId: string, region: string, jobs: JobRecordType[] | []) {
+async function registerJobs(
+    accountId: string,
+    credentialsId: string | undefined = '',
+    region: string | undefined = '',
+    jobs: JobRecordType[] | []
+) {
     logger.info('Registering jobs', { accountId, credentialsId, region, jobs: jobs?.length });
     logger.debug('Bulk creating jobs', jobs);
     if (isEmpty(jobs)) {
@@ -247,43 +252,26 @@ async function getSubJobs(accountId: string, jobId: string, credentialsId?: stri
     return subJobs;
 }
 
-async function updateJobDetails(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    jobId: string,
-    params: UpdateJobRecordType
-) {
+async function updateJobDetails(accountId: string, jobId: string, params: UpdateJobRecordType) {
     const { description, status, endTime, error } = params;
     logger.info(' Modifying job details', {
         accountId,
-        credentialsId,
-        region,
         jobId,
         description,
         status,
         endTime,
         error
     });
-    const response = await updateJob(
-        accountId,
-        credentialsId,
-        region,
-        jobId,
-        description,
-        status as JOBSTATUS,
-        endTime,
-        error
-    );
+    const response = await updateJob(accountId, jobId, description, status as JOBSTATUS, endTime, error);
     if (response) {
         return formatJob(response);
     }
     throw createError(`Failed to modify job with ID ${jobId} in ${accountId}. Please ensure the Job ID is correct.`);
 }
 
-async function deleteJobsWithAllSubJobs(accountId: string, credentialsId: string, region: string, jobId: string) {
-    logger.info(' Deleting jobs with all its subjobs', { accountId, credentialsId, region, jobId });
-    const level2Jobs = await getSubJobs(accountId, jobId, credentialsId, region);
+async function deleteJobsWithAllSubJobs(accountId: string, jobId: string) {
+    logger.info(' Deleting jobs with all its subjobs', { accountId, jobId });
+    const level2Jobs = await getSubJobs(accountId, jobId);
     let jobIdsToDelete = [jobId];
     if (level2Jobs.length > 0) {
         level2Jobs.forEach((level2Job: JobWithSubJobsDbSchema) => {
@@ -370,7 +358,7 @@ async function updateLongRunningJobs() {
         await Promise.all(
             runningJobs.map(async runningJob => {
                 logger.info('Marking job as failed ', runningJob.name);
-                updateJobDetails(runningJob.account_id, runningJob.credentials_id, runningJob.region, runningJob.id, {
+                updateJobDetails(runningJob.account_id, runningJob.id, {
                     status: JOBSTATUS.FAILED,
                     endTime: new Date().valueOf(),
                     error: 'Stack creation failed. Check cloud formation for failure reason.'
@@ -389,7 +377,7 @@ async function updateLongRunningResourcePrepareJobs() {
         await Promise.all(
             runningJobs.map(async runningJob => {
                 logger.info('Marking resource prepare job as failed: ', runningJob.name);
-                updateJobDetails(runningJob.account_id, runningJob.credentials_id, runningJob.region, runningJob.id, {
+                updateJobDetails(runningJob.account_id, runningJob.id, {
                     status: JOBSTATUS.FAILED,
                     endTime: new Date().valueOf(),
                     error: 'Resource preparation failed due to timeout.'

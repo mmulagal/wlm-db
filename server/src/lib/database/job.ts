@@ -160,15 +160,13 @@ async function createJob(accountId: string, job: readOnlyJob) {
 
 async function updateJob(
     accountId: string,
-    credentialsId: string,
-    region: string,
     jobId: string,
     description?: string,
     status?: JOBSTATUS,
     endTime?: number,
     error?: string
 ) {
-    logger.info('Updating a job', { accountId, credentialsId, region, jobId, description, status, endTime, error });
+    logger.info('Updating a job', { accountId, jobId, description, status, endTime, error });
 
     accountId = checkAccount(accountId);
 
@@ -178,9 +176,7 @@ async function updateJob(
 
     return prisma.client.job.update({
         where: {
-            id: jobId,
-            credentials_id: credentialsId,
-            region
+            id: jobId
         },
         data: {
             ...(description && { description }),
