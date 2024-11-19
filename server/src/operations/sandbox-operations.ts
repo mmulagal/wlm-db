@@ -670,7 +670,7 @@ async function startSandboxCreation(
     } finally {
         // clearning all the ssm command cache so that we will get the fresh data once the sandbox is created
         resetCache(SSM_COMMAND_CACHE_TYPE);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             error: errorMsg,
             status: status!,
             endTime: Date.now()
@@ -848,7 +848,7 @@ async function validateCloneParams(
         status = JOBSTATUS.FAILED;
         throw createError(e.statusCode, errMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, validationJob.id, {
+        await updateJobDetails(accountId, validationJob.id, {
             error: errMsg,
             status,
             endTime: Date.now()
@@ -930,7 +930,7 @@ async function getMappings(
         errorMsg = e.message || 'Internal Server Error';
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, mappingJob.id, {
+        await updateJobDetails(accountId, mappingJob.id, {
             error: errorMsg,
             status,
             endTime: Date.now()
@@ -1042,7 +1042,7 @@ async function createVolumeClone(
         errorMsg = e.message || 'Internal Server Error';
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, createVolumeCloneJob.id, {
+        await updateJobDetails(accountId, createVolumeCloneJob.id, {
             error: errorMsg,
             status,
             endTime: Date.now()
@@ -1205,7 +1205,7 @@ async function invokeVirtualMount(
             }
         } finally {
             if (status === JOBSTATUS.FAILED || status === JOBSTATUS.COMPLETED) {
-                await updateJobDetails(accountId, credentialsId, region, invokeMountJob.id, {
+                await updateJobDetails(accountId, invokeMountJob.id, {
                     error: errorMsg,
                     status,
                     endTime: Date.now()
@@ -1309,7 +1309,7 @@ async function createCloneDb(
         errorMsg = e.message || 'Internal Server Error';
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, createCloneDbJob.id, {
+        await updateJobDetails(accountId, createCloneDbJob.id, {
             error: errorMsg,
             status,
             endTime: Date.now()
@@ -1435,7 +1435,7 @@ async function createExtendedProperties(
         errorMsg = e.message || 'Internal Server Error';
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, createExtendedPropertiesJob.id, {
+        await updateJobDetails(accountId, createExtendedPropertiesJob.id, {
             error: errorMsg,
             status,
             endTime: Date.now()
@@ -1544,7 +1544,7 @@ async function startCleanup(
         errorMsg = `Failed to clean up ${e.message}`;
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, cleanupJob.id, {
+        await updateJobDetails(accountId, cleanupJob.id, {
             error: errorMsg,
             status,
             endTime: Date.now()
@@ -1860,7 +1860,7 @@ async function performSandboxDeletion(
         errorMsg = e.message || 'Internal Server Error';
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status,
             error: errorMsg,
             endTime: Date.now()
@@ -1921,7 +1921,7 @@ async function validateDeleteSandboxParams(
         status = JOBSTATUS.FAILED;
         throw createError(e.statusCode, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, validationJob.id, {
+        await updateJobDetails(accountId, validationJob.id, {
             error: errorMsg,
             status,
             endTime: Date.now()
@@ -2265,7 +2265,7 @@ async function performLifecycleUpdate(
             }
         }
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status,
             error: errorMsg,
             endTime: Date.now()
@@ -2339,7 +2339,7 @@ async function validateLifeCycleParams(
         errMsg = `Validate failed: ${e.message}`;
         throw createError(e.statusCode, e.message);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, validationJob.id, {
+        await updateJobDetails(accountId, validationJob.id, {
             error: errMsg,
             status,
             endTime: Date.now()
@@ -2437,7 +2437,7 @@ async function detachSandboxAndAccessPath(
         errMsg = e.message || e || 'Internal Server Error';
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, detachJob.id, {
+        await updateJobDetails(accountId, detachJob.id, {
             status,
             endTime: Date.now(),
             error: errMsg
@@ -2596,7 +2596,7 @@ async function reAttachSandboxAndAccessPath(
         errMsg = e.message || e || 'Internal Server Error';
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, reattachJob.id, {
+        await updateJobDetails(accountId, reattachJob.id, {
             status,
             endTime: Date.now(),
             error: errMsg
@@ -2684,7 +2684,7 @@ async function performSplitOperation(
         status = JOBSTATUS.FAILED;
         errMsg = e.message || 'Internal Server Error';
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status,
             error: errMsg,
             endTime: Date.now()
@@ -2752,7 +2752,7 @@ async function validateSplitParams(
         errorMsg = e.message || 'Internal Server Error';
         throw createError(e.statusCode, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, validationJob.id, {
+        await updateJobDetails(accountId, validationJob.id, {
             error: errorMsg,
             status,
             endTime: Date.now()
@@ -2820,7 +2820,7 @@ async function splitVolumes(
         errorMsg = e.message || 'Internal Server Error';
         throw createError(e.statusCode, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, splitJob.id, {
+        await updateJobDetails(accountId, splitJob.id, {
             status,
             error: errorMsg,
             endTime: Date.now()
@@ -2890,7 +2890,7 @@ async function deleteExtendedProperties(
         errorMsg = e.message || 'Internal Server Error';
         throw createError(e.statusCode, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, deleteJob.id, {
+        await updateJobDetails(accountId, deleteJob.id, {
             status,
             error: errorMsg,
             endTime: Date.now()
@@ -3008,7 +3008,7 @@ async function performIntegrityCheck(
         errorMsg = e.message || 'Internal Server Error';
         throw createError(e.statusCode, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status,
             error: errorMsg,
             endTime: Date.now()

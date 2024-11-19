@@ -100,6 +100,7 @@ const UpdateJobSchema = {
 const CreateJobSchema = {
     ...baseRequestWriter,
     hide: process.env.NODE_ENV === 'production',
+    params: AccountIdParams,
     summary: 'Create jobs',
     description: 'API to create jobs',
     body: CreateJobRequestBody,

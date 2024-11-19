@@ -774,7 +774,7 @@ async function driftAssessmentDataCollection(
             sqlServerDeploymentType: RESOURCESTYPE.MSSQL
         };
         const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             error: errorMessage,
             description: `SQL Server instance(s) ${instanceNames.join(
                 ','

@@ -190,29 +190,14 @@ describe('Modify jobs', () => {
         const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         const [jobIds] = jobs.map(({ id }) => id);
         const endTime = moment(new Date()).valueOf();
-        const response = await updateJob(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            jobIds,
-            'modified-description',
-            JOBSTATUS.COMPLETED,
-            endTime
-        );
+        const response = await updateJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.COMPLETED, endTime);
         expect(response.description).equal('modified-description');
         expect(response.status, JOBSTATUS.COMPLETED);
     });
 
     it('should fail to modify a job invalid Job Id', async () => {
         try {
-            await updateJob(
-                ACCOUNT_ID,
-                DEFAULT_AWS_CREDENTIALS_ID,
-                DEFAULT_AWS_REGION,
-                'a',
-                'modified-description',
-                JOBSTATUS.COMPLETED
-            );
+            await updateJob(ACCOUNT_ID, 'a', 'modified-description', JOBSTATUS.COMPLETED);
         } catch (error: any) {
             expect(error?.meta?.cause).toEqual('Record to update not found.');
         }
