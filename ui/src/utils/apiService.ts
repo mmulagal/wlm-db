@@ -380,6 +380,13 @@ export const databaseHomeApi = createApi({
                     body: payload
                 })
             }),
+            getPgsqlTemplates: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/pgsql/cloudformation/template`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             getTerraformSetup: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/mssql/terraform/setup`,
@@ -930,7 +937,8 @@ export const {
     useGetJobsSummaryQuery,
     useLazyGetJobsSummaryQuery,
     useGetTemplatesMutation,
-    useGetTerraformSetupMutation
+    useGetTerraformSetupMutation,
+    useGetPgsqlTemplatesMutation
 } = databaseHomeApi;
 
 export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
