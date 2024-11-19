@@ -53,20 +53,23 @@ foreach ($property in $serviceURlMapJson.PSObject.Properties) {
     $serviceURLHashTable[$property.Name] = $property.Value
 }
 
-foreach ($service in $serviceURLHashTable.keys) {
+# Skip CloudFormation endpoint connection checks if running in Terraform
+if (-not $IsTerraform) {
+    foreach ($service in $serviceURLHashTable.keys) {
 
-    try{
-        $out = (Invoke-WebRequest "https://cloudformation.$region.amazonaws.com" -UseBasicParsing).StatusCode
+        try{
+            $out = (Invoke-WebRequest "https://cloudformation.$region.amazonaws.com" -UseBasicParsing).StatusCode
 
-        if (($out -ge 200 -and $out -lt 299) -or ($out -ge 500 -and $out-lt 600)) {
-            # Was able to connect to service, continue testing
-        } else {
+            if (($out -ge 200 -and $out -lt 299) -or ($out -ge 500 -and $out-lt 600)) {
+                # Was able to connect to service, continue testing
+            } else {
+                $failedServices += $service
+                $failed = $true
+            }
+        } catch {
             $failedServices += $service
             $failed = $true
         }
-    } catch {
-        $failedServices += $service
-        $failed = $true
     }
 }
 
