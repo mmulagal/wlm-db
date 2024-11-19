@@ -7,6 +7,7 @@ import {
     DatabaseInstance,
     WorkloadInstance,
     StorageAssessment,
+    databaseInstanceMetadata,
     OptimizeMpioPolicyParams
 } from '../utils/common-types';
 import { HttpErrorCodes, AuditStatus, SqlServerDeploymentModel, RESOURCESTYPE } from '../utils/consts';
@@ -48,6 +49,7 @@ import {
     SizingViolationResponseType
 } from '../routes/types/continuous-optimization.types';
 import { getFsxVolumeDetails, getFsxnVolIdsFromOntapVolIds } from './aws/fsx-operations';
+import { updateOptimizedConfigNameInInstanceTable } from './demo-operations';
 import { CHECK_MPIO_POLICY, REMEDIATE_MPIO_POLICY } from './workloads/mssql/mpio-remediation-scripts';
 import { describeInstance } from '../lib/aws/ec2';
 
@@ -85,6 +87,7 @@ interface OptimizeStorageOperationParams {
     sqlAuthEnabled: boolean;
     svmName: string;
     optimizationTargets: OptimizeStorageRequestParamsType[];
+    instanceMetadata?: databaseInstanceMetadata;
 }
 
 async function handleOptimizeJobCreation(
@@ -202,7 +205,8 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
         instanceName,
         sqlAuthEnabled,
         svmName,
-        optimizationTargets
+        optimizationTargets,
+        instanceMetadata
     } = params;
     if (optimizationTargets && optimizationTargets.length > 0) {
         await optimizeOntapStorage({
@@ -231,6 +235,18 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
         cloudProviderAccountId: awsAccountId,
         resourceName: serverNameWithHostName
     };
+
+    if (isDemoFlow) {
+        // update metadata in nstances table to mark optimized configuration
+        const configurationNames: string[] = optimizationTargets.map(config => config.configurationName);
+
+        await updateOptimizedConfigNameInInstanceTable(
+            accountId,
+            instanceId,
+            configurationNames,
+            instanceMetadata || {}
+        );
+    }
     await triggerAssessmentAfterOptimization(
         credentialsId,
         region,
@@ -371,7 +387,8 @@ async function activeSqlNodeDetails(
         database_instance_id: instanceId,
         database_type: databaseType,
         fsx_svm_id: svmDetails,
-        resource: resourceDetail
+        resource: resourceDetail,
+        metadata: instanceMetadata
     } = instanceDetail as unknown as DatabaseInstance;
 
     const { metadata, resource_name: sqlServerName } = resourceDetail;
@@ -411,7 +428,8 @@ async function activeSqlNodeDetails(
         databaseType,
         svmDetails,
         awsAccountId: resourceDetail.cloud_provider_account_id,
-        serverNameWithHostName
+        serverNameWithHostName,
+        instanceMetadata
     };
 }
 
@@ -428,6 +446,7 @@ async function getSvmNameFromId(credentialsId: string, region: string, fsxId: st
 
     return svmName;
 }
+
 async function optimizeStorage(params: OptimizeStorageParams) {
     const { accountId, credentialsId, region, databaseHostId, databaseInstanceId, optimizationTargets } = params;
     logger.info(
@@ -448,7 +467,8 @@ async function optimizeStorage(params: OptimizeStorageParams) {
         databaseType,
         svmDetails,
         awsAccountId,
-        serverNameWithHostName
+        serverNameWithHostName,
+        instanceMetadata
     } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
     // check whether any jobs on the same resource running
     const parentJobId = await handleOptimizeJobCreation(
@@ -485,7 +505,8 @@ async function optimizeStorage(params: OptimizeStorageParams) {
             sqlAuthEnabled: sqlAuthEnabled || false,
             svmName,
             optimizationTargets,
-            awsAccountId
+            awsAccountId,
+            instanceMetadata
         } as OptimizeStorageOperationParams);
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;

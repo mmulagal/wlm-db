@@ -417,6 +417,19 @@ async function updateUserDBIntoInstanceTable(
     }
 }
 
+async function updateOptimizedConfigNameInInstanceTable(
+    accountId: string,
+    instanceId: string,
+    configNames: string[],
+    metaData: databaseInstanceMetadata
+) {
+    logger.info('updating optimized config name into instance meta data', accountId, instanceId, configNames);
+
+    const existingConfigs = metaData.configsOptimized || [];
+    metaData.configsOptimized = Array.from(new Set([...existingConfigs, ...configNames]));
+    await updateInstanceMetadata(accountId, instanceId, metaData);
+}
+
 async function updateSandboxDBIntoResourceData(
     accountId: string,
     credentialsId: string,
@@ -650,5 +663,6 @@ export {
     getEBSVolumesForDemo,
     createAssessmentJobMockData,
     createOptimizeJobMockData,
+    updateOptimizedConfigNameInInstanceTable,
     createOperatingSystemOptimizeJobMockData
 };
