@@ -105,6 +105,26 @@ const CloudFormationTemplateRequestBody = Type.Omit(CloudFormationStaticTemplate
     'region'
 ]);
 
+// PgSql Cloud formation template, yaml and cli creation
+const PgSqlCloudFormationStaticTemplateRequestBody = Type.Object({
+    networkConfiguration: CFNetworkConfiguration,
+    ec2Configuration: EC2Configuration,
+    fsxConfiguration: FSXConfiguration,
+    sqlConfiguration: SQLConfiguration,
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
+    tags: Type.Optional(
+        Type.Array(
+            Type.Object({
+                key: Type.String(),
+                value: Type.String()
+            })
+        )
+    ),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String())
+});
+
 const MissingPermission = Type.Object({
     service: Type.String(),
     action: Type.String(),
@@ -242,5 +262,6 @@ export {
     PgSqlConfigurationType,
     TerraformSetupResponse,
     TerraformSetupResponseType,
-    TerraformSetupRequestBody
+    TerraformSetupRequestBody,
+    PgSqlCloudFormationStaticTemplateRequestBody
 };

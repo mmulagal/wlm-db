@@ -486,11 +486,13 @@ async function deployDatabase(
         const filterParams = {
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName as string,
-            typeFilter: JOBTYPE.CREATE_RESOURCE
+            typeFilter: JOBTYPE.CREATE_RESOURCE,
+            credentialsId,
+            region
         };
         const {
             items: [job]
-        } = await getJobs(accountId, credentialsId, region, filterParams);
+        } = await getJobs(accountId, filterParams);
 
         if (job) {
             // Calculate the time difference in minutes

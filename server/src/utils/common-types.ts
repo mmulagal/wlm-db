@@ -22,6 +22,7 @@ interface databaseInstanceMetadata {
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
+    configsOptimized?: Array<any>;
 }
 
 interface CreateDbMetrics {

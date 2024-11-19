@@ -20,47 +20,49 @@ import {
 } from '../operations/database/job-operations';
 import { JobRecordType } from './types/jobs.types';
 
-const JOBS_API_PATH: string = '/v1/credentials/:credentialsId/regions/:region/jobs';
+const JOBS_API_PATH: string = '/v1/jobs';
+const JOBS_API_PATH_WRITER: string = '/v1/credentials/:credentialsId/regions/:region/jobs';
 
 export default function jobsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server.get(`${JOBS_API_PATH}`, { schema: ListJobsSchema }, async (request, reply) => {
         const {
-            params: { accountId, credentialsId, region },
+            params: { accountId },
             query
         } = request;
-        const response = await getJobs(accountId, credentialsId, region, query);
+        const response = await getJobs(accountId, query);
         return reply.send(response);
     });
     server.get(`${JOBS_API_PATH}/:jobId`, { schema: JobDetailsSchema }, async (request, reply) => {
         const {
-            params: { accountId, credentialsId, region, jobId }
+            params: { accountId, jobId },
+            query: { credentialsId, region }
         } = request;
-        const response = await getJobDetails(accountId, credentialsId, region, jobId);
+        const response = await getJobDetails(accountId, jobId, credentialsId, region);
         return reply.send(response);
     });
 
     server.get(`${JOBS_API_PATH}/summary`, { schema: JobSummarySchema }, async (request, reply) => {
         const {
-            params: { accountId, credentialsId, region },
-            query: { startTime, endTime }
+            params: { accountId },
+            query
         } = request;
-        const response = await getJobSummary(accountId, credentialsId, region, startTime, endTime);
+        const response = await getJobSummary(accountId, query);
         return reply.send(response);
     });
 
     server.get(`${JOBS_API_PATH}/summary/timeline`, { schema: JobSummaryByTimeSchema }, async (request, reply) => {
         const {
-            params: { accountId, credentialsId, region },
-            query: { startTime, endTime }
+            params: { accountId },
+            query
         } = request;
-        const response = await getJobSummaryByTime(accountId, credentialsId, region, startTime, endTime);
+        const response = await getJobSummaryByTime(accountId, query);
         return reply.send(response);
     });
 
     if (process.env.NODE_ENV !== 'production') {
-        server.delete(`${JOBS_API_PATH}/:jobId`, { schema: DeleteJobSchema }, async (request, reply) => {
+        server.delete(`${JOBS_API_PATH_WRITER}/:jobId`, { schema: DeleteJobSchema }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region, jobId }
             } = request;
@@ -68,7 +70,7 @@ export default function jobsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         });
 
-        server.patch(`${JOBS_API_PATH}/:jobId`, { schema: UpdateJobSchema }, async (request, reply) => {
+        server.patch(`${JOBS_API_PATH_WRITER}/:jobId`, { schema: UpdateJobSchema }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region, jobId },
                 body
@@ -77,7 +79,7 @@ export default function jobsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         });
 
-        server.post(`${JOBS_API_PATH}`, { schema: CreateJobSchema }, async (request, reply) => {
+        server.post(`${JOBS_API_PATH_WRITER}`, { schema: CreateJobSchema }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region }
             } = request;

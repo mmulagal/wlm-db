@@ -99,7 +99,7 @@ $SsmParameter = Get-SSMParameter -Name "/netapp/wlmdb/$DeploymentName" -WithDecr
 $Store = $SsmParameter.Value | ConvertFrom-Json
 
 # Get domain credentials
-$DomainNetBiosName = $DomainDnsName -replace '\.com$', ''
+$DomainNetBiosName = $env:USERDOMAIN
 $DomainAdminFullUser = $DomainNetBiosName + '\' + $DomainAdminUser
 $DomainPassword = $Store.domain.password
 $DomainSecurePassword = ConvertTo-SecureString $DomainPassword -AsPlainText -Force

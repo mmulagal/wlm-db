@@ -5,20 +5,22 @@ import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import moment from 'moment';
 import getLogger from '../utils/logger';
-import { convertToBytes, getEc2Arn, sqlResponseParsing } from '../utils/utils';
+import { convertToBytes, getEc2Arn, isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
 import storageGoldenConfigData from './continuous-optimization/golden-configs/storage';
-import { ACCOUNT_ID, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import {
+    DatabaseInstance,
+    databaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
     LogDriveDetails,
     StorageAssessment,
     TempDbDriveDetails,
     WorkloadInstance
 } from '../utils/common-types';
+import { ACCOUNT_ID, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
 import { listAllManagedInstances, listResources } from '../lib/database/db';
@@ -34,9 +36,11 @@ import {
 import {
     ComputeDriftResponseType,
     DriftAssessmentResponseType,
+    ParameterDriftResponseType,
     SizingViolationResponseType,
     StorageParameterDriftResponseType
 } from '../routes/types/continuous-optimization.types';
+import { getInstanceInfo } from './database/database-operations';
 import {
     createDatabaseInstanceConfigData,
     listDatabaseInstanceConfigData
@@ -44,6 +48,7 @@ import {
 import { listJobs } from '../lib/database/job';
 import { setAsyncLocalStorageResource } from '../utils/async-local-storage';
 
+const isDemoFlow = isDemo();
 const logger = getLogger();
 
 interface DatabaseVolumeRecord {
@@ -913,7 +918,15 @@ async function triggerAssessment(
 
     const { resource_name: resourceName } = resource;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const jobDescription = `Assessing SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in <Instance optimization dashboard>`;
+    const instanceDetailsForJob = JSON.stringify({
+        hostName: resourceName,
+        resourceId: databaseHostId,
+        databaseInstanceId,
+        databaseInstanceName,
+        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+    });
+
+    const jobDescription = `Assessing SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         name: jobDescription,
@@ -1070,6 +1083,23 @@ async function fetchDriftAssessment(
     ]);
 
     if (!isEmpty(storageAssessmentResponse)) {
+        if (isDemoFlow) {
+            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+            const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+
+            logger.info('Instance metadata:', instanceMetadata);
+            const configsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized || [];
+            storageAssessmentResponse.configuration.volumes = storageAssessmentResponse.configuration.volumes.map(
+                volume => {
+                    const vol = volume as ParameterDriftResponseType;
+                    if (configsOptimized.includes(vol.name)) {
+                        vol.status = AssessmentStatus.OPTIMIZED;
+                        vol.objectsInViolation = [];
+                    }
+                    return vol;
+                }
+            );
+        }
         driftAssessmentData.storage = storageAssessmentResponse;
     }
 
