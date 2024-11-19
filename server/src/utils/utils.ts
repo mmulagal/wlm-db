@@ -12,6 +12,7 @@ import isBase64 from 'is-base64';
 import { inflateRaw } from 'node:zlib';
 import { promisify } from 'util';
 import { getAsyncLocalStorageResource } from './async-local-storage';
+import { RegionDetailsType } from '../routes/types/generic.types';
 
 import {
     SQL_AMI_NAMES,
@@ -37,7 +38,8 @@ import {
     SECRETS,
     DatabaseTypes,
     MAX_DATA_LUN_SIZE_IN_GIB,
-    PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT
+    PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
+    AWS_REGIONS
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -689,6 +691,13 @@ function filterActions(actions: string | string[]) {
     return PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT.includes(actions) ? [] : [actions];
 }
 
+function getRegionDetails(region: string): RegionDetailsType {
+    return {
+        name: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region) : '',
+        code: region
+    };
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -731,5 +740,6 @@ export {
     retryWithDelay,
     getRedisDetails,
     getTimeDifferenceInMinutes,
-    filterActions
+    filterActions,
+    getRegionDetails
 };

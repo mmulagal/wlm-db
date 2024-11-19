@@ -679,7 +679,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
-                                    {selectComponents()}
+                                    <div></div>
                                     <div className={styles.content}>
                                         <div className={styles.selectContainer}>
                                             <SelectField

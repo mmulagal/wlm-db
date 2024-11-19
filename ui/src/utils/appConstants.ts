@@ -1168,7 +1168,7 @@ export const GENERAL = {
     BYOL_TEXT: 'Monthly SQL BYOL costs($)',
     CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI: 'Source database is not hosted on a NetApp iSCSI drive',
     COMING_SOON: 'Coming soon',
-    NOTE_PONT_ONE: 'No disruption to your services is expected during this process.',
+    NOTE_PONT_ONE: 'No disruption to your services are expected during this process.',
     NOTE_PONT_TWO:
         'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.',
     OS_NOTE_POINT_ONE:

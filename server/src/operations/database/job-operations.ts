@@ -23,9 +23,12 @@ import {
     JobSummaryByTimeRecordType,
     JobSummaryResponseType,
     ListJobsQueryType,
-    UpdateJobRecordType
+    UpdateJobRecordType,
+    JobSummaryQueryType
 } from '../../routes/types/jobs.types';
 import { JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
+import { getRegionDetails } from '../../utils/utils';
+import { RegionDetailsType } from '../../routes/types/generic.types';
 
 const logger = getLogger();
 
@@ -33,7 +36,7 @@ interface Job extends JobRecordType {
     id: string;
     accountId: string;
     credentialsId: string;
-    region: string;
+    region: RegionDetailsType;
 }
 interface JobWithSubJobs extends Job {
     subJobs?: Job[];
@@ -73,11 +76,12 @@ function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
         parent_job_id: parentJobId,
         subJobs
     } = job;
+
     return {
         id,
         accountId,
         credentialsId,
-        region,
+        ...{ region: getRegionDetails(region) },
         type,
         status,
         resourceName,
@@ -134,9 +138,11 @@ async function registerJob(accountId: string, credentialsId: string, region: str
     return formatJob(jobToCreate);
 }
 
-async function getJobs(accountId: string, credentialsId: string, region: string, filterParams: ListJobsQueryType = {}) {
-    logger.info(' Get jobs', { accountId, credentialsId, region, filterParams });
+async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) {
+    logger.info(' Get jobs', { accountId, filterParams });
     const {
+        credentialsId,
+        region,
         parentJobId,
         sort,
         sortOrder,
@@ -188,7 +194,7 @@ async function getJobs(accountId: string, credentialsId: string, region: string,
     if (includeSubJobs) {
         await Promise.all(
             (records || []).map(async (record: JobWithSubJobsDbSchema) => {
-                const allLevelSubJobs = await getSubJobs(accountId, credentialsId, region, record.id);
+                const allLevelSubJobs = await getSubJobs(accountId, record.id, credentialsId, region);
                 record.subJobs = allLevelSubJobs;
             })
         );
@@ -203,7 +209,7 @@ async function getJobs(accountId: string, credentialsId: string, region: string,
     };
 }
 
-async function getJobDetails(accountId: string, credentialsId: string, region: string, jobId: string) {
+async function getJobDetails(accountId: string, jobId: string, credentialsId?: string, region?: string) {
     logger.info(' Get job details', { accountId, credentialsId, region, jobId });
 
     try {
@@ -212,7 +218,7 @@ async function getJobDetails(accountId: string, credentialsId: string, region: s
         job.subJobs = [];
 
         const formattedJob = formatJob(job);
-        const subJobsDbSchema = await getSubJobs(accountId, credentialsId, region, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
+        const subJobsDbSchema = await getSubJobs(accountId, jobId, credentialsId, region); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
         let subJobs = trimAccountIdForDemo(subJobsDbSchema);
         subJobs = isEmpty(subJobs) ? [] : subJobs.map(formatJob);
 
@@ -228,14 +234,14 @@ async function getJobDetails(accountId: string, credentialsId: string, region: s
     }
 }
 
-async function getSubJobs(accountId: string, credentialsId: string, region: string, jobId: string) {
+async function getSubJobs(accountId: string, jobId: string, credentialsId?: string, region?: string) {
     logger.info('Get subjobs', { accountId, credentialsId, region, jobId });
 
     const subJobs = await listJobs(accountId, credentialsId, region, jobId);
     await Promise.all(
         (subJobs || []).map(async (subJob: JobWithSubJobsDbSchema) => {
             const { id } = subJob;
-            subJob.subJobs = await getSubJobs(accountId, credentialsId, region, id);
+            subJob.subJobs = await getSubJobs(accountId, id, credentialsId, region);
         })
     );
     return subJobs;
@@ -277,7 +283,7 @@ async function updateJobDetails(
 
 async function deleteJobsWithAllSubJobs(accountId: string, credentialsId: string, region: string, jobId: string) {
     logger.info(' Deleting jobs with all its subjobs', { accountId, credentialsId, region, jobId });
-    const level2Jobs = await getSubJobs(accountId, credentialsId, region, jobId);
+    const level2Jobs = await getSubJobs(accountId, jobId, credentialsId, region);
     let jobIdsToDelete = [jobId];
     if (level2Jobs.length > 0) {
         level2Jobs.forEach((level2Job: JobWithSubJobsDbSchema) => {
@@ -291,14 +297,10 @@ async function deleteJobsWithAllSubJobs(accountId: string, credentialsId: string
     return deleteJobs(accountId, jobIdsToDelete);
 }
 
-async function getJobSummary(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    startTime: number | undefined,
-    endTime: number | undefined
-): Promise<JobSummaryResponseType> {
-    logger.info('Getting job summary', { accountId, credentialsId, region, startTime, endTime });
+async function getJobSummary(accountId: string, filters: JobSummaryQueryType): Promise<JobSummaryResponseType> {
+    logger.info('Getting job summary', { accountId, ...filters });
+
+    let { credentialsId = undefined, region = undefined, startTime, endTime } = filters;
 
     if (startTime && endTime && startTime > endTime) {
         throw createError(400, 'Start time cannot be greater than end time');
@@ -330,13 +332,11 @@ async function getJobSummary(
 
 async function getJobSummaryByTime(
     accountId: string,
-    credentialsId: string,
-    region: string,
-    startTime: number | undefined,
-    endTime: number | undefined
+    query: JobSummaryQueryType
 ): Promise<JobSummaryByTimeRecordType[]> {
-    logger.info('Getting job summary by time', { accountId, credentialsId, region, startTime, endTime });
+    logger.info('Getting job summary by time', { accountId, ...query });
 
+    let { credentialsId = undefined, region = undefined, startTime = undefined, endTime = undefined } = query;
     if (startTime && endTime && startTime > endTime) {
         throw createError(400, 'Start time cannot be greater than end time');
     }

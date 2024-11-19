@@ -64,7 +64,7 @@ describe('Job operations', () => {
     });
 
     it('Get Jobs', async () => {
-        const response = await getJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        const response = await getJobs(ACCOUNT_ID);
         expect(response.count).toBeGreaterThanOrEqual(2);
     });
 
@@ -82,21 +82,21 @@ describe('Job operations', () => {
         ]);
         const [jobDetails] = await listJobs(
             ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
+            undefined,
+            undefined,
             undefined,
             undefined,
             undefined,
             undefined,
             'filterMe'
         );
-        const response = await getJobDetails(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, jobDetails.id);
+        const response = await getJobDetails(ACCOUNT_ID, jobDetails.id);
         expect(response.description).toEqual('test-filtered-job-description');
     });
 
     it('Modify Job Details', async () => {
         const [job] = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
-        const jobDetails = await getJobDetails(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, job.id);
+        const jobDetails = await getJobDetails(ACCOUNT_ID, job.id, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         const response = await updateJobDetails(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, job.id, {
             description: 'modified-description',
             status: JOBSTATUS.COMPLETED,
@@ -138,7 +138,7 @@ describe('Job operations', () => {
                 parentJobId: jobId
             }
         ]);
-        const jobDetails = await getJobDetails(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, jobId);
+        const jobDetails = await getJobDetails(ACCOUNT_ID, jobId, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         expect(jobDetails.subJobs?.length).toEqual(2);
 
         const level2Jobs = jobDetails.subJobs as Job[];
@@ -199,13 +199,12 @@ describe('Job operations', () => {
     });
 
     it('should get job summary', async () => {
-        const response = await getJobSummary(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            new Date('2024-01-01').valueOf(),
-            Date.now()
-        );
+        const response = await getJobSummary(ACCOUNT_ID, {
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            startTime: new Date('2024-01-01').valueOf(),
+            endTime: Date.now()
+        });
         expect(response).toHaveProperty('inProgress');
         expect(response).toHaveProperty('completed');
         expect(response).toHaveProperty('failed');
@@ -248,13 +247,12 @@ describe('getJobSummaryByTime', async () => {
     ]);
 
     it('should return job summary by time', async () => {
-        const result = await getJobSummaryByTime(
-            'ACCOUNT_ID',
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            mockStartTime,
-            mockEndTime
-        );
+        const result = await getJobSummaryByTime('ACCOUNT_ID', {
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            startTime: mockStartTime,
+            endTime: mockEndTime
+        });
 
         expect(result.length).toEqual(2);
     });
@@ -262,13 +260,12 @@ describe('getJobSummaryByTime', async () => {
     it('should handle error and throw an error', async () => {
         await deleteJobsOfAccount('ACCOUNT_ID');
 
-        const result = await getJobSummaryByTime(
-            'ACCOUNT_ID',
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            mockStartTime,
-            mockEndTime
-        );
+        const result = await getJobSummaryByTime('ACCOUNT_ID', {
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            startTime: mockStartTime,
+            endTime: mockEndTime
+        });
 
         expect(result.length).toEqual(0);
     });

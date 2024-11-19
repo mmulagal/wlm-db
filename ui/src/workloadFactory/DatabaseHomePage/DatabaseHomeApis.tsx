@@ -33,8 +33,6 @@ const DatabaseHomeApis = () => {
         const startTime = endTime - 30 * (3600 * 1000 * 24);
         try {
             const result: any = await getJobsSummaryApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                region: headerSelectedRegion?.label2,
                 startTime: startTime,
                 endTime: endTime
             });
