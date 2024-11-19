@@ -1,4 +1,5 @@
 import { JsonValue } from '@prisma/client/runtime/library';
+import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 
 interface Metadata {
     node1InstanceId: string;
@@ -331,6 +332,10 @@ interface OptimizeMpioPolicyParams {
     standbyNodeCurrentPolicy?: string;
 }
 
+interface DatabaseInstancesIncludingResource extends DatabaseInstances {
+    resource: Resource;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -357,5 +362,6 @@ export {
     OptimizeStorageParams,
     VolumeSpaceRecord,
     OptimizeMpioPolicyParams,
-    StorageLayout
+    StorageLayout,
+    DatabaseInstancesIncludingResource
 };

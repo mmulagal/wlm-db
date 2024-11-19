@@ -45,8 +45,8 @@ async function countParentJobs(accountId: string) {
 
 async function listJobs(
     accountId: string,
-    credentialsId: string,
-    region: string,
+    credentialsId?: string,
+    region?: string,
     parentJobId: string | null = null,
     sort: string = 'start_time',
     sortOrder: string = 'desc',
@@ -86,8 +86,8 @@ async function listJobs(
     return prisma.client.job.findMany({
         where: {
             account_id: accountId,
-            credentials_id: credentialsId,
-            region,
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && { region }),
             parent_job_id: parentJobId,
             ...(type && { type: { in: type } }),
             ...(status && { status: { in: status } }),

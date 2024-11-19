@@ -168,7 +168,7 @@ async function triggerAssessmentAfterOptimization(
         await sleep(5000);
     }
 
-    await driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, [instanceToAssess]);
+    await driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, instanceToAssess);
     await updateJobDetails(accountId, credentialsId, region, parentJobId, {
         status: JOBSTATUS.COMPLETED,
         endTime: Date.now(),

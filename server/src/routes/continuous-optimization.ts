@@ -2,7 +2,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
     fetchDriftAssessment,
-    triggerDriftAssessmentDataCollection
+    onDemandTriggerDriftAssessmentDataCollection
 } from '../operations/cont-opt-assessment-operations';
 import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
 import {
@@ -51,12 +51,12 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
                     query: { fields }
                 } = request;
-                const response = await triggerDriftAssessmentDataCollection(
+                const response = await onDemandTriggerDriftAssessmentDataCollection(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
-                    [databaseInstanceId],
+                    databaseInstanceId,
                     AssessmentTriggeredBy.USER,
                     fields
                 );

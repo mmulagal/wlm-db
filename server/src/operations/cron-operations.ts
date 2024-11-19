@@ -18,7 +18,6 @@ import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './d
 
 import {
     listAllManagedInstances,
-    listResources,
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record
@@ -28,7 +27,7 @@ import {
     manageInstanceRecommendationPreReqs,
     manageInstanceRecommendationPreReqsForManagedInstances
 } from './aws/compute-optimizer-operations';
-import { generateHash, getEc2Arn, getRedisDetails } from '../utils/utils';
+import { getEc2Arn, getRedisDetails } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
 import {
     checkComputeOptimizerEnrollmentStatus,
@@ -259,18 +258,6 @@ async function runScheduledAssessment() {
 
 async function scheduledAssessment() {
     const redisDetails = getRedisDetails();
-
-    const managedResources = await listResources();
-    if (isEmpty(managedResources)) {
-        logger.error('No managed database resources found.');
-        return;
-    }
-    const managedInstances = await listAllManagedInstances();
-    if (isEmpty(managedInstances)) {
-        logger.error('No successfully managed database instances found.');
-        return;
-    }
-
     let redisConnection: IORedis;
     try {
         redisConnection = new IORedis(redisDetails.url, {
@@ -300,79 +287,19 @@ async function scheduledAssessment() {
         const allJobsCount = await driftAssessmentQueue.getJobCounts();
         logger.info(JSON.stringify(allJobsCount));
 
-        await Promise.all(
-            managedResources.map(async managedResource => {
-                const {
-                    account_id: accountId,
-                    credentials_id: credentialsId,
-                    region,
-                    resource_id: resourceId
-                } = managedResource;
+        driftAssessmentQueue.add('driftAssessment', {
+            repeat: { every: Number(ms(config.get('redis.cron-job-interval'))) }, // 24 hours in milliseconds
+            removeOnComplete: true,
+            removeOnFail: true,
+            jobId: 'driftAssessment'
+        });
 
-                const managedInstanceIds = managedInstances
-                    .filter(instance => instance.resource_id === resourceId)
-                    .map(instance => instance.database_instance_id);
-
-                if (!isEmpty(managedInstanceIds)) {
-                    const redisJobid = generateHash(
-                        `${accountId}-${credentialsId}-${resourceId}-${managedInstanceIds.join(',')}`
-                    );
-
-                    logger.info('Adding assessment cron for ', {
-                        redisJobid,
-                        accountId,
-                        credentialsId,
-                        resourceId,
-                        managedInstanceIds
-                    });
-
-                    try {
-                        driftAssessmentQueue.add(
-                            `driftAssessmentFor-${redisJobid}`,
-                            {
-                                accountId,
-                                credentialsId,
-                                region,
-                                resourceId,
-                                managedInstanceIds
-                            },
-                            {
-                                repeat: { every: Number(ms(config.get('redis.cron-job-interval'))) }, // 24 hours in milliseconds
-                                removeOnComplete: true,
-                                removeOnFail: true,
-                                jobId: redisJobid
-                            }
-                        );
-                    } catch (error: any) {
-                        logger.error(`Error while add job to the queue. Error: ${error}`);
-                    }
-
-                    logger.info('Added assessment cron for ', {
-                        redisJobid,
-                        accountId,
-                        credentialsId,
-                        resourceId,
-                        managedInstanceIds
-                    });
-                } else {
-                    logger.info('No managed instances found for ', { accountId, credentialsId, resourceId });
-                }
-            })
-        );
         getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
             const driftAssessmentWorker = new Worker(
                 DRIFT_ASSESSMENT_QUEUE,
                 async (job: { data: DriftAssessmentJob }) => {
-                    setAsyncLocalStorageResource(ACCOUNT_ID, job.data.accountId);
                     try {
-                        await triggerDriftAssessmentDataCollection(
-                            job.data.accountId,
-                            job.data.credentialsId,
-                            job.data.region,
-                            job.data.resourceId,
-                            job.data.managedInstanceIds,
-                            AssessmentTriggeredBy.SYSTEM
-                        );
+                        await triggerDriftAssessmentDataCollection(AssessmentTriggeredBy.SYSTEM);
                     } catch (error) {
                         logger.error('Error processing job:', job, error);
                     }
@@ -407,5 +334,6 @@ export {
     updateManagedInstRecPrefs,
     scheduledAssessment,
     runScheduledAssessment,
-    purgeAssessmentData
+    purgeAssessmentData,
+    DatabaseInstancesIncludingResource
 };

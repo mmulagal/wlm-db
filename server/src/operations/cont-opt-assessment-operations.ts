@@ -11,11 +11,17 @@ import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
 import storageGoldenConfigData from './continuous-optimization/golden-configs/storage';
-import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
-import { LogDriveDetails, StorageAssessment, TempDbDriveDetails, WorkloadInstance } from '../utils/common-types';
+import { ACCOUNT_ID, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import {
+    DatabaseInstancesIncludingResource,
+    LogDriveDetails,
+    StorageAssessment,
+    TempDbDriveDetails,
+    WorkloadInstance
+} from '../utils/common-types';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
-import { listResources } from '../lib/database/db';
+import { listAllManagedInstances, listResources } from '../lib/database/db';
 import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
 import { checkComputeOptimizerEnrollmentStatus } from './recommendation-operations';
 import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
@@ -35,6 +41,8 @@ import {
     createDatabaseInstanceConfigData,
     listDatabaseInstanceConfigData
 } from '../lib/database/database-instance-config';
+import { listJobs } from '../lib/database/job';
+import { setAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -696,13 +704,32 @@ async function initiateComputeAssessment(
     }
 }
 
+async function updateMasterAssessment(accountId: string, masterAssessmentJobId: string) {
+    logger.info('Updating master assessment', { accountId, masterAssessmentJobId });
+
+    const allSubJobs = await listJobs(accountId, '', '', masterAssessmentJobId);
+    const masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
+        ? JOBSTATUS.IN_PROGRESS
+        : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
+        ? JOBSTATUS.FAILED
+        : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
+        ? JOBSTATUS.COMPLETED
+        : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
+        ? JOBSTATUS.WARNING
+        : JOBSTATUS.IN_PROGRESS;
+    await updateJobDetails(accountId, '', '', masterAssessmentJobId, {
+        status: masterJobStatus,
+        endTime: Date.now()
+    });
+}
+
 async function driftAssessmentDataCollection(
     accountId: string,
     credentialsId: string,
     region: string,
     jobId: string,
     databaseHostId: string,
-    databaseInstanceRecords: WorkloadInstance[],
+    databaseInstanceRecord: WorkloadInstance,
     fields?: string
 ) {
     logger.info('Drift assessment data collection', {
@@ -711,12 +738,9 @@ async function driftAssessmentDataCollection(
         region,
         jobId,
         databaseHostId,
-        databaseInstanceRecords,
+        databaseInstanceRecord,
         fields
     });
-
-    let errorMessage;
-    let jobStatus: string = JOBSTATUS.COMPLETED;
 
     let fieldsValues: Array<string> = [AssessmentCategories.STORAGE];
 
@@ -727,131 +751,285 @@ async function driftAssessmentDataCollection(
 
     const shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
 
+    if (shouldRunStorageAssessment) {
+        await initiateStorageAssessmentCollection(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            jobId,
+            databaseInstanceRecord
+        );
+    }
+
+    // try {
+    //     // https://jira.ngage.netapp.com/browse/DBS-4127 fix
+    //     await Promise.map(
+    //         databaseInstanceRecords,
+    //         async databaseInstanceRecord => {
+    //             if (shouldRunStorageAssessment) {
+    //                 await initiateStorageAssessmentCollection(
+    //                     accountId,
+    //                     credentialsId,
+    //                     region,
+    //                     databaseHostId,
+    //                     jobId,
+    //                     databaseInstanceRecord
+    //                 );
+    //             }
+    //         },
+    //         {
+    //             concurrency: 1
+    //         }
+    //     );
+    // } catch (error: any) {
+    //     logger.error(error);
+    //     errorMessage = error.message || 'Internal Server Error';
+    //     jobStatus = JOBSTATUS.FAILED;
+    // } finally {
+    //     const instanceNames = databaseInstanceRecords.map(i => i.name);
+    //     await updateJobDetails(accountId, credentialsId, region, jobId, {
+    //         error: errorMessage,
+    //         description: `Assessing SQL Server instance <instance name>. Review detailed findings and recommendations in <Instance optimization dashboard>`,
+    //         status: jobStatus!,
+    //         endTime: Date.now()
+    //     });
+    // }
+}
+
+// async function triggerDriftAssessmentDataCollection(
+//     accountId: string,
+//     credentialsId: string,
+//     region: string,
+//     databaseHostId: string,
+//     databaseInstanceId: string,
+//     parentJobId: string,
+//     initiatedBy: string,
+//     fields?: string
+// ) {
+//     logger.info('Trigger drift assessment', {
+//         accountId,
+//         credentialsId,
+//         region,
+//         databaseHostId,
+//         databaseInstanceId,
+//         parentJobId,
+//         initiatedBy,
+//         fields
+//     });
+
+//     const runningInstances: WorkloadInstance[] = [];
+
+//     const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
+//     if (isEmpty(resourceDetail)) {
+//         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+//         logger.error(errorMessage);
+//         throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+//     }
+
+//     const resourceName = resourceDetail.resource_name!;
+//     try {
+//         await Promise.all(
+//             databaseInstanceIds.map(async databaseInstanceId => {
+//                 const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } =
+//                     await getInstanceDetails(accountId, credentialsId, region, databaseHostId, databaseInstanceId);
+//                 const {
+//                     database_instance_name: savedInstanceName,
+//                     fsxn_ids: fileSystemId,
+//                     sqlAuthEnabled
+//                 } = newDatabaseInstanceDetails;
+
+//                 const instanceRecord: WorkloadInstance = {
+//                     id: databaseInstanceId,
+//                     name: savedInstanceName,
+//                     type: RESOURCESTYPE.MSSQL,
+//                     region,
+//                     sqlAuthEnabled: sqlAuthEnabled || false,
+//                     activeNodeInstanceid: activeNodeInstanceId,
+//                     fsxFileSystem: fileSystemId,
+//                     cloudProviderAccountId: cloudProviderAccountId || '',
+//                     resourceName: resourceName || ''
+//                 };
+//                 runningInstances.push(instanceRecord);
+//             })
+//         );
+//     } catch (error) {
+//         logger.error(`Error while fetching database instance details ${accountId}, ${databaseHostId}, ${error}`);
+//     }
+
+//     const instanceNames = runningInstances.map(i => i.name);
+//     if (!isEmpty(runningInstances)) {
+//         const jobString = `SQL Server instance(s) ${instanceNames.join(
+//             ','
+//         )} is/are being scanned for best practice misalignments.`;
+//         const job = await registerJob(accountId, credentialsId, region, {
+//             name: jobString,
+//             description: jobString,
+//             resourceName: resourceName!,
+//             initiator: initiatedBy.toLocaleUpperCase(),
+//             startTime: Date.now(),
+//             status: JOBSTATUS.IN_PROGRESS,
+//             type: JOBTYPE.ASSESSMENT
+//         });
+
+//         driftAssessmentDataCollection(
+//             accountId,
+//             credentialsId,
+//             region,
+//             job.id,
+//             databaseHostId,
+//             runningInstances,
+//             fields
+//         );
+
+//         return { jobId: job.id };
+//     }
+//     throw createError(
+//         HttpErrorCodes.NOT_FOUND,
+//         `Aborting assessment as no instances found running for ${accountId}, ${databaseHostId}.`
+//     );
+// }
+
+async function triggerAssessment(
+    managedInstance: DatabaseInstancesIncludingResource,
+    parentJobId: string,
+    fields?: string
+) {
+    logger.info('Triggering drift assessment ', { managedInstance, parentJobId, fields });
+
+    setAsyncLocalStorageResource(ACCOUNT_ID, managedInstance.account_id);
+
+    let jobStatus: string = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
+    const {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: databaseHostId,
+        database_instance_id: databaseInstanceId,
+        database_instance_name: databaseInstanceName,
+        resource
+    } = managedInstance;
+
+    const { resource_name: resourceName } = resource;
+    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+    const jobDescription = `Assessing SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in <Instance optimization dashboard>`;
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: jobDescription,
+        description: jobDescription,
+        resourceName: resourceWithInstanceName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId
+    });
     try {
-        // https://jira.ngage.netapp.com/browse/DBS-4127 fix
-        await Promise.map(
-            databaseInstanceRecords,
-            async databaseInstanceRecord => {
-                if (shouldRunStorageAssessment) {
-                    await initiateStorageAssessmentCollection(
-                        accountId,
-                        credentialsId,
-                        region,
-                        databaseHostId,
-                        jobId,
-                        databaseInstanceRecord
-                    );
-                }
-            },
-            {
-                concurrency: 1
-            }
+        const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } = await getInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+
+        const {
+            database_instance_name: savedInstanceName,
+            fsxn_ids: fileSystemId,
+            sqlAuthEnabled
+        } = newDatabaseInstanceDetails;
+
+        const instanceRecord: WorkloadInstance = {
+            id: databaseInstanceId,
+            name: savedInstanceName,
+            type: RESOURCESTYPE.MSSQL,
+            region,
+            sqlAuthEnabled: sqlAuthEnabled || false,
+            activeNodeInstanceid: activeNodeInstanceId,
+            fsxFileSystem: fileSystemId,
+            cloudProviderAccountId: cloudProviderAccountId || '',
+            resourceName: resource.resource_name || ''
+        };
+        await driftAssessmentDataCollection(
+            accountId,
+            credentialsId,
+            region,
+            jobId,
+            databaseHostId,
+            instanceRecord,
+            fields
         );
     } catch (error: any) {
         logger.error(error);
         errorMessage = error.message || 'Internal Server Error';
         jobStatus = JOBSTATUS.FAILED;
     } finally {
-        const instanceNames = databaseInstanceRecords.map(i => i.name);
         await updateJobDetails(accountId, credentialsId, region, jobId, {
             error: errorMessage,
-            description: `SQL Server instance(s) ${instanceNames.join(
-                ','
-            )} has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.`,
-            status: jobStatus!,
+            status: jobStatus,
             endTime: Date.now()
         });
+        await updateMasterAssessment(accountId, parentJobId);
     }
 }
 
-async function triggerDriftAssessmentDataCollection(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    databaseInstanceIds: string[],
-    initiatedBy: string,
-    fields?: string
-) {
-    logger.info('Trigger drift assessment', {
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseInstanceIds,
-        initiatedBy,
-        fields
-    });
+async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?: string) {
+    logger.info('Trigger drift assessment per account', { initiatedBy });
 
-    const runningInstances: WorkloadInstance[] = [];
-
-    const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    const allManagedInstances = (await listAllManagedInstances()) as DatabaseInstancesIncludingResource[];
+    if (isEmpty(allManagedInstances)) {
+        logger.error('No successfully managed database instances found.');
+        return;
     }
 
-    const resourceName = resourceDetail.resource_name!;
-    try {
-        await Promise.all(
-            databaseInstanceIds.map(async databaseInstanceId => {
-                const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } =
-                    await getInstanceDetails(accountId, credentialsId, region, databaseHostId, databaseInstanceId);
-                const {
-                    database_instance_name: savedInstanceName,
-                    fsxn_ids: fileSystemId,
-                    sqlAuthEnabled
-                } = newDatabaseInstanceDetails;
+    // group managed instances by account_id
+    const managedInstancesGroupedByAccountId: { [key: string]: DatabaseInstancesIncludingResource[] } =
+        allManagedInstances.reduce((acc: { [key: string]: DatabaseInstancesIncludingResource[] }, managedInstance) => {
+            const key = `${managedInstance.account_id}`;
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+            acc[key].push(managedInstance);
+            return acc;
+        }, {} as { [key: string]: DatabaseInstancesIncludingResource[] });
 
-                const instanceRecord: WorkloadInstance = {
-                    id: databaseInstanceId,
-                    name: savedInstanceName,
-                    type: RESOURCESTYPE.MSSQL,
-                    region,
-                    sqlAuthEnabled: sqlAuthEnabled || false,
-                    activeNodeInstanceid: activeNodeInstanceId,
-                    fsxFileSystem: fileSystemId,
-                    cloudProviderAccountId: cloudProviderAccountId || '',
-                    resourceName: resourceName || ''
-                };
-                runningInstances.push(instanceRecord);
-            })
-        );
-    } catch (error) {
-        logger.error(`Error while fetching database instance details ${accountId}, ${databaseHostId}, ${error}`);
-    }
-
-    const instanceNames = runningInstances.map(i => i.name);
-    if (!isEmpty(runningInstances)) {
-        const jobString = `SQL Server instance(s) ${instanceNames.join(
-            ','
-        )} is/are being scanned for best practice misalignments.`;
-        const job = await registerJob(accountId, credentialsId, region, {
-            name: jobString,
-            description: jobString,
-            resourceName: resourceName!,
-            initiator: initiatedBy.toLocaleUpperCase(),
-            startTime: Date.now(),
-            status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.ASSESSMENT
-        });
-
-        driftAssessmentDataCollection(
-            accountId,
-            credentialsId,
-            region,
-            job.id,
-            databaseHostId,
-            runningInstances,
-            fields
-        );
-
-        return { jobId: job.id };
-    }
-    throw createError(
-        HttpErrorCodes.NOT_FOUND,
-        `Aborting assessment as no instances found running for ${accountId}, ${databaseHostId}.`
+    await Promise.all(
+        Object.entries(managedInstancesGroupedByAccountId).map(async ([accountId, managedInstances]) => {
+            if (isEmpty(managedInstances)) {
+                const errorMessage = `No managed instances found for account ${accountId}.`;
+                logger.error(errorMessage);
+            } else {
+                const jobDescription = `Assess ${managedInstances.length} managed SQL Server instances in your account ${accountId} for best practice misalignments.`;
+                const { id: parentJobId } = await registerJob(accountId, '', '', {
+                    name: jobDescription,
+                    description: jobDescription,
+                    resourceName: accountId,
+                    initiator: initiatedBy.toLocaleUpperCase(),
+                    startTime: Date.now(),
+                    status: JOBSTATUS.IN_PROGRESS,
+                    type: JOBTYPE.ASSESSMENT
+                });
+                try {
+                    await Promise.all(
+                        managedInstances.map(
+                            async managedInstance => {
+                                await triggerAssessment(managedInstance, parentJobId, fields);
+                            },
+                            {
+                                concurrency: 1
+                            }
+                        )
+                    );
+                } catch (error: any) {
+                    logger.info('Error while triggering drift assessment for account', { accountId, error });
+                    await updateJobDetails(accountId, '', '', parentJobId, {
+                        status: JOBSTATUS.FAILED,
+                        error: error.message,
+                        endTime: Date.now()
+                    });
+                }
+            }
+        })
     );
 }
 
@@ -916,6 +1094,77 @@ function getMatchingAssessmentStatus(finding: string) {
     }
 }
 
+async function onDemandTriggerDriftAssessmentDataCollection(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseInstanceId: string,
+    databaseHostId: string,
+    initiatedBy: string,
+    fields?: string
+) {
+    logger.info('On-demand trigger drift assessment', {
+        accountId,
+        credentialsId,
+        region,
+        databaseInstanceId,
+        databaseHostId,
+        initiatedBy,
+        fields
+    });
+
+    const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+
+    const resourceName = resourceDetail.resource_name!;
+    try {
+        const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } = await getInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+        const {
+            database_instance_name: savedInstanceName,
+            fsxn_ids: fileSystemId,
+            sqlAuthEnabled
+        } = newDatabaseInstanceDetails;
+
+        const instanceRecord: WorkloadInstance = {
+            id: databaseInstanceId,
+            name: savedInstanceName,
+            type: RESOURCESTYPE.MSSQL,
+            region,
+            sqlAuthEnabled: sqlAuthEnabled || false,
+            activeNodeInstanceid: activeNodeInstanceId,
+            fsxFileSystem: fileSystemId,
+            cloudProviderAccountId: cloudProviderAccountId || '',
+            resourceName: resourceName || ''
+        };
+
+        const jobString = `SQL Server instance ${savedInstanceName} is being scanned for best practice misalignments.`;
+        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+            name: jobString,
+            description: jobString,
+            resourceName: resourceName!,
+            initiator: initiatedBy.toLocaleUpperCase(),
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.ASSESSMENT
+        });
+        driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, instanceRecord, fields);
+
+        return { jobId };
+    } catch (error) {
+        logger.error(`Error while fetching database instance details ${accountId}, ${databaseHostId}, ${error}`);
+    }
+}
+
 export {
     triggerDriftAssessmentDataCollection,
     fetchDriftAssessment,
@@ -923,5 +1172,6 @@ export {
     getHeadroomDrift,
     getLogVolumeDrift,
     getTempDbVolumeDrift,
-    getFsxStorageDetails
+    getFsxStorageDetails,
+    onDemandTriggerDriftAssessmentDataCollection
 };
