@@ -1590,23 +1590,53 @@ function assessmentJobData(
         sqlServerDeploymentType: 'MSSQL'
     };
     const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
-    return [
-        {
-            id: parentJobId,
+    const jobs = [];
+    jobs.push({
+        id: parentJobId,
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        name: `Assess ${instanceNames.length} managed SQL Server instances in your account (<Number of Instances>) for best practice misalignments`,
+        status: JOBSTATUS.COMPLETED,
+        resource_name: accountId,
+        type: JOBTYPE.ASSESSMENT,
+        start_time: new Date(Date.now()),
+        end_time: new Date(Date.now()),
+        initiator: 'SYSTEM'
+    });
+    jobs.push({
+        id: randomUUID(),
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        name: `Assessing SQL Server host ${resourceName} compute right sizing`,
+        status: JOBSTATUS.COMPLETED,
+        resource_name: resourceName,
+        parent_job_id: parentJobId,
+        type: JOBTYPE.ASSESSMENT,
+        start_time: new Date(Date.now()),
+        end_time: new Date(Date.now()),
+        initiator: 'SYSTEM'
+    });
+    instanceNames.forEach(instanceName => {
+        jobs.push({
+            id: randomUUID(),
             account_id: accountId,
             credentials_id: credentialsId,
             region,
-            name: `SQL Server instance(s) ${instanceNames.join(
-                ','
-            )} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
+            name: `Assessing SQL Server instance ${resourceName}\\${instanceName}`,
+            description: `Assessing SQL Server instance ${resourceName}\\${instanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJobString}`,
             status: JOBSTATUS.COMPLETED,
-            resource_name: resourceName,
+            resource_name: `${resourceName}\\${instanceName}`,
+            parent_job_id: parentJobId,
             type: JOBTYPE.ASSESSMENT,
-            start_time: new Date(Date.now() - 390000),
+            start_time: new Date(Date.now()),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
-        }
-    ];
+        });
+    });
+
+    return jobs;
 }
 
 function optimizeStorageJobData(
