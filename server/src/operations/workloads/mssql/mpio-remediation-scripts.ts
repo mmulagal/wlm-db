@@ -1,10 +1,7 @@
 import { OptimizeMpioPolicyParams } from '../../../utils/common-types';
 
 const CHECK_MPIO_POLICY = `
-Start-Transcript -Path "C:\\cfn\\log\\mpio-policy-remediation.log.txt" -Append | Out-Null
 $currentMpioPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
-Write-Output "Current MPIO policy is $currentMpioPolicy"
-Stop-Transcript | Out-Null
 if ($currentMpioPolicy -eq "RR") {
    return @{"remediated" = $true
              "policy" = $currentMpioPolicy} | ConvertTo-Json
@@ -36,11 +33,7 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPr
         Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR   
     }
    
-    if($sqlDeploymentType -eq "standalone") {
-        Write-output "Restarting standalone instance"
-        ${RESTART_INSTANCE}
-    }
-    elseif($sqlDeploymentType -eq "fci")  {
+    if($sqlDeploymentType -eq "fci")  {
         if($changeClusterOwnership -eq $true) {
             
             $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server (${mpioParams.instanceName})")
@@ -53,12 +46,7 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPr
                 runningOnPrimaryNode ? mpioParams.standbyNodeName : mpioParams.activeNodeName
             }
 
-        }
-        
-        if($currentPolicy -ne "RR") {
-            Write-output "Restarting FCI instance"
-            ${RESTART_INSTANCE}
-        }       
+        }     
     }
     Stop-Transcript | Out-Null
 `;

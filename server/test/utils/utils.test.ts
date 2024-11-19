@@ -122,6 +122,6 @@ describe(' Secrets Manager string', () => {
     it('should return region name for region key', () => {
         expect(getRegionDetails('42').name).toBeDefined();
         expect(getRegionDetails('42').name).toBe('');
-        expect(getRegionDetails('eu-west-1')).toEqual({name: 'Europe (Ireland)', code: 'eu-west-1'});
+        expect(getRegionDetails('eu-west-1')).toEqual({ name: 'Europe (Ireland)', code: 'eu-west-1' });
     });
 });
