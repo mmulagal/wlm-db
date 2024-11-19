@@ -37,7 +37,7 @@ import {
     endpointData,
     sandboxJobData,
     assessmentJobData,
-    optimizeJobData,
+    optimizeStorageJobData,
     optimizeOperatingSystemJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
@@ -556,12 +556,23 @@ async function createAssessmentJobMockData(
     resourceName: string,
     instanceNames: string[],
     credentialsId: string,
-    region: string
+    region: string,
+    InstanceIds: string,
+    resourceId: string
 ) {
     logger.debug('Generate mock data for job table', accountId, resourceName, credentialsId, region);
     accountId = checkAccount(accountId);
     const parentJobId = randomUUID();
-    return assessmentJobData(accountId, resourceName, instanceNames, credentialsId, region, parentJobId);
+    return assessmentJobData(
+        accountId,
+        resourceName,
+        instanceNames,
+        credentialsId,
+        region,
+        parentJobId,
+        InstanceIds,
+        resourceId
+    );
 }
 
 async function createOptimizeJobMockData(
@@ -569,12 +580,31 @@ async function createOptimizeJobMockData(
     resourceName: string,
     instanceName: string,
     credentialsId: string,
-    region: string
+    region: string,
+    instanceId: string,
+    resourceId: string
 ) {
-    logger.debug('Generate optimize mock data for job table', accountId, resourceName, credentialsId, region);
+    logger.debug(
+        'Generate optimize mock data for job table',
+        accountId,
+        resourceName,
+        credentialsId,
+        region,
+        instanceId,
+        resourceId
+    );
     accountId = checkAccount(accountId);
     const parentJobId = randomUUID();
-    return optimizeJobData(accountId, resourceName, instanceName, credentialsId, region, parentJobId);
+    return optimizeStorageJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
 }
 
 async function createOperatingSystemOptimizeJobMockData(
@@ -582,18 +612,30 @@ async function createOperatingSystemOptimizeJobMockData(
     resourceName: string,
     instanceName: string,
     credentialsId: string,
-    region: string
+    region: string,
+    instanceId: string,
+    resourceId: string
 ) {
-    logger.debug(
-        'Generate operating system optimize mock data for job table',
+    logger.debug('Generate operating system optimize mock data for job table', {
         accountId,
         resourceName,
         credentialsId,
-        region
-    );
+        region,
+        instanceId,
+        resourceId
+    });
     accountId = checkAccount(accountId);
     const parentJobId = randomUUID();
-    return optimizeOperatingSystemJobData(accountId, resourceName, instanceName, credentialsId, region, parentJobId);
+    return optimizeOperatingSystemJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
 }
 
 export {

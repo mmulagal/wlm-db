@@ -757,11 +757,19 @@ async function driftAssessmentDataCollection(
         jobStatus = JOBSTATUS.FAILED;
     } finally {
         const instanceNames = databaseInstanceRecords.map(i => i.name);
+        const instanceDetailsForJob = {
+            hostName: databaseInstanceRecords[0].resourceName,
+            resourceId: databaseHostId,
+            databaseInstanceId: databaseInstanceRecords.map(i => i.id),
+            databaseInstanceName: instanceNames.join(','),
+            sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+        };
+        const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
         await updateJobDetails(accountId, credentialsId, region, jobId, {
             error: errorMessage,
             description: `SQL Server instance(s) ${instanceNames.join(
                 ','
-            )} has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.`,
+            )} has been scanned for best practice misalignments. Review detailed findings and recommendations in.;${instanceDetailsForJobString}`,
             status: jobStatus!,
             endTime: Date.now()
         });
