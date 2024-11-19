@@ -1,12 +1,7 @@
-param (
+    param (
     [string[]]$InstanceNames = @(),
     [string]$SqlUsername
 )
-
-$osEdition = (Get-WmiObject -Class Win32_OperatingSystem).Caption
-$cpuCount = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
-$ramSize = (Get-WmiObject -Class Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1GB
-
 
 function Get-FCIName {
     param (
@@ -48,6 +43,56 @@ function Invoke-SQLQuery {
     }
 }
 
+
+function GetDriveDetails{
+
+ param (
+        [string]$nodeName
+    )
+# Define the script block to run on the remote node
+$scriptBlock = {
+    # Retrieve the disk drives with DeviceID and Model properties
+    $disks = Get-CimInstance -ClassName Win32_DiskDrive | Select-Object DeviceID, Model
+
+    # Initialize an array to store the results
+    $results = @()
+
+    # Iterate over each disk
+    foreach ($disk in $disks) {
+        # Retrieve the partitions associated with the current disk
+        $partitions = Get-CimInstance -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass=Win32_DiskDriveToDiskPartition"
+
+        # Iterate over each partition
+        foreach ($partition in $partitions) {
+            # Retrieve the logical disks associated with the current partition
+            $logicalDisks = Get-CimInstance -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass=Win32_LogicalDiskToPartition"
+
+            # Iterate over each logical disk
+            foreach ($logicalDisk in $logicalDisks) {
+                # Create a custom object with the desired properties
+                $result = [PSCustomObject]@{
+                    DeviceID = $disk.DeviceID
+                    Model = $disk.Model
+                    DriveLetter = $logicalDisk.DeviceID
+                }
+
+                # Add the result to the array
+                $results += $result
+            }
+        }
+    }
+
+    # Convert the results to JSON and return the JSON string directly
+    $results | ConvertTo-Json -Depth 3
+}
+
+# Run the script block on the remote node and capture the JSON string
+$jsonResults = Invoke-Command -ComputerName $nodeName -ScriptBlock $scriptBlock
+return $jsonResults
+    
+    }
+ 
+
 function GetClusterNodeDetails {
 
  param (
@@ -62,16 +107,29 @@ function GetClusterNodeDetails {
 
     # Retrieve RAM size
     $ramSize = (Get-CimInstance -ClassName Win32_PhysicalMemory -ComputerName $nodeName | Measure-Object -Property Capacity -Sum).Sum / 1GB
+
+    $networkConfiguration = Get-CimInstance -ClassName Win32_NetworkAdapter -ComputerName $nodeName | Where-Object { $_.Speed -ne $null } | Select-Object Name, @{Name='SpeedMbps'; Expression = { $_.Speed / 1MB * 8 } }, AdapterType | ConvertTo-Json
        
+    $driveDetails = GetDriveDetails($nodeName)
+
+  
 
    $nodeDetails = @{
         "odEdition"              = $osEdition
         "numberOfVirtualCPUs"  = $cpuCount
         "RAMSize"           = $ramSize
+        "networkCOnfiguration" = $networkConfiguration
+        "driveDetails" = $driveDetails
     }
     return $nodeDetails
 }
 
+
+$osEdition = (Get-WmiObject -Class Win32_OperatingSystem).Caption
+$cpuCount = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
+$ramSize = (Get-WmiObject -Class Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1GB
+$networkConfiguration = Get-CimInstance -ClassName Win32_NetworkAdapter | Where-Object { $_.Speed -ne $null } | Select-Object Name, @{Name='SpeedMbps';Expression={ $_.Speed / 1MB }}, AdapterType
+$driveDetails = GetDriveDetails(hostname)
 
 
 if($SqlUsername){
@@ -102,7 +160,8 @@ $hostDetails = @{
     "osEdition" = $osEdition
     "numberOfVirtualCPUs" = $cpuCount
     "RAMSize" = $ramSize
-    
+    "networkConfiguration" = $networkConfiguration
+    "driveDetails" = $driveDetails
 }
 
  $windowsConfig = @{
@@ -126,8 +185,6 @@ if($belongsToCluster){
             $node = $clusterResult
         }
     }
-
-
 }
 
 $sqlServiceList = Get-WmiObject win32_service | Where-Object { $_.DisplayName -like 'sql server (*' }
@@ -188,26 +245,34 @@ SET NOCOUNT ON; SELECT SERVERPROPERTY('Collation') AS ServerCollation;
 "@
 
 cpuUtilization = @"
-SET NOCOUNT ON; SET QUOTED_IDENTIFIER ON; WITH CPUUsage AS (
-    SELECT
-        DATEADD(ms, -1 * (rb.timestamp - si.ms_ticks), GETDATE()) AS EventTime,
-        CAST(x.record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]', 'int') AS INT) AS SystemIdle,
-        CAST(x.record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]', 'int') AS INT) AS SQLProcessUtilization
-    FROM
-        sys.dm_os_ring_buffers AS rb
-    CROSS JOIN
-        sys.dm_os_sys_info AS si
-    CROSS APPLY
-        (SELECT CONVERT(XML, rb.record) AS record) AS x
-    WHERE
-        rb.ring_buffer_type = N'RING_BUFFER_SCHEDULER_MONITOR'
-)
-SELECT
-    MAX(100 - SystemIdle) AS MaxCPUUtilizationPercentage
-FROM
-    CPUUsage
-WHERE 
-    EventTime >= DATEADD(hour, -6, GETDATE());
+SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
+
+DECLARE @ts_now bigint = (SELECT ms_ticks FROM sys.dm_os_sys_info WITH (NOLOCK));
+DECLARE @start_time datetime = DATEADD(HOUR, -6, GETDATE());
+
+SELECT TOP(1) 
+    SQLProcessUtilization AS [maxCpuUtilization],
+    DATEADD(ms, -1 * (@ts_now - [timestamp]), GETDATE()) AS [Event Time]
+FROM (
+    SELECT 
+        record.value('(./Record/@id)[1]', 'int') AS record_id,
+        record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]', 'int') AS [SystemIdle],
+        record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]', 'int') AS [SQLProcessUtilization],
+        [timestamp]
+    FROM (
+        SELECT 
+            [timestamp], 
+            CONVERT(xml, record) AS [record]
+        FROM sys.dm_os_ring_buffers WITH (NOLOCK)
+        WHERE ring_buffer_type = N'RING_BUFFER_SCHEDULER_MONITOR'
+            AND record LIKE N'%<SystemHealth>%'
+    ) AS x
+    WHERE DATEADD(ms, -1 * (@ts_now - [timestamp]), GETDATE()) >= @start_time
+) AS y
+ORDER BY SQLProcessUtilization DESC
+FOR JSON PATH;
+
 "@
 
 isHadrEnabled = @"
@@ -318,6 +383,13 @@ BEGIN
 END
 "@
 
+vcpuUsedByTheInstance = @"
+SET NOCOUNT ON;
+SELECT COUNT(*)
+FROM sys.dm_os_schedulers
+WHERE status = 'VISIBLE ONLINE';
+"@
+
 storageDetailsByDB = @"
 SET NOCOUNT ON;
 WITH db_size_cte AS (
@@ -416,11 +488,11 @@ ForEach ($instance in $finalInstancesList) {
         $instanceResults['deploymentType'] = 'fci'
         $clusterNodeQuery = "SET NOCOUNT ON; 
         SELECT 
-        NodeName, 
+        NodeName as nodeName, 
         CASE 
             WHEN is_current_owner = 1 THEN 'Primary'
             ELSE 'Standby'
-        END AS NodeRole
+        END AS nodeRole
         FROM sys.dm_os_cluster_nodes FOR JSON PATH; "
         $instanceResults["ownerNodes"] = Invoke-SQLQuery -Query $clusterNodeQuery -InstanceName $instance -SqlUsername $SqlUsername -SqlPassword $SqlPassword
         break
@@ -430,9 +502,8 @@ ForEach ($instance in $finalInstancesList) {
         break
     }
     default {
-        $instanceResults['deploymentType'] = 'standalone'
-        $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') FOR JSON PATH; "
-        $instanceResults["ownerNode"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instance -SqlUsername $SqlUsername -SqlPassword $SqlPassword
+        $instanceResults['deploymentType'] = 'standalone'   
+        $instanceResults["ownerNode"] = @{"nodeName" = hostname}
     }
 }
 
@@ -456,4 +527,4 @@ $outputFilePath = Join-Path -Path $PSScriptRoot -ChildPath ("TCOResponse-" + (Ge
  
 $jsonResults | Out-File -FilePath $outputFilePath 
 
-Write-Output "TCO data collection completed. Output file path: $outputFilePath" 
+Write-Output "TCO data collection completed. Output file path: $outputFilePath"
