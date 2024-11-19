@@ -38,6 +38,19 @@ const CloudFormationTemplateSchema = {
     }
 };
 
+// PGSQL CloudFormation template
+const PgSqlCloudFormationTemplateSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
+    summary: 'Create PgSQL CloudFormation template',
+    headers: CloudFormationTemplateHeader,
+    description: 'Create CloudFormation template in URL, YAML and CLI format for PgSql deployment',
+    body: PgSqlCloudFormationTemplateRequestBody,
+    response: {
+        200: CloudFormationStaticTemplateResponse
+    }
+};
+
 // Create CloudFormation template or Deploy Schema
 const DeployTemplateSchema = {
     ...baseRequest,
@@ -123,5 +136,6 @@ export {
     FsxAvailableRegionsForThroughputSchema,
     CollationListSchema,
     PgSqlDeployTemplateSchema,
-    TerraformSetupSchema
+    TerraformSetupSchema,
+    PgSqlCloudFormationTemplateSchema
 };
