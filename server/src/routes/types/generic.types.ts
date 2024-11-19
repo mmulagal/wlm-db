@@ -7,7 +7,7 @@ const GenericHeaders = Type.Object({
 type GenericHeadersType = Static<typeof GenericHeaders>;
 
 const AccountIdParams = Type.Object({
-    accountId: Type.String({ minLength: 1 })
+    accountId: Type.String({ description: 'Workload Factory account ID.', minLength: 1 })
 });
 
 const AccountIdRegionParams = Type.Object({
@@ -26,6 +26,22 @@ const CredentialsIdParams = Type.Object({
     region: Type.String({ description: 'AWS region hosting EC2 instances', minLength: 1 })
 });
 
+const RegionDetails = Type.Object({
+    code: Type.Optional(Type.String({ description: 'Region code for AWS region', minLength: 1 })),
+    name: Type.Optional(Type.String({ description: 'Region name for AWS region' }))
+});
+type RegionDetailsType = Static<typeof RegionDetails>;
+
+const CredentialsIdRegionQueryParams = Type.Object({
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String())
+});
+
+const CredentialsIdRegionParams = Type.Object({
+    credentialsId: Type.Optional(Type.String()),
+    region: RegionDetails
+});
+
 type AccountIdParamsType = Static<typeof AccountIdParams>;
 
 const nextTokenQueryString = Type.Object({
@@ -39,6 +55,10 @@ export {
     AccountIdRegionParams,
     AccountIdCredentialsIdParams,
     AccountIdParamsType,
+    RegionDetails,
+    RegionDetailsType,
     CredentialsIdParams,
+    CredentialsIdRegionParams,
+    CredentialsIdRegionQueryParams,
     nextTokenQueryString
 };

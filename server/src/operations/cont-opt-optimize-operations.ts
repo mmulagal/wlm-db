@@ -106,11 +106,13 @@ async function handleOptimizeJobCreation(
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName as string,
         typeFilter: jobType,
+        region,
+        credentialsId,
         ...(parentJobId && { parentJobId })
     };
     const {
         items: [job]
-    } = await getJobs(accountId, credentialsId, region, filterParams);
+    } = await getJobs(accountId, filterParams);
 
     if (job) {
         const timeDifferenceInMinutes = getTimeDifferenceInMinutes(job.startTime);
