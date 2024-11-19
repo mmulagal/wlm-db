@@ -766,40 +766,6 @@ async function driftAssessmentDataCollection(
             databaseInstanceRecord
         );
     }
-
-    // try {
-    //     // https://jira.ngage.netapp.com/browse/DBS-4127 fix
-    //     await Promise.map(
-    //         databaseInstanceRecords,
-    //         async databaseInstanceRecord => {
-    //             if (shouldRunStorageAssessment) {
-    //                 await initiateStorageAssessmentCollection(
-    //                     accountId,
-    //                     credentialsId,
-    //                     region,
-    //                     databaseHostId,
-    //                     jobId,
-    //                     databaseInstanceRecord
-    //                 );
-    //             }
-    //         },
-    //         {
-    //             concurrency: 1
-    //         }
-    //     );
-    // } catch (error: any) {
-    //     logger.error(error);
-    //     errorMessage = error.message || 'Internal Server Error';
-    //     jobStatus = JOBSTATUS.FAILED;
-    // } finally {
-    //     const instanceNames = databaseInstanceRecords.map(i => i.name);
-    //     await updateJobDetails(accountId, credentialsId, region, jobId, {
-    //         error: errorMessage,
-    //         description: `Assessing SQL Server instance <instance name>. Review detailed findings and recommendations in <Instance optimization dashboard>`,
-    //         status: jobStatus!,
-    //         endTime: Date.now()
-    //     });
-    // }
 }
 
 // async function triggerDriftAssessmentDataCollection(
@@ -926,10 +892,10 @@ async function triggerAssessment(
         sqlServerDeploymentType: RESOURCESTYPE.MSSQL
     });
 
+    const jobName = `Assessing SQL Server instance ${resourceWithInstanceName}`;
     const jobDescription = `Assessing SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
-
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: jobDescription,
+        name: jobName,
         description: jobDescription,
         resourceName: resourceWithInstanceName,
         startTime: Date.now(),
@@ -1022,6 +988,23 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     status: JOBSTATUS.IN_PROGRESS,
                     type: JOBTYPE.ASSESSMENT
                 });
+
+                const allManagedResources = managedInstances.map(instance => instance.resource.resource_name);
+
+                allManagedResources.forEach(async resource => {
+                    const jobString = `Assessing SQL Server host ${resource} compute right sizing`;
+                    await registerJob(accountId, '', '', {
+                        name: jobString,
+                        description: jobString,
+                        resourceName: resource!,
+                        startTime: Date.now(),
+                        endTime: Date.now(),
+                        status: JOBSTATUS.COMPLETED,
+                        type: JOBTYPE.ASSESSMENT,
+                        parentJobId
+                    });
+                });
+
                 try {
                     await Promise.all(
                         managedInstances.map(

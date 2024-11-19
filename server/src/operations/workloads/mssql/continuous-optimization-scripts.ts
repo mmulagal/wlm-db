@@ -371,103 +371,91 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     
     ${ontapRestRequest}
 
-    if([string]::IsNullOrEmpty($instanceRecord.mappedVolumesUuids)) {
-        $DriftAssessmentData['errors']['volumes'] = 'Unable to fetch volume details.'
-    }
-    else{
-        $APIEndpoint = '/storage/volumes'
-        $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
-        $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
-        
-        
-        # Volume details
-        try{
-            $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
-            $Volumes = $Response.records
 
-            $VolumeList = @()
-            # loop through each volume and get data
-            $SvmNames = @()
-            foreach ($perVolumeData in $Volumes) {
-                # Using PSCustomObject
-                $perVolRow = [PSCustomObject]@{
-                    name = $perVolumeData.name
-                    'thin-provision' = $perVolumeData.guarantee.honored
-                    'space-guarantee' = $perVolumeData.guarantee.type
-                    'autosize-mode' = $perVolumeData.autosize.mode
-                    'fractional-reserve' = $perVolumeData.space.fractional_reserve
-                    'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
-                    'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
-                    'tiering-policy' = $perVolumeData.tiering.policy
-                    'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
-                }
-                if($perVolumeData.autosize.mode -ne 'off') {
-                    $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "on"
-                }
-                else {
-                    $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "off"
-                }
-                $VolumeList += $($perVolRow)
-                $SvmNames += $perVolumeData.svm.name
-            }
-            $DriftAssessmentData['volumes'] = @($($VolumeList))
-        } catch {$DriftAssessmentData['errors']['volumes'] = $_.Exception.Message}
-    }
+    $APIEndpoint = '/storage/volumes'
+    $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
+    $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
     
-    if([string]::IsNullOrEmpty($instanceRecord.mappedVolumeNames)) {
-       $DriftAssessmentData['errors']['volumes-footprint'] = 'Unable to fetch volume details.'
-    }
-    else {
-        # Volume footprint details
-        $SvmNamesWithDelimiter = $SvmNames -join '|'
-        $APIEndpoint = '/private/cli/volume/show-footprint'
-        $APIQueryFilter = "vserver=$SvmNamesWithDelimiter,volume=${instanceRecord.mappedVolumeNames?.join('|')}"
-        $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
-
-        try{
-            $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
-            $Volumes = $Response.records
-
-            $isPerformanceTier100Percent = $true
-            # loop through each volume and get data
-            foreach ($perVolumeData in $Volumes) {
-            if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
-                    $isPerformanceTier100Percent = $false
-                    break
-            }
-            }
-        } catch {$DriftAssessmentData['errors']['volumes-footprint'] = $_.Exception.Message}
-    }
     
-    if([string]::IsNullOrEmpty($instanceRecord.mappedVolumeNames)) {
-        $DriftAssessmentData['errors']['luns'] = 'Unable to fetch lun details.'
-    }
-    else {
-        # Lun details
-        $APIEndpoint = '/storage/luns'
-        $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
-        $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
-        
-        try{
-            $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
-            $Luns = $Response.records
-        
-            $LunsList = @()
+    # Volume details
+    try{
+        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
+        $Volumes = $Response.records
 
-            # loop through luns and get per lun data
-            foreach ($perLunData in $Luns) {
-                # Using PSCustomObject
-                $perLunRow = [PSCustomObject]@{
-                    name = $($perLunData.name)
-                    'os-type' = $($perLunData.os_type)
-                    'space-reservation-enabled' = $($perLunData.space.guarantee.requested)
-                    'space-allocation-allocated' = $($perLunData.space.scsi_thin_provisioning_support_enabled)
-                }
-                $LunsList += $($perLunRow)
+        $VolumeList = @()
+        # loop through each volume and get data
+        $SvmNames = @()
+        foreach ($perVolumeData in $Volumes) {
+            # Using PSCustomObject
+            $perVolRow = [PSCustomObject]@{
+                name = $perVolumeData.name
+                'thin-provision' = $perVolumeData.guarantee.honored
+                'space-guarantee' = $perVolumeData.guarantee.type
+                'autosize-mode' = $perVolumeData.autosize.mode
+                'fractional-reserve' = $perVolumeData.space.fractional_reserve
+                'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
+                'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
+                'tiering-policy' = $perVolumeData.tiering.policy
+                'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
             }
-            $DriftAssessmentData['luns'] = @($($LunsList))
-        } catch {$DriftAssessmentData['errors']['luns'] = $_.Exception.Message}
-    }
+            if($perVolumeData.autosize.mode -ne 'off') {
+                $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "on"
+            }
+            else {
+                $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "off"
+            }
+            $VolumeList += $($perVolRow)
+            $SvmNames += $perVolumeData.svm.name
+        }
+        $DriftAssessmentData['volumes'] = @($($VolumeList))
+    } catch {$DriftAssessmentData['errors']['volumes'] = $_.Exception.Message}
+    
+    # Volume footprint details
+    $SvmNamesWithDelimiter = $SvmNames -join '|'
+    $APIEndpoint = '/private/cli/volume/show-footprint'
+    $APIQueryFilter = "vserver=$SvmNamesWithDelimiter,volume=${instanceRecord.mappedVolumeNames?.join('|')}"
+    $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
+
+    try{
+        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
+        $Volumes = $Response.records
+
+        $isPerformanceTier100Percent = $true
+        # loop through each volume and get data
+        foreach ($perVolumeData in $Volumes) {
+        if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
+                $isPerformanceTier100Percent = $false
+                break
+        }
+        }
+    } catch {$DriftAssessmentData['errors']['volumes-footprint'] = $_.Exception.Message}
+    
+   
+    # Lun details
+    $APIEndpoint = '/storage/luns'
+    $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
+    $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
+    
+    try{
+        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
+        $Luns = $Response.records
+    
+        $LunsList = @()
+
+        # loop through luns and get per lun data
+        foreach ($perLunData in $Luns) {
+            # Using PSCustomObject
+            $perLunRow = [PSCustomObject]@{
+                name = $($perLunData.name)
+                'os-type' = $($perLunData.os_type)
+                'space-reservation-enabled' = $($perLunData.space.guarantee.requested)
+                'space-allocation-allocated' = $($perLunData.space.scsi_thin_provisioning_support_enabled)
+            }
+            $LunsList += $($perLunRow)
+        }
+        $DriftAssessmentData['luns'] = @($($LunsList))
+    } catch {$DriftAssessmentData['errors']['luns'] = $_.Exception.Message}
+    
 
     # gather storage layout data
     try{
