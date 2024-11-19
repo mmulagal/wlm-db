@@ -1159,10 +1159,10 @@ async function setMpioPolicyToRoundRobin(
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     const jobDescription =
         sqlDeploymentType !== SqlServerDeploymentModel.SQL_STANDALONE_SHORT
-            ? `Setting MPIO policy to Round Robin on ${serverNameWithHostName}, rebooting instance and changing cluster ownership on ${
+            ? `Setting MPIO policy to Round Robin on ${serverNameWithHostName} and changing cluster ownership on ${
                   runningOnPrimaryNode ? 'primary node' : 'standby node'
               }.`
-            : `Setting MPIO policy to Round Robin on ${serverNameWithHostName} and rebooting instance.`;
+            : `Setting MPIO policy to Round Robin on ${serverNameWithHostName}.`;
     let jobError;
 
     const jobId = await handleOptimizeJobCreation(
@@ -1177,7 +1177,7 @@ async function setMpioPolicyToRoundRobin(
     );
 
     try {
-        // Set MPIO policy to Round Robin and reboot instance
+        // Set MPIO policy to Round Robin
         const ssmCommand = REMEDIATE_MPIO_POLICY(optimizeMpioPolicyParams, runningOnPrimaryNode);
         await callSsmExecution(
             credentialsId,
@@ -1248,8 +1248,7 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
         // For primary node
         // Check if MPIO policy is set to Round Robin
         // If not, set MPIO policy to Round Robin
-        // If standalone, reboot instance
-        // If FCI, change cluster ownership and reboot instance
+        // If FCI, change cluster ownership
         await validateAndRemediateMpioPolicy(optimizeMpioPolicyParams, true);
 
         if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
@@ -1257,7 +1256,6 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
             // Check if MPIO policy is set to Round Robin
             // Case Not set to RR on standby
             // 1. Check if ownership was changed from primary to standby, if yes change back to primary
-            // 2. Reboot instance
             // Case set to RR on standby
             // 1. Check if ownership was changed from primary to standby, if yes change back to primary. Else no action needed
             await validateAndRemediateMpioPolicy(optimizeMpioPolicyParams, false);
