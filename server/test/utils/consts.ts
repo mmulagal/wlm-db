@@ -6,6 +6,7 @@ const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 const DEFAULT_AWS_CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 const DEFAULT_AWS_REGION = 'us-east-1';
 
+const TEST_STOPPED_EC2_INSTANCE_ID = 'i-07e76a4b916548dc0';
 const NETWORKING_CONFIGURATION = {
     vpcId: 'vpc-84b3afe6',
     vpcCidr: '172.31.0.0/16',
@@ -110,6 +111,7 @@ const STANDBY_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
 export {
+    TEST_STOPPED_EC2_INSTANCE_ID,
     SQL_CONFIGURATION,
     FSX_CONFIGURATION,
     AD_CONFIGURATION,

@@ -13,7 +13,9 @@ import {
     isEbsAwsBackupEnabled,
     getInstanceDetailsByPrivateIp,
     getInstanceTypesFromInstanceRequirementsForManagedInstances,
-    getInstanceTypesFromInstanceRequirements
+    getInstanceTypesFromInstanceRequirements,
+    waitForInstanceToBeStopped,
+    instanceTypeChangePreReqs
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -22,7 +24,12 @@ import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/aws/cloud-watch-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
+import {
+    DEFAULT_AWS_CREDENTIALS_ID,
+    DEFAULT_AWS_CREDENTIALS_TYPE,
+    ACCOUNT_ID,
+    TEST_STOPPED_EC2_INSTANCE_ID
+} from '../../utils/consts';
 
 const WINDOWS = 'windows';
 const SQL = 'sql';
@@ -131,5 +138,22 @@ describe('EC2 Operations', () => {
             'AOAG'
         );
         expect(response).toBeDefined();
+    });
+
+    it('Wait for instance to be stopped', async () => {
+        const response = await waitForInstanceToBeStopped(
+            credentialsId,
+            DEFAULT_AWS_REGION,
+            TEST_STOPPED_EC2_INSTANCE_ID
+        );
+        expect(response).toBeTruthy();
+    });
+
+    it('Instance type change pre-reqs', async () => {
+        try {
+            await instanceTypeChangePreReqs(credentialsId, DEFAULT_AWS_REGION, ACCOUNT_ID, ['i-12345']);
+        } catch (error) {
+            expect(error).toBeUndefined();
+        }
     });
 });

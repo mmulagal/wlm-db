@@ -16,6 +16,7 @@ import {
     CpuManufacturer
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
+import ms from 'ms';
 import {
     AMI_OWNERS,
     AWSQueryFields,
@@ -41,11 +42,12 @@ import {
     describeSnapshots,
     describeInstance,
     describeInstanceType,
-    getInstanceTypesFromInstanceRequirementsCommand
+    getInstanceTypesFromInstanceRequirementsCommand,
+    describeAddresses
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
-import { filterSqlAmis, getResourceNameFromTags, isDemo } from '../../utils/utils';
+import { filterSqlAmis, getResourceNameFromTags, isDemo, sleep } from '../../utils/utils';
 import { getEbsVolumeUtilization, getInstanceUtilization } from './cloud-watch-operations';
 import {
     ResourceDetails,
@@ -57,6 +59,7 @@ import {
     NodeDetails
 } from '../../utils/common-types';
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
+import describeAutoscalingInstances from '../../lib/aws/auto-scaling';
 
 const logger = getLogger();
 
@@ -857,6 +860,110 @@ async function getInstanceDetailsByPrivateIp(credentialsId: string, region: stri
     return instanceDetails;
 }
 
+async function waitForInstanceToBeStopped(credentialsId: string, region: string, instanceId: string) {
+    logger.info('Waiting for instance to be stopped', { credentialsId, region, instanceId });
+
+    const maxRetries = 10;
+    const delay = '30s'; // 30 seconds wait ; total wait maxRetries * delay = 300s
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const { Reservations: [{ Instances: [{ State: { Name: instanceState = '' } = {} }] = [] } = {}] = [] } =
+            await describeInstance(credentialsId, region, { InstanceIds: [instanceId] });
+
+        if (!instanceState) {
+            throw new Error('Instance state not found');
+        }
+
+        if (instanceState === 'stopped') {
+            return true;
+        }
+        if (instanceState === 'stopping') {
+            await sleep(ms(delay));
+        }
+    }
+
+    throw new Error(`Instance ${instanceId} in ${region} did not stop within the expected time`);
+}
+
+async function instanceTypeChangePreReqs(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    instanceIds: string[]
+) {
+    logger.info('Checking instance type change prerequisites', { credentialsId, region, accountId, instanceIds });
+
+    try {
+        const { Reservations = [] } = await describeInstance(credentialsId, region, {
+            InstanceIds: instanceIds
+        });
+
+        const instances = Reservations.map(reservation => reservation.Instances || []).flat();
+
+        // elastic IP check
+        try {
+            const publicIpAddresses = compact(instances.map(({ PublicIpAddress }) => PublicIpAddress)) || [];
+            if (!isEmpty(publicIpAddresses)) {
+                return await describeAddresses(credentialsId, region, {
+                    PublicIps: publicIpAddresses
+                });
+            }
+        } catch (error: any) {
+            logger.error('Error while checking elastic IP address', error);
+            if (error?.Code && error.Code === 'InvalidAddress.NotFound') {
+                throw createError(
+                    500,
+                    'Elastic IP address not found. On instance type change, Amazon EC2 releases the address and give your instance a new public IPv4 address'
+                );
+            }
+            throw error;
+        }
+
+        // spot instance check
+        const instanceLifecycles = compact(instances.map(({ InstanceLifecycle }) => InstanceLifecycle)) || [];
+        if (!isEmpty(instanceLifecycles)) {
+            instanceLifecycles.some(lifecycle => {
+                if (lifecycle === 'spot') {
+                    throw createError(500, 'Instance type of a Spot Instance cannot be changed');
+                }
+                return false;
+            });
+        }
+
+        // more than 26 volumes to be attached to an instance
+        const blockDeviceMappings = compact(instances.map(({ BlockDeviceMappings }) => BlockDeviceMappings)) || [];
+        blockDeviceMappings.some(blockDeviceMapping => {
+            if (blockDeviceMapping.length > 26) {
+                throw createError(
+                    500,
+                    'The instance type change operation cannot be performed because the instance has more than 26 volumes attached'
+                );
+            }
+            return false;
+        });
+
+        // autoscaling group check
+        const { AutoScalingInstances: autoScalingInstances } = await describeAutoscalingInstances(
+            credentialsId,
+            region,
+            accountId,
+            {
+                InstanceIds: instanceIds
+            }
+        );
+
+        if (autoScalingInstances?.length) {
+            throw createError(
+                500,
+                'Instances are part of an auto-scaling group. The Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and might terminate it and launch a replacement instance'
+            );
+        }
+    } catch (error: any) {
+        logger.error('Error while checking instance type change prerequisites', error);
+        throw error;
+    }
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -876,5 +983,7 @@ export {
     getInstanceTypesFromInstanceRequirements,
     getInstanceDetailsByPrivateIp,
     determineBiggerInstance,
-    determineSmallerInstance
+    determineSmallerInstance,
+    waitForInstanceToBeStopped,
+    instanceTypeChangePreReqs
 };

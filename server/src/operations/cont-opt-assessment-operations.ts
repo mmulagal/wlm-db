@@ -83,7 +83,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const optimisedDrives: SizingViolationResponseType[] = [];
 
     const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
-    driveDetails.forEach((drive: { [x: string]: any }) => {
+    driveDetails.forEach((drive: LogDriveDetails) => {
         const { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(drive as SizingViolationResponseType);
@@ -696,11 +696,16 @@ async function initiateComputeAssessment(
             currentInstanceType,
             finding,
             findingReasonCodes,
-            recommendationOptions: coRecOptions?.map(({ instanceType, rank, savingsOpportunity }) => ({
-                instanceType,
-                rank,
-                savingsOpportunity
-            }))
+            recommendationOptions: coRecOptions
+                ?.filter(({ platformDifferences }) => platformDifferences?.length === 0)
+                ?.map(
+                    ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
+                        instanceType,
+                        rank,
+                        savingsOpportunity,
+                        platformDifferences
+                    }) // return only such recommandation options that has no platform difference. Migration to different platform cannot be supported programatically from our application.
+                )
         };
     } catch (error: any) {
         errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Optimization. ${error.message}`;
@@ -960,5 +965,6 @@ export {
     getHeadroomDrift,
     getLogVolumeDrift,
     getTempDbVolumeDrift,
-    getFsxStorageDetails
+    getFsxStorageDetails,
+    calculateComputeDrift
 };
