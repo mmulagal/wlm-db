@@ -12,8 +12,13 @@ import { setStorageCapacity, setStorageUnit } from '../../../../store/mssql/mssq
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import StorageCapacityTable from './StorageCapacityTable/StorageCapacityTable';
+import { WIZARD_TYPE } from '../../../../utils/consts';
 
-const StorageCapacity = () => {
+type storageCapacityTypes = {
+    wizardType?: string;
+};
+
+const StorageCapacity = ({ wizardType = 'mssql' }: storageCapacityTypes) => {
     const dispatch = useDispatch();
 
     const inputCapacity = useAppSelector((state: any) => state.mssqlForm.storageCapacity.capacity);
@@ -96,7 +101,7 @@ const StorageCapacity = () => {
     const tooltipMessage = () => {
         return (
             <Typography variant="Regular_13" className={styles.infoMsg}>
-                {GENERAL.CAPACITY_TOOLTIP}
+                {wizardType === WIZARD_TYPE.PGSQL ? GENERAL.CAPACITY_PGSQL_TOOLTIP : GENERAL.CAPACITY_TOOLTIP}
             </Typography>
         );
     };
@@ -134,7 +139,7 @@ const StorageCapacity = () => {
                                 className={styles.selectField}
                             />
                         </div>
-                        {<StorageCapacityTable />}
+                        {<StorageCapacityTable wizardType={wizardType} />}
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

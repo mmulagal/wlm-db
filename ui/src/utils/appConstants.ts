@@ -88,7 +88,7 @@ export const GENERAL = {
     DELETE_CONFIG_NOTIFICATION: 'Configuration deleted successfully.',
     SAVE_CONFIG_CONTENT:
         'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
-        SAVE_CONFIG_PGSQL_CONTENT:
+    SAVE_CONFIG_PGSQL_CONTENT:
         'You can save this PostgreSQL Server configuration and load the configuration later for a future PostgreSQL Server deployment.',
     RENAME_CONFIG_CONTENT: ['Enter a new name for the ', ' configuration'],
     RENAME_CONFIG_NOTIFICATION: 'Configuration name changed successfully.',
@@ -185,6 +185,9 @@ export const GENERAL = {
     //Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
     FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across multiple Availability Zones',
+    PGSQL_STANDALONE: 'Deploy your PostgreSQL Server on a single node',
+    PGSQL_HA:
+        'Deploy your PostgreSQL Server across multiple Availability Zones for high availability and data redundancy',
     STANDALONE_INSTANCE: 'Standalone instance',
     HIGH_AVAILABILITY: 'High availability (HA)',
     SINGLE_INSTANCE: 'Single Instance',
@@ -234,6 +237,8 @@ export const GENERAL = {
     //Constants for Storage capacity
     CAPACITY: 'Capacity',
     UNIT: 'Unit',
+    CAPACITY_PGSQL_TOOLTIP:
+        'Specify the PostgreSQL data drive size only. The provisioning for log drive, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
     ERROR_CAPACITY: 'Supported capacity should be between 120 GiB to 86 TiB.',

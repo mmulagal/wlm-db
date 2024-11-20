@@ -5,8 +5,13 @@ import { useAppSelector } from '../../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { formatFractionalNumber, isFsxnNew } from '../../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../../utils/appConstants';
+import { WIZARD_TYPE } from '../../../../../utils/consts';
 
-const StorageCapacityTable = () => {
+type StorageCapacityTableProps = {
+    wizardType?: string;
+};
+
+const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProps) => {
     const { getEstimatedCostData, getEstimatedCostLoading } = useAppSelector(state => state.mssql);
     const selectedUnit = useAppSelector(state => state.mssqlForm.storageCapacity.unit);
     const fsxNType = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNType);
@@ -27,12 +32,15 @@ const StorageCapacityTable = () => {
             size: sizeData?.log,
             calculation: `25% of ${GENERAL.DATA_SIZE}`
         });
-        newList.push({
-            id: 3,
-            type: GENERAL.TEMPDB_VOLUME,
-            size: sizeData?.tempdb,
-            calculation: `10% of ${GENERAL.DATA_SIZE}`
-        });
+        if (wizardType === WIZARD_TYPE.MSSQL) {
+            newList.push({
+                id: 3,
+                type: GENERAL.TEMPDB_VOLUME,
+                size: sizeData?.tempdb,
+                calculation: `10% of ${GENERAL.DATA_SIZE}`
+            });
+        }
+
         if (sizeData?.quorum) {
             newList.push({
                 id: 4,
