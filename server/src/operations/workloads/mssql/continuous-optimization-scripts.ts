@@ -479,7 +479,21 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
         $MpioStatus = $true
     }
-    $LoadBalancingPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
+    
+    # Fetch load balancing policy for all NetApp disks
+    $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number 
+
+    $MpioLBDetails = mpclaim -s -d
+
+    $LoadBalancingPolicy = 'RR'
+
+    foreach ($disk in $AllNetappDisks){
+        $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
+        if(-Not ($MpioLBDetails -Match $matchString) ) {
+            $LoadBalancingPolicy = 'Other'
+            break
+        }
+    }
 
     ${TEST_ISCSI_SESSIONS}
 
