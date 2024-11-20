@@ -1,19 +1,24 @@
-import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import { JOBSTATUS, JOBTYPE, resource } from '@prisma/client';
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
-import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import {
     Metadata,
     DatabaseInstance,
     WorkloadInstance,
     StorageAssessment,
     databaseInstanceMetadata,
-    OptimizeMpioPolicyParams
+    OptimizeMpioPolicyParams,
+    LogDriveDetails,
+    TempDbDriveDetails
 } from '../utils/common-types';
 import { HttpErrorCodes, AuditStatus, SqlServerDeploymentModel, RESOURCESTYPE } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
-import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from './workloads/mssql/continuous-optimization-scripts';
+import {
+    CHECK_NODE_STATUS,
+    MOVE_ALL_CLUSTER_GROUPS,
+    OPTIMIZE_STORAGE_PARAMS_SCRIPT
+} from './workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import {
@@ -26,6 +31,7 @@ import {
     getResourceNameFromTags
 } from '../utils/utils';
 import {
+    calculateComputeDrift,
     driftAssessmentDataCollection,
     getHeadroomDrift,
     getLogVolumeDrift,
@@ -51,7 +57,14 @@ import {
 import { getFsxVolumeDetails, getFsxnVolIdsFromOntapVolIds } from './aws/fsx-operations';
 import { updateOptimizedConfigNameInInstanceTable } from './demo-operations';
 import { CHECK_MPIO_POLICY, REMEDIATE_MPIO_POLICY } from './workloads/mssql/mpio-remediation-scripts';
-import { describeInstance } from '../lib/aws/ec2';
+import { describeInstance, modifyInstanceType, startInstance, stopInstance, waitForInstanceOk } from '../lib/aws/ec2';
+import {
+    getInstanceDetailsByPrivateIp,
+    instanceTypeChangePreReqs,
+    waitForInstanceToBeStopped
+} from './aws/ec2-operations';
+import { listResources } from '../lib/database/db';
+import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from './workloads/mssql/discover-consts';
 
 const isDemoFlow = isDemo();
 
@@ -182,7 +195,7 @@ async function triggerAssessmentAfterOptimization(
         instanceToAssess,
         serverNameWithHostName
     );
-    await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+    await updateJobDetails(accountId, parentJobId, {
         status: JOBSTATUS.COMPLETED,
         endTime: Date.now(),
         description: `Optimization completed for ${serverNameWithHostName}`
@@ -352,13 +365,13 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
         parentJobStatus = JOBSTATUS.FAILED;
         parentJobError = errorMessage;
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: newJobStatus,
             endTime: Date.now(),
             error: newJobError,
             description: newJobDescription
         });
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: parentJobStatus,
             endTime: Date.now(),
             error: parentJobError
@@ -513,7 +526,7 @@ async function optimizeStorage(params: OptimizeStorageParams) {
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;
         logger.error(errorMessage);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
             error: errorMessage
@@ -603,7 +616,7 @@ async function modifySizingAttributes(
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: jobStatus || JOBSTATUS.COMPLETED,
             endTime: Date.now(),
             error: errorMessage
@@ -665,7 +678,7 @@ async function headroomOptimization(
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus || JOBSTATUS.COMPLETED,
             endTime: Date.now(),
             error: errorMessage
@@ -718,7 +731,7 @@ async function logDriveOptimization(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    logDriveDetails: any,
+    logDriveDetails: LogDriveDetails[],
     parentJobId: string,
     serverNameWithHostName: string,
     databaseHostId: string,
@@ -873,7 +886,7 @@ async function logDriveOptimization(
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus || JOBSTATUS.COMPLETED,
             endTime: Date.now(),
             error: errorMessage
@@ -886,7 +899,7 @@ async function tempDbDriveOptimization(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    tempDbDriveDetails: any,
+    tempDbDriveDetails: TempDbDriveDetails,
     parentJobId: string,
     serverNameWithHostName: string,
     databaseHostId: string,
@@ -991,7 +1004,7 @@ async function tempDbDriveOptimization(
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus || JOBSTATUS.COMPLETED,
             endTime: Date.now(),
             error: errorMessage
@@ -1120,7 +1133,7 @@ async function validateMpioPolicyToRoundRobin(
             jobError = errorMessage;
             throw errorMessage;
         } else {
-            await updateJobDetails(accountId, credentialsId, region, jobId, {
+            await updateJobDetails(accountId, jobId, {
                 status: JOBSTATUS.COMPLETED,
                 endTime: Date.now()
             });
@@ -1132,7 +1145,7 @@ async function validateMpioPolicyToRoundRobin(
         jobError = errorMessage;
         throw errorMessage;
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus,
             endTime: Date.now(),
             error: jobError
@@ -1160,10 +1173,10 @@ async function setMpioPolicyToRoundRobin(
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     const jobDescription =
         sqlDeploymentType !== SqlServerDeploymentModel.SQL_STANDALONE_SHORT
-            ? `Setting MPIO policy to Round Robin on ${serverNameWithHostName}, rebooting instance and changing cluster ownership on ${
+            ? `Setting MPIO policy to Round Robin on ${serverNameWithHostName} and changing cluster ownership on ${
                   runningOnPrimaryNode ? 'primary node' : 'standby node'
               }.`
-            : `Setting MPIO policy to Round Robin on ${serverNameWithHostName} and rebooting instance.`;
+            : `Setting MPIO policy to Round Robin on ${serverNameWithHostName}.`;
     let jobError;
 
     const jobId = await handleOptimizeJobCreation(
@@ -1178,7 +1191,7 @@ async function setMpioPolicyToRoundRobin(
     );
 
     try {
-        // Set MPIO policy to Round Robin and reboot instance
+        // Set MPIO policy to Round Robin
         const ssmCommand = REMEDIATE_MPIO_POLICY(optimizeMpioPolicyParams, runningOnPrimaryNode);
         await callSsmExecution(
             credentialsId,
@@ -1186,25 +1199,6 @@ async function setMpioPolicyToRoundRobin(
             [ssmCommand],
             runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!
         );
-        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId!);
-        let retries = 3;
-        while (retries > 0) {
-            retries -= 1;
-            await sleep(20000);
-            if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                jobStatus = JOBSTATUS.COMPLETED;
-                break;
-            }
-
-            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId!);
-        }
-        if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
-            const errorMessage = `Failed to set MPIO policy to Round Robin on ${serverNameWithHostName}.`;
-            logger.error(errorMessage);
-            jobStatus = JOBSTATUS.FAILED;
-            jobError = errorMessage;
-            throw errorMessage;
-        }
     } catch (error) {
         const errorMessage = `Error while setting MPIO policy to Round Robin ${error}`;
         logger.error(errorMessage);
@@ -1212,7 +1206,7 @@ async function setMpioPolicyToRoundRobin(
         jobError = errorMessage;
         throw errorMessage;
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus,
             endTime: Date.now(),
             error: jobError,
@@ -1268,8 +1262,7 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
         // For primary node
         // Check if MPIO policy is set to Round Robin
         // If not, set MPIO policy to Round Robin
-        // If standalone, reboot instance
-        // If FCI, change cluster ownership and reboot instance
+        // If FCI, change cluster ownership
         await validateAndRemediateMpioPolicy(optimizeMpioPolicyParams, true);
 
         if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
@@ -1277,7 +1270,6 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
             // Check if MPIO policy is set to Round Robin
             // Case Not set to RR on standby
             // 1. Check if ownership was changed from primary to standby, if yes change back to primary
-            // 2. Reboot instance
             // Case set to RR on standby
             // 1. Check if ownership was changed from primary to standby, if yes change back to primary. Else no action needed
             await validateAndRemediateMpioPolicy(optimizeMpioPolicyParams, false);
@@ -1311,7 +1303,7 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
     } finally {
         const errorMessage = `Error while optimizing mpio configuration ${jobError}`;
         logger.error(errorMessage);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: jobStatus,
             endTime: Date.now(),
             error: jobError
@@ -1427,7 +1419,7 @@ async function optimizeOperatingSystemSettings(
     } catch (error) {
         const errorMessage = `Error while optimizing operating system settings ${error}`;
         logger.error(errorMessage);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
             error: errorMessage
@@ -1440,4 +1432,284 @@ async function optimizeOperatingSystemSettings(
     return { jobId: parentJobId };
 }
 
-export { optimizeStorage, optimizeSizing, optimizeOperatingSystemSettings };
+async function handleComputeRemediation(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    instanceType: string,
+    resourceDetails: resource[],
+    jobId: string
+) {
+    logger.info('Handling compute remediation', {
+        credentialsId,
+        region,
+        accountId,
+        instanceType,
+        resourceDetails,
+        jobId
+    });
+
+    let jobStatus;
+    let errorMessage = '';
+
+    try {
+        const [{ metadata }] = resourceDetails;
+        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+        const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
+            credentialsId,
+            region,
+            node1InstanceId,
+            node2InstanceId
+        );
+
+        if (activeNodeInstanceId) {
+            const instanceIdsList = [activeNodeInstanceId];
+            if (node2InstanceId) {
+                // more than one node in the cluster
+                const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
+                if (!connectionStatus) {
+                    throw createError(500, 'SSM connection is not available for the selected instance');
+                }
+                const clusterNetworkIpDetails = await callSsmExecution(
+                    credentialsId,
+                    region,
+                    CLUSTER_NETWORK_IP_INFO_PS1,
+                    node2InstanceId,
+                    accountId
+                );
+                if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
+                    throw createError('Failed to get network interface details during compute optimization.');
+                } else if (clusterNetworkIpDetails) {
+                    const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } =
+                        JSON.parse(clusterNetworkIpDetails);
+                    // get all nodes in a cluster
+                    const { clusterNetworkIps } = clusterNetworkIpDetailsJson;
+                    if (clusterNetworkIps.length > 1) {
+                        const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
+                            credentialsId,
+                            region,
+                            clusterNetworkIps
+                        );
+                        const clusterNodeInstanceIds = compact(
+                            clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId)
+                        );
+
+                        instanceIdsList.push(...clusterNodeInstanceIds);
+
+                        // run elastic IP address; spot instance and autoscaling instance check for all nodes in the cluster; throws error if any node has does not meets the criteria
+                        await instanceTypeChangePreReqs(credentialsId, region, accountId, clusterNodeInstanceIds);
+
+                        const nonPrimaryNodeInstanceIds = clusterNodeInstanceIds.filter(
+                            nodeId => nodeId !== activeNodeInstanceId
+                        );
+                        // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
+                        for (const nodeId of nonPrimaryNodeInstanceIds) {
+                            await updateNodeInstanceType(credentialsId, region, nodeId, instanceType);
+                        }
+                        logger.info('Instance type updated for all secondary nodes in the cluster');
+
+                        // pick one of the nodes in the cluster to transfer primary node ownership
+                        const clusteNodeInstanceNames = compact(
+                            clusterNodeDetails.map(
+                                ({ ec2InstanceId, ec2InstanceName }) =>
+                                    ec2InstanceId !== activeNodeInstanceId && ec2InstanceName
+                            )
+                        );
+
+                        let targetNodeName;
+                        for (const nodeName of clusteNodeInstanceNames) {
+                            const resp = await callSsmExecution(
+                                credentialsId,
+                                region,
+                                [CHECK_NODE_STATUS(nodeName)],
+                                activeNodeInstanceId
+                            );
+                            const { status } = sqlResponseParsing(resp);
+                            if (status === 'success') {
+                                targetNodeName = nodeName;
+                                break;
+                            }
+                        }
+                        // move all cluster groups to the selected node
+                        if (targetNodeName) {
+                            const nodesTransferred = await moveClusterGroupOwnership(
+                                credentialsId,
+                                region,
+                                targetNodeName,
+                                activeNodeInstanceId
+                            );
+                            logger.info('Primary node ownership transferred to', { targetNodeName, nodesTransferred });
+                        } else {
+                            throw createError(500, 'Failed to find a node to transfer primary node ownership');
+                        }
+                    }
+                }
+            } else {
+                // single node cluster/standalone
+                await instanceTypeChangePreReqs(credentialsId, region, accountId, instanceIdsList);
+            }
+
+            await updateNodeInstanceType(credentialsId, region, activeNodeInstanceId, instanceType); // modify instance type for the primary node ; secondary nodes if any are already modified at this point
+            // move all cluster groups to the primary node
+            if (node2InstanceId) {
+                const ownershipTransferStatus = await moveClusterGroupOwnership(
+                    credentialsId,
+                    region,
+                    instanceName,
+                    activeNodeInstanceId
+                );
+                logger.info('Primary node ownership transferred to', { instanceName, ownershipTransferStatus });
+            }
+            jobStatus = JOBSTATUS.COMPLETED;
+            return;
+        }
+
+        jobStatus = JOBSTATUS.FAILED;
+        errorMessage = 'No active node found in the cluster';
+    } catch (error) {
+        errorMessage = `Error while optimizing compute ${error}`;
+        logger.error(errorMessage);
+
+        jobStatus = JOBSTATUS.FAILED;
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus || JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
+    }
+}
+async function optimizeCompute(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    instanceType: string
+) {
+    logger.info('Optimizing compute', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        instanceType
+    });
+
+    const { recommendationOptions } = await calculateComputeDrift(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    );
+    const recommendedInstanceTypes =
+        recommendationOptions?.map(({ instanceType: recommendedInstanceType }) => recommendedInstanceType) || [];
+    if (!isDemo() && !recommendedInstanceTypes.includes(instanceType)) {
+        throw createError(400, 'Invalid instance type, please choose from the recommended instance types');
+    }
+
+    /*
+        As per https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html), Its riskier to programatically configure the parameters to overcome these limitations.
+        Most of these differences between the current and recommended instance types are captured in `platformDifferences` in the response of compute-optimizer.(https://docs.aws.amazon.com/compute-optimizer/latest/ug/view-ec2-recommendations.html#ec2-platform-differences) .
+        So proceeding with the optimization only if there are no platform differences between the current and recommended instance types.
+
+        Additional considerations:
+        https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/change-instance-type-of-ebs-backed-instance.html
+
+        If your instance has a public IPv4 address, that is not an Elastic IP, we release the address and give your instance a new public IPv4 address.
+        If your instance is in an Auto Scaling group, the Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and might terminate it and launch a replacement instance.
+        You can't change the instance type of a Spot Instance.
+        The maximum number of Amazon EBS volumes that you can attach to an instance depends on the instance type and instance size. You can't change to an instance type or instance size that does not support the number of volumes that are already attached to your instance. For more information, see Amazon EBS volume limits for Amazon EC2 instances.
+    */
+
+    const platformDifferences =
+        recommendationOptions?.find(
+            ({ instanceType: recommendedInstanceType }) => recommendedInstanceType === instanceType
+        )?.platformDifferences || [];
+    if (!isEmpty(platformDifferences)) {
+        throw createError(400, 'We dont support the selected instance type as it has platform differences');
+    }
+
+    const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    const [{ resource_name: resourceName }] = resourceDetails;
+    const jobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        resourceName!,
+        JOBTYPE.OPTIMIZATION,
+        `Optimize EC2 compute for ${resourceName}`,
+        `Optimize EC2 compute for ${resourceName}`
+    );
+
+    handleComputeRemediation(credentialsId, region, accountId, instanceType, resourceDetails, jobId);
+
+    return { jobId };
+}
+
+async function moveClusterGroupOwnership(
+    credentialsId: string,
+    region: string,
+    targetNodeName: string,
+    activeNodeInstanceId: string
+) {
+    logger.info('Moving cluster group ownership', {
+        credentialsId,
+        region,
+        targetNodeName,
+        activeNodeInstanceId
+    });
+    const resp = await callSsmExecution(
+        credentialsId,
+        region,
+        [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
+        activeNodeInstanceId
+    );
+
+    let clusterGroupOwnershipTransferStatus = sqlResponseParsing(resp);
+    if (!Array.isArray(clusterGroupOwnershipTransferStatus)) {
+        clusterGroupOwnershipTransferStatus = [clusterGroupOwnershipTransferStatus];
+    }
+
+    if (
+        clusterGroupOwnershipTransferStatus.some(
+            ({ status }: { status: string; groupName: string; error: string }) => status === 'failed'
+        )
+    ) {
+        const failedClusterGroups = clusterGroupOwnershipTransferStatus.filter(
+            ({ status }: { status: string }) => status === 'failed'
+        );
+        throw createError(
+            500,
+            'Failed to transfer primary node ownership. Failed cluster groups',
+            failedClusterGroups ? JSON.stringify(failedClusterGroups) : []
+        );
+    }
+
+    return clusterGroupOwnershipTransferStatus;
+}
+
+async function updateNodeInstanceType(credentialsId: string, region: string, instanceId: string, instanceType: string) {
+    logger.info(`Updating instance type for ${instanceId} to ${instanceType}`);
+
+    try {
+        await stopInstance(credentialsId, region, instanceId);
+        if (!isDemo()) {
+            await waitForInstanceToBeStopped(credentialsId, region, instanceId);
+        }
+        await modifyInstanceType(credentialsId, region, instanceId, instanceType);
+        await startInstance(credentialsId, region, instanceId);
+        await waitForInstanceOk(credentialsId, region, instanceId);
+    } catch (error) {
+        const errorMessage = `Failed to update instance type for ${instanceId} to ${instanceType}. ${error}`;
+
+        logger.error(errorMessage);
+        throw createError(500, errorMessage);
+    }
+}
+
+export { optimizeStorage, optimizeSizing, optimizeOperatingSystemSettings, optimizeCompute };

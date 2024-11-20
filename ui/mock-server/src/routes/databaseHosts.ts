@@ -45,14 +45,14 @@ router.get(
     }
 );
 
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/jobs/summary`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/jobs/summary`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, JobsSummary);
     }, 3000);
 });
 
 router.get(
-    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/jobs/summary/timeline`,
+    `${BASE_URL}/v1/jobs/summary/timeline`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, JobsSummaryTimeline['30']);
@@ -76,13 +76,13 @@ router.get(`${BASE_URL}/v1/status`, async (req: {}, res: any) => {
     generateResponse(res, 200, { isActive: true });
 });
 
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/jobs`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/jobs`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, JobMonitoringDownloads);
     }, 2000);
 });
 
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/jobs/:jobId`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/jobs/:jobId`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, JobMonitoringSubTask);
     }, 3000);

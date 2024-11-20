@@ -10,6 +10,7 @@ import {
     OptimizeStorageRequestBody,
     OptimizeSizingRequestBody,
     DriftAssessmentResponse,
+    OptimizeComputeRequestBody,
     OptimizeOperatingSystemRequestBody
 } from '../types/continuous-optimization.types';
 
@@ -75,6 +76,20 @@ const OptimizeSizingSchema = {
     }
 };
 
+const OptimizeComputeSchema = {
+    ...resourceRequest,
+    summary: 'Optimize compute',
+    description: 'Optimize compute as per the best practice for the selected database instance.',
+    params: DatabaseHostInstanceSummaryParams,
+    body: OptimizeComputeRequestBody,
+    tags: [RouteTags.ASSESSMENT],
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
+
 const OptimizeOperatingSystemSchema = {
     ...resourceRequest,
     summary: 'Optimize MPIO settings',
@@ -94,5 +109,6 @@ export {
     TriggerDriftAssessmentSchema,
     OptimizeStorageSchema,
     OptimizeSizingSchema,
+    OptimizeComputeSchema,
     OptimizeOperatingSystemSchema
 };

@@ -721,7 +721,7 @@ async function invokeSSMForDatabaseDeployment(
                 { name: instanceNameForScript, executableName: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
                 serverNameWithHostName
             );
-            await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            await updateJobDetails(accountId, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
                 endTime: Date.now(),
                 error: undefined
@@ -847,7 +847,7 @@ async function invokeSSMForDatabaseDeployment(
                 fsxLogVolumeName
             );
 
-            await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            await updateJobDetails(accountId, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
                 endTime: Date.now(),
                 error: undefined
@@ -913,7 +913,7 @@ async function invokeSSMForDatabaseDeployment(
             );
         }
         updateLongRunningAuditGroup(AuditStatus.FAILED, err?.message, serverNameWithHostName);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
             error: err?.message
@@ -1033,7 +1033,7 @@ async function createDatabase(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job update
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+        await updateJobDetails(accountId, childJobId, {
             status,
             endTime: Date.now(),
             ...(errMsg && { error: errMsg })
@@ -1139,7 +1139,7 @@ async function configureLuns(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job failed
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+        await updateJobDetails(accountId, childJobId, {
             status,
             endTime: Date.now(),
             ...(errMsg && { error: errMsg })
@@ -1263,7 +1263,7 @@ async function newDBInitialization(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job failed
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+        await updateJobDetails(accountId, childJobId, {
             status,
             endTime: Date.now(),
             ...(errMsg && { error: errMsg })
@@ -1371,7 +1371,7 @@ async function cleanUpDatabaseDeployment(
         status = JOBSTATUS.FAILED;
     } finally {
         // child job failed
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+        await updateJobDetails(accountId, childJobId, {
             status,
             endTime: Date.now(),
             ...(errMsg && { error: errMsg })
@@ -1564,7 +1564,7 @@ async function validateParams(
         throw createError(error.statusCode || 412, `${errorMsg} ${errMsg}`);
     } finally {
         // child job failed
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+        await updateJobDetails(accountId, childJobId, {
             status,
             endTime: Date.now(),
             ...(errMsg && { error: errMsg })

@@ -216,29 +216,35 @@ interface WorkloadInstance {
     resourceName: string;
 }
 interface LogDriveDetails {
+    lunUuid: string;
+    svmName: string;
     databaseName: string;
+    logDrivePath: string;
+    dataDrivePath: string;
+    logAccessPath: string;
+    dataAccessPath: string;
     logDriveLetter: string;
     dataDriveLetter: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
     logDriveTotalSizeMB: number;
     dataDriveTotalSizeMB: number;
+}
+
+interface TempDbDriveDetails {
     lunUuid: string;
     svmName: string;
     ontapVolumeName: string;
     ontapVolumeUuid: string;
-}
-interface TempDbDriveDetails {
+    tempdbDrivePath: string;
     tempdbDriveLetter: string;
     dataDriveTotalSizeMB: number;
     defaultDataDriveLetter: string;
     tempdbDriveTotalSizeMB: number;
-    lunUuid: string;
-    svmName: string;
-    ontapVolumeName: string;
-    ontapVolumeUuid: string;
 }
 interface Sizing {
-    'performance-tier': string;
-    'data-log-drive-details': LogDriveDetails;
+    'performance-tier': boolean;
+    'data-log-drive-details': LogDriveDetails[];
     'data-tempdb-drive-details': TempDbDriveDetails;
 }
 

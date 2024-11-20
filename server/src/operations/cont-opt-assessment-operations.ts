@@ -87,7 +87,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const optimisedDrives: SizingViolationResponseType[] = [];
 
     const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
-    driveDetails.forEach((drive: { [x: string]: any }) => {
+    driveDetails.forEach((drive: LogDriveDetails) => {
         const { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(drive as SizingViolationResponseType);
@@ -225,7 +225,7 @@ async function calculateStorageDrift(
     );
 
     if (isEmpty(persistedConfigurationData)) {
-        const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found.`;
+        const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
@@ -736,11 +736,16 @@ async function initiateComputeAssessment(
             currentInstanceType,
             finding,
             findingReasonCodes,
-            recommendationOptions: coRecOptions?.map(({ instanceType, rank, savingsOpportunity }) => ({
-                instanceType,
-                rank,
-                savingsOpportunity
-            }))
+            recommendationOptions: coRecOptions
+                ?.filter(({ platformDifferences }) => platformDifferences?.length === 0)
+                ?.map(
+                    ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
+                        instanceType,
+                        rank,
+                        savingsOpportunity,
+                        platformDifferences
+                    }) // return only such recommandation options that has no platform difference. Migration to different platform cannot be supported programatically from our application.
+                )
         };
     } catch (error: any) {
         errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Optimization. ${error.message}`;
@@ -762,7 +767,7 @@ async function updateMasterAssessment(accountId: string, masterAssessmentJobId: 
         : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
         ? JOBSTATUS.WARNING
         : JOBSTATUS.IN_PROGRESS;
-    await updateJobDetails(accountId, '', '', masterAssessmentJobId, {
+    await updateJobDetails(accountId, masterAssessmentJobId, {
         status: masterJobStatus,
         endTime: Date.now()
     });
@@ -890,7 +895,7 @@ async function triggerAssessment(
         errorMessage = error.message || 'Internal Server Error';
         jobStatus = JOBSTATUS.FAILED;
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             error: errorMessage,
             status: jobStatus,
             endTime: Date.now()
@@ -965,7 +970,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     );
                 } catch (error: any) {
                     logger.info('Error while triggering drift assessment for account', { accountId, error });
-                    await updateJobDetails(accountId, '', '', parentJobId, {
+                    await updateJobDetails(accountId, parentJobId, {
                         status: JOBSTATUS.FAILED,
                         error: error.message,
                         endTime: Date.now()
@@ -1133,5 +1138,6 @@ export {
     getLogVolumeDrift,
     getTempDbVolumeDrift,
     getFsxStorageDetails,
-    onDemandTriggerDriftAssessmentDataCollection
+    onDemandTriggerDriftAssessmentDataCollection,
+    calculateComputeDrift
 };

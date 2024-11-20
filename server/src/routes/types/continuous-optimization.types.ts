@@ -92,6 +92,11 @@ type OptimizeStorageRequestBodyType = Static<typeof OptimizeStorageRequestBody>;
 
 type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
 
+const OptimizeComputeRequestBody = Type.Object({
+    instanceType: Type.String()
+});
+
+type OptimizeComputeRequestBodyType = Static<typeof OptimizeComputeRequestBody>;
 const OptimizeSizingRequestBody = Type.Object({
     type: Type.Array(Type.Enum(OPTIMIZE_SIZING_CONFIGS))
 });
@@ -112,6 +117,8 @@ export {
     OptimizeStorageRequestBody,
     OptimizeStorageRequestBodyType,
     OptimizeStorageRequestParamsType,
+    OptimizeComputeRequestBody,
+    OptimizeComputeRequestBodyType,
     OptimizeSizingRequestBody,
     OptimizeSizingRequestBodyType,
     OptimizeOperatingSystemRequestBody

@@ -97,7 +97,7 @@ describe('Job operations', () => {
     it('Modify Job Details', async () => {
         const [job] = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         const jobDetails = await getJobDetails(ACCOUNT_ID, job.id, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
-        const response = await updateJobDetails(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, job.id, {
+        const response = await updateJobDetails(ACCOUNT_ID, job.id, {
             description: 'modified-description',
             status: JOBSTATUS.COMPLETED,
             endTime: Date.now()
@@ -189,12 +189,7 @@ describe('Job operations', () => {
             ]);
         }
 
-        const response = await deleteJobsWithAllSubJobs(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            jobId
-        );
+        const response = await deleteJobsWithAllSubJobs(ACCOUNT_ID, jobId);
         expect(response.count).toEqual(7);
     });
 

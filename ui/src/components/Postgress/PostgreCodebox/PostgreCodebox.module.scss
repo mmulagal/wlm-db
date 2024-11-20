@@ -9,7 +9,20 @@
     background-color: var(--grey-70);
     border-left: 1px solid var(--border);
 
-   
+    .colorAutomation {
+        color: var(--white) !important;
+        margin-top: 0px;
+    }
+
+    .awsCli {
+        white-space: initial;
+    }
+
+    .awsCliHighlightClass {
+        color: var(--blue-30);
+        background-color: transparent;
+    }
+
     .createDbHeader {
         display: flex;
         flex-direction: row;
@@ -125,6 +138,37 @@
                     --icon-primary-color: var(--field-icon) !important;
                 }
             }
+        }
+    }
+
+    .terraformContainer {
+        display: flex;
+        gap: 32px;
+        align-items: center;
+    }
+
+    .cloudFormationButtonContainer {
+        height: 64px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--grey-65);
+        button {
+            --button-height: 32px !important;
+            background: none !important;
+            --button-min-width: 480px;
+            color: var(--blue-40);
+            border: 1px solid var(--blue-40) !important;
+
+            span {
+                text-transform: none !important;
+            }
+        }
+
+        button:hover {
+            color: var(--blue-30) !important;
+            border: 1px solid var(--blue-30) !important;
+            background-color: var(--grey-60) !important;
         }
     }
 
