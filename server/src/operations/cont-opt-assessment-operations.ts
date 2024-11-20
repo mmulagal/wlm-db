@@ -1063,8 +1063,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseInstanceId: string,
     databaseHostId: string,
+    databaseInstanceId: string,
     initiatedBy: string,
     fields?: string
 ) {
