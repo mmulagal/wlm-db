@@ -83,6 +83,7 @@ model config {
   creation_time DateTime @db.DateTime(3)
   data          Json?    @default("{}")
   modified_time DateTime? @updatedAt @db.DateTime(3)
+  database_type String   @db.VarChar(20)@default("mssql")
 
   @@index([account_id], map: "k_wlmdb_config_account_id")
   @@unique([account_id, name, user], name: "uk_wlmdb_config_account_id_name_user", map: "uk_wlmdb_config_account_id_name_user")

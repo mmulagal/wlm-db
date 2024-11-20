@@ -54,6 +54,7 @@ interface Config {
     creationTime?: number;
     name: string;
     data?: object;
+    databaseType?: string;
 }
 
 interface DatabaseInstanceRecord {
@@ -429,7 +430,8 @@ async function listConfig(accountId: string, id?: string) {
             account_id: true,
             data: !isEmpty(id),
             name: true,
-            modified_time: true
+            modified_time: true,
+            database_type: true
         },
         take: 100
     });
@@ -437,7 +439,7 @@ async function listConfig(accountId: string, id?: string) {
 
 async function createConfig(accountId: string, params: Config) {
     logger.info('Creating config', { accountId, params });
-    const { user, creationTime, data, name } = params;
+    const { user, creationTime, data, name, databaseType } = params;
     accountId = checkAccount(accountId);
 
     return prisma.client.config.create({
@@ -446,7 +448,8 @@ async function createConfig(accountId: string, params: Config) {
             user: user!,
             name,
             creation_time: new Date(creationTime!),
-            data
+            data,
+            database_type: databaseType!
         }
     });
 }

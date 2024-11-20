@@ -7,7 +7,8 @@ const FormConfigObjectResponse = Type.Object({
     accountId: Type.String(),
     user: Type.String(),
     data: Type.Any(),
-    modifiedTime: Type.Optional(Type.Number())
+    modifiedTime: Type.Optional(Type.Number()),
+    databaseType: Type.Optional(Type.String())
 });
 
 const FormConfigListObjectResponse = Type.Object({
@@ -16,7 +17,8 @@ const FormConfigListObjectResponse = Type.Object({
     creationTime: Type.Number(),
     accountId: Type.String(),
     user: Type.String(),
-    modifiedTime: Type.Optional(Type.Number())
+    modifiedTime: Type.Optional(Type.Number()),
+    databaseType: Type.Optional(Type.String())
 });
 
 const FormConfigObjectDeleteResponse = {};
@@ -63,7 +65,8 @@ type FormConfigUpdateResponseType = Static<typeof FormConfigUpdateResponse>;
 
 const CreateConfigRequestBody = Type.Object({
     name: Type.String(),
-    data: Type.Any()
+    data: Type.Any(),
+    databaseType: Type.Optional(Type.String({ enum: ['mssql', 'pgsql'] }))
 });
 
 const UpdateConfigRequestBody = Type.Object({

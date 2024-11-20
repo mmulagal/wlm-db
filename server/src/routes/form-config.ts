@@ -67,10 +67,10 @@ export default function formConfigRoutes(fastify: FastifyInstance) {
         async request => {
             const {
                 params: { accountId },
-                body: { name, data }
+                body: { name, data, databaseType }
             } = request;
             const { user } = request.headers;
-            return saveConfig(accountId, user as string, name, data);
+            return saveConfig(accountId, user as string, name, data, databaseType);
         }
     );
 
