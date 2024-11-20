@@ -6,6 +6,11 @@ export const AUTH_STATUS = {
     AUTH_STATUS_PROGRESS: 'AUTH_PROGRESS'
 };
 
+export const WIZARD_TYPE = {
+    PGSQL: 'pgsql',
+    MSSQL: 'mssql'
+};
+
 //Environments names should be aligned with .env files
 export const PRODUCTION = 'PRODUCTION';
 export const STAGING = 'STAGING';

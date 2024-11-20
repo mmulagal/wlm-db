@@ -646,7 +646,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                         },
                                                         {
                                                             id: '2',
-                                                            label: 'PostgreSQL',
+                                                            label: 'PostgreSQL Server',
                                                             onClick: () => {
                                                                 dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
                                                                 navigate(WLF_TO_PROTECT_NAVIGATE);

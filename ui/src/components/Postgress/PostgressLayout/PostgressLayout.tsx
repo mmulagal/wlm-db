@@ -30,7 +30,7 @@ import PostgreServerName from '../PostgreServerName/PostgreServerName';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { setSelectedDBDeploymentModel } from '../../../store/mssql/mssqlFormSlice';
-import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { SQL_DEPLOYMENT_MODE, WIZARD_TYPE } from '../../../utils/consts';
 import SecurityGroup from '../../CreateMsSql/AwsSettings/SecurityGroup/SecurityGroup';
 import StorageCapacity from '../../CreateMsSql/InfrastructureSettings/StorageCapacity/StorageCapacity';
 
@@ -128,7 +128,7 @@ function PostgressLayout() {
                         <InstanceType />
                         <FSxNSystem />
                         <SnapshotPolicy />
-                        <StorageCapacity />
+                        <StorageCapacity wizardType={WIZARD_TYPE.PGSQL} />
                         <ProvisionedIOPS />
                         <ThroughputCapacity />
                         <Encryption />
