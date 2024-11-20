@@ -1,4 +1,11 @@
-import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL, STORAGE_TYPE, SOURCE, DATABASE_DEPLOYMENT_TYPE } from '@prisma/client';
+import {
+    DEPLOYMENT_STATUS,
+    DEPLOYMENT_MODEL,
+    STORAGE_TYPE,
+    SOURCE,
+    DATABASE_DEPLOYMENT_TYPE,
+    DATABASE_TYPE
+} from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
@@ -449,7 +456,7 @@ async function createConfig(accountId: string, params: Config) {
             name,
             creation_time: new Date(creationTime!),
             data,
-            database_type: databaseType!
+            database_type: databaseType! as DATABASE_TYPE
         }
     });
 }
