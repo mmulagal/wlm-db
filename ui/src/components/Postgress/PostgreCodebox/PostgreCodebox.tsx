@@ -1,4 +1,4 @@
-import { Button, DsTypography, Popover, Typography } from '@netapp/design-system';
+import { Button, DsTypography, Popover, Typography, useDialog } from '@netapp/design-system';
 import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import styles from './PostgreCodebox.module.scss';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
@@ -20,7 +20,7 @@ import {
 } from '../../../utils/utilityFunctions';
 import {
     AWS_CLI_HIGHLIGHT_STRINGS,
-    CREATE_PGSQL_CURL_REQ_TEMPLATE,
+    PGSQL_CURL_REQ_TEMPLATE,
     CRED_PLACEHOLDERS,
     DEPLOY_ENDPOINT,
     UI_IDS
@@ -42,6 +42,7 @@ import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
 import { useDispatch } from 'react-redux';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
 
 const _ = require('lodash');
 
@@ -62,6 +63,7 @@ const PostgreCodebox = () => {
 
     const [loadTemplateData] = useGetPgsqlTemplatesMutation();
     const dispatch = useDispatch();
+    const { setDialog } = useDialog();
 
     const terraformUI = () => {
         return (
@@ -85,18 +87,33 @@ const PostgreCodebox = () => {
         return options;
     }, []);
 
+    const openDemoInfoDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.DEMO_TITLE}
+                content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
+                primaryButton={GENERAL.CONTINUE}
+                callback={() => {}}
+            />
+        );
+    };
+
     // "Redirect to CloudFormation" click implementation
     const handleRedirectToCF = () => {
-        const updatedFormData = { mssqlFormData, pgsqlFormData };
-        if (!formData || !_.isEqual(updatedFormData, formData)) {
-            // If form changed so template API will get called again to get latest CF url
-            dispatch(setIsLoading(true));
-            setFormData(updatedFormData);
-            getTemplateResponse(true);
+        if (isDemoMode) {
+            openDemoInfoDialog();
         } else {
-            // If data is already stored
-            if (rightPanelTemplateResponse?.url) {
-                window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
+            const updatedFormData = { mssqlFormData, pgsqlFormData };
+            if (!formData || !_.isEqual(updatedFormData, formData)) {
+                // If form changed so template API will get called again to get latest CF url
+                dispatch(setIsLoading(true));
+                setFormData(updatedFormData);
+                getTemplateResponse(true);
+            } else {
+                // If data is already stored
+                if (rightPanelTemplateResponse?.url) {
+                    window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
+                }
             }
         }
     };
@@ -182,7 +199,7 @@ const PostgreCodebox = () => {
             return rightPanelTemplateResponse?.template;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
             const baseUrl = getBaseUrl();
-            const restApiPayload = CREATE_PGSQL_CURL_REQ_TEMPLATE(
+            const restApiPayload = PGSQL_CURL_REQ_TEMPLATE(
                 baseUrl,
                 selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
                 selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
