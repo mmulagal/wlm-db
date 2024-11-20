@@ -238,9 +238,10 @@ async function calculateStorageDrift(
     };
 
     const { config_data: configData } = persistedConfigurationData;
+
     const { volumes, luns, os, layout, sizing, filesystemId, errors } = configData as unknown as StorageAssessment;
 
-    if (errors.volumes) {
+    if (errors && errors.volumes) {
         driftAssessmentData.configuration.volumes.push({ errorMessage: errors.volumes });
     } else {
         volumeConfigData.forEach(config => {
@@ -270,7 +271,7 @@ async function calculateStorageDrift(
             });
         });
     }
-    if (errors.luns) {
+    if (errors && errors.luns) {
         driftAssessmentData.configuration.luns.push({ errorMessage: errors.luns });
     } else {
         lunConfigData.forEach(config => {
@@ -318,7 +319,7 @@ async function calculateStorageDrift(
         }
     });
 
-    if (errors.layout) {
+    if (errors && errors.layout) {
         driftAssessmentData.layout.push({ errorMessage: errors.layout });
     } else {
         Object.entries(layout).forEach(([key, value]) => {
@@ -442,7 +443,7 @@ async function calculateStorageDrift(
         });
     }
 
-    if (errors.sizing) {
+    if (errors && errors.sizing) {
         driftAssessmentData.sizing.push({ errorMessage: errors.sizing });
     } else {
         Object.entries(sizing).forEach(([key, value]) => {
@@ -488,7 +489,7 @@ async function calculateStorageDrift(
     }
 
     // Headroom drift assessment
-    if (errors.sizing) {
+    if (errors && errors.sizing) {
         driftAssessmentData.sizing.push({ errorMessage: errors.sizing });
     } else {
         try {
@@ -1063,8 +1064,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseInstanceId: string,
     databaseHostId: string,
+    databaseInstanceId: string,
     initiatedBy: string,
     fields?: string
 ) {

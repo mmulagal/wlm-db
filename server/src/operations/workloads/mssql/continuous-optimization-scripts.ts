@@ -509,7 +509,18 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $MpioStatus = $true
         }
         $DriftAssessmentData['os']['mpio-enabled'] = $MpioStatus
-        $LoadBalancingPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
+        
+        # Fetch load balancing policy for all NetApp disks
+        $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number 
+        $MpioLBDetails = mpclaim -s -d
+        $LoadBalancingPolicy = 'RR'
+        foreach ($disk in $AllNetappDisks){
+            $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
+            if(-Not ($MpioLBDetails -Match $matchString) ) {
+                $LoadBalancingPolicy = 'Other'
+                break
+            }
+        }
         $DriftAssessmentData['os']['mpio-load-balance-policy'] = "$LoadBalancingPolicy"
         } catch {$DriftAssessmentData['errors']['mpio-policy'] = $_.Exception.Message}
 
