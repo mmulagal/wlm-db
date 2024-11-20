@@ -190,6 +190,9 @@ Resources:
             sudo mkdir -p /$fsxdatavolumename /$fsxlogvolumename
             check_status "Failed to create directories"
 
+            # Add NFS entries to /etc/fstab
+            echo "$fsxNFSIP:$fsxdatamountpoint /${fsxdatavolumename} nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
+            echo "$fsxNFSIP:$fsxlogmountpoint /${fsxlogvolumename} nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
             
             # Mount NFS volumes
             echo "sudo mount -t nfs $fsxNFSIP:$fsxdatamountpoint /$fsxdatavolumename"
@@ -280,34 +283,6 @@ Resources:
                 exit 1
             fi
 
-            # Install dependencies for pgvector
-            sudo yum install -y git gcc make libpq-devel
-            check_status "Failed to install dependencies for pgvector"
-
-            # Clone the pgvector repository
-            git clone https://github.com/pgvector/pgvector.git
-            check_status "Failed to clone pgvector repository"
-
-            # Install PostgreSQL development packages
-            sudo yum install -y $pgsql_version-private-devel --allowerasing
-            check_status "Failed to install $pgsql_version-private-devel"
-
-            sudo yum install -y $pgsql_version-server-devel
-            check_status "Failed to install $pgsql_version-server-devel"
-
-            # Build and install pgvector
-            cd pgvector
-            make
-            sudo make install
-            check_status "Failed to build and install pgvector"
-
-            # Enable pgvector extension in PostgreSQL
-            sudo sysctl -p
-            sudo systemctl restart postgresql
-            sudo -u postgres /usr/bin/psql -c "CREATE EXTENSION vector;"
-            check_status "Failed to create pgvector extension"
-
-            echo "pgvector installation complete."
             # Signal the status from the instance
             cfn-signal -e $? --resource SqlNode --stack ${AWS::StackName} --region ${AWS::Region}
 
