@@ -1,4 +1,13 @@
-import { DsAccordion, DsSelect, DsTypography, Spinner, DsTooltipInfo, Popover, DsButton } from '@netapp/design-system';
+import {
+    DsAccordion,
+    DsSelect,
+    DsTypography,
+    Spinner,
+    DsTooltipInfo,
+    Popover,
+    DsButton,
+    useDialog
+} from '@netapp/design-system';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
@@ -8,6 +17,7 @@ import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as Light } from '../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../assets/Light-Disabled.svg';
+import { ReactComponent as Error } from '../../assets/error-icon.svg';
 import { ReactComponent as Union } from '../../assets/Union.svg';
 import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
@@ -39,6 +49,8 @@ import { resetGwData, setGwRefreshPage } from '../../store/workloadFactory/getWe
 import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import { GENERAL } from '../../utils/appConstants';
+import DialogComponent from '../../common/Dialog/DialogComponent';
+import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -58,6 +70,7 @@ const GetWell = () => {
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
     const [configCount, setConfigCount] = useState(0);
+    const { setDialog, closeDialog } = useDialog();
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
@@ -195,6 +208,17 @@ const GetWell = () => {
     }, [optimizeFilterTags]);
 
     GetWellApi();
+
+    const handleLearnHowClick = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.LEARN_HOW_DIALOG.ASSESSMENT_TITLE}
+                content={<LearnHowDialog type={'assessment'} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => closeDialog()}
+            />
+        );
+    };
 
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
@@ -1339,16 +1363,47 @@ const GetWell = () => {
                                         <DsAccordion
                                             id="11"
                                             variant="Default"
-                                            isDisabled={loading || !cardData?.compute_rightsizing?.block_two?.value}
+                                            isDisabled={
+                                                loading ||
+                                                !cardData?.compute_rightsizing?.block_two?.value ||
+                                                filteredCardData?.compute_rightsizing?.isMissingPermissions
+                                            }
                                             isExpanded={optimizePrintState}
                                             title={
-                                                <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.compute_rightsizing?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
-                                                        }
-                                                    )}
-                                                </div>
+                                                filteredCardData?.compute_rightsizing?.isMissingPermissions ? (
+                                                    <div className={styles.missingPermissionText}>
+                                                        <Error />
+                                                        <DsTypography
+                                                            variant={'Semibold_14'}
+                                                            style={{ marginLeft: '8px' }}
+                                                        >
+                                                            Error:
+                                                        </DsTypography>
+                                                        &nbsp;
+                                                        <DsTypography variant={'Regular_14'}>
+                                                            Compute rightsizing details are unavailable due to missing
+                                                            permissions.
+                                                        </DsTypography>
+                                                        &nbsp;
+                                                        <DsButton
+                                                            type="text"
+                                                            onClick={e => {
+                                                                e.stopPropagation();
+                                                                handleLearnHowClick();
+                                                            }}
+                                                        >
+                                                            Learn how to get compute rightsizing recommendations.
+                                                        </DsButton>
+                                                    </div>
+                                                ) : (
+                                                    <div className={styles.tagPlacement}>
+                                                        {filteredCardData?.compute_rightsizing?.tags?.map(
+                                                            (perTag: string) => {
+                                                                return <Tag text={perTag} />;
+                                                            }
+                                                        )}
+                                                    </div>
+                                                )
                                             }
                                             headerActions={[
                                                 <div className={styles.headerAction}>

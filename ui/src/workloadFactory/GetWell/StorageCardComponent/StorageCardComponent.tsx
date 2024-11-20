@@ -27,8 +27,6 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 import store from '../../../store/store';
-import LearnHowDialog from '../../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
-import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -72,17 +70,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else {
             return;
         }
-    };
-
-    const handleLearnHowClick = () => {
-        setDialog(
-            <DialogComponent
-                header={GENERAL.LEARN_HOW_DIALOG.ASSESSMENT_TITLE}
-                content={<LearnHowDialog type={'assessment'} />}
-                primaryButton={GENERAL.CLOSE}
-                callback={() => closeDialog()}
-            />
-        );
     };
 
     const tooltipListSection = (listObj: { key: string; value: string }[]) => {
@@ -198,13 +185,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else if (cardData?.isMissingPermissions && cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING) {
             return (
                 <div className={styles.warningMsg}>
-                    <WarningIcon
-                        //@ts-ignore
-                        style={{ width: '16px', height: '16px', '--icon-primary-color': 'var(--warning' }}
-                    />
-                    <DsButton type="text" onClick={handleLearnHowClick}>
-                        {GENERAL.UNSUPPORTED_PERMISSIONS}
-                    </DsButton>
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
                 </div>
             );
         } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
@@ -234,11 +217,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
-        } else if(type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
+        } else if (type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
             apiCall = optimizeStorageSizing;
             payload = {
                 type: [cardData?.id]
-            }
+            };
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -322,9 +305,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     closeDialog();
                 }}
                 customClass={styles.colorSet}
-                hidePrimaryButton={
-                    type === 'User data files (.mdf) placement'
-                }
+                hidePrimaryButton={type === 'User data files (.mdf) placement'}
             />
         );
     };

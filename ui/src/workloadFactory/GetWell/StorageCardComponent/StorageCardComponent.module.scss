@@ -49,19 +49,19 @@
             max-width: 296px;
         }
 
+        .tooltip:hover {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+
         svg {
             position: relative;
             top: 2px;
         }
     }
-
-    // .tooltipContainer:hover {
-    //     svg {
-    //         path {
-    //             fill: var(--tooltip-icon-hover);
-    //         }
-    //     }
-    // }
 
     .warningMsg {
         display: flex;
