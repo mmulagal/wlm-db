@@ -21,7 +21,6 @@ import {
 import { JobRecordType } from './types/jobs.types';
 
 const JOBS_API_PATH: string = '/v1/jobs';
-const JOBS_API_PATH_WRITER: string = '/v1/credentials/:credentialsId/regions/:region/jobs';
 
 export default function jobsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -62,29 +61,29 @@ export default function jobsRoutes(fastify: FastifyInstance) {
     });
 
     if (process.env.NODE_ENV !== 'production') {
-        server.delete(`${JOBS_API_PATH_WRITER}/:jobId`, { schema: DeleteJobSchema }, async (request, reply) => {
+        server.delete(`${JOBS_API_PATH}/:jobId`, { schema: DeleteJobSchema }, async (request, reply) => {
             const {
-                params: { accountId, credentialsId, region, jobId }
+                params: { accountId, jobId }
             } = request;
-            const response = await deleteJobsWithAllSubJobs(accountId, credentialsId, region, jobId);
+            const response = await deleteJobsWithAllSubJobs(accountId, jobId);
             return reply.send(response);
         });
 
-        server.patch(`${JOBS_API_PATH_WRITER}/:jobId`, { schema: UpdateJobSchema }, async (request, reply) => {
+        server.patch(`${JOBS_API_PATH}/:jobId`, { schema: UpdateJobSchema }, async (request, reply) => {
             const {
-                params: { accountId, credentialsId, region, jobId },
+                params: { accountId, jobId },
                 body
             } = request;
-            const response = await updateJobDetails(accountId, credentialsId, region, jobId, body);
+            const response = await updateJobDetails(accountId, jobId, body);
             return reply.send(response);
         });
 
-        server.post(`${JOBS_API_PATH_WRITER}`, { schema: CreateJobSchema }, async (request, reply) => {
+        server.post(`${JOBS_API_PATH}`, { schema: CreateJobSchema }, async (request, reply) => {
             const {
-                params: { accountId, credentialsId, region }
+                params: { accountId }
             } = request;
 
-            const { items } = request.body;
+            const { credentialsId, region, items } = request.body;
             const response = await registerJobs(accountId, credentialsId, region, items as JobRecordType[]);
             return reply.send(response);
         });

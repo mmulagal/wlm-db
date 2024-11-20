@@ -195,7 +195,7 @@ async function triggerAssessmentAfterOptimization(
         [instanceToAssess],
         serverNameWithHostName
     );
-    await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+    await updateJobDetails(accountId, parentJobId, {
         status: JOBSTATUS.COMPLETED,
         endTime: Date.now(),
         description: `Optimization completed for ${serverNameWithHostName}`
@@ -365,13 +365,13 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
         parentJobStatus = JOBSTATUS.FAILED;
         parentJobError = errorMessage;
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: newJobStatus,
             endTime: Date.now(),
             error: newJobError,
             description: newJobDescription
         });
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: parentJobStatus,
             endTime: Date.now(),
             error: parentJobError
@@ -526,7 +526,7 @@ async function optimizeStorage(params: OptimizeStorageParams) {
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;
         logger.error(errorMessage);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
             error: errorMessage
@@ -616,7 +616,7 @@ async function modifySizingAttributes(
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: jobStatus || JOBSTATUS.COMPLETED,
             endTime: Date.now(),
             error: errorMessage
@@ -678,7 +678,7 @@ async function headroomOptimization(
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus || JOBSTATUS.COMPLETED,
             endTime: Date.now(),
             error: errorMessage
@@ -886,7 +886,7 @@ async function logDriveOptimization(
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus || JOBSTATUS.COMPLETED,
             endTime: Date.now(),
             error: errorMessage
@@ -1004,7 +1004,7 @@ async function tempDbDriveOptimization(
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus || JOBSTATUS.COMPLETED,
             endTime: Date.now(),
             error: errorMessage
@@ -1133,7 +1133,7 @@ async function validateMpioPolicyToRoundRobin(
             jobError = errorMessage;
             throw errorMessage;
         } else {
-            await updateJobDetails(accountId, credentialsId, region, jobId, {
+            await updateJobDetails(accountId, jobId, {
                 status: JOBSTATUS.COMPLETED,
                 endTime: Date.now()
             });
@@ -1145,7 +1145,7 @@ async function validateMpioPolicyToRoundRobin(
         jobError = errorMessage;
         throw errorMessage;
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus,
             endTime: Date.now(),
             error: jobError
@@ -1206,7 +1206,7 @@ async function setMpioPolicyToRoundRobin(
         jobError = errorMessage;
         throw errorMessage;
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus,
             endTime: Date.now(),
             error: jobError,
@@ -1303,7 +1303,7 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
     } finally {
         const errorMessage = `Error while optimizing mpio configuration ${jobError}`;
         logger.error(errorMessage);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: jobStatus,
             endTime: Date.now(),
             error: jobError
@@ -1419,7 +1419,7 @@ async function optimizeOperatingSystemSettings(
     } catch (error) {
         const errorMessage = `Error while optimizing operating system settings ${error}`;
         logger.error(errorMessage);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
             error: errorMessage

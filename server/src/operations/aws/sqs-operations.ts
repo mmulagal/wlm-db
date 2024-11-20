@@ -237,7 +237,7 @@ async function modifyMasterJobStatus(
     }
 
     logger.info('Update job to status :', masterJob?.id, masterJobName, jobStatus);
-    const response = await updateJobDetails(accountId, credentialsId, region, masterJob.id, {
+    const response = await updateJobDetails(accountId, masterJob.id, {
         status: jobStatus,
         endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined,
         error: jobStatus === JOBSTATUS.FAILED ? [...new Set(combinedErrors)].join(',') : undefined
@@ -342,7 +342,7 @@ async function createOrUpdateChildJobs(
                 childJobName: childJob.name,
                 jobStatus
             });
-            const response = await updateJobDetails(accountId, credentialsId, region, childJob.id, {
+            const response = await updateJobDetails(accountId, childJob.id, {
                 status: jobStatus,
                 error: jobStatus === JOBSTATUS.FAILED ? [...new Set(combinedErrors)].join(',') : undefined,
                 endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined
@@ -503,16 +503,10 @@ async function processCloudFormationMessages() {
                                                         masterJob.id,
                                                         masterJobName
                                                     );
-                                                    const response = await updateJobDetails(
-                                                        accountId,
-                                                        credentialsId,
-                                                        region,
-                                                        masterJob.id,
-                                                        {
-                                                            status: JOBSTATUS.COMPLETED,
-                                                            endTime: new Date(messageTimestamp).valueOf()
-                                                        }
-                                                    );
+                                                    const response = await updateJobDetails(accountId, masterJob.id, {
+                                                        status: JOBSTATUS.COMPLETED,
+                                                        endTime: new Date(messageTimestamp).valueOf()
+                                                    });
                                                     logger.debug('Update master job response:', response);
 
                                                     const {

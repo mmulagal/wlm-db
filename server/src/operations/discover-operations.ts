@@ -1697,7 +1697,7 @@ async function performPrepareTasks(
         preparePsModulesForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId)
     ]);
 
-    await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+    await updateJobDetails(accountId, parentJobId, {
         status:
             dbResponse === JOBSTATUS.COMPLETED && psResponse === JOBSTATUS.COMPLETED
                 ? JOBSTATUS.COMPLETED
@@ -1759,7 +1759,7 @@ async function prepareDbScriptsForManage(
             error: errorInfo.message as string
         };
     }
-    await updateJobDetails(accountId, credentialsId, region, childJobId, jobStatusRecord);
+    await updateJobDetails(accountId, childJobId, jobStatusRecord);
 
     return jobStatusRecord.status;
 }
@@ -1830,7 +1830,7 @@ async function preparePsModulesForManage(
         };
     }
 
-    await updateJobDetails(accountId, credentialsId, region, childJobId, jobStatusRecord);
+    await updateJobDetails(accountId, childJobId, jobStatusRecord);
 
     return jobStatusRecord.status;
 }

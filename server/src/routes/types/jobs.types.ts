@@ -1,10 +1,10 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
-    CredentialsIdParams,
     CredentialsIdRegionQueryParams,
     CredentialsIdRegionParams,
-    RegionDetails
+    RegionDetails,
+    AccountIdParams
 } from './generic.types';
 
 const JobSummaryQueryString = Type.Composite([
@@ -137,17 +137,17 @@ const CreateJobObject = Type.Object({
     error: Type.Optional(Type.String()),
     initiator: Type.Optional(Type.String())
 });
-
 type JobRecordType = Static<typeof CreateJobObject>;
 
-const CreateJobRequestBody = Type.Object({
-    items: Type.Array(CreateJobObject)
-});
+const CreateJobRequestBody = Type.Composite([
+    CredentialsIdRegionQueryParams,
+    Type.Object({ items: Type.Array(CreateJobObject) })
+]);
 const CreateJobResponse = Type.Object({
     count: Type.Number()
 });
 const JobsParams = Type.Object({ accountId: Type.String({ minLength: 1 }), jobId: Type.String({ minLength: 1 }) });
-const JobsParamsWriter = Type.Composite([CredentialsIdParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })]);
+const JobsParamsWriter = Type.Composite([AccountIdParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })]);
 
 export {
     ListJobsQueryString,
