@@ -8,6 +8,7 @@ import {
     getCloudformationTemplate,
     getCollationDetailsForDeployment,
     getFSXAvailableRegionsForThrougput,
+    getPgSqlCfTemplate,
     getTerraformSetup
 } from '../operations/deployment-operations';
 import {
@@ -18,7 +19,8 @@ import {
     FsxAvailableRegionsForThroughputSchema,
     CollationListSchema,
     PgSqlDeployTemplateSchema,
-    TerraformSetupSchema
+    TerraformSetupSchema,
+    PgSqlCloudFormationTemplateSchema
 } from './schemas/deployment-schemas';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -171,6 +173,39 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     tags
                 );
                 return reply.code(202).send(response);
+            }
+        )
+        .post(
+            `${'/v1/pgsql/cloudformation/template'}`,
+            { schema: PgSqlCloudFormationTemplateSchema },
+            async (request, reply) => {
+                const {
+                    headers: { 'triggered-from': triggeredFrom },
+                    body: {
+                        networkConfiguration,
+                        ec2Configuration,
+                        fsxConfiguration,
+                        sqlConfiguration,
+                        topicArn,
+                        enableCloudWatch,
+                        tags,
+                        credentialsId,
+                        region
+                    }
+                } = request;
+                const response = await getPgSqlCfTemplate(
+                    networkConfiguration,
+                    ec2Configuration,
+                    fsxConfiguration,
+                    sqlConfiguration,
+                    topicArn,
+                    enableCloudWatch,
+                    triggeredFrom,
+                    tags,
+                    credentialsId,
+                    region
+                );
+                return reply.send(response);
             }
         )
         .post(`${API_MSSQL_TERRAFORM_PREFIX_PATH}`, { schema: TerraformSetupSchema }, async (request, reply) => {

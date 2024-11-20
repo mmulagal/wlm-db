@@ -4,7 +4,7 @@ import { PutParameterCommandInput } from '@aws-sdk/client-ssm';
 import {
     sendSSMCommand,
     getCommandInvocation,
-    describeFSxOntapRegions,
+    getParametersByPath,
     getConnectionStatus,
     putParameter,
     getParameter
@@ -40,7 +40,7 @@ describe('sendSSMCommand', () => {
     });
 
     it('List of AWS regions supporting Amazon FSx for NetApp ONTAP', async () => {
-        const response = await describeFSxOntapRegions(DEFAULT_AWS_CREDENTIALS_TYPE);
+        const response = await getParametersByPath(DEFAULT_AWS_CREDENTIALS_TYPE);
         expect(response).toEqual(fsxOntapRegions.Parameters);
     });
 

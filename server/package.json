@@ -30,7 +30,7 @@
     "license": "UNLICENSED",
     "dependencies": {
         "@apidevtools/swagger-parser": "^10.1.0",
-        "@aws-sdk/client-auto-scaling": "^3.691.0",
+        "@aws-sdk/client-auto-scaling": "^3.696.0",
         "@aws-sdk/client-bedrock-runtime": "^3.691.0",
         "@aws-sdk/client-cloudformation": "^3.691.0",
         "@aws-sdk/client-cloudwatch": "^3.691.0",

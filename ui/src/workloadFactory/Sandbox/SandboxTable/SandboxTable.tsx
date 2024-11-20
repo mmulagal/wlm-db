@@ -145,8 +145,6 @@ const SandboxTable = () => {
             showJobInProgressNotification(action, rowData?.name);
             const jobInterval = setInterval(() => {
                 getJobDetailApi({
-                    credentialId: headerSelectedCred?.data?.credentialsId,
-                    region: headerSelectedRegion?.label2,
                     id: res?.data?.jobId
                 }).then((jobRes: any) => {
                     const status = jobRes?.data?.status;

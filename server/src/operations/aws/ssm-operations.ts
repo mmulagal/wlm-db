@@ -13,7 +13,7 @@ import { DescribeRegionsCommandInput } from '@aws-sdk/client-ec2';
 import {
     sendSSMCommand,
     getCommandInvocation,
-    describeFSxOntapRegions,
+    getParametersByPath,
     getConnectionStatus,
     putParameter,
     getParameter
@@ -232,7 +232,7 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
     logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP');
 
     try {
-        const fsxRegionResponse = await describeFSxOntapRegions();
+        const fsxRegionResponse = await getParametersByPath();
 
         const fsxRegionsList: Array<FSxAvailableRegionType> = [];
         const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
@@ -270,7 +270,7 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
             ]
         };
         const [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
-            describeFSxOntapRegions(credentialsId),
+            getParametersByPath(credentialsId),
             describeRegions(input, credentialsId)
         ]);
 

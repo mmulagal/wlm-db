@@ -77,15 +77,19 @@ export const GENERAL = {
     LANDING_ZONE: 'Landing zone',
     VIEW_API_REQUEST: 'View API request',
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL Server configuration',
+    LOAD_CONFIG_PGSQL_HEADER: 'Load PostgreSQL Server configuration',
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
     SAVE_CONFIG_HEADER: 'Save Microsoft SQL Server configuration',
+    SAVE_CONFIG_PGSQL_HEADER: 'Save PostgreSQL Server configuration',
     RENAME_CONFIG: 'Rename configuration',
     DELETE_CONFIG: 'Delete configuration',
     DELETE_CONFIG_TEXT: 'Are you sure to delete configuration',
     DELETE_CONFIG_NOTIFICATION: 'Configuration deleted successfully.',
     SAVE_CONFIG_CONTENT:
         'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
+        SAVE_CONFIG_PGSQL_CONTENT:
+        'You can save this PostgreSQL Server configuration and load the configuration later for a future PostgreSQL Server deployment.',
     RENAME_CONFIG_CONTENT: ['Enter a new name for the ', ' configuration'],
     RENAME_CONFIG_NOTIFICATION: 'Configuration name changed successfully.',
     CONFIG_NAME: 'Configuration name',
@@ -1164,7 +1168,7 @@ export const GENERAL = {
     BYOL_TEXT: 'Monthly SQL BYOL costs($)',
     CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI: 'Source database is not hosted on a NetApp iSCSI drive',
     COMING_SOON: 'Coming soon',
-    NOTE_PONT_ONE: 'No disruption to your services is expected during this process.',
+    NOTE_PONT_ONE: 'No disruption to your services are expected during this process.',
     NOTE_PONT_TWO:
         'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.',
     OS_NOTE_POINT_ONE:

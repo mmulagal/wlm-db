@@ -21,6 +21,7 @@ interface databaseInstanceMetadata {
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
+    configsOptimized?: Array<any>;
 }
 
 interface CreateDbMetrics {
@@ -245,6 +246,24 @@ interface Sizing {
     'data-log-drive-details': LogDriveDetails[];
     'data-tempdb-drive-details': TempDbDriveDetails;
 }
+
+interface UserDatabaseLayout {
+    name: string;
+    lunPath: string;
+    lunUuid: string;
+    svmName: string;
+    fileName: string;
+    sizeInMb: number;
+    lunSerialNumber: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
+}
+interface StorageLayout {
+    'user-database-layout:': { log: [UserDatabaseLayout]; data: [UserDatabaseLayout] };
+    'tempdb-files-location': string;
+    'default-log-files-location': string;
+    'default-data-files-location': string;
+}
 interface StorageAssessment {
     filesystemId: string;
     volumes: Array<{ Key?: string; Value?: string }>;
@@ -285,6 +304,30 @@ type VolumeSpaceRecord = {
     };
 };
 
+interface OptimizeMpioPolicyParams {
+    accountId: string;
+    region: string;
+    credentialsId: string;
+    parentJobId: string;
+    fsxId: string;
+    instanceId: string;
+    instanceName: string;
+    databaseType: string;
+    sqlAuthEnabled: boolean;
+    serverNameWithHostName: string;
+    databaseHostId: string;
+    databaseInstanceId: string;
+    sqlDeploymentType?: string;
+    activeNodeInstanceId?: string;
+    activeNodeName?: string;
+    standbyNodeInstanceId?: string;
+    standbyNodeName?: string;
+    awsAccountId: string;
+    changeClusterOwnership?: boolean;
+    activeNodeCurrentPolicy?: string;
+    standbyNodeCurrentPolicy?: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -309,5 +352,7 @@ export {
     StorageAssessment,
     DriftAssessmentJob,
     OptimizeStorageParams,
-    VolumeSpaceRecord
+    VolumeSpaceRecord,
+    OptimizeMpioPolicyParams,
+    StorageLayout
 };

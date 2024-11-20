@@ -86,7 +86,9 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         const result: any = await rawBaseQuery(adjustedArgs, api, extraOptions);
         // For deploy API and discover API if it gets rate exceeded than retry that API
         if (
-            (api.endpoint === 'deploySqlTemplate' || api.endpoint === 'discoverHosts') &&
+            (api.endpoint === 'deploySqlTemplate' ||
+                api.endpoint === 'discoverHosts' ||
+                api.endpoint === 'deployPgsqlTemplate') &&
             result.error?.data &&
             result.error.data?.message.toLowerCase().includes(API_ERRORS.RATE_EXCEEDED)
         ) {
@@ -371,12 +373,18 @@ export const databaseHomeApi = createApi({
     endpoints: builder => {
         return {
             getJobsSummary: builder.query({
-                query: ({ credentialId, region, startTime, endTime }) =>
-                    `v1/credentials/${credentialId}/regions/${region}/jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ startTime, endTime }) => `v1/jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/mssql/cloudformation/template`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            getPgsqlTemplates: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/pgsql/cloudformation/template`,
                     method: 'POST',
                     body: payload
                 })
@@ -421,8 +429,8 @@ export const jobMonitoringApi = createApi({
         return {
             // getJobsList will just include first level jobs list info
             getJobsList: builder.query({
-                query: ({ credentialId, region, nextToken = null, startTime, endTime }) => {
-                    let url = `v1/credentials/${credentialId}/regions/${region}/jobs?startTime=${startTime}&endTime=${endTime}`;
+                query: ({ nextToken = null, startTime, endTime }) => {
+                    let url = `v1/jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
                         url += `&nextToken=${nextToken}`;
                     }
@@ -432,8 +440,6 @@ export const jobMonitoringApi = createApi({
             // getFullJobsList will include subtasks and task level data also
             getFullJobsList: builder.query({
                 query: ({
-                    credentialId,
-                    region,
                     nextToken = null,
                     startTime,
                     endTime,
@@ -441,7 +447,7 @@ export const jobMonitoringApi = createApi({
                     type = null,
                     status = null
                 }) => {
-                    let url = `v1/credentials/${credentialId}/regions/${region}/jobs?startTime=${startTime}&endTime=${endTime}`;
+                    let url = `v1/jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
                         url += `&nextToken=${nextToken}`;
                     }
@@ -458,17 +464,15 @@ export const jobMonitoringApi = createApi({
                 }
             }),
             getSubTaskList: builder.query({
-                query: ({ credentialId, region, id }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/jobs/${id}`
+                query: ({ id }) => ({
+                    url: `v1/jobs/${id}`
                 })
             }),
             getJobsSummaryData: builder.query({
-                query: ({ credentialId, region, startTime, endTime }) =>
-                    `v1/credentials/${credentialId}/regions/${region}/jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ startTime, endTime }) => `v1/jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getJobsSummaryTimelineData: builder.query({
-                query: ({ credentialId, region, startTime, endTime }) =>
-                    `v1/credentials/${credentialId}/regions/${region}/jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
+                query: ({ startTime, endTime }) => `v1/jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
             })
         };
     }
@@ -871,6 +875,13 @@ export const getWellApi = createApi({
                     body: payload
                 })
             }),
+            optimizeOperatingSystem: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-operating-system`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             optimizeComputeConfig: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/compute`,
@@ -928,7 +939,8 @@ export const {
     useGetJobsSummaryQuery,
     useLazyGetJobsSummaryQuery,
     useGetTemplatesMutation,
-    useGetTerraformSetupMutation
+    useGetTerraformSetupMutation,
+    useGetPgsqlTemplatesMutation
 } = databaseHomeApi;
 
 export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
@@ -990,5 +1002,10 @@ export const {
     useGetManualViewCalculationsMutation
 } = exploreSavingsApi;
 
-export const { useGetMssqlAssessmentDataMutation, useOptimizeStorageConfigMutation, useOptimizeComputeConfigMutation, useOptimizeStorageSizingMutation } =
-    getWellApi;
+export const {
+    useGetMssqlAssessmentDataMutation,
+    useOptimizeStorageConfigMutation,
+    useOptimizeComputeConfigMutation,
+    useOptimizeStorageSizingMutation,
+    useOptimizeOperatingSystemMutation
+} = getWellApi;

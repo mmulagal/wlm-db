@@ -41,6 +41,8 @@ const PostgreServerName = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [!isDBClusterNameFilled, isCreateHit]);
 
+
+    //Check for valid server name
     function isValidDBName() {
         const firstChar = credName && credName.charAt(0);
       

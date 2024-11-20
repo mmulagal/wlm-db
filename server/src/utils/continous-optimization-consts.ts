@@ -47,6 +47,10 @@ enum OptimizeStorageConfigs {
     SPACE_ALLOCATION = 'space-allocation-allocated'
 }
 
+enum OptimizeOperatingSystemParams {
+    MPIO_POLICY = 'mpio-load-balance-policy'
+}
+
 enum OPTIMIZE_SIZING_CONFIGS {
     HEADROOM = 'headroom',
     LOG_DRIVE_SIZE = 'log-drive-size',
@@ -147,5 +151,6 @@ export {
     VOLUME,
     LUN,
     QUERY_PARAMS,
-    REDIS_SCHEMA
+    REDIS_SCHEMA,
+    OptimizeOperatingSystemParams
 };

@@ -1,7 +1,7 @@
 import randomize from 'randomatic';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { AWS_REGIONS } from '../consts';
+import { AWS_REGIONS, RESOURCESTYPE } from '../consts';
 
 function masterStackData(
     accountId: string,
@@ -1578,8 +1578,18 @@ function assessmentJobData(
     instanceNames: string[],
     credentialsId: string,
     region: string,
-    parentJobId: string
+    parentJobId: string,
+    instanceIds: string,
+    resourceId: string
 ) {
+    const instanceDetailsForJob = {
+        hostName: resourceName,
+        resourceId,
+        databaseInstanceId: instanceIds,
+        databaseInstanceName: instanceNames.join(','),
+        sqlServerDeploymentType: 'MSSQL'
+    };
+    const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
     return [
         {
             id: parentJobId,
@@ -1588,7 +1598,7 @@ function assessmentJobData(
             region,
             name: `SQL Server instance(s) ${instanceNames.join(
                 ','
-            )} has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.`,
+            )} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             type: JOBTYPE.ASSESSMENT,
@@ -1599,14 +1609,24 @@ function assessmentJobData(
     ];
 }
 
-function optimizeJobData(
+function optimizeStorageJobData(
     accountId: string,
     resourceName: string,
     instanceName: string,
     credentialsId: string,
     region: string,
-    parentJobId: string
+    parentJobId: string,
+    instanceIds: string,
+    resourceId: string
 ) {
+    const instanceDetailsForJob = {
+        hostName: resourceName,
+        resourceId,
+        databaseInstanceId: instanceIds,
+        databaseInstanceName: instanceName,
+        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+    };
+    const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
     return [
         {
             id: parentJobId,
@@ -1641,8 +1661,8 @@ function optimizeJobData(
             account_id: accountId,
             credentials_id: credentialsId,
             region,
-            name: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.`,
-            description: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in <Instance optimization dashboard>.`,
+            name: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
+            description: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
@@ -1654,6 +1674,100 @@ function optimizeJobData(
     ];
 }
 
+function optimizeOperatingSystemJobData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    instanceId: string,
+    resourceId: string
+) {
+    const instanceDetailsForJob = {
+        hostName: resourceName,
+        resourceId,
+        databaseInstanceId: instanceId,
+        databaseInstanceName: instanceName,
+        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+    };
+    const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
+    return [
+        {
+            id: parentJobId,
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Optimize operating system configuration for ${resourceName}\\${instanceName}.`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now()),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Validate MPIO policy to Round Robin on ${resourceName}\\${instanceName}`,
+            description: `Validate MPIO policy to Round Robin on ${resourceName}\\${instanceName}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now()),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Setting MPIO policy to Round Robin on ${resourceName}\\${instanceName}.`,
+            description: `Setting MPIO policy to Round Robin on ${resourceName}\\${instanceName}.`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Validate MPIO policy to Round Robin on ${resourceName}\\${instanceName}`,
+            description: `Validate MPIO policy to Round Robin on ${resourceName}\\${instanceName}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
+            description: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
 export {
     masterStackData,
     validationStack1Data,
@@ -1666,5 +1780,6 @@ export {
     saveStandaloneConfigurationData,
     sandboxJobData,
     assessmentJobData,
-    optimizeJobData
+    optimizeStorageJobData,
+    optimizeOperatingSystemJobData
 };

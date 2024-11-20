@@ -43,7 +43,7 @@ describe('Database name accordion test', () => {
         (useStateMock as any).mockImplementationOnce(() => ['sqldatabase', setState]);
         const { container } = wrapper();
         expect(DatabaseName).toBeDefined();
-        expect(container).toHaveTextContent('Database name');
+        expect(container).toHaveTextContent('Database Server namesqldatabaseic_card_arrow_expand.svg');
         expect(container).toHaveTextContent('sqldatabase');
     });
 
@@ -51,7 +51,7 @@ describe('Database name accordion test', () => {
         (useStateMock as any).mockImplementationOnce(() => ['sqldatabase_123344455', setState]);
         const { container } = wrapper();
         expect(DatabaseName).toBeDefined();
-        expect(container).toHaveTextContent('Database name');
+        expect(container).toHaveTextContent('Database Server nameerror-icon.svgOne or more fields has an erroric_card_arrow_expand.svg');
         expect(container).toHaveTextContent('One or more fields has an error');
     });
 });
