@@ -18,6 +18,7 @@
         .statusTopSection {
             display: flex;
             gap: 4px;
+            align-items: center;
 
             .svgSection {
                 position: relative;
@@ -54,13 +55,13 @@
         }
     }
 
-    .tooltipContainer:hover {
-        svg {
-            path {
-                fill: var(--tooltip-icon-hover);
-            }
-        }
-    }
+    // .tooltipContainer:hover {
+    //     svg {
+    //         path {
+    //             fill: var(--tooltip-icon-hover);
+    //         }
+    //     }
+    // }
 
     .warningMsg {
         display: flex;
