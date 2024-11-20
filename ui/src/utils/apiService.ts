@@ -86,7 +86,9 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         const result: any = await rawBaseQuery(adjustedArgs, api, extraOptions);
         // For deploy API and discover API if it gets rate exceeded than retry that API
         if (
-            (api.endpoint === 'deploySqlTemplate' || api.endpoint === 'discoverHosts') &&
+            (api.endpoint === 'deploySqlTemplate' ||
+                api.endpoint === 'discoverHosts' ||
+                api.endpoint === 'deployPgsqlTemplate') &&
             result.error?.data &&
             result.error.data?.message.toLowerCase().includes(API_ERRORS.RATE_EXCEEDED)
         ) {
@@ -1000,5 +1002,10 @@ export const {
     useGetManualViewCalculationsMutation
 } = exploreSavingsApi;
 
-export const { useGetMssqlAssessmentDataMutation, useOptimizeStorageConfigMutation, useOptimizeComputeConfigMutation, useOptimizeStorageSizingMutation, useOptimizeOperatingSystemMutation } =
-    getWellApi;
+export const {
+    useGetMssqlAssessmentDataMutation,
+    useOptimizeStorageConfigMutation,
+    useOptimizeComputeConfigMutation,
+    useOptimizeStorageSizingMutation,
+    useOptimizeOperatingSystemMutation
+} = getWellApi;
