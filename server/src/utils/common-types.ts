@@ -1,4 +1,5 @@
 import { JsonValue } from '@prisma/client/runtime/library';
+import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 
 interface Metadata {
     node1InstanceId: string;
@@ -271,6 +272,16 @@ interface StorageAssessment {
     os: Array<{ Key?: string; Value?: string }>;
     layout: JSON;
     sizing: Sizing;
+    errors: {
+        volumes: string;
+        luns: string;
+        'volumes-footprint': string;
+        layout: string;
+        sizing: string;
+        'mpio-policy': string;
+        'iscsi-sessions': string;
+        'ntfs-allocation': string;
+    };
 }
 
 interface DriftAssessmentJob {
@@ -328,6 +339,10 @@ interface OptimizeMpioPolicyParams {
     standbyNodeCurrentPolicy?: string;
 }
 
+interface DatabaseInstancesIncludingResource extends DatabaseInstances {
+    resource: Resource;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -354,5 +369,6 @@ export {
     OptimizeStorageParams,
     VolumeSpaceRecord,
     OptimizeMpioPolicyParams,
-    StorageLayout
+    StorageLayout,
+    DatabaseInstancesIncludingResource
 };

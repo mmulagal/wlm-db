@@ -352,6 +352,7 @@ function Test-IscsiSessions {
 const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     `
     $DriftAssessmentData = @{}
+    $DriftAssessmentData['errors'] = @{}
     $sqlInstance = "${instanceRecord.name}"
     $FSxID = "${instanceRecord.fsxFileSystem}"
     $FSxRegion = "${instanceRecord.region}"
@@ -367,150 +368,168 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     }
 
     $DriftAssessmentData['filesystemId'] = $FSxID
+    
+    ${ontapRestRequest}
+
 
     $APIEndpoint = '/storage/volumes'
     $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
     $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
     
-    ${ontapRestRequest}
     
     # Volume details
-    $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
-    $Volumes = $Response.records
+    try{
+        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
+        $Volumes = $Response.records
 
-    $VolumeList = @()
-    # loop through each volume and get data
-    $SvmNames = @()
-    foreach ($perVolumeData in $Volumes) {
-        # Using PSCustomObject
-        $perVolRow = [PSCustomObject]@{
-            name = $perVolumeData.name
-            'thin-provision' = $perVolumeData.guarantee.honored
-            'space-guarantee' = $perVolumeData.guarantee.type
-            'autosize-mode' = $perVolumeData.autosize.mode
-            'fractional-reserve' = $perVolumeData.space.fractional_reserve
-            'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
-            'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
-            'tiering-policy' = $perVolumeData.tiering.policy
-            'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
+        $VolumeList = @()
+        # loop through each volume and get data
+        $SvmNames = @()
+        foreach ($perVolumeData in $Volumes) {
+            # Using PSCustomObject
+            $perVolRow = [PSCustomObject]@{
+                name = $perVolumeData.name
+                'thin-provision' = $perVolumeData.guarantee.honored
+                'space-guarantee' = $perVolumeData.guarantee.type
+                'autosize-mode' = $perVolumeData.autosize.mode
+                'fractional-reserve' = $perVolumeData.space.fractional_reserve
+                'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
+                'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
+                'tiering-policy' = $perVolumeData.tiering.policy
+                'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
+            }
+            if($perVolumeData.autosize.mode -ne 'off') {
+                $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "on"
+            }
+            else {
+                $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "off"
+            }
+            $VolumeList += $($perVolRow)
+            $SvmNames += $perVolumeData.svm.name
         }
-        if($perVolumeData.autosize.mode -ne 'off') {
-            $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "on"
-        }
-        else {
-            $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "off"
-        }
-        $VolumeList += $($perVolRow)
-        $SvmNames += $perVolumeData.svm.name
-    }
-    $DriftAssessmentData['volumes'] = @($($VolumeList))
-
+        $DriftAssessmentData['volumes'] = @($($VolumeList))
+    } catch {$DriftAssessmentData['errors']['volumes'] = $_.Exception.Message}
+    
     # Volume footprint details
     $SvmNamesWithDelimiter = $SvmNames -join '|'
     $APIEndpoint = '/private/cli/volume/show-footprint'
     $APIQueryFilter = "vserver=$SvmNamesWithDelimiter,volume=${instanceRecord.mappedVolumeNames?.join('|')}"
     $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
+
+    try{
+        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
+        $Volumes = $Response.records
+
+        $isPerformanceTier100Percent = $true
+        # loop through each volume and get data
+        foreach ($perVolumeData in $Volumes) {
+        if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
+                $isPerformanceTier100Percent = $false
+                break
+        }
+        }
+    } catch {$DriftAssessmentData['errors']['volumes-footprint'] = $_.Exception.Message}
     
-    $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
-    $Volumes = $Response.records
-
-    $isPerformanceTier100Percent = $true
-    # loop through each volume and get data
-    foreach ($perVolumeData in $Volumes) {
-       if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
-            $isPerformanceTier100Percent = $false
-            break
-       }
-    }
-    $DriftAssessmentData['volumes'] = @($($VolumeList))
-
+   
     # Lun details
     $APIEndpoint = '/storage/luns'
     $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
     $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
     
-    $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
-    $Luns = $Response.records
-   
-    $LunsList = @()
+    try{
+        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
+        $Luns = $Response.records
+    
+        $LunsList = @()
 
-    # loop through luns and get per lun data
-    foreach ($perLunData in $Luns) {
-        # Using PSCustomObject
-        $perLunRow = [PSCustomObject]@{
-            name = $($perLunData.name)
-            'os-type' = $($perLunData.os_type)
-            'space-reservation-enabled' = $($perLunData.space.guarantee.requested)
-            'space-allocation-allocated' = $($perLunData.space.scsi_thin_provisioning_support_enabled)
+        # loop through luns and get per lun data
+        foreach ($perLunData in $Luns) {
+            # Using PSCustomObject
+            $perLunRow = [PSCustomObject]@{
+                name = $($perLunData.name)
+                'os-type' = $($perLunData.os_type)
+                'space-reservation-enabled' = $($perLunData.space.guarantee.requested)
+                'space-allocation-allocated' = $($perLunData.space.scsi_thin_provisioning_support_enabled)
+            }
+            $LunsList += $($perLunRow)
         }
-        $LunsList += $($perLunRow)
-    }
-    $DriftAssessmentData['luns'] = @($($LunsList))
+        $DriftAssessmentData['luns'] = @($($LunsList))
+    } catch {$DriftAssessmentData['errors']['luns'] = $_.Exception.Message}
+    
 
     # gather storage layout data
-    ${INSTANCE_DRIVE_DETAILS_TEMPLATE(instanceRecord.name, instanceRecord.sqlAuthEnabled)}
+    try{
+        ${INSTANCE_DRIVE_DETAILS_TEMPLATE(instanceRecord.name, instanceRecord.sqlAuthEnabled)}
 
-    ${DATABASE_VOLUME_LUN_DETAILS(instanceRecord)}
-    
-    foreach ($drive in $instanceAllDataDrivesSizes) {
-        $logVolumeLunDetails = $responseObject.log | Where-Object { $_.name -eq $drive.databaseName }
-        if ($logVolumeLunDetails) {
-            $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetails.ontapVolumeUuid 
-            $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetails.ontapVolumeName
-            $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetails.lunUuid
-            $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetails.svmName
+        ${DATABASE_VOLUME_LUN_DETAILS(instanceRecord)}
+        
+        foreach ($drive in $instanceAllDataDrivesSizes) {
+            $logVolumeLunDetails = $responseObject.log | Where-Object { $_.name -eq $drive.databaseName }
+            if ($logVolumeLunDetails) {
+                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetails.ontapVolumeUuid 
+                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetails.ontapVolumeName
+                $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetails.lunUuid
+                $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetails.svmName
+                }
+                
             }
-            
-        }
-    
-    foreach ($drive in $defaultTempDBDriveSize) {
-        $tempdbVolumeLunDetails = $responseObject.tempDb
-        if ($tempdbVolumeLunDetails) {
-            $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $tempdbVolumeLunDetails.ontapVolumeUuid 
-            $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $tempdbVolumeLunDetails.ontapVolumeName
-            $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $tempdbVolumeLunDetails.lunUuid
-            $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $tempdbVolumeLunDetails.svmName
+        
+        foreach ($drive in $defaultTempDBDriveSize) {
+            $tempdbVolumeLunDetails = $responseObject.tempDb
+            if ($tempdbVolumeLunDetails) {
+                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $tempdbVolumeLunDetails.ontapVolumeUuid 
+                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $tempdbVolumeLunDetails.ontapVolumeName
+                $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $tempdbVolumeLunDetails.lunUuid
+                $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $tempdbVolumeLunDetails.svmName
+                }
+                
             }
-            
-        }
-    # gather OS configuration data 
-    $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 | Select ProductId,VendorId 
-    $MpioStatus = $false
-    if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
-        $MpioStatus = $true
-    }
-    $LoadBalancingPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
-
-    ${TEST_ISCSI_SESSIONS}
-
-    $SessionCount = Test-IscsiSessions
-    $AllDrives = $($filteredDataDrives; $filteredLogDrives)
-    $AllDrives = $AllDrives | select -Unique
-    $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object Name, BlockSize 
-    $ntfsUnitSize = 65536
-    $ntfsAllocationUnit | ForEach-Object -Process {if($_.BlockSize -ne 65536) {$ntfsUnitSize = $_.BlockSize}}
-    $DriftAssessmentData['os'] = @{
-                                    'mpio-enabled' = $MpioStatus;
-                                    'mpio-load-balance-policy' = "$LoadBalancingPolicy";
-                                    'mpio-iscsi-count' = "$SessionCount";
-                                    'ntfs-allocation-details' = $($ntfsAllocationUnit);
-                                    'ntfs-allocation-unit-size' = $($ntfsUnitSize);
-    }
-    
-    $DriftAssessmentData['layout'] = @{
+        
+        $DriftAssessmentData['layout'] = @{
                                         'default-data-files-location' = $defaultDataDrive;
                                         'default-log-files-location' = $defaultLogDrive;
                                         'tempdb-files-location' = $tempdbDrive;
-                                        'user-database-layout' = $($responseObject);
-    }
-    
-
-    $DriftAssessmentData['sizing'] = @{
+                                        'user-database-layout' = $($responseObject);}
+        
+        $DriftAssessmentData['sizing'] = @{
                                         'performance-tier' = $isPerformanceTier100Percent;
                                         'data-log-drive-details' = @($($instanceAllDataDrivesSizes));
-                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);
+                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);}
+    } catch { 
+        $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
+        $DriftAssessmentData['errors']['sizing'] = $_.Exception.Message
     }
-   
+    
+    # gather OS configuration data 
+     $DriftAssessmentData['os'] = @{}
+    try{
+        $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 | Select ProductId,VendorId 
+        $MpioStatus = $false
+        if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
+            $MpioStatus = $true
+        }
+        $DriftAssessmentData['os']['mpio-enabled'] = $MpioStatus
+        $LoadBalancingPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
+        $DriftAssessmentData['os']['mpio-load-balance-policy'] = "$LoadBalancingPolicy"
+        } catch {$DriftAssessmentData['errors']['mpio-policy'] = $_.Exception.Message}
+
+    ${TEST_ISCSI_SESSIONS}
+    
+    try{
+        $SessionCount = Test-IscsiSessions
+        $DriftAssessmentData['os']['mpio-iscsi-count'] = "$SessionCount"
+        } catch {$DriftAssessmentData['errors']['iscsi-sessions'] = $_.Exception.Message}
+    
+    try{
+        $AllDrives = $($filteredDataDrives; $filteredLogDrives)
+        $AllDrives = $AllDrives | select -Unique
+        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object Name, BlockSize 
+        $ntfsUnitSize = 65536
+        $ntfsAllocationUnit | ForEach-Object -Process {if($_.BlockSize -ne 65536) {$ntfsUnitSize = $_.BlockSize}}
+        $DriftAssessmentData['os']['ntfs-allocation-details'] = $($ntfsAllocationUnit)
+        $DriftAssessmentData['os']['ntfs-allocation-unit-size'] = $($ntfsUnitSize)
+    } catch {$DriftAssessmentData['errors']['ntfs-allocation'] = $_.Exception.Message}
+
     $response = $DriftAssessmentData | ConvertTo-Json -Depth 5
 
     if([string]::IsNullOrEmpty($response)) {

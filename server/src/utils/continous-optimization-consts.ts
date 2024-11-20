@@ -57,7 +57,7 @@ enum OPTIMIZE_SIZING_CONFIGS {
     TEMPDB_DRIVE_SIZE = 'tempdb-drive-size'
 }
 
-const DRIFT_ASSESSMENT_QUEUE = 'driftAssessmentQueue';
+const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
 const SEVERITY = {
     CRITICAL: 'critical',
     WARNING: 'warning'
