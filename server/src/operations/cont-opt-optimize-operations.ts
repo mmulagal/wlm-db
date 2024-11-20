@@ -1575,7 +1575,7 @@ async function handleComputeRemediation(
 
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, jobId, {
+        await updateJobDetails(accountId, jobId, {
             status: jobStatus || JOBSTATUS.COMPLETED,
             endTime: Date.now()
         });
