@@ -18,6 +18,7 @@
         .statusTopSection {
             display: flex;
             gap: 4px;
+            align-items: center;
 
             .svgSection {
                 position: relative;
@@ -48,17 +49,17 @@
             max-width: 296px;
         }
 
+        .tooltip:hover {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+
         svg {
             position: relative;
             top: 2px;
-        }
-    }
-
-    .tooltipContainer:hover {
-        svg {
-            path {
-                fill: var(--tooltip-icon-hover);
-            }
         }
     }
 

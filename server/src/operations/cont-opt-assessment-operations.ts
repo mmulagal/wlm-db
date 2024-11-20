@@ -14,15 +14,16 @@ import storageGoldenConfigData from './continuous-optimization/golden-configs/st
 import {
     DatabaseInstance,
     databaseInstanceMetadata,
+    DatabaseInstancesIncludingResource,
     LogDriveDetails,
     StorageAssessment,
     TempDbDriveDetails,
     WorkloadInstance
 } from '../utils/common-types';
-import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import { ACCOUNT_ID, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
-import { listResources } from '../lib/database/db';
+import { listAllManagedInstances, listResources } from '../lib/database/db';
 import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
 import { checkComputeOptimizerEnrollmentStatus } from './recommendation-operations';
 import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
@@ -35,6 +36,7 @@ import {
 import {
     ComputeDriftResponseType,
     DriftAssessmentResponseType,
+    ParameterDriftResponseType,
     SizingViolationResponseType,
     StorageParameterDriftResponseType
 } from '../routes/types/continuous-optimization.types';
@@ -43,6 +45,8 @@ import {
     createDatabaseInstanceConfigData,
     listDatabaseInstanceConfigData
 } from '../lib/database/database-instance-config';
+import { listJobs } from '../lib/database/job';
+import { setAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -228,86 +232,81 @@ async function calculateStorageDrift(
 
     const driftAssessmentData: StorageParameterDriftResponseType = {
         timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
-        optimisedCount: { total: 0, optimised: 0 },
         configuration: { volumes: [], luns: [], os: [] },
         sizing: [],
         layout: []
     };
 
     const { config_data: configData } = persistedConfigurationData;
-    const { volumes, luns, os, layout, sizing, filesystemId } = configData as unknown as StorageAssessment;
-    let configCount = 0;
-    let optimizedCount = 0;
+    const { volumes, luns, os, layout, sizing, filesystemId, errors } = configData as unknown as StorageAssessment;
 
-    volumeConfigData.forEach(config => {
-        configCount += 1;
-        let status = AssessmentStatus.OPTIMIZED;
-        const objectsInViolation: string[] = [];
-        volumes.forEach(volume => {
-            let objectName = '';
-            Object.entries(volume).forEach(([key, value]) => {
-                objectName = key === 'name' ? value : objectName;
-                if (key === config.parameter) {
-                    status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
-                    if (status === AssessmentStatus.NOT_OPTIMIZED) {
-                        objectsInViolation.push(objectName!);
+    if (errors.volumes) {
+        driftAssessmentData.configuration.volumes.push({ errorMessage: errors.volumes });
+    } else {
+        volumeConfigData.forEach(config => {
+            let status = AssessmentStatus.OPTIMIZED;
+            const objectsInViolation: string[] = [];
+            volumes.forEach(volume => {
+                let objectName = '';
+                Object.entries(volume).forEach(([key, value]) => {
+                    objectName = key === 'name' ? value : objectName;
+                    if (key === config.parameter) {
+                        status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
+                        if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                            objectsInViolation.push(objectName!);
+                        }
                     }
-                }
+                });
+            });
+
+            driftAssessmentData.configuration.volumes.push({
+                name: config.parameter,
+                recommended: config.value.toString(),
+                status,
+                objectsInViolation,
+                severity: config.severity,
+                recommendation: config.recommendation,
+                tags: config.tags
             });
         });
-        if (status === AssessmentStatus.OPTIMIZED) {
-            optimizedCount += 1;
-        }
-        driftAssessmentData.configuration.volumes.push({
-            name: config.parameter,
-            recommended: config.value.toString(),
-            status,
-            objectsInViolation,
-            severity: config.severity,
-            recommendation: config.recommendation,
-            tags: config.tags
-        });
-    });
+    }
+    if (errors.luns) {
+        driftAssessmentData.configuration.luns.push({ errorMessage: errors.luns });
+    } else {
+        lunConfigData.forEach(config => {
+            let status = AssessmentStatus.OPTIMIZED;
+            const objectsInViolation: string[] = [];
+            luns.forEach(lun => {
+                let objectName = '';
+                Object.entries(lun).forEach(([key, value]) => {
+                    objectName = key === 'name' ? value : objectName;
+                    if (key === config.parameter) {
+                        status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
 
-    lunConfigData.forEach(config => {
-        configCount += 1;
-        let status = AssessmentStatus.OPTIMIZED;
-        const objectsInViolation: string[] = [];
-        luns.forEach(lun => {
-            let objectName = '';
-            Object.entries(lun).forEach(([key, value]) => {
-                objectName = key === 'name' ? value : objectName;
-                if (key === config.parameter) {
-                    status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
-
-                    if (status === AssessmentStatus.NOT_OPTIMIZED) {
-                        objectsInViolation.push(objectName!);
+                        if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                            objectsInViolation.push(objectName!);
+                        }
                     }
-                }
+                });
+            });
+
+            driftAssessmentData.configuration.luns.push({
+                name: config.parameter,
+                recommended: config.value.toString(),
+                status,
+                objectsInViolation,
+                severity: config.severity,
+                recommendation: config.recommendation,
+                tags: config.tags
             });
         });
-        if (status === AssessmentStatus.OPTIMIZED) {
-            optimizedCount += 1;
-        }
-        driftAssessmentData.configuration.luns.push({
-            name: config.parameter,
-            recommended: config.value.toString(),
-            status,
-            objectsInViolation,
-            severity: config.severity,
-            recommendation: config.recommendation,
-            tags: config.tags
-        });
-    });
+    }
 
     Object.entries(os).forEach(([key, value]) => {
         const goldenData = osConfigData.find(data => data.parameter === key);
         if (!isEmpty(goldenData)) {
-            configCount += 1;
             const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            if (status === AssessmentStatus.OPTIMIZED) {
-                optimizedCount += 1;
-            }
+
             driftAssessmentData.configuration.os.push({
                 name: key,
                 recommended: goldenData.value.toString(),
@@ -319,196 +318,197 @@ async function calculateStorageDrift(
         }
     });
 
-    Object.entries(layout).forEach(([key, value]) => {
-        const goldenData = layoutConfigData.find(data => data.parameter === key);
-        if (!isEmpty(goldenData)) {
-            configCount += 1;
-            const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            if (status === AssessmentStatus.OPTIMIZED) {
-                optimizedCount += 1;
+    if (errors.layout) {
+        driftAssessmentData.layout.push({ errorMessage: errors.layout });
+    } else {
+        Object.entries(layout).forEach(([key, value]) => {
+            const goldenData = layoutConfigData.find(data => data.parameter === key);
+            if (!isEmpty(goldenData)) {
+                const status =
+                    goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+
+                driftAssessmentData.layout.push({
+                    name: key,
+                    recommended: goldenData.value.toString(),
+                    status,
+                    severity: goldenData.severity,
+                    recommendation: goldenData.recommendation,
+                    tags: goldenData.tags
+                });
             }
-            driftAssessmentData.layout.push({
-                name: key,
-                recommended: goldenData.value.toString(),
-                status,
-                severity: goldenData.severity,
-                recommendation: goldenData.recommendation,
-                tags: goldenData.tags
-            });
-        }
-        if (key === 'user-database-layout') {
-            const dataVolumes = value.data;
-            const logVolumes = value.log;
-            const dataLogVolumeDetails: DatabaseVolumeRecord[] = [];
-            dataVolumes.map((data: DatabaseVolumeRecord) =>
-                logVolumes.forEach((log: DatabaseVolumeRecord) => {
-                    if (data.name === log.name) {
-                        const volDetails = data as DatabaseVolumeRecord;
-                        volDetails.logVolume = log.volumeName;
-                        volDetails.logLunPath = log.lunPath;
-                        volDetails.logFileName = log.fileName;
-                        volDetails.logSizeInMb = log.sizeInMb;
-                        volDetails.logVolumeUuid = log.ontapVolumeUuid;
-                        volDetails.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
-                        dataLogVolumeDetails.push(volDetails);
+            if (key === 'user-database-layout') {
+                const dataVolumes = value.data;
+                const logVolumes = value.log;
+                const dataLogVolumeDetails: DatabaseVolumeRecord[] = [];
+                dataVolumes.map((data: DatabaseVolumeRecord) =>
+                    logVolumes.forEach((log: DatabaseVolumeRecord) => {
+                        if (data.name === log.name) {
+                            const volDetails = data as DatabaseVolumeRecord;
+                            volDetails.logVolume = log.volumeName;
+                            volDetails.logLunPath = log.lunPath;
+                            volDetails.logFileName = log.fileName;
+                            volDetails.logSizeInMb = log.sizeInMb;
+                            volDetails.logVolumeUuid = log.ontapVolumeUuid;
+                            volDetails.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
+                            dataLogVolumeDetails.push(volDetails);
+                        }
+                    })
+                );
+
+                // start user database layout assessment
+                // each database is on separate data and log lun
+                const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
+                    (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
+                );
+                logger.info({ databasesOnSameDataLogLun }); // Todo: remove this line
+
+                // each database is on separate data and log volume
+                const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
+                    (data: DatabaseVolumeRecord) => data.volumeUuid === data.logVolumeUuid
+                );
+                logger.info({ databasesOnSameDataLogVolume }); // Todo: remove this line
+
+                const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
+                    (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
+                );
+                logger.info({ databasesAbove500Gb }); // Todo: remove this line
+
+                const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
+                const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
+                const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
+                const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
+                logger.info({ groupByDataVolume }); // Todo: remove this line
+                logger.info({ groupByLogVolume }); // Todo: remove this line
+                logger.info({ groupByDataLun }); // Todo: remove this line
+                logger.info({ groupByLogLun }); // Todo: remove this line
+
+                const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
+                const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
+                const databasesSharingDataLuns = Object.values(groupByDataLun).filter(count => count > 1);
+                const databasesSharingLogLuns = Object.values(groupByLogLun).filter(count => count > 1);
+
+                let recommended = '';
+                let status = AssessmentStatus.OPTIMIZED;
+                let recommendationString = '';
+                let severity = 'critical';
+
+                if (!isEmpty(databasesOnSameDataLogLun)) {
+                    recommended = 'separate-data-log-lun-per-database';
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    severity = 'critical';
+                } else if (!isEmpty(databasesOnSameDataLogVolume)) {
+                    recommended = 'separate-data-log-volume-per-database';
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    severity = 'warning';
+                } else if (databasesAbove500Gb.length > 1) {
+                    if (
+                        !isEmpty(databasesSharingDataVolumes) ||
+                        !isEmpty(databasesSharingLogVolumes) ||
+                        !isEmpty(databasesSharingDataLuns) ||
+                        !isEmpty(databasesSharingLogLuns)
+                    ) {
+                        recommended = 'separate-data-log-lun-volume-for-large-database';
+                        status = AssessmentStatus.NOT_OPTIMIZED;
+                        severity = 'critical';
+                        recommendationString =
+                            'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
                     }
-                })
-            );
-
-            // start user database layout assessment
-            // each database is on separate data and log lun
-            const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
-                (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
-            );
-            logger.info({ databasesOnSameDataLogLun }); // Todo: remove this line
-
-            // each database is on separate data and log volume
-            const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
-                (data: DatabaseVolumeRecord) => data.volumeUuid === data.logVolumeUuid
-            );
-            logger.info({ databasesOnSameDataLogVolume }); // Todo: remove this line
-
-            const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
-                (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
-            );
-            logger.info({ databasesAbove500Gb }); // Todo: remove this line
-
-            const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
-            const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
-            const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
-            const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
-            logger.info({ groupByDataVolume }); // Todo: remove this line
-            logger.info({ groupByLogVolume }); // Todo: remove this line
-            logger.info({ groupByDataLun }); // Todo: remove this line
-            logger.info({ groupByLogLun }); // Todo: remove this line
-
-            const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
-            const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
-            const databasesSharingDataLuns = Object.values(groupByDataLun).filter(count => count > 1);
-            const databasesSharingLogLuns = Object.values(groupByLogLun).filter(count => count > 1);
-
-            let recommended = '';
-            let status = AssessmentStatus.OPTIMIZED;
-            let recommendationString = '';
-            let severity = 'critical';
-
-            if (!isEmpty(databasesOnSameDataLogLun)) {
-                recommended = 'separate-data-log-lun-per-database';
-                status = AssessmentStatus.NOT_OPTIMIZED;
-                severity = 'critical';
-            } else if (!isEmpty(databasesOnSameDataLogVolume)) {
-                recommended = 'separate-data-log-volume-per-database';
-                status = AssessmentStatus.NOT_OPTIMIZED;
-                severity = 'warning';
-            } else if (databasesAbove500Gb.length > 1) {
-                if (
-                    !isEmpty(databasesSharingDataVolumes) ||
-                    !isEmpty(databasesSharingLogVolumes) ||
-                    !isEmpty(databasesSharingDataLuns) ||
-                    !isEmpty(databasesSharingLogLuns)
-                ) {
-                    recommended = 'separate-data-log-lun-volume-for-large-database';
+                } else if (!isEmpty(databasesSharingDataLuns) || !isEmpty(databasesSharingLogLuns)) {
+                    recommended = 'separate-data-log-lun-for-large-database';
                     status = AssessmentStatus.NOT_OPTIMIZED;
                     severity = 'critical';
                     recommendationString =
                         'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
+                } else if (!isEmpty(databasesSharingDataVolumes) || !isEmpty(databasesSharingLogVolumes)) {
+                    recommended = 'separate-data-log-volume-for-large-database';
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    severity = 'warning';
+                    recommendationString =
+                        'Consolidate small-to-medium size databases that are less critical or have fewer I/O requirements to a single volume';
                 }
-            } else if (!isEmpty(databasesSharingDataLuns) || !isEmpty(databasesSharingLogLuns)) {
-                recommended = 'separate-data-log-lun-for-large-database';
-                status = AssessmentStatus.NOT_OPTIMIZED;
-                severity = 'critical';
-                recommendationString =
-                    'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
-            } else if (!isEmpty(databasesSharingDataVolumes) || !isEmpty(databasesSharingLogVolumes)) {
-                recommended = 'separate-data-log-volume-for-large-database';
-                status = AssessmentStatus.NOT_OPTIMIZED;
-                severity = 'warning';
-                recommendationString =
-                    'Consolidate small-to-medium size databases that are less critical or have fewer I/O requirements to a single volume';
-            }
 
-            driftAssessmentData.layout.push({
-                name: 'user-database-layout',
-                recommended,
-                status,
-                severity,
-                recommendation: recommendationString,
-                tags: [
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            });
-        }
-    });
-
-    Object.entries(sizing).forEach(([key, value]) => {
-        let goldenData = sizingConfigData.find(data => data.parameter === key);
-
-        let overProvisionedDrives;
-        let underProvisionedDrives;
-        let ignoredDrives;
-
-        if (key === 'data-log-drive-details') {
-            goldenData = sizingConfigData.find(data => data.parameter === 'log-drive-size');
-        }
-        if (key === 'data-tempdb-drive-details') {
-            goldenData = sizingConfigData.find(data => data.parameter === 'tempdb-drive-size');
-        }
-        if (!isEmpty(goldenData)) {
-            configCount += 1;
-            let status = AssessmentStatus.NOT_OPTIMIZED;
-            if (key === 'performance-tier') {
-                status = value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            }
-            if (key === 'data-log-drive-details') {
-                ({ key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives } = getLogVolumeDrift(
-                    value,
+                driftAssessmentData.layout.push({
+                    name: 'user-database-layout',
+                    recommended,
                     status,
-                    key
-                ));
+                    severity,
+                    recommendation: recommendationString,
+                    tags: [
+                        AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
+                        AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                    ]
+                });
             }
-            if (key === 'data-tempdb-drive-details') {
-                ({ status, key } = getTempDbVolumeDrift(value, status, key));
-            }
-            if (status === AssessmentStatus.OPTIMIZED) {
-                optimizedCount += 1;
-            }
-            driftAssessmentData.sizing.push({
-                name: key,
-                recommended: goldenData.value.toString(),
-                status,
-                severity: goldenData.severity,
-                recommendation: goldenData.recommendation,
-                tags: goldenData.tags,
-                sizingViolations: { overProvisionedDrives, underProvisionedDrives, ignoredDrives }
-            });
-        }
-    });
-
-    // Headroom drift assessment
-    try {
-        const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
-        const { status } = await getHeadroomDrift(credentialsId, region, filesystemId);
-        configCount += 1;
-        if (status === AssessmentStatus.OPTIMIZED) {
-            optimizedCount += 1;
-        }
-        driftAssessmentData.sizing.push({
-            name: 'headroom',
-            recommended: goldenData!.value.toString(),
-            status,
-            severity: goldenData!.severity,
-            recommendation: goldenData!.recommendation,
-            tags: goldenData!.tags
         });
-    } catch (error: any) {
-        logger.error(
-            `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`
-        );
     }
 
-    driftAssessmentData.optimisedCount.total = configCount;
-    driftAssessmentData.optimisedCount.optimised = optimizedCount;
+    if (errors.sizing) {
+        driftAssessmentData.sizing.push({ errorMessage: errors.sizing });
+    } else {
+        Object.entries(sizing).forEach(([key, value]) => {
+            let goldenData = sizingConfigData.find(data => data.parameter === key);
+
+            let overProvisionedDrives;
+            let underProvisionedDrives;
+            let ignoredDrives;
+
+            if (key === 'data-log-drive-details') {
+                goldenData = sizingConfigData.find(data => data.parameter === 'log-drive-size');
+            }
+            if (key === 'data-tempdb-drive-details') {
+                goldenData = sizingConfigData.find(data => data.parameter === 'tempdb-drive-size');
+            }
+            if (!isEmpty(goldenData)) {
+                let status = AssessmentStatus.NOT_OPTIMIZED;
+                if (key === 'performance-tier') {
+                    status = value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+                }
+                if (key === 'data-log-drive-details') {
+                    ({ key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives } = getLogVolumeDrift(
+                        value,
+                        status,
+                        key
+                    ));
+                }
+                if (key === 'data-tempdb-drive-details') {
+                    ({ status, key } = getTempDbVolumeDrift(value, status, key));
+                }
+
+                driftAssessmentData.sizing.push({
+                    name: key,
+                    recommended: goldenData.value.toString(),
+                    status,
+                    severity: goldenData.severity,
+                    recommendation: goldenData.recommendation,
+                    tags: goldenData.tags,
+                    sizingViolations: { overProvisionedDrives, underProvisionedDrives, ignoredDrives }
+                });
+            }
+        });
+    }
+
+    // Headroom drift assessment
+    if (errors.sizing) {
+        driftAssessmentData.sizing.push({ errorMessage: errors.sizing });
+    } else {
+        try {
+            const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
+            const { status } = await getHeadroomDrift(credentialsId, region, filesystemId);
+
+            driftAssessmentData.sizing.push({
+                name: 'headroom',
+                recommended: goldenData!.value.toString(),
+                status,
+                severity: goldenData!.severity,
+                recommendation: goldenData!.recommendation,
+                tags: goldenData!.tags
+            });
+        } catch (error: any) {
+            logger.error(
+                `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`
+            );
+        }
+    }
 
     return driftAssessmentData;
 }
@@ -648,6 +648,46 @@ async function initiateStorageAssessmentCollection(
             config_data: parsedResponse
         }
     ]);
+
+    const resourceWithInstanceName = `${instanceRecord.resourceName}\\${instanceRecord.name}`;
+    const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
+    const configJobStatus =
+        isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
+            ? JOBSTATUS.FAILED
+            : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
+            ? JOBSTATUS.COMPLETED
+            : JOBSTATUS.WARNING;
+
+    await registerJob(accountId, credentialsId, region, {
+        name: 'Storage configuration assessment',
+        description: 'Storage configuration assessment',
+        resourceName: resourceWithInstanceName,
+        startTime: Date.now(),
+        endTime: Date.now(),
+        status: configJobStatus,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId: jobId
+    });
+    await registerJob(accountId, credentialsId, region, {
+        name: 'Storage layout assessment',
+        description: 'Storage layout assessment',
+        resourceName: resourceWithInstanceName,
+        startTime: Date.now(),
+        endTime: Date.now(),
+        status: isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId: jobId
+    });
+    await registerJob(accountId, credentialsId, region, {
+        name: 'Storage sizing assessment',
+        description: 'Storage sizing assessment',
+        resourceName: resourceWithInstanceName,
+        startTime: Date.now(),
+        endTime: Date.now(),
+        status: isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId: jobId
+    });
 }
 
 async function initiateComputeAssessment(
@@ -714,13 +754,32 @@ async function initiateComputeAssessment(
     }
 }
 
+async function updateMasterAssessment(accountId: string, masterAssessmentJobId: string) {
+    logger.info('Updating master assessment', { accountId, masterAssessmentJobId });
+
+    const allSubJobs = await listJobs(accountId, '', '', masterAssessmentJobId);
+    const masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
+        ? JOBSTATUS.IN_PROGRESS
+        : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
+        ? JOBSTATUS.FAILED
+        : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
+        ? JOBSTATUS.COMPLETED
+        : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
+        ? JOBSTATUS.WARNING
+        : JOBSTATUS.IN_PROGRESS;
+    await updateJobDetails(accountId, masterAssessmentJobId, {
+        status: masterJobStatus,
+        endTime: Date.now()
+    });
+}
+
 async function driftAssessmentDataCollection(
     accountId: string,
     credentialsId: string,
     region: string,
     jobId: string,
     databaseHostId: string,
-    databaseInstanceRecords: WorkloadInstance[],
+    databaseInstanceRecord: WorkloadInstance,
     fields?: string
 ) {
     logger.info('Drift assessment data collection', {
@@ -729,12 +788,9 @@ async function driftAssessmentDataCollection(
         region,
         jobId,
         databaseHostId,
-        databaseInstanceRecords,
+        databaseInstanceRecord,
         fields
     });
-
-    let errorMessage;
-    let jobStatus: string = JOBSTATUS.COMPLETED;
 
     let fieldsValues: Array<string> = [AssessmentCategories.STORAGE];
 
@@ -745,139 +801,183 @@ async function driftAssessmentDataCollection(
 
     const shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
 
+    if (shouldRunStorageAssessment) {
+        await initiateStorageAssessmentCollection(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            jobId,
+            databaseInstanceRecord
+        );
+    }
+}
+
+async function triggerAssessment(
+    managedInstance: DatabaseInstancesIncludingResource,
+    parentJobId: string,
+    fields?: string
+) {
+    logger.info('Triggering drift assessment ', { managedInstance, parentJobId, fields });
+
+    setAsyncLocalStorageResource(ACCOUNT_ID, managedInstance.account_id);
+
+    let jobStatus: string = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
+    const {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: databaseHostId,
+        database_instance_id: databaseInstanceId,
+        database_instance_name: databaseInstanceName,
+        resource
+    } = managedInstance;
+
+    const { resource_name: resourceName } = resource;
+    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+    const instanceDetailsForJob = JSON.stringify({
+        hostName: resourceName,
+        resourceId: databaseHostId,
+        databaseInstanceId,
+        databaseInstanceName,
+        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+    });
+
+    const jobName = `Assessing SQL Server instance ${resourceWithInstanceName}`;
+    const jobDescription = `Assessing SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: jobName,
+        description: jobDescription,
+        resourceName: resourceWithInstanceName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId
+    });
     try {
-        // https://jira.ngage.netapp.com/browse/DBS-4127 fix
-        await Promise.map(
-            databaseInstanceRecords,
-            async databaseInstanceRecord => {
-                if (shouldRunStorageAssessment) {
-                    await initiateStorageAssessmentCollection(
-                        accountId,
-                        credentialsId,
-                        region,
-                        databaseHostId,
-                        jobId,
-                        databaseInstanceRecord
-                    );
-                }
-            },
-            {
-                concurrency: 1
-            }
+        const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } = await getInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+
+        const {
+            database_instance_name: savedInstanceName,
+            fsxn_ids: fileSystemId,
+            sqlAuthEnabled
+        } = newDatabaseInstanceDetails;
+
+        const instanceRecord: WorkloadInstance = {
+            id: databaseInstanceId,
+            name: savedInstanceName,
+            type: RESOURCESTYPE.MSSQL,
+            region,
+            sqlAuthEnabled: sqlAuthEnabled || false,
+            activeNodeInstanceid: activeNodeInstanceId,
+            fsxFileSystem: fileSystemId,
+            cloudProviderAccountId: cloudProviderAccountId || '',
+            resourceName: resource.resource_name || ''
+        };
+        await driftAssessmentDataCollection(
+            accountId,
+            credentialsId,
+            region,
+            jobId,
+            databaseHostId,
+            instanceRecord,
+            fields
         );
     } catch (error: any) {
         logger.error(error);
         errorMessage = error.message || 'Internal Server Error';
         jobStatus = JOBSTATUS.FAILED;
     } finally {
-        const instanceNames = databaseInstanceRecords.map(i => i.name);
-        const instanceDetailsForJob = {
-            hostName: databaseInstanceRecords[0].resourceName,
-            resourceId: databaseHostId,
-            databaseInstanceId: databaseInstanceRecords.map(i => i.id),
-            databaseInstanceName: instanceNames.join(','),
-            sqlServerDeploymentType: RESOURCESTYPE.MSSQL
-        };
-        const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
         await updateJobDetails(accountId, jobId, {
             error: errorMessage,
-            description: `SQL Server instance(s) ${instanceNames.join(
-                ','
-            )} has been scanned for best practice misalignments. Review detailed findings and recommendations in.;${instanceDetailsForJobString}`,
-            status: jobStatus!,
+            status: jobStatus,
             endTime: Date.now()
         });
+        await updateMasterAssessment(accountId, parentJobId);
     }
 }
 
-async function triggerDriftAssessmentDataCollection(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    databaseInstanceIds: string[],
-    initiatedBy: string,
-    fields?: string
-) {
-    logger.info('Trigger drift assessment', {
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseInstanceIds,
-        initiatedBy,
-        fields
-    });
+async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?: string) {
+    logger.info('Trigger drift assessment per account', { initiatedBy });
 
-    const runningInstances: WorkloadInstance[] = [];
-
-    const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    const allManagedInstances = (await listAllManagedInstances()) as DatabaseInstancesIncludingResource[];
+    if (isEmpty(allManagedInstances)) {
+        logger.error('No successfully managed database instances found.');
+        return;
     }
 
-    const resourceName = resourceDetail.resource_name!;
-    try {
-        await Promise.all(
-            databaseInstanceIds.map(async databaseInstanceId => {
-                const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } =
-                    await getInstanceDetails(accountId, credentialsId, region, databaseHostId, databaseInstanceId);
-                const {
-                    database_instance_name: savedInstanceName,
-                    fsxn_ids: fileSystemId,
-                    sqlAuthEnabled
-                } = newDatabaseInstanceDetails;
+    // group managed instances by account_id
+    const managedInstancesGroupedByAccountId: { [key: string]: DatabaseInstancesIncludingResource[] } =
+        allManagedInstances.reduce((acc: { [key: string]: DatabaseInstancesIncludingResource[] }, managedInstance) => {
+            const key = `${managedInstance.account_id}`;
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+            acc[key].push(managedInstance);
+            return acc;
+        }, {} as { [key: string]: DatabaseInstancesIncludingResource[] });
 
-                const instanceRecord: WorkloadInstance = {
-                    id: databaseInstanceId,
-                    name: savedInstanceName,
-                    type: RESOURCESTYPE.MSSQL,
-                    region,
-                    sqlAuthEnabled: sqlAuthEnabled || false,
-                    activeNodeInstanceid: activeNodeInstanceId,
-                    fsxFileSystem: fileSystemId,
-                    cloudProviderAccountId: cloudProviderAccountId || '',
-                    resourceName: resourceName || ''
-                };
-                runningInstances.push(instanceRecord);
-            })
-        );
-    } catch (error) {
-        logger.error(`Error while fetching database instance details ${accountId}, ${databaseHostId}, ${error}`);
-    }
+    await Promise.all(
+        Object.entries(managedInstancesGroupedByAccountId).map(async ([accountId, managedInstances]) => {
+            if (isEmpty(managedInstances)) {
+                const errorMessage = `No managed instances found for account ${accountId}.`;
+                logger.error(errorMessage);
+            } else {
+                const jobDescription = `Assess ${managedInstances.length} managed SQL Server instances in your account ${accountId} for best practice misalignments.`;
+                const { id: parentJobId } = await registerJob(accountId, '', '', {
+                    name: jobDescription,
+                    description: jobDescription,
+                    resourceName: accountId,
+                    initiator: initiatedBy.toLocaleUpperCase(),
+                    startTime: Date.now(),
+                    status: JOBSTATUS.IN_PROGRESS,
+                    type: JOBTYPE.ASSESSMENT
+                });
 
-    const instanceNames = runningInstances.map(i => i.name);
-    if (!isEmpty(runningInstances)) {
-        const jobString = `SQL Server instance(s) ${instanceNames.join(
-            ','
-        )} is/are being scanned for best practice misalignments.`;
-        const job = await registerJob(accountId, credentialsId, region, {
-            name: jobString,
-            description: jobString,
-            resourceName: resourceName!,
-            initiator: initiatedBy.toLocaleUpperCase(),
-            startTime: Date.now(),
-            status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.ASSESSMENT
-        });
+                const allManagedResources = managedInstances.map(instance => instance.resource.resource_name);
 
-        driftAssessmentDataCollection(
-            accountId,
-            credentialsId,
-            region,
-            job.id,
-            databaseHostId,
-            runningInstances,
-            fields
-        );
+                allManagedResources.forEach(async resource => {
+                    const jobString = `Assessing SQL Server host ${resource} compute right sizing`;
+                    await registerJob(accountId, '', '', {
+                        name: jobString,
+                        description: jobString,
+                        resourceName: resource!,
+                        startTime: Date.now(),
+                        endTime: Date.now(),
+                        status: JOBSTATUS.COMPLETED,
+                        type: JOBTYPE.ASSESSMENT,
+                        parentJobId
+                    });
+                });
 
-        return { jobId: job.id };
-    }
-    throw createError(
-        HttpErrorCodes.NOT_FOUND,
-        `Aborting assessment as no instances found running for ${accountId}, ${databaseHostId}.`
+                try {
+                    await Promise.all(
+                        managedInstances.map(
+                            async managedInstance => {
+                                await triggerAssessment(managedInstance, parentJobId, fields);
+                            },
+                            {
+                                concurrency: 1
+                            }
+                        )
+                    );
+                } catch (error: any) {
+                    logger.info('Error while triggering drift assessment for account', { accountId, error });
+                    await updateJobDetails(accountId, parentJobId, {
+                        status: JOBSTATUS.FAILED,
+                        error: error.message,
+                        endTime: Date.now()
+                    });
+                }
+            }
+        })
     );
 }
 
@@ -926,11 +1026,12 @@ async function fetchDriftAssessment(
             const configsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized || [];
             storageAssessmentResponse.configuration.volumes = storageAssessmentResponse.configuration.volumes.map(
                 volume => {
-                    if (configsOptimized.includes(volume.name)) {
-                        volume.status = AssessmentStatus.OPTIMIZED;
-                        volume.objectsInViolation = [];
+                    const vol = volume as ParameterDriftResponseType;
+                    if (configsOptimized.includes(vol.name)) {
+                        vol.status = AssessmentStatus.OPTIMIZED;
+                        vol.objectsInViolation = [];
                     }
-                    return volume;
+                    return vol;
                 }
             );
         }
@@ -958,6 +1059,77 @@ function getMatchingAssessmentStatus(finding: string) {
     }
 }
 
+async function onDemandTriggerDriftAssessmentDataCollection(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseInstanceId: string,
+    databaseHostId: string,
+    initiatedBy: string,
+    fields?: string
+) {
+    logger.info('On-demand trigger drift assessment', {
+        accountId,
+        credentialsId,
+        region,
+        databaseInstanceId,
+        databaseHostId,
+        initiatedBy,
+        fields
+    });
+
+    const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+
+    const resourceName = resourceDetail.resource_name!;
+    try {
+        const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } = await getInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+        const {
+            database_instance_name: savedInstanceName,
+            fsxn_ids: fileSystemId,
+            sqlAuthEnabled
+        } = newDatabaseInstanceDetails;
+
+        const instanceRecord: WorkloadInstance = {
+            id: databaseInstanceId,
+            name: savedInstanceName,
+            type: RESOURCESTYPE.MSSQL,
+            region,
+            sqlAuthEnabled: sqlAuthEnabled || false,
+            activeNodeInstanceid: activeNodeInstanceId,
+            fsxFileSystem: fileSystemId,
+            cloudProviderAccountId: cloudProviderAccountId || '',
+            resourceName: resourceName || ''
+        };
+
+        const jobString = `SQL Server instance ${savedInstanceName} is being scanned for best practice misalignments.`;
+        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+            name: jobString,
+            description: jobString,
+            resourceName: resourceName!,
+            initiator: initiatedBy.toLocaleUpperCase(),
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.ASSESSMENT
+        });
+        driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, instanceRecord, fields);
+
+        return { jobId };
+    } catch (error) {
+        logger.error(`Error while fetching database instance details ${accountId}, ${databaseHostId}, ${error}`);
+    }
+}
+
 export {
     triggerDriftAssessmentDataCollection,
     fetchDriftAssessment,
@@ -966,5 +1138,6 @@ export {
     getLogVolumeDrift,
     getTempDbVolumeDrift,
     getFsxStorageDetails,
+    onDemandTriggerDriftAssessmentDataCollection,
     calculateComputeDrift
 };

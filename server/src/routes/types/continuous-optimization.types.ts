@@ -64,17 +64,13 @@ const ComputeDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalC
 type ComputeDriftResponseType = Static<typeof ComputeDriftResponse>;
 const StorageParameterDriftResponse = Type.Object({
     timestamp: Type.Number(),
-    optimisedCount: Type.Object({
-        total: Type.Number(),
-        optimised: Type.Number()
-    }),
     configuration: Type.Object({
-        volumes: Type.Array(ParameterDriftResponse),
-        luns: Type.Array(ParameterDriftResponse),
-        os: Type.Array(ParameterDriftResponse)
+        volumes: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
+        luns: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
+        os: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))
     }),
-    sizing: Type.Array(ParameterDriftResponse),
-    layout: Type.Array(ParameterDriftResponse)
+    sizing: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
+    layout: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))
 });
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 const DriftAssessmentResponse = Type.Object({

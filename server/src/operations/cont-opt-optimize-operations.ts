@@ -192,7 +192,7 @@ async function triggerAssessmentAfterOptimization(
         region,
         jobId,
         databaseHostId,
-        [instanceToAssess],
+        instanceToAssess,
         serverNameWithHostName
     );
     await updateJobDetails(accountId, parentJobId, {

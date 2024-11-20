@@ -1186,7 +1186,7 @@ export const GENERAL = {
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     RIGHTSIZING_TOOLTIP:
-        'Right-sizing recommendations are based on AWS Compute Optimizer; the analysis can take up to 14 days as it reviews metrics from this period to provide accurate suggestions.'
+        'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.'
 };
 
 export const CODE_VIEWER = {

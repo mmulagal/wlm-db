@@ -649,8 +649,11 @@ async function updateDatabaseInstanceMetadata(
     });
 }
 
-async function listAllManagedInstances() {
+async function listAllManagedInstances(accountId?: string) {
     return prisma.client.database_instances.findMany({
+        where: {
+            ...(accountId && { account_id: accountId })
+        },
         orderBy: {
             id: 'asc'
         },

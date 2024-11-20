@@ -236,6 +236,15 @@
         display: flex;
         flex-direction: column;
 
+        .missingPermissionText {
+            display: flex;
+            align-items: center;
+
+            [class*='dsButtonContainer'] {
+                pointer-events: auto !important; /* Ensure the button remains clickable */
+            }
+        }
+
         .tagPlacement {
             display: flex;
             gap: 16px;
